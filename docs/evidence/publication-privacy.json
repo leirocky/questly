@@ -170,5 +170,6 @@
       "publicSHA256": "8823c2db9a42ab71f0aa73fd36a8ed65d06319c27abbcd1101628cab6f478020",
       "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
     }
-  ]
+  ],
+  "scope": "Hashes describe the initial public-evidence preparation in local commit ae947ab, before the later upload handoff changes to STATUS."
 }

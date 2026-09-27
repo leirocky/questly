@@ -1,6 +1,6 @@
 # Questly execution status
 
-Updated: 2026-09-27 — native branch upload and public evidence preparation
+Updated: 2026-09-27 — native branch published to GitHub and verified
 
 ## Current branches and artifacts
 
@@ -12,9 +12,9 @@ Updated: 2026-09-27 — native branch upload and public evidence preparation
 
 ## GitHub upload handoff
 
-The owner requested uploading the native work, including local commit `cf24eaa`. The HTTPS command `GIT_TERMINAL_PROMPT=0 git push -u origin production/ios-foundation` failed because no Git CLI credentials were configured; SSH strict host verification also had no trusted host entry. No credentials or host trust settings were changed. The existing GitHub connector has repository write permission and is being used to publish the native branch as a content-equivalent snapshot; original local commits remain intact.
+The owner requested uploading the native work, including local commit `cf24eaa`. The HTTPS command `GIT_TERMINAL_PROMPT=0 git push -u origin production/ios-foundation` failed because no Git CLI credentials were configured; SSH strict host verification also had no trusted host entry. No credentials or host trust settings were changed. The existing GitHub connector published [production/ios-foundation](https://github.com/leirocky/questly/tree/production/ios-foundation). Initial remote snapshot [`ebd481c`](https://github.com/leirocky/questly/commit/ebd481c919cdceec13c0234815fb90595fce8629) has exactly the same 145-file Git tree (`d777d5cf5e7f5dd293ba792d3a2b53b4d0d4a9ef`) as local publication commit `ae947ab`. Original local development commits remain intact; the connector-created snapshot has a different commit identity, not a rewritten local history. Normal CLI push remains unconfigured.
 
-Automatic approval rejected a raw diagnostic-log upload because it included usernames, absolute local paths and detailed machine traces. The safe public copies retain actual commands, test outcomes and failures, with those traces omitted and paths redacted. Complete original evidence remains local. Application code and screenshot pixels were not changed, and application tests were **not rerun** during this upload-only task. Remote ref/tree verification follows publication; no native work is merged into `main` and no Pages release is requested.
+Automatic approval rejected a raw diagnostic-log upload because it included usernames, absolute local paths and detailed machine traces. The safe public copies retain actual commands, test outcomes and failures, with those traces omitted and paths redacted. Complete original evidence remains local. Application code and screenshot pixels were not changed, and application tests were **not rerun** during this upload-only task. `git ls-remote --heads origin production/ios-foundation main` confirmed the new branch and unchanged `main` at `a41a8fed13fc9f2cdaf67a4261bc7cfb89c5fc65`. A fresh fetch and `git diff --exit-code HEAD origin/production/ios-foundation` confirmed byte-identical repository contents before this handoff-only update. All 19 tested source hashes still match, and `git diff --check` passed. No native work was merged into `main` and no Pages release occurred.
 
 ## Completed native implementation and current fixes
 
