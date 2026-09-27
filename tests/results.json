@@ -1,0 +1,24 @@
+{
+  "tested_at_utc": "2026-09-27T06:09:08.214175+00:00",
+  "browser": "Chromium 144.0.7559.96",
+  "scope": "HTML loaded into Chromium via set_content. Real browser clicks, mobile viewport emulation. localStorage simulated for persistence tests.",
+  "not_verified": [
+    "Live HTTPS deployment",
+    "Physical iPhone",
+    "Safari/WebKit",
+    "Real origin-backed storage across browser refresh"
+  ],
+  "environment_note": "Local HTTP navigation attempt was blocked with ERR_BLOCKED_BY_ADMINISTRATOR. No browser policy was changed. DOM tests use supplied HTML without network navigation.",
+  "results": [
+    {"test": "390px: empty state, full click flow, hint, duplicate event guard, overflow", "status": "PASS"},
+    {"test": "390px: rehydrate a completed session from SIMULATED storage", "status": "PASS"},
+    {"test": "390px: non-charging paywall preview and return", "status": "PASS"},
+    {"test": "1280px: empty state, full click flow, hint, duplicate event guard, overflow", "status": "PASS"},
+    {"test": "1280px: rehydrate a completed session from SIMULATED storage", "status": "PASS"},
+    {"test": "1280px: non-charging paywall preview and return", "status": "PASS"},
+    {"test": "Storage denied: full click flow reaches parent brief", "status": "PASS"},
+    {"test": "Malformed saved JSON does not break app", "status": "PASS"},
+    {"test": "No uncaught JavaScript errors in exercised cases", "status": "PASS"}
+  ],
+  "javascript_errors": []
+}
