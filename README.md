@@ -1,61 +1,80 @@
-# questly
+# Questly — Storm Island
 
-## Review prototype v0.2
+## Review prototype v0.3.0
 
-A small, dependency-free Grade 1 math experience for product review. This is not an App Store release, a validated learning assessment, or a production subscription product.
+Live preview: https://leirocky.github.io/questly/
 
-### Review flow
+A complete replacement for the earlier multiple-choice math prototype. Children manipulate cargo, rotate circuits and program a rover. This is a product-review prototype, not an App Store release, a validated learning assessment or a commercial subscription product.
 
-Home → Grade 1 setup → three fixed warm-up questions → four Moon Garden challenges → session brief → non-charging family-plan preview.
+### Play
 
-Answers require an explicit Continue/Next action. Repeated clicks do not add extra credit. Missed mission answers reveal a question-specific hint. The parent brief uses the current session's actual first-try and retry counts, rather than fabricated mastery percentages. Completed sessions are stored in this browser when storage is available; storage denial does not block navigation.
+Open the hosted page in a browser. Engineer mode is selected by default. Explorer mode has independent saved progress and simpler puzzles. The top-right language button switches between English and Chinese. Any station can be opened directly from the island map.
 
-### What is not implemented
+1. **Supply run:** load and unload six supplies, observe the boat's capacity, plan arrival order and keep water away from batteries. Engineer mode allows three voyages with capacity 10. Explorer mode allows unlimited voyages with capacity 12. Undo a voyage or restart a plan.
+2. **Restore power:** rotate wire tiles and test which connections carry power. Explorer has one target on a 4×4 board. Engineer has two targets, a three-way junction and decoys on a 5×5 board.
+3. **Program Nova:** compose a main program and repeat body using forward, left, right, pickup and a blocked-front conditional. Run, single-step or stop the rover. A correct program is accepted even when it exceeds the optional compact-code goal.
 
-- Adaptive item selection, an AI tutor, an educationally validated diagnostic, and a curriculum engine.
-- Other grades, multi-child accounts, cloud sync, and production analytics.
-- StoreKit, real payment collection, trial enrollment, and subscription entitlements. Prices are design proposals only.
-- App Store packaging and a production privacy/compliance review.
+The parent field notes show observed actions: successful voyages, rejected launches, rotations, tests, program runs, hints and shortest working program. They do not infer intelligence, grade level or mastery. Resetting a station resets its counters.
 
-No child's name, email, image, or voice is requested. The prototype itself has no external scripts, trackers, API calls, or server-side data collection. Hosting providers may maintain their own access logs.
+### Deliberate limits
 
-## Run locally
+- One chapter, three puzzle systems and two curated difficulty modes; not a full curriculum.
+- No account, payment flow, advertising, analytics, cloud sync or AI API.
+- Progress is stored in this browser only. A visible notice explains when storage is unavailable.
+- No child's name, photo, recording or responses are sent by the app to a server. Hosting providers still receive ordinary website requests.
+- Public static frontend code is visible to visitors.
+- All game graphics are inline SVG/CSS. No external fonts, libraries or media requests.
 
-From this folder, run `python3 -m http.server 8000`, then open `http://localhost:8000` in a regular browser. Attachment previewers are not the supported runtime.
+### Files
 
-## Publishing for review
+- `index.html`: static entry point.
+- `storm-engine.js`: deterministic game rules and level configurations.
+- `storm-app.js`: interaction, rendering, English/Chinese labels and local persistence.
+- `storm.css`: responsive layouts including compact mobile rover controls.
+- `tests/engine.test.cjs`: deterministic rule regression groups and cargo feasibility search.
+- `tests/browser.py`: Chromium DOM interaction regression cases.
+- `tests/results-v3.json`: recorded results and exact tested frontend file hashes.
+- Earlier commits retain the v0.2 quiz implementation and its historical results.
 
-The repository is currently private. Its visibility has not been changed.
+### Run locally
 
-`index.html` and `.nojekyll` are prepared for static hosting. No live deployment has been verified and no live URL is claimed.
-
-For GitHub Pages, a repository administrator can open Settings → Pages → Build and deployment, choose **Deploy from a branch**, select **main** and **/(root)**, then save. Use the actual **Visit site** link shown by GitHub after publishing.
-
-Important: GitHub Free does not support Pages sourced from a private repository; private-repository Pages requires an eligible paid GitHub plan. A Pages website on a personal account is public even when its source repository remains private. Do not change repository visibility or purchase a plan without the owner's decision.
-
-Official references:
-- https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
-- https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site
-
-## Tests and evidence
-
-`tests/smoke.py` performs real Chromium browser clicks on the supplied HTML. `tests/results.json` records the run on 2026-09-27 at 06:09 UTC.
-
-Verified cases include the complete answer/hint/brief/paywall flow at 390×844 and 1280×900, duplicate-answer handling, empty state, malformed saved JSON, simulated storage restoration, and storage-denied completion. No uncaught JavaScript errors occurred in those exercised cases.
-
-The environment blocked local HTTP navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`. Browser policies were not changed. Tests instead used Playwright `set_content` for DOM interactions and an explicitly simulated storage object for persistence cases.
-
-**Not verified:** live HTTPS hosting; physical iPhone; Safari/WebKit; real origin-backed storage across browser reload. Mobile viewport emulation is not an iPhone test.
-
-To reproduce the DOM suite in a suitable development environment:
+Use any static HTTP server, for example:
 
 ```sh
-python3 -m pip install playwright
-CHROMIUM_PATH=/path/to/chromium python3 tests/smoke.py
+python -m http.server 8000
 ```
 
-The script writes a JSON report and screenshots under `tests/`. It requires an installed Chromium executable.
+Open `http://localhost:8000`. This is a normal local-development option, not a claim that localhost navigation was possible in the assistant's test environment.
 
-## Review gate
+### Reproduce tests
 
-Stop at the interactive prototype. Proceed to production app engineering only after the owner approves the product direction.
+Rule tests need Node.js:
+
+```sh
+node tests/engine.test.cjs
+```
+
+Browser tests need Python, Playwright and Chromium:
+
+```sh
+pip install playwright
+CHROMIUM_PATH=/usr/bin/chromium TEST_PART=390 python tests/browser.py
+CHROMIUM_PATH=/usr/bin/chromium TEST_PART=1280 python tests/browser.py
+CHROMIUM_PATH=/usr/bin/chromium TEST_PART=explorer python tests/browser.py
+CHROMIUM_PATH=/usr/bin/chromium TEST_PART=extra python tests/browser.py
+CHROMIUM_PATH=/usr/bin/chromium TEST_PART=storage python tests/browser.py
+```
+
+`CHROMIUM_PATH` can be changed to an installed Chromium executable. Without `TEST_PART`, the script runs all batches. Splitting them avoids execution-time limits in restricted environments.
+
+### Recorded test scope
+
+14 engine regression groups and 21 browser case groups passed. Browser cases cover 390px and 1280px complete flows, 320px overflow checks, both modes, cargo rejection and undo, circuit rotation and reachability, rover collision/loops/conditionals/step/stop, English/Chinese screens and malformed/unavailable storage. No uncaught JavaScript errors occurred in these cases.
+
+These are **real Chromium DOM clicks after `set_content` with local CSS/JS inlined**. Persistence cases use **explicitly simulated localStorage**. The browser environment blocked network navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`; no browser policy was changed or bypassed.
+
+**Not verified:** physical iPhone, Safari/WebKit, live HTTPS browser clicks, or real-origin persistence across browser restarts. GitHub Pages deployment status is checked separately and does not substitute for those tests.
+
+### Publishing
+
+GitHub Pages serves the `main` branch root. `.nojekyll` is retained. Work is staged on `prototype/storm-island-v3`, then fast-forwarded to `main` after tests and file-hash checks. No force push or history rewrite is required.
