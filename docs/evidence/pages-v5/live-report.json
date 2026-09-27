@@ -1,0 +1,114 @@
+{
+  "testedAt": "2026-09-27T21:07:31.542Z",
+  "url": "https://leirocky.github.io/questly/",
+  "mergeCommit": "051a905abe73b96b924fe12547332c9501d33133",
+  "node": "v24.19.0",
+  "browser": "154.0.8037.58",
+  "scope": "Sandboxed desktop Chrome over public HTTPS; isolated real disk profile; not physical-device or Safari evidence",
+  "results": [
+    {
+      "name": "All eight deployed frontend files return HTTP 200 and match tested SHA-256 hashes",
+      "status": "PASS"
+    },
+    {
+      "name": "Live HTTPS home has 18 playable entries",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: live robot completed through program controls",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: live robot completed through program controls",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: live robot completed through program controls",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: live robot completed through program controls",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: live robot completed through program controls",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: live robot completed through program controls",
+      "status": "PASS"
+    },
+    {
+      "name": "All 18 completions and Chinese survive live HTTPS reload",
+      "status": "PASS"
+    },
+    {
+      "name": "Real Chrome shutdown/relaunch restores all 18 completions, mission and language on public origin",
+      "status": "PASS"
+    },
+    {
+      "name": "No uncaught page errors or failed HTTP responses during exercised live flows",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "failedResponses": [],
+  "hashes": {
+    "index.html": "456d267f250c3eeae0a647da7b2d6561947f6a4805877dfc2b1d27f1fb504785",
+    "storm-engine.js": "9b14dfecebe69b62c0dd3b7a6a6a43e6f197908b5ec248ecc8bd2026e5658871",
+    "storm-levels.js": "b164d85e8953cd12a57730c9ac15a7eb0cdc3c2a6cc4fbc795ea48d88ee5e079",
+    "storm-save.js": "e3f52955348e990c35c5f61a79bcf1a3175af4be84a628a1644b62e1b8c13afe",
+    "storm-app.js": "f45d358ac33781ace5b57f59dd225605c3b1c1b5ce69eda47f62439fc4fba2df",
+    "storm.css": "a6d9ffacf25a5f4ce8cdfb2b44cfd38802af1bc9de5789e92afde77371c9ceea",
+    "storm-visual.js": "3db9057de15105e2cc0fd8db36997ba853344e604d347c4d976ce3b86d3a4ce6",
+    "storm-visual.css": "c8fe245953c11272406b2678df1e59f40a198dbe35e261bfa13be514eb1402d1"
+  }
+}
