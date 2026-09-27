@@ -1,9 +1,11 @@
 """Presentation regression. set_content is not an HTTPS/Safari test; storage is simulated."""
 from pathlib import Path
-import json,re
+import json,re,os
 from datetime import datetime,timezone
 from playwright.sync_api import sync_playwright,expect
 R=Path(__file__).resolve().parents[1]
+OUTPUT=R/'artifacts'/'web-v5-legacy'
+OUTPUT.mkdir(parents=True,exist_ok=True)
 h=(R/'index.html').read_text()
 h=re.sub(r'<link rel="stylesheet" href="([^"?]+)(?:\?[^\"]*)?">',lambda m:'<style>'+(R/m.group(1)).read_text()+'</style>',h)
 h=re.sub(r'<script src="([^"?]+)(?:\?[^\"]*)?"></script>',lambda m:'<script>'+(R/m.group(1)).read_text()+'</script>',h)
@@ -13,11 +15,11 @@ def boot(b,width=390,store=None,reduce=False):
  c=b.new_context(viewport={'width':width,'height':844},reduced_motion='reduce' if reduce else 'no-preference')
  p=c.new_page();p.on('pageerror',lambda e:errors.append(str(e)))
  p.evaluate("""d=>{window.testStore={...d};Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem(k){return testStore[k]??null},setItem(k,v){testStore[k]=String(v)}}});}""",store or {})
- p.set_content(h);p.wait_for_function("window.QuestVisual?.version==='0.4.0'");return c,p
+ p.set_content(h);p.wait_for_function("window.QuestVisual?.version==='0.5.0'");return c,p
 
 def nav(p,s):p.locator(f'[data-action="nav"][data-value="{s}"]').first.click()
 with sync_playwright() as pw:
- b=pw.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+ b=pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,chromium_sandbox=True)
  c,p=boot(b)
  assert not p.evaluate('QuestVisual.hasAudioContext()');assert not p.evaluate('QuestVisual.getPreferences().sound')
  rec('Sound starts off; no AudioContext is created without opt-in')
@@ -57,11 +59,11 @@ with sync_playwright() as pw:
     assert p.locator('.q-toolbar').count()==1
   rec(f'{width}px English and Chinese: all five screens fit without horizontal overflow')
   if width in [390,1280]:
-   nav(p,'map');p.wait_for_timeout(400);p.screenshot(path=str(R/'tests'/f'v4-map-zh-{width}.png'),full_page=True)
+   nav(p,'map');p.wait_for_timeout(400);p.screenshot(path=str(OUTPUT/f'visual-map-zh-{width}.png'),full_page=True)
    p.locator('[data-action="lang"]').click()
    for stage in ['map','cargo','power','robot']:
-    nav(p,stage);p.wait_for_timeout(400);p.screenshot(path=str(R/'tests'/f'v4-{stage}-{width}.png'),full_page=True)
+    nav(p,stage);p.wait_for_timeout(400);p.screenshot(path=str(OUTPUT/f'visual-{stage}-{width}.png'),full_page=True)
   c.close()
  assert not errors,errors;rec('No uncaught JavaScript errors during visual and accessibility checks')
  b.close()
-(R/'tests'/'visual-results-v4.json').write_text(json.dumps({'tested_at_utc':datetime.now(timezone.utc).isoformat(),'scope':'Chromium DOM tests; simulated storage; no real iPhone or live HTTPS navigation','results':results,'errors':errors},indent=2))
+(OUTPUT/'visual-results.json').write_text(json.dumps({'tested_at_utc':datetime.now(timezone.utc).isoformat(),'scope':'Sandboxed Chromium DOM tests; simulated storage; no real iPhone or live HTTPS navigation','results':results,'errors':errors},indent=2))

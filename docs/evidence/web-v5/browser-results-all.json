@@ -1,0 +1,101 @@
+{
+  "tested_at_utc": "2026-09-27T20:19:33.987541+00:00",
+  "browser": "Chromium 154.0.8037.58",
+  "scope": "Real Chromium DOM clicks with set_content; storage explicitly simulated; sizes 320, 390 and 1280 CSS pixels. Not a physical device or real-origin storage test.",
+  "not_verified": [
+    "iPhone Safari / WebKit",
+    "Live HTTPS browser clicking",
+    "Real-origin storage across browser restarts"
+  ],
+  "results": [
+    {
+      "name": "390px cargo: empty, precedence, overload and incompatible cargo rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "390px cargo: all supplies delivered in three voyages",
+      "status": "PASS"
+    },
+    {
+      "name": "390px cargo: successful voyage undo and retry",
+      "status": "PASS"
+    },
+    {
+      "name": "390px power: rotate through DOM clicks, test both targets",
+      "status": "PASS"
+    },
+    {
+      "name": "390px robot: empty program, collision, loop+condition success with 8 blocks",
+      "status": "PASS"
+    },
+    {
+      "name": "390px completion map and actual parent counters",
+      "status": "PASS"
+    },
+    {
+      "name": "390px simulated storage recovery, independent modes and Chinese screens",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px cargo: empty, precedence, overload and incompatible cargo rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px cargo: all supplies delivered in three voyages",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px cargo: successful voyage undo and retry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px power: rotate through DOM clicks, test both targets",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px robot: empty program, collision, loop+condition success with 8 blocks",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px completion map and actual parent counters",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px simulated storage recovery, independent modes and Chinese screens",
+      "status": "PASS"
+    },
+    {
+      "name": "Explorer: two-voyage cargo, single-target circuit, six-command robot completion",
+      "status": "PASS"
+    },
+    {
+      "name": "Three-voyage limit, recoverable planning failure and progressive hints",
+      "status": "PASS"
+    },
+    {
+      "name": "Navigation cancels in-flight voyage without hidden completion",
+      "status": "PASS"
+    },
+    {
+      "name": "Robot: single-step, rerun and stop cancel pending animation",
+      "status": "PASS"
+    },
+    {
+      "name": "Storage denied: game works with explicit non-persistence notice",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed and structurally invalid legacy saves are preserved while a separate new game works",
+      "status": "PASS"
+    },
+    {
+      "name": "320px viewport: no horizontal overflow on every screen",
+      "status": "PASS"
+    },
+    {
+      "name": "No uncaught JavaScript errors in all exercised browser cases",
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}

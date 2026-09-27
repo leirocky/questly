@@ -1,52 +1,58 @@
 # Questly — Storm Island
 
-## Visual review prototype v0.4.0
+## Web challenge edition v0.5.0
 
-Live preview: https://leirocky.github.io/questly/?v=4
+18 playable engineering missions: six cargo puzzles, six circuit puzzles and six robot programs. The original six missions remain available, with twelve new challenges. English/Chinese, optional motion and sound, and local progress are supported. This is a web prototype, not a finished App Store app or a validated learning assessment.
 
-Three hands-on engineering puzzles: arrange boat cargo, connect a circuit, and program Nova the rover. This is a product-review web prototype, not a finished App Store app or a validated learning assessment.
+The public [GitHub Pages preview](https://leirocky.github.io/questly/) remains on the reviewed version until this branch is approved and deployed. Native M1 work is separate on `production/ios-foundation`; this web branch contains no native app changes.
 
-### Visual edition
+### Play locally
 
-- Original SVG island diorama: terrain, waterfall, bridge, port crane, turbine and glass-roof lab.
-- Nova robot character, layered cargo artwork and animated transport boat.
-- Connected-circuit light effects and online/offline station indicators.
-- Smooth rover movement, direction indicator and highlighted execution blocks.
-- Optional locally synthesized sound effects, OFF by default. No background music.
-- Animation toggle and respect for the device's reduced-motion preference.
-- English and Chinese layouts, tested at 320, 390, 768 and 1280 CSS pixels.
+No application dependencies or build step are required:
 
-This is a presentation-layer update. `storm-app.js`, `storm-engine.js` and the v3 campaign storage key are unchanged. Existing valid progress can still load in the same browser. Visual preferences have a separate key.
+```sh
+git switch codex/web-challenge-levels
+python3 -m http.server 8765 --bind 127.0.0.1
+# Open http://127.0.0.1:8765/ in a browser.
+```
 
-### Play
+Use the mission library below the island or a station's mission selector. Each of the 18 missions saves its own progress. Completion opens the next challenge in the same workshop; all missions are also freely selectable. Hints are optional and become more specific with each tap.
 
-Engineer mode is initially selected. Explorer has independent progress and simpler puzzles. Any station can be opened from the map. Use the top controls for language, sound and motion.
+- **Cargo:** 8–10 supplies, linked arrival constraints, limited deck space, incompatible cargo and a first-voyage priority.
+- **Circuits:** 6×6 and 7×7 boards, three or four stations, fixed relays, branches and decoys. Narrow screens can scroll the board sideways while keeping rotatable tiles at least 44 CSS pixels wide.
+- **Robot:** longer stairways, a loop around the lagoon, surveys with a return route and two camps that reuse the same program. Compactness is optional; longer correct programs still succeed.
 
-1. Supply run: plan cargo weights and arrival order; water and batteries must travel separately. Engineer allows three voyages with capacity 10. Explorer has capacity 12 without a voyage limit.
-2. Restore power: rotate wires until both ends meet. Explorer has one target; Engineer has two targets and a three-way junction.
-3. Program Nova: compose moves, pickups, a repeat body and a blocked-front condition. Run, step or stop. Correct but longer solutions still succeed.
+The SVG island, Nova, cargo artwork, local synthesized sound (off by default), and reduced-motion support continue from v0.4. No remote assets or services are required during play after loading the page. Offline **cold launch is not provided**: there is no installed service worker or offline cache guarantee.
 
-Parent field notes show observed actions only, not intelligence, grade level or mastery estimates. Resetting a station resets its counters.
+### Saves
 
-### Tests
+Valid `questly-storm-v3` saves migrate into `questly-storm-v5` on the same browser and origin. Original save bytes are retained. New saves include a schema and content version and validate cargo history, circuit pieces and program state. Invalid/future current saves are preserved and clearly disable saving for that session. Storage failure does not prevent play, but displays a warning.
+
+Progress is local to a browser/origin. Clearing browser data can remove it; there is no cloud sync, native import, account or cross-device backup. This web edition does not add the two native avatar profiles.
+
+### Reproduce tests
 
 ```sh
 node tests/engine.test.cjs
-# Python with playwright and Chromium installed:
-python tests/browser.py
-python tests/visual.py
+node tests/challenges.test.cjs
+
+# Test dependencies only; the game itself has none.
+npm install --no-save --package-lock=false playwright
+python3 -m venv .venv
+.venv/bin/pip install playwright
+export CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+# Or point CHROMIUM_PATH to your installed Chromium executable.
+node tests/challenges-browser.cjs
+.venv/bin/python tests/browser.py
+.venv/bin/python tests/visual.py
 ```
 
-`CHROMIUM_PATH` can select the browser for the gameplay suite. `TEST_PART` can run `390`, `1280`, `explorer`, `extra` or `storage` separately. Tests load local HTML, CSS and JavaScript into Chromium using `set_content`; they do NOT claim online navigation coverage. Storage is explicitly simulated for recovery cases.
+The browser is launched with its sandbox enabled. No browser download is necessary when a compatible Chrome/Chromium is already installed. New screenshots and reports go into ignored `artifacts/web-v5/` and `artifacts/web-v5-legacy/`.
 
-The v0.4 local verification passed 14 rule checks, 21 gameplay checks and 11 visual-specific checks, with no uncaught JavaScript errors in exercised flows. Repeated no-error checks are not counted as separate substantive cases. See `tests/results-v4.json` for the scope and asset hashes. Older results describe older builds.
+`challenges-browser.cjs` serves the real files over HTTP, clicks through all 18 missions, and checks real-origin storage and full Chrome process restart. The original Python suites use `set_content` and explicitly simulated storage. Their evidence categories are separate. CSS viewport sizes are not physical iPhone/iPad testing. Recorded commands, results, limits and file hashes are in [the current status](docs/STATUS.md) and [v0.5 evidence](docs/evidence/web-v5/README.md). Older JSON reports describe older builds.
 
-Not verified: physical iPhone/iPad, Safari/WebKit, live HTTPS click flow, real-origin storage across browser restarts, or audio quality on physical devices. The Pages deployment is a separate build/deployment check, not proof of these tests.
+### Content and architecture
 
-### Deliberate limits
+[Level catalog and design notes](docs/WEB_CHALLENGES.md) describe all challenges and the validation approach. `storm-engine.js` is the unchanged original deterministic rules reference. `storm-levels.js` provides versioned authored content and added cargo constraints. `storm-save.js` validates/migrates saves; `storm-app.js` implements interaction; `storm-visual.js` and its CSS decorate the UI. The static entry point and relative URLs remain at the repository root.
 
-One chapter, three puzzle systems and two curated modes. No accounts, payments, advertising, analytics, cloud sync, AI service, or validated adaptive curriculum. The app does not upload child responses; the hosting provider still receives normal website requests. Public frontend source is visible. Sound and motion controls are optional; there are no streak incentives or paid interactions.
-
-### Architecture
-
-`storm-engine.js`: deterministic rules. `storm-app.js`: game state and interactions. `storm.css`: original base styles. `storm-visual.js` and `storm-visual.css`: presentation-only layer that decorates renders without modifying campaign rules. `index.html`: static entry point. No build step or package dependencies are needed to host the app.
+No accounts, payments, advertising, analytics, cloud collection, AI service or validated adaptive curriculum. Parent notes show observed actions, not ability or mastery scores. The hosting provider still receives ordinary website requests. Native production decisions and milestones are documented in [the handoff](docs/PRODUCTION_HANDOFF.md).

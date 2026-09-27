@@ -1,0 +1,137 @@
+{
+  "testedAt": "2026-09-27T20:20:38.195Z",
+  "scope": "Sandboxed desktop Chrome via HTTP, real-origin storage and real process relaunch; CSS viewports are not physical iPhone/iPad evidence",
+  "results": [
+    {
+      "name": "HTTP home presents all 18 mission entries with a direct library shortcut on phone",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "Undo and mission selector isolate progress between challenges",
+      "status": "PASS"
+    },
+    {
+      "name": "Real localStorage restores all mission histories and language after HTTP reload",
+      "status": "PASS"
+    },
+    {
+      "name": "Entire Chrome process closes/reopens with real-origin saved selection, mission and Chinese intact",
+      "status": "PASS"
+    },
+    {
+      "name": "Original v3 storage migrates without altering its bytes; new mission actions preserve legacy progress",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed current save is visibly protected and never overwritten during session play",
+      "status": "PASS"
+    },
+    {
+      "name": "Changing a mission cancels pending voyage; robot Stop cancels the runner",
+      "status": "PASS"
+    },
+    {
+      "name": "320px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default",
+      "status": "PASS"
+    },
+    {
+      "name": "390px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default",
+      "status": "PASS"
+    },
+    {
+      "name": "768px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default",
+      "status": "PASS"
+    },
+    {
+      "name": "No uncaught page errors across exercised HTTP flows",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "hashes": {
+    "index.html": "456d267f250c3eeae0a647da7b2d6561947f6a4805877dfc2b1d27f1fb504785",
+    "storm-engine.js": "9b14dfecebe69b62c0dd3b7a6a6a43e6f197908b5ec248ecc8bd2026e5658871",
+    "storm-levels.js": "b164d85e8953cd12a57730c9ac15a7eb0cdc3c2a6cc4fbc795ea48d88ee5e079",
+    "storm-save.js": "e3f52955348e990c35c5f61a79bcf1a3175af4be84a628a1644b62e1b8c13afe",
+    "storm-app.js": "f45d358ac33781ace5b57f59dd225605c3b1c1b5ce69eda47f62439fc4fba2df",
+    "storm.css": "a6d9ffacf25a5f4ce8cdfb2b44cfd38802af1bc9de5789e92afde77371c9ceea",
+    "storm-visual.js": "3db9057de15105e2cc0fd8db36997ba853344e604d347c4d976ce3b86d3a4ce6",
+    "storm-visual.css": "c8fe245953c11272406b2678df1e59f40a198dbe35e261bfa13be514eb1402d1"
+  }
+}

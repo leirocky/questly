@@ -1,0 +1,31 @@
+PASS HTTP home presents all 18 mission entries with a direct library shortcut on phone
+PASS explorer: cargo completed using real buttons
+PASS explorer: circuit completed by rotating real tiles
+PASS explorer: robot program built and run through real controls
+PASS engineer: cargo completed using real buttons
+PASS engineer: circuit completed by rotating real tiles
+PASS engineer: robot program built and run through real controls
+PASS tides: cargo completed using real buttons
+PASS tides: circuit completed by rotating real tiles
+PASS tides: robot program built and run through real controls
+PASS ridge: cargo completed using real buttons
+PASS ridge: circuit completed by rotating real tiles
+PASS ridge: robot program built and run through real controls
+PASS beacon: cargo completed using real buttons
+PASS beacon: circuit completed by rotating real tiles
+PASS beacon: robot program built and run through real controls
+PASS summit: cargo completed using real buttons
+PASS summit: circuit completed by rotating real tiles
+PASS summit: robot program built and run through real controls
+PASS Undo and mission selector isolate progress between challenges
+PASS Real localStorage restores all mission histories and language after HTTP reload
+PASS Entire Chrome process closes/reopens with real-origin saved selection, mission and Chinese intact
+PASS Original v3 storage migrates without altering its bytes; new mission actions preserve legacy progress
+PASS Malformed current save is visibly protected and never overwritten during session play
+PASS Changing a mission cancels pending voyage; robot Stop cancels the runner
+PASS 320px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default
+PASS 390px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default
+PASS 768px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default
+PASS 1280px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default
+PASS No uncaught page errors across exercised HTTP flows
+{"passed":30,"output":"/Users/lei/.codex/worktrees/web-challenge-levels/questly/artifacts/web-v5"}

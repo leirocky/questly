@@ -1,0 +1,23 @@
+PASS 390px cargo: empty, precedence, overload and incompatible cargo rejected
+PASS 390px cargo: all supplies delivered in three voyages
+PASS 390px cargo: successful voyage undo and retry
+PASS 390px power: rotate through DOM clicks, test both targets
+PASS 390px robot: empty program, collision, loop+condition success with 8 blocks
+PASS 390px completion map and actual parent counters
+PASS 390px simulated storage recovery, independent modes and Chinese screens
+PASS 1280px cargo: empty, precedence, overload and incompatible cargo rejected
+PASS 1280px cargo: all supplies delivered in three voyages
+PASS 1280px cargo: successful voyage undo and retry
+PASS 1280px power: rotate through DOM clicks, test both targets
+PASS 1280px robot: empty program, collision, loop+condition success with 8 blocks
+PASS 1280px completion map and actual parent counters
+PASS 1280px simulated storage recovery, independent modes and Chinese screens
+PASS Explorer: two-voyage cargo, single-target circuit, six-command robot completion
+PASS Three-voyage limit, recoverable planning failure and progressive hints
+PASS Navigation cancels in-flight voyage without hidden completion
+PASS Robot: single-step, rerun and stop cancel pending animation
+PASS Storage denied: game works with explicit non-persistence notice
+PASS Malformed and structurally invalid legacy saves are preserved while a separate new game works
+PASS 320px viewport: no horizontal overflow on every screen
+PASS No uncaught JavaScript errors in all exercised browser cases
+{"passed": 22, "errors": []}

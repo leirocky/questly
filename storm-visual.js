@@ -1,4 +1,4 @@
-/* Questly v0.4 — presentation only. Puzzle rules and saved campaigns stay in v3.
+/* Questly v0.5 — presentation for the versioned 18-mission collection.
    Original vector UI artwork, local synthesized cues. No external requests. */
 (function(){
 'use strict';
@@ -90,14 +90,18 @@ const defs=`<defs>
 </symbol>`;
 const sprite=document.createElementNS(NS,'svg');sprite.id='q-art-defs';sprite.setAttribute('aria-hidden','true');sprite.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';sprite.innerHTML=defs;document.body.appendChild(sprite);
 function cargoArt(id){
- const colors=['#ffd177','#edb189','#7edecb','#81bfef','#b3d786','#f39b9e'];
+ const colors=['#ffd177','#edb189','#7edecb','#81bfef','#b3d786','#f39b9e','#85d7ef','#d1b2ee','#efbe8b','#a7e5bb'];
  const glyph=[
  '<path d="M42 64V42h19M42 43l12 11H42M60 43v16l-3 3"/>',
  '<path d="M40 49l20-6 6 6-20 7zM40 57l6 8 20-8M46 56v9"/>',
  '<path d="M48 44v-4h9v4M43 45h18v25H43zM54 49l-7 10h7l-4 8"/>',
  '<path d="M53 43q-17 19-7 25q16 8 14-10z"/>',
  '<path d="M51 68V52M51 58q-15 0-13-14q13-1 13 14M52 63q17-3 15-16q-12-1-15 16"/>',
- '<path d="M52 44v24M41 56h22" stroke-width="6"/>'
+ '<path d="M52 44v24M41 56h22" stroke-width="6"/>',
+ '<path d="M37 46h29v21H37zM47 46v21M57 46v21M37 56h29"/>',
+ '<path d="M39 47h27v20H39zM45 47v-6h14v6M39 55h27M51 53v5"/>',
+ '<path d="M39 62h27v7H39zM45 62V49h15v13M52 49V40h14M61 54h8v8"/>',
+ '<path d="M39 49h27v20H39zM46 49V35M43 58h5m-5 6h5M58 56v8"/>'
  ][id];
  return svg(`<ellipse cx="50" cy="88" rx="33" ry="7" fill="#071d36" opacity=".25"/><path d="M16 34l34-16 34 16v42L50 93 16 76z" fill="${colors[id]}"/><path d="M50 51l34-17v42L50 93z" fill="#0c3554" opacity=".22"/><path d="M16 34l34-16 34 16-34 17z" fill="#fff" opacity=".32"/><path d="M19 39v35l26 13V53" fill="none" stroke="#fff" stroke-opacity=".26" stroke-width="2"/><path d="M35 25l34 18v11l-14 7V49L22 33" fill="#fff3cd" opacity=".45"/><g transform="translate(-4,1)" fill="none" stroke="#254969" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${glyph}</g>`,'0 0 100 100','q-cargo-art');
 }
@@ -142,7 +146,7 @@ function harborArt(){return svg(`<rect width="700" height="240" fill="url(#q-sea
  <circle cx="443" cy="80" r="4" fill="#fdd586"/><path d="M443 84v16" stroke="#224d70" stroke-width="2"/>`,'0 0 700 240','q-harbor-art');}
 function robotArt(){return use('nova','q-mini','0 0 100 120');}
 function soundIcon(){return svg(`<path d="M3 9h4l5-5v16l-5-5H3z" fill="none" stroke="currentColor" stroke-width="1.8"/>${pref.sound?'<path d="M16 7q5 5 0 10m3-13q8 8 0 16" fill="none" stroke="currentColor" stroke-width="1.8"/>':'<path d="M16 9l6 6m0-6-6 6" stroke="currentColor" stroke-width="1.8"/>'}`,'0 0 24 24','icon');}
-function controls(){return `<div class="q-toolbar"><span class="q-edition"><i></i>${text('STORM ISLAND · PLAY EDITION','风暴岛 · 视觉升级版')}</span><div class="q-options"><button type="button" class="q-setting" data-visual="sound" aria-pressed="${pref.sound}" aria-label="${text('Sound effects','操作音效')}" title="${text('Optional sound effects. No background music.','可选操作音效，无背景音乐。')}">${soundIcon()}<span>${pref.sound?text('Sound on','音效开'):text('Sound off','音效关')}</span></button><button type="button" class="q-setting" data-visual="motion" aria-pressed="${moving()}" ${mq.matches?'disabled':''} aria-label="${text('Animations','动画')}" title="${text('Respects the device’s reduced-motion setting.','遵循设备的减弱动态效果设置。')}">${svg('<path d="M3 8h13m-8 8h13M13 4l4 4-4 4M8 12l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.8"/>','0 0 24 24','icon')}<span>${moving()?text('Motion on','动画开'):text('Motion off','动画关')}</span></button></div></div>`;}
+function controls(){return `<div class="q-toolbar"><span class="q-edition"><i></i>${text('STORM ISLAND · 18 MISSIONS','风暴岛 · 18 关挑战')}</span><div class="q-options"><button type="button" class="q-setting" data-visual="sound" aria-pressed="${pref.sound}" aria-label="${text('Sound effects','操作音效')}" title="${text('Optional sound effects. No background music.','可选操作音效，无背景音乐。')}">${soundIcon()}<span>${pref.sound?text('Sound on','音效开'):text('Sound off','音效关')}</span></button><button type="button" class="q-setting" data-visual="motion" aria-pressed="${moving()}" ${mq.matches?'disabled':''} aria-label="${text('Animations','动画')}" title="${text('Respects the device’s reduced-motion setting.','遵循设备的减弱动态效果设置。')}">${svg('<path d="M3 8h13m-8 8h13M13 4l4 4-4 4M8 12l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.8"/>','0 0 24 24','icon')}<span>${moving()?text('Motion on','动画开'):text('Motion off','动画关')}</span></button></div></div>`;}
 function cue(kind){
  if(!pref.sound||!unlocked||!audio||audio.state!=='running'||document.hidden)return;
  const notes=kind==='win'?[523.25,659.25,783.99]:kind==='error'?[220,196]:kind==='power'?[392,523.25]:kind==='pickup'?[660,880]:[480];
@@ -162,7 +166,7 @@ function enhance(){
  const state=window.QuestGame.getState(),screen=window.QuestGame.getScreen(),c=state.campaigns[state.mode],fresh=lastScreen!==screen;
  document.body.classList.add('q-premium');document.body.classList.toggle('q-reduce',!moving());document.body.dataset.scene=screen;
  const nav=$('.nav');if(nav&&!$('.q-toolbar'))nav.insertAdjacentHTML('afterend',controls());
- const footer=$('.footer>span');if(footer)footer.textContent='QUESTLY · STORM ISLAND · v0.4.0';
+ const footer=$('.footer>span');if(footer)footer.textContent='QUESTLY · STORM ISLAND · v0.5.0';
  const map=$('.world-map');
  if(map){
   map.classList.add('q-diorama');map.insertAdjacentHTML('afterbegin',islandArt(c));
@@ -174,9 +178,9 @@ function enhance(){
  }
  const harbor=$('.harbor');
  if(harbor){
-  harbor.insertAdjacentHTML('afterbegin',harborArt());const boat=$('.boat',harbor);if(boat){boat.insertAdjacentHTML('afterbegin',use('boat','q-boat-art','0 0 240 140'));boat.style.setProperty('--draft',Math.min(12,c.cargo.load.reduce((a,i)=>a+QuestEngine.cargo[i].weight,0))+'px');}
+  harbor.insertAdjacentHTML('afterbegin',harborArt());const boat=$('.boat',harbor);if(boat){boat.insertAdjacentHTML('afterbegin',use('boat','q-boat-art','0 0 240 140'));boat.style.setProperty('--draft',Math.min(12,c.cargo.load.reduce((a,i)=>a+QuestGame.getCargoConfig().items[i].weight,0))+'px');}
   $$('.cargo-item').forEach(el=>{const old=$(':scope>.icon',el);if(old)old.outerHTML=cargoArt(Number(el.dataset.value));});
-  const cap=state.mode==='engineer'?10:12,w=c.cargo.load.reduce((a,i)=>a+QuestEngine.cargo[i].weight,0);harbor.classList.toggle('q-overload',w>cap);
+  const cfg=QuestGame.getCargoConfig(),cap=cfg.capacity,w=c.cargo.load.reduce((a,i)=>a+cfg.items[i].weight,0);harbor.classList.toggle('q-overload',w>cap);
   if(pending?.action==='cargo'){animate($(`.cargo-item[data-value="${pending.value}"]`),[{transform:'translateY(-5px) scale(.97)'},{transform:'translateY(0) scale(1)'}],{duration:230,easing:'ease-out'});cue('tick');}
  }
  const pg=$('.power-grid');
@@ -213,5 +217,5 @@ function systemMotion(){document.body.classList.toggle('q-reduce',!moving());$('
 if(mq.addEventListener)mq.addEventListener('change',systemMotion);else if(mq.addListener)mq.addListener(systemMotion);
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&audio)audio.suspend().catch(()=>{});});
 observer=new MutationObserver(enhance);enhance();
-window.QuestVisual={version:'0.4.0',getPreferences:()=>({...pref,reducedBySystem:mq.matches}),hasAudioContext:()=>!!audio};
+window.QuestVisual={version:'0.5.0',getPreferences:()=>({...pref,reducedBySystem:mq.matches}),hasAudioContext:()=>!!audio};
 })();

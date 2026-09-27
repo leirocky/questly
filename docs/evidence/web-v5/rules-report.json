@@ -1,0 +1,566 @@
+{
+  "testedAt": "2026-09-27T20:18:46.035Z",
+  "environment": "v24.19.0",
+  "scope": "Node rules/content/migration tests; no browser or device claim",
+  "results": [
+    {
+      "name": "18 independently selectable missions, stable IDs and isolated initial state",
+      "status": "PASS"
+    },
+    {
+      "name": "Original six configurations and 8,192 cargo acceptance/rejection cases match the unchanged engine",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "New cargo precedence, deck slots, priority and trip budget reject without time pressure",
+      "status": "PASS"
+    },
+    {
+      "name": "All displayed cargo hint plans satisfy the independently authored constraints",
+      "status": "PASS"
+    },
+    {
+      "name": "Legacy migration preserves original six mission states without mutating the input",
+      "status": "PASS"
+    },
+    {
+      "name": "All 18 completed states survive JSON roundtrip; clearing one mission leaves the other 17 intact",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed/future saves are preserved and cannot silently overwrite valid legacy progress",
+      "status": "PASS"
+    },
+    {
+      "name": "Fixed circuit pieces and impossible cargo histories cannot be loaded",
+      "status": "PASS"
+    }
+  ],
+  "solutions": {
+    "explorer": {
+      "cargo": [
+        [
+          0,
+          3,
+          4
+        ],
+        [
+          1,
+          2,
+          5
+        ]
+      ],
+      "power": [
+        6,
+        12,
+        6,
+        8,
+        5,
+        0,
+        5,
+        0,
+        2,
+        10,
+        9,
+        0,
+        3,
+        10,
+        0,
+        9
+      ],
+      "robot": {
+        "main": [
+          "F",
+          "F",
+          "L",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [],
+        "repeat": 2
+      }
+    },
+    "engineer": {
+      "cargo": [
+        [
+          0
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "power": [
+        6,
+        10,
+        12,
+        0,
+        4,
+        0,
+        0,
+        6,
+        10,
+        9,
+        2,
+        10,
+        13,
+        5,
+        9,
+        0,
+        0,
+        3,
+        10,
+        12,
+        0,
+        0,
+        0,
+        3,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "I",
+          "F",
+          "F",
+          "P",
+          "R"
+        ],
+        "repeat": 2
+      }
+    },
+    "tides": {
+      "cargo": [
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4,
+          7
+        ],
+        [
+          2,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        0,
+        6,
+        6,
+        10,
+        10,
+        8,
+        0,
+        10,
+        5,
+        0,
+        6,
+        8,
+        6,
+        9,
+        5,
+        0,
+        5,
+        0,
+        6,
+        10,
+        11,
+        10,
+        13,
+        0,
+        5,
+        6,
+        12,
+        0,
+        5,
+        0,
+        1,
+        3,
+        9,
+        0,
+        3,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F"
+        ],
+        "body": [
+          "F",
+          "F",
+          "L",
+          "F",
+          "F",
+          "P",
+          "R"
+        ],
+        "repeat": 3
+      }
+    },
+    "ridge": {
+      "cargo": [
+        [
+          0,
+          2,
+          7
+        ],
+        [
+          1,
+          4,
+          8
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        2,
+        10,
+        12,
+        0,
+        6,
+        8,
+        6,
+        10,
+        5,
+        0,
+        5,
+        0,
+        2,
+        10,
+        11,
+        10,
+        13,
+        0,
+        6,
+        9,
+        0,
+        12,
+        5,
+        5,
+        3,
+        10,
+        6,
+        10,
+        13,
+        9,
+        2,
+        10,
+        9,
+        0,
+        3,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "beacon": {
+      "cargo": [
+        [
+          0,
+          4,
+          7
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          3,
+          5,
+          9
+        ]
+      ],
+      "power": [
+        4,
+        0,
+        6,
+        10,
+        10,
+        10,
+        8,
+        5,
+        6,
+        5,
+        10,
+        12,
+        0,
+        0,
+        3,
+        10,
+        13,
+        0,
+        6,
+        10,
+        8,
+        6,
+        9,
+        5,
+        0,
+        5,
+        5,
+        0,
+        6,
+        10,
+        11,
+        10,
+        13,
+        0,
+        0,
+        5,
+        6,
+        12,
+        0,
+        5,
+        0,
+        0,
+        1,
+        3,
+        9,
+        0,
+        3,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F",
+          "F",
+          "F",
+          "R",
+          "F",
+          "F",
+          "F"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "summit": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          2,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        2,
+        10,
+        12,
+        0,
+        6,
+        10,
+        8,
+        6,
+        12,
+        5,
+        5,
+        5,
+        6,
+        12,
+        3,
+        9,
+        7,
+        10,
+        13,
+        3,
+        9,
+        2,
+        10,
+        11,
+        10,
+        13,
+        0,
+        0,
+        6,
+        10,
+        12,
+        0,
+        5,
+        0,
+        0,
+        6,
+        10,
+        10,
+        10,
+        13,
+        0,
+        0,
+        1,
+        6,
+        9,
+        5,
+        3,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q",
+          "L",
+          "F",
+          "F",
+          "F",
+          "F"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    }
+  },
+  "hashes": {
+    "index.html": "456d267f250c3eeae0a647da7b2d6561947f6a4805877dfc2b1d27f1fb504785",
+    "storm-engine.js": "9b14dfecebe69b62c0dd3b7a6a6a43e6f197908b5ec248ecc8bd2026e5658871",
+    "storm-levels.js": "b164d85e8953cd12a57730c9ac15a7eb0cdc3c2a6cc4fbc795ea48d88ee5e079",
+    "storm-save.js": "e3f52955348e990c35c5f61a79bcf1a3175af4be84a628a1644b62e1b8c13afe",
+    "storm-app.js": "f45d358ac33781ace5b57f59dd225605c3b1c1b5ce69eda47f62439fc4fba2df",
+    "storm.css": "a6d9ffacf25a5f4ce8cdfb2b44cfd38802af1bc9de5789e92afde77371c9ceea",
+    "storm-visual.js": "3db9057de15105e2cc0fd8db36997ba853344e604d347c4d976ce3b86d3a4ce6",
+    "storm-visual.css": "c8fe245953c11272406b2678df1e59f40a198dbe35e261bfa13be514eb1402d1"
+  }
+}
