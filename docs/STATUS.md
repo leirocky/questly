@@ -1,14 +1,14 @@
 # Questly execution status
 
-Updated: 2026-09-27 — web challenge edition implementation and actual browser verification
+Updated: 2026-09-27 — 18-mission Pages release deployed and verified over public HTTPS
 
 ## Current work and branch boundaries
 
 - The owner requested harder web missions while Xcode was installing, explicitly choosing balanced expansion across all three mechanics.
-- `codex/web-challenge-levels`, based on `main` at `52c448b`: **18 playable web missions**, comprising the original six plus four new challenges per mechanic. Reviewable implementation and fresh evidence are complete. Public Pages deployment is **NOT PERFORMED** pending release review.
+- `codex/web-challenge-levels`, based on `main` at `52c448b`: **18 playable web missions**, comprising the original six plus four new challenges per mechanic. The owner authorized publication. [PR #1](https://github.com/leirocky/questly/pull/1) merged at `051a905abe73b96b924fe12547332c9501d33133`; [Pages deployment](https://github.com/leirocky/questly/actions/runs/36350307234) succeeded. All 18 missions are live at https://leirocky.github.io/questly/.
 - `production/ios-foundation`: separate native M1 implementation, with Swift core (`ab1d375`), app source (`a9c6d74`) and handoff/setup commits. These native files are intentionally absent from this web-only branch.
-- Full Xcode 27.0 (27A266a) and iOS 27.0 (24A434) simulator runtimes are now installed. Native Swift XCTest has actually run: **15 tests, zero failures**. The first iPad build exposed a Debug/package architecture mismatch; its project generator is being corrected on the native branch and simulator UI verification is in progress there. This web handoff does not claim M1 accepted.
-- No Apple login, paid service, signing account, App Store distribution, force-push or main-branch merge was performed.
+- Full Xcode 27.0 (27A266a) and iOS 27.0 (24A434) simulator runtimes are now installed. Native Swift XCTest has actually run: **15 tests, zero failures**. The native branch fixed the Debug/package architecture mismatch and now builds/runs on iPad and iPhone simulators. Its final iPhone UI suite passed 4/4, and the iPad scenarios passed across the suite and a corrected focused restart retest. Device/accessibility acceptance remains incomplete; native execution evidence is retained on that separate local branch.
+- No Apple login, paid service, signing account, App Store distribution or force-push was performed. The authorized main merge contains web changes only.
 
 ## Completed web changes
 
@@ -38,9 +38,13 @@ Absolute executable/environment substitutions, exact command lines, raw results,
 
 Screenshots were captured from the implemented game in actual desktop Chrome at the documented CSS sizes. They are **not** simulator or physical-device screenshots. Rules and full browser flows ran against the final frontend files; earlier failed fixture setup attempts are not claimed as passes.
 
+## Public release verification
+
+`docs/evidence/pages-v5/check-live.cjs` ran against the public HTTPS origin on 2026-09-27 at 21:07 UTC, using Node 24.19.0 and sandboxed Chrome 154.0.8037.58: **23 checks PASS, exit 0**. All eight frontend files match the reviewed SHA-256 hashes; all 18 missions were completed using actual controls; Chinese and progress survived reload and complete Chrome shutdown/relaunch. No uncaught page errors or failed HTTP responses occurred. The test used a separate temporary disk profile. [Exact command and report](evidence/pages-v5/README.md).
+
 ## Limits and unresolved gates
 
-- Public Pages merge/deployment, live HTTPS flow, Safari/WebKit, physical iPhone/iPad, touch-device usability, VoiceOver and physical audio quality: **UNVERIFIED / NOT PERFORMED** for v0.5.
+- Safari/WebKit, physical iPhone/iPad, touch-device usability, VoiceOver and physical audio quality: **UNVERIFIED** for v0.5. Public Pages deployment and desktop Chrome live HTTPS flows have now actually passed.
 - Web saves remain browser/origin-local. No cloud sync, native import, two-avatar web profiles or offline cold-launch cache has been added. The native two-profile/offline contract remains a separate M1 requirement.
 - Larger boards scroll inside their panel on narrow screens. Automated CSS target-size checks do not replace actual touch testing.
 - Difficulty is authored progression, not a measured child assessment. Robot compactness is optional, and no shortest-program claim is made.
@@ -48,5 +52,5 @@ Screenshots were captured from the implemented game in actual desktop Chrome at 
 
 ## Next executable tasks
 
-1. Review this web branch and its running local preview (`python3 -m http.server 8765 --bind 127.0.0.1`). Obtain the owner's public-release approval required by `AGENTS.md` before merging into `main` and replacing the Pages preview; then verify deployment and a live HTTP flow.
-2. Continue native M1 on `production/ios-foundation` using shell-scoped `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`: finish actual iPad/iPhone UI suites, resolve failures, capture simulator images and document remaining device/accessibility gates. Keep web content changes out of that branch until a deliberate integration review.
+1. The authorized Pages release is complete. Preserve deployed v0.5 frontend behavior and the original v3/v5 save keys; gather usability feedback before changing challenge design.
+2. Continue native M1 acceptance on `production/ios-foundation`: actual device, accessibility, large-text/rotation and network-disabled offline checks. Native implementation and its evidence remain separate from this web-only branch.
