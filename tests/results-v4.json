@@ -1,0 +1,30 @@
+{
+  "version": "0.4.0",
+  "test_date_utc": "2026-09-27",
+  "scope": "Locally executed Node rule tests and Chromium DOM clicks via set_content. Storage is explicitly simulated. Visual tests rerun after the final Chinese heading line-break fix. These are not CI, Safari or live HTTPS test results.",
+  "passed_substantive_checks": {"rules": 14, "gameplay": 21, "visual": 11},
+  "javascript_errors_in_exercised_flows": [],
+  "gameplay_parts": ["390", "1280", "explorer", "extra", "storage"],
+  "visual_checks": [
+    "Sound defaults off; no AudioContext before opt-in",
+    "Repeated visual toggles do not duplicate artwork or mutate game state",
+    "Sound opt-in and mute",
+    "Animation opt-out",
+    "Simulated preference recovery and gameplay with motion off",
+    "Power status follows tested connectivity; no duplicated station panels",
+    "System reduced-motion and robot single-step",
+    "320px English and Chinese: every screen fits",
+    "390px English and Chinese: every screen fits",
+    "768px English and Chinese: every screen fits",
+    "1280px English and Chinese: every screen fits"
+  ],
+  "asset_git_blob_shas": {
+    "index.html": "c7af5762674b6ea4bd3b9a83cd34b6d39b28c92c",
+    "storm-app.js": "3b549ed8a61935cc099975761004459b43afd944",
+    "storm-engine.js": "d778443728904c45513218e55a5c3c21085cc6b7",
+    "storm.css": "42bde8370753386b275e2df52a423a6088841542",
+    "storm-visual.js": "42810ff62106c3d0237269cbdcbae370199cbd7d",
+    "storm-visual.css": "cb3875357e1e5984c677e2a6de8628fa5231d45c"
+  },
+  "not_verified": ["Physical iPhone or iPad", "Safari/WebKit", "Live HTTPS browser click flow", "Real-origin storage across browser restarts", "Sound output and quality on physical devices"]
+}

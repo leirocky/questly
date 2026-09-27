@@ -7,9 +7,10 @@ import json,os
 from datetime import datetime,timezone
 from playwright.sync_api import sync_playwright,expect
 ROOT=Path(__file__).resolve().parents[1]
-html=(ROOT/'index.html').read_text().replace('<link rel="stylesheet" href="storm.css?v=3">','<style>'+(ROOT/'storm.css').read_text()+'</style>')
-for fn in ['storm-engine.js','storm-app.js']:
- html=html.replace(f'<script src="{fn}?v=3"></script>','<script>'+(ROOT/fn).read_text()+'</script>')
+import re
+html=(ROOT/'index.html').read_text()
+html=re.sub(r'<link rel="stylesheet" href="([^"?]+)(?:\?[^\"]*)?">',lambda m:'<style>'+(ROOT/m.group(1)).read_text()+'</style>',html)
+html=re.sub(r'<script src="([^"?]+)(?:\?[^\"]*)?"></script>',lambda m:'<script>'+(ROOT/m.group(1)).read_text()+'</script>',html)
 PART=os.environ.get("TEST_PART","all");results=[];errors=[]
 def rec(name): results.append({'name':name,'status':'PASS'});print('PASS',name,flush=True)
 def load(b,width=390,store=None,denied=False):
