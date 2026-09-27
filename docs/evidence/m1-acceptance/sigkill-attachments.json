@@ -1,0 +1,17 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "5872A47D-A2ED-4FEA-B410-212C0B4679CD.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "after-real-sigkill_0_480E1189-5707-43C9-A3C9-E766DEA60193.png",
+        "timestamp" : 1790546077.345
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testExternalSIGKILLRestoresCommittedVoyage()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testExternalSIGKILLRestoresCommittedVoyage"
+  }
+]

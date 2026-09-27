@@ -1,0 +1,28 @@
+{
+  "device": "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+  "runID": "external-kill-98ace2e3-5b13-4c1a-b8fe-5192d27de114",
+  "command": [
+    "xcodebuild",
+    "test-without-building",
+    "-xctestrun",
+    "$HOME/Projects/questly/artifacts/m1-qe/FinalBuild/Build/Products/external-kill-98ace2e3-5b13-4c1a-b8fe-5192d27de114.xctestrun",
+    "-destination",
+    "platform=iOS Simulator,id=E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+    "-parallel-testing-enabled",
+    "NO",
+    "-collect-test-diagnostics",
+    "never",
+    "-only-testing:QuestlyUITests/QuestlyUITests/testExternalSIGKILLRestoresCommittedVoyage",
+    "-resultBundlePath",
+    "$HOME/Projects/questly/artifacts/m1-qe/sigkill-final/kill.xcresult"
+  ],
+  "signal": "SIGKILL",
+  "result": "PASS",
+  "scope": "Isolated simulator app; not physical-device power-loss evidence",
+  "deviceName": "Questly-QE-iPhone",
+  "killedPID": 31396,
+  "checkpointGeneration": 6,
+  "secondsAfterCheckpoint": 0.882580881,
+  "killedAtUnix": 1790546063.244222,
+  "xcodebuildExitCode": 0
+}

@@ -1,0 +1,64 @@
+PUBLIC TEST-RESULT EXCERPT
+Verbose compiler/UI traces and machine paths are omitted. Original evidence is retained locally.
+
+Test Suite 'All tests' started at 2026-09-27 14:16:43.657.
+Test Suite 'QuestCoreTests.xctest' started at 2026-09-27 14:16:43.659.
+Test Suite 'CargoTests' started at 2026-09-27 14:16:43.659.
+Test Case '-[QuestCoreTests.CargoTests testAllJavaScriptGoldenCases]' started.
+Test Case '-[QuestCoreTests.CargoTests testAllJavaScriptGoldenCases]' passed (0.097 seconds).
+Test Case '-[QuestCoreTests.CargoTests testIndependentShortestSolutions]' started.
+Test Case '-[QuestCoreTests.CargoTests testIndependentShortestSolutions]' passed (0.003 seconds).
+Test Case '-[QuestCoreTests.CargoTests testInvalidSelectionAndHintBounds]' started.
+Test Case '-[QuestCoreTests.CargoTests testInvalidSelectionAndHintBounds]' passed (0.000 seconds).
+Test Case '-[QuestCoreTests.CargoTests testMalformedRuleHistoryRejected]' started.
+Test Case '-[QuestCoreTests.CargoTests testMalformedRuleHistoryRejected]' passed (0.000 seconds).
+Test Case '-[QuestCoreTests.CargoTests testRejectedLoadPreservedUndoAndRestart]' started.
+Test Case '-[QuestCoreTests.CargoTests testRejectedLoadPreservedUndoAndRestart]' passed (0.000 seconds).
+Test Case '-[QuestCoreTests.CargoTests testVoyageLimitIsRecoverableAndExplorerUnlimited]' started.
+Test Case '-[QuestCoreTests.CargoTests testVoyageLimitIsRecoverableAndExplorerUnlimited]' passed (0.000 seconds).
+Test Suite 'CargoTests' passed at 2026-09-27 14:16:43.762.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.102 (0.103) seconds
+Test Suite 'QESaveFaultTests' started at 2026-09-27 14:16:43.762.
+Test Case '-[QuestCoreTests.QESaveFaultTests testAuthenticatedIllegalCargoHistoryFallsBackRatherThanEnteringRules]' started.
+Test Case '-[QuestCoreTests.QESaveFaultTests testAuthenticatedIllegalCargoHistoryFallsBackRatherThanEnteringRules]' passed (0.005 seconds).
+Test Case '-[QuestCoreTests.QESaveFaultTests testDuplicateProfileIDsAreRejectedEvenWithCorrectChecksum]' started.
+Test Case '-[QuestCoreTests.QESaveFaultTests testDuplicateProfileIDsAreRejectedEvenWithCorrectChecksum]' passed (0.003 seconds).
+Test Case '-[QuestCoreTests.QESaveFaultTests testEveryTruncationOfNewestCheckpointRecoversOlderBytesWithoutMutatingFiles]' started.
+Test Case '-[QuestCoreTests.QESaveFaultTests testEveryTruncationOfNewestCheckpointRecoversOlderBytesWithoutMutatingFiles]' passed (0.616 seconds).
+Test Case '-[QuestCoreTests.QESaveFaultTests testFuturePayloadSchemaPreservesBothSlotsAndBlocksWrites]' started.
+Test Case '-[QuestCoreTests.QESaveFaultTests testFuturePayloadSchemaPreservesBothSlotsAndBlocksWrites]' passed (0.004 seconds).
+Test Case '-[QuestCoreTests.QESaveFaultTests testGenerationExhaustionCannotWrapAndOverwriteNewest]' started.
+Test Case '-[QuestCoreTests.QESaveFaultTests testGenerationExhaustionCannotWrapAndOverwriteNewest]' passed (0.002 seconds).
+Test Case '-[QuestCoreTests.QESaveFaultTests testOversizedAndUnreadableSlotsDoNotBecomeFreshEmptyProgress]' started.
+Test Case '-[QuestCoreTests.QESaveFaultTests testOversizedAndUnreadableSlotsDoNotBecomeFreshEmptyProgress]' passed (0.004 seconds).
+Test Case '-[QuestCoreTests.QESaveFaultTests testPostReplacementIOErrorHasAnUncertainCommitOutcome]' started.
+Test Case '-[QuestCoreTests.QESaveFaultTests testPostReplacementIOErrorHasAnUncertainCommitOutcome]' passed (0.003 seconds).
+Test Case '-[QuestCoreTests.QESaveFaultTests testRollbackRecoveryKeepsOtherProfileAndOtherDifficultyIntact]' started.
+Test Case '-[QuestCoreTests.QESaveFaultTests testRollbackRecoveryKeepsOtherProfileAndOtherDifficultyIntact]' passed (0.003 seconds).
+Test Suite 'QESaveFaultTests' passed at 2026-09-27 14:16:44.403.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.640 (0.641) seconds
+Test Suite 'SaveTests' started at 2026-09-27 14:16:44.403.
+Test Case '-[QuestCoreTests.SaveTests testBothDamagedBlockWritesAndPreserveEvidence]' started.
+Test Case '-[QuestCoreTests.SaveTests testBothDamagedBlockWritesAndPreserveEvidence]' passed (0.004 seconds).
+Test Case '-[QuestCoreTests.SaveTests testChecksumTamperingRecoversAndInvalidStateCannotBeSaved]' started.
+Test Case '-[QuestCoreTests.SaveTests testChecksumTamperingRecoversAndInvalidStateCannotBeSaved]' passed (0.004 seconds).
+Test Case '-[QuestCoreTests.SaveTests testColdRelaunchProfilesModesPreferencesAndSelectedCargo]' started.
+Test Case '-[QuestCoreTests.SaveTests testColdRelaunchProfilesModesPreferencesAndSelectedCargo]' passed (0.001 seconds).
+Test Case '-[QuestCoreTests.SaveTests testContentRevisionRequiresMigrationRatherThanReset]' started.
+Test Case '-[QuestCoreTests.SaveTests testContentRevisionRequiresMigrationRatherThanReset]' passed (0.001 seconds).
+Test Case '-[QuestCoreTests.SaveTests testCorruptNewestRecoversPreviousAndCanSaveAgain]' started.
+Test Case '-[QuestCoreTests.SaveTests testCorruptNewestRecoversPreviousAndCanSaveAgain]' passed (0.009 seconds).
+Test Case '-[QuestCoreTests.SaveTests testFutureSchemaBlocksRollbackEvenWithValidOlderSlot]' started.
+Test Case '-[QuestCoreTests.SaveTests testFutureSchemaBlocksRollbackEvenWithValidOlderSlot]' passed (0.001 seconds).
+Test Case '-[QuestCoreTests.SaveTests testInterruptedWriteRetainsLastCheckpoint]' started.
+Test Case '-[QuestCoreTests.SaveTests testInterruptedWriteRetainsLastCheckpoint]' passed (0.003 seconds).
+Test Case '-[QuestCoreTests.SaveTests testSaveFailureDoesNotDestroyPreviousFile]' started.
+Test Case '-[QuestCoreTests.SaveTests testSaveFailureDoesNotDestroyPreviousFile]' passed (0.001 seconds).
+Test Case '-[QuestCoreTests.SaveTests testUncommittedTemporaryFileIgnored]' started.
+Test Case '-[QuestCoreTests.SaveTests testUncommittedTemporaryFileIgnored]' passed (0.001 seconds).
+Test Suite 'SaveTests' passed at 2026-09-27 14:16:44.433.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.026 (0.030) seconds
+Test Suite 'QuestCoreTests.xctest' passed at 2026-09-27 14:16:44.433.
+	 Executed 23 tests, with 0 failures (0 unexpected) in 0.767 (0.774) seconds
+Test Suite 'All tests' passed at 2026-09-27 14:16:44.433.
+	 Executed 23 tests, with 0 failures (0 unexpected) in 0.767 (0.776) seconds

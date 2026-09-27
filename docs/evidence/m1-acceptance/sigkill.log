@@ -1,0 +1,18 @@
+PUBLIC TEST-RESULT EXCERPT
+Verbose compiler/UI traces and machine paths are omitted. Original evidence is retained locally.
+
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun $HOME/Projects/questly/artifacts/m1-qe/FinalBuild/Build/Products/external-kill-98ace2e3-5b13-4c1a-b8fe-5192d27de114.xctestrun -destination "platform=iOS Simulator,id=E9A37872-E9CD-4990-89F2-E9AD3D34C11B" -parallel-testing-enabled NO -collect-test-diagnostics never "-only-testing:QuestlyUITests/QuestlyUITests/testExternalSIGKILLRestoresCommittedVoyage" -resultBundlePath $HOME/Projects/questly/artifacts/m1-qe/sigkill-final/kill.xcresult
+Test Suite 'Selected tests' started at 2026-09-27 14:54:04.845.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-27 14:54:04.845.
+Test Suite 'QuestlyUITests' started at 2026-09-27 14:54:04.845.
+Test Case '-[QuestlyUITests.QuestlyUITests testExternalSIGKILLRestoresCommittedVoyage]' started.
+Test Case '-[QuestlyUITests.QuestlyUITests testExternalSIGKILLRestoresCommittedVoyage]' passed (69.957 seconds).
+Test Suite 'QuestlyUITests' passed at 2026-09-27 14:55:14.805.
+	 Executed 1 test, with 0 failures (0 unexpected) in 69.957 (69.959) seconds
+Test Suite 'QuestlyUITests.xctest' passed at 2026-09-27 14:55:14.805.
+	 Executed 1 test, with 0 failures (0 unexpected) in 69.957 (69.960) seconds
+Test Suite 'Selected tests' passed at 2026-09-27 14:55:14.806.
+	 Executed 1 test, with 0 failures (0 unexpected) in 69.957 (69.961) seconds
+** TEST EXECUTE SUCCEEDED **
+Testing started

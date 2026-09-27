@@ -1,0 +1,88 @@
+{
+  "results": [
+    {
+      "name": "Cargo: no empty, invalid or duplicate loads",
+      "status": "PASS"
+    },
+    {
+      "name": "Cargo: weight, arrival precedence, battery/water and delivered guard",
+      "status": "PASS"
+    },
+    {
+      "name": "Cargo: exhaustive search finds 3-trip engineer and 2-trip explorer solutions",
+      "status": "PASS"
+    },
+    {
+      "name": "Circuit: all 16 bit masks return after four turns",
+      "status": "PASS"
+    },
+    {
+      "name": "Circuit: both puzzles start unsolved and have a rotation-reachable solution",
+      "status": "PASS"
+    },
+    {
+      "name": "Circuit: adjacency alone does not conduct; boundary never wraps",
+      "status": "PASS"
+    },
+    {
+      "name": "Circuit: closed loops terminate",
+      "status": "PASS"
+    },
+    {
+      "name": "Robot: missing code, empty loop and invalid repeat are safe",
+      "status": "PASS"
+    },
+    {
+      "name": "Robot: collision and missing pickup are distinguished",
+      "status": "PASS"
+    },
+    {
+      "name": "Robot: conditional turns only when front is blocked",
+      "status": "PASS"
+    },
+    {
+      "name": "Robot: explorer route solves with six commands",
+      "status": "PASS"
+    },
+    {
+      "name": "Robot: engineer repeat-and-condition route solves within 8 blocks",
+      "status": "PASS"
+    },
+    {
+      "name": "Robot: an over-budget correct solution is still accepted",
+      "status": "PASS"
+    },
+    {
+      "name": "Campaign instances do not share mutable arrays",
+      "status": "PASS"
+    }
+  ],
+  "solutions": {
+    "engineer": [
+      [
+        0
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4,
+        5
+      ]
+    ],
+    "explorer": [
+      [
+        0,
+        3,
+        4
+      ],
+      [
+        1,
+        2,
+        5
+      ]
+    ]
+  }
+}

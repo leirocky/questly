@@ -1,0 +1,174 @@
+{
+  "purpose": "Public GitHub evidence copies",
+  "retention": "Original local commit cf24eaa and ignored artifacts/native-github-publish/original-evidence",
+  "files": [
+    {
+      "path": "docs/STATUS.md",
+      "originalSHA256": "02295ba09d978ae64e422e1a35eefc1c56edce1dced483a0d9ef0951a9fc6fb3",
+      "publicSHA256": "73cab4a6158ac5c3a9016017f3dbc2dcd5c32d12e0fc163533f7e0c632d49ff0",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/audit-final.log",
+      "originalSHA256": "badc314195b522b6923924d25bd6448a5bd63c591b706a62d08c7e8654efec76",
+      "publicSHA256": "7af4f50634c8881a519044eec1898764264b64214b82afd4a6dcd0714b21f085",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/build-for-testing.log",
+      "originalSHA256": "5a14370821fb142009fcc3289d159039dc916ca04abaecf45c8c1c9e58d8c606",
+      "publicSHA256": "2f5d374121ee0619d97fee273402eeaa37f298b841609e61793fdeb294be561f",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/ipad-final.log",
+      "originalSHA256": "e647c8a07756972cb9017b464ce351d30128b5901a9aa3dbecc3ab02e8178416",
+      "publicSHA256": "b97aaf38e11fc15c329c1c2da03ef6b6da214f0e8c4f792b317f5d8a565f1ce7",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/ipad-release-candidate.log",
+      "originalSHA256": "137c63d7eda211ea8abe255ce634ebee123eb4008b501e1ca453315f87ac8fa8",
+      "publicSHA256": "4194ad6bf0c6d5958494ecc82450906f668eb94f22bb8755c2ac29172f032824",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/landscape-fullscreen-failed.log",
+      "originalSHA256": "e284e7dd97dad2730367686d32be2e273ed1a058072fa539c712b8d3b34f1abd",
+      "publicSHA256": "3c4d67774de6bc459c5c3a1909c9bc4156bd04ed290239627ea1730a001179b3",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/landscape-verified.log",
+      "originalSHA256": "de4d9872012dc29b20e2af564768e1ceee311d7d461c2a1b7bbaac43a5c52fa7",
+      "publicSHA256": "81e135718f04affaedca0a7392eafaad3287e36d106e0b8470637ba09ab63799",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/large-accepted.log",
+      "originalSHA256": "efc0c9058e29ef0b14a5b6962d6c28f0a852cc137b31ef0614c1f481b928487a",
+      "publicSHA256": "8c2d056f795a9974df96b2fe8d33650b8bc7c411f4bca1e88723c388ac291eb7",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/motion-accepted.log",
+      "originalSHA256": "bd318cdafa263e197c8137ae8e5a67f707ab7d8ff35202760127541ba41768a0",
+      "publicSHA256": "04f2acceb4c928be977b6f97fb6b811b9d58e14fc9e073fee02859ff8741c1be",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/motion-final.log",
+      "originalSHA256": "4fa5112c9a77865f6902869459eaac77363ac438d164b6bebc3d07125e8dc1d9",
+      "publicSHA256": "539e7d6a7d3915073b12e6adb3e8e93bf0d757cbbb561edf39decaa0f703cdf6",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/motion-verified.log",
+      "originalSHA256": "867f818a265d45cc16c998f580c8beed2f3f7b0788f109865bb7f72dad4efd6f",
+      "publicSHA256": "e30b4e3aec5f1d0af0c997226d2993cc88cd67c0fdf00b4e048b6e2e280d1012",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/phone-motion.log",
+      "originalSHA256": "b6bbe46974f207de5f89cf9645a2b03b034a88b80c57eb3ba03c7a3d2b1f5c73",
+      "publicSHA256": "a3d4a6ce3affa2a7f4400316cc6d6f3f7936b4debea60f9248fea52d1d1e56cb",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/sigkill-report.json",
+      "originalSHA256": "c3b2f2d48b8a5729be49532ba5ad59014f138baec7f1872edb76e7404b9a736d",
+      "publicSHA256": "29dd55b0ac3bab94047dc3c9c2b36c212f1851cc214874916437cfb987fef530",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/sigkill.log",
+      "originalSHA256": "b968a62504494f77a743191ed753e7c7e966673c2f79ec1083fdf2e85ba1827d",
+      "publicSHA256": "08bc293108edf2922433500f225947afa7db845f81dfb3a5ba3869af06e3b22b",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-acceptance/test-harness-build.log",
+      "originalSHA256": "212924681750c28c5bf92f3f1842e6eafd834d7caf117cf983ee00bf7ea53cd5",
+      "publicSHA256": "cf4d41f1f8a91d8eaa5eac3b40557ca35d1f3c6ebdcbff840a7768187f312508",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-qe/README.md",
+      "originalSHA256": "52cb8183e7c8df9026d0e11a5c8fff9fd08b7982c8f0e1f837772c6ffeb945cc",
+      "publicSHA256": "8019f86c1ad4d02b9004c27711e5ce7874c2211e3d7e5f334416ba0640e78450",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-qe/app-tests-build.log",
+      "originalSHA256": "40351c6c9a1d8ac33703b6acfd0cfb8f4aea5c71768dafe10105584815b20d82",
+      "publicSHA256": "ba4c0b1b3832dc9515b7c28e1187541461b87eb3cf271c48148567d3c692a49c",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-qe/ios-sigkill-report.json",
+      "originalSHA256": "c3b2f2d48b8a5729be49532ba5ad59014f138baec7f1872edb76e7404b9a736d",
+      "publicSHA256": "29dd55b0ac3bab94047dc3c9c2b36c212f1851cc214874916437cfb987fef530",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-qe/ipad-final.log",
+      "originalSHA256": "e647c8a07756972cb9017b464ce351d30128b5901a9aa3dbecc3ab02e8178416",
+      "publicSHA256": "b97aaf38e11fc15c329c1c2da03ef6b6da214f0e8c4f792b317f5d8a565f1ce7",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-qe/ipad-release-candidate.log",
+      "originalSHA256": "137c63d7eda211ea8abe255ce634ebee123eb4008b501e1ca453315f87ac8fa8",
+      "publicSHA256": "4194ad6bf0c6d5958494ecc82450906f668eb94f22bb8755c2ac29172f032824",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-qe/swift-tests.log",
+      "originalSHA256": "aa418d97c6452f438baad4eb504a7f41d5e03518b703d4fd5fd7673cdd0c80ea",
+      "publicSHA256": "df330a7fd5338aaaadf73706dada40496e25c43acf17bfdb54816cbc88bd7304",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-simulator/README.md",
+      "originalSHA256": "757034997cace3c0d66118d5423528574f52429191785d0c304ca92498417a00",
+      "publicSHA256": "72afd72e8d9e3a933549759e477ff52437565f377baa51ab0557c6abbd7d6a33",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-simulator/ipad-restart.log",
+      "originalSHA256": "2d4f59731b254bec9ffde7f0e82a85f9eaa48dadb8ee9b262102a72a5c5a59c3",
+      "publicSHA256": "43ebfdaeec7bef997e96a6dcbfd0e6b1a54713a4356a943157bf943c99fde5ec",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-simulator/ipad-suite.log",
+      "originalSHA256": "ea438647a4ead64e8a5a59efd9cf2a4ac6bbd0324eabe59bb44bf50273654141",
+      "publicSHA256": "8d5b6f8d701313762dfecae9a07c2bdcb5167ba40fbc0b38ca28445841350c35",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-simulator/iphone-suite.log",
+      "originalSHA256": "f02e652e8c2070d36f8f1de1b24210b64491b6bf79e99dd03e44ab4790426b7a",
+      "publicSHA256": "1f95536af44c9ab2bc457ec06f5627d089ea547b5161f0b86311af61c6db36d9",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-simulator/screenshot-command.log",
+      "originalSHA256": "5f3f9c78f4613f11c40a1ccf33d91d233d5dac0e131b8eb26aa3c54b79eeab35",
+      "publicSHA256": "48150771c0c4e163c8d2b21f693569190b68605fd5938f65b03644b53d314a3a",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/m1-simulator/swift-tests.log",
+      "originalSHA256": "4b78ffda55a275f464451c1dc10b5fe96f83dd7450d97d37a9184014ccf8231e",
+      "publicSHA256": "6064e211a5de91a8b3a8f90ef2ce8b167c9d13efcb6a630aa3b932c5eefa61ec",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    },
+    {
+      "path": "docs/evidence/pages-v5/README.md",
+      "originalSHA256": "f4302aabf318085b23aa1fa437c86996ca64081d25c42929d8829121014b6a4a",
+      "publicSHA256": "8823c2db9a42ab71f0aa73fd36a8ed65d06319c27abbcd1101628cab6f478020",
+      "change": "Machine home/temporary paths redacted; large logs contain only commands, outcomes and failures."
+    }
+  ]
+}

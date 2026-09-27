@@ -1,0 +1,21 @@
+PUBLIC TEST-RESULT EXCERPT
+Verbose compiler/UI traces and machine paths are omitted. Original evidence is retained locally.
+
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun artifacts/m1-qe/FinalBuild/Build/Products/Questly_iphonesimulator27.0-arm64.xctestrun -destination "platform=iOS Simulator,id=E9A37872-E9CD-4990-89F2-E9AD3D34C11B" -parallel-testing-enabled NO -collect-test-diagnostics never "-only-testing:QuestlyUITests/QuestlyUITests/testSystemReduceMotionOverridesAndPreservesAppPreference" "-only-testing:QuestlyUITests/QuestlyUITests/testEngineerRulesCompletionUndoAndRelaunch" -resultBundlePath artifacts/m1-qe/phone-motion.xcresult
+Test Suite 'Selected tests' started at 2026-09-27 14:47:33.238.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-27 14:47:33.238.
+Test Suite 'QuestlyUITests' started at 2026-09-27 14:47:33.238.
+Test Case '-[QuestlyUITests.QuestlyUITests testEngineerRulesCompletionUndoAndRelaunch]' started.
+Test Case '-[QuestlyUITests.QuestlyUITests testEngineerRulesCompletionUndoAndRelaunch]' passed (44.625 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' started.
+$HOME/Projects/questly/apps/ios/QuestlyUITests/QuestlyUITests.swift:214: error: -[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference] : XCTAssertEqual failed: ("Optional("On")") is not equal to ("Optional("Off")")
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' failed (16.679 seconds).
+Test Suite 'QuestlyUITests' failed at 2026-09-27 14:48:34.545.
+	 Executed 2 tests, with 1 failure (0 unexpected) in 61.304 (61.307) seconds
+Test Suite 'QuestlyUITests.xctest' failed at 2026-09-27 14:48:34.545.
+	 Executed 2 tests, with 1 failure (0 unexpected) in 61.304 (61.307) seconds
+Test Suite 'Selected tests' failed at 2026-09-27 14:48:34.545.
+	 Executed 2 tests, with 1 failure (0 unexpected) in 61.304 (61.308) seconds
+** TEST EXECUTE FAILED **
+Testing started

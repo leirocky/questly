@@ -1,0 +1,37 @@
+PUBLIC TEST-RESULT EXCERPT
+Verbose compiler/UI traces and machine paths are omitted. Original evidence is retained locally.
+
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun artifacts/m1-qe/FinalBuild/Build/Products/Questly_iphonesimulator27.0-arm64.xctestrun -destination "platform=iOS Simulator,id=E9A37872-E9CD-4990-89F2-E9AD3D34C11B" -parallel-testing-enabled NO -collect-test-diagnostics never "-only-testing:QuestlyUITests/QuestlyUITests/testSystemReduceMotionOverridesAndPreservesAppPreference" "-only-testing:QuestlyTests" -resultBundlePath artifacts/m1-qe/motion-verified.xcresult
+Test Suite 'Selected tests' started at 2026-09-27 14:50:28.425.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-27 14:50:28.426.
+Test Suite 'QuestlyUITests' started at 2026-09-27 14:50:28.426.
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' started.
+$HOME/Projects/questly/apps/ios/QuestlyUITests/QuestlyUITests.swift:220: error: -[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference] : XCTAssertEqual failed: ("Optional("0")") is not equal to ("Optional("1")") - Enable the real system preference
+$HOME/Projects/questly/apps/ios/QuestlyUITests/QuestlyUITests.swift:224: error: -[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference] : Asynchronous wait failed: Exceeded timeout of 5 seconds, with unfulfilled expectations: "Expect predicate `value == "Off"` for object "motion" Button".
+$HOME/Projects/questly/apps/ios/QuestlyUITests/QuestlyUITests.swift:225: error: -[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference] : XCTAssertFalse failed
+$HOME/Projects/questly/apps/ios/QuestlyUITests/QuestlyUITests.swift:229: error: -[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference] : XCTAssertEqual failed: ("Optional("On")") is not equal to ("Optional("Off")")
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' failed (42.383 seconds).
+Test Suite 'QuestlyUITests' failed at 2026-09-27 14:51:10.811.
+	 Executed 1 test, with 4 failures (0 unexpected) in 42.383 (42.385) seconds
+Test Suite 'QuestlyUITests.xctest' failed at 2026-09-27 14:51:10.811.
+	 Executed 1 test, with 4 failures (0 unexpected) in 42.383 (42.386) seconds
+Test Suite 'Selected tests' failed at 2026-09-27 14:51:10.812.
+	 Executed 1 test, with 4 failures (0 unexpected) in 42.383 (42.387) seconds
+Test Suite 'All tests' started at 2026-09-27 14:51:12.402.
+Test Suite 'QuestlyTests.xctest' started at 2026-09-27 14:51:12.402.
+Test Suite 'GameModelTests' started at 2026-09-27 14:51:12.402.
+Test Case '-[QuestlyTests.GameModelTests testPostReplacementErrorFreezesEditsUntilReloadWithoutReplayingDelivery]' started.
+Test Case '-[QuestlyTests.GameModelTests testPostReplacementErrorFreezesEditsUntilReloadWithoutReplayingDelivery]' passed (0.017 seconds).
+Test Case '-[QuestlyTests.GameModelTests testPreReplacementFailureKeepsCheckpointAndRequiresSuccessfulReload]' started.
+Test Case '-[QuestlyTests.GameModelTests testPreReplacementFailureKeepsCheckpointAndRequiresSuccessfulReload]' passed (0.010 seconds).
+Test Case '-[QuestlyTests.GameModelTests testReloadClearsDeliveryAndRuleFeedbackWhenReconcilingAnotherProfile]' started.
+Test Case '-[QuestlyTests.GameModelTests testReloadClearsDeliveryAndRuleFeedbackWhenReconcilingAnotherProfile]' passed (0.018 seconds).
+Test Suite 'GameModelTests' passed at 2026-09-27 14:51:12.451.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.046 (0.048) seconds
+Test Suite 'QuestlyTests.xctest' passed at 2026-09-27 14:51:12.451.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.046 (0.048) seconds
+Test Suite 'All tests' passed at 2026-09-27 14:51:12.451.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.046 (0.049) seconds
+** TEST EXECUTE FAILED **
+Testing started

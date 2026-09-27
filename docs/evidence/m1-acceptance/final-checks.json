@@ -1,0 +1,74 @@
+{
+  "checkedAtUTC": "2026-09-27T22:03:57.555995+00:00",
+  "checks": [
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/generate-xcode-project.py",
+        "--check"
+      ],
+      "exitCode": 0,
+      "output": "Verified Xcode project\n"
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "scripts/ios-simulator.sh"
+      ],
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "py_compile",
+        "scripts/verify-ios-kill.py"
+      ],
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--exit-code",
+        "HEAD",
+        "--",
+        "index.html",
+        "storm-engine.js",
+        "storm-app.js",
+        "storm-visual.js",
+        "storm.css",
+        "storm-visual.css",
+        ".nojekyll"
+      ],
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exitCode": 0,
+      "output": ""
+    }
+  ],
+  "matchingSourceHashes": 19,
+  "result": "PASS",
+  "scope": "Build reproducibility, syntax, whitespace, source identity and unchanged public frontend; not additional gameplay tests",
+  "stagedEvidenceWhitespace": "Initial staged check found whitespace in raw Xcode logs; committed copies trim only line-end whitespace and surplus EOF blank lines. Original and committed hashes are recorded separately. Final staged check passed."
+}

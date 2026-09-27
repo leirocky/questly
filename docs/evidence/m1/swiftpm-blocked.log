@@ -1,0 +1,3 @@
+dyld[16586]: Symbol not found: _$s19BuildServerProtocol019SourceKitInitializeA12ResponseDataV14encodeToLSPAny08LanguagebC00K0OyF
+  Referenced from: <561F6755-7606-396F-9382-B01D5CC7EDFB> /Library/Developer/CommandLineTools/usr/bin/swift-package
+  Expected in:     <1D521CF7-FD8E-30C8-A76C-929C3890CBD6> /Library/Developer/CommandLineTools/usr/lib/swift/pm/BuildServerProtocol.framework/Versions/A/BuildServerProtocol

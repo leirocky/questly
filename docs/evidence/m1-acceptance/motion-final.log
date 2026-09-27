@@ -1,0 +1,19 @@
+PUBLIC TEST-RESULT EXCERPT
+Verbose compiler/UI traces and machine paths are omitted. Original evidence is retained locally.
+
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun artifacts/m1-qe/FinalBuild/Build/Products/Questly_iphonesimulator27.0-arm64.xctestrun -destination "platform=iOS Simulator,id=E9A37872-E9CD-4990-89F2-E9AD3D34C11B" -parallel-testing-enabled NO -collect-test-diagnostics never "-only-testing:QuestlyUITests/QuestlyUITests/testSystemReduceMotionOverridesAndPreservesAppPreference" -resultBundlePath artifacts/m1-qe/motion-final.xcresult
+Test Suite 'Selected tests' started at 2026-09-27 14:52:01.555.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-27 14:52:01.555.
+Test Suite 'QuestlyUITests' started at 2026-09-27 14:52:01.555.
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' started.
+$HOME/Projects/questly/apps/ios/QuestlyUITests/QuestlyUITests.swift:243: error: -[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference] : failed - System Reduce Motion did not become false: Attributes: Switch, 0x113dce940, {{32.0, 131.3}, {326.0, 28.0}}, identifier: 'REDUCE_MOTION', label: 'Reduce Motion', value: 1
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' failed (40.116 seconds).
+Test Suite 'QuestlyUITests' failed at 2026-09-27 14:52:41.673.
+	 Executed 1 test, with 1 failure (0 unexpected) in 40.116 (40.118) seconds
+Test Suite 'QuestlyUITests.xctest' failed at 2026-09-27 14:52:41.674.
+	 Executed 1 test, with 1 failure (0 unexpected) in 40.116 (40.118) seconds
+Test Suite 'Selected tests' failed at 2026-09-27 14:52:41.674.
+	 Executed 1 test, with 1 failure (0 unexpected) in 40.116 (40.119) seconds
+** TEST EXECUTE FAILED **
+Testing started
