@@ -1,0 +1,16 @@
+PASS 8,206 golden comparisons with the unchanged JavaScript engine
+PASS Independent exhaustive search: explorer 2 trips, engineer 3 trips
+PASS Rejected moves preserve selections; undo reopens completion; restart clears one game
+PASS Engineer trip budget, explorer unlimited, invalid selectors and hint bounds
+PASS Invalid persisted histories are rejected before use
+PASS Real disk reopen preserves 2 profiles × 2 modes, language, route, motion and selection
+PASS Corrupt latest checkpoint recovers previous checkpoint and repairs on next save
+PASS Injected partial write and out-of-space error preserve last valid checkpoint
+PASS Uncommitted staging file is ignored
+PASS Both damaged checkpoints block writes and preserve bytes
+PASS Future schema blocks fallback to older data and cannot be overwritten
+PASS Checksum covers generation as well as payload; invalid profile set cannot be saved
+PASS Changed content revision requires migration and preserves the save
+PASS Permission failure before write leaves previous checkpoint untouched
+PASS: 14 standalone Swift verification groups. Not XCTest, iOS build or simulator evidence.
+PASS: fresh process recovered the committed trip after SIGKILL; other profile remains empty.

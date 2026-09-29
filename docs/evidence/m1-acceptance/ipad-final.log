@@ -1,0 +1,41 @@
+PUBLIC TEST-RESULT EXCERPT
+Verbose compiler/UI traces and machine paths are omitted. Original evidence is retained locally.
+
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun artifacts/m1-qe/FinalBuild/Build/Products/Questly_iphonesimulator27.0-arm64.xctestrun -destination "platform=iOS Simulator,id=CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41" -parallel-testing-enabled NO -collect-test-diagnostics never "-only-testing:QuestlyTests" "-only-testing:QuestlyUITests/QuestlyUITests/testIslandExposesAccessibleControls" "-only-testing:QuestlyUITests/QuestlyUITests/testAccessibilityAuditIslandAndCargo" "-only-testing:QuestlyUITests/QuestlyUITests/testEngineerRulesCompletionUndoAndRelaunch" "-only-testing:QuestlyUITests/QuestlyUITests/testProfilesModesChineseMotionAndBackground" "-only-testing:QuestlyUITests/QuestlyUITests/testVoyageLimitHintsAndScopedRestart" -resultBundlePath artifacts/m1-qe/ipad-final.xcresult
+Test Suite 'Selected tests' started at 2026-09-27 14:41:29.137.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-27 14:41:29.137.
+Test Suite 'QuestlyUITests' started at 2026-09-27 14:41:29.137.
+Test Case '-[QuestlyUITests.QuestlyUITests testAccessibilityAuditIslandAndCargo]' started.
+Test Case '-[QuestlyUITests.QuestlyUITests testAccessibilityAuditIslandAndCargo]' passed (6.103 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testEngineerRulesCompletionUndoAndRelaunch]' started.
+Test Case '-[QuestlyUITests.QuestlyUITests testEngineerRulesCompletionUndoAndRelaunch]' passed (38.660 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testIslandExposesAccessibleControls]' started.
+Test Case '-[QuestlyUITests.QuestlyUITests testIslandExposesAccessibleControls]' passed (6.591 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testProfilesModesChineseMotionAndBackground]' started.
+Test Case '-[QuestlyUITests.QuestlyUITests testProfilesModesChineseMotionAndBackground]' passed (41.145 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testVoyageLimitHintsAndScopedRestart]' started.
+Test Case '-[QuestlyUITests.QuestlyUITests testVoyageLimitHintsAndScopedRestart]' passed (23.599 seconds).
+Test Suite 'QuestlyUITests' passed at 2026-09-27 14:43:25.238.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 116.098 (116.101) seconds
+Test Suite 'QuestlyUITests.xctest' passed at 2026-09-27 14:43:25.239.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 116.098 (116.102) seconds
+Test Suite 'Selected tests' passed at 2026-09-27 14:43:25.239.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 116.098 (116.103) seconds
+Test Suite 'All tests' started at 2026-09-27 14:43:26.895.
+Test Suite 'QuestlyTests.xctest' started at 2026-09-27 14:43:26.896.
+Test Suite 'GameModelTests' started at 2026-09-27 14:43:26.896.
+Test Case '-[QuestlyTests.GameModelTests testPostReplacementErrorFreezesEditsUntilReloadWithoutReplayingDelivery]' started.
+Test Case '-[QuestlyTests.GameModelTests testPostReplacementErrorFreezesEditsUntilReloadWithoutReplayingDelivery]' passed (0.026 seconds).
+Test Case '-[QuestlyTests.GameModelTests testPreReplacementFailureKeepsCheckpointAndRequiresSuccessfulReload]' started.
+Test Case '-[QuestlyTests.GameModelTests testPreReplacementFailureKeepsCheckpointAndRequiresSuccessfulReload]' passed (0.017 seconds).
+Test Case '-[QuestlyTests.GameModelTests testReloadClearsDeliveryAndRuleFeedbackWhenReconcilingAnotherProfile]' started.
+Test Case '-[QuestlyTests.GameModelTests testReloadClearsDeliveryAndRuleFeedbackWhenReconcilingAnotherProfile]' passed (0.030 seconds).
+Test Suite 'GameModelTests' passed at 2026-09-27 14:43:26.972.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.073 (0.076) seconds
+Test Suite 'QuestlyTests.xctest' passed at 2026-09-27 14:43:26.972.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.073 (0.076) seconds
+Test Suite 'All tests' passed at 2026-09-27 14:43:26.972.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.073 (0.077) seconds
+** TEST EXECUTE SUCCEEDED **
+Testing started

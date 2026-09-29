@@ -1,0 +1,26 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "FEDD59CB-1686-4EA6-8077-7D3A076775D6.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "system-reduce-motion_0_DDA4C824-B19A-4468-9601-B4D37A2DA1C6.png",
+        "timestamp" : 1790546419.812
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "E728CC5A-C282-4D23-ACF3-B778270A8482.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "system-setting-reduce-motion-on_0_046DB2BC-454D-486D-97F1-52BB7AB8A3C8.png",
+        "timestamp" : 1790546402.96
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testSystemReduceMotionOverridesAndPreservesAppPreference()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testSystemReduceMotionOverridesAndPreservesAppPreference"
+  }
+]

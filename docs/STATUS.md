@@ -1,54 +1,48 @@
 # Questly execution status
 
-Updated: 2026-09-28 — 90-mission web expansion implemented; 90-mission release merged into main, deployed and verified over public HTTPS
+Updated: 2026-09-28 — native M1 integration prepared; post-merge validation pending
 
-## Current scope and branches
+## Current task
 
-The owner requested **30 levels in each of cargo, circuits and robot programming (90 total)**, ordered from easy to hard, and explicitly authorized immediate Pages publication after verification. Work uses `codex/web-90-levels` in the existing clean web worktree, based on `main` at `a41a8fed13fc9f2cdaf67a4261bc7cfb89c5fc65`. No uncommitted work was overwritten.
+The owner explicitly requested merging M1 into `main`, then verifying it, while retaining Pages. Integration branch `codex/merge-m1` combines web main `dae6da5d0c3070da84371ab27ff40e6585799b66` and published native branch `f94025f1f43016a5977981bd3a4278e274436aa8`. Existing local native and web development commits remain intact; no uncommitted work was overwritten.
 
-Native M1 remains on [production/ios-foundation](https://github.com/leirocky/questly/tree/production/ios-foundation). Its implementation, independent QE and simulator evidence are separate; no native work or tests are part of this web release. Physical-device/native acceptance is still incomplete as recorded on that branch. No Apple login, signing, paid service, App Store action or security-policy change occurred.
+Conflicts were limited to `.gitignore`, this status file and historical Pages evidence documentation. The ignore rules are combined, this file now describes both products, and the existing main version of Pages evidence is retained. The root README now links both runnable entry points. Native source, content, Xcode project and tests are unchanged from the published M1 branch.
 
-## Implemented
+## Products in the repository
 
-- `storm-content.js` and `scripts/build-web-content.cjs`: 24 new static collections, each containing one cargo puzzle, circuit and robot route, giving **72 new missions / 90 total**. Deterministic authoring; no generated-at-runtime content or network dependency during play.
-- `storm-levels.js`: six chapters of five collections, all 30 missions per workshop freely selectable. The original 18 configurations and stable IDs are unchanged; the original rules engine is unchanged.
-- New cargo includes 6–12 supplies, differing packing/deck constraints, precedence chains, incompatible pairs and delivery priorities. Circuit boards range from 4×4 to 8×8, with up to five stations. Robot routes progress through turns, stairs, loops, laboratory detours, conditional corners and reusable paired camps, within the existing editor limits. No timer or compulsory compactness score.
-- `storm-app.js`, `storm-visual.js`, `storm-visual.css`, `index.html`: bilingual chapter browsing, per-workshop progress out of 30, next-level controls, progressive hints, new crate illustrations and versioned static URLs. Fresh saves begin with Explorer.
-- `storm-save.js`: schema 6/content 2, new `questly-storm-v6` key; validated v5/v3 migration preserves old bytes and every original completion, in-progress cargo selection, circuit and program. Invalid/future current or v5 saves remain protected.
-- `tests/fixtures/web-v5.json`: pre-edit reference for all old configurations and a complete v5 save. Expanded rule/browser tests, runnable public-site verification, catalog and documentation.
+- **Pages v0.6:** 90 missions (30 cargo, 30 circuits, 30 robot), six chapters, English/Chinese, optional effects, independent level progress, v3/v5-to-v6 save migration. [Play](https://leirocky.github.io/questly/). The entry point, all nine frontend files, `.nojekyll`, relative URLs and existing save keys are preserved byte-for-byte by this integration.
+- **Native M1:** SwiftUI shell, SpriteKit island/cargo, Explorer/Engineer, two anonymous local avatar profiles, English/Chinese, undo/restart, alternating atomic checksummed checkpoints and interrupted-process recovery. [Runbook](../apps/ios/README.md). No native circuit/robot missions, audio, cloud sync, purchases or store release.
+- Web saves and native saves remain separate. The web expansion is not native M2. No Apple login, signing team, paid service, TestFlight, App Store or security-policy action is part of this merge.
 
-## Actual current verification
+## Verification in this task
 
-Environment: macOS 26.6 arm64, Node 24.19.0, sandboxed desktop Chrome 154.0.8037.58, Node Playwright 1.62.1, Python Playwright 1.60.0. Reports go to ignored `artifacts/web-v6/` and `artifacts/web-v6-legacy/`; public evidence is curated separately without private machine paths.
+The user requested actual verification after merging. Before merge, only repository/content preservation and installed tooling were inspected. Previous results below are historical, not new executions.
 
-| Gate | Result |
+| Gate | Current task |
 | --- | --- |
-| `node tests/engine.test.cjs` | PASS — 14 original rule groups |
-| `node tests/challenges.test.cjs` | PASS — 102 groups: all 90 independently solvable, old 18 exact configuration parity, 8,192 original cargo comparisons, valid hints, distinct content, editor limits, v3/v5 migration and save isolation |
-| `node scripts/build-web-content.cjs --check` | PASS — byte-reproducible committed content |
-| `python tests/browser.py` | PASS — 22 legacy gameplay groups; set_content and simulated storage |
-| `python tests/visual.py` | PASS — 12 presentation groups; set_content, sound opt-in, reduced motion, localization and viewport layout |
-| `node tests/challenges-browser.cjs` | PASS — 104 groups, exit 0; all 90 played through actual controls, v3/v5 migration, real storage/browser restart, both languages at 320/390/768/1280 CSS px |
-| `node tests/chapters-browser.cjs` | PASS — 5 groups, exit 0; all 90 final-file hint/art screens in both languages; 87 next-level links and three finale returns using explicit synthetic completion fixtures |
-| Public Pages release | PASS — [PR #3](https://github.com/leirocky/questly/pull/3) merged at `c089d15947226613b512b777ad8cc267301ed985`; [Pages run 36506680188](https://github.com/leirocky/questly/actions/runs/36506680188) succeeded |
-| Final public HTTPS gameplay | PASS — 95 groups, exit 0; all nine frontend hashes, all 90 real-control completions, Chinese/progress reload and full Chrome shutdown/relaunch; no page errors or failed responses |
+| Pages source preservation against pre-merge main | Verify exact Git blobs before publication and public file hashes after deployment |
+| Swift core / golden JS contract / crash probe | PENDING after merge |
+| Xcode simulator build and iPad/iPhone UI | PENDING after merge |
+| Simulator interrupted-save/relaunch and isolation | PENDING after merge |
+| Public Pages deployment and browser flows | PENDING after merge |
 
-An early authoring run caught a conflicting cargo hint; the plan was corrected and the complete rules suite passed. Two new cargo SVG glyphs and the final chapter ordering were completed during the initial browser run; the 5-group final fresh-page audit and 95-group public HTTPS run both used the final files. Earlier loaded presentation bytes are not labeled final-release evidence.
+Installed tooling was freshly inspected: Xcode 27.0 (`27A266a`), Swift 6.4, iOS Simulator 27.0. Available booted targets include iPad Pro 11-inch (M5) and the dedicated Questly-QE-iPhone (iPhone 17e). Use shell-scoped `DEVELOPER_DIR`; no global setting was changed.
 
-## Limits
+## Historical evidence, retained
 
-Difficulty is an authored progression, not a measured ability/learning assessment. Browser CSS viewports and simulated touch events are not actual iPad/iPhone evidence. Safari/WebKit, physical touch, VoiceOver, real audio quality and offline cold launch remain **UNVERIFIED**. No service worker/offline cache, cloud sync, account, cross-device backup, native import or two-profile web feature was added. Native production scope remains separate.
+- Web release [PR #3](https://github.com/leirocky/questly/pull/3), [handoff PR #4](https://github.com/leirocky/questly/pull/4): 14 engine groups, 102 rules/content/save groups, 104 real HTTP gameplay groups completing all 90, 22 legacy DOM groups, 12 visual groups, 5 final chapter/hint groups. [Local evidence](evidence/web-v6/README.md).
+- Public v0.6 check at `2026-09-29T01:16:13.532Z`: 95 groups passed; nine deployed file hashes, all 90 real-control completions, reload and full Chrome restart. [Public report](evidence/pages-v6/README.md). These have not yet been rerun for this merge.
+- Native prior acceptance: 23 core XCTest cases with 8,206 golden comparisons; final iPad 9-test suite; phone AX5 presentation/audit; real system Reduce Motion; simulator SIGKILL/relaunch; independent save-fault QE. [Native acceptance](evidence/m1-acceptance/README.md), [QE](evidence/m1-qe/README.md). Intermediate failures and the limited accessibility-audit scope remain documented.
+- Historical public logs are privacy-filtered excerpts. Full machine diagnostics stay in ignored local artifacts; do not upload raw user paths or infer new execution from retained reports.
+
+## Remaining acceptance limits
+
+Physical iPad/iPhone, iOS 17 runtime, verified network-disabled cold launch, VoiceOver order/announcements, complete text-clipping/contrast review, direct SpriteKit hit-target coverage, physical low-storage/power-loss and performance remain unverified or blocked as documented in the native runbook. Safari/WebKit and physical-device web testing are unverified. No offline web cold-launch cache is provided.
+
+M1 code can be merged without claiming full device acceptance or an App Store release. M2/M3 and signing/distribution remain separate work.
 
 ## Next executable tasks
 
-1. Local rules, gameplay, storage, chapter/hint and visual gates passed. Actual final Chinese chapter/cargo/circuit/robot screenshots are in `docs/evidence/web-v6/`; public reproduction commands and limitations are recorded there.
-2. The 90-mission Pages publication and live verification are complete. Use the [live site](https://leirocky.github.io/questly/) or `python3 -m http.server 8765 --bind 127.0.0.1` from this web tree. Preserve v3/v5/v6 saves in future content updates; use feedback to refine difficulty without collecting personal data.
-3. Continue native M1 acceptance separately when physical-device/signing conditions are available.
-
-## Publication identity
-
-The GitHub connector published the exact tested tree because Git CLI credentials are not configured. Local commits `7417fb8` and `7c0c763` are retained; remote implementation snapshot `bca7adc9ca095fe7144bb024bbee45056717d0c1` has the same tree `d3e9082218f2091ead8c4878e73cfb05e0af586d`. A fresh fetch and `git diff --exit-code HEAD origin/main` passed after PR #3 merged. Commit identities differ, content does not. No force-push, branch deletion or native merge occurred.
-
-## Final public verification
-
-`docs/evidence/pages-v6/check-live.cjs` completed at `2026-09-29T01:16:13.532Z`: **95 groups PASS, exit 0**. The real HTTPS run used Step for 24 robot missions and automatic Run for six chapter finales; the local real HTTP suite separately used automatic Run for every robot. No game-state or clock injection was used in either gameplay run. All 90 completions and Chinese survived both reload and complete Chrome process restart. [Commands, report and deployment evidence](evidence/pages-v6/README.md). No physical-device, Safari or offline-cold-launch result is inferred.
+1. Publish the reviewed integration tree and merge its PR into `main` under the explicit authorization.
+2. Fetch the actual merged tree, execute native core/build/simulator/lifecycle checks, and verify the deployed Pages files and actual browser flows. Fix any failure and distinguish unexecuted gates.
+3. Commit the actual post-merge evidence and update this status. Continue physical-device acceptance when an authorized device/signing path is available.

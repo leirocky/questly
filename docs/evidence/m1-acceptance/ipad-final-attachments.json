@@ -1,0 +1,65 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "3ADFD361-0277-415E-AA3E-596C11517C56.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "accessibility-cargo_0_BF056324-D37A-4E6D-A70C-9277238F58D9.png",
+        "timestamp" : 1790545294.678
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testAccessibilityAuditIslandAndCargo()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testAccessibilityAuditIslandAndCargo"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "4A19377B-1A82-489A-9BDE-786B1723A1C2.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "cargo-engineer-complete-en_0_B3988830-F17C-4411-A807-CA7F1C5FA0C5.png",
+        "timestamp" : 1790545325.838
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "CBAE26BD-DB27-45C1-9631-83CE93948261.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "island-en_0_58F08703-11B4-4693-88D1-45A79889AECC.png",
+        "timestamp" : 1790545300.554
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testEngineerRulesCompletionUndoAndRelaunch()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testEngineerRulesCompletionUndoAndRelaunch"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "A0C75658-4C38-418C-8CF6-5FD9D5FD3237.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "island-restored-zh_0_844CB3C9-8D8F-43D1-A1B3-FBE9BBB88148.png",
+        "timestamp" : 1790545380.025
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "D27FD826-D381-47EC-8483-440F1E0520A5.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "cargo-zh_0_33C1C24B-6511-4517-B4A2-2F3358A4194B.png",
+        "timestamp" : 1790545363.905
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testProfilesModesChineseMotionAndBackground()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testProfilesModesChineseMotionAndBackground"
+  }
+]

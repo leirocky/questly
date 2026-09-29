@@ -1,0 +1,18 @@
+PUBLIC TEST-RESULT EXCERPT
+Verbose compiler/UI traces and machine paths are omitted. Original evidence is retained locally.
+
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun artifacts/m1-qe/MotionBuild/Build/Products/Questly_iphonesimulator27.0-arm64.xctestrun -destination "platform=iOS Simulator,id=E9A37872-E9CD-4990-89F2-E9AD3D34C11B" -parallel-testing-enabled NO -collect-test-diagnostics never "-only-testing:QuestlyUITests/QuestlyUITests/testSystemReduceMotionOverridesAndPreservesAppPreference" -resultBundlePath artifacts/m1-qe/motion-accepted.xcresult
+Test Suite 'Selected tests' started at 2026-09-27 14:59:47.755.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-27 14:59:47.756.
+Test Suite 'QuestlyUITests' started at 2026-09-27 14:59:47.756.
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' started.
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' passed (40.858 seconds).
+Test Suite 'QuestlyUITests' passed at 2026-09-27 15:00:28.616.
+	 Executed 1 test, with 0 failures (0 unexpected) in 40.858 (40.861) seconds
+Test Suite 'QuestlyUITests.xctest' passed at 2026-09-27 15:00:28.617.
+	 Executed 1 test, with 0 failures (0 unexpected) in 40.858 (40.861) seconds
+Test Suite 'Selected tests' passed at 2026-09-27 15:00:28.617.
+	 Executed 1 test, with 0 failures (0 unexpected) in 40.858 (40.862) seconds
+** TEST EXECUTE SUCCEEDED **
+Testing started

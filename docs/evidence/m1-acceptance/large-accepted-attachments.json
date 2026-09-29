@@ -1,0 +1,95 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "1786B8C2-C15F-45FD-8FC3-763F499B018C.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "accessibility-cargo_0_A429B484-229F-4FBC-B401-F97A68E8D5F4.png",
+        "timestamp" : 1790545152.42
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testAccessibilityAuditIslandAndCargo()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testAccessibilityAuditIslandAndCargo"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "CD40FE6C-78FA-4DA1-8430-1C603B90C925.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "layout-cargo-zh-3_0_9C074A5B-A11E-4291-ADB1-1263A091E8E6.png",
+        "timestamp" : 1790545588.969
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "350DAE00-4DDD-47DF-B69A-9B485DB1A2D7.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "layout-island-zh-3_0_E238D916-9D76-4031-9763-75F4E89E1212.png",
+        "timestamp" : 1790545497.695
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "AE9BF74A-6CD7-49F3-A3FB-55F242589494.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "layout-cargo-en-3_0_87CDDE0D-5F13-44E0-A2F4-843E50CBBC47.png",
+        "timestamp" : 1790545459.188
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "8B0D57FE-3870-475F-93A0-60C0430003DF.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "layout-island-en-3_0_6C3374E7-541C-4ABB-BC11-C7343A5B45F9.png",
+        "timestamp" : 1790545361.921
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "3C90CF1D-B9A2-473E-912C-F873AB04262F.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "layout-cargo-zh-1_0_77F69A1E-C321-4FC5-8445-E9B26DF71039.png",
+        "timestamp" : 1790545327.338
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "95B6F1E4-E4C7-4A52-BB57-16BB8A117488.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "layout-island-zh-1_0_D5ACA3A6-8F65-408C-895B-1DEE33DD36D9.png",
+        "timestamp" : 1790545266.096
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "8E63FDF9-B464-49B0-9FC7-BC3C229741F2.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "layout-cargo-en-1_0_64B67326-6321-439E-8175-0878AFF74982.png",
+        "timestamp" : 1790545241.507
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "F1016562-4673-4385-8F9B-E0F96904780A.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "layout-island-en-1_0_2EF85C4D-A636-45A8-BF23-53C93E68AEAA.png",
+        "timestamp" : 1790545170.245
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testLayoutTouchTargetsInBothLanguagesAndOrientations()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testLayoutTouchTargetsInBothLanguagesAndOrientations"
+  }
+]

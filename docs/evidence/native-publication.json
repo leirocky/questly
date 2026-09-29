@@ -1,0 +1,18 @@
+{
+  "verifiedAtUTC": "2026-09-27T22:32:19.480902+00:00",
+  "branch": "production/ios-foundation",
+  "publicationMethod": "Existing GitHub connector; CLI HTTPS authentication unavailable",
+  "initialRemoteCommit": "ebd481c919cdceec13c0234815fb90595fce8629",
+  "matchingLocalCommit": "ae947ab3f7df2580d62511ef182d26e4c67d7e69",
+  "matchingTree": "d777d5cf5e7f5dd293ba792d3a2b53b4d0d4a9ef",
+  "fileCount": 145,
+  "unchangedMain": "a41a8fed13fc9f2cdaf67a4261bc7cfb89c5fc65",
+  "verification": [
+    "GitHub create_tree SHA equals local Git tree SHA",
+    "git ls-remote shows new native branch and unchanged main",
+    "Fresh Git fetch and git diff --exit-code HEAD origin/production/ios-foundation",
+    "19 tested source hashes unchanged; no application tests rerun"
+  ],
+  "privacy": "Public diagnostic excerpts redact machine home paths and omit verbose machine-specific traces; originals retained locally.",
+  "scope": "Initial published snapshot; this record and STATUS update are a subsequent documentation-only commit."
+}
