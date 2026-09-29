@@ -1,6 +1,6 @@
 # Questly execution status
 
-Updated: 2026-09-28 — 90-mission web expansion implemented; local verification passed; authorized publication in progress
+Updated: 2026-09-28 — 90-mission web expansion implemented; 90-mission release merged into main, deployed and verified over public HTTPS
 
 ## Current scope and branches
 
@@ -30,9 +30,10 @@ Environment: macOS 26.6 arm64, Node 24.19.0, sandboxed desktop Chrome 154.0.8037
 | `python tests/visual.py` | PASS — 12 presentation groups; set_content, sound opt-in, reduced motion, localization and viewport layout |
 | `node tests/challenges-browser.cjs` | PASS — 104 groups, exit 0; all 90 played through actual controls, v3/v5 migration, real storage/browser restart, both languages at 320/390/768/1280 CSS px |
 | `node tests/chapters-browser.cjs` | PASS — 5 groups, exit 0; all 90 final-file hint/art screens in both languages; 87 next-level links and three finale returns using explicit synthetic completion fixtures |
-| Public Pages release | PENDING — authorized; publish only after local gates complete |
+| Public Pages release | PASS — [PR #3](https://github.com/leirocky/questly/pull/3) merged at `c089d15947226613b512b777ad8cc267301ed985`; [Pages run 36506680188](https://github.com/leirocky/questly/actions/runs/36506680188) succeeded |
+| Final public HTTPS gameplay | PASS — 95 groups, exit 0; all nine frontend hashes, all 90 real-control completions, Chinese/progress reload and full Chrome shutdown/relaunch; no page errors or failed responses |
 
-An early authoring run caught a conflicting cargo hint; the plan was corrected and the complete rules suite passed. Two new cargo SVG glyphs and the final chapter ordering were completed during the initial browser run; final fresh-page visual coverage and public HTTPS verification must use those final files. Do not call earlier loaded presentation bytes final-release evidence.
+An early authoring run caught a conflicting cargo hint; the plan was corrected and the complete rules suite passed. Two new cargo SVG glyphs and the final chapter ordering were completed during the initial browser run; the 5-group final fresh-page audit and 95-group public HTTPS run both used the final files. Earlier loaded presentation bytes are not labeled final-release evidence.
 
 ## Limits
 
@@ -41,5 +42,13 @@ Difficulty is an authored progression, not a measured ability/learning assessmen
 ## Next executable tasks
 
 1. Local rules, gameplay, storage, chapter/hint and visual gates passed. Actual final Chinese chapter/cargo/circuit/robot screenshots are in `docs/evidence/web-v6/`; public reproduction commands and limitations are recorded there.
-2. Publish the reviewed web tree through a PR into `main` under the owner's release authorization, confirm Pages deployment and execute the public HTTPS verification script. Record the exact merge/deployment IDs and results here.
+2. The 90-mission Pages publication and live verification are complete. Use the [live site](https://leirocky.github.io/questly/) or `python3 -m http.server 8765 --bind 127.0.0.1` from this web tree. Preserve v3/v5/v6 saves in future content updates; use feedback to refine difficulty without collecting personal data.
 3. Continue native M1 acceptance separately when physical-device/signing conditions are available.
+
+## Publication identity
+
+The GitHub connector published the exact tested tree because Git CLI credentials are not configured. Local commits `7417fb8` and `7c0c763` are retained; remote implementation snapshot `bca7adc9ca095fe7144bb024bbee45056717d0c1` has the same tree `d3e9082218f2091ead8c4878e73cfb05e0af586d`. A fresh fetch and `git diff --exit-code HEAD origin/main` passed after PR #3 merged. Commit identities differ, content does not. No force-push, branch deletion or native merge occurred.
+
+## Final public verification
+
+`docs/evidence/pages-v6/check-live.cjs` completed at `2026-09-29T01:16:13.532Z`: **95 groups PASS, exit 0**. The real HTTPS run used Step for 24 robot missions and automatic Run for six chapter finales; the local real HTTP suite separately used automatic Run for every robot. No game-state or clock injection was used in either gameplay run. All 90 completions and Chinese survived both reload and complete Chrome process restart. [Commands, report and deployment evidence](evidence/pages-v6/README.md). No physical-device, Safari or offline-cold-launch result is inferred.

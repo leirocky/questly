@@ -1,0 +1,96 @@
+PASS All nine deployed frontend files return HTTP 200 and match tested SHA-256 hashes
+PASS Live HTTPS home has 90 playable entries
+PASS explorer: live cargo completed through buttons
+PASS explorer: live circuit completed through tiles
+PASS explorer: live robot completed through Step controls
+PASS harbor: live cargo completed through buttons
+PASS harbor: live circuit completed through tiles
+PASS harbor: live robot completed through Step controls
+PASS cove: live cargo completed through buttons
+PASS cove: live circuit completed through tiles
+PASS cove: live robot completed through Step controls
+PASS garden: live cargo completed through buttons
+PASS garden: live circuit completed through tiles
+PASS garden: live robot completed through Step controls
+PASS quay: live cargo completed through buttons
+PASS quay: live circuit completed through tiles
+PASS quay: live robot completed through Run controls
+PASS engineer: live cargo completed through buttons
+PASS engineer: live circuit completed through tiles
+PASS engineer: live robot completed through Step controls
+PASS orchard: live cargo completed through buttons
+PASS orchard: live circuit completed through tiles
+PASS orchard: live robot completed through Step controls
+PASS canal: live cargo completed through buttons
+PASS canal: live circuit completed through tiles
+PASS canal: live robot completed through Step controls
+PASS cliff: live cargo completed through buttons
+PASS cliff: live circuit completed through tiles
+PASS cliff: live robot completed through Step controls
+PASS bridge: live cargo completed through buttons
+PASS bridge: live circuit completed through tiles
+PASS bridge: live robot completed through Run controls
+PASS tides: live cargo completed through buttons
+PASS tides: live circuit completed through tiles
+PASS tides: live robot completed through Step controls
+PASS marsh: live cargo completed through buttons
+PASS marsh: live circuit completed through tiles
+PASS marsh: live robot completed through Step controls
+PASS delta: live cargo completed through buttons
+PASS delta: live circuit completed through tiles
+PASS delta: live robot completed through Step controls
+PASS grove: live cargo completed through buttons
+PASS grove: live circuit completed through tiles
+PASS grove: live robot completed through Step controls
+PASS inlet: live cargo completed through buttons
+PASS inlet: live circuit completed through tiles
+PASS inlet: live robot completed through Run controls
+PASS ridge: live cargo completed through buttons
+PASS ridge: live circuit completed through tiles
+PASS ridge: live robot completed through Step controls
+PASS terrace: live cargo completed through buttons
+PASS terrace: live circuit completed through tiles
+PASS terrace: live robot completed through Step controls
+PASS ravine: live cargo completed through buttons
+PASS ravine: live circuit completed through tiles
+PASS ravine: live robot completed through Step controls
+PASS plateau: live cargo completed through buttons
+PASS plateau: live circuit completed through tiles
+PASS plateau: live robot completed through Step controls
+PASS waterfall: live cargo completed through buttons
+PASS waterfall: live circuit completed through tiles
+PASS waterfall: live robot completed through Run controls
+PASS beacon: live cargo completed through buttons
+PASS beacon: live circuit completed through tiles
+PASS beacon: live robot completed through Step controls
+PASS observatory: live cargo completed through buttons
+PASS observatory: live circuit completed through tiles
+PASS observatory: live robot completed through Step controls
+PASS estuary: live cargo completed through buttons
+PASS estuary: live circuit completed through tiles
+PASS estuary: live robot completed through Step controls
+PASS lighthouse: live cargo completed through buttons
+PASS lighthouse: live circuit completed through tiles
+PASS lighthouse: live robot completed through Step controls
+PASS reservoir: live cargo completed through buttons
+PASS reservoir: live circuit completed through tiles
+PASS reservoir: live robot completed through Run controls
+PASS summit: live cargo completed through buttons
+PASS summit: live circuit completed through tiles
+PASS summit: live robot completed through Step controls
+PASS citadel: live cargo completed through buttons
+PASS citadel: live circuit completed through tiles
+PASS citadel: live robot completed through Step controls
+PASS aurora: live cargo completed through buttons
+PASS aurora: live circuit completed through tiles
+PASS aurora: live robot completed through Step controls
+PASS horizon: live cargo completed through buttons
+PASS horizon: live circuit completed through tiles
+PASS horizon: live robot completed through Step controls
+PASS islandheart: live cargo completed through buttons
+PASS islandheart: live circuit completed through tiles
+PASS islandheart: live robot completed through Run controls
+PASS All 90 completions and Chinese survive live HTTPS reload
+PASS Real Chrome shutdown/relaunch restores all 90 completions, mission and language on public origin
+PASS No uncaught page errors or failed HTTP responses during exercised live flows
+{"passed":95,"out":"$HOME/.codex/worktrees/web-challenge-levels/questly/artifacts/pages-v6"}

@@ -1,0 +1,403 @@
+{
+  "testedAt": "2026-09-29T01:16:13.532Z",
+  "url": "https://leirocky.github.io/questly/",
+  "mergeCommit": "c089d15947226613b512b777ad8cc267301ed985",
+  "node": "v24.19.0",
+  "browser": "154.0.8037.58",
+  "scope": "Sandboxed desktop Chrome over public HTTPS; isolated real disk profile; not physical-device or Safari evidence",
+  "results": [
+    {
+      "name": "All nine deployed frontend files return HTTP 200 and match tested SHA-256 hashes",
+      "status": "PASS"
+    },
+    {
+      "name": "Live HTTPS home has 90 playable entries",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: live robot completed through Run controls",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: live robot completed through Run controls",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: live robot completed through Run controls",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: live robot completed through Run controls",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: live robot completed through Run controls",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: live robot completed through Step controls",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: live cargo completed through buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: live circuit completed through tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: live robot completed through Run controls",
+      "status": "PASS"
+    },
+    {
+      "name": "All 90 completions and Chinese survive live HTTPS reload",
+      "status": "PASS"
+    },
+    {
+      "name": "Real Chrome shutdown/relaunch restores all 90 completions, mission and language on public origin",
+      "status": "PASS"
+    },
+    {
+      "name": "No uncaught page errors or failed HTTP responses during exercised live flows",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "failedResponses": [],
+  "hashes": {
+    "storm-content.js": "c365196635779a47daa665f781285a1beca2ed23472f3309d92a9b338e3b4d1c",
+    "index.html": "cc0386422307fe62cc534f9844f43fa40f0306c23062b2c1b00dd7c912084051",
+    "storm-engine.js": "9b14dfecebe69b62c0dd3b7a6a6a43e6f197908b5ec248ecc8bd2026e5658871",
+    "storm-levels.js": "c794996b6ba088f0ad1a3e16d44e7a6bbd3db15423cbef30f33b7f98374efef6",
+    "storm-save.js": "e0e9eb68711a18bef344fbe1e56c45eabcd0c93252fdfdda5ced42cb51c25e78",
+    "storm-app.js": "666f767567b49c2a86cf36289a22a334acdc1149a031f3ce8e9bf01f205b3b0f",
+    "storm.css": "a6d9ffacf25a5f4ce8cdfb2b44cfd38802af1bc9de5789e92afde77371c9ceea",
+    "storm-visual.js": "dacea50925caa03d219d969efc0bd2f45c219410c7cadbd5c099e8831cbc4ce9",
+    "storm-visual.css": "3458924a2c848f7d26f7326d1879c255857e0d46519cc6b65d2037b1e1e0da35"
+  }
+}
