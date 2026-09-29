@@ -1,0 +1,2762 @@
+{
+  "testedAt": "2026-09-29T00:53:01.478Z",
+  "environment": "v24.19.0",
+  "scope": "Node rules/content/migration tests; no browser or device claim",
+  "results": [
+    {
+      "name": "90 independently selectable missions, stable IDs and isolated initial state",
+      "status": "PASS"
+    },
+    {
+      "name": "Original six configurations and 8,192 cargo acceptance/rejection cases match the unchanged engine",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: independent cargo BFS finds a legal solution within its voyage limit",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: circuit starts unsolved; a rotation-reachable solution independently powers every target",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: independent robot interpreter verifies the authored loop plan and optional block target",
+      "status": "PASS"
+    },
+    {
+      "name": "New cargo precedence, deck slots, priority and trip budget reject without time pressure",
+      "status": "PASS"
+    },
+    {
+      "name": "All displayed cargo hint plans satisfy the independently authored constraints",
+      "status": "PASS"
+    },
+    {
+      "name": "Legacy migration preserves original six mission states without mutating the input",
+      "status": "PASS"
+    },
+    {
+      "name": "All 90 completed states survive JSON roundtrip; clearing one mission leaves the other 89 intact",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed/future saves are preserved and cannot silently overwrite valid legacy progress",
+      "status": "PASS"
+    },
+    {
+      "name": "Fixed circuit pieces and impossible cargo histories cannot be loaded",
+      "status": "PASS"
+    },
+    {
+      "name": "All original 18 configurations are byte-equivalent to the released fixture",
+      "status": "PASS"
+    },
+    {
+      "name": "Every workshop has 30 distinct puzzles, all shapes valid and witnesses within editor limits",
+      "status": "PASS"
+    },
+    {
+      "name": "Completed v5 progress expands to all 90 missions without changing or aliasing the old save",
+      "status": "PASS"
+    },
+    {
+      "name": "In-progress v5 boards and programs migrate; new current save wins; invalid prior saves are protected",
+      "status": "PASS"
+    }
+  ],
+  "solutions": {
+    "explorer": {
+      "cargo": [
+        [
+          0,
+          3,
+          4
+        ],
+        [
+          1,
+          2,
+          5
+        ]
+      ],
+      "power": [
+        6,
+        12,
+        6,
+        8,
+        5,
+        0,
+        5,
+        0,
+        2,
+        10,
+        9,
+        0,
+        3,
+        10,
+        0,
+        9
+      ],
+      "robot": {
+        "main": [
+          "F",
+          "F",
+          "L",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [],
+        "repeat": 2
+      }
+    },
+    "harbor": {
+      "cargo": [
+        [
+          0,
+          3,
+          4
+        ],
+        [
+          1,
+          2,
+          5
+        ]
+      ],
+      "power": [
+        6,
+        10,
+        10,
+        8,
+        5,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3
+      ],
+      "robot": {
+        "main": [
+          "F",
+          "F",
+          "P",
+          "L",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [],
+        "repeat": 2
+      }
+    },
+    "cove": {
+      "cargo": [
+        [
+          0
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "power": [
+        0,
+        6,
+        10,
+        8,
+        6,
+        9,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        12,
+        0,
+        0,
+        10
+      ],
+      "robot": {
+        "main": [
+          "F",
+          "F",
+          "L",
+          "F",
+          "P",
+          "R",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [],
+        "repeat": 2
+      }
+    },
+    "garden": {
+      "cargo": [
+        [
+          0
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "power": [
+        10,
+        6,
+        10,
+        8,
+        0,
+        5,
+        12,
+        0,
+        2,
+        9,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "robot": {
+        "main": [
+          "F",
+          "F",
+          "L",
+          "F",
+          "P",
+          "R",
+          "F",
+          "F",
+          "L",
+          "F",
+          "P"
+        ],
+        "body": [],
+        "repeat": 2
+      }
+    },
+    "quay": {
+      "cargo": [
+        [
+          0
+        ],
+        [
+          1,
+          2,
+          4
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        0,
+        6,
+        10,
+        8,
+        6,
+        9,
+        0,
+        0,
+        1,
+        0,
+        0,
+        6,
+        0,
+        0,
+        0,
+        0
+      ],
+      "robot": {
+        "main": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L",
+          "L",
+          "F",
+          "F",
+          "F",
+          "R",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [],
+        "repeat": 2
+      }
+    },
+    "engineer": {
+      "cargo": [
+        [
+          0
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "power": [
+        6,
+        10,
+        12,
+        0,
+        4,
+        0,
+        0,
+        6,
+        10,
+        9,
+        2,
+        10,
+        13,
+        5,
+        9,
+        0,
+        0,
+        3,
+        10,
+        12,
+        0,
+        0,
+        0,
+        3,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "I",
+          "F",
+          "F",
+          "P",
+          "R"
+        ],
+        "repeat": 2
+      }
+    },
+    "orchard": {
+      "cargo": [
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          4,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        12,
+        0,
+        10,
+        0,
+        4,
+        0,
+        6,
+        10,
+        10,
+        9,
+        2,
+        13,
+        0,
+        0,
+        0,
+        0,
+        3,
+        10,
+        10,
+        12,
+        0,
+        0,
+        0,
+        10,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "L",
+          "F",
+          "P",
+          "R"
+        ],
+        "repeat": 2
+      }
+    },
+    "canal": {
+      "cargo": [
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          4,
+          6,
+          7
+        ]
+      ],
+      "power": [
+        6,
+        10,
+        10,
+        10,
+        8,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        12,
+        0,
+        0,
+        10,
+        6,
+        3,
+        12,
+        5,
+        0,
+        6,
+        0,
+        3,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F"
+        ],
+        "body": [
+          "F",
+          "F",
+          "L",
+          "F",
+          "F",
+          "P",
+          "R"
+        ],
+        "repeat": 2
+      }
+    },
+    "cliff": {
+      "cargo": [
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4,
+          7
+        ],
+        [
+          2,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        6,
+        10,
+        10,
+        10,
+        8,
+        5,
+        0,
+        0,
+        0,
+        6,
+        5,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        10,
+        10,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "L",
+          "F",
+          "F",
+          "P",
+          "R"
+        ],
+        "repeat": 3
+      }
+    },
+    "bridge": {
+      "cargo": [
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          3,
+          7
+        ],
+        [
+          2,
+          4,
+          6
+        ]
+      ],
+      "power": [
+        0,
+        0,
+        0,
+        6,
+        8,
+        6,
+        10,
+        10,
+        9,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        10,
+        6,
+        0,
+        3,
+        10,
+        10,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "L",
+          "F",
+          "P",
+          "R"
+        ],
+        "repeat": 3
+      }
+    },
+    "tides": {
+      "cargo": [
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4,
+          7
+        ],
+        [
+          2,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        0,
+        6,
+        6,
+        10,
+        10,
+        8,
+        0,
+        10,
+        5,
+        0,
+        6,
+        8,
+        6,
+        9,
+        5,
+        0,
+        5,
+        0,
+        6,
+        10,
+        11,
+        10,
+        13,
+        0,
+        5,
+        6,
+        12,
+        0,
+        5,
+        0,
+        1,
+        3,
+        9,
+        0,
+        3,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F"
+        ],
+        "body": [
+          "F",
+          "F",
+          "L",
+          "F",
+          "F",
+          "P",
+          "R"
+        ],
+        "repeat": 3
+      }
+    },
+    "marsh": {
+      "cargo": [
+        [
+          0,
+          2,
+          7
+        ],
+        [
+          1,
+          4,
+          8
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        2,
+        12,
+        0,
+        6,
+        0,
+        4,
+        5,
+        3,
+        12,
+        0,
+        6,
+        9,
+        0,
+        6,
+        11,
+        10,
+        13,
+        0,
+        2,
+        9,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        12,
+        0,
+        0,
+        0,
+        0,
+        3,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "delta": {
+      "cargo": [
+        [
+          0,
+          2,
+          7
+        ],
+        [
+          1,
+          5,
+          8
+        ],
+        [
+          3,
+          4,
+          6
+        ]
+      ],
+      "power": [
+        2,
+        12,
+        0,
+        6,
+        10,
+        8,
+        6,
+        11,
+        10,
+        9,
+        0,
+        6,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        12,
+        5,
+        0,
+        0,
+        0,
+        0,
+        3,
+        10,
+        12,
+        0,
+        6,
+        0,
+        0,
+        0,
+        3,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 2
+      }
+    },
+    "grove": {
+      "cargo": [
+        [
+          0,
+          2,
+          7
+        ],
+        [
+          1,
+          4,
+          8
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        4,
+        0,
+        0,
+        6,
+        10,
+        8,
+        7,
+        10,
+        10,
+        9,
+        0,
+        0,
+        5,
+        12,
+        0,
+        5,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        10,
+        3,
+        12,
+        3,
+        3,
+        0,
+        0,
+        0,
+        3,
+        10,
+        10,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "F",
+          "P",
+          "L",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 2
+      }
+    },
+    "inlet": {
+      "cargo": [
+        [
+          0,
+          2,
+          7
+        ],
+        [
+          1,
+          4,
+          8
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        4,
+        5,
+        0,
+        0,
+        0,
+        4,
+        3,
+        12,
+        6,
+        6,
+        10,
+        9,
+        6,
+        11,
+        10,
+        9,
+        0,
+        12,
+        3,
+        12,
+        6,
+        0,
+        5,
+        5,
+        0,
+        3,
+        10,
+        10,
+        12,
+        0,
+        0,
+        0,
+        0,
+        5,
+        3,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "P",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "ridge": {
+      "cargo": [
+        [
+          0,
+          2,
+          7
+        ],
+        [
+          1,
+          4,
+          8
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "power": [
+        2,
+        10,
+        12,
+        0,
+        6,
+        8,
+        6,
+        10,
+        5,
+        0,
+        5,
+        0,
+        2,
+        10,
+        11,
+        10,
+        13,
+        0,
+        6,
+        9,
+        0,
+        12,
+        5,
+        5,
+        3,
+        10,
+        6,
+        10,
+        13,
+        9,
+        2,
+        10,
+        9,
+        0,
+        3,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "terrace": {
+      "cargo": [
+        [
+          0
+        ],
+        [
+          1,
+          2,
+          7
+        ],
+        [
+          4,
+          5,
+          8
+        ],
+        [
+          3,
+          6,
+          9
+        ]
+      ],
+      "power": [
+        4,
+        0,
+        0,
+        5,
+        6,
+        8,
+        3,
+        12,
+        6,
+        3,
+        5,
+        3,
+        6,
+        11,
+        10,
+        10,
+        9,
+        0,
+        5,
+        0,
+        5,
+        12,
+        0,
+        0,
+        7,
+        10,
+        12,
+        0,
+        0,
+        0,
+        1,
+        0,
+        3,
+        10,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F",
+          "R",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "ravine": {
+      "cargo": [
+        [
+          0
+        ],
+        [
+          1,
+          2,
+          7
+        ],
+        [
+          5,
+          6,
+          8
+        ],
+        [
+          3,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        2,
+        12,
+        0,
+        10,
+        6,
+        4,
+        0,
+        3,
+        12,
+        0,
+        0,
+        5,
+        0,
+        0,
+        5,
+        0,
+        6,
+        9,
+        6,
+        10,
+        11,
+        14,
+        9,
+        0,
+        5,
+        10,
+        0,
+        3,
+        12,
+        0,
+        1,
+        3,
+        6,
+        0,
+        3,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F",
+          "F",
+          "R",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "plateau": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          3,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        2,
+        12,
+        0,
+        0,
+        6,
+        8,
+        0,
+        7,
+        10,
+        10,
+        9,
+        12,
+        3,
+        5,
+        0,
+        0,
+        0,
+        0,
+        6,
+        9,
+        0,
+        0,
+        10,
+        0,
+        3,
+        14,
+        10,
+        10,
+        10,
+        12,
+        2,
+        9,
+        0,
+        0,
+        0,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F",
+          "R",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "P",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "waterfall": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          2,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        6,
+        10,
+        10,
+        10,
+        10,
+        8,
+        5,
+        0,
+        0,
+        12,
+        0,
+        0,
+        5,
+        0,
+        6,
+        0,
+        0,
+        10,
+        5,
+        6,
+        0,
+        5,
+        0,
+        5,
+        5,
+        12,
+        3,
+        3,
+        0,
+        3,
+        3,
+        10,
+        10,
+        10,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F",
+          "F",
+          "R",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "beacon": {
+      "cargo": [
+        [
+          0,
+          4,
+          7
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          3,
+          5,
+          9
+        ]
+      ],
+      "power": [
+        4,
+        0,
+        6,
+        10,
+        10,
+        10,
+        8,
+        5,
+        6,
+        5,
+        10,
+        12,
+        0,
+        0,
+        3,
+        10,
+        13,
+        0,
+        6,
+        10,
+        8,
+        6,
+        9,
+        5,
+        0,
+        5,
+        5,
+        0,
+        6,
+        10,
+        11,
+        10,
+        13,
+        0,
+        0,
+        5,
+        6,
+        12,
+        0,
+        5,
+        0,
+        0,
+        1,
+        3,
+        9,
+        0,
+        3,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "L",
+          "F",
+          "F",
+          "F",
+          "R",
+          "F",
+          "F",
+          "F"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "observatory": {
+      "cargo": [
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          2,
+          7
+        ],
+        [
+          4,
+          6,
+          8
+        ],
+        [
+          3,
+          9,
+          10
+        ]
+      ],
+      "power": [
+        2,
+        12,
+        0,
+        6,
+        10,
+        10,
+        8,
+        5,
+        7,
+        10,
+        9,
+        0,
+        5,
+        0,
+        6,
+        9,
+        0,
+        0,
+        10,
+        0,
+        6,
+        5,
+        0,
+        5,
+        0,
+        3,
+        6,
+        0,
+        3,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0,
+        6,
+        11,
+        10,
+        12,
+        5,
+        12,
+        0,
+        1,
+        0,
+        10,
+        3,
+        10,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "estuary": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          6,
+          10
+        ],
+        [
+          2,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        4,
+        6,
+        10,
+        10,
+        10,
+        10,
+        8,
+        7,
+        9,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        12,
+        6,
+        0,
+        12,
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        7,
+        10,
+        12,
+        6,
+        0,
+        10,
+        3,
+        5,
+        0,
+        5,
+        6,
+        12,
+        6,
+        5,
+        1,
+        0,
+        3,
+        9,
+        3,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "lighthouse": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          6,
+          10
+        ],
+        [
+          2,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        2,
+        12,
+        10,
+        6,
+        10,
+        10,
+        8,
+        0,
+        5,
+        0,
+        5,
+        10,
+        10,
+        0,
+        6,
+        5,
+        0,
+        5,
+        6,
+        3,
+        0,
+        6,
+        11,
+        10,
+        9,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7,
+        10,
+        10,
+        10,
+        10,
+        12,
+        0,
+        1,
+        10,
+        0,
+        0,
+        10,
+        3,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 2
+      }
+    },
+    "reservoir": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          6,
+          10
+        ],
+        [
+          2,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        4,
+        0,
+        0,
+        10,
+        6,
+        10,
+        8,
+        5,
+        5,
+        0,
+        12,
+        5,
+        0,
+        0,
+        5,
+        0,
+        0,
+        6,
+        9,
+        12,
+        0,
+        7,
+        10,
+        10,
+        9,
+        5,
+        6,
+        0,
+        7,
+        12,
+        6,
+        0,
+        0,
+        0,
+        12,
+        5,
+        5,
+        0,
+        0,
+        0,
+        0,
+        10,
+        1,
+        3,
+        10,
+        10,
+        10,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q",
+          "L",
+          "F",
+          "R",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "summit": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          2,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        2,
+        10,
+        12,
+        0,
+        6,
+        10,
+        8,
+        6,
+        12,
+        5,
+        5,
+        5,
+        6,
+        12,
+        3,
+        9,
+        7,
+        10,
+        13,
+        3,
+        9,
+        2,
+        10,
+        11,
+        10,
+        13,
+        0,
+        0,
+        6,
+        10,
+        12,
+        0,
+        5,
+        0,
+        0,
+        6,
+        10,
+        10,
+        10,
+        13,
+        0,
+        0,
+        1,
+        6,
+        9,
+        5,
+        3,
+        10,
+        8
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q",
+          "L",
+          "F",
+          "F",
+          "F",
+          "F"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "citadel": {
+      "cargo": [
+        [
+          5
+        ],
+        [
+          0,
+          2,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          6,
+          10
+        ],
+        [
+          4,
+          9,
+          11
+        ]
+      ],
+      "power": [
+        4,
+        5,
+        0,
+        10,
+        6,
+        10,
+        12,
+        4,
+        5,
+        6,
+        0,
+        0,
+        0,
+        5,
+        0,
+        5,
+        5,
+        10,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        5,
+        5,
+        3,
+        12,
+        6,
+        10,
+        10,
+        13,
+        7,
+        10,
+        10,
+        10,
+        9,
+        3,
+        0,
+        1,
+        7,
+        10,
+        12,
+        6,
+        0,
+        0,
+        3,
+        3,
+        5,
+        5,
+        3,
+        10,
+        10,
+        10,
+        10,
+        12,
+        1,
+        10,
+        0,
+        10,
+        0,
+        12,
+        10,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q",
+          "L",
+          "F",
+          "F",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 4
+      }
+    },
+    "aurora": {
+      "cargo": [
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          7
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          3,
+          6,
+          10
+        ],
+        [
+          4,
+          9,
+          11
+        ]
+      ],
+      "power": [
+        2,
+        12,
+        3,
+        0,
+        0,
+        12,
+        5,
+        4,
+        6,
+        9,
+        0,
+        5,
+        6,
+        0,
+        12,
+        5,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12,
+        5,
+        5,
+        3,
+        6,
+        0,
+        12,
+        12,
+        6,
+        9,
+        7,
+        10,
+        10,
+        12,
+        0,
+        12,
+        7,
+        8,
+        5,
+        0,
+        0,
+        3,
+        10,
+        14,
+        9,
+        0,
+        5,
+        0,
+        3,
+        0,
+        3,
+        3,
+        10,
+        12,
+        1,
+        0,
+        12,
+        5,
+        6,
+        0,
+        0,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q"
+        ],
+        "body": [
+          "F",
+          "F",
+          "P",
+          "F",
+          "F",
+          "F",
+          "P",
+          "I"
+        ],
+        "repeat": 4
+      }
+    },
+    "horizon": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          8
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          6,
+          11
+        ],
+        [
+          4,
+          9,
+          10
+        ]
+      ],
+      "power": [
+        2,
+        12,
+        0,
+        0,
+        6,
+        10,
+        10,
+        8,
+        6,
+        9,
+        0,
+        6,
+        9,
+        10,
+        0,
+        5,
+        5,
+        5,
+        6,
+        9,
+        0,
+        6,
+        3,
+        0,
+        5,
+        10,
+        5,
+        0,
+        3,
+        0,
+        3,
+        10,
+        7,
+        10,
+        9,
+        0,
+        12,
+        6,
+        10,
+        8,
+        3,
+        14,
+        10,
+        14,
+        10,
+        9,
+        0,
+        10,
+        0,
+        5,
+        0,
+        3,
+        10,
+        10,
+        10,
+        12,
+        2,
+        9,
+        10,
+        6,
+        6,
+        10,
+        12,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q",
+          "L",
+          "F",
+          "R",
+          "F",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "F",
+          "P",
+          "L",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 2
+      }
+    },
+    "islandheart": {
+      "cargo": [
+        [
+          0,
+          5,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          3,
+          11
+        ],
+        [
+          6,
+          10
+        ],
+        [
+          2,
+          4,
+          9
+        ]
+      ],
+      "power": [
+        4,
+        0,
+        10,
+        0,
+        10,
+        6,
+        3,
+        4,
+        5,
+        3,
+        3,
+        0,
+        6,
+        10,
+        10,
+        9,
+        7,
+        10,
+        10,
+        10,
+        9,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        12,
+        0,
+        0,
+        5,
+        0,
+        7,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        8,
+        7,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        12,
+        5,
+        0,
+        0,
+        6,
+        0,
+        3,
+        6,
+        5,
+        1,
+        0,
+        0,
+        10,
+        0,
+        0,
+        0,
+        1
+      ],
+      "robot": {
+        "main": [
+          "Q",
+          "F",
+          "F",
+          "F",
+          "F",
+          "Q",
+          "L",
+          "F",
+          "F",
+          "R",
+          "F",
+          "P"
+        ],
+        "body": [
+          "F",
+          "F",
+          "P",
+          "L",
+          "F",
+          "F",
+          "F",
+          "P",
+          "L"
+        ],
+        "repeat": 2
+      }
+    }
+  },
+  "hashes": {
+    "storm-content.js": "c365196635779a47daa665f781285a1beca2ed23472f3309d92a9b338e3b4d1c",
+    "index.html": "cc0386422307fe62cc534f9844f43fa40f0306c23062b2c1b00dd7c912084051",
+    "storm-engine.js": "9b14dfecebe69b62c0dd3b7a6a6a43e6f197908b5ec248ecc8bd2026e5658871",
+    "storm-levels.js": "c794996b6ba088f0ad1a3e16d44e7a6bbd3db15423cbef30f33b7f98374efef6",
+    "storm-save.js": "e0e9eb68711a18bef344fbe1e56c45eabcd0c93252fdfdda5ced42cb51c25e78",
+    "storm-app.js": "666f767567b49c2a86cf36289a22a334acdc1149a031f3ce8e9bf01f205b3b0f",
+    "storm.css": "a6d9ffacf25a5f4ce8cdfb2b44cfd38802af1bc9de5789e92afde77371c9ceea",
+    "storm-visual.js": "dacea50925caa03d219d969efc0bd2f45c219410c7cadbd5c099e8831cbc4ce9",
+    "storm-visual.css": "3458924a2c848f7d26f7326d1879c255857e0d46519cc6b65d2037b1e1e0da35"
+  }
+}

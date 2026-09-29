@@ -7,7 +7,7 @@ import json,os
 from datetime import datetime,timezone
 from playwright.sync_api import sync_playwright,expect
 ROOT=Path(__file__).resolve().parents[1]
-OUTPUT=ROOT/'artifacts'/'web-v5-legacy'
+OUTPUT=ROOT/'artifacts'/'web-v6-legacy'
 OUTPUT.mkdir(parents=True,exist_ok=True)
 import re
 html=(ROOT/'index.html').read_text()
@@ -20,7 +20,7 @@ def load(b,width=390,store=None,denied=False):
  page=ctx.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
  if denied:page.evaluate("Object.defineProperty(window,'localStorage',{configurable:true,get(){throw new Error('Storage unavailable')}})")
  else:page.evaluate("""data=>{window.testStore={...data};Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem(k){return window.testStore[k]??null},setItem(k,v){window.testStore[k]=String(v)}}})}""",store or {})
- page.set_content(html,wait_until='load');return ctx,page
+ page.set_content(html,wait_until='load');page.locator('[data-action="mode"][data-value="engineer"]').click();return ctx,page
 
 def click(p,a,v=None):
  q=f'[data-action="{a}"]'+(f'[data-value="{v}"]' if v is not None else '')
@@ -106,7 +106,7 @@ with sync_playwright() as pw:
   # Storage errors must not prevent interaction.
   ctx,p=load(b,denied=True);click(p,'nav','cargo');voyage(p,[0,3],1);click(p,'nav','parents');expect(p.locator('#view')).to_contain_text('storage is unavailable');rec('Storage denied: game works with explicit non-persistence notice');ctx.close()
   for stored in [{'questly-storm-v3':'not json'},{'questly-storm-v3':'{"version":3,"lang":"en","mode":"engineer","campaigns":{}}'}]:
-   ctx,p=load(b,store=stored);assert state(p)['version']==5;click(p,'nav','robot');nooverflow(p);assert p.evaluate('window.testStore["questly-storm-v3"]')==stored['questly-storm-v3'];ctx.close()
+   ctx,p=load(b,store=stored);assert state(p)['version']==6;click(p,'nav','robot');nooverflow(p);assert p.evaluate('window.testStore["questly-storm-v3"]')==stored['questly-storm-v3'];ctx.close()
   rec('Malformed and structurally invalid legacy saves are preserved while a separate new game works')
   ctx,p=load(b,320)
   for stage in ['cargo','power','robot','parents','map']:click(p,'nav',stage);nooverflow(p)

@@ -1,0 +1,5 @@
+PASS Final catalog order matches the published source; new players begin on level one
+PASS en: all 90 mission screens expose three readable hints without missing art or horizontal page overflow
+PASS zh: all 90 mission screens expose three readable hints without missing art or horizontal page overflow
+PASS Synthetic completed-save navigation: all 87 next-level links cross chapters correctly; all three finales return to the map
+PASS No uncaught errors in final-file chapter/hint/navigation audit

@@ -1,0 +1,434 @@
+{
+  "testedAt": "2026-09-29T00:58:35.204Z",
+  "scope": "Sandboxed desktop Chrome via HTTP, real-origin storage and real process relaunch; CSS viewports are not physical iPhone/iPad evidence",
+  "results": [
+    {
+      "name": "HTTP home presents all 90 mission entries in six chapters with a direct library shortcut on phone",
+      "status": "PASS"
+    },
+    {
+      "name": "Six ordered chapters each expose five missions per workshop, all freely selectable",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "explorer: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "harbor: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "cove: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "garden: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "quay: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "engineer: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "orchard: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "canal: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "cliff: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "bridge: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "tides: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "marsh: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "delta: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "grove: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "inlet: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "ridge: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "terrace: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "ravine: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "plateau: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "waterfall: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "beacon: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "observatory: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "estuary: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "lighthouse: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "reservoir: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "citadel: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "aurora: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "horizon: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "islandheart: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: cargo completed using real buttons",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: circuit completed by rotating real tiles",
+      "status": "PASS"
+    },
+    {
+      "name": "summit: robot program built and run through real controls",
+      "status": "PASS"
+    },
+    {
+      "name": "Undo and mission selector isolate progress between challenges",
+      "status": "PASS"
+    },
+    {
+      "name": "Real localStorage restores all mission histories and language after HTTP reload",
+      "status": "PASS"
+    },
+    {
+      "name": "Entire Chrome process closes/reopens with real-origin saved selection, mission and Chinese intact",
+      "status": "PASS"
+    },
+    {
+      "name": "Original v3 storage migrates without altering its bytes; new mission actions preserve legacy progress",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed current save is visibly protected and never overwritten during session play",
+      "status": "PASS"
+    },
+    {
+      "name": "Released v5 save preserves all 18 completions byte-for-byte while a new mission survives reload",
+      "status": "PASS"
+    },
+    {
+      "name": "Changing a mission cancels pending voyage; robot Stop cancels the runner",
+      "status": "PASS"
+    },
+    {
+      "name": "320px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default",
+      "status": "PASS"
+    },
+    {
+      "name": "390px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default",
+      "status": "PASS"
+    },
+    {
+      "name": "768px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default",
+      "status": "PASS"
+    },
+    {
+      "name": "No uncaught page errors across exercised HTTP flows",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "hashes": {
+    "storm-content.js": "c365196635779a47daa665f781285a1beca2ed23472f3309d92a9b338e3b4d1c",
+    "index.html": "cc0386422307fe62cc534f9844f43fa40f0306c23062b2c1b00dd7c912084051",
+    "storm-engine.js": "9b14dfecebe69b62c0dd3b7a6a6a43e6f197908b5ec248ecc8bd2026e5658871",
+    "storm-levels.js": "c794996b6ba088f0ad1a3e16d44e7a6bbd3db15423cbef30f33b7f98374efef6",
+    "storm-save.js": "e0e9eb68711a18bef344fbe1e56c45eabcd0c93252fdfdda5ced42cb51c25e78",
+    "storm-app.js": "666f767567b49c2a86cf36289a22a334acdc1149a031f3ce8e9bf01f205b3b0f",
+    "storm.css": "a6d9ffacf25a5f4ce8cdfb2b44cfd38802af1bc9de5789e92afde77371c9ceea",
+    "storm-visual.js": "dacea50925caa03d219d969efc0bd2f45c219410c7cadbd5c099e8831cbc4ce9",
+    "storm-visual.css": "3458924a2c848f7d26f7326d1879c255857e0d46519cc6b65d2037b1e1e0da35"
+  }
+}
