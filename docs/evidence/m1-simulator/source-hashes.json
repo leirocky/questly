@@ -1,0 +1,14 @@
+{
+  "apps/ios/Questly/Art.swift": "4ad561334b98201e90572adc40d1d039dbff3fab6410aed32c78c1f058cf717a",
+  "apps/ios/Questly/GameModel.swift": "6d6a379072c8ea51d7ebf86554b0ff25c7eb90a6a774392fe355ff7f99b5988e",
+  "apps/ios/Questly/QuestlyApp.swift": "bfd7017801b04b26206c1f2f33372994181589493dec587cc176a3272f392faf",
+  "apps/ios/Questly/QuestlyView.swift": "32162ddbe8b9eaa50b4de6377786fdd05e62b9ba6e8cf68f03bdfa11c76c63fb",
+  "apps/ios/Questly/Scenes.swift": "4956f34756acb0fba34a9da709cb795e09f29e1c2111a380c565230dab29c760",
+  "apps/ios/Questly/Info.plist": "6cfbbf427a6b62a43d9128e6723df5e26c5b0e3b3903f6f5816dae93fec0157b",
+  "apps/ios/Questly.xcodeproj/project.pbxproj": "5beb219d77b873732a972bf77ee6f4842e93f9778bca2b678b2f9d3a27db21ca",
+  "apps/ios/QuestlyUITests/QuestlyUITests.swift": "5189a9f340059f94679d1c23b0443719791962269ff89cecf443c7755882b614",
+  "packages/QuestCore/Sources/QuestSaveProbe/main.swift": "8d7e72a97e4f0fdc9f1f901809ac53b348a346a4683a26fa76caae9a9e873385",
+  "packages/QuestCore/Sources/QuestCore/Cargo.swift": "06408d3650ddfc46d18402318f79052bf6093cdc79bba8dad79318599f9e3977",
+  "packages/QuestCore/Sources/QuestCore/SaveStore.swift": "f59671b10026589f71433f16c15755fbb7407c6b2e9cc967833b36fbe75b9277",
+  "packages/QuestCore/Sources/QuestCore/Progress.swift": "5ad5a26eeea9712d3e54cd275b76871cde6e2222f28958e41b42a35250035074"
+}

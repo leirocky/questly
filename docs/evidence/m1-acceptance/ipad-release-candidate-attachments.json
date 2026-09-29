@@ -1,0 +1,125 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "07E960DF-A0F1-42B1-BB9B-34ABE99C9FBB.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "accessibility-cargo_0_2989C5B0-8FF4-4B9E-BADA-17630B412A01.png",
+        "timestamp" : 1790545985.284
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testAccessibilityAuditIslandAndCargo()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testAccessibilityAuditIslandAndCargo"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "DDF9D053-0EBB-4ACA-A81C-41E6E47A2368.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "cargo-engineer-complete-en_0_1FBD7A38-32A0-44A6-BEA1-9258111B9B8F.png",
+        "timestamp" : 1790546015.568
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "09EAD2F8-4139-4DA8-9FDD-E9F3684B66B5.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "island-en_0_A5A02F6A-7C31-4E83-9D37-A8A82E56BB68.png",
+        "timestamp" : 1790545990.769
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testEngineerRulesCompletionUndoAndRelaunch()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testEngineerRulesCompletionUndoAndRelaunch"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "A8360B97-DEF3-44D7-A589-275B23F13D7E.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-cargo-card-zh-landscape_0_94ECCE53-7273-4EE1-BED4-68DE2D03A14D.png",
+        "timestamp" : 1790546063.413
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "994454BE-1675-4CDF-8FCA-9A2CC7EBFFED.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-cargo-header-zh-landscape_0_37A44C04-13EA-431A-B079-2BA48E8B624B.png",
+        "timestamp" : 1790546060.069
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "A6C1819A-35B5-46CA-B346-FA0DAE269405.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-island-zh-landscape_0_2C43F0A8-862A-4377-A79A-6E73B71F3B95.png",
+        "timestamp" : 1790546056.805
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "946A0A82-A3CA-4AED-AF92-08023F65C3FA.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-cargo-card-en-landscape_0_01803B79-4967-456E-B86F-3A6BB025E64A.png",
+        "timestamp" : 1790546046.543
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "B58EF3DE-C422-48E4-86D1-7811FC3231DA.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-cargo-header-en-landscape_0_CD01287D-F9ED-421C-82CB-D1B2E5793CA0.png",
+        "timestamp" : 1790546043.42
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "F771A2A5-D14B-46D4-828A-DB790303206A.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-island-en-landscape_0_BEEC6E03-0B86-4BF7-9697-7460792C79D1.png",
+        "timestamp" : 1790546040.12
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testLandscapeFullScreenPresentation()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testLandscapeFullScreenPresentation"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "B16E6F34-4E01-4B66-92EF-00B9D4BB52C0.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "island-restored-zh_0_4232317A-D545-47B9-A8FD-9DC39C6BEEC9.png",
+        "timestamp" : 1790546109.977
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "CDD71AB5-2ED6-4C76-B1AE-B1DA767CAE41",
+        "deviceName" : "iPad Pro 11-inch (M5)",
+        "exportedFileName" : "283D648C-9FC5-4321-A607-008E5A9DAAEF.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "cargo-zh_0_D9614C15-C4E1-490F-8E62-E9893038684A.png",
+        "timestamp" : 1790546093.859
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testProfilesModesChineseMotionAndBackground()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testProfilesModesChineseMotionAndBackground"
+  }
+]

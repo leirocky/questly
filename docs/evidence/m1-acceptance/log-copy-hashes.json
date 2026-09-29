@@ -1,0 +1,102 @@
+[
+  {
+    "path": "docs/evidence/m1-acceptance/audit-final.log",
+    "originalSHA256": "dde7eeed3c839284ab510db16c7c64b0952b3532e10cf303744b05cf33e31690",
+    "committedSHA256": "badc314195b522b6923924d25bd6448a5bd63c591b706a62d08c7e8654efec76"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/phone-motion.log",
+    "originalSHA256": "f5c277703557265ce95d1d5f516e86eda83699338eba069ded7e30e523f48b22",
+    "committedSHA256": "b6bbe46974f207de5f89cf9645a2b03b034a88b80c57eb3ba03c7a3d2b1f5c73"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/build-for-testing.log",
+    "originalSHA256": "5599f0ce1e3a50ff9b7d09d0013e2e50d5f6b207926f5ebcc381a9036e549020",
+    "committedSHA256": "5a14370821fb142009fcc3289d159039dc916ca04abaecf45c8c1c9e58d8c606"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/sigkill.log",
+    "originalSHA256": "668c778b1ace39604931f45fb9ea77942445d9ec2963258140a7572d8a293f9d",
+    "committedSHA256": "b968a62504494f77a743191ed753e7c7e966673c2f79ec1083fdf2e85ba1827d"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/test-harness-build.log",
+    "originalSHA256": "5ede3c11d51496c1ce3f3f2243aee61945b8f34376f6e725bef096662bba80b7",
+    "committedSHA256": "212924681750c28c5bf92f3f1842e6eafd834d7caf117cf983ee00bf7ea53cd5"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/motion-accepted.log",
+    "originalSHA256": "94c31e83ed08e6b24e73130a93562c207adbb6ae01eb0d8ac938208c8553313f",
+    "committedSHA256": "bd318cdafa263e197c8137ae8e5a67f707ab7d8ff35202760127541ba41768a0"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/ipad-final.log",
+    "originalSHA256": "a4431959cdc8e47f751e3b5d1bc8ea63557afa3934324eaad1d8d4d69ae45708",
+    "committedSHA256": "e647c8a07756972cb9017b464ce351d30128b5901a9aa3dbecc3ab02e8178416"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/large-accepted.log",
+    "originalSHA256": "77fb7df3ec4a1c355dcf994606e72221def4838a0580eb6926ec9b980cbbaeb5",
+    "committedSHA256": "efc0c9058e29ef0b14a5b6962d6c28f0a852cc137b31ef0614c1f481b928487a"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/motion-final.log",
+    "originalSHA256": "d2a67109d6584d17aad3597d96944dffd2c48f0275b42d3d4c4f9aedfd957e01",
+    "committedSHA256": "4fa5112c9a77865f6902869459eaac77363ac438d164b6bebc3d07125e8dc1d9"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/landscape-verified.log",
+    "originalSHA256": "527c8b05cefcf5d5d22433b03a3547ea3b3be1b0e1102f964b307c5f350e7495",
+    "committedSHA256": "de4d9872012dc29b20e2af564768e1ceee311d7d461c2a1b7bbaac43a5c52fa7"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/motion-verified.log",
+    "originalSHA256": "064696761d3ba9cd755413e467169ddfe18f83f4ae15cb99501a232c5472d403",
+    "committedSHA256": "867f818a265d45cc16c998f580c8beed2f3f7b0788f109865bb7f72dad4efd6f"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/landscape-fullscreen-failed.log",
+    "originalSHA256": "af064a44488b74916f9943a57bc10616420db8fd0cdb1c8c84e893e19162b645",
+    "committedSHA256": "e284e7dd97dad2730367686d32be2e273ed1a058072fa539c712b8d3b34f1abd"
+  },
+  {
+    "path": "docs/evidence/m1-acceptance/ipad-release-candidate.log",
+    "originalSHA256": "8496f1d34f12b307c95cf9e2c4dc16d96c3d9e607067768a47af2e1308a795dc",
+    "committedSHA256": "137c63d7eda211ea8abe255ce634ebee123eb4008b501e1ca453315f87ac8fa8"
+  },
+  {
+    "path": "docs/evidence/m1-qe/app-tests-build.log",
+    "originalSHA256": "679274c3b136ddecef62673928203818fea82228c5fd2650c48a66bc87bca01c",
+    "committedSHA256": "40351c6c9a1d8ac33703b6acfd0cfb8f4aea5c71768dafe10105584815b20d82"
+  },
+  {
+    "path": "docs/evidence/m1-qe/process-crash.log",
+    "originalSHA256": "8240bc3f824a96017a00953d4d3661ebb88cf4aa675b17e9f1fe7a192df032ea",
+    "committedSHA256": "8240bc3f824a96017a00953d4d3661ebb88cf4aa675b17e9f1fe7a192df032ea"
+  },
+  {
+    "path": "docs/evidence/m1-qe/fixture-contract.log",
+    "originalSHA256": "cb770a36b666b3d9978e4d504a4054da20d484209b7e7764b8c0da431e346bd7",
+    "committedSHA256": "cb770a36b666b3d9978e4d504a4054da20d484209b7e7764b8c0da431e346bd7"
+  },
+  {
+    "path": "docs/evidence/m1-qe/swift-tests.log",
+    "originalSHA256": "aa418d97c6452f438baad4eb504a7f41d5e03518b703d4fd5fd7673cdd0c80ea",
+    "committedSHA256": "aa418d97c6452f438baad4eb504a7f41d5e03518b703d4fd5fd7673cdd0c80ea"
+  },
+  {
+    "path": "docs/evidence/m1-qe/ipad-final.log",
+    "originalSHA256": "a4431959cdc8e47f751e3b5d1bc8ea63557afa3934324eaad1d8d4d69ae45708",
+    "committedSHA256": "e647c8a07756972cb9017b464ce351d30128b5901a9aa3dbecc3ab02e8178416"
+  },
+  {
+    "path": "docs/evidence/m1-qe/ipad-release-candidate.log",
+    "originalSHA256": "8496f1d34f12b307c95cf9e2c4dc16d96c3d9e607067768a47af2e1308a795dc",
+    "committedSHA256": "137c63d7eda211ea8abe255ce634ebee123eb4008b501e1ca453315f87ac8fa8"
+  },
+  {
+    "path": "docs/evidence/m1-qe/reference-engine.log",
+    "originalSHA256": "a1dbf70efe72a68ef6ec2a72941f268e6f1ccd66e768b6463c5588606be5c329",
+    "committedSHA256": "a1dbf70efe72a68ef6ec2a72941f268e6f1ccd66e768b6463c5588606be5c329"
+  }
+]

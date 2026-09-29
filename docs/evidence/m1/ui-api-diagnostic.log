@@ -1,0 +1,1 @@
+PASS limited macOS shared-API diagnostic. UIKit-specific parts were adapted/omitted; iOS build remains UNVERIFIED.

@@ -1,0 +1,6 @@
+PUBLIC TEST-RESULT EXCERPT
+Verbose compiler/UI traces and machine paths are omitted. Original evidence is retained locally.
+
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project apps/ios/Questly.xcodeproj -scheme Questly -configuration Debug -destination "platform=iOS Simulator,id=E9A37872-E9CD-4990-89F2-E9AD3D34C11B" -derivedDataPath artifacts/m1-qe/MotionBuild CODE_SIGNING_ALLOWED=NO build-for-testing
+** TEST BUILD SUCCEEDED **

@@ -1,0 +1,62 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "4FB30B06-CAB0-460F-A1AE-E5EC8ACF069A.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-cargo-card-zh-landscape_0_12B4437C-C25C-45D7-B7E1-C37391EC412B.png",
+        "timestamp" : 1790546339.513
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "A456E201-45C9-408B-B996-8E111A495DC3.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-cargo-header-zh-landscape_0_24BCEEB7-9F3A-4580-9D35-84BAE515DAF1.png",
+        "timestamp" : 1790546333.271
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "67E71A9A-3622-4B01-BA61-D2DADD53FCC1.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-island-zh-landscape_0_369E2EB6-B190-4EEA-AA9B-26E9F90DDA58.png",
+        "timestamp" : 1790546329.4
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "35530E1A-C1E5-4456-A77C-6B70247545F5.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-cargo-card-en-landscape_0_ABFE663E-7CBF-4CFA-B249-45636EFC63BF.png",
+        "timestamp" : 1790546302.055
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "CD50BCCB-FF8D-4C7F-BD3F-28053603B5D9.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-cargo-header-en-landscape_0_4D06D68E-4650-4F86-82DF-C9AE5756BB39.png",
+        "timestamp" : 1790546295.815
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "E9A37872-E9CD-4990-89F2-E9AD3D34C11B",
+        "deviceName" : "Questly-QE-iPhone",
+        "exportedFileName" : "01047291-E04D-411E-88DE-E7C634ECBC1C.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "fullscreen-island-en-landscape_0_0699ADCE-1539-4F9F-94D9-EA0575ECAF64.png",
+        "timestamp" : 1790546290.568
+      }
+    ],
+    "testIdentifier" : "QuestlyUITests/testLandscapeFullScreenPresentation()",
+    "testIdentifierURL" : "test://com.apple.xcode/Questly/QuestlyUITests/QuestlyUITests/testLandscapeFullScreenPresentation"
+  }
+]

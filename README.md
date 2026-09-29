@@ -4,7 +4,7 @@
 
 90 playable engineering missions: **30 cargo puzzles, 30 circuit puzzles and 30 robot programs**, arranged in six chapters from beginner to advanced. All previous 18 missions remain intact alongside 72 new missions. English/Chinese, optional motion and sound, and local progress are supported. This is a web prototype, not a finished App Store app or a validated learning assessment.
 
-Play at the public [GitHub Pages preview](https://leirocky.github.io/questly/). The owner authorized this web expansion and publication; the execution status records deployment verification. Native M1 work is separate on `production/ios-foundation`; this web branch contains no native app changes.
+Play at the public [GitHub Pages preview](https://leirocky.github.io/questly/). The owner authorized this web expansion and publication; the execution status records deployment verification. The same repository also contains the native SwiftUI/SpriteKit M1 in `apps/ios/`; the web and native apps have separate entry points and local saves.
 
 ### Play locally
 
@@ -57,3 +57,9 @@ The browser is launched with its sandbox enabled. No browser download is necessa
 [Level catalog and design notes](docs/WEB_CHALLENGES.md) describe all challenges and the validation approach. `storm-engine.js` is the unchanged original deterministic rules reference. `storm-content.js` contains deterministic static content produced by `node scripts/build-web-content.cjs` (use `--check` to verify reproducibility). `storm-levels.js` provides the ordered catalog and added cargo constraints. `storm-save.js` validates/migrates saves; `storm-app.js` implements interaction; `storm-visual.js` and its CSS decorate the UI. The static entry point and relative URLs remain at the repository root.
 
 No accounts, payments, advertising, analytics, cloud collection, AI service or validated adaptive curriculum. Parent notes show observed actions, not ability or mastery scores. The hosting provider still receives ordinary website requests. Native production decisions and milestones are documented in [the handoff](docs/PRODUCTION_HANDOFF.md).
+
+## Native M1 for iPad / iPhone
+
+The native island and cargo slice lives in [`apps/ios/`](apps/ios/README.md), with pure Swift rules/storage in `packages/QuestCore/`. Open `apps/ios/Questly.xcodeproj`, choose the Questly scheme and an installed simulator, and Run. No Apple account or signing team is needed for simulator builds.
+
+M1 includes two cargo difficulties, two independent local avatars, English/Chinese, durable versioned checkpoints and relaunch recovery. Native circuits, robot programming, purchases and App Store distribution are not implemented. The 90 web missions remain fully playable on [Pages](https://leirocky.github.io/questly/); they are not 90 native missions. Read [STATUS](docs/STATUS.md) for post-merge tests and remaining device/offline/accessibility gates.

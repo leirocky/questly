@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "supply-run-v1",
+  "items": [
+    {"id":0,"en":"Crane","zh":"起重机","weight":7,"symbol":"building.2.crop.circle"},
+    {"id":1,"en":"Beams","zh":"木梁","weight":6,"symbol":"shippingbox.fill"},
+    {"id":2,"en":"Battery","zh":"电池","weight":4,"symbol":"bolt.fill"},
+    {"id":3,"en":"Water","zh":"清水","weight":3,"symbol":"drop.fill"},
+    {"id":4,"en":"Seeds","zh":"种子","weight":2,"symbol":"leaf.fill"},
+    {"id":5,"en":"Medicine","zh":"药箱","weight":2,"symbol":"cross.case.fill"}
+  ],
+  "levels": [
+    {"mode":"explorer","capacity":12},
+    {"mode":"engineer","capacity":10,"maxTrips":3}
+  ]
+}
