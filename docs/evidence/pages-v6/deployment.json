@@ -1,0 +1,11 @@
+{
+  "pr": "https://github.com/leirocky/questly/pull/3",
+  "mergeCommit": "c089d15947226613b512b777ad8cc267301ed985",
+  "implementationSnapshot": "bca7adc9ca095fe7144bb024bbee45056717d0c1",
+  "testedTree": "d3e9082218f2091ead8c4878e73cfb05e0af586d",
+  "runId": 36506680188,
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/leirocky/questly/actions/runs/36506680188",
+  "site": "https://leirocky.github.io/questly/"
+}
