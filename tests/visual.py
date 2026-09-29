@@ -4,7 +4,7 @@ import json,re,os
 from datetime import datetime,timezone
 from playwright.sync_api import sync_playwright,expect
 R=Path(__file__).resolve().parents[1]
-OUTPUT=R/'artifacts'/'web-v5-legacy'
+OUTPUT=R/'artifacts'/'web-v6-legacy'
 OUTPUT.mkdir(parents=True,exist_ok=True)
 h=(R/'index.html').read_text()
 h=re.sub(r'<link rel="stylesheet" href="([^"?]+)(?:\?[^\"]*)?">',lambda m:'<style>'+(R/m.group(1)).read_text()+'</style>',h)
@@ -15,7 +15,7 @@ def boot(b,width=390,store=None,reduce=False):
  c=b.new_context(viewport={'width':width,'height':844},reduced_motion='reduce' if reduce else 'no-preference')
  p=c.new_page();p.on('pageerror',lambda e:errors.append(str(e)))
  p.evaluate("""d=>{window.testStore={...d};Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem(k){return testStore[k]??null},setItem(k,v){testStore[k]=String(v)}}});}""",store or {})
- p.set_content(h);p.wait_for_function("window.QuestVisual?.version==='0.5.0'");return c,p
+ p.set_content(h);p.locator('[data-action="mode"][data-value="engineer"]').click();p.wait_for_function("window.QuestVisual?.version==='0.6.0'");return c,p
 
 def nav(p,s):p.locator(f'[data-action="nav"][data-value="{s}"]').first.click()
 with sync_playwright() as pw:

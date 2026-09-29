@@ -1,0 +1,55 @@
+{
+  "tested_at_utc": "2026-09-29T00:51:18.326112+00:00",
+  "scope": "Sandboxed Chromium DOM tests; simulated storage; no real iPhone or live HTTPS navigation",
+  "results": [
+    {
+      "name": "Sound starts off; no AudioContext is created without opt-in",
+      "status": "PASS"
+    },
+    {
+      "name": "Repeated animation toggles do not duplicate artwork or modify campaign state",
+      "status": "PASS"
+    },
+    {
+      "name": "Sound control opts into local synthesis, then mutes; no external audio asset",
+      "status": "PASS"
+    },
+    {
+      "name": "Animation opt-out sets reduced mode without blocking interaction",
+      "status": "PASS"
+    },
+    {
+      "name": "Visual preferences restore from simulated storage; a voyage still completes with motion off",
+      "status": "PASS"
+    },
+    {
+      "name": "Power preview follows tested connectivity; toggles cannot duplicate station panels",
+      "status": "PASS"
+    },
+    {
+      "name": "System reduced-motion is respected; robot single-step remains functional",
+      "status": "PASS"
+    },
+    {
+      "name": "320px English and Chinese: all five screens fit without horizontal overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "390px English and Chinese: all five screens fit without horizontal overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "768px English and Chinese: all five screens fit without horizontal overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "1280px English and Chinese: all five screens fit without horizontal overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "No uncaught JavaScript errors during visual and accessibility checks",
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}

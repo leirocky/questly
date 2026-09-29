@@ -7,7 +7,7 @@ const crypto=require('node:crypto');
 const {chromium}=require('playwright');
 const E=require('../storm-engine.js'),L=require('../storm-levels.js'),S=require('../storm-save.js');
 const {searchCargo,robotPrograms}=require('./challenges.test.cjs');
-const root=path.resolve(__dirname,'..'),output=path.join(root,'artifacts/web-v5');
+const root=path.resolve(__dirname,'..'),output=path.join(root,'artifacts/web-v6');
 fs.mkdirSync(output,{recursive:true});
 const results=[],errors=[];
 const record=name=>{results.push({name,status:'PASS'});console.log('PASS',name);};
@@ -22,10 +22,10 @@ const server=http.createServer((request,response)=>{
 });
 const click=(p,action,value)=>p.locator(`[data-action="${action}"]${value===undefined?'':`[data-value="${value}"]`}`).first().click();
 const state=p=>p.evaluate(()=>QuestGame.getState());
-async function select(p,mode,stage){await click(p,'nav','map');await click(p,'level',mode+':'+stage);}
+async function select(p,mode,stage){await click(p,'nav','map');await click(p,'chapter',Math.floor(L.ids.indexOf(mode)/5));await click(p,'level',mode+':'+stage);}
 async function noOverflow(p){assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
 async function screen(p,name){await p.screenshot({path:path.join(output,name+'.png'),fullPage:true});}
-async function ready(p){await p.waitForFunction(()=>window.QuestVisual?.version==='0.5.0');}
+async function ready(p){await p.waitForFunction(()=>window.QuestVisual?.version==='0.6.0');}
 async function solveCargo(p,mode){
  await select(p,mode,'cargo');const trips=searchCargo(L.cargoConfig(mode));
  for(const [index,trip] of trips.entries()){
@@ -50,7 +50,7 @@ async function solveRobot(p,mode){
  if(code.body.length){await click(p,'editor','body');for(const op of code.body)await click(p,'add',op);}
  await click(p,'editor','main');for(const op of code.main)await click(p,'add',op);
  await p.selectOption('#repeat-count',String(code.repeat));
- await click(p,'runRobot');await p.waitForFunction(mode=>QuestGame.getState().campaigns[mode].robot.done,mode,{timeout:30000});
+ await click(p,'runRobot');await p.waitForFunction(mode=>QuestGame.getState().campaigns[mode].robot.done,mode,{timeout:60000});
  assert.equal((await state(p)).campaigns[mode].robot.best,E.codeSize(code.main,code.body));await noOverflow(p);
 }
 async function main(){
@@ -62,9 +62,11 @@ async function main(){
  try{
   const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true}),p=await context.newPage();attach(p);
   await p.goto(origin);await ready(p);
-  assert.equal(await p.locator('.mission-choice').count(),18);
+  assert.equal(await p.locator('.mission-choice').count(),90);
   await click(p,'library');assert.ok(await p.locator('#missions').evaluate(el=>Math.abs(el.getBoundingClientRect().top)<2));
-  await screen(p,'missions-en-390');record('HTTP home presents all 18 mission entries with a direct library shortcut on phone');
+  await screen(p,'missions-en-390');record('HTTP home presents all 90 mission entries in six chapters with a direct library shortcut on phone');
+  for(const chapter of [0,1,2,3,4,5]){await click(p,'chapter',chapter);assert.equal(await p.locator('.mission-choice:visible').count(),15);}
+  record('Six ordered chapters each expose five missions per workshop, all freely selectable');
   for(const mode of L.ids){
    await solveCargo(p,mode);record(`${mode}: cargo completed using real buttons`);
    await solvePower(p,mode);record(`${mode}: circuit completed by rotating real tiles`);
@@ -108,11 +110,22 @@ async function main(){
   record('Original v3 storage migrates without altering its bytes; new mission actions preserve legacy progress');
   for(const invalid of ['broken-json','null']){
    await legacyPage.goto(origin+'/storage-fixture');
-   await legacyPage.evaluate(text=>localStorage.setItem('questly-storm-v5',text),invalid);
+   await legacyPage.evaluate(text=>localStorage.setItem('questly-storm-v6',text),invalid);
    await legacyPage.goto(origin);await ready(legacyPage);await select(legacyPage,'tides','cargo');await click(legacyPage,'cargo',7);
-   assert.equal(await legacyPage.evaluate(()=>localStorage.getItem('questly-storm-v5')),invalid);
+   assert.equal(await legacyPage.evaluate(()=>localStorage.getItem('questly-storm-v6')),invalid);
   }
   record('Malformed current save is visibly protected and never overwritten during session play');
+  await legacyPage.goto(origin+'/storage-fixture');
+  const previousText=JSON.stringify(require('./fixtures/web-v5.json').save);
+  await legacyPage.evaluate(text=>{localStorage.clear();localStorage.setItem('questly-storm-v5',text);},previousText);
+  await legacyPage.goto(origin);await ready(legacyPage);
+  assert.equal((await state(legacyPage)).version,6);
+  for(const id of ['explorer','engineer','tides','ridge','beacon','summit'])for(const stage of ['cargo','power','robot'])assert.equal((await state(legacyPage)).campaigns[id][stage].done,true);
+  await select(legacyPage,'islandheart','cargo');await click(legacyPage,'cargo',0);
+  assert.equal(await legacyPage.evaluate(()=>localStorage.getItem('questly-storm-v5')),previousText);
+  await legacyPage.reload();await ready(legacyPage);assert.deepEqual((await state(legacyPage)).campaigns.islandheart.cargo.load,[0]);
+  assert.equal((await state(legacyPage)).campaigns.summit.robot.done,true);
+  record('Released v5 save preserves all 18 completions byte-for-byte while a new mission survives reload');
   await legacyContext.close();
   // In-flight cancellation must not complete in a different collection or after Stop.
   const cancelContext=await browser.newContext(),cancelPage=await cancelContext.newPage();attach(cancelPage);await cancelPage.goto(origin);await ready(cancelPage);
@@ -131,7 +144,7 @@ async function main(){
    for(const language of ['en','zh']){
     if(language==='zh')await click(view,'lang');
     for(const stage of ['map','cargo','power','robot','parents']){
-     if(stage==='map'||stage==='parents')await click(view,'nav',stage);else await select(view,'summit',stage);
+     if(stage==='map'||stage==='parents')await click(view,'nav',stage);else await select(view,stage==='power'?'islandheart':'summit',stage);
      await noOverflow(view);
      assert.equal(await view.locator('.q-toolbar').count(),1);
      if(stage==='power'){
@@ -140,13 +153,16 @@ async function main(){
      }
     }
    }
+   await select(view,'islandheart','cargo');for(let hint=0;hint<3;hint++)await click(view,'hint','cargo');assert.ok((await view.locator('.hint').innerText()).length>30);
+   await select(view,'horizon','robot');for(let hint=0;hint<3;hint++)await click(view,'hint','robot');assert.ok((await view.locator('.hint').innerText()).length>30);await noOverflow(view);
+   if(width===390){await select(view,'islandheart','power');await screen(view,'chapter6-power-zh-390');await select(view,'islandheart','cargo');await screen(view,'chapter6-cargo-zh-390');await select(view,'horizon','robot');await screen(view,'chapter6-robot-zh-390');}
    if(width===1280){await click(view,'nav','map');await screen(view,'missions-zh-1280');await select(view,'summit','power');await screen(view,'summit-power-zh-1280');}
    record(`${width}px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default`);
    await ctx.close();
   }
   assert.deepEqual(errors,[]);record('No uncaught page errors across exercised HTTP flows');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
- const hashes=Object.fromEntries(['index.html','storm-engine.js','storm-levels.js','storm-save.js','storm-app.js','storm.css','storm-visual.js','storm-visual.css'].map(file=>[file,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
+ const hashes=Object.fromEntries(['storm-content.js','index.html','storm-engine.js','storm-levels.js','storm-save.js','storm-app.js','storm.css','storm-visual.js','storm-visual.css'].map(file=>[file,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
  fs.writeFileSync(path.join(output,'browser-report.json'),JSON.stringify({testedAt:new Date().toISOString(),scope:'Sandboxed desktop Chrome via HTTP, real-origin storage and real process relaunch; CSS viewports are not physical iPhone/iPad evidence',results,errors,hashes},null,2));
  console.log(JSON.stringify({passed:results.length,output}));
 }

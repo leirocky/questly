@@ -1,0 +1,105 @@
+PASS HTTP home presents all 90 mission entries in six chapters with a direct library shortcut on phone
+PASS Six ordered chapters each expose five missions per workshop, all freely selectable
+PASS explorer: cargo completed using real buttons
+PASS explorer: circuit completed by rotating real tiles
+PASS explorer: robot program built and run through real controls
+PASS harbor: cargo completed using real buttons
+PASS harbor: circuit completed by rotating real tiles
+PASS harbor: robot program built and run through real controls
+PASS cove: cargo completed using real buttons
+PASS cove: circuit completed by rotating real tiles
+PASS cove: robot program built and run through real controls
+PASS garden: cargo completed using real buttons
+PASS garden: circuit completed by rotating real tiles
+PASS garden: robot program built and run through real controls
+PASS quay: cargo completed using real buttons
+PASS quay: circuit completed by rotating real tiles
+PASS quay: robot program built and run through real controls
+PASS engineer: cargo completed using real buttons
+PASS engineer: circuit completed by rotating real tiles
+PASS engineer: robot program built and run through real controls
+PASS orchard: cargo completed using real buttons
+PASS orchard: circuit completed by rotating real tiles
+PASS orchard: robot program built and run through real controls
+PASS canal: cargo completed using real buttons
+PASS canal: circuit completed by rotating real tiles
+PASS canal: robot program built and run through real controls
+PASS cliff: cargo completed using real buttons
+PASS cliff: circuit completed by rotating real tiles
+PASS cliff: robot program built and run through real controls
+PASS bridge: cargo completed using real buttons
+PASS bridge: circuit completed by rotating real tiles
+PASS bridge: robot program built and run through real controls
+PASS tides: cargo completed using real buttons
+PASS tides: circuit completed by rotating real tiles
+PASS tides: robot program built and run through real controls
+PASS marsh: cargo completed using real buttons
+PASS marsh: circuit completed by rotating real tiles
+PASS marsh: robot program built and run through real controls
+PASS delta: cargo completed using real buttons
+PASS delta: circuit completed by rotating real tiles
+PASS delta: robot program built and run through real controls
+PASS grove: cargo completed using real buttons
+PASS grove: circuit completed by rotating real tiles
+PASS grove: robot program built and run through real controls
+PASS inlet: cargo completed using real buttons
+PASS inlet: circuit completed by rotating real tiles
+PASS inlet: robot program built and run through real controls
+PASS ridge: cargo completed using real buttons
+PASS ridge: circuit completed by rotating real tiles
+PASS ridge: robot program built and run through real controls
+PASS terrace: cargo completed using real buttons
+PASS terrace: circuit completed by rotating real tiles
+PASS terrace: robot program built and run through real controls
+PASS ravine: cargo completed using real buttons
+PASS ravine: circuit completed by rotating real tiles
+PASS ravine: robot program built and run through real controls
+PASS plateau: cargo completed using real buttons
+PASS plateau: circuit completed by rotating real tiles
+PASS plateau: robot program built and run through real controls
+PASS waterfall: cargo completed using real buttons
+PASS waterfall: circuit completed by rotating real tiles
+PASS waterfall: robot program built and run through real controls
+PASS beacon: cargo completed using real buttons
+PASS beacon: circuit completed by rotating real tiles
+PASS beacon: robot program built and run through real controls
+PASS observatory: cargo completed using real buttons
+PASS observatory: circuit completed by rotating real tiles
+PASS observatory: robot program built and run through real controls
+PASS estuary: cargo completed using real buttons
+PASS estuary: circuit completed by rotating real tiles
+PASS estuary: robot program built and run through real controls
+PASS lighthouse: cargo completed using real buttons
+PASS lighthouse: circuit completed by rotating real tiles
+PASS lighthouse: robot program built and run through real controls
+PASS reservoir: cargo completed using real buttons
+PASS reservoir: circuit completed by rotating real tiles
+PASS reservoir: robot program built and run through real controls
+PASS citadel: cargo completed using real buttons
+PASS citadel: circuit completed by rotating real tiles
+PASS citadel: robot program built and run through real controls
+PASS aurora: cargo completed using real buttons
+PASS aurora: circuit completed by rotating real tiles
+PASS aurora: robot program built and run through real controls
+PASS horizon: cargo completed using real buttons
+PASS horizon: circuit completed by rotating real tiles
+PASS horizon: robot program built and run through real controls
+PASS islandheart: cargo completed using real buttons
+PASS islandheart: circuit completed by rotating real tiles
+PASS islandheart: robot program built and run through real controls
+PASS summit: cargo completed using real buttons
+PASS summit: circuit completed by rotating real tiles
+PASS summit: robot program built and run through real controls
+PASS Undo and mission selector isolate progress between challenges
+PASS Real localStorage restores all mission histories and language after HTTP reload
+PASS Entire Chrome process closes/reopens with real-origin saved selection, mission and Chinese intact
+PASS Original v3 storage migrates without altering its bytes; new mission actions preserve legacy progress
+PASS Malformed current save is visibly protected and never overwritten during session play
+PASS Released v5 save preserves all 18 completions byte-for-byte while a new mission survives reload
+PASS Changing a mission cancels pending voyage; robot Stop cancels the runner
+PASS 320px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default
+PASS 390px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default
+PASS 768px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default
+PASS 1280px: both languages, all screens fit, 44px wire targets, reduced motion and sound-off default
+PASS No uncaught page errors across exercised HTTP flows
+{"passed":104,"output":"$HOME/.codex/worktrees/web-challenge-levels/questly/artifacts/web-v6"}

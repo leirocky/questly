@@ -3,6 +3,7 @@ const fs=require('node:fs');
 const crypto=require('node:crypto');
 const path=require('node:path');
 const E=require('../storm-engine.js'),L=require('../storm-levels.js'),S=require('../storm-save.js');
+const old=require('./fixtures/web-v5.json');
 const results=[],solutions={};
 function test(name,run){run();results.push({name,status:'PASS'});}
 // This search uses authored constraints directly, never L.cargoCheck to select a move.
@@ -49,6 +50,7 @@ const robotPrograms={
  beacon:{main:['Q','L','F','F','F','R','F','F','F'],body:['F','F','F','P','F','F','F','P','L'],repeat:4},
  summit:{main:['Q','F','F','F','F','F','Q','L','F','F','F','F'],body:['F','F','F','P','L'],repeat:4}
 };
+for(const [id,entry] of Object.entries(require('../storm-content.js').levels))robotPrograms[id]=entry.hints.robot;
 function independentRobot(cfg,program){
  let [r,c,d]=cfg.start;const bag=new Set(),road=new Set(cfg.road.map(x=>x.join(','))),samples=new Set(cfg.samples.map(x=>x.join(',')));
  const flat=program.main.flatMap(x=>x==='Q'?Array.from({length:program.repeat},()=>program.body).flat():[x]);
@@ -62,8 +64,8 @@ function independentRobot(cfg,program){
  return r===cfg.goal[0]&&c===cfg.goal[1]&&bag.size===samples.size;
 }
 function run(){
- test('18 independently selectable missions, stable IDs and isolated initial state',()=>{
-  assert.equal(L.ids.length*3,18);assert.equal(new Set(L.ids).size,6);
+ test('90 independently selectable missions, stable IDs and isolated initial state',()=>{
+  assert.equal(L.ids.length*3,90);assert.equal(new Set(L.ids).size,30);
  const state=S.fresh();assert.ok(S.valid(state));
   state.campaigns.tides.cargo.load.push(7);assert.deepEqual(state.campaigns.ridge.cargo.load,[]);
  });
@@ -122,15 +124,15 @@ function run(){
   assert.deepEqual(result.state.campaigns.explorer,old.campaigns.explorer);
   result.state.campaigns.engineer.cargo.load=[];assert.equal(JSON.stringify(old),before);
  });
- test('All 18 completed states survive JSON roundtrip; clearing one mission leaves the other 17 intact',()=>{
+ test('All 90 completed states survive JSON roundtrip; clearing one mission leaves the other 89 intact',()=>{
   const state=S.fresh();
   for(const mode of L.ids){const c=state.campaigns[mode],answer=solutions[mode];c.cargo.trips=answer.cargo;c.cargo.delivered=answer.cargo.flat();c.cargo.done=true;c.power.masks=answer.power;c.power.done=true;Object.assign(c.robot,answer.robot,{done:true,best:E.codeSize(answer.robot.main,answer.robot.body)});}
   assert.ok(S.valid(state));const restored=S.restore(JSON.parse(JSON.stringify(state)),null).state;assert.deepEqual(restored,state);
   restored.campaigns.summit.cargo=L.newCampaign('summit').cargo;
-  assert.equal(L.ids.reduce((n,id)=>n+['cargo','power','robot'].filter(stage=>restored.campaigns[id][stage].done).length,0),17);
+  assert.equal(L.ids.reduce((n,id)=>n+['cargo','power','robot'].filter(stage=>restored.campaigns[id][stage].done).length,0),89);
  });
  test('Malformed/future saves are preserved and cannot silently overwrite valid legacy progress',()=>{
-  for(const broken of [{version:99},{invalid:true},{...S.fresh(),contentVersion:2}])assert.equal(S.restore(broken,null).writable,false);
+  for(const broken of [{version:99},{invalid:true},{...S.fresh(),contentVersion:3}])assert.equal(S.restore(broken,null).writable,false);
   const state=S.fresh();state.campaigns.summit.cargo.trips=[[0]];state.campaigns.summit.cargo.delivered=[0];
   assert.equal(S.valid(state),false);assert.equal(S.restore(state,null).writable,false);
   assert.equal(S.restore(null,{version:3}).notice,'legacyInvalid');
@@ -140,7 +142,35 @@ function run(){
   state.campaigns.summit.power.masks[cfg.fixed[0]]=0;assert.equal(S.valid(state),false);
   const bad=S.fresh();bad.campaigns.tides.cargo.trips=[[1]];bad.campaigns.tides.cargo.delivered=[1];assert.equal(S.valid(bad),false);
  });
- const files=['index.html','storm-engine.js','storm-levels.js','storm-save.js','storm-app.js','storm.css','storm-visual.js','storm-visual.css'];
+ test('All original 18 configurations are byte-equivalent to the released fixture',()=>{
+  for(const [id,cfg] of Object.entries(old.configs))for(const stage of ['cargo','power','robot'])assert.deepEqual(L[stage+'Config'](id),cfg[stage]);
+ });
+ test('Every workshop has 30 distinct puzzles, all shapes valid and witnesses within editor limits',()=>{
+  for(const stage of ['cargo','power','robot'])assert.equal(new Set(L.ids.map(id=>JSON.stringify(L[stage+'Config'](id)))).size,30);
+  for(const id of L.ids){
+   const cfg=L.robotConfig(id),code=robotPrograms[id];
+   assert.ok(code.main.length<=24&&code.body.length<=12);assert.ok(E.simulate(cfg,code.main,code.body,code.repeat).trace.length<=160);
+   assert.ok(cfg.road.every(([r,c])=>r>=0&&r<cfg.n&&c>=0&&c<cfg.n));assert.equal(new Set(cfg.samples.map(x=>x.join(','))).size,cfg.samples.length);
+   const power=L.powerConfig(id);assert.equal(power.initial.length,power.n**2);assert.equal(new Set([power.source,...power.targets,...power.fixed]).size,1+power.targets.length+power.fixed.length);
+   if(L.extra(id)){let delivered=[];L.extra(id).hints.cargo.forEach((load,i)=>{assert.ok(L.cargoCheck(id,load,delivered,i).ok,id+' hint');delivered.push(...load);});assert.equal(delivered.length,L.cargoConfig(id).items.length);}
+  }
+ });
+ test('Completed v5 progress expands to all 90 missions without changing or aliasing the old save',()=>{
+  const previous=JSON.parse(JSON.stringify(old.save)),before=JSON.stringify(previous),migrated=S.restore(null,null,previous);
+  assert.equal(migrated.notice,'expanded');assert.ok(S.valid(migrated.state));
+  for(const [id,c] of Object.entries(previous.campaigns))assert.deepEqual(migrated.state.campaigns[id],c);
+  migrated.state.campaigns.summit.cargo.trips.pop();assert.equal(JSON.stringify(previous),before);
+  for(const id of L.ids.filter(id=>!old.configs[id]))assert.deepEqual(migrated.state.campaigns[id],L.newCampaign(id));
+ });
+ test('In-progress v5 boards and programs migrate; new current save wins; invalid prior saves are protected',()=>{
+  const previous=JSON.parse(JSON.stringify(old.save));previous.campaigns.tides=L.newCampaign('tides');
+  previous.campaigns.tides.cargo.load=[0,7];previous.campaigns.tides.power.masks[1]=E.rotate(previous.campaigns.tides.power.masks[1]);previous.campaigns.tides.robot.main=['F','Q'];
+  assert.deepEqual(S.restore(null,null,previous).state.campaigns.tides,previous.campaigns.tides);
+  const current=S.fresh();assert.deepEqual(S.restore(current,null,previous).state,current);
+  for(const bad of [{...previous,version:99},{...previous,contentVersion:99},{...previous,campaigns:{}},{invalid:true}])assert.equal(S.restore(null,null,bad).writable,false);
+  assert.equal(S.restore({version:99},null,previous).writable,false);
+ });
+ const files=['storm-content.js','index.html','storm-engine.js','storm-levels.js','storm-save.js','storm-app.js','storm.css','storm-visual.js','storm-visual.css'];
  const hashes=Object.fromEntries(files.map(name=>[name,crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname,'..',name))).digest('hex')]));
  const report={testedAt:new Date().toISOString(),environment:process.version,scope:'Node rules/content/migration tests; no browser or device claim',results,solutions,hashes};
  console.log(JSON.stringify(report,null,2));return report;

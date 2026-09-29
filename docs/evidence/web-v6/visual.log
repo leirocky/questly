@@ -1,0 +1,12 @@
+PASS Sound starts off; no AudioContext is created without opt-in
+PASS Repeated animation toggles do not duplicate artwork or modify campaign state
+PASS Sound control opts into local synthesis, then mutes; no external audio asset
+PASS Animation opt-out sets reduced mode without blocking interaction
+PASS Visual preferences restore from simulated storage; a voyage still completes with motion off
+PASS Power preview follows tested connectivity; toggles cannot duplicate station panels
+PASS System reduced-motion is respected; robot single-step remains functional
+PASS 320px English and Chinese: all five screens fit without horizontal overflow
+PASS 390px English and Chinese: all five screens fit without horizontal overflow
+PASS 768px English and Chinese: all five screens fit without horizontal overflow
+PASS 1280px English and Chinese: all five screens fit without horizontal overflow
+PASS No uncaught JavaScript errors during visual and accessibility checks

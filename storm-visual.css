@@ -122,3 +122,12 @@ body.q-premium{background:radial-gradient(ellipse at 80% 0,#20335d88,transparent
  .q-premium .robot-workspace.large-board>.panel:first-child>.actions{justify-content:flex-start}
  .q-premium .robot-workspace.large-board>.panel:first-child>.actions button{flex:1;white-space:nowrap;min-width:76px;padding:10px 12px;font-size:13px}
 }
+
+/* Thirty missions per workshop, browsed five at a time. */
+[hidden]{display:none!important}
+.chapter-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:20px 0}
+.chapter-choice{min-height:64px;border:1px solid #56748e;border-radius:14px;padding:10px 12px;text-align:left;color:#dceafa;background:#13283e;cursor:pointer}
+.chapter-choice span,.chapter-choice strong{display:block}.chapter-choice span{font-size:11px;color:#b4cbdc;margin-bottom:5px}.chapter-choice strong{font-size:14px}
+.chapter-choice.active{border-color:#8df0ca;background:#1a433f}.chapter-choice:focus-visible{outline:3px solid #ffce82;outline-offset:3px}
+.mission-column h3 small{font-size:12px;margin-left:auto;color:#b4cbdc}
+@media(max-width:600px){.chapter-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.chapter-choice{padding:10px}}

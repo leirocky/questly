@@ -1,7 +1,8 @@
-/* Questly challenge collection v1. Original six levels still use the unchanged engine. */
+/* Questly challenge collection v2. Original six levels still use the unchanged engine. */
 (function(root){
 'use strict';
 const E=typeof module==='object'&&module.exports?require('./storm-engine.js'):root.QuestEngine;
+const C=typeof module==='object'&&module.exports?require('./storm-content.js'):root.QuestContent;
 const copy=x=>JSON.parse(JSON.stringify(x));
 const catalog=[
  {id:'explorer',en:'First landing',zh:'初次登岛',tag:['Explorer','探索模式'],description:['Learn the three workshops.','认识三座工程站。'],titles:{cargo:['First supplies','第一批物资'],power:['A light in the harbor','港口亮灯'],robot:['Nova’s first route','Nova 初次出发']}},
@@ -11,10 +12,20 @@ const catalog=[
  {id:'beacon',en:'Beacon network',zh:'灯塔网络',tag:['Challenge 3','进阶三'],description:['A four-stage build and a survey before the return to the lab.','四步建造顺序，巡查完成后返回中心实验室。'],titles:{cargo:['The relay delivery','接力运输'],power:['Across the estuary','河口连网'],robot:['Survey and return','巡查再返航']}},
  {id:'summit',en:'Summit challenge',zh:'巅峰挑战',tag:['Challenge 4','进阶四'],description:['Two dependency chains, a first-trip priority and reusable surveys.','两条建造链、首趟优先物资，复用两次巡查程序。'],titles:{cargo:['Everything has a place','环环相扣'],power:['The summit grid','山顶电网'],robot:['Two research camps','双营地巡查']}}
 ];
+const originals=catalog.slice();
+const added=Object.values(C.levels);
+catalog.length=0;
+for(let chapter=0;chapter<6;chapter++){
+ const group=added.slice(chapter*4,chapter*4+4).map(x=>x.info);
+ catalog.push(originals[chapter],...group);
+}
 const ids=catalog.map(x=>x.id);
+const chapters=C.chapters;
+const extra=mode=>C.levels[mode];
 function info(mode){const value=catalog.find(x=>x.id===mode);if(!value)throw Error('Unknown collection');return value;}
 function cargoConfig(mode){
  info(mode);
+ if(extra(mode))return copy(extra(mode).cargo);
  const items=copy(E.cargo);
  const base={items,capacity:mode==='explorer'?12:10,maxTrips:mode==='explorer'?null:3,maxItems:null,before:[[0,1]],apart:[[2,3]],by:{}};
  if(['explorer','engineer'].includes(mode))return base;
@@ -56,6 +67,7 @@ const circuits={
 };
 function powerConfig(mode){
  info(mode);
+ if(extra(mode))return copy(extra(mode).power);
  if(!circuits[mode])return {...E.powerConfig(mode),fixed:[]};
  const data=circuits[mode],solution=Array(data.n**2).fill(0);
  for(const path of data.paths)for(let j=1;j<path.length;j++){
@@ -78,6 +90,7 @@ function perimeter(top,left,side){
 }
 function robotConfig(mode){
  info(mode);
+ if(extra(mode))return copy(extra(mode).robot);
  if(mode==='explorer'||mode==='engineer')return E.robotConfig(mode);
  if(mode==='tides')return {n:8,start:[7,0,1],goal:[0,6],samples:[[5,2],[3,4],[1,6]],road:[[7,0],[7,1],[7,2],[6,2],[5,2],[5,3],[5,4],[4,4],[3,4],[3,5],[3,6],[2,6],[1,6],[0,6]],budget:10};
  if(mode==='ridge')return {n:7,start:[6,0,1],goal:[6,0],samples:[[6,6],[0,6],[0,0],[6,0]],road:perimeter(0,0,6),budget:9};
@@ -85,7 +98,7 @@ function robotConfig(mode){
  return {n:9,start:[8,0,1],goal:[4,5],samples:[[8,3],[5,3],[5,0],[8,0],[8,8],[5,8],[5,5],[8,5]],road:[...perimeter(5,0,3),...perimeter(5,5,3),[8,4],[4,5]],budget:17};
 }
 function newCampaign(mode){const campaign=E.newCampaign(mode);campaign.power.masks=powerConfig(mode).initial;return campaign;}
-const api={version:1,catalog,ids,info,cargoConfig,cargoCheck,powerConfig,robotConfig,newCampaign};
+const api={version:2,catalog,ids,chapters,extra,info,cargoConfig,cargoCheck,powerConfig,robotConfig,newCampaign};
 root.QuestLevels=api;
 if(typeof module==='object'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
