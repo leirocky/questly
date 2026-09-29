@@ -1,0 +1,98 @@
+{
+  "testedCommit": "5257f4a2ccf459c4bfaef991be25526a025bc62c",
+  "scope": "Commands actually executed after checkout of merged main; no physical-device claim",
+  "completedCommands": [
+    {
+      "command": "node tests/engine.test.cjs",
+      "exitCode": 0,
+      "groups": 14
+    },
+    {
+      "command": "node tests/challenges.test.cjs",
+      "exitCode": 0,
+      "groups": 102
+    },
+    {
+      "command": "node scripts/cargo-fixtures.cjs --check",
+      "exitCode": 0,
+      "goldenCases": 8206
+    },
+    {
+      "command": "python3 scripts/generate-xcode-project.py --check",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/build-web-content.cjs --check",
+      "exitCode": 0,
+      "stdout": "empty (successful check is silent)"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    {
+      "command": "xcrun swift test --package-path packages/QuestCore --scratch-path artifacts/m1-merge/SwiftPM",
+      "exitCode": 0,
+      "xctestCases": 23
+    },
+    {
+      "command": "bash scripts/verify-save-crash.sh \"$PWD/artifacts/m1-merge/SwiftPM/debug/QuestSaveProbe\"",
+      "exitCode": 0
+    },
+    {
+      "command": "xcodebuild -project apps/ios/Questly.xcodeproj -scheme Questly -configuration Debug -destination platform=iOS\\ Simulator,id=E9A37872-E9CD-4990-89F2-E9AD3D34C11B -derivedDataPath artifacts/m1-merge/Build CODE_SIGNING_ALLOWED=NO build-for-testing",
+      "exitCode": 0
+    },
+    {
+      "command": "RELEASE_COMMIT=5257f4a2ccf459c4bfaef991be25526a025bc62c node docs/evidence/pages-v6/check-live.cjs \"$PWD\" \"$PWD/artifacts/m1-merge/pages\"",
+      "exitCode": 0,
+      "groups": 95
+    }
+  ],
+  "environment": {
+    "Xcode": "27.0 (27A266a)",
+    "Swift": "6.4",
+    "iOSSimulator": "27.0 (24A434)",
+    "Node": "24.19.0",
+    "Chrome": "154.0.8037.58"
+  },
+  "limits": "Full simulator commands in README; terminal runtime paths omitted. No product source changes after the tested merge. Counts across suites overlap; do not treat their sum as unique coverage.",
+  "simulatorRuns": [
+    {
+      "run": "ipad",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "startTime": 1790655559.205,
+      "finishTime": 1790655728.717
+    },
+    {
+      "run": "iphone-functional",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "startTime": 1790655560.175,
+      "finishTime": 1790655722.45
+    },
+    {
+      "run": "iphone-ax5",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "startTime": 1790655783.58,
+      "finishTime": 1790656317.076
+    },
+    {
+      "run": "sigkill",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "startTime": 1790656370.13,
+      "finishTime": 1790656441.576
+    }
+  ]
+}

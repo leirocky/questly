@@ -1,0 +1,18 @@
+[
+  {
+    "file": "ipad-cargo-zh-landscape.png",
+    "sha256": "2ebdc16421a747c1cdea25e93a08f4a53409e15b371ed77b28bd8873e4fa4a14",
+    "test": "QuestlyUITests/testLandscapeFullScreenPresentation()",
+    "device": "iPad Pro 11-inch (M5)",
+    "timestamp": 1790655656.94,
+    "unedited": true
+  },
+  {
+    "file": "ipad-island-restored-zh.png",
+    "sha256": "93f0eae8108ae70482b1da7ac4838b16bc2785cc14bd526a101b8e0bf8e965a5",
+    "test": "QuestlyUITests/testProfilesModesChineseMotionAndBackground()",
+    "device": "iPad Pro 11-inch (M5)",
+    "timestamp": 1790655702.822,
+    "unedited": true
+  }
+]

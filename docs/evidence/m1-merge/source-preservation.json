@@ -1,0 +1,77 @@
+{
+  "before": "dae6da5d0c3070da84371ab27ff40e6585799b66",
+  "after": "5257f4a2ccf459c4bfaef991be25526a025bc62c",
+  "scope": "Exact Git blob equality; public HTTPS hashes are a separate browser check",
+  "files": [
+    {
+      "path": "index.html",
+      "beforeBlob": "f814128e604da2c6f77046c811d520c9427db9e6",
+      "afterBlob": "f814128e604da2c6f77046c811d520c9427db9e6",
+      "sha256": "cc0386422307fe62cc534f9844f43fa40f0306c23062b2c1b00dd7c912084051",
+      "identical": true
+    },
+    {
+      "path": "storm-engine.js",
+      "beforeBlob": "d778443728904c45513218e55a5c3c21085cc6b7",
+      "afterBlob": "d778443728904c45513218e55a5c3c21085cc6b7",
+      "sha256": "9b14dfecebe69b62c0dd3b7a6a6a43e6f197908b5ec248ecc8bd2026e5658871",
+      "identical": true
+    },
+    {
+      "path": "storm-content.js",
+      "beforeBlob": "8391077ffd72f2509c9038dba5255cd39c1f2e2e",
+      "afterBlob": "8391077ffd72f2509c9038dba5255cd39c1f2e2e",
+      "sha256": "c365196635779a47daa665f781285a1beca2ed23472f3309d92a9b338e3b4d1c",
+      "identical": true
+    },
+    {
+      "path": "storm-levels.js",
+      "beforeBlob": "3ba519d376ddfcaff4117c2e1663d9c3aa932028",
+      "afterBlob": "3ba519d376ddfcaff4117c2e1663d9c3aa932028",
+      "sha256": "c794996b6ba088f0ad1a3e16d44e7a6bbd3db15423cbef30f33b7f98374efef6",
+      "identical": true
+    },
+    {
+      "path": "storm-save.js",
+      "beforeBlob": "2540cb60b4015b1fda403ddb05547fa05ac3a054",
+      "afterBlob": "2540cb60b4015b1fda403ddb05547fa05ac3a054",
+      "sha256": "e0e9eb68711a18bef344fbe1e56c45eabcd0c93252fdfdda5ced42cb51c25e78",
+      "identical": true
+    },
+    {
+      "path": "storm-app.js",
+      "beforeBlob": "bae2b1d06336798537907508671df9ca5ba0f2ef",
+      "afterBlob": "bae2b1d06336798537907508671df9ca5ba0f2ef",
+      "sha256": "666f767567b49c2a86cf36289a22a334acdc1149a031f3ce8e9bf01f205b3b0f",
+      "identical": true
+    },
+    {
+      "path": "storm.css",
+      "beforeBlob": "42bde8370753386b275e2df52a423a6088841542",
+      "afterBlob": "42bde8370753386b275e2df52a423a6088841542",
+      "sha256": "a6d9ffacf25a5f4ce8cdfb2b44cfd38802af1bc9de5789e92afde77371c9ceea",
+      "identical": true
+    },
+    {
+      "path": "storm-visual.js",
+      "beforeBlob": "2a7ef9b11e769e9fc3a37883e672d3025c764063",
+      "afterBlob": "2a7ef9b11e769e9fc3a37883e672d3025c764063",
+      "sha256": "dacea50925caa03d219d969efc0bd2f45c219410c7cadbd5c099e8831cbc4ce9",
+      "identical": true
+    },
+    {
+      "path": "storm-visual.css",
+      "beforeBlob": "fd9f6ac57a94e2950a4a249b2cc1ec556ae1015a",
+      "afterBlob": "fd9f6ac57a94e2950a4a249b2cc1ec556ae1015a",
+      "sha256": "3458924a2c848f7d26f7326d1879c255857e0d46519cc6b65d2037b1e1e0da35",
+      "identical": true
+    },
+    {
+      "path": ".nojekyll",
+      "beforeBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "afterBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "identical": true
+    }
+  ]
+}
