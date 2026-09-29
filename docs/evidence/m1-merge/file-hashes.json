@@ -1,0 +1,122 @@
+[
+  {
+    "file": "README.md",
+    "sha256": "5b34e625d27dcafb4ce90f17cad38dd474371903d86f9cf88bdc7690ab576584",
+    "bytes": 9262
+  },
+  {
+    "file": "build.log",
+    "sha256": "7fe347a6968ac31b2304c1f6edb6fee9ea3144538d48402cc80efc4208456066",
+    "bytes": 120
+  },
+  {
+    "file": "challenges.json",
+    "sha256": "022d865aa2a3405dd57ea7231c399f960c609fe0b7878401eef4bf12fb95a6a1",
+    "bytes": 44289
+  },
+  {
+    "file": "command-results.json",
+    "sha256": "a540803099eae17106cad3b2814271866a4925c0f120d211f1d36b1978cbc8cf",
+    "bytes": 2814
+  },
+  {
+    "file": "engine.json",
+    "sha256": "a1dbf70efe72a68ef6ec2a72941f268e6f1ccd66e768b6463c5588606be5c329",
+    "bytes": 1840
+  },
+  {
+    "file": "fixtures.log",
+    "sha256": "9161ba16dc88cd679ef6691451c6ee6b68f4636f06ac9cf18898ab682a7a1e47",
+    "bytes": 143
+  },
+  {
+    "file": "ipad-cargo-zh-landscape.png",
+    "sha256": "2ebdc16421a747c1cdea25e93a08f4a53409e15b371ed77b28bd8873e4fa4a14",
+    "bytes": 500003
+  },
+  {
+    "file": "ipad-island-restored-zh.png",
+    "sha256": "93f0eae8108ae70482b1da7ac4838b16bc2785cc14bd526a101b8e0bf8e965a5",
+    "bytes": 254201
+  },
+  {
+    "file": "ipad-summary.json",
+    "sha256": "3550f82ee8ddb683b35d315985487d01d0b5f753fdbb404b92d9f3fb0be54634",
+    "bytes": 1011
+  },
+  {
+    "file": "ipad.log",
+    "sha256": "2defa9435d7929c9ac492cc969b66b2d3448e7608fc9e64c4664392169684449",
+    "bytes": 2427
+  },
+  {
+    "file": "iphone-ax5-summary.json",
+    "sha256": "0a64fd8bcdf39b232d11fc949e9e75751f5619f8e74a8577482cbda1cfc00f95",
+    "bytes": 995
+  },
+  {
+    "file": "iphone-ax5.log",
+    "sha256": "e47178c8ed71d26811d1b239173416528fb4ccafe178db82397284e697efad3c",
+    "bytes": 1094
+  },
+  {
+    "file": "iphone-functional-summary.json",
+    "sha256": "db348d2e751ef1de870e99f84396f26c6ff5a327b90fb9d2dead9dd69bdd4bca",
+    "bytes": 995
+  },
+  {
+    "file": "iphone-functional.log",
+    "sha256": "fda73b83f8bb9620136763eaa7a9874420c940f50237aac83f2f517ba6fbfcdb",
+    "bytes": 1111
+  },
+  {
+    "file": "pages-live-report.json",
+    "sha256": "bd368d871c32263c3d0ca7867195478293c1b4693d2b90a3289a7f47e20d19a1",
+    "bytes": 10878
+  },
+  {
+    "file": "project.log",
+    "sha256": "89d5e4298fadd661662377c6189a68f57d4b6262e1faf06c59c151d7afcf4be3",
+    "bytes": 116
+  },
+  {
+    "file": "save-crash.log",
+    "sha256": "e55881a3666f3bdd77e82fd109793266bcbc7b0cd7fa2a408a720ad9775f481b",
+    "bytes": 186
+  },
+  {
+    "file": "screenshots.json",
+    "sha256": "809b83816dd5fabbb448c261576081266bd44c07d465eedcac860921c9023f64",
+    "bytes": 600
+  },
+  {
+    "file": "settings-restored.json",
+    "sha256": "c12749eedb250f3a28edc85e2d34bf2bc35eb0df4ad40e66f3038769d1bd6f61",
+    "bytes": 217
+  },
+  {
+    "file": "sigkill-report.json",
+    "sha256": "b0360ea7b8b07ac9b660cc06f4fb61b4fb12fa28f9215104bad5b0cd29dfd898",
+    "bytes": 986
+  },
+  {
+    "file": "sigkill-summary.json",
+    "sha256": "0bfb8628d73508d9f5eefcb9e5b2bc98093f2a2411bc6fbc5de5f67c3828e374",
+    "bytes": 995
+  },
+  {
+    "file": "sigkill.log",
+    "sha256": "5bf4b7c0b389c5d94d3f9c6e6ffcbab45aad923ce7504bfcd77721d60122522a",
+    "bytes": 630
+  },
+  {
+    "file": "source-preservation.json",
+    "sha256": "4e9cb6771f6ed9713f67ba85b131255b361b0e7bc0de588f8e5dc5fbd8deb1eb",
+    "bytes": 3009
+  },
+  {
+    "file": "swift.log",
+    "sha256": "4565e7f0a563fa4efa87e8985fde9980b7bc81750d60bc4730112384bbc052a0",
+    "bytes": 3964
+  }
+]

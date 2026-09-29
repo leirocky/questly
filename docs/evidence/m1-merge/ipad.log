@@ -1,0 +1,29 @@
+# Privacy-filtered actual result excerpt; full trace remains in ignored artifacts/m1-merge/.
+Test Suite 'Selected tests' started at 2026-09-28 21:19:30.937.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-28 21:19:30.937.
+Test Suite 'QuestlyUITests' started at 2026-09-28 21:19:30.937.
+Test Case '-[QuestlyUITests.QuestlyUITests testAccessibilityAuditIslandAndCargo]' passed (7.867 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testEngineerRulesCompletionUndoAndRelaunch]' passed (38.953 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testIslandExposesAccessibleControls]' passed (6.701 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testLandscapeFullScreenPresentation]' passed (38.448 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testProfilesModesChineseMotionAndBackground]' passed (41.472 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testVoyageLimitHintsAndScopedRestart]' passed (22.078 seconds).
+Test Suite 'QuestlyUITests' passed at 2026-09-28 21:22:06.469.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 155.519 (155.532) seconds
+Test Suite 'QuestlyUITests.xctest' passed at 2026-09-28 21:22:06.471.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 155.519 (155.534) seconds
+Test Suite 'Selected tests' passed at 2026-09-28 21:22:06.472.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 155.519 (155.535) seconds
+Test Suite 'All tests' started at 2026-09-28 21:22:08.389.
+Test Suite 'QuestlyTests.xctest' started at 2026-09-28 21:22:08.390.
+Test Suite 'GameModelTests' started at 2026-09-28 21:22:08.390.
+Test Case '-[QuestlyTests.GameModelTests testPostReplacementErrorFreezesEditsUntilReloadWithoutReplayingDelivery]' passed (0.016 seconds).
+Test Case '-[QuestlyTests.GameModelTests testPreReplacementFailureKeepsCheckpointAndRequiresSuccessfulReload]' passed (0.010 seconds).
+Test Case '-[QuestlyTests.GameModelTests testReloadClearsDeliveryAndRuleFeedbackWhenReconcilingAnotherProfile]' passed (0.017 seconds).
+Test Suite 'GameModelTests' passed at 2026-09-28 21:22:08.434.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.042 (0.044) seconds
+Test Suite 'QuestlyTests.xctest' passed at 2026-09-28 21:22:08.434.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.042 (0.045) seconds
+Test Suite 'All tests' passed at 2026-09-28 21:22:08.434.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.042 (0.045) seconds
+** TEST EXECUTE SUCCEEDED **

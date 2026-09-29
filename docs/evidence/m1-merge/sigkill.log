@@ -1,0 +1,9 @@
+# Privacy-filtered actual result excerpt; full trace remains in ignored artifacts/m1-merge/.
+Test Suite 'Selected tests' started at 2026-09-28 21:32:53.797.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-28 21:32:53.797.
+Test Suite 'QuestlyUITests' started at 2026-09-28 21:32:53.798.
+Test Case '-[QuestlyUITests.QuestlyUITests testExternalSIGKILLRestoresCommittedVoyage]' passed (67.456 seconds).
+Test Suite 'QuestlyUITests' passed at 2026-09-28 21:34:01.256.
+Test Suite 'QuestlyUITests.xctest' passed at 2026-09-28 21:34:01.257.
+Test Suite 'Selected tests' passed at 2026-09-28 21:34:01.257.
+** TEST EXECUTE SUCCEEDED **

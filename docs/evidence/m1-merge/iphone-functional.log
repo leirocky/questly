@@ -1,0 +1,14 @@
+# Privacy-filtered actual result excerpt; full trace remains in ignored artifacts/m1-merge/.
+Test Suite 'Selected tests' started at 2026-09-28 21:19:30.937.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-28 21:19:30.937.
+Test Suite 'QuestlyUITests' started at 2026-09-28 21:19:30.937.
+Test Case '-[QuestlyUITests.QuestlyUITests testEngineerRulesCompletionUndoAndRelaunch]' passed (47.743 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testProfilesModesChineseMotionAndBackground]' passed (58.547 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testSystemReduceMotionOverridesAndPreservesAppPreference]' passed (44.883 seconds).
+Test Suite 'QuestlyUITests' passed at 2026-09-28 21:22:02.122.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 151.173 (151.184) seconds
+Test Suite 'QuestlyUITests.xctest' passed at 2026-09-28 21:22:02.122.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 151.173 (151.185) seconds
+Test Suite 'Selected tests' passed at 2026-09-28 21:22:02.123.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 151.173 (151.185) seconds
+** TEST EXECUTE SUCCEEDED **

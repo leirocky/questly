@@ -1,0 +1,14 @@
+# Privacy-filtered actual result excerpt; full trace remains in ignored artifacts/m1-merge/.
+Test Suite 'Selected tests' started at 2026-09-28 21:23:07.069.
+Test Suite 'QuestlyUITests.xctest' started at 2026-09-28 21:23:07.069.
+Test Suite 'QuestlyUITests' started at 2026-09-28 21:23:07.069.
+Test Case '-[QuestlyUITests.QuestlyUITests testAccessibilityAuditIslandAndCargo]' passed (19.392 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testLandscapeFullScreenPresentation]' passed (82.757 seconds).
+Test Case '-[QuestlyUITests.QuestlyUITests testLayoutTouchTargetsInBothLanguagesAndOrientations]' passed (427.547 seconds).
+Test Suite 'QuestlyUITests' passed at 2026-09-28 21:31:56.768.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 529.696 (529.699) seconds
+Test Suite 'QuestlyUITests.xctest' passed at 2026-09-28 21:31:56.768.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 529.696 (529.699) seconds
+Test Suite 'Selected tests' passed at 2026-09-28 21:31:56.769.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 529.696 (529.700) seconds
+** TEST EXECUTE SUCCEEDED **
