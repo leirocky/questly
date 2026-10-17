@@ -18,7 +18,8 @@ from engine.paths import BUILD, SR
 
 MUSIC_LUFS = -27.0      # music bed loudness before ducking (narration clips sit at -20 LUFS)
 MUSIC_DUCK_DB = -7.0    # extra attenuation while someone is speaking
-SFX_DUCK_DB = -4.0
+SFX_DUCK_DB = -6.0
+SPEECH_MARGIN_DB = 12.0  # narration must stay at least this far above music + sfx on every line
 FINAL_LUFS = -16.0
 CEILING = 0.89          # ~ -1 dBFS
 
@@ -97,6 +98,49 @@ def speech_envelope(voice, attack=0.08, release=0.7, thresh_db=-42):
     return np.interp(np.arange(len(voice)) / hop, np.arange(nh), env).astype(np.float32)
 
 
+def _rms_db(x):
+    return 10 * np.log10(np.mean(np.square(x, dtype=np.float64)) + 1e-12)
+
+
+def protect_speech(tl, voice, music, sfx, target_db=SPEECH_MARGIN_DB, ramp=0.25):
+    """Extra, smoothly ramped background attenuation on any line where the background
+    (music + sfx) is less than ``target_db`` below the narration. Returns new stems + report."""
+    n = len(voice)
+    gain_db = np.zeros(n, np.float32)
+    rows = []
+    for s in tl["scenes"]:
+        for i, ln in enumerate(s["lines"]):
+            a = int((s["start"] + ln["start"]) * SR)
+            b = min(n, int((s["start"] + ln["end"]) * SR))
+            if b <= a:
+                continue
+            v = _rms_db(voice[a:b])
+            bg = _rms_db(music[a:b] + sfx[a:b])
+            need = min(0.0, (v - bg) - target_db)          # negative dB if background too loud
+            if need < 0:
+                gain_db[a:b] = np.minimum(gain_db[a:b], need)
+            rows.append((s["id"], i, v - bg, need))
+    # Smooth the gain curve so cuts ramp in/out over ``ramp`` seconds (and start slightly early).
+    k = int(ramp * SR)
+    g = ndimage.minimum_filter1d(gain_db, k)
+    g = ndimage.uniform_filter1d(g, 2 * k)
+    gl = (10 ** (g / 20)).astype(np.float32)[:, None]
+    lines = [f"speech-to-background target {target_db:.0f} dB"]
+    for sid, i, m, need in rows:
+        lines.append(f"{sid:12s} line {i}: {m:5.1f} dB" + (f"  -> background cut {need:.1f} dB" if need < 0 else ""))
+    music, sfx = music * gl, sfx * gl
+    after = []
+    for s in tl["scenes"]:
+        for ln in s["lines"]:
+            a, b = int((s["start"] + ln["start"]) * SR), min(n, int((s["start"] + ln["end"]) * SR))
+            if b > a:
+                after.append(_rms_db(voice[a:b]) - _rms_db(music[a:b] + sfx[a:b]))
+    worst = min(r[2] for r in rows)
+    lines.append(f"worst before protection {worst:.1f} dB; lines adjusted {sum(1 for r in rows if r[3] < 0)}; "
+                 f"worst after {min(after):.1f} dB")
+    return music, sfx, "\n".join(lines) + "\n"
+
+
 def limit(x, ceiling=CEILING, release=0.08):
     """Look-ahead peak limiter (5 ms)."""
     peak = np.max(np.abs(x), axis=1)
@@ -137,6 +181,8 @@ def mix():
     env = speech_envelope(voice)[:, None]
     music_d = music * 10 ** (MUSIC_DUCK_DB * env / 20)
     sfx_d = sfx * 10 ** (SFX_DUCK_DB * env / 20)
+    music_d, sfx_d, report = protect_speech(tl, voice, music_d, sfx_d)
+    (BUILD / "audio" / "speech_report.txt").write_text(report)
 
     out = _to_stereo(voice) + music_d + sfx_d
     # Gentle fade in/out of the whole film.
