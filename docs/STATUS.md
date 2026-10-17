@@ -48,3 +48,7 @@ Public browser execution finished at `2026-09-29T04:19:41.904Z`, Node 24.19.0 an
 1. Continue native device acceptance when an authorized physical iPad/iPhone/signing path and iOS 17 runtime are available. These were not run in this task; prior availability blockers remain. Do not operate Apple login/signing or distribute without authorization.
 2. Independently verify network-disabled native cold launch, VoiceOver order/announcements, complete text-clipping/contrast review, direct SpriteKit hit targets, physical low-storage/power-loss and performance. They remain **UNVERIFIED**, not PASS.
 3. Safari/WebKit and physical-device web testing remain **UNVERIFIED**. Pages has no verified offline cold-launch cache. Subsequent native M2/M3 development remains separate from this M1 merge and acceptance work.
+
+## Side project: Jonah picture-book video (unrelated to Questly product work)
+
+Branch `claude/jonah-picture-book-video-sg86s7` adds a self-contained `jonah-video/` folder (Chinese picture-book video of the Book of Jonah with TTS narration, music and effects). No Questly files were changed. Work in progress: script, offline TTS/timeline, rendering engine and title scene exist; characters, scenes 2–13, music/SFX/mix and final assembly remain. Executed: `python3 voice/tts.py` (13 scenes, 137.43 s timeline) and `python3 tools/preview.py s01_title` (stills and clip rendered in the cloud container). No Questly test suites were run because no Questly code changed. See `jonah-video/README.md`.
