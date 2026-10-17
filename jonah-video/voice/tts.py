@@ -1,13 +1,13 @@
 """Offline Chinese text-to-speech for every story utterance, plus the master timeline.
 
 Engines (sherpa-onnx, models in .cache/models — see README):
-  * matcha-icefall-zh-baker + vocos-22khz   -> narrator (clear female voice)
-  * ZipVoice (distill, zh-en, Emilia)       -> God, Jonah, captain, sailors, king. Zero-shot: each male
-    voice takes its timbre from a short Kokoro v1.1-zh prompt clip, while ZipVoice (trained on natural
-    conversational speech) supplies the prosody and pauses.
-  Both front ends get pronunciation lexicons generated from the script (voice/lexicons.py): readings in
-  context plus tone sandhi, so polyphones follow their words.
-  * Kokoro v1.1-zh                          -> optional direct engine for the male voices (MALE_ENGINE).
+  * ZipVoice (distill, zh-en, Emilia) + vocos-24khz -> every voice. Zero-shot: each voice takes its
+    timbre from a short prompt clip — Matcha zh-baker for the narrator, Kokoro v1.1-zh speakers for God,
+    Jonah, captain, sailors and king — while ZipVoice (trained on natural conversational speech)
+    supplies the prosody and pauses. Comma/sentence pauses are then widened (stretch_pauses).
+  * matcha-icefall-zh-baker + vocos-22khz and Kokoro v1.1-zh -> the prompt clips (and optional direct
+    engines). Both front ends get pronunciation lexicons generated from the script (voice/lexicons.py):
+    readings in context plus tone sandhi, so polyphones follow their words.
 
 Each utterance is synthesised whole, checked by ASR (retried with other settings when it misreads),
 and cut into subtitle chunks at punctuation, timed from the recogniser's per-character timestamps.
@@ -16,6 +16,8 @@ Outputs
   build/voice/lines/<scene>_<n>.wav   processed 48 kHz mono clip per utterance
   build/audio/voice.wav               all lines placed on the global timeline
   build/timeline.json                 scene, line and subtitle-chunk timing (seconds, frame aligned)
+  build/voice/takes.txt               cache keys of the raw takes used (tools/save_takes.py copies them
+                                      to voice/takes/*.flac, so another machine reuses the approved takes)
 """
 import hashlib
 import json
@@ -197,6 +199,10 @@ def _prompt(voice):
     return np.asarray(x, np.float32), sr, p["text"]
 
 
+TAKES = __import__("pathlib").Path(__file__).resolve().parent / "takes"
+USED_TAKES = set()   # cache keys synth_raw served during this run (prompts included)
+
+
 def _cache_path(text, voice, extra=""):
     prompt = voice.get("prompt") if voice["engine"] == "zipvoice" else None
     key = hashlib.sha1(json.dumps([text, voice["engine"], voice["sid"], voice["speed"], extra, prompt],
@@ -221,8 +227,10 @@ def synth_raw(text, voice):
         extra = _relevant_entries(text, [f"{w} {' '.join(s)}" for w, s in
                                          LX.narrator_additions(_engine_texts()[0]).items()])
     path = _cache_path(text, voice, extra)
-    if path.exists():
-        x, sr = sf.read(path, dtype="float32")
+    USED_TAKES.add(path.stem)
+    take = TAKES / f"{path.stem}.flac"   # approved takes committed with the script (tools/save_takes.py)
+    if path.exists() or take.exists():
+        x, sr = sf.read(path if path.exists() else take, dtype="float32")
         return x, sr
     path.parent.mkdir(parents=True, exist_ok=True)
     tts = _engine(voice["engine"])
@@ -614,6 +622,7 @@ def build():
     timeline = {"fps": FPS, "xfade": story.XFADE, "duration": total, "title": story.TITLE,
                 "subtitle": story.SUBTITLE, "scenes": scenes}
     (BUILD / "timeline.json").write_text(json.dumps(timeline, ensure_ascii=False, indent=1))
+    (BUILD / "voice" / "takes.txt").write_text("\n".join(sorted(USED_TAKES)) + "\n")
 
     # Place every line on one mono voice track.
     track = np.zeros(int((total + 3) * SR), np.float32)

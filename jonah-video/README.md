@@ -24,18 +24,23 @@
 
 ## 重新生成
 
-一键安装依赖和语音模型：`./setup.sh`（Ubuntu 24.04）。多代理制作流程脚本在 [`workflows/`](workflows/)。
+一键安装依赖和语音模型：`./setup.sh`（Ubuntu 24.04 或装了 Homebrew 的 macOS）。多代理制作流程脚本在 [`workflows/`](workflows/)。
 
-手动安装时的依赖：
+手动安装时的依赖（Ubuntu）：
 
     apt-get install fluidsynth musescore-general-soundfont fonts-lxgw-wenkai fonts-noto-cjk ffmpeg
-    pip install sherpa-onnx playwright==1.56.0 opencv-python-headless numpy scipy soundfile pyloudnorm pillow mido
+    pip install sherpa-onnx==1.13.8 playwright==1.56.0 opencv-python-headless numpy scipy soundfile pyloudnorm \
+      pillow mido pypinyin==0.55.0 zstandard
 
-Chromium 用 Playwright 自带的（`PLAYWRIGHT_BROWSERS_PATH`，默认 `/opt/pw-browsers`）。
-语音模型放在 `.cache/models/`，从 https://github.com/k2-fsa/sherpa-onnx/releases 下载：
-`tts-models/kokoro-multi-lang-v1_1.tar.bz2`、`tts-models/matcha-icefall-zh-baker.tar.bz2`、
-`vocoder-models/vocos-22khz-univ.onnx`；校验用的识别模型是
-`asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2`。
+macOS 上 `setup.sh` 会做这些事：`brew install ffmpeg fluid-synth`；把霞鹜文楷 v1.315
+（和 Ubuntu 同一版本，之后的版本把 Bold 改名成了 Medium）装进 `~/Library/Fonts`；
+`tools/fetch_soundfont.py` 把同一个 MuseScore General 音色库下到 `.cache/soundfonts/`；
+`python3 -m playwright install chromium`；Python 包装在 `jonah-video/.venv`（先 `source .venv/bin/activate`）。字体和音色库也可以用环境变量 `JONAH_FONT_DIR`、
+`JONAH_SOUNDFONT` 指定。
+
+Chromium 用 Playwright 自带的（Linux 上先找 `PLAYWRIGHT_BROWSERS_PATH`，默认 `/opt/pw-browsers`）。
+语音模型放在 `.cache/models/`，由 `setup.sh` 从 https://github.com/k2-fsa/sherpa-onnx/releases 下载：
+Kokoro v1.1、Matcha zh-baker、ZipVoice distill zh-en、vocos 声码器，以及校验用的 SenseVoice 识别模型。
 
     cd jonah-video
     python3 build.py all        # 配音 → 配乐 → 渲染场景 → 混音 → 合成，输出 output/jonah_story.mp4
@@ -48,6 +53,16 @@ Chromium 用 Playwright 自带的（`PLAYWRIGHT_BROWSERS_PATH`，默认 `/opt/pw
     python3 tools/preview.py s04_storm --bench   # 每帧渲染耗时
 
 场景片段有缓存：只有改动过的场景会重新渲染。完整重建在 4 核机器上约 20–30 分钟。
+
+### 在自己电脑上接着做
+
+云端会话可以用 Claude Code 拉到本地继续：在本仓库的本地克隆里（工作区要干净，登录同一个账号）运行
+`claude --teleport`，选这个会话即可。它带过去的是对话记录和已推送的分支；云端正在跑的后台任务和
+没提交的文件不会带过去，所以中途的生成结果要先提交推送。`build/`、`.cache/` 不进 git，本地第一次运行
+`./setup.sh` 下载模型（解压后约 1.5 GB）。已认可的配音原始片段存在 `voice/takes/`（FLAC），
+所以本地 `python3 build.py all --jobs 8` 重新生成时用的是同一批配音，不会合成出另一版；
+改了台词的句子才会重新合成（之后用 `python3 tools/save_takes.py` 把新的认可版本存进去）。
+`--jobs 8` 让 10 核机器并行渲染 8 个场景。
 
 ## 验证结果（本次生成）
 

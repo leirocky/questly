@@ -14,8 +14,9 @@ import mido
 import numpy as np
 
 from audio.theory import Chord, Scale, midi, voice_lead
+from engine.paths import SOUNDFONT as _SF
 
-SOUNDFONT = "/usr/share/sounds/sf3/MuseScore_General.sf3"
+SOUNDFONT = str(_SF)               # MuseScore General (apt package or tools/fetch_soundfont.py)
 SR = 48000
 PPQ = 960
 TEMPO_US = 500000                      # fixed MIDI tempo: 1 tick = 1/1920 s
