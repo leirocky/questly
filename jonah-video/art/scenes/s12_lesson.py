@@ -15,8 +15,8 @@ Timing (all keyed to ctx.lines; the first 0.8 s is a still frame for the dissolv
   line 0  "约拿，这棵蓖麻不是你栽种的，"  Jonah looks up at his name; clouds part, golden rays fall on him (a
           warm light pass sits on Jonah himself); he is sad, turns the dry leaf in his hand; a dead leaf
           wobbles loose from the canopy and flutters down.
-  line 1  "你尚且这样爱惜它。"  Jonah looks down at the leaf, thoughtful ('sorry'). Near the end of the line the
-          camera starts a slow pull-back while Jonah leans toward the city ('worried', no smile yet).
+  line 1  "你尚且这样爱惜它。"  Jonah looks down at the leaf, thoughtful ('sorry', eyes downcast). Late in the line
+          the camera starts a slow pull-back while he leans toward the city below (still downcast, no smile).
   line 2  "尼尼微有十二万多…人"  the pull-back settles on a held wide view of the whole city with Jonah on his
           knoll (doves fly ahead of the camera and leave the frame); then one continuous slow glide descends
           to the people (hearts rise over them, one each, above their heads).
@@ -506,7 +506,7 @@ def build(ctx):
     t_light0 = max(l0.start, t_still)         # God speaks: clouds part, golden rays on Jonah
     t_leaf_fall = l0.start + 0.8              # a dead leaf wobbles loose and flutters down ("这棵蓖麻")
     t_thought = l1.start + 0.2                # "你尚且这样爱惜它" -> Jonah looks at the leaf, thoughtful
-    t_look = l1.end - 0.15                    # he leans and looks toward the city (worried, not smiling)
+    t_look = l1.end - 0.15                    # he leans toward the city below (eyes downcast, not smiling)
     t_sw0, t_sw1 = l1.end - 1.8, l2.start + 1.2      # slow pull-back to the held wide view of the city
     t_hold1 = l2.start + 1.9                  # end of the wide hold -> one continuous glide
     t_back1 = l3.end - 0.55                   # the glide lands back on Jonah ...
@@ -772,7 +772,7 @@ def build(ctx):
                     frame_at=arms, motion=hop_motion(x, y, hops, BALL_H), hops=hops, H=BALL_H)
         hand = CH.body_points(CH.citizen, x, y, s_, fc, kind="child", variant=v, pose="cheer")["hands"][0]
         lift = BALL_H * math.sin(math.pi * 0.15 / 0.45)
-        catch_pts.append((hand[0] - 6 * fc, hand[1] - 16 * s_ - lift))   # just inside / above the raised hand
+        catch_pts.append((hand[0] + 4 * fc, hand[1] - 22 * s_ - lift))   # at / just above the raised hand
     (xa, ya), (xb, yb) = catch_pts
     ARC = 175
     ball_svg = doc(S.g(f'<circle cx="1060" cy="900" r="15" fill="#e2683f" stroke="{P["ink"]}" stroke-width="3.5"/>'
@@ -909,11 +909,12 @@ def build(ctx):
         alpha=a_light(t) * (0.75 + 0.25 * math.sin(t * 1.9)),
         rot=2.0 * math.sin(t * 0.45), px=GAP[0], py=GAP[1] - 40))
 
-    # Jonah: sad -> thoughtful (sorry) -> looking toward the city (worried) -> peaceful (the only smile)
-    exprs = ["sad", "sorry", "worried", "peaceful"]
+    # Jonah: sad -> thoughtful, eyes downcast (sorry: at the leaf, then leaning toward the city below) ->
+    # peaceful (the only smile, after the camera has settled on him)
+    exprs = ["sad", "sorry", "peaceful"]
     jshadow = CH.ground_shadow(XJ, GY, SP, width=210, opacity=0.25)
     jframes = [doc(jshadow + CH.jonah(XJ, GY, SP, -1, pose="sit", expr=e)) for e in exprs]
-    switch = [(t_thought, 0.25), (t_look, 0.3), (t_peace, 0.35)]
+    switch = [(t_thought, 0.25), (t_peace, 0.35)]
 
     def jonah_frame(t):
         f = 0.0
@@ -929,8 +930,8 @@ def build(ctx):
         rot = 0.0
         # hears his name: sits up and looks up toward the voice and the light, then settles
         e = _env(t, t_name, t_name + 0.6, t_name + 0.8, t_name + 1.6)
-        rot += 2.6 * e
-        sy *= 1 + 0.03 * e
+        rot += 3.0 * e
+        sy *= 1 + 0.035 * e
         # thoughtful sigh, looking down at the leaf
         u = t - t_thought
         if 0 <= u < 1.4:
@@ -1059,12 +1060,13 @@ def build(ctx):
     Cw = Cam(1620, 850, 2420)         # held wide view: the whole city, the plain, the pasture, Jonah on his knoll
     Cw2 = Cam(1590, 860, 2390)
     C1 = Cam(1100, 1010, 1850)        # the people
-    C2 = Cam(1620, 1120, 1800)        # the animals
+    C2 = Cam(1620, 1110, 1800)        # the animals
+    C2b = Cam(1700, 880, 1800)        # tilt up first, so Jonah enters from the side, head and all
     C3 = Cam(XJ - 20, 640, 1720)      # back up the knoll to Jonah
     Cf = Cam(hx, 600, 1450)           # slow push-in: Jonah's face at the centre (s13 opens on him there)
     moves = []
     for (ta, tb, cams, r) in [(t_still, t_sw0, [C0, C0b], 0.45), (t_sw0, t_sw1, [C0b, Cw], 0.27),
-                              (t_sw1, t_hold1, [Cw, Cw2], 0.5), (t_hold1, t_back1, [Cw2, C1, C2, C3], 0.15),
+                              (t_sw1, t_hold1, [Cw, Cw2], 0.5), (t_hold1, t_back1, [Cw2, C1, C2, C2b, C3], 0.15),
                               (t_back1, T, [C3, Cf], 0.5)]:
         fn, _, knots = _cam_path(cams)
         moves.append((ta, tb, fn, r, knots))
