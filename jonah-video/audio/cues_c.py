@@ -218,9 +218,9 @@ def deep(c):
     s.pad("choir", 3, 57, 77, vel=62, tops=tops("D5"), bass_ref=(38, 50))
     s.pad(["vla", "vln2", "vln1"], 3, 57, 79, vel=54, bass_part="vc", bass_lo=40, bass_hi=51)
     s.add("cb", 0, 4, "D2", 52, "bass")
-    gliss(s, "harp", 0, 0.5, midi("D3"), midi("A6"), v0=36, v1=60)
-    s.add("glock", 0.5, 2, "F#6", 40, "arp", "r")
-    s.add("celesta", 1.0, 2, "A6", 40, "arp", "r")            # rings out before the shore's G
+    gliss(s, "harp", 0, 0.5, midi("D3"), midi("D7"), v0=36, v1=56)    # out of the cave: bells up high
+    s.add("glock", 0.5, 2, "F#6", 48, "arp", "r")
+    s.add("celesta", 1.0, 2, "A6", 48, "arp", "r")            # rings out before the shore's G
     timp_roll(s, 0, 3.5, midi("D2"), 30, 44)
     s.expr(["choir", "vla", "vln2", "vln1", "vc", "cb"], [(0, -10), (1, -8), (3, -8), (4, -9)])
 

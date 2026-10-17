@@ -256,9 +256,9 @@ def row(c):
     q_ls1 = r2.q_of(c.t0 + c.ls(i_waves))
     for p in ("vc_fast", "cb_fast", "horn", "timp", "hand", "trem_va", "trem_hi"):
         r1.expr(p, [(0, -13), (max(0.5, q_hard - 1), -12), (max(q_hard, q_le0 - 0.5), -9), (16, -5)])
-        r2.expr(p, [(0, -5), (max(0.3, q_ls1 + 0.6), -12), (12, -11), (q_crash - 0.4, -11), (q_crash, -3),
+        r2.expr(p, [(0, -5), (max(0.3, q_ls1 + 0.6), -12), (12, -11), (q_crash - 0.4, -11), (q_crash, -4.5),
                     (16, -8)])
-    r2.expr(["tbn", "brass"], [(12, -18), (q_crash - 0.3, -13), (q_crash, -4), (16, -8)])
+    r2.expr(["tbn", "brass"], [(12, -18), (q_crash - 0.3, -13), (q_crash, -5.5), (16, -8)])
     # the hushed prayer: humming choir, soft low strings, the storm still rumbling far off
     r3.pad("ooh", 3, 55, 72, vel=56, bass_ref=(36, 50))
     r3.pad(["vla", "vln2"], 2, 53, 69, vel=42, bass_part="vc", bass_lo=40, bass_hi=51)

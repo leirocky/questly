@@ -48,8 +48,15 @@ doc, graded, ship_pt, deck_y_at = V.doc, V.graded, V.ship_pt, V.deck_y_at
 apply, compose, keyc = V.apply, V.compose, V.keyc
 fm = V.fm
 
-# crew on deck (bow on the left): A v0 and D v2 work the bow side, C v3 and B v1 the stern side
-AX, DX, CX, BX = 980.0, 1140.0, 1335.0, 1495.0
+# crew on deck (bow on the left): A v0 and D v2 work the bow side, C v3 and B v1 the stern side; the captain
+# takes the helm at the stern (ship-local x -390, by the steering oar, behind the high stern bulwark), clear of
+# B's overhead heaves
+AX, DX, CX, BX = 980.0, 1140.0, 1335.0, SX + 245 * SS
+CAPX = SX + 390 * SS
+# where s03 leaves its people in its last picture (the same ship-local spots): v1 by the mast, the captain just aft
+# of it, Jonah crouched behind the stern rail by the cargo looking back at Joppa (v0 at the bow = AX)
+B_X0, CAP_X0, JDX = SX - 72 * SS, SX + 60 * SS, SX + 239 * SS
+J_PEEK = 104.0                         # Jonah's crouch: this far below standing height (s03's duck, at s04 scale)
 GRAB, LIFT, FT = 0.85, 0.32, 0.22     # carry pose this long before a release, throw pose this long before, held after
 
 
@@ -61,6 +68,23 @@ def span(line, phrases, f0, f1):
                 return c.start, c.end
     d = line.end - line.start
     return line.start + f0 * d, line.start + f1 * d
+
+
+def sheer_clip(cid, lift=10.0):
+    """clipPath keeping everything above the hull's sheer line (the deck / bulwark top, rising toward bow and
+    stern) - a figure drawn inside it is hidden by the hull below the rail, like s03's hull cover."""
+    pts = [(x, deck_y_at(min(max(x, SX - 520 * SS), SX + 520 * SS)) - lift * SS) for x in range(-40, W + 81, 40)]
+    d = "M-40,-600 L" + f"{W + 80},-600 " + " ".join(f"L{fm(x)},{fm(y)}" for x, y in reversed(pts)) + " Z"
+    return f'<clipPath id="{cid}"><path d="{d}"/></clipPath>'
+
+
+def fig_svg(markup, depth=0.0, clip=False, cid="fc"):
+    """A figure standing ``depth`` px below its deck spot (on a ladder in a hatch), clipped at the sheer line."""
+    if depth:
+        markup = f'<g transform="translate(0,{depth:.1f})">{markup}</g>'
+    if depth or clip:
+        markup = sheer_clip(cid) + f'<g clip-path="url(#{cid})">{markup}</g>'
+    return markup
 
 
 # ================================================================= calm-weather drawings
@@ -433,7 +457,20 @@ def build(ctx):
     T_REV = (T_DIVE0 + 0.4, T_DIVE0 + 0.95)
     T_IN = T_REV[1]
     T_HATCH = [T_IN + 0.45, max(T_IN + 1.4, c_sleep[0] + 0.25)]
-    T_BLACK = (max(T_DIVE1 + 0.6, T - 1.45), T - 0.95)   # dark as the 1.0 s dissolve into s05 begins
+    # no dip at the end: s05 opens on this very picture of the hold (same painting, seed and final camera)
+
+    # opening, continuing s03's last picture; '但是，人怎么能躲开上帝呢？' Jonah gives up looking back at Joppa,
+    # yawns and stretches, and climbs down the stern hatch one rung at a time (Jonah 1:5b); the captain walks
+    # aft to the helm and v1 follows him to his place; '船开出去不久' v2 and v3 climb up from below deck
+    T_JYAWN = c_ask[0] + 0.35
+    T_JDOWN = T_JYAWN + 1.0
+    J_STEPS = [T_JDOWN + 0.38 * (k + 1) for k in range(3)]
+    T_JGONE = J_STEPS[-1] + 0.25
+    T_CTURN = T_JDOWN + 0.15
+    CW = (T_CTURN + 0.12, T_CTURN + 1.75)            # the captain's walk aft
+    BW = (CW[0] + 0.5, CW[0] + 2.0)                  # v1's walk aft
+    T_DUP = max(c_sail[0] + 0.15, BW[0] + 0.7)       # v2 up from below (v1 has left that spot)
+    T_CUP = max(c_sail[0] + 0.6, BW[0] + 1.2)        # v3 up from below (v1 has passed it)
 
     # --------------------------------------------------- ship motion
     grade = lambda t: M.progress(t, T_REACT - 0.9, T_REACT + 0.9, "sine")       # noqa: E731  calm -> storm light
@@ -558,7 +595,9 @@ def build(ctx):
                                 (T_WIND + 0.5, {"dx": 960, "dy": -44}), (t_in + 0.3, {"dx": 0, "dy": 0})],
                                ["linear", "in", "out"]),
                         M.drift(vx=-5), M.bob(7, 4.4, 0.3))
-    bolt_spec = [(m_left, CL[3], -0.3, 700, -1), (m_right, CR[2], 0.05, 770, -1), (m_left, CL[2], 0.25, 760, -1),
+    # (motion, cloud, x fraction across it, bottom y, sway): every bolt strikes open sky, well clear of the sail,
+    # the bow and the crew (bolt 1 far left right after '狂风', bolt 2 right, bolt 3 far left, bolt 4 right)
+    bolt_spec = [(m_left, CL[1], -0.35, 700, -1), (m_right, CR[2], 0.05, 770, -1), (m_left, CL[2], -0.15, 760, -1),
                  (m_right, CR[0], -0.28, 650, 1)]
     bolts = []
     for (ts, _), (mm, (cx, cy, cw, ch), fr, y1, sway) in zip(STRIKES, bolt_spec):
@@ -574,10 +613,12 @@ def build(ctx):
     sc.add("clouds_left", doc(S.g(left, filter="wobble")), wc=0.9, motion=m_left)
     sc.add("clouds_right", doc(S.g(right, filter="wobble")), wc=0.9, motion=m_right)
 
-    gusts = [(T_WIND + 0.15, 1550, 330, 520), (T_WIND + 0.75, 700, 470, 480), (T_WIND + 1.35, 1950, 470, 440),
+    # (time, x, y, length): each gust appears whole inside the frame (curl and streak), holds, then whips left;
+    # none crosses the prayer bubbles or the flying cargo (the one in line 2 comes after A's last splash)
+    gusts = [(T_WIND + 0.15, 1550, 330, 520), (T_WIND + 0.75, 700, 470, 480), (T_WIND + 1.35, 1790, 470, 440),
              (T_WIND + 1.85, 1100, 250, 640), (T_WIND + 2.35, 520, 300, 520), (l1.start + 0.25, 450, 330, 460),
              (l1.start + 0.85, 1750, 400, 520), (c_break[0] + 0.4, 1350, 260, 560), (l2.start + 0.6, 600, 420, 460),
-             (c_throw[0] - 0.4, 1900, 330, 480), (c_where[0] + 0.3, 700, 380, 520)]
+             (max(c_light[0] + 0.55, REL["A2"] + 0.75), 560, 290, 440), (c_where[0] + 0.3, 700, 380, 520)]
     for i, (tg, gx_, gy_, gl) in enumerate(gusts):
         sc.add(f"gust{i}", doc(S.g(V.wind_svg(gx_, gy_, gl, seed=30 + i), filter="wobble-fine")), wc=0,
                motion=(lambda tg_: M.combine(
@@ -642,17 +683,20 @@ def build(ctx):
                wc=0.5, motion=scrap_m)
 
     # snore cue -> Jonah's breathing (chest highest at the end of each inhale of the actual sound)
+    # it ends (fading over 0.5 s) at T-0.6, while s05's own snore fades in over its first 0.6 s (T-1.0 .. T-0.4):
+    # one snore hands over to the other instead of two out-of-phase snores through the dissolve
     snore_at = round(T_CUT[0] + 0.25, 3)
+    snore_end = T - 0.6
     peaks = []
     for k in range(8):   # choose a variation whose inhale falls inside the hold, before the scene's dissolve
         at_k = round(snore_at + 0.07 * k, 3)
-        pk = V.snore_inhale_peaks(ctx.id, at_k, round(T + 0.6 - at_k, 3))
-        if not pk or any(T_IN + 0.15 <= p <= T_BLACK[0] for p in pk):
+        pk = V.snore_inhale_peaks(ctx.id, at_k, round(snore_end - at_k, 3))
+        if not pk or any(T_IN + 0.15 <= p <= T - 1.1 for p in pk):
             snore_at, peaks = at_k, pk
             break
     else:
-        peaks = V.snore_inhale_peaks(ctx.id, snore_at, round(T + 0.6 - snore_at, 3))
-    snore_dur = round(T + 0.6 - snore_at, 3)
+        peaks = V.snore_inhale_peaks(ctx.id, snore_at, round(snore_end - snore_at, 3))
+    snore_dur = round(snore_end - snore_at, 3)
     breath = V.breath_curve(peaks)
 
     # sleeping Jonah inside the cutaway hold (small; the hold painting takes over during the dive)
@@ -662,54 +706,76 @@ def build(ctx):
                                        cutf(t) * (1 - M.progress(t, T_REV[0] + 0.02, T_REV[0] + 0.18, "sine")),
                                        jx_c, jy_c)))
 
+    # 'Z z z' in the cutaway: they drift right, into the open (stern) part of the hold, and rise only a little,
+    # so they stay inside the opening (below the deck beam) and read whole
     hcx, hcy = jx_c + 136 * SS, jy_c - 79 * SS          # cutaway Jonah's head (facing -1)
+    zbx, zby = hcx + 46, hcy + 12                       # baseline centre of a new Z
     for i in range(3):
-        zc = doc(S.text(hcx + 34, hcy - 34, "Z", size=40, fill="#fff3d6",
-                        extra=f'stroke="{INK}" stroke-width="6" paint-order="stroke"'))
+        zc = doc(S.text(fm(zbx), fm(zby), "Z", size=56, fill="#fff3d6",
+                        extra=f'stroke="{INK}" stroke-width="7" paint-order="stroke"'))
 
         def zcm(t, i=i):
             per_ = 1.5
             t0 = T_CUT[1] + 0.1 + 0.5 * i
             if t < t0:
-                return Tf(alpha=0.0, px=hcx + 34, py=hcy - 44)
+                return Tf(alpha=0.0, px=zbx, py=zby - 20)
             u = ((t - t0) % per_) / per_
             a = (min(1.0, u / 0.15) * (1 - M.progress(u, 0.55, 1.0, "sine"))
                  * (1 - M.progress(t, T_REV[0] - 0.2, T_REV[0] + 0.1, "sine")))
-            s_ = 0.55 + 0.6 * u
-            return Tf(10 + 34 * u, -8 - 46 * u, -10 + 18 * u, s_, s_, a, hcx + 34, hcy - 44)
+            s_ = 0.7 + 0.35 * u
+            return Tf(118 * u, -20 * u, -10 + 16 * u, s_, s_, a, zbx, zby - 20)
         sc.add(f"zc{i}", zc, wc=0, motion=on_ship(zcm))
 
-    # ---- crew choreography: (time, pose, expr, facing, storm-graded, hop?) per sailor
+    # ---- crew choreography: (time, pose, expr, facing, hop?, depth below the deck spot) per figure. Every
+    # pose is drawn in both colour grades and only the grade of the same drawing crossfades (with the ship's
+    # grade(t)); different poses are hard cuts sold by a squash-and-hop.
+    DEEP = 360.0                                      # below deck, out of sight
+
     def throws_ev(names, facing):
         ev = []
         for k, nm in enumerate(names):
             tr = REL[nm]
-            ev += [(tr - GRAB, "carry", None, facing, True, k == 0), (tr - LIFT, "throw", None, facing, True, False),
-                   (tr + FT, "carry", None, facing, True, False)]
-        ev.append((REL[names[-1]] + 0.75, "stand", "tired", facing, True, True))
+            ev += [(tr - GRAB, "carry", None, facing, k == 0, 0), (tr - LIFT, "throw", None, facing, False, 0)]
+            if k + 1 < len(names):          # empty-handed between two loads: straighten up, worried
+                ev.append((tr + FT, "stand", "worried", facing, True, 0))
+            else:                           # done: catch breath
+                ev.append((tr + FT, "stand", "tired", facing, True, 0))
         return ev
+
+    def climb_up(t0, facing, expr):
+        """Up a ladder from below deck: head and shoulders, chest, then on deck with a hop."""
+        return [(0, "stand", "neutral", facing, False, DEEP), (t0, "stand", "neutral", facing, True, 150),
+                (t0 + 0.26, "stand", "neutral", facing, True, 62), (t0 + 0.52, "stand", expr, facing, True, 0)]
 
     h1 = HITS[0][0]
     EV = {
-        "A": [(0, "point", "happy", -1, False, False), (T_REACT, "point", "surprised", -1, True, True),
-              (S1 + 0.05, "scared", None, -1, True, True), (h1 - 0.12, "carry", "worried", -1, True, True),
-              (S2 + 0.05, "scared", None, -1, True, True), (T_PRAY["A"], "pray", None, -1, True, True)]
-             + throws_ev(["A1", "A2"], -1) + [(T_L3, "scared", None, -1, True, True)],
-        "D": [(0, "stand", "happy", 1, False, False), (0.5 * (c_ask[0] + c_ask[1]), "stand", "happy", -1, False, True),
-              (T_REACT + 0.12, "stand", "worried", -1, True, True),
-              (S1 + 0.1, "scared", None, -1, True, True), (T_PRAY["D"], "pray", None, -1, True, True)]
-             + throws_ev(["D1"], -1) + [(T_L3 + 0.1, "pray", None, -1, True, True)],
-        "C": [(0, "stand", "neutral", -1, False, False), (T_REACT + 0.06, "stand", "worried", 1, True, True),
-              (S1 + 0.12, "scared", None, 1, True, True), (T_PRAY["C"], "pray", None, 1, True, True)]
-             + throws_ev(["C1"], 1) + [(T_L3 + 0.05, "pray", None, 1, True, True)],
-        "B": [(0, "stand", "happy", -1, False, False), (c_sail[0] + 0.35, "stand", "neutral", 1, False, True),
-              (T_REACT + 0.18, "stand", "worried", 1, True, True),
-              (S1 + 0.08, "scared", None, 1, True, True), (h1 - 0.08, "carry", "worried", 1, True, True),
-              (S2 + 0.08, "scared", None, 1, True, True), (T_PRAY["B"], "pray", None, 1, True, True)]
-             + throws_ev(["B1", "B2"], 1) + [(T_L3 - 0.05, "scared", None, 1, True, True)],
+        "A": [(0, "point", "happy", -1, False, 0), (T_REACT, "point", "surprised", -1, True, 0),
+              (S1 + 0.05, "scared", None, -1, True, 0), (h1 - 0.12, "carry", "worried", -1, True, 0),
+              (S2 + 0.05, "scared", None, -1, True, 0), (T_PRAY["A"], "pray", None, -1, True, 0)]
+             + throws_ev(["A1", "A2"], -1) + [(T_L3, "scared", None, -1, True, 0)],
+        "D": climb_up(T_DUP, -1, "happy")
+             + [(T_REACT + 0.12, "stand", "worried", -1, True, 0),
+                (S1 + 0.1, "scared", None, -1, True, 0), (T_PRAY["D"], "pray", None, -1, True, 0)]
+             + throws_ev(["D1"], -1) + [(T_L3 + 0.1, "pray", None, -1, True, 0)],
+        "C": climb_up(T_CUP, -1, "neutral")
+             + [(T_REACT + 0.06, "stand", "worried", 1, True, 0),
+                (S1 + 0.12, "scared", None, 1, True, 0), (T_PRAY["C"], "pray", None, 1, True, 0)]
+             + throws_ev(["C1"], 1) + [(T_L3 + 0.05, "pray", None, 1, True, 0)],
+        "B": [(0, "stand", "happy", 1, False, 0), (BW[1] + 0.04, "stand", "neutral", 1, True, 0),
+              (T_REACT + 0.18, "stand", "worried", 1, True, 0),
+              (S1 + 0.08, "scared", None, 1, True, 0), (h1 - 0.08, "carry", "worried", 1, True, 0),
+              (S2 + 0.08, "scared", None, 1, True, 0), (T_PRAY["B"], "pray", None, 1, True, 0)]
+             + throws_ev(["B1", "B2"], 1) + [(T_L3 - 0.05, "scared", None, 1, True, 0)],
+        # the captain: aft of the mast as s03 leaves him, turns and walks aft to the helm; in the storm he holds
+        # his head in his hands
+        "K": [(0, "stand", "neutral", -1, False, 0), (T_CTURN, "stand", "neutral", 1, True, 0),
+              (CW[1] + 0.04, "stand", "neutral", -1, True, 0), (T_REACT + 0.2, "stand", "worried", -1, True, 0),
+              (S1 + 0.14, "worried", None, -1, True, 0)],
     }
     CREW = {"A": (AX, 0, -1, ["A1", "A2"]), "D": (DX, 2, -1, ["D1"]), "C": (CX, 3, 1, ["C1"]),
             "B": (BX, 1, 1, ["B1", "B2"])}
+    WALK = {"B": (B_X0, BW), "K": (CAP_X0, CW)}
+    APPEAR = {"D": T_DUP, "C": T_CUP}
 
     def heave_keys(throws):
         """Forward lean (deg, + = toward the sea) and vertical squash for a sailor's throws."""
@@ -736,6 +802,15 @@ def build(ctx):
             return dy, sy
         return f
 
+    def walk_fn(x_from, x_to, t0, t1):
+        """Walking along the deck behind the rail (the shields hide the legs, as in s03): an eased glide with a
+        bob on every step."""
+        def f(t):
+            dx = (x_from - x_to) * (1 - M.progress(t, t0, t1, "sine"))
+            dy = -5 * abs(math.sin(math.pi * (t - t0) / 0.3)) if t0 <= t < t1 else 0.0
+            return dx, dy
+        return f
+
     hit_dir = {"stern": -1, "bow": 1}
 
     def stagger(t, seed):
@@ -747,13 +822,32 @@ def build(ctx):
             v += 4.0 * math.exp(-(t - T_CRASH) / 0.35) * math.sin(10 * (t - T_CRASH) + 0.2 * seed)
         return v
 
+    def pose_frames(ev, draw, x, cid, grades=True, clip=False):
+        """Flipbook frames (one per distinct pose / expr / facing / depth, each in both grades) and frame_at."""
+        frames, keys_, idx = [], {}, []
+        for e in ev:
+            k = (e[1], e[2], e[3], e[5])
+            if k not in keys_:
+                keys_[k] = len(keys_)
+                mk = fig_svg(draw(x, e[1], e[2], e[3]), e[5], clip, f"{cid}{keys_[k]}")
+                frames.append(doc(mk))
+                if grades:
+                    frames.append(doc(graded(mk), GRADE_DEFS))
+            idx.append(keys_[k])
+        times = [e[0] for e in ev[1:]]
+        if grades:
+            return frames, (lambda t: 2.0 * idx[sum(t >= ts for ts in times)] + grade(t))
+        return frames, (lambda t: float(idx[sum(t >= ts for ts in times)]))
+
     actors = {}
 
     def make_actor(key):
         x, var, tf_face, names = CREW[key]
         ev = sorted(EV[key], key=lambda e: e[0])
         lean, squash = heave_keys([REL[n] for n in names])
-        hop = hop_fn([e[0] for e in ev[1:] if e[5]])
+        hop = hop_fn([e[0] for e in ev[1:] if e[4]])
+        walk = walk_fn(WALK[key][0], x, *WALK[key][1]) if key in WALK else (lambda t: (0.0, 0.0))
+        t_app = APPEAR.get(key, -1.0)
         grab0 = REL[names[0]] - GRAB
         last = REL[names[-1]]
         seed = ord(key)
@@ -769,24 +863,16 @@ def build(ctx):
             a = tamp(t)
             ddx, ddy = a * math.sin(t * 47 + seed), 0.4 * a * math.sin(t * 31 + seed)
             hdy, hsy = hop(t)
+            wdx, wdy = walk(t)
             sy = squash(t) * hsy * (1 + 0.006 * math.sin(2 * math.pi * t / 3.1 + seed))
             rot = tf_face * lean(t) + stagger(t, seed)
             for p0, p1 in pray_iv:          # praying: a slow imploring sway
                 if p0 <= t < p1:
                     rot += 1.6 * M.progress(t, p0, p0 + 0.5, "sine") * math.sin(2 * math.pi * (t - p0) / 2.3 + seed)
-            return Tf(ddx, ddy + hdy, rot, 1 + 0.5 * (1 - sy), sy, 1.0, x, DECK)
+            return Tf(ddx + wdx, ddy + hdy + wdy, rot, 1 + 0.5 * (1 - sy), sy, float(t >= t_app), x, DECK)
         actors[key] = m
-
-        frames, keys_, idx = [], {}, []
-        for e in ev:
-            k = e[1:5]
-            if k not in keys_:
-                keys_[k] = len(frames)
-                mk = C.sailor(x, DECK, SS, e[3], variant=var, pose=e[1], expr=e[2])
-                frames.append(doc(graded(mk) if e[4] else mk, GRADE_DEFS))
-            idx.append(keys_[k])
-        times = [e[0] for e in ev[1:]]
-        return frames, (lambda t: float(idx[sum(t >= ts for ts in times)]))
+        return pose_frames(ev, lambda x_, p, e, f: C.sailor(x_, DECK, SS, f, variant=var, pose=p, expr=e), x,
+                           f"sc{key}")
 
     def carry_over(sx, facing, variant):
         hc = C.hand_positions(C.sailor, sx, DECK, SS, facing, variant=variant, pose="carry")
@@ -795,6 +881,45 @@ def build(ctx):
                 ((ht[0][0] + ht[1][0]) / 2, (ht[0][1] + ht[1][1]) / 2))
 
     z_crew = len(sc.layers) + len(sc.dynamics)
+
+    # Jonah on deck (as s03 leaves him), behind the cargo: yawns and stretches, then climbs down the stern hatch
+    jev = [(0, "stand", "scared", 1, False, J_PEEK), (T_JYAWN, "wake", "sleepy", -1, True, 0),
+           (T_JDOWN, "stand", "sleepy", -1, True, J_PEEK)]
+    jev += [(ts, "stand", "sleepy", -1, False, J_PEEK + d) for ts, d in zip(J_STEPS, (72, 146, 230))]
+    jframes, jfa = pose_frames(jev, lambda x_, p, e, f: C.jonah(x_, DECK, SS, f, pose=p, expr=e), JDX, "jd",
+                               grades=False)
+    jhop = hop_fn([T_JYAWN, T_JDOWN])
+
+    def jdeck_m(t):
+        hdy, hsy = jhop(t)
+        dy = hdy
+        for ts in J_STEPS:                  # each rung: a small drop and settle
+            if ts <= t < ts + 0.22:
+                dy += 6 * math.sin(math.pi * (t - ts) / 0.22)
+        stretch = 0.03 * math.sin(math.pi * M.progress(t, T_JYAWN + 0.2, T_JDOWN - 0.15, "linear"))
+        sy = hsy * (1 + stretch + 0.008 * math.sin(2 * math.pi * t / 2.7))
+        return Tf(0, dy, 0, 1 + 0.4 * (1 - sy), sy, float(t < T_JGONE), JDX, DECK)
+    sc.add("jonah_deck", jframes, motion=on_ship(jdeck_m), frame_at=jfa, z=z_crew - 0.8)
+
+    # the captain (behind the crew): clipped at the sheer line so the high stern bulwark hides his legs at the helm
+    kev = sorted(EV["K"], key=lambda e: e[0])
+    khop = hop_fn([e[0] for e in kev[1:] if e[4]])
+    kwalk = walk_fn(CAP_X0, CAPX, *CW)
+    ktamp = keyc([(S1, 0.0), (S1 + 0.25, 1.4), (c_scare[0], 1.4), (c_scare[0] + 0.25, 2.2), (T_LIGHT, 2.2),
+                  (T_LIGHT + 0.3, 0.7), (T_L3, 0.7), (T_L3 + 0.3, 1.6)], "linear")
+
+    def cap_m(t):
+        a = ktamp(t)
+        hdy, hsy = khop(t)
+        wdx, wdy = kwalk(t)
+        sy = hsy * (1 + 0.006 * math.sin(2 * math.pi * t / 2.9 + 1.0))
+        return Tf(wdx + a * math.sin(t * 43 + 1.0), hdy + wdy + 0.4 * a * math.sin(t * 29), stagger(t, 75),
+                  1 + 0.5 * (1 - sy), sy, 1.0, CAPX, DECK)
+    actors["K"] = cap_m
+    kframes, kfa = pose_frames(kev, lambda x_, p, e, f: C.captain(x_, DECK, SS, f, pose=p, expr=e), CAPX, "kc",
+                               clip=True)
+    sc.add("captain", kframes, motion=on_ship(cap_m), frame_at=kfa, z=z_crew - 0.2)
+
     for key in ("C", "D", "A", "B"):
         frames, fa = make_actor(key)
         sc.add(f"sailor_{key}", frames, motion=on_ship(actors[key]), frame_at=fa)
@@ -902,7 +1027,8 @@ def build(ctx):
                                     * (1 - M.progress(t, t_cr[1] - 0.3, t_cr[1], "sine"))))
 
     # prayer bubbles: each sailor's own god's sign (sun, little idol, moon, star)
-    BUB = {"A": ("sun", -70, -175, 72), "D": ("idol", -30, -215, 70), "C": ("moon", 40, -205, 70),
+    # D's bubble sits right over the torn sail's hole (both ride the ship), so the hole never peeks out above it
+    BUB = {"A": ("sun", -70, -175, 72), "D": ("idol", 6, -244, 70), "C": ("moon", 40, -205, 70),
            "B": ("star", 70, -172, 72)}
     for key, (kind, ox, oy, rad) in BUB.items():
         x, var, _, names = CREW[key]
@@ -1042,7 +1168,9 @@ def build(ctx):
            motion=in_hold(lambda t: Tf(0, 0, 0, 1 + 0.006 * breath(t), 1 + 0.024 * breath(t), fade_in(t), jx, jy)))
 
     lhx, lhy = V.LANTERN_HOOK
-    swing = lambda t: 8 * math.sin(2 * math.pi * t / 3.1 + 0.6) - 0.6 * ship_tf(t).rot     # noqa: E731
+    # the lantern's swing is phase-locked to s05's (which starts at T-1.0 with the same swing), so it does not
+    # double up in the dissolve
+    swing = lambda t: 8 * math.sin(2 * math.pi * (t - (T - 1.0)) / 3.1 + 0.6) - 0.6 * ship_tf(t).rot   # noqa: E731
     glow = f'<ellipse cx="{lhx + 60}" cy="{lhy + 400}" rx="600" ry="520" fill="url(#lg2)"/>'
     sc.add("lamp_glow", doc(glow, S.rad_grad("lg2", [(0, "#ffd890", 0.5), (0.35, "#ffc870", 0.22), (1, "#ffc060", 0)])),
            wc=0, blend="add",
@@ -1057,6 +1185,9 @@ def build(ctx):
     head = (jx + 240, jy - 140)
     per = 2.25
     t_z0 = c_sleep[0] - 0.1
+    # phase-locked to s05's three Z's (same drawing, path and cycle; s05 starts at T-1.0), so in the dissolve each
+    # Z simply carries on instead of doubling
+    t_z0 = T - 1.0 + round((t_z0 - (T - 1.0)) / (per / 3)) * per / 3
     while t_z0 - per / 3 >= T_REV[0] + 0.2:
         t_z0 -= per / 3
     for i, delay in enumerate((0.0, per / 3, 2 * per / 3)):
@@ -1191,10 +1322,10 @@ def build(ctx):
     rain_k = keyc([(T_WIND + 1.0, 0.0), (T_WIND + 1.6, 0.4), (l0.end - 0.3, 0.45), (l0.end + 0.5, 1.0),
                    (T_REV[0] - 0.25, 1.0), (T_REV[0] + 0.35, 0.0)], "sine")
     sc.fx = [rain_fx(rain_k, density=0.95, angle=-16, seed=5, hole=rain_hole),
-             V.flash_fx(STRIKES), V.motes_fx(hold_region, 24, T_IN - 0.3), V.dip_fx(*T_BLACK)]
+             V.flash_fx(STRIKES), V.motes_fx(hold_region, 24, T_IN - 0.3)]
     sc.meta = dict(STRIKES=STRIKES, HITS=HITS, REL=REL, T_PRAY=T_PRAY, splashes=[s[:3] for s in splashes],
                    T_CUT=T_CUT, T_DIVE0=T_DIVE0, T_DIVE1=T_DIVE1, T_REV=T_REV, T_IN=T_IN, T_HATCH=T_HATCH,
-                   T_CRASH=T_CRASH, T_TEAR=T_TEAR, T_LIGHT=T_LIGHT, T_REACT=T_REACT, WIPE=WIPE, T_BLACK=T_BLACK,
+                   T_CRASH=T_CRASH, T_TEAR=T_TEAR, T_LIGHT=T_LIGHT, T_REACT=T_REACT, WIPE=WIPE,
                    t_cull=t_cull, snore=(snore_at, snore_dur, peaks), ship_tf=ship_tf, camera=camera, bolts=bolts,
                    t_z0=t_z0, place=place, H0=H0)
 
@@ -1212,6 +1343,8 @@ def build(ctx):
         sc.sfx(name, t_in_amb, dur=T + 0.6 - t_in_amb, gain_db=g_in, fade_in=1.0, fade_out=0.8)
     sc.sfx("drip", T_REV[0], dur=T + 0.6 - T_REV[0], gain_db=-16, fade_in=0.6, fade_out=0.8)
     sc.sfx("ship_creak", 0, dur=T + 0.6, gain_db=-13, fade_in=0.8, fade_out=0.8)
+    sc.sfx("footsteps", CW[0], dur=CW[1] - CW[0] + 0.1, gain_db=-21, pan=0.2, fade_in=0.15, fade_out=0.3)
+    sc.sfx("footsteps", BW[0] + 0.1, dur=BW[1] - BW[0], gain_db=-23, pan=0.1, fade_in=0.15, fade_out=0.3)
     sc.sfx("ship_creak", l1.start - 0.1, dur=l1.end - l1.start + 0.8, gain_db=-7, fade_in=0.3, fade_out=0.5)
     for (ts, _), (bx_, *_r) in zip(STRIKES, bolts):
         sc.sfx("thunder", ts, gain_db=-6 if ts < S4 else -9, pan=max(-0.6, min(0.6, (bx_ - 1200) / 1300)))
@@ -1225,5 +1358,5 @@ def build(ctx):
         sc.sfx("splash_small", ts, gain_db=-7, pan=max(-0.8, min(0.8, (x - 1200) / 1100)))
     for nm, tr in REL.items():
         sc.sfx("whoosh", tr, gain_db=-15, pan=-0.3 if nm[0] in "AD" else 0.3)
-    sc.sfx("snore", snore_at, dur=snore_dur, gain_db=-8, fade_in=0.5, fade_out=0.6)
+    sc.sfx("snore", snore_at, dur=snore_dur, gain_db=-10, fade_in=0.5, fade_out=0.5)
     return sc

@@ -1,34 +1,45 @@
 """Scene 21 — the castor plant (Jonah 4:6).
 
 The dry knoll east of Nineveh (the city small on the western horizon, left), Jonah in his little booth
-facing the city — the same place, booth and look as v1 s11 / s20. Every time comes from the narration
-(ctx.lines[i].at(phrase) / .start / .end), never fixed numbers.
+facing the city — the same place, booth and look as v1 s11 / s20 / s22. Every time comes from the narration
+(ctx.lines[i].at(phrase) / .start / .end, or _at_in() for a phrase inside a chunk), never fixed numbers.
 
 Line 0 "上帝安排了一棵蓖麻。" — a hot afternoon; Jonah sits in the booth, tired and sweaty. God's warm light
-        (light only, never a figure) shines down beside the booth; a little golden seed floats down the beam,
-        lands, and a sprout pops up (sparkles). Jonah notices it (hop).
-        "一夜之间，蓖麻就长起来了，又高又大。" — the sun sinks behind the city and night falls (stars, crescent
-        moon); Jonah yawns and lies down to sleep (z's); the castor plant grows in the night, glowing softly
-        with God's light — one continuous drawing per video frame; dawn breaks in the east as it reaches its
-        full height ("又高又大").
+        (light only, never a figure) shines down beside the booth; a golden glow gathers on the ground in it
+        and on "一棵蓖麻" a sprout pushes up through the earth (crumbs, sparkles). Jonah notices it (hop).
+        "一夜之间，蓖麻就长起来了，又高又大。" — just before "一夜之间" the sun sinks behind the city and night
+        falls (stars, crescent moon); Jonah yawns and lies down to sleep (z's); the castor plant grows in the
+        night, glowing softly with God's light (small warm sparkles that hug the growing plant) — one exact
+        drawing per video frame; dawn breaks in the east as it reaches its full height ("又高又大").
 Line 1 "它宽宽的叶子，像一把绿色的大伞，" — Jonah wakes and stretches, then sees the plant (hop); the camera tilts
         up to the wide leaves arching over the booth like a green umbrella; doves fly by; Jonah is pleased.
-        "替约拿挡住了火辣辣的太阳。" — the sun climbs and blazes (flame rays, hot sky, heat shimmer on the open
-        sand), but the canopy holds a cool shade over the booth: the ground shade and a cool tint on Jonah
-        settle in, sunlight only glints on the top leaves; Jonah closes his eyes in relief.
+        "替约拿挡住了火辣辣的太阳。" — the sun has climbed to just behind the right half of the leaf umbrella and
+        blazes (flame rays fanning out behind the leaves, which cut them off; hot sky; warm light shafts and
+        heat shimmer on the open sand), while a cool blue-violet shade settles under the canopy and on Jonah;
+        the lizard hops on its hot stone and scurries into the shade; Jonah closes his eyes in relief.
 Line 2 "这下，约拿非常非常高兴！" — hop into a delighted pose (legs out, arms open), rocking happily with little
-        music notes; the camera pushes in and the scene settles on a calm, sunny frame.
+        music notes; then he settles back (hop-cut) into a calm seated, eyes-closed rest in the cool shade, and
+        the camera eases back to exactly s22's opening framing for a clean same-place dissolve.
+
+Continuity
+* Start: s20 ends on this scene's first frame (booth anchor, Jonah 'sit' facing left, lizard, and this
+  afternoon flame sun with its scale / turning / breathing phase are matched there), so the opening camera
+  Cam(1075, 600, 1960), the booth, Jonah's first pose and the afternoon sun must stay as they are.
+* End: the last camera key equals s22's first key Cam(1070, 600, 1990) (same stage layout V.XP / GY / SP /
+  XB); Jonah ends sitting with closed eyes like s22's dozing Jonah; the noon sun is at s22's SUN_HOT.
 
 Notes for maintainers
 * Reuses the approved v1 s11_vine techniques (helpers imported from art.scenes_v1.s11_vine): the castor plant
   is ONE drawing per video frame with whole-number flipbook indices (never two plants alpha-blended), each
-  leaf keeps its full-grown spin while it grows; Jonah's pose changes are 1-frame cuts hidden by a
-  squash-and-hop (+ dust poof); expression-only changes crossfade softly; the shade is a ground multiply
-  ellipse plus a cool multiply tint of Jonah's own silhouette.
+  leaf keeps its full-grown spin while it grows; Jonah's pose AND expression changes are 1-frame cuts (the
+  flipbook index is always whole), pose changes hidden by a squash-and-hop (+ dust poof).
 * Night: the plant grows DURING the night, so a silhouette-mask grade (v1) would not match the growing plant.
   Instead the whole frame gets one uniform night grade (multiply + small blue lift); the night sky layer is
   painted pre-compensated for it, and the stars, the moon and God's glow on the plant are drawn AFTER the
   grade (post-grade overlay fx), only in clear sky, so they stay bright.
+* Heat vs shade: the hot sky is painted warm (a light global warm grade only); the canopy shade is a bluish
+  multiply on the ground plus a post-grade cool recolour (luminance kept, hue pushed to blue-violet) inside
+  the shade pool, a lighter one on Jonah's silhouette, and almost none on the lizard so it stays readable.
 * Camera: few long sine-eased moves inside the 2112 x 1188 stage.
 """
 import math
@@ -60,11 +71,12 @@ XJ = XB + 28        # Jonah sitting, facing the city (left)
 XJS = XB + 62       # Jonah lying asleep (head on the left, toward the plant)
 HORIZON = 640
 LIZ = (1606, 950)   # lizard basking on its stone
+LIZ_TO = (1395, 976)  # ... its spot in the canopy's shade (an open patch in front of the grass)
 
 SUN_A = (330, 300)      # hot afternoon sun (west, over the city)
 SUN_SET = (300, 790)    # where it sinks (behind the city)
 SUN_E = (1890, 790)     # dawn sun start (east, hidden behind the hills)
-SUN_HOT = (1720, 330)   # noon sun, high beside the canopy (right)
+SUN_HOT = (1490, 225)   # noon sun, just behind the right half of the leaf umbrella (= s22's)
 S_H = 0.74              # noon sun scale (rays reach ~250 px)
 MOON = (1765, 300)
 
@@ -179,16 +191,100 @@ def _note(x, y, s, col):
     return S.g(halo + stem + head, filter="wobble-fine")
 
 
-def _seed_svg(x, y):
+def _jonah_rest(x, y, scale, facing, expr="peaceful", marks=True):
+    """Jonah resting in the shade: the body pose of s22's opening 'doze' (seated, hands on knees, torso +2,
+    head bowed 18 deg; characters' rig, as s22 builds it) with a contented closed-eyes smile, so the dissolve
+    into s22 only changes his mouth. Falls back to the library 'sit' pose if the rig API changes."""
+    try:
+        ps = CH._P(t=2, h=18, legs=(("ik", 80, 1), ("ik", 90, 1)),
+                   arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)), **CH._SEATED)
+        inner, _ = CH._figure(CH._jonah_design(), CH._ADULT, ps, expr, CH._fsign(facing), marks)
+        return CH._wrap_out(inner, x, y, scale, facing, "jonah21-rest")
+    except (AttributeError, TypeError, KeyError):
+        return CH.jonah(x, y, scale, facing, pose="sit", expr=expr, marks=marks)
+
+
+def _ground_glow_svg(x, y):
+    """A small golden glow gathering on the ground where the sprout will push up (light only, no seed)."""
     return S.svg_doc(
-        f'<circle cx="{x}" cy="{y}" r="70" fill="url(#sgl)"/>' +
-        S.g(f'<ellipse cx="{x}" cy="{y}" rx="19" ry="13" fill="#d9a23c" stroke="{INK}" stroke-width="3.6" '
-            f'transform="rotate(-30 {x} {y})"/>'
-            f'<path d="M{x - 12},{y + 4} q12,-3 22,-14" fill="none" stroke="#a8742a" stroke-width="2.6" '
-            f'stroke-linecap="round"/>'
-            f'<ellipse cx="{x - 6}" cy="{y - 5}" rx="6" ry="3.4" fill="#fff4cf" transform="rotate(-30 {x} {y})"/>',
-            filter="wobble-fine"),
-        defs=S.rad_grad("sgl", [(0, "#fff6cf", 1.0), (0.35, "#ffe9a0", 0.6), (1, "#ffe08a", 0)]))
+        f'<ellipse cx="{x}" cy="{y}" rx="95" ry="46" fill="url(#ggl)"/>'
+        f'<ellipse cx="{x}" cy="{y - 4}" rx="30" ry="15" fill="url(#ggc)"/>',
+        defs=S.rad_grad("ggl", [(0, "#fff6cf", 0.95), (0.4, "#ffe9a0", 0.55), (1, "#ffe08a", 0)]) +
+        S.rad_grad("ggc", [(0, "#fffef4", 1.0), (0.6, "#fff4c6", 0.7), (1, "#ffe9a0", 0)]))
+
+
+_PUNCT = "，。！？：；、,.!?:;…"
+
+
+def _at_in(line, phrase, default=None):
+    """Start of ``phrase`` INSIDE a subtitle chunk: the chunk start plus the share of the chunk's speaking time
+    taken by the text before it (characters weigh 1, punctuation 1.5; closing punctuation is not spoken)."""
+    def wt(txt):
+        return sum(1.5 if ch in _PUNCT else 1.0 for ch in txt)
+    for c in line.chunks:
+        i = c.text.find(phrase)
+        if i >= 0:
+            tot = wt(c.text.rstrip(_PUNCT))
+            return c.start + (c.end - c.start) * (wt(c.text[:i]) / tot if tot > 0 else 0.0)
+    return default if default is not None else line.at(phrase)
+
+
+def _shafts_svg(cx, cy, targets, r0=95, w0=14, w1=75):
+    """Soft warm light shafts from the sun (cx, cy) to points on the sunlit sand; each shaft is transparent at
+    the sun and brightest where it lands (a userSpace gradient down the frame), plus a glow where it lands."""
+    d, pools = "", ""
+    for (tx, ty) in targets:
+        ang = math.atan2(ty - cy, tx - cx)
+        ux, uy = math.cos(ang), math.sin(ang)
+        nx, ny = -uy, ux
+        sx_, sy_ = cx + ux * r0, cy + uy * r0
+        p = [(sx_ + nx * w0, sy_ + ny * w0), (tx + nx * w1, ty + ny * w1), (tx - nx * w1, ty - ny * w1),
+             (sx_ - nx * w0, sy_ - ny * w0)]
+        d += "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in p) + " Z "
+        pools += f'<ellipse cx="{tx:.0f}" cy="{ty:.0f}" rx="{w1 * 1.6:.0f}" ry="{w1 * 0.42:.0f}" fill="url(#shp)"/>'
+    grad = (f'<linearGradient id="shg" gradientUnits="userSpaceOnUse" x1="0" y1="{cy}" x2="0" y2="{max(t[1] for t in targets)}">'
+            f'<stop offset="0" stop-color="#fff2c4" stop-opacity="0"/>'
+            f'<stop offset="0.45" stop-color="#fff0c0" stop-opacity="0.22"/>'
+            f'<stop offset="1" stop-color="#ffeab0" stop-opacity="0.55"/></linearGradient>')
+    return S.svg_doc(S.g(f'<path d="{d}" fill="url(#shg)"/>', filter="blur-md") + pools,
+                     defs=grad + S.rad_grad("shp", [(0, "#fff4cc", 0.7), (0.5, "#ffeab0", 0.3), (1, "#ffe0a0", 0)]))
+
+
+def _plant_sparkles(growth_fn, t0, t1, count=22, color=(255, 214, 120), size=(6, 14), period=1.3, seed=3):
+    """God's warm sparkles that hug the growing castor plant: their envelope follows the plant's height
+    (props.castor_height of growth_fn(t)), so they stay on the sprout / stem / canopy and never float like
+    stars over the empty plain."""
+    rng = np.random.default_rng(seed)
+    u = rng.uniform(-1, 1, count)
+    v = rng.uniform(0.15, 1.0, count)
+    ph = rng.uniform(0, 1, count)
+    sz = rng.uniform(*size, count)
+
+    def fx(frame, t, view):
+        k = _env(t, t0, t0 + 0.6, t1 - 0.6, t1)
+        if k <= 0:
+            return frame
+        hgt = PR.castor_height(growth_fn(t)) * SP
+        ov = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(ov)
+        for i in range(count):
+            tw = 0.5 + 0.5 * math.sin(2 * math.pi * (t / period + ph[i]))
+            if tw < 0.15:
+                continue
+            vi = v[i]
+            x = XP + hgt * (0.1 + 0.25 * vi) + u[i] * (34 + hgt * (0.15 + 0.45 * vi))
+            y = GY - 18 - vi * hgt * 1.2 - 8 * tw
+            ox, oy = view.to_out(x, y)
+            r = sz[i] * view.scale * (0.5 + 0.5 * tw)
+            a = int(225 * k * tw)
+            w = r * 0.22
+            g = r * 0.55
+            d.ellipse([ox - g, oy - g, ox + g, oy + g], fill=(*color, a // 4))
+            d.polygon([(ox, oy - r), (ox + w, oy - w), (ox + r, oy), (ox + w, oy + w), (ox, oy + r),
+                       (ox - w, oy + w), (ox - r, oy), (ox - w, oy - w)], fill=(*color, a))
+        frame.alpha_composite(ov)
+        return frame
+    return fx
 
 
 def _glow_pm(R=320, col=(255, 220, 140)):
@@ -221,16 +317,19 @@ def build(ctx):
 
     # --- key times (all from the narration) -------------------------------------------------------
     t_beam0 = l0.start + 0.1                        # God's light shines beside the booth
-    t_seed0 = l0.start + 0.3                        # a golden seed floats down the beam
-    t_land = c0.start + 0.55 * (c0.end - c0.start)  # ... lands ("…一棵蓖麻")
-    t_pop = t_land + 0.08                           # the sprout pops up
-    t_notice = t_pop + 0.45                         # Jonah notices it
-    t_n0 = _at(l0, ["一夜之间"], l0.start + 0.35 * (l0.end - l0.start))   # dusk begins ("一夜之间")
-    t_tw = t_n0 + 0.55                              # violet twilight (between sunset and night)
-    t_n1 = t_n0 + 1.0                               # full night
-    t_yawn = t_n0 + 0.15
-    t_sleep = t_yawn + 0.65                         # lies down to sleep
-    t_g0 = t_n0 + 0.55                              # the plant grows in the night ...
+    try:                                            # the sprout pushes up on "一棵蓖麻"
+        t_pop = _at_in(l0, "一棵") + 0.12
+    except KeyError:
+        t_pop = c0.start + 0.55 * (c0.end - c0.start)
+    t_glow0 = max(t_beam0 + 0.3, t_pop - 0.55)      # a golden glow gathers on the ground first (light only)
+    t_notice = t_pop + 0.4                          # Jonah notices it
+    c_night = _at(l0, ["一夜之间"], l0.start + 0.35 * (l0.end - l0.start))   # "一夜之间"
+    t_n0 = max(c_night - 0.25, t_notice + 0.2)      # dusk begins just before "一夜之间"
+    t_tw = t_n0 + 0.7                               # violet twilight (between sunset and night)
+    t_n1 = t_n0 + 1.2                               # full night
+    t_yawn = t_n0 + 0.3
+    t_sleep = t_yawn + 0.9                          # lies down to sleep
+    t_g0 = t_n0 + 0.65                              # the plant grows in the night ...
     t_g1 = max(t_g0 + 2.2, l0.end - 0.4)            # ... to its full height on "又高又大"
     t_d0 = t_g1 - 0.35                              # dawn breaks
     t_d1 = t_d0 + 0.9
@@ -241,7 +340,8 @@ def build(ctx):
     t_hot0 = _at(l1, ["挡住", "太阳"], l1.start + 0.5 * (l1.end - l1.start))   # "替约拿挡住了火辣辣的太阳"
     t_relief = t_hot0 + 0.95                        # eyes closed: cool shade
     t_happy = max(l2.start + 0.45, t_relief + 1.0)  # "这下，约拿非常非常高兴！"
-    t_calm = min(T - 1.1, l2.end + 0.3)             # rocking settles for the dissolve
+    t_settle = min(l2.end + 0.1, T - 1.2)           # settles back to a calm eyes-closed rest (hop-cut) ...
+    t_cam1 = min(T - 1.2, l2.end + 0.2)             # ... as the camera arrives on s22's opening framing
 
     # =============================================================== SKY (day / hot / gold / night / dawn)
     sky_h = 665
@@ -260,7 +360,8 @@ def build(ctx):
         wc=0.5, motion=lambda t: Tf(alpha=0.0 if covered(t) else 1.0))
     sc.add("sky_hot", S.svg_doc(
         f'<rect x="-20" y="-20" width="{W + 40}" height="{sky_h + 20}" fill="url(#g)"/>',
-        defs=S.lin_grad("g", [(0, "#9cc8d6"), (0.45, "#e3e2bc"), (0.8, "#f6dca4"), (1, "#f8dca8")])),
+        defs=S.lin_grad("g", [(0, "#8cc4ea"), (0.36, "#cbe3f0"), (0.62, "#f6e4c4"), (0.86, "#fbdfa4"),
+                              (1, "#fbd99e")])),
         wc=0.5, motion=lambda t: Tf(alpha=min(1.0, a_hot(t)) * (0.0 if max(a_gold(t), a_tw(t), a_night(t)) >= 0.999 else 1.0)))
     sc.add("sky_gold", S.svg_doc(
         f'<rect x="-20" y="-20" width="{W + 40}" height="{sky_h + 20}" fill="url(#g)"/>'
@@ -306,10 +407,10 @@ def build(ctx):
         sink, lambda t: Tf(alpha=_env(t, t_n0 - 0.1, t_n0 + 0.3, t_tw + 0.1, t_tw + 0.25)))))
 
     S_HOT = 118 * S_H / 82   # the dawn disc grows to exactly the noon disc as it arrives
-    climb = M.keys([(t_d0, {"dx": 0, "dy": 0}), (t_d1, {"dx": -10, "dy": -225}),
-                    (t_hot0 - 0.2, {"dx": -110, "dy": -380}),
+    # rises over the eastern hills at dawn, pauses, then glides up behind the leaf umbrella to SUN_HOT
+    climb = M.keys([(t_d0, {"dx": 0, "dy": 0}), (t_d1, {"dx": -18, "dy": -218}),
                     (t_hot0 + 0.5, {"dx": SUN_HOT[0] - SUN_E[0], "dy": SUN_HOT[1] - SUN_E[1], "s": S_HOT})],
-                   ["out", "linear", "inout"], pivot=(CX, CY))
+                   ["out", "sine"], pivot=(CX, CY))
     sc.add("sun_dawn", _sun_svg(82, "#f8c070", "#ffe0b0", 330), wc=0.5, motion=at(SUN_E, M.combine(
         climb, lambda t: Tf(alpha=_env(t, t_d0, t_d0 + 0.3, t_hot0 + 0.45, t_hot0 + 0.75)))))
     sc.add("sun_rays", rays, wc=0.3, motion=at(SUN_HOT, M.combine(
@@ -406,18 +507,20 @@ def build(ctx):
             M.bob(10, 0.6, ph * 0.1)))
 
     # =============================================================== LIZARD (basks; hot feet; runs into the shade)
-    LIZ_TO = (1478, 970)                       # its new spot in the canopy's shade
-
-    def liz_svg(legs, facing):
+    # It ends on an open patch inside the shade pool, in front of the grass and the booth (high z); there it
+    # gets only a light shade tint of its own (it is above the ground-shade multiply) so it stays readable.
+    def liz_body(legs, facing):
         body = V._lizard(LIZ[0], LIZ[1], 0.82, legs=legs)
         if facing < 0:
             body = f'<g transform="translate({2 * LIZ[0]},0) scale(-1,1)">{body}</g>'
-        return S.svg_doc(body)
+        return body
 
-    liz_frames = [liz_svg(0, 1), liz_svg(0, -1), liz_svg(1, -1)]
+    liz_states = [(0, 1), (0, -1), (1, -1)]
+    liz_frames = [S.svg_doc(liz_body(*st)) for st in liz_states]
+    liz_flat = [S.svg_doc(S.g(liz_body(*st), filter="flat"), defs=V.FLAT_DEFS) for st in liz_states]
     t_liz_hot = t_hot0 + 1.2                   # hot feet on the sun-baked stone
     t_liz = t_hot0 + 1.75                      # turns and scurries into the shade
-    LIZ_RUN = 0.6
+    LIZ_RUN = 0.75
 
     def liz_frame(t):
         if t < t_liz:
@@ -446,7 +549,11 @@ def build(ctx):
             return Tf(dx=dx, dy=dy, sx=1 - 0.03 * b, sy=1 + 0.1 * b, px=LIZ[0], py=LIZ[1] + 2)
         return Tf(dx=dx, dy=dy)
 
-    sc.add("lizard", liz_frames, frame_at=liz_frame, motion=liz_motion, wc=0.5)
+    Z_LIZ = 500                                # above the booth, the ground shade and the near grass
+    liz_shaded = lambda t: M.progress(t, t_liz + 0.45 * LIZ_RUN, t_liz + LIZ_RUN, "sine")
+    sc.add("lizard", liz_frames, frame_at=liz_frame, motion=liz_motion, wc=0.5, z=Z_LIZ)
+    sc.add("liz_shade", liz_flat, frame_at=liz_frame, wc=0, blend="multiply", z=Z_LIZ + 0.1,
+           motion=M.combine(liz_motion, lambda t: Tf(alpha=0.3 * liz_shaded(t))))
     sc.add("liz_rock2", S.svg_doc(S.g(V._stone(LIZ[0] + 150, 1002, 104, 58, seed=43, sw=4), filter="wobble-fine")),
            wc=0.8)
 
@@ -471,28 +578,35 @@ def build(ctx):
     # =============================================================== CANOPY SHADE (ground) + sun flecks
     shade_amt = lambda t: (0.3 * M.progress(t, t_d1, t_d1 + 1.5, "sine") +
                            0.7 * M.progress(t, t_hot0 + 0.55, t_hot0 + 1.2, "sine"))
-    blobs = [(640, 976, 110, 24), (760, 970, 140, 28), (900, 968, 150, 30), (1050, 970, 160, 32),
-             (1210, 972, 170, 32), (1360, 974, 140, 28), (1470, 978, 100, 22)]
+    blobs = [(640, 980, 115, 34), (760, 976, 145, 40), (900, 974, 155, 44), (1050, 976, 165, 46),
+             (1210, 978, 175, 46), (1360, 980, 145, 40), (1470, 984, 105, 32)]
     flecks = [(712, 978, 20, 6), (845, 966, 16, 5), (985, 984, 22, 6), (1150, 990, 18, 5), (1318, 984, 22, 6),
               (1435, 972, 14, 4), (560, 984, 14, 4)]
-    pool = "".join(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#6c6898"/>' for x, y, rx, ry in blobs)
+    pool = "".join(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#7c84b6"/>' for x, y, rx, ry in blobs)
     holes = "".join(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="black"/>' for x, y, rx, ry in flecks)
     def gshade(pool_op, wash_op):
         return S.svg_doc(
             f'<mask id="fl" maskUnits="userSpaceOnUse" x="0" y="0" width="{W}" height="{H}">'
             f'<rect x="0" y="0" width="{W}" height="{H}" fill="white"/>{holes}</mask>'
-            f'<g mask="url(#fl)"><g opacity="{pool_op}" filter="url(#soft)">{pool}</g></g>'
-            f'<ellipse cx="{XP + 380}" cy="{GY - 150}" rx="330" ry="200" fill="#a79fc4" opacity="{wash_op}" '
-            f'filter="url(#blur-md)"/>')
+            f'<g mask="url(#fl)"><g opacity="{pool_op}" filter="url(#shsoft)">{pool}</g></g>'
+            f'<ellipse cx="{XP + 380}" cy="{GY - 150}" rx="330" ry="200" fill="#a2a7d0" opacity="{wash_op}" '
+            f'filter="url(#blur-md)"/>',
+            defs='<filter id="shsoft" x="-30%" y="-80%" width="160%" height="260%">'
+                 '<feGaussianBlur stdDeviation="14"/></filter>')
 
     sh0, sh1 = t_hot0 + 0.15, t_hot0 + 1.35     # the noon shade spreads from the stem over the booth
     # weak morning shade; retired (cost) once the stronger noon shade has spread over it
-    sc.add("ground_shade_am", gshade(0.62, 0.4), wc=0, blend="multiply",
+    sc.add("ground_shade_am", gshade(0.5, 0.4), wc=0, blend="multiply",
            motion=lambda t: Tf(alpha=0.3 * M.progress(t, t_d1, t_d1 + 1.5, "sine") *
                                (1 - M.progress(t, sh1, sh1 + 0.6, "sine"))))
-    sc.add("ground_shade", gshade(0.72, 0.46), wc=0, blend="multiply",
+    sc.add("ground_shade", gshade(0.5, 0.42), wc=0, blend="multiply",
            motion=lambda t: Tf(alpha=0.0 if t < sh0 else 1.0),
            reveal=lambda t: {"mode": "left", "frac": M.progress(t, sh0, sh1, "sine"), "soft": 160})
+
+    # warm sun shafts landing on the open sand right of the shade (the light the leaves keep off Jonah)
+    sc.add("sun_shafts", _shafts_svg(SUN_HOT[0], SUN_HOT[1], [(1628, 992), (1815, 978), (2000, 950)]), wc=0,
+           blend="screen", motion=lambda t: Tf(alpha=M.progress(t, t_hot0 + 0.3, t_hot0 + 1.2, "sine") *
+                                               (0.9 + 0.1 * math.sin(t * 2.3))))
 
     # =============================================================== CASTOR PLANT (one exact drawing per video frame)
     def gcurve(u):
@@ -515,33 +629,27 @@ def build(ctx):
         return gcurve(_clamp((t - t_g0) / (t_g1 - t_g0)))
 
     def plant_motion(t):
-        a = M.progress(t, t_pop - 0.05, t_pop + 0.12, "sine")
-        s = 0.35 + 0.65 * M.progress(t, t_pop - 0.05, t_pop + 0.35, "back")
+        # the sprout pushes up through the earth (stretches up out of the ground, a little overshoot)
+        a = M.progress(t, t_pop - 0.04, t_pop + 0.06, "sine")
+        sy = 0.05 + 0.95 * M.progress(t, t_pop - 0.04, t_pop + 0.42, "back")
+        sx = 0.6 + 0.4 * M.progress(t, t_pop - 0.04, t_pop + 0.3, "out")
         rot = 0.6 * math.sin(2 * math.pi * t / 3.4)
         # a morning breeze rustles the wide leaves as they are described ("它宽宽的叶子")
         br = _env(t, l1.start, l1.start + 0.8, t_hot0 - 1.0, t_hot0)
         rot += br * (0.6 * math.sin(2 * math.pi * t / 1.5) + 0.25 * math.sin(t * 7.3))
-        return Tf(rot=rot, sx=s, sy=s, alpha=a, px=XP, py=GY)
+        return Tf(rot=rot, sx=sx, sy=sy, alpha=a, px=XP, py=GY)
 
-    sc.add("castor", plant_frames, frame_at=plant_frame, motion=plant_motion, wc=0.9)
-
-    # the golden seed floating down the beam
-    sx0, sy0 = XP - 20, 150
-    seed_svg = _seed_svg(XP, GY - 10)
-
-    def seed_motion(t):
-        if t < t_seed0 or t > t_pop + 0.3:
+    # a golden glow gathers on the ground in God's light where the sprout will come up (no falling seed:
+    # Jonah 4:6 only says the LORD God appointed the plant and made it come up)
+    def glow_motion(t):
+        if t < t_glow0 or t > t_pop + 0.8:
             return Tf(alpha=0.0)
-        u = _clamp((t - t_seed0) / (t_land - t_seed0))
-        e = M.ease("sine")(u)
-        dx = (sx0 - XP) * (1 - e) + 46 * math.sin(u * 6.5) * (1 - u)
-        dy = (sy0 - (GY - 10)) * (1 - e)
-        a = M.progress(t, t_seed0, t_seed0 + 0.25, "sine") * (1 - M.progress(t, t_pop, t_pop + 0.25, "sine"))
-        sq = 1 - 0.5 * M.progress(t, t_land, t_pop + 0.2, "sine")
-        return Tf(dx=dx, dy=dy, rot=40 * math.sin(u * 5), sx=1 / max(sq, 0.5) ** 0.3, sy=sq, alpha=a,
-                  px=XP, py=GY - 10)
+        a = M.progress(t, t_glow0, t_glow0 + 0.35, "sine") * (1 - M.progress(t, t_pop + 0.15, t_pop + 0.8, "sine"))
+        s = (0.45 + 0.55 * M.progress(t, t_glow0, t_pop, "out")) * (1 + 0.06 * math.sin(t * 9))
+        return Tf(sx=s, sy=s, alpha=a, px=XP, py=GY - 8)
 
-    sc.add("seed", seed_svg, motion=seed_motion, wc=0.2)
+    sc.add("ground_glow", _ground_glow_svg(XP, GY - 8), motion=glow_motion, wc=0)
+    sc.add("castor", plant_frames, frame_at=plant_frame, motion=plant_motion, wc=0.9)
 
     # earth crumbs popping as the sprout breaks the ground
     crumbs = ""
@@ -562,9 +670,12 @@ def build(ctx):
     # (pose, expr, x, facing, shadow width)
     poses = [("sit", "tired", XJ, -1, 210), ("sit", "surprised", XJ, -1, 210), ("sit", "sleepy", XJ, -1, 210),
              ("sleep", None, XJS, 1, 330), ("wake", None, XJ, -1, 220), ("sit", "surprised", XJ, -1, 210),
-             ("sit", "happy", XJ, -1, 210), ("sit", "peaceful", XJ, -1, 210), ("sit_happy", "happy", XJ, -1, 250)]
+             ("sit", "happy", XJ, -1, 210), ("sit", "peaceful", XJ, -1, 210), ("sit_happy", "happy", XJ, -1, 250),
+             ("rest", "peaceful", XJ, -1, 210)]
 
     def jdraw(p, e, x, f):
+        if p == "rest":
+            return _jonah_rest(x, GY, SP, f, expr=e)
         return CH.jonah(x, GY, SP, f, pose=p, expr=e, marks=(p != "sleep"))
 
     jframes = [S.svg_doc(CH.ground_shadow(x, GY, SP, width=sw_, opacity=0.25) + jdraw(p, e, x, f))
@@ -575,24 +686,23 @@ def build(ctx):
               (t_sleep, "pose", 0.6, False, True),      # -> lies down to sleep
               (t_wake, "pose", 0.8, False, True),       # -> wakes and stretches at dawn
               (t_look, "pose", 0.9, True, True),        # -> sees the big plant
-              (t_glad, "expr", 0, False, False),        # surprised -> happy
-              (t_relief, "expr", 0, False, False),      # happy -> peaceful (cool shade)
-              (t_happy, "pose", 1.0, True, True)]       # -> delighted, arms open
+              (t_glad, "expr", 0.22, False, False),     # surprised -> happy (cut + a tiny squash)
+              (t_relief, "expr", 0, False, False),      # happy -> peaceful: eyes close (a plain cut, like a blink)
+              (t_happy, "pose", 1.0, True, True),       # -> delighted, arms open
+              (t_settle, "pose", 0.4, False, False)]    # -> settles back to rest, eyes closed (s22's doze pose)
 
     def jonah_frame(t):
+        """Whole flipbook indices only: every pose AND expression change is a 1-frame cut (no ghosted faces)."""
         f = 0.0
-        for i, (ts, kind, *_r) in enumerate(switch):
-            if kind == "pose":
-                if t >= ts:
-                    f = float(i + 1)
-            elif t >= ts:
-                f = i + M.progress(t, ts, ts + 0.22, "sine")
+        for i, (ts, *_r) in enumerate(switch):
+            if t >= ts:
+                f = float(i + 1)
         return f
 
     def hop(t):
         sy, dy = 1.0, 0.0
         for ts, kind, amp, *_r in switch:
-            if kind != "pose":
+            if amp <= 0:
                 continue
             u = t - ts
             if -0.09 <= u <= 0.17:
@@ -620,8 +730,8 @@ def build(ctx):
         if t_relief <= t < t_happy:            # a big relieved sigh, then calm breathing
             u = t - t_relief
             sy *= 1 + 0.025 * math.sin(math.pi * _clamp(u / 1.4))
-        if t >= t_happy:                       # happy rocking, settling for the dissolve
-            k = M.progress(t, t_happy, t_happy + 0.4) * (1 - 0.6 * M.progress(t, t_calm - 0.6, t_calm + 0.4))
+        if t >= t_happy:                       # happy rocking, dying away just before he settles back
+            k = M.progress(t, t_happy, t_happy + 0.4) * (1 - M.progress(t, t_settle - 0.9, t_settle - 0.05))
             rot = k * 1.8 * math.sin(2 * math.pi * (t - t_happy) / 1.1)
             dy = -k * 5 * abs(math.sin(2 * math.pi * (t - t_happy) / 1.1))
         hsy, hdy = hop(t)
@@ -634,7 +744,7 @@ def build(ctx):
     # canopy shade ON JONAH ONLY: a cool flat-colour copy of his own silhouette, multiplied
     tint_frames = [S.svg_doc(S.g(jdraw(p, e, x, f), filter="flat"), defs=V.FLAT_DEFS) for p, e, x, f, _w in poses]
     sc.add("jonah_shade", tint_frames, frame_at=jonah_frame, wc=0, blend="multiply",
-           motion=M.combine(jonah_motion, lambda t: Tf(alpha=0.46 * shade_amt(t))))
+           motion=M.combine(jonah_motion, lambda t: Tf(alpha=0.34 * shade_amt(t))))
 
     # --- pose-change pop: dust poofs + emphasis lines --------------------------------------------------
     dust_svg = ""
@@ -706,7 +816,7 @@ def build(ctx):
             if t < t0:
                 return Tf(alpha=0.0)
             u = ((t - t0) % 1.6) / 1.6
-            fade = 1 - M.progress(t, t_calm - 0.8, t_calm)
+            fade = 1 - M.progress(t, t_settle - 0.75, t_settle - 0.1)
             return Tf(dx=18 * math.sin(u * 5 + i), dy=-110 * u, rot=12 * math.sin(u * 6 + i),
                       alpha=fade * math.sin(math.pi * u) ** 0.6, sx=0.8 + 0.3 * u, sy=0.8 + 0.3 * u, px=nx, py=ny)
         sc.add(f"note{i}", S.svg_doc(_note(nx, ny, s_, col)), motion=note_motion, wc=0.3)
@@ -734,7 +844,7 @@ def build(ctx):
     sc.camera = M.cam_keys([
         (0.0, Cam(1075, 600, 1960)),
         (t_beam0 + 0.1, Cam(1072, 598, 1956)),
-        (t_notice + 0.1, Cam(1012, 638, 1770)),        # closer: the seed lands, the sprout pops
+        (t_notice + 0.1, Cam(1012, 638, 1770)),        # closer: the glow gathers, the sprout pushes up
         (t_n0 + 0.2, Cam(1010, 640, 1762)),
         (t_g0 + 1.7, Cam(1050, 592, 1960)),            # back out as night falls and the plant shoots up
         (t_g1, Cam(1052, 592, 1960)),
@@ -742,8 +852,10 @@ def build(ctx):
         (t_hot0 - 0.3, Cam(1072, 540, 1720)),          # tilt up to the umbrella of leaves
         (t_hot0 + 1.7, Cam(1150, 648, 1880)),          # ... back to show the blazing sun and the shade
         (l2.start + 0.1, Cam(1152, 646, 1870)),
-        (t_calm, Cam(1176, 618, 1580)),                # push in on the happy Jonah
-        (T, Cam(1178, 619, 1570)),
+    ] + ([(t_happy + 0.8, Cam(1146, 640, 1800))]     # a small push in on the delighted Jonah ...
+         if t_happy + 0.8 < t_cam1 - 1.0 else []) + [
+        (t_cam1, Cam(1070, 600, 1990)),                # ... then ease back to s22's opening framing (= its
+        (T, Cam(1070, 600, 1990)),                     #     first camera key) and hold for the dissolve
     ], "sine")
 
     # =============================================================== FX
@@ -752,8 +864,9 @@ def build(ctx):
     def grade(frame, t, view):
         mul = np.array([1.0, 1.0, 1.0])
         add = np.zeros(3)
-        k_hot = 0.5 * (1 - M.progress(t, t_n0, t_n0 + 0.5, "sine")) + \
-            0.55 * M.progress(t, t_hot0 + 0.1, t_hot0 + 0.9, "sine")
+        # light warm grade only: the warmth is painted into the hot sky, so the blues stay clean
+        k_hot = 0.26 * (1 - M.progress(t, t_n0, t_n0 + 0.5, "sine")) + \
+            0.28 * M.progress(t, t_hot0 + 0.1, t_hot0 + 0.9, "sine")
         for col, k in [((255, 224, 184), k_hot),
                        ((255, 206, 160), _env(t, t_n0 - 0.05, t_n0 + 0.35, t_n0 + 0.45, t_tw + 0.1)),
                        ((236, 204, 226), 0.6 * _env(t, t_n0 + 0.3, t_tw, t_tw + 0.1, t_n1)),
@@ -769,6 +882,102 @@ def build(ctx):
         arr = cv2.multiply(np.asarray(frame), (float(mul[0]), float(mul[1]), float(mul[2]), 1.0))
         if kn > 0:
             arr = cv2.add(arr, (float(add[0]), float(add[1]), float(add[2]), 0.0))
+        return Image.fromarray(arr, "RGBA")
+
+    # --- post-grade cool shade: "hot sun, cool shade" ---------------------------------------------------
+    # Inside the shade pool (the same ellipses and sun flecks as the ground-shade multiply) the colour is
+    # recoloured toward a cool blue-violet of the same luminance (texture and ink lines are kept); Jonah's
+    # silhouette gets a lighter version, the lizard almost none (it must stay readable). Applied AFTER the
+    # warm grade, so the warmth cannot turn it brown again.
+    COOL_TINT = np.array([0.80, 0.93, 1.36], np.float32)
+    COOL_LIFT = np.array([20.0, 22.0, 32.0], np.float32)
+    KP, KW, KJ, KZ = 0.62, 0.26, 0.15, 0.06     # recolour strength: ground pool / under the roof / Jonah / lizard
+    LUMA = np.array([0.299, 0.587, 0.114], np.float32)
+
+    wcx, wcy, wrx, wry = XP + 380, GY - 150, 330, 200       # the multiply wash ellipse under the roof
+    px0 = min(min(x - rx for x, _y, rx, _r in blobs) - 40, wcx - wrx - 80)
+    py0 = min(min(y - ry for _x, y, _r, ry in blobs) - 40, wcy - wry - 80)
+    px1 = max(max(x + rx for x, _y, rx, _r in blobs) + 40, wcx + wrx + 80)
+    py1 = max(max(y + ry for _x, y, _r, ry in blobs) + 40, wcy + wry + 80)
+    pmask = np.zeros((py1 - py0, px1 - px0), np.uint8)
+    for x, y, rx, ry in blobs:
+        cv2.ellipse(pmask, (x - px0, y - py0), (rx, ry), 0, 0, 360, 255, -1, cv2.LINE_AA)
+    for x, y, rx, ry in flecks:
+        cv2.ellipse(pmask, (x - px0, y - py0), (rx, ry), 0, 0, 360, 0, -1, cv2.LINE_AA)
+    # (falls off faster than the multiply's soft edge, so lit sand at the rim never turns pale lilac)
+    pmask = (cv2.GaussianBlur(pmask, (0, 0), 14).astype(np.float32) / 255.0) ** 1.7 * 255.0 * KP
+    # ... plus a weaker cool wash in the space under the roof and canopy (behind Jonah), like the multiply wash
+    wmask = np.zeros_like(pmask)
+    cv2.ellipse(wmask, (wcx - px0, wcy - py0), (wrx, wry), 0, 0, 360, 255.0, -1, cv2.LINE_AA)
+    wmask = cv2.GaussianBlur(wmask, (0, 0), 40) * KW
+    pmask = np.maximum(pmask, wmask)
+    pool_full = np.dstack([np.clip(pmask, 0, 255).astype(np.uint8)] * 4)
+
+    def alpha_pm(svg):
+        im = raster.rasterize(svg.replace(BOIL_TOKEN, "1"), W, H)
+        bb = im.getchannel("A").getbbox()
+        a = np.asarray(im.getchannel("A").crop(bb), np.uint8)
+        return np.ascontiguousarray(np.dstack([a] * 4)), (bb[0], bb[1])
+
+    j_first = 4                                  # the shade exists only from dawn on (wake pose onward)
+    jon_pm = [alpha_pm(tint_frames[i]) if i >= j_first else None for i in range(len(tint_frames))]
+    liz_pm = [alpha_pm(f) for f in liz_flat]
+
+    def out_box(pm, Mx):
+        h, w = pm.shape[:2]
+        c = Mx @ np.array([[0, w, w, 0], [0, 0, h, h], [1, 1, 1, 1]], np.float64)
+        return c[0].min(), c[1].min(), c[0].max(), c[1].max()
+
+    def cool_shade(frame, t, view):
+        ka = shade_amt(t)
+        if ka <= 0.01:
+            return frame
+        # pool strength: the weak morning shade everywhere, the noon shade as it spreads from the stem
+        am = 0.3 * M.progress(t, t_d1, t_d1 + 1.5, "sine")
+        noon = 0.7 if t >= sh0 else 0.0
+        pool = pool_full
+        rv = M.progress(t, sh0, sh1, "sine")
+        if noon > 0 and rv < 1.0:
+            m = CO._reveal_mask({"mode": "left", "frac": rv, "soft": 160}, pool.shape[1], pool.shape[0], (px0, py0))
+            k_map = am + noon * m
+            pool = (pool.astype(np.float32) * k_map[..., None] + 0.5).astype(np.uint8)
+            k_pool = 1.0
+        else:
+            k_pool = am + noon
+        draws = [("p", pool, view.M @ CO._T(px0, py0), k_pool)]
+        ji = int(jonah_frame(t))
+        if jon_pm[ji] is not None:
+            pm_, off = jon_pm[ji]
+            draws.append(("j", pm_, view.M @ CO.layer_matrix(jonah_motion(t), (0, 0)) @ CO._T(*off), 1.0))
+        if t >= t_liz:
+            pm_, off = liz_pm[int(liz_frame(t))]
+            draws.append(("z", pm_, view.M @ CO.layer_matrix(liz_motion(t), (0, 0)) @ CO._T(*off), 1.0))
+        boxes = [out_box(pm_, Mx) for _n, pm_, Mx, _k in draws]
+        x0 = max(0, int(min(b[0] for b in boxes)) - 2)
+        y0 = max(0, int(min(b[1] for b in boxes)) - 2)
+        x1 = min(frame.size[0], int(max(b[2] for b in boxes)) + 3)
+        y1 = min(frame.size[1], int(max(b[3] for b in boxes)) + 3)
+        if x1 <= x0 or y1 <= y0:
+            return frame
+        sh = (y1 - y0, x1 - x0)
+        bufs = {}
+        for name, pm_, Mx, k in draws:
+            buf = np.zeros((*sh, 3), np.uint8)
+            CO.draw_image(buf, pm_, CO._T(-x0, -y0) @ Mx, k)
+            bufs[name] = buf[..., 0].astype(np.float32) / 255.0
+        m = bufs["p"]
+        if "j" in bufs:
+            J = bufs["j"]
+            m = m * (1 - J) + J * (KJ * ka)
+        if "z" in bufs:
+            Z = bufs["z"]
+            m = m * (1 - Z) + Z * (KZ * ka)
+        arr = np.array(frame)
+        sub = arr[y0:y1, x0:x1, :3].astype(np.float32)
+        Y = sub @ LUMA
+        cool = Y[..., None] * COOL_TINT + COOL_LIFT
+        sub += (cool - sub) * m[..., None]
+        arr[y0:y1, x0:x1, :3] = np.clip(sub, 0, 255).astype(np.uint8)
         return Image.fromarray(arr, "RGBA")
 
     # --- post-grade night overlay: stars, moon and God's glow on the growing plant ------------------
@@ -849,12 +1058,13 @@ def build(ctx):
 
     sc.fx = [
         grade,
+        cool_shade,
         night_overlay,
-        # God's sparkles around the plant column and (once it has grown) above the canopy, never on Jonah
-        FX.sparkles((XP - 300, GY - 760, XP + 190, GY - 20), count=24, t0=t_beam0 + 0.2, t1=t_d1 + 0.2,
-                    color=(255, 238, 160), size=(10, 24), period=1.3, drift=-10, seed=3),
-        FX.sparkles((XP + 190, GY - 860, XP + 650, GY - 520), count=10, t0=t_g0 + 1.4, t1=t_d1 + 0.2,
-                    color=(255, 238, 160), size=(10, 22), period=1.4, drift=-8, seed=5),
+        # God's sparkles: in the beam by day (they fade as dusk falls), then small warm ones that hug the
+        # growing plant at night (never loose in the sky, where they would read as stars)
+        FX.sparkles((XP - 140, GY - 760, XP + 140, GY - 20), count=16, t0=t_beam0 + 0.2, t1=t_n0 + 0.5,
+                    color=(255, 238, 160), size=(10, 22), period=1.3, drift=-10, seed=3),
+        _plant_sparkles(plant_growth, t_g0 - 0.2, t_d1 + 0.2),
         FX.sparkles((XP - 200, GY - 830, XP + 640, GY - 560), count=9, t0=t_hot0 + 0.4, t1=T + 1,
                     color=(255, 250, 220), size=(8, 16), period=1.7, drift=0, seed=21),
         FX.motes((200, 200, 1900, 900), count=24, t0=t_d1, t1=T + 1, color=(255, 246, 214), alpha=100),
@@ -865,13 +1075,14 @@ def build(ctx):
     sc.sfx("heat", 0, dur=t_n0 + 0.6, gain_db=-15, fade_in=0.8, fade_out=0.6)
     sc.sfx("wind_soft", 0, dur=T + 0.8, gain_db=-17, fade_in=0.8, fade_out=0.8)
     sc.sfx("chime", t_beam0, gain_db=-9)
-    sc.sfx("sparkle", t_land - 0.1, gain_db=-11)
+    sc.sfx("sparkle", t_glow0, gain_db=-11)
     sc.sfx("pop", t_pop, gain_db=-9)
     sc.sfx("night", t_n0 + 0.3, dur=t_d1 - t_n0, gain_db=-14, fade_in=0.5, fade_out=0.6)
     sc.sfx("grow", t_g0, gain_db=-7)
     sc.sfx("sparkle", t_g1 - 0.3, gain_db=-12, pan=0.2)
     sc.sfx("snore", t_sleep + 0.4, dur=t_wake - t_sleep - 0.4, gain_db=-18, fade_in=0.3, fade_out=0.3)
-    sc.sfx("rooster", l0.end - 0.05, gain_db=-13, pan=-0.5)
+    # the rooster crows softly as the dawn sky begins, under "又高又大", and is done before line 1
+    sc.sfx("rooster", t_d0 + 0.1, dur=1.0, gain_db=-16, fade_out=0.3, pan=-0.5)
     sc.sfx("birds", t_d1, dur=T - t_d1 + 0.8, gain_db=-16, fade_in=0.6, fade_out=0.8, pan=-0.2)
     sc.sfx("heat", t_hot0, dur=T - t_hot0 + 0.8, gain_db=-15, fade_in=0.8, fade_out=0.8)
     sc.sfx("sparkle", t_happy, gain_db=-12)

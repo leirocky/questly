@@ -32,7 +32,6 @@ Stage 2112 x 2120 (the v1 lots stage; the camera stays on the deck world, y < 11
 import math
 import random
 import re
-from dataclasses import replace
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -69,7 +68,7 @@ PHASE = dict(capt=0.65, sv1=0.8, sv2=0.55, sv3=0.4, sv0=0.2, jon=0.1)   # s06's 
 OFF_DEFAULT = 44.833                # s06's local time at this scene's t = 0 (s06 duration - cross-dissolve)
 
 # ---- this scene's new marks
-SV3_ASK_X = 1384                   # the ginger sailor walks up to Jonah at '水手们问约拿'
+SV3_ASK_X = 1336                   # the ginger sailor steps up to Jonah at '水手们问约拿' (plea ends ~65 px short)
 SV0_HOP = (1928, 930, 0.86)        # sailor 0 hops away from the rail at the crash
 POINT_X = 1792                     # the breaker that answers Jonah's pointing finger ('扔进海里')
 
@@ -262,18 +261,20 @@ def coast_layer():
 
 
 def surge_cap(f, xc, wl, amp, seed, size=1.0, sw=3.0):
-    """V4.foam_cap without its curled bead lip and spray dots (behind the rail those chains of white balls read as
-    thought bubbles over the sailors' heads): a bubbly crown riding the crest with lace below."""
+    """V4.foam_cap without its curled bead lip and spray dots, and without puffs running down the slopes (behind the
+    rail those chains of white balls read as thought bubbles over the sailors' heads): a compact bubbly crown on the
+    crest with lace below."""
     r = random.Random(seed)
-    half = 0.17 * wl * size
+    half = 0.1 * wl * size
     rb = (9 + 0.2 * amp) * size
     circ = []
-    n = max(5, int(2 * half / (rb * 0.9)))
+    n = max(5, int(2 * half / (rb * 0.7)))
     for i in range(n):
         u = -1 + 2 * i / (n - 1)
         x = xc + u * half
-        rad = rb * (0.5 + 0.5 * (1 - abs(u)) ** 0.7) * r.uniform(0.85, 1.12)
-        circ.append((x, f(x) + 0.3 * rad, rad))
+        rad = rb * (0.62 + 0.38 * (1 - abs(u)) ** 0.7) * r.uniform(0.88, 1.1)
+        # a compact crown sitting ON the crest (only loosely following the slopes, so it never trails down them)
+        circ.append((x, f(xc) + 0.3 * (f(x) - f(xc)) + 0.45 * rad, rad))
     out = V4.puffs(circ, P["foam"], sw, shade=(P["sea_pale"], (xc, f(xc) + rb * 1.3, half * 1.1, rb * 0.8), 0.8),
                    cid=f"s7fc{seed}")
     lace = ""
@@ -752,11 +753,14 @@ def build(ctx):
            motion=lambda t: Tf(dx=s06_sky_dx(t + OFF) + 22 * max(0.0, t - p0)))
 
     # the swells rise up from behind the rail one after another and keep heaving
+    # (crests at x 1270 + 618 k in the painting: shifted so that, once risen, they ride between the heads — over
+    # the mast, in the gap between the ginger sailor and Jonah, and right of sailor 0; risen 45 px less than the
+    # full swell so the foam crowns stay above the heads)
     def surge_m(t):
         g = grow(t)
-        up = 300 * (1 - g)
+        up = 300 * (1 - g) + 45 * g
         heave = (14 + 30 * g) * math.sin(2 * math.pi * t / 3.6 + 0.4)
-        return Tf(dx=60 * math.sin(2 * math.pi * t / 7.2) - 40 * g, dy=up + heave)
+        return Tf(dx=200 + 28 * math.sin(2 * math.pi * t / 7.2) - 20 * g, dy=up + heave)
     sc.add("surge", surge_layer(), z=2, motion=tilted(surge_m), wc=0.9)
 
     lift_pt = lambda t: 50 * math.sin(math.pi * M.progress(t, p2b - 0.1, p2b + 1.6, "linear"))   # noqa: E731
@@ -807,9 +811,10 @@ def build(ctx):
 
     def sail_m(t):                   # the torn sail billows and shivers in the gusts (stronger as the storm grows)
         g = grow(t)
+        k = M.progress(t, 0.6, 1.4, "sine")          # still under the dissolve (s06's sail is a still painting)
         gust = math.sin(2 * math.pi * t / 1.3) + 0.5 * math.sin(2 * math.pi * t / 0.57 + 1.0)
-        return Tf(rot=(0.1 + 0.6 * g) * gust, sy=1 + (0.003 + 0.015 * g) * math.sin(2 * math.pi * t / 1.9),
-                  px=MX, py=SAIL_YARD)
+        return Tf(rot=(0.15 * k + 0.55 * g) * gust,
+                  sy=1 + (0.004 * k + 0.014 * g) * math.sin(2 * math.pi * t / 1.9), px=MX, py=SAIL_YARD)
     sc.add("sail", sail_layer(), z=10.6, motion=sail_m)
     sc.add("deck_props", V5.deck_props_layer(), z=11)
     mlx, mly = MX + 47, 610
@@ -868,8 +873,8 @@ def build(ctx):
     S0.key(t_crash + 0.08, "scared", -1, "scared")
     # '水手们问约拿：' — they turn to Jonah; the ginger sailor walks up to him (planted steps); Jonah lifts his head
     t_w0 = p0c + 0.1
-    t_w1 = t_w0 + 0.45
-    S3.walk(t_w0, t_w1, (SV3_ASK_X, SV3[1], SV3[2]), 1, "worried", step=0.15)
+    t_w1 = t_w0 + 0.32
+    S3.walk(t_w0, t_w1, (SV3_ASK_X, SV3[1], SV3[2]), 1, "worried", step=0.16)
     S2.key(p0c + 0.22, "stand", 1, "worried")
     S1.key(p0c + 0.34, "chin", 1, "worried")
     CP.key(p0c + 0.46, "palm", 1, "worried")

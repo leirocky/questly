@@ -64,7 +64,7 @@ INK = P["ink"]
 # ================================================================ outside (panorama) geometry
 WALL_Y, WALL_H = 1100, 260
 K = WALL_H / 260.0
-WALL_X0, WALL_X1 = 250, 2990
+WALL_X0, WALL_X1 = -260, SW + 260   # the front wall runs off both edges of the stage: no city end is ever seen
 SEAM_X = 1360                       # the front wall is two city_wall pieces; a tower hides the joint
 GX, GWD = 640, 156                  # west gate (Jonah goes in here; the camera flies through it)
 GX2, GWD2 = 2060, 140               # a second gate further east
@@ -76,8 +76,8 @@ HOLE_CLEAR = (GX - HOLE_R + 8, GX + HOLE_R - 8, SPRING, WALL_Y - 12)
 HORIZON = 640
 
 # footprint trail ("three days' walk") over the city, west gate -> east end
-TRAIL = [(GX + 10, 850), (820, 760), (1150, 705), (1550, 690), (1950, 700), (2350, 680), (2750, 700),
-         (2950, 770)]
+TRAIL = [(GX + 10, 850), (820, 760), (1150, 705), (1550, 690), (1950, 700), (2330, 682), (2700, 696),
+         (2900, 765)]
 
 # ================================================================ inside (street + market) geometry
 GY = 1310                           # street ground line (Jonah's feet)
@@ -199,7 +199,9 @@ def person_sprite(s, wide=170, tall=360, seed=0):
 
 # ================================================================ Jonah (custom rig poses)
 
-_EXTRA_EXPRS = {"serious": dict(eyes="dot", brow=(0.015, -0.005, -0.02), mouth="flat")}
+_EXTRA_EXPRS = {"serious": dict(eyes="dot", brow=(0.015, -0.005, -0.02), mouth="flat"),
+                # earnest proclaiming brows with the mouth shut (the pauses in Jonah's cry)
+                "call_shut": dict(eyes="dot", brow=(-0.07, 0.02, -0.07), mouth="flat")}
 
 
 @contextmanager
@@ -219,23 +221,68 @@ def jfig(x, y, s, ps, expr, facing=1, label="j", marks=True):
     return C._wrap_out(inner, x, y, s, facing, label)
 
 
-def walk_pose(k, arm="down"):
-    """Planted-foot walk drawing k (WALK_N drawings per step, two steps per cycle): the planted ankle goes from
-    +A to -A figure px while the other foot swings through, so advancing the anchor ADV stage px per drawing keeps
-    the planted sole on one spot. arm: 'down' (both arms swing), 'mid' / 'up' (far arm raised: calling out)."""
-    ph = (k % (2 * WALK_N)) / WALK_N
-    step, u = divmod(ph, 1.0)
-    A = WALK_A
-    plant = ("ik", A * (1 - 2 * u), 1)
-    swing = ("ik", -A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u)), 1, 22 * math.sin(math.pi * u))
+_KIND_M = {"man": C._ADULT, "woman": C._metrics(C._ADULT, 0.96, 0.92), "child": C._CHILD}
+
+
+def cfig(x, y, s, kind, variant, facing, ps, expr=None):
+    """A townsperson (same design as C.citizen) in a custom rig pose: their planted-foot walk drawings."""
+    D = C._citizen_design(kind, variant, "normal")
+    inner, _ = C._figure(D, _KIND_M[kind], ps, expr or "neutral", C._fsign(facing), True)
+    return C._wrap_out(inner, x, y, s, facing, f"{kind}{variant}-gait")
+
+
+def leg_k(kind):
+    m = _KIND_M[kind]
+    return (m["th"] + m["sh"]) / (C._ADULT["th"] + C._ADULT["sh"])
+
+
+def gait(pdx, sdx, plift, slift, parity, ph, u, arm="down", lk=1.0):
+    """One drawing of a planted-foot walk: planted ankle at pdx, swinging ankle at sdx (figure px from the anchor),
+    each foot ``lift`` figure px above the anchor's ground line (a foot on a higher tread, or in the air).
+    parity 0: the far leg is planted. ph: phase in the two-step cycle (arm swing); u: phase in the step (pelvis bob).
+    arm: 'down' (both arms swing), 'mid' / 'up' (far arm raised: calling out). lk: leg length / adult leg length."""
+    plant = ("ik", pdx, 1, plift) if abs(plift) > 1e-9 else ("ik", pdx, 1)
+    swing = ("ik", sdx, 1, slift)
     sw = 34 * math.cos(math.pi * ph)
     far, hands = ("fk", -sw, -sw + 14), ("fist", "fist")
     if arm == "up":
         far, hands = ("fk", 150, 166), ("open", "fist")
     elif arm == "mid":
         far, hands = ("fk", 116, 142), ("open", "fist")
-    return C._P(t=4, h=-3, legs=(plant, swing) if step == 0 else (swing, plant),
-                arms=(far, ("fk", sw, sw + 14)), hands=hands, drop=12 + 4 * math.cos(2 * math.pi * u))
+    drop = 12 + 4 * math.cos(2 * math.pi * u)
+    return C._P(t=4, h=-3, legs=(plant, swing) if parity == 0 else (swing, plant),
+                arms=(far, ("fk", sw, sw + 14)), hands=hands, drop=drop * lk if lk != 1.0 else drop)
+
+
+def walk_pose(k, arm="down", A=WALK_A, lk=1.0):
+    """Planted-foot walk drawing k on level ground (WALK_N drawings per step, two steps per cycle): the planted
+    ankle goes from +A to -A figure px while the other foot swings through, so advancing the anchor 2A/WALK_N
+    figure px per drawing keeps the planted sole on one spot."""
+    ph = (k % (2 * WALK_N)) / WALK_N
+    step, u = divmod(ph, 1.0)
+    swing_lift = 22 * math.sin(math.pi * u) if lk == 1.0 else 22 * lk * math.sin(math.pi * u)
+    return gait(A * (1 - 2 * u), -A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u)), 0.0, swing_lift, int(step), ph,
+                u, arm, lk)
+
+
+def climb_pose(feet, treads, k, s=JS):
+    """Walk drawing k (WALK_N per step) over explicit footfalls: during step n = k // WALK_N the ankle planted at
+    stage x feet(n) (on a tread treads(n) stage px above the street) never moves; the swing foot arcs from feet(n-1)
+    to feet(n+1) (a higher arc when it climbs) and the body rises onto a higher tread over the first 60% of the step.
+    Returns (pose, anchor x, anchor y)."""
+    n, j = divmod(k, WALK_N)
+    u = j / WALK_N
+    prev, plant, nxt = feet(n - 1), feet(n), feet(n + 1)
+    hp, hn, hx = treads(n - 1), treads(n), treads(n + 1)
+    ax = M.lerp((prev + plant) / 2, (plant + nxt) / 2, u)
+    v = min(1.0, u / 0.6)
+    H = M.lerp(min(hp, hn), hn, v * v * (3 - 2 * v))
+    e = 0.5 - 0.5 * math.cos(math.pi * u)
+    sx = prev + (nxt - prev) * (u + e) / 2
+    w = M.lerp(hp, hx, e) + (22 * s + 0.6 * max(0.0, hx - hp)) * math.sin(math.pi * u)
+    ph = (k % (2 * WALK_N)) / WALK_N
+    ps = gait((plant - ax) / s, (sx - ax) / s, (hn - H) / s, (w - H) / s, n % 2, ph, u)
+    return ps, ax, GY - H
 
 
 STAND = C._P(arms=(("fk", 14, 8), ("fk", -8, -3)))
@@ -260,64 +307,6 @@ def pano_clouds_svg(items):
     for cx, cy, w, h, seed in items:
         body += S.cloud(cx, cy, w, h, "#fdf6e8", seed=seed, sw=3, shade_fill="#efe2d0")
     return doc(S.g(body, filter="wobble"))
-
-
-def corner_tower(xe, side):
-    """Square corner tower closing one end of the front wall (side -1: left end at xe, +1: right end), with the
-    side wall running back up the page toward the horizon behind it (adapted from v1 s09)."""
-    k = K
-    col = P["sand"]
-    dark = S.shade(col, -0.2)
-    x0, x1 = xe - 50 * k, xe + 70 * k
-    top = WALL_Y - WALL_H - 100 * k
-    out = ""
-    # the side wall recedes up-left (lower and hazier as it goes), ending in a small far corner tower
-    bx, by = x0 - 300, WALL_Y - 330
-    hb = WALL_H * 0.55
-    side_col = S.mix(S.shade(col, -0.2), P["sky_warm"], 0.08)
-    out += V.merlons(bx + 4, x0 - 4, by - hb - 2, side_col, 24 * k, 9 * k, 20 * k, 3.2,
-                     slope=((WALL_Y - WALL_H) - (by - hb)) / (x0 - bx))
-    out += poly([(bx, by), (x0, WALL_Y), (x0, WALL_Y - WALL_H), (bx, by - hb)], side_col, 3.5)
-    for i in range(1, 9):
-        u = i / 9
-        ya, yb = (by - hb) + hb * u, (WALL_Y - WALL_H) + WALL_H * u
-        out += (f'<path d="M{f1(bx + 3)},{f1(ya)} L{f1(x0 - 3)},{f1(yb)}" stroke="{dark}" stroke-width="1.6" '
-                f'opacity="0.3"/>')
-    for u in (0.22, 0.48, 0.72):                      # buttresses, closer together toward the far end
-        xa = x0 + (bx - x0) * u
-        ya_b = WALL_Y + (by - WALL_Y) * u
-        ha = WALL_H + (hb - WALL_H) * u
-        wb = 26 * (1 - 0.45 * u)
-        out += poly([(xa, ya_b), (xa - wb, ya_b - 0.9 * wb), (xa - wb, ya_b - ha - 10), (xa, ya_b - ha - 8)],
-                    S.shade(side_col, 0.1), 3)
-    fk = 0.6
-    ft = by - hb - 50 * fk
-    far = (V.merlons(bx - 34 * fk, bx + 34 * fk, ft, side_col, 22 * fk, 8 * fk, 20 * fk, 2.6)
-           + f'<rect x="{f1(bx - 30 * fk)}" y="{f1(ft)}" width="{f1(60 * fk)}" height="{f1(by - ft)}" '
-             f'fill="{side_col}" stroke="{INK}" stroke-width="3"/>')
-    out = far + out
-    out += V.merlons(x0 - 6 * k, x1 + 6 * k, top, col, 40 * k, 16 * k, 34 * k)
-    out += poly([(x0, WALL_Y), (x0 - 16 * k, WALL_Y - 8 * k), (x0 - 16 * k, top - 8 * k), (x0, top)],
-                S.shade(col, -0.18), 4)
-    out += (f'<rect x="{f1(x0)}" y="{f1(top)}" width="{f1(x1 - x0)}" height="{f1(WALL_Y - top)}" '
-            f'fill="{S.shade(col, 0.06)}" stroke="{INK}" stroke-width="4"/>')
-    out += (f'<rect x="{f1(x0 + 2)}" y="{f1(WALL_Y - 26 * k)}" width="{f1(x1 - x0 - 4)}" height="{f1(24 * k)}" '
-            f'fill="{S.shade(col, -0.12)}"/>')
-    yy = top + 26 * k
-    while yy < WALL_Y - 20 * k:
-        out += (f'<path d="M{f1(x0 + 3)},{f1(yy)} L{f1(x1 - 3)},{f1(yy)}" stroke="{dark}" stroke-width="1.8" '
-                f'opacity="0.35"/>')
-        yy += 26 * k
-    cx = (x0 + x1) / 2
-    for wy in (top + 70 * k, top + 170 * k):
-        out += (f'<rect x="{f1(cx - 6 * k)}" y="{f1(wy)}" width="{f1(12 * k)}" height="{f1(34 * k)}" '
-                f'rx="{f1(6 * k)}" fill="#4a3426" stroke="{INK}" stroke-width="3"/>')
-    out += V.rosette_band(x0 + 6 * k, x1 - 6 * k, top + 22 * k, 22 * k)
-    out += (f'<rect x="{f1(x0)}" y="{f1(top)}" width="{f1(x1 - x0)}" height="{f1(WALL_Y - top)}" fill="none" '
-            f'stroke="{INK}" stroke-width="4"/>')
-    if side > 0:
-        out = f'<g transform="translate({2 * xe},0) scale(-1,1)">{out}</g>'
-    return S.g(out, filter="wobble-fine")
 
 
 def temple(x, y, s, col=None):
@@ -358,8 +347,8 @@ def interior_body():
     # the far city (hazy): it keeps going behind everything
     body += PR.nineveh_skyline(-60, SW + 60, HORIZON + 30, scale=0.95, seed=21, haze=0.55)
     # the city mound (warm ground the houses stand on)
-    mound = (f'<path d="M{WALL_X0 - 300},{WALL_Y - 330} C700,{HORIZON + 40} 1300,{HORIZON + 10} 1700,{HORIZON + 20} '
-             f'S2600,{HORIZON + 40} {WALL_X1 + 300},{WALL_Y - 330} L{WALL_X1 + 60},{WALL_Y} L{WALL_X0 - 60},{WALL_Y} Z" '
+    mound = (f'<path d="M-300,{HORIZON + 120} C500,{HORIZON + 40} 1300,{HORIZON + 10} 1700,{HORIZON + 20} '
+             f'S2700,{HORIZON + 40} {SW + 300},{HORIZON + 120} L{SW + 100},{WALL_Y} L-100,{WALL_Y} Z" '
              f'fill="{S.mix(P["sand"], P["sky_warm"], 0.25)}" stroke="{INK}" stroke-width="2.5"/>')
     body += S.g(mound, filter="wobble")
     rows = ((HORIZON + 70, 0.15, 0.36), (HORIZON + 112, 0.17, 0.28), (HORIZON + 156, 0.19, 0.2),
@@ -371,8 +360,8 @@ def interior_body():
                     filter="wobble-fine"), 0.1),
     }
     for row, (gy, sc, hz_) in enumerate(rows):
-        span_l = WALL_X0 - 300 + (row + 1) * 55
-        span_r = WALL_X1 + 300 - (row + 1) * 55
+        span_l = -110 + row * 20
+        span_r = SW + 110 - row * 20
         x = span_l + rng.uniform(0, 80)
         houses = ""
         while x < span_r:
@@ -396,21 +385,31 @@ def interior_body():
     return body, defs
 
 
+PAS_STOPS = [(0, "#3a2a20"), (0.6, "#4a3426"), (1, "#5c4231")]
+PAS_Y0, PAS_Y1 = SPRING - GWD / 2 - 6, WALL_Y + 4          # bbox of the passage gradient
+
+
+def passage_color(y):
+    """The passage gradient's colour (RGB floats) at stage y: little Jonah darkens toward it as he walks in."""
+    u = min(1.0, max(0.0, (y - PAS_Y0) / (PAS_Y1 - PAS_Y0)))
+    for (o0, c0), (o1, c1) in zip(PAS_STOPS, PAS_STOPS[1:]):
+        if u <= o1:
+            k = (u - o0) / (o1 - o0)
+            a, b = S.hex_rgb(c0), S.hex_rgb(c1)
+            return tuple(a[i] + (b[i] - a[i]) * k for i in range(3))
+    return S.hex_rgb(PAS_STOPS[-1][1])
+
+
 def passage_svg():
-    """The inside of the open west gate (shown until the camera flies through it)."""
+    """The deep shadow inside the open west gate (shown until the camera flies through it). Plain dark, so little
+    Jonah can walk into it and be swallowed by the shade."""
     r = GWD / 2
     d = (f"M{GX - r - 6},{WALL_Y + 4} L{GX - r - 6},{SPRING:.1f} A{r + 6},{r + 6} 0 0 1 {GX + r + 6},{SPRING:.1f} "
          f"L{GX + r + 6},{WALL_Y + 4} Z")
-    r2 = r * 0.5
-    far = (f"M{GX - r2},{WALL_Y - 6} L{GX - r2},{SPRING + 34:.1f} A{r2},{r2} 0 0 1 {GX + r2},{SPRING + 34:.1f} "
-           f"L{GX + r2},{WALL_Y - 6} Z")
-    defs = S.lin_grad("s15pas", [(0, "#3a2a20"), (0.6, "#4a3426"), (1, "#5c4231")])
+    defs = S.lin_grad("s15pas", PAS_STOPS)
     body = (f'<path d="{d}" fill="url(#s15pas)"/>'
-            f'<path d="{far}" fill="{S.mix(P["sand_light"], P["sky_warm"], 0.45)}" stroke="{INK}" stroke-width="2.5"/>'
-            f'<path d="M{GX - r2 + 4},{WALL_Y - 22} L{GX + r2 - 4},{WALL_Y - 22} L{GX + r2 - 2},{WALL_Y - 6} '
-            f'L{GX - r2 + 2},{WALL_Y - 6} Z" fill="{P["sand"]}"/>'
-            f'<path d="M{GX - r2 - 30},{WALL_Y + 2} L{GX - r2},{WALL_Y - 6} L{GX + r2},{WALL_Y - 6} '
-            f'L{GX + r2 + 30},{WALL_Y + 2} Z" fill="#6a4c36"/>')
+            f'<path d="M{GX - HOLE_R},{WALL_Y + 3} L{GX - HOLE_R + 26},{WALL_Y - 8} L{GX + HOLE_R - 26},{WALL_Y - 8} '
+            f'L{GX + HOLE_R},{WALL_Y + 3} Z" fill="#6a4c36" opacity="0.8"/>')
     return doc(S.g(body, filter="wobble-fine"), defs)
 
 
@@ -425,7 +424,6 @@ def wall_body():
     wall = PR.city_wall(WALL_X0, SEAM_X, WALL_Y, WALL_H, gate=(GX, GWD), doors_open=1.0, seed=9)
     wall += PR.city_wall(SEAM_X, WALL_X1, WALL_Y, WALL_H, gate=(GX2, GWD2), doors_open=0.75, seed=13)
     wall += S.g(PR._tower(SEAM_X, WALL_Y, 96 * K, WALL_H + 56 * K, P["sand"], K), filter="wobble-fine")
-    wall += corner_tower(WALL_X0, -1) + corner_tower(WALL_X1, 1)
     ban = ""
     for gx_, gw_ in ((GX, GWD), (GX2, GWD2)):
         for tx in (gx_ - gw_ / 2 - 60 * K, gx_ + gw_ / 2 + 60 * K):
@@ -442,13 +440,53 @@ def wall_body():
     return f'<g mask="url(#s15hw)">{wall}{S.g(ban + rim, filter="wobble-fine")}</g>', defs
 
 
+# the road comes in from the lower left and runs up-right to the west gate (little Jonah walks up it side-on)
+ROAD_C = [(170, SH + 40), (285, 1600), (385, 1430), (480, 1280), (568, 1170), (GX, WALL_Y)]
+ROAD_HW = [330, 245, 190, 145, 112, 92]
+
+
+def road_edges():
+    return ([(x - hw, y) for (x, y), hw in zip(ROAD_C, ROAD_HW)],
+            [(x + hw, y) for (x, y), hw in zip(ROAD_C, ROAD_HW)])
+
+
 def road_path():
-    left = [(120, SH + 40), (330, 1560), (470, 1330), (560, 1190), (GX - 92, WALL_Y)]
-    right = [(GX + 92, WALL_Y), (730, 1190), (760, 1330), (800, 1560), (860, SH + 40)]
+    left, right = road_edges()
+    right = right[::-1]
     d = S.smooth_path(left, closed=False, tension=0.8)
     d += f" L{right[0][0]},{right[0][1]}"
     d += " " + S.smooth_path(right, closed=False, tension=0.8).replace("M", "L", 1)
     return d + " Z"
+
+
+def _road_samples():
+    pts = []
+    n = len(ROAD_C)
+    for i in range(n - 1):
+        p0, p1, p2, p3 = ROAD_C[max(0, i - 1)], ROAD_C[i], ROAD_C[i + 1], ROAD_C[min(n - 1, i + 2)]
+        for j in range(30):
+            u = j / 30
+            pts.append(tuple(0.5 * (2 * p1[c] + (-p0[c] + p2[c]) * u + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * u * u
+                                    + (-p0[c] + 3 * p1[c] - 3 * p2[c] + p3[c]) * u ** 3) for c in (0, 1)))
+    pts.append(ROAD_C[-1])
+    cum = [0.0]
+    for a, b in zip(pts, pts[1:]):
+        cum.append(cum[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    return pts, cum
+
+
+_ROAD = _road_samples()
+
+
+def road_point(frac):
+    """Point on the road's centre line, frac 0 (bottom of the stage) .. 1 (the west gate threshold)."""
+    pts, cum = _ROAD
+    target = min(1.0, max(0.0, frac)) * cum[-1]
+    for i in range(1, len(cum)):
+        if cum[i] >= target:
+            u = (target - cum[i - 1]) / max(1e-6, cum[i] - cum[i - 1])
+            return (M.lerp(pts[i - 1][0], pts[i][0], u), M.lerp(pts[i - 1][1], pts[i][1], u))
+    return pts[-1]
 
 
 RIVER_BANK = [(SW + 40, 1128), (2980, 1160), (2730, 1240), (2520, 1380), (2390, 1560), (2330, SH + 40)]
@@ -491,8 +529,7 @@ def ground_body():
             + S.lin_grad("s15road", [(0, S.mix(P["sand_light"], "#fffaf0", 0.25)), (1, P["sand_light"])])
             + S.lin_grad("s15riv", [(0, S.mix(P["sea_light"], P["sky_day"], 0.3)), (0.45, P["sea"]),
                                     (1, P["sea_deep"])]))
-    ground = (f'<path d="M-40,{SH + 40} L-40,{WALL_Y - 46} L{WALL_X0 - 240},{WALL_Y - 46} L{WALL_X0 - 50},'
-              f'{WALL_Y - 4} L{WALL_X1 + 50},{WALL_Y - 4} L{WALL_X1 + 240},{WALL_Y - 46} L{SW + 40},{WALL_Y - 46} '
+    ground = (f'<path d="M-40,{SH + 40} L-40,{WALL_Y - 4} L{SW + 40},{WALL_Y - 4} '
               f'L{SW + 40},{SH + 40} Z" fill="url(#s15gr)" stroke="{INK}" stroke-width="3"/>')
     fields = (field([(880, 1185), (1240, 1175), (1300, 1265), (900, 1285)], S.mix(P["grass"], P["sand"], 0.25), 5, 1)
               + field([(1420, 1180), (1900, 1172), (1980, 1270), (1460, 1290)], S.mix(P["leaf_light"], P["sand"],
@@ -506,8 +543,8 @@ def ground_body():
     peb = ""
     for _ in range(36):
         u = rng.random()
-        y = SH - u * (SH - WALL_Y - 40)
-        x = 330 + (GX - 330) * u + rng.uniform(-80, 80) * (1 - u) + 160 * (1 - u)
+        x, y = road_point(0.04 + 0.92 * u)
+        x += rng.uniform(-0.6, 0.6) * (280 - 190 * u)
         r = rng.uniform(3, 7) * (1.3 - 0.8 * u)
         peb += (f'<ellipse cx="{f1(x)}" cy="{f1(y)}" rx="{f1(r * 1.4)}" ry="{f1(r)}" fill="{P["sand_dark"]}" '
                 f'opacity="0.5"/>')
@@ -527,7 +564,7 @@ def ground_body():
                         (2260, 1215, 0.36, 0.15), (2600, 1170, 0.3, 0.1), (2470, 1195, 0.33, -0.25),
                         (380, 1210, 0.4, -0.1), (300, 1230, 0.34, 0.2)):
         deco += PR.palm_tree(x, y, s, lean=ln)
-    for x, y, s, v in ((520, 1250, 0.4, 2), (820, 1330, 0.45, 0), (1350, 1340, 0.42, 1), (2000, 1380, 0.5, 0),
+    for x, y, s, v in ((700, 1262, 0.4, 2), (820, 1330, 0.45, 0), (1350, 1340, 0.42, 1), (2000, 1380, 0.5, 0),
                        (1250, 1215, 0.32, 2), (2280, 1400, 0.55, 3)):
         deco += PR.bush(x, y, s, v)
     for x, y, s in ((2560, 1365, 0.42), (2430, 1500, 0.5), (2360, 1660, 0.58), (2700, 1250, 0.36),
@@ -537,11 +574,11 @@ def ground_body():
         deco += C.ground_shadow(x, y, s, 140) + PR.animal(x, y, s, f, kind="sheep")
     deco += C.ground_shadow(2140, 1500, 0.36, 300) + PR.animal(2140, 1500, 0.36, -1, kind="camel")
     deco += C.ground_shadow(2030, 1512, 0.36, 110) + C.citizen(2030, 1512, 0.36, 1, kind="man", variant=2)
-    for x, y, s, v in ((200, 1500, 0.8, 1), (600, 1460, 0.7, 2), (980, 1640, 0.8, 0), (1500, 1680, 0.9, 1),
+    for x, y, s, v in ((60, 1470, 0.8, 1), (700, 1470, 0.7, 2), (980, 1640, 0.8, 0), (1500, 1680, 0.9, 1),
                        (1900, 1620, 0.8, 2), (700, 1700, 0.9, 0), (1200, 1760, 1.0, 2)):
         deco += PR.grass_tuft(x, y, s, v)
     rocks = ""
-    for x, y, rx, ry, seed in ((880, 1500, 40, 22, 1), (930, 1512, 22, 13, 2), (430, 1660, 38, 20, 3)):
+    for x, y, rx, ry, seed in ((880, 1500, 40, 22, 1), (930, 1512, 22, 13, 2), (720, 1660, 38, 20, 3)):
         rocks += S.path(S.blob(x, y, rx, ry, 0.15, 8, seed), fill=P["stone_dark"], sw=3)
     return body + deco + S.g(rocks, filter="wobble-fine"), defs
 
@@ -681,11 +718,23 @@ def street_sky_svg():
 
 
 def street_sky_eve_svg():
-    """Warm late-afternoon sky wash (fades in over the noon sky as the day goes by)."""
-    defs = sky_grad("s15esky", [(0, S.mix(P["sky_day_top"], P["sky_dawn_top"], 0.6)),
-                                (0.4, S.mix(P["sky_dawn"], P["sky_day"], 0.3)),
-                                (0.75, S.mix(P["sky_dawn"], P["sky_warm"], 0.5)), (1, P["sky_warm"])])
+    """Golden late-afternoon sky wash (fades in over the noon sky as the day goes by): clear apricot above, gold
+    toward the rooftops."""
+    defs = sky_grad("s15esky", [(0, S.mix(S.mix(P["sky_dawn"], P["sky_warm"], 0.5), "#fff4e2", 0.2)),
+                                (0.45, S.mix(P["sky_warm"], P["sky_dawn"], 0.35)),
+                                (0.8, S.mix(P["sky_warm"], P["gold"], 0.3)), (1, S.mix(P["sky_warm"], P["gold"], 0.45))])
     return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SKY_BOT + 20}" fill="url(#s15esky)"/>', defs)
+
+
+def glow_image(r=640, col=(255, 214, 140)):
+    """A soft warm glow (RGBA, premultiplied-friendly) for a 'screen' dynamic around the low sun."""
+    yy, xx = np.mgrid[-r:r, -r:r].astype(np.float32)
+    d = np.sqrt(xx * xx + yy * yy) / r
+    a = np.clip(1 - d, 0, 1) ** 2.2
+    im = np.zeros((2 * r, 2 * r, 4), np.uint8)
+    im[..., 0], im[..., 1], im[..., 2] = col
+    im[..., 3] = (a * 255).astype(np.uint8)
+    return Image.fromarray(im, "RGBA")
 
 
 def sun_svg(x, y):

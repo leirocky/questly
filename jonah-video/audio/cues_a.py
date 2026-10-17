@@ -68,7 +68,7 @@ def god_voice(c, t0, t1, bars, label, second=False):
 def call(c):
     """Theme b3-b7 under the opening lines, shimmer for 'God said to Jonah:', God's voice, and a
     first, distant glimpse of Nineveh (D hijaz) for 'far to the east... Israel's enemy'."""
-    c.gain(-1.0)
+    c.gain(-1.4)
     tS = c.gap(c.find("上帝对约拿说"))
     i_g = c.find("你起来")
     tG = c.gap(i_g)
@@ -253,7 +253,7 @@ def storm(c):
             s3.add("okit", q, 1, 36, 70, "perc")
             s3.add("timp", q, 1, "D2" if q != 16 else "Bb2", 70, "timp")
     # timpani: hit on the storm downbeat, rolls that crescendo into the pauses
-    s1.add("timp", 0, 1, "D2", 72, "timp", "h")             # answers the flight's run
+    s1.add("timp", 0, 1, "D2", 66, "timp", "h")             # answers the flight's run
     timp_roll(s1, 1, 8, midi("D2"), 34, 46)
     timp_roll(s1, 8, 16, midi("D2"), 40, 50)
     timp_roll(s1, 16, 22, midi("D2"), 46, 60)
@@ -276,7 +276,7 @@ def storm(c):
     loud = ("trem_hi", "trem_va", "vc_fast", "cb_fast", "tbn", "tuba", "horn", "brass", "timp")
     for p in loud:
         brass = p in ("tbn", "tuba", "horn", "brass")
-        s1.expr(p, [(0, -8), (max(0.5, q_ls0 - 0.9), -8), (q_ls0, -14), (max(q_ls0 + 1, q_le0 - 0.3), -10),
+        s1.expr(p, [(0, -10), (max(0.5, q_ls0 - 0.9), -9), (q_ls0, -14), (max(q_ls0 + 1, q_le0 - 0.3), -10),
                     (24, -3)])
         s2.expr(p, [(0, -3.5), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -7)])
         s3.expr(p, [(0, -7), (max(0.5, q_ls2 - 0.2), -7.5), (q_ls2 + 0.8, -14 if brass else -12),

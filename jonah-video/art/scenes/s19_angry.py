@@ -1,37 +1,51 @@
 """Scene 19 — Jonah is angry (Jonah 4:1-4).
 
-Outside Nineveh on a sunny afternoon, one 2800 x 1575 stage, no cuts. West (left): the great city, saved and
-joyful — its mud-brick wall with the open gate, banners and bunting, the ziggurat and rooftops behind, people
-cheering on the wall walk, children hopping and grown-ups waving on the green plain outside the gate, sheep,
-doves. East (right): a dry rocky knoll where Jonah stands with his back to the city.
+Outside Nineveh on a sunny afternoon, one 2800 x 1575 stage, no cuts. West (left): the great city, saved —
+its mud-brick wall with the open gate, the ziggurat and rooftops behind. The townspeople are still in their
+sackcloth from the fast (as s18 ends and s20 begins) but cheer on the wall walk and on the green plain outside
+the gate (children hop, grown-ups wave); two sheep in sackcloth blankets; doves. No festival decorations: the
+joy is in the people and the warm light. East (right): a dry rocky knoll where Jonah stands; his bundle of
+booth sticks and rolled cloth lies beside him the whole time (s20 opens with it there and builds the booth).
 
   line 0  "大家都很高兴，" the joyful city (wide). "只有约拿一点儿也不高兴。" the camera glides right to Jonah:
           arms crossed, scowling, a grumpy huff (steam puffs). "他非常生气，" he stamps (anger mark, puffs);
           "对上帝说：" he lifts his face to heaven.
   line 1  "耶和华啊，" both arms up to heaven; "我早就知道会这样！" arms flung wide; "所以我才急忙逃到他施去。"
-          a thought bubble pops up beside him: a small flashback of himself running down the pier at Joppa and
-          leaping aboard the striped-sail ship, which sails off west.
-  line 2  "因为我知道，你又慈爱，又宽容，" palms out; a warm golden memory bubble with a glowing heart (God's
-          kindness — never a figure) that beats on "慈爱" and "宽容"; "你说要降下的灾祸，" a little grey storm
-          cloud gathers over a tiny Nineveh in the bubble; "只要人一认错，你就不忍心降下来。" the heart's light
-          melts the cloud away and the tiny city glows; Jonah crosses his arms and huffs.
-  line 3  "原来，" he plops down on the knoll (thud, dust), sulking; the camera eases back to show the happy city
-          behind him (doves fly home over it); "可是他不愿意上帝饶恕他们，" he side-eyes the cheering city;
-          "所以当初才逃跑了。" a huff, eyes front again.
+          a thought bubble pops up beside him: a flashback — tiny Jonah dashes in from the right along the pier
+          at Joppa (planted run drawings, one stride per drawing), leaps aboard the striped-sail ship on "他施",
+          and the ship sails off west, sliding out of the window under the bubble's ring.
+  line 2  "因为我知道，" palms out (the flashback pops away); "你又慈爱，" a warm memory bubble with a glowing heart
+          (God's kindness — never a figure) that beats on "慈爱" and "宽容"; "你说要降下的灾祸，" a little grey
+          rain cloud with a lightning bolt gathers over a tiny Nineveh; "你就不忍心降下来。" three golden rays
+          shoot from the heart onto the cloud: rain and bolt stop, the cloud turns gold, squashes and pops into a
+          burst of white puffs, and a warm gold glow rises behind the little city (twinkles); Jonah crosses his
+          arms and huffs.
+  line 3  "原来，" he plops down on the knoll (thud, dust), sulking; the camera eases back to show the cheering
+          city behind him (doves fly home over it); mid-sentence he re-crosses his arms tighter with a huff;
+          "可是他不愿意上帝饶恕他们，" he hop-turns to glare at the cheering crowd (steam, anger mark);
+          "所以当初才逃跑了。" he hops back with a "hmph!" — eyes shut, nose in the air — then sulks on.
   line 4  "于是，上帝问约拿：" the clouds above him part and gentle golden light pours down on him (chime,
           sparkles); the camera eases in and tilts up into the light.
   line 5  "约拿，你这样生气，对吗？" the light glows softly with the words; Jonah looks up into it, surprised —
           then turns his back to the light (a hop-turn) and sulks toward the city without answering. Calm hold.
 
+Continuity: s20 (约拿没有回答) opens on this scene's last frame — Jonah seated facing west at output
+(1060, 926), scale 1.2 * 1920 / 2066, the light coming from the cloud gap GAP, the bundle beside him — and
+replays this file's fidget / breathing clock. Keep JX, JS, GAP, the last camera key, the final pose and
+jonah_motion's sway unchanged unless s20 changes with them.
+
 Pose changes are hard cuts hidden by a squash-and-hop (dust poof, pop lines) as in v1 s11, and the sit-down
 is a "plop" (squash, cut, short drop, landing squash); nothing crossfades between two different drawings of
 Jonah. While his arms are crossed he fidgets with a slow grumpy sway. Bubble contents move inside the bubble's
-own pop transform, and the puffy ring is drawn ON TOP of the contents (window cut out), so the flashback ship
-can sail off behind it. God's light: the cloud bank drifts in from the east during line 3 (the thought
-bubbles use that sky before), then parts in line 4. All timings come from ctx.lines / chunks (phrase
-positions inside a chunk are estimated from the character index, so they follow a re-generated voice).
-Camera: few long sine moves, peak ~11 output px / frame.
+own pop transform, and the puffy ring is drawn ON TOP of the contents (window cut out). Layers that cross the
+window edge while they move (the ship sailing out, tiny Jonah running in) carry a window clip that stays put
+on stage: the run is a set of planted drawings, and the ship is a flipbook whose drawings have the clip
+pre-shifted against its travel (one per 40 px), so the clip edge always lies under the ring. God's light: the
+cloud bank drifts in from the east during line 3 (the thought bubbles use that sky before), then parts in
+line 4. All timings come from ctx.lines / chunks (phrase positions inside a chunk are estimated from the
+character index, so they follow a re-generated voice). Camera: few long sine moves, peak ~11 output px / frame.
 """
+from contextlib import contextmanager
 import math
 import random
 import re
@@ -57,9 +71,9 @@ GX, GW = 860, 200            # gate centre, width
 WX1 = 1540                   # right end of the wall; the corner tower stands there
 TOWER = (WX1 + 50, 150)      # corner tower centre x, width
 JX, JS = 1850, 1.2           # Jonah
-BX, BY, RX, RY = 2300, 525, 262, 156      # thought-bubble window (centre, radii)
-GAP = (2230, 262)            # where the clouds part for God's light
-SUN = (330, 330)
+BX, BY, RX, RY = 2300, 528, 282, 170      # thought-bubble window (centre, radii)
+GAP = (2230, 262)            # where the clouds part for God's light (s20 maps its opening light from here)
+SUN = (560, 312)             # whole sun + rays inside the frame during the line-3 pull-back, off it when close
 INK = P["ink"]
 
 
@@ -91,14 +105,32 @@ def knoll_y(x):
 JY = knoll_y(JX)
 
 
-def phrase_t(line, phrase):
-    """Start of ``phrase`` inside its subtitle chunk, estimated by its character index in that chunk."""
+def phrase_t(line, phrase, frac=0.0):
+    """Start of ``phrase`` inside its subtitle chunk, estimated by its character index in that chunk. If the
+    narration was edited and the phrase is gone, fall back to ``frac`` of the way through the line (so the
+    build never breaks; the beat just lands near where it used to be)."""
     for c in line.chunks:
         i = c.text.find(phrase)
         if i >= 0:
             n = max(1, len(c.text.rstrip("，。！？：；、")))
             return c.start + (c.end - c.start) * i / n
-    raise KeyError(phrase)
+    return line.start + (line.end - line.start) * frac
+
+
+# a scene-local face for the "hmph!" (eyes shut, chin up) — registered only while this scene's drawings are built
+_EXTRA_EXPRS = {"hmph": dict(eyes="closed", brow=(0.12, -0.05, 0.04), mouth="grumpy")}
+
+
+@contextmanager
+def _local_exprs():
+    added = [k for k in _EXTRA_EXPRS if k not in CH.EXPRS]
+    for k in added:
+        CH.EXPRS[k] = _EXTRA_EXPRS[k]
+    try:
+        yield
+    finally:
+        for k in added:
+            CH.EXPRS.pop(k, None)
 
 
 # ------------------------------------------------------------------ Jonah (library + scene-local poses)
@@ -113,8 +145,16 @@ LOCAL_POSES = {
                        hands=("open", "open"), expr="angry", look=(0.02, -0.08)),
     "shrug": CH._P(t=-2, h=-10, legs=((8, 3), (-7, -3)), arms=(("fk", 40, 110), ("fk", -40, -110)),
                    hands=("open", "open"), expr="angry"),
-    "sulk_eye": CH._P(t=-2, h=8, legs=(("ik", 76, 1), ("ik", 86, 1)), arms=_CROSS, far_front=True, expr="angry",
-                      look=(-0.06, 0.0), **CH._SEATED),
+    # arms re-crossed tighter and higher, chin sunk lower (the grumpy fidget in line 3)
+    "sulk_b": CH._P(t=0, h=20, legs=(("ik", 76, 1), ("ik", 86, 1)),
+                    arms=(("ik", "torso", -0.05, 0.48, 1), ("ik", "torso", 1.12, 0.44, 1)), far_front=True,
+                    expr="angry", **CH._SEATED),
+    # leaning toward the city, head up, glaring at it (use with facing -1)
+    "sulk_glare": CH._P(t=5, h=-2, legs=(("ik", 76, 1), ("ik", 86, 1)), arms=_CROSS, far_front=True,
+                        expr="angry", look=(0.08, -0.01), **CH._SEATED),
+    # "hmph!": leaning back, nose in the air, eyes shut
+    "sulk_hmph": CH._P(t=-7, h=-22, legs=(("ik", 76, 1), ("ik", 86, 1)), arms=_CROSS, far_front=True,
+                       expr="hmph", **CH._SEATED),
     "sulk_up": CH._P(t=-2, h=-14, legs=(("ik", 76, 1), ("ik", 86, 1)), arms=_CROSS, far_front=True,
                      expr="surprised", look=(0.03, -0.08), **CH._SEATED),
 }
@@ -178,8 +218,11 @@ def bank_svg(rel, gold, uid):
 def heaven_glow_svg():
     gx, gy = GAP
     defs = S.rad_grad("hg", [(0, "#fffbec", 0.95), (0.25, "#fff0c0", 0.7), (0.6, "#ffd98a", 0.28), (1, "#ffd27a", 0)])
+    defs += S.rad_grad("hgc", [(0, "#fffef6", 0.92), (0.5, "#fff4cc", 0.6), (1, "#ffe9a8", 0)])
     body = f'<ellipse cx="{gx}" cy="{gy + 30}" rx="560" ry="330" fill="url(#hg)"/>'
-    body += f'<ellipse cx="{gx}" cy="{gy + 30}" rx="200" ry="110" fill="#fffaf0" opacity="0.55" filter="url(#blur-md)"/>'
+    # a bright core inside the parted clouds, so the light visibly comes out of the gap
+    body += f'<ellipse cx="{gx}" cy="{gy + 24}" rx="320" ry="170" fill="url(#hgc)"/>'
+    body += f'<ellipse cx="{gx}" cy="{gy + 24}" rx="240" ry="125" fill="#fffaf0" opacity="0.8" filter="url(#blur-md)"/>'
     return doc(body, defs)
 
 
@@ -236,93 +279,12 @@ def corner_tower(cx, y, h, w):
     return S.g(out, filter="wobble-fine")
 
 
-GATE_TOWERS = (GX - GW / 2 - 60, GX + GW / 2 + 60)     # centres of the two gate towers
-GT_TOP = WY - 1.45 * WH - 34                            # top of the gate towers
-
-
-def banner(cx, top, w=56, h=150, col="#c0533a"):
-    """Long festive banner hanging on a tower: swallow-tail end, gold sun disc."""
-    x0, x1 = cx - w / 2, cx + w / 2
-    d = (f"M{f1(x0)},{f1(top)} L{f1(x1)},{f1(top)} L{f1(x1)},{f1(top + h)} L{f1(cx)},{f1(top + h - 22)} "
-         f"L{f1(x0)},{f1(top + h)} Z")
-    out = (f'<rect x="{f1(x0 - 8)}" y="{f1(top - 8)}" width="{f1(w + 16)}" height="10" rx="4" fill="{P["wood"]}" '
-           f'stroke="{INK}" stroke-width="3"/>')
-    out += S.path(d, fill=col, sw=3.5)
-    out += f'<path d="M{f1(x0 + 6)},{f1(top + 6)} L{f1(x0 + 6)},{f1(top + h - 12)}" stroke="{S.shade(col, 0.3)}" stroke-width="4" opacity="0.6"/>'
-    out += (f'<circle cx="{f1(cx)}" cy="{f1(top + h * 0.38)}" r="{f1(w * 0.26)}" fill="{P["gold"]}" stroke="{INK}" '
-            f'stroke-width="2.5"/>')
-    out += f'<path d="M{f1(x0)},{f1(top + 16)} L{f1(x1)},{f1(top + 16)}" stroke="{P["gold"]}" stroke-width="4"/>'
-    return out
-
-
 def wall_svg():
+    """The city wall with the open gate and the corner tower. No festival decorations: the city was spared,
+    but the people are still in sackcloth (s18 / s20) — the joy is in their cheering and in the light."""
     body = PR.city_wall(-60, WX1, WY, WH, gate=(GX, GW), doors_open=1.0, seed=4)
     body += corner_tower(TOWER[0], WY + 4, WH + 76, TOWER[1])
-    ban = ""
-    for i, cx in enumerate(GATE_TOWERS):
-        ban += banner(cx, GT_TOP + 150, col=("#c0533a", "#3f78b5")[i % 1])
-    ban += banner(TOWER[0], WY - WH - 76 + 92, w=48, h=124, col="#3b8b89")
-    # garland over the gate arch
-    gy = WY - 0.62 * WH - GW / 2 - 6
-    pts = [(GX - GW / 2 - 4, gy + 30), (GX - 50, gy - 6), (GX, gy - 18), (GX + 50, gy - 6), (GX + GW / 2 + 4, gy + 30)]
-    gd = S.smooth_path(pts, closed=False)
-    ban += f'<path d="{gd}" fill="none" stroke="{INK}" stroke-width="16" stroke-linecap="round"/>'
-    ban += f'<path d="{gd}" fill="none" stroke="{P["leaf"]}" stroke-width="10" stroke-linecap="round"/>'
-    rnd = random.Random(3)
-    for i in range(9):
-        u = (i + 0.5) / 9
-        x = pts[0][0] + (pts[-1][0] - pts[0][0]) * u
-        y = gy + 30 - 48 * math.sin(math.pi * u) + rnd.uniform(-2, 2)
-        c = ("#f3a0a8", "#f6d36b", "#fffaf0", "#e45e52")[i % 4]
-        ban += (f'<circle cx="{f1(x)}" cy="{f1(y)}" r="9" fill="{c}" stroke="{INK}" stroke-width="2"/>'
-                f'<circle cx="{f1(x)}" cy="{f1(y)}" r="3" fill="#e7a73d"/>')
-    body += S.g(ban, filter="wobble-fine")
     return doc(body)
-
-
-BUNT_COLS = ("#e45e52", "#f2c14e", "#3f78b5", "#f3a0a8", "#3b8b89", "#fff3d6")
-
-
-def bunting_svg():
-    """Strings of little triangular flags swagging along the wall face and between the gate towers."""
-    out = ""
-    top = WY - WH + 18
-    spans = [(-40, 205), (322, 628), (1084, 1300), (1300, WX1 - 18)]
-    spans += [(GATE_TOWERS[0] + 40, GATE_TOWERS[1] - 40)]
-    k = 0
-    for si, (x0, x1) in enumerate(spans):
-        y0 = top if si < 4 else GT_TOP + 120
-        sag = 40 if si < 4 else 52
-        n = max(5, int((x1 - x0) / 34))
-        pts = [(x0 + (x1 - x0) * i / 40, y0 + sag * math.sin(math.pi * i / 40)) for i in range(41)]
-        out += S.path(S.smooth_path(pts, closed=False), sw=2.5)
-        for i in range(n):
-            u = (i + 0.5) / n
-            x = x0 + (x1 - x0) * u
-            y = y0 + sag * math.sin(math.pi * u)
-            c = BUNT_COLS[k % len(BUNT_COLS)]
-            k += 1
-            out += (f'<path d="M{f1(x - 11)},{f1(y)} L{f1(x + 11)},{f1(y)} L{f1(x + 1)},{f1(y + 26)} Z" fill="{c}" '
-                    f'stroke="{INK}" stroke-width="2.4" stroke-linejoin="round"/>')
-    return doc(S.g(out, filter="wobble-fine"))
-
-
-def pennant_svg(phase):
-    """Small flags on poles on top of the gate towers and the corner tower; ``phase`` flutters them."""
-    out = ""
-    tops = [(GATE_TOWERS[0], GT_TOP - 30), (GATE_TOWERS[1], GT_TOP - 30), (TOWER[0], WY - WH - 76 - 40)]
-    for i, (x, y) in enumerate(tops):
-        out += f'<path d="M{f1(x)},{f1(y + 34)} L{f1(x)},{f1(y - 70)}" stroke="{INK}" stroke-width="7" stroke-linecap="round"/>'
-        out += f'<path d="M{f1(x)},{f1(y + 34)} L{f1(x)},{f1(y - 70)}" stroke="{P["wood"]}" stroke-width="3.5" stroke-linecap="round"/>'
-        ph = phase + i * 0.9
-        L = 78
-        pts_top = [(x + L * j / 4, y - 66 + 6 * math.sin(ph + j * 1.3) * j / 4) for j in range(5)]
-        pts_bot = [(x + L * j / 4, y - 30 - 14 * j / 4 + 6 * math.sin(ph + j * 1.3 + 0.4) * j / 4) for j in range(5)]
-        tip = (x + L + 6, y - 52 + 7 * math.sin(ph + 5.5))
-        poly = pts_top + [tip] + pts_bot[::-1]
-        col = ("#e45e52", "#e45e52", "#f2c14e")[i]
-        out += S.path(S.smooth_path(poly, tension=0.6), fill=col, sw=3)
-    return doc(S.g(out, filter="wobble-fine"))
 
 
 def plain_svg():
@@ -352,7 +314,8 @@ def plain_svg():
     for x, y, s in [(1985, 958, 0.34), (2045, 962, 0.28), (2560, 946, 0.36), (2625, 950, 0.3)]:
         body += PR.palm_tree(x, y, s)
     body += PR.house(2110, 966, 0.13, variant=0) + PR.house(2490, 950, 0.12, variant=2, facing=-1)
-    for x, y, s, v in [(1720, 1030, 0.36, 2), (2230, 990, 0.32, 0), (2380, 984, 0.3, 1), (1880, 1010, 0.3, 3)]:
+    # (no bush right behind Jonah: it read as a pouch at his elbow / an earring when he sits)
+    for x, y, s, v in [(1720, 1030, 0.36, 2), (2230, 990, 0.32, 0), (2380, 984, 0.3, 1)]:
         body += PR.bush(x, y, s, variant=v)
     for x, y, s, v in [(560, 1046, 0.45, 1), (1190, 1044, 0.42, 3), (300, 1070, 0.4, 0), (1420, 1060, 0.4, 1)]:
         body += PR.bush(x, y, s, variant=v)
@@ -411,6 +374,55 @@ def knoll_svg():
     return doc(land + S.g(st, filter="wobble-fine"), defs)
 
 
+# ------------------------------------------------------------------ Jonah's bundle (copied from s20_booth)
+# s20 opens with this bundle lying beside him (its bundle_local(0), scale 1.25 on its stage, centre 210 px right
+# of and 22 px above his anchor). Mapped through s20's matched opening view (s20 px per s19 px = 1.25 / 1.2)
+# that is scale 1.2 here, centre (JX + 201.6, JY - 21.1).
+ROPE = S.mix(P["sackcloth"], P["sand"], 0.3)
+CLOTH = S.mix(P["headcloth"], P["sand"], 0.3)
+BUN = (JX + 210 * 1.2 / 1.25, JY - 22 * 1.2 / 1.25)
+
+
+def _btube(pts, w, col, sw=3.2):
+    d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+    return (f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="{w + 2 * sw:.1f}" stroke-linecap="round" '
+            f'stroke-linejoin="round"/><path d="{d}" fill="none" stroke="{col}" stroke-width="{w:.1f}" '
+            f'stroke-linecap="round" stroke-linejoin="round"/>')
+
+
+def bundle_local():
+    """s20's bundle_local(state=0): booth sticks tied with rope plus the striped cloth rolled up, centred on
+    (0, 0) at scale 1 (axis along x)."""
+    rnd = random.Random(5)
+    cols = [P["wood"], P["wood_dark"], P["wood_light"], P["wood"], S.shade(P["wood"], -0.12)]
+    offs = [(-15, 0), (7, 1), (-5, 2), (15, 3), (2, 4)]
+    out = ""
+    for o, ci in offs:
+        e0, e1, j = rnd.uniform(-0.05, 0.04), rnd.uniform(-0.06, 0.06), rnd.uniform(-2.5, 2.5)
+        out += _btube([(-130 * (1 + e1), o), (0, o + j), (130 * (1 + e0), o)], 8.5, cols[ci], 3)
+    y0, r = 30, 17
+    x0, x1 = -88, 84
+    out += (f'<rect x="{x0}" y="{y0 - r}" width="{x1 - x0}" height="{2 * r}" rx="{r}" fill="{CLOTH}" '
+            f'stroke="{INK}" stroke-width="3.4"/>')
+    for xs in (-58, -40, 44, 62):
+        out += (f'<path d="M{xs},{y0 - r + 2} q-5,{r - 2} 0,{2 * r - 4}" fill="none" stroke="{P["sail_stripe"]}" '
+                f'stroke-width="6" stroke-linecap="round"/>')
+    out += (f'<ellipse cx="{x1 - 8}" cy="{y0}" rx="8" ry="{r - 2}" fill="{S.shade(CLOTH, -0.12)}" stroke="{INK}" '
+            f'stroke-width="2.6"/><path d="M{x1 - 9},{y0 - 6} q5,6 0,12" fill="none" stroke="{INK}" '
+            f'stroke-width="2"/>')
+    for bx in (73, -47):
+        out += _btube([(bx + 2, -23), (bx - 2, 50)], 6, ROPE, 3)
+    return out
+
+
+def bundle_svg():
+    x, y = BUN
+    k = 1.2 / 1.25
+    sh = CH.ground_shadow(x, JY + 26 * k, k, width=300, opacity=0.22)
+    return doc(sh + f'<g transform="translate({x:.1f},{y:.1f}) scale(1.2) rotate(180)"><g filter="url(#wobble-fine)">'
+               f'{bundle_local()}</g></g>')
+
+
 def foreground_svg():
     fg = V11._rock(1330, 1560, 260, 120, seed=31) + V11._rock(2650, 1570, 330, 140, seed=33)
     fg += V11._rock(2440, 1590, 160, 70, seed=34)
@@ -452,14 +464,27 @@ def ring_front_svg(cream, under, glow_col, seed):
     return doc(body, defs)
 
 
-def win_clip(cid, inset=0):
-    return f'<clipPath id="{cid}"><ellipse cx="{BX}" cy="{BY}" rx="{RX - inset}" ry="{RY - inset}"/></clipPath>'
+def win_clip(cid, inset=0, dx=0.0):
+    """Clip to the bubble window (grown by -inset), optionally shifted right by dx (see flash_ship_frames)."""
+    return (f'<clipPath id="{cid}"><ellipse cx="{f1(BX + dx)}" cy="{BY}" rx="{RX - inset}" ry="{RY - inset}"/>'
+            f'</clipPath>')
 
 
-# flashback (bubble 1): Joppa harbour, the ship to Tarshish, Jonah running down the pier
-SHIP = (BX - 108, BY + 96, 0.24)            # ship waterline anchor, scale (facing -1: sails west / left)
-PIER_Y = BY + 96 - 165 * 0.24               # pier planks level with the ship's deck
-PIER_X0 = BX + 22
+# flashback (bubble 1): Joppa harbour, the ship to Tarshish, tiny Jonah dashing along the pier
+SS = 0.28                                   # flashback scale (ship and tiny Jonah)
+WL = BY + 108                               # the ship's waterline
+SHIP_X = BX - 75                            # ship anchor (facing -1: sails west / left)
+DECK_Y = WL + PR.SHIP_DECK_Y * SS           # feet of people standing on deck
+PIER_Y = DECK_Y                             # pier planks level with the deck
+PIER_X0 = SHIP_X + 182                      # pier end, just clear of the stern and the steering oar
+RUN_STEP = 150 * SS                         # stage px per run drawing (one stride per drawing)
+RUN_N = 5                                   # strides from under the ring (right) to the pier end
+RUN_XS = [BX + 300 - k * RUN_STEP for k in range(RUN_N)]
+RUN_DT = 0.16                               # s per stride: ~260 stage px / s — a real dash
+LAND_X = BX - 32                            # where he lands on deck
+CLIP_STEP = 40                              # the ship's window clip is re-centred every 40 px of travel...
+SAIL_DX = 400                               # ...over its whole sail-off (it leaves the window completely)
+N_CLIP = int(SAIL_DX / CLIP_STEP) + 2
 
 
 def flash_back_svg():
@@ -467,26 +492,27 @@ def flash_back_svg():
             S.lin_grad("fsky", [(0, "#a9d4e4"), (0.6, "#dcefe8"), (1, "#f6efd6")], 0, 0, 0, 1) +
             S.lin_grad("fsea", [(0, P["sea_light"]), (1, P["sea"])]))
     inner = f'<rect x="{BX - RX}" y="{BY - RY}" width="{2 * RX}" height="{2 * RY}" fill="url(#fsky)"/>'
-    inner += S.cloud(BX - 150, BY - 110, 120, 40, "#fffaf0", seed=4, sw=2.5, shade_fill="#dbe9ee")
-    inner += S.cloud(BX + 140, BY - 128, 90, 32, "#fffaf0", seed=6, sw=2.5, shade_fill="#dbe9ee")
+    inner += S.cloud(BX - 175, BY - 122, 120, 40, "#fffaf0", seed=4, sw=2.5, shade_fill="#dbe9ee")
+    inner += S.cloud(BX + 150, BY - 130, 90, 32, "#fffaf0", seed=6, sw=2.5, shade_fill="#dbe9ee")
     # Joppa's hill on the right (east), a few tiny houses
-    inner += V2._ridge([(BX + 40, BY + 12), (BX + 150, BY - 40), (BX + 260, BY - 54), (BX + RX + 40, BY - 30)],
+    inner += V2._ridge([(BX + 70, BY + 12), (BX + 170, BY - 46), (BX + 275, BY - 60), (BX + RX + 40, BY - 36)],
                        S.mix(P["grass"], P["sand"], 0.45), 2.5)
-    for hx, hy, s in [(BX + 150, BY - 34, 0.07), (BX + 205, BY - 46, 0.08), (BX + 250, BY - 40, 0.065)]:
+    for hx, hy, s in [(BX + 170, BY - 40, 0.075), (BX + 226, BY - 52, 0.085), (BX + 272, BY - 46, 0.07)]:
         inner += PR.house(hx, hy, s, variant=0)
-    inner += f'<path d="{S.wave_band(BY - 6, 3, 90, 0, BX - RX - 20, BX + RX + 20, BY + RY + 20)}" fill="url(#fsea)" stroke="{INK}" stroke-width="2.5"/>'
+    inner += (f'<path d="{S.wave_band(BY - 6, 3, 90, 0, BX - RX - 20, BX + RX + 20, BY + RY + 20)}" fill="url(#fsea)" '
+              f'stroke="{INK}" stroke-width="2.5"/>')
     for i in range(6):
-        x = BX - 230 + i * 80
-        inner += (f'<path d="M{x},{BY + 30 + (i % 3) * 22} q14,-6 28,0" fill="none" stroke="{P["foam"]}" '
+        x = BX - 250 + i * 84
+        inner += (f'<path d="M{x},{BY + 26 + (i % 3) * 22} q14,-6 28,0" fill="none" stroke="{P["foam"]}" '
                   f'stroke-width="3" stroke-linecap="round" opacity="0.8"/>')
-    # pier
+    # pier (planks level with the ship's deck), a crate at its far end
     pier = ""
     for px in range(int(PIER_X0 + 14), int(BX + RX + 40), 46):
-        pier += (f'<rect x="{px - 6}" y="{f1(PIER_Y)}" width="12" height="{f1(BY + 140 - PIER_Y)}" fill="{P["wood_dark"]}" '
-                 f'stroke="{INK}" stroke-width="2.5"/>')
+        pier += (f'<rect x="{px - 6}" y="{f1(PIER_Y)}" width="12" height="{f1(BY + RY + 10 - PIER_Y)}" '
+                 f'fill="{P["wood_dark"]}" stroke="{INK}" stroke-width="2.5"/>')
     pier += (f'<rect x="{f1(PIER_X0)}" y="{f1(PIER_Y - 2)}" width="{f1(BX + RX + 60 - PIER_X0)}" height="14" '
              f'fill="{P["wood"]}" stroke="{INK}" stroke-width="3"/>')
-    pier += PR.jar(BX + 240, PIER_Y - 22, 0.24) + PR.crate(BX + 196, PIER_Y - 16, 0.26)
+    pier += PR.crate(BX + 258, PIER_Y - 16, 0.26)
     inner += pier
     body = f'<ellipse cx="{BX}" cy="{BY}" rx="{RX + 30}" ry="{RY + 26}" fill="#fff8ea"/>'
     body += f'<g clip-path="url(#w1)">{S.g(inner, filter="wobble-fine")}</g>'
@@ -494,25 +520,56 @@ def flash_back_svg():
     return doc(f'<ellipse cx="{BX}" cy="{BY}" rx="{RX + 150}" ry="{RY + 120}" fill="url(#fh)"/>' + body, defs + halo)
 
 
-def flash_ship_svg(part):
-    x, y, s = SHIP
-    body = PR.ship(x, y, s, -1, sail="full", part=part, lantern=False)
-    return doc(f'<g clip-path="url(#w1b)">{body}</g>', win_clip("w1b", -24))
+def _ship_part(part):
+    return PR.ship(SHIP_X, WL, SS, -1, sail="full", part=part, lantern=False)
+
+
+def tiny_jonah(x, y, pose):
+    return jfig(x, y, SS, -1, pose=pose, expr="worried")
+
+
+def flash_ship_frames():
+    """Frame 0: the ship (back part) before Jonah is aboard. Frames 1..N_CLIP: back part + Jonah standing on deck
+    + front part, with the window clip pre-shifted k * CLIP_STEP to the right, so that while the layer has
+    travelled about -k * CLIP_STEP (the sail-off) its clip sits on the window and the clip's edge stays under
+    the ring (radius RX + 30 +- 20 px, the ring covers to beyond RX + 55)."""
+    back, front = _ship_part("back"), _ship_part("front")
+    frames = [doc(f'<g clip-path="url(#sc0)">{back}</g>', win_clip("sc0", -30))]
+    aboard = back + tiny_jonah(LAND_X, DECK_Y, "stand") + front
+    for k in range(N_CLIP):
+        cid = f"sc{k + 1}"
+        frames.append(doc(f'<g clip-path="url(#{cid})">{aboard}</g>', win_clip(cid, -30, k * CLIP_STEP)))
+    return frames
+
+
+def flash_ship_front_svg():
+    return doc(f'<g clip-path="url(#w1b)">{_ship_part("front")}</g>', win_clip("w1b", -30))
+
+
+def flash_run_frames():
+    """Tiny Jonah's dash along the pier: one drawing per stride (run_a / run_b), each drawn where that stride
+    lands (planted, nothing slides) and clipped to the window, so he comes out from under the ring."""
+    out = []
+    for k, x in enumerate(RUN_XS):
+        cid = f"rn{k}"
+        out.append(doc(f'<g clip-path="url(#{cid})">{tiny_jonah(x, PIER_Y, ("run_a", "run_b")[k % 2])}</g>',
+                       win_clip(cid, -4)))
+    return out
 
 
 def flash_sea_front_svg():
-    x, y, s = SHIP
-    d = S.wave_band(y + 4, 4, 70, 0.6, BX - RX - 30, BX + RX + 30, BY + RY + 30)
+    d = S.wave_band(WL + 4, 4, 70, 0.6, BX - RX - 30, BX + RX + 30, BY + RY + 30)
     body = f'<path d="{d}" fill="{S.mix(P["sea_light"], P["sea"], 0.45)}" stroke="{INK}" stroke-width="2.5"/>'
-    body += (f'<path d="{S.wave_line(y + 4, 4, 70, 0.6, BX - 260, BX + 260)}" fill="none" stroke="{P["foam"]}" '
+    body += (f'<path d="{S.wave_line(WL + 4, 4, 70, 0.6, BX - 270, BX + 270)}" fill="none" stroke="{P["foam"]}" '
              f'stroke-width="4" opacity="0.8"/>')
     return doc(f'<g clip-path="url(#w1c)">{S.g(body, filter="wobble-fine")}</g>', win_clip("w1c", -24))
 
 
-# memory (bubble 2): God's kindness — a glowing heart; a grey cloud over a tiny Nineveh melts away
-HEART = (BX - 100, BY - 46)
-HEART_W = 108
-MCLOUD = (BX + 98, BY - 6)
+# memory (bubble 2): God's kindness — a glowing heart; a grey cloud over a tiny Nineveh turns gold and pops
+HEART = (BX - 112, BY - 52)
+HEART_W = 112
+MCLOUD = (BX + 104, BY - 14)
+CITY_Y = BY + 134                           # the tiny city's ground line
 
 
 def heart_path(cx, cy, w):
@@ -532,13 +589,45 @@ def memory_back_svg():
             S.rad_grad("mh", [(0, "#fff3c8", 0.95), (0.6, "#ffe3a0", 0.5), (1, "#ffd98a", 0)]))
     inner = f'<rect x="{BX - RX}" y="{BY - RY}" width="{2 * RX}" height="{2 * RY}" fill="url(#msky)"/>'
     inner += f'<circle cx="{HEART[0]}" cy="{HEART[1]}" r="230" fill="url(#mglow)"/>'
-    gy = BY + 128
-    inner += PR.nineveh_skyline(BX - RX + 10, BX + RX - 10, gy, 0.18, seed=2, haze=0.12, tint="#f6dcae")
-    inner += V2._ridge([(BX - RX - 40, gy + 2), (BX, gy - 2), (BX + RX + 40, gy + 4)],
-                       S.mix(P["grass"], P["sand"], 0.4), 2.5)
     body = f'<ellipse cx="{BX}" cy="{BY}" rx="{RX + 30}" ry="{RY + 26}" fill="#fff0c8"/>'
     body += f'<g clip-path="url(#w2)">{S.g(inner, filter="wobble-fine")}</g>'
     return doc(f'<ellipse cx="{BX}" cy="{BY}" rx="{RX + 190}" ry="{RY + 160}" fill="url(#mh)"/>' + body, defs)
+
+
+def memory_city_svg():
+    """The tiny Nineveh on its plain — in front of the gold glow that rises behind it when the cloud pops."""
+    inner = PR.nineveh_skyline(BX - RX + 10, BX + RX - 10, CITY_Y, 0.18, seed=2, haze=0.12, tint="#f6dcae")
+    inner += V2._ridge([(BX - RX - 40, CITY_Y + 2), (BX, CITY_Y - 2), (BX + RX + 40, CITY_Y + 4)],
+                       S.mix(P["grass"], P["sand"], 0.4), 2.5)
+    return doc(f'<g clip-path="url(#w2c)">{S.g(inner, filter="wobble-fine")}</g>', win_clip("w2c"))
+
+
+def city_glow_svg():
+    """Warm gold sunrise-like glow in the sky BEHIND the tiny city (not a wash over its buildings)."""
+    defs = (win_clip("w2g", 2) +
+            S.rad_grad("cg", [(0, "#ffc83e", 0.95), (0.4, "#ffd25e", 0.6), (0.75, "#ffdc84", 0.22),
+                              (1, "#ffe09a", 0)]))
+    body = f'<ellipse cx="{BX + 20}" cy="{CITY_Y - 52}" rx="330" ry="160" fill="url(#cg)"/>'
+    return doc(f'<g clip-path="url(#w2g)">{body}</g>', defs)
+
+
+TWINKLES = [(BX - 160, CITY_Y - 96, 14), (BX + 6, CITY_Y - 124, 17), (BX + 168, CITY_Y - 88, 13),
+            (BX + 86, CITY_Y - 168, 11), (BX - 70, CITY_Y - 150, 10)]
+
+
+def star_d(x, y, r):
+    k = 0.3 * r
+    return (f"M{f1(x)},{f1(y - r)} Q{f1(x + k * 0.3)},{f1(y - k)} {f1(x + r)},{f1(y)} "
+            f"Q{f1(x + k * 0.3)},{f1(y + k)} {f1(x)},{f1(y + r)} Q{f1(x - k * 0.3)},{f1(y + k)} {f1(x - r)},{f1(y)} "
+            f"Q{f1(x - k * 0.3)},{f1(y - k)} {f1(x)},{f1(y - r)} Z")
+
+
+def twinkle_svg(idx):
+    out = ""
+    for i in idx:
+        x, y, r = TWINKLES[i]
+        out += f'<path d="{star_d(x, y, r)}" fill="#fff4b8" stroke="#d99a2b" stroke-width="2.6" stroke-linejoin="round"/>'
+    return doc(S.g(out, filter="wobble-fine"))
 
 
 def heart_rays_svg():
@@ -561,49 +650,91 @@ def heart_svg():
     return doc(S.g(body, filter="wobble-fine"))
 
 
-def heart_beam_svg():
-    """Warm light shining from the heart onto the grey cloud and the little city below it."""
+def beam_origin():
+    """Where the heart's three rays start (its edge toward the cloud) and their direction."""
     hx, hy = HEART
     cx, cy = MCLOUD
-    ang = math.degrees(math.atan2(cy + 20 - hy, cx - hx))
-    hx += HEART_W * 0.42 * math.cos(math.radians(ang))
-    hy += HEART_W * 0.42 * math.sin(math.radians(ang))
-    d = V2._fan(hx, hy, math.hypot(cx - hx, cy - hy) + 90, [ang - 7, ang + 3, ang + 12], [7, 9, 6])
-    defs = (f'<radialGradient id="hbm" gradientUnits="userSpaceOnUse" cx="{hx}" cy="{hy}" r="300">'
-            f'<stop offset="0.15" stop-color="#fff2b8" stop-opacity="0.95"/>'
-            f'<stop offset="1" stop-color="#ffe08a" stop-opacity="0.15"/></radialGradient>')
-    return doc(f'<path d="{d}" fill="url(#hbm)" filter="url(#soft)"/>', defs)
+    ang = math.degrees(math.atan2(cy + 8 - (hy + 6), cx - hx))
+    ex = hx + HEART_W * 0.40 * math.cos(math.radians(ang))
+    ey = hy + 6 + HEART_W * 0.40 * math.sin(math.radians(ang))
+    return ex, ey, ang
 
 
-def storm_svg():
+def _wedge(x0, y0, ang, length, w0, w1):
+    """A tapered ray from (x0, y0) along ``ang`` degrees: w0 wide at the start, w1 at the rounded far end."""
+    c, s_ = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+    nx, ny = -s_, c
+    x1, y1 = x0 + c * length, y0 + s_ * length
+    tip = (x1 + c * w1 * 0.45, y1 + s_ * w1 * 0.45)
+    return (f"M{f1(x0 + nx * w0 / 2)},{f1(y0 + ny * w0 / 2)} L{f1(x1 + nx * w1 / 2)},{f1(y1 + ny * w1 / 2)} "
+            f"Q{f1(tip[0] + nx * w1 * 0.5)},{f1(tip[1] + ny * w1 * 0.5)} {f1(tip[0])},{f1(tip[1])} "
+            f"Q{f1(tip[0] - nx * w1 * 0.5)},{f1(tip[1] - ny * w1 * 0.5)} {f1(x1 - nx * w1 / 2)},{f1(y1 - ny * w1 / 2)} "
+            f"L{f1(x0 - nx * w0 / 2)},{f1(y0 - ny * w0 / 2)} Z")
+
+
+def heart_beam_svg():
+    """Three distinct golden rays fanning from the heart onto the grey cloud (drawn above the cloud): a warm
+    glow, a gold body and a pale core in each, soft-edged like light."""
+    ex, ey, ang = beam_origin()
+    cx, cy = MCLOUD
+    dist = math.hypot(cx - ex, cy - ey)
+    rays = [(ang - 7.5, dist - 22), (ang, dist + 4), (ang + 7.5, dist - 22)]
+    body_d = " ".join(_wedge(ex, ey, a, ln, 7, 26) for a, ln in rays)
+    core_d = " ".join(_wedge(ex, ey, a, ln - 6, 2.5, 9) for a, ln in rays)
+    defs = (f'<linearGradient id="hbm" gradientUnits="userSpaceOnUse" x1="{f1(ex)}" y1="{f1(ey)}" x2="{f1(cx)}" '
+            f'y2="{f1(cy)}"><stop offset="0" stop-color="#ffc533"/><stop offset="1" stop-color="#ffdb5c"/>'
+            f'</linearGradient>'
+            f'<filter id="bglow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="9"/></filter>'
+            f'<filter id="bsoft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.6"/>'
+            f'</filter>')
+    body = (f'<path d="{body_d}" fill="#ffd34d" stroke="#ffd34d" stroke-width="16" stroke-linejoin="round" '
+            f'opacity="0.55" filter="url(#bglow)"/>')
+    body += f'<path d="{body_d}" fill="url(#hbm)" opacity="0.9" filter="url(#bsoft)"/>'
+    body += f'<path d="{core_d}" fill="#fff6cf" opacity="0.9" filter="url(#bsoft)"/>'
+    return doc(body, defs)
+
+
+def rain_svg(phase):
+    """Rain streaks and the lightning bolt under the grey cloud (own layer: it stops before the cloud turns
+    gold). ``phase`` 0 / 1 shifts the streaks so the rain falls."""
     cx, cy = MCLOUD
     body = ""
     for i in range(5):
         x = cx - 60 + i * 30
-        body += (f'<path d="M{x},{cy + 24} l-8,26" stroke="#7d8aa0" stroke-width="4" stroke-linecap="round" '
-                 f'opacity="0.8"/>')
+        y0 = cy + 22 + (12 if (i + phase) % 2 else 0)
+        body += (f'<path d="M{x},{y0} l-8,26" stroke="#7d8aa0" stroke-width="4" stroke-linecap="round" '
+                 f'opacity="0.85"/>')
     body += (f'<path d="M{cx + 18},{cy + 22} l-14,22 l12,0 l-12,24" fill="none" stroke="{INK}" stroke-width="7" '
              f'stroke-linejoin="round" stroke-linecap="round"/>'
              f'<path d="M{cx + 18},{cy + 22} l-14,22 l12,0 l-12,24" fill="none" stroke="#f6d35a" stroke-width="3.5" '
              f'stroke-linejoin="round" stroke-linecap="round"/>')
-    body += S.cloud(cx, cy, 136, 50, "#a9a7b3", seed=21, sw=3, shade_fill="#86849a")
-    body += (f'<path d="M{cx - 30},{cy - 2} c8,-12 18,8 26,-4 s16,10 24,-2" fill="none" stroke="#6f6d7d" '
-             f'stroke-width="3.5" stroke-linecap="round"/>')
     return doc(S.g(body, filter="wobble-fine"))
 
 
-def city_glow_svg():
-    defs = (win_clip("w2g", 4) +
-            S.rad_grad("cg", [(0, "#fff6d0", 0.85), (0.5, "#ffe7a6", 0.45), (1, "#ffdc90", 0)]))
-    body = f'<ellipse cx="{BX + 40}" cy="{BY + 100}" rx="260" ry="90" fill="url(#cg)"/>'
-    return doc(f'<g clip-path="url(#w2g)">{body}</g>', defs)
+def storm_cloud_svg(gold):
+    """The memory cloud: grey (frame 0) or gold (frame 1) — the SAME outline, so the colour swap reads as the
+    cloud changing, not as two clouds."""
+    cx, cy = MCLOUD
+    if gold:
+        body = S.cloud(cx, cy, 136, 50, "#ffd970", seed=21, sw=3, shade_fill="#f2b64c")
+        body += (f'<path d="M{cx - 40},{cy - 10} q18,-14 40,-8" fill="none" stroke="#fff4c8" stroke-width="5" '
+                 f'stroke-linecap="round" opacity="0.9"/>')
+    else:
+        body = S.cloud(cx, cy, 136, 50, "#a9a7b3", seed=21, sw=3, shade_fill="#86849a")
+        body += (f'<path d="M{cx - 30},{cy - 2} c8,-12 18,8 26,-4 s16,10 24,-2" fill="none" stroke="#6f6d7d" '
+                 f'stroke-width="3.5" stroke-linecap="round"/>')
+    return doc(S.g(body, filter="wobble-fine"))
 
 
 def melt_puffs_svg():
+    """A ring of little white puffs: scaled up from the cloud's centre it bursts outward as the cloud pops."""
     cx, cy = MCLOUD
     out = ""
-    for dx, dy, r in [(-50, -10, 16), (0, -24, 20), (46, -8, 15), (20, 14, 12)]:
-        out += f'<circle cx="{cx + dx}" cy="{cy + dy}" r="{r}" fill="#fffaf0" stroke="{P["ink_soft"]}" stroke-width="3"/>'
+    for i, r in enumerate((17, 13, 15, 12, 16, 13, 14)):
+        a = 2 * math.pi * i / 7 + 0.3
+        x, y = cx + 64 * math.cos(a), cy + 34 * math.sin(a)
+        out += (f'<circle cx="{f1(x)}" cy="{f1(y)}" r="{r}" fill="#fffaf0" stroke="{P["ink_soft"]}" '
+                f'stroke-width="3"/>')
     return doc(S.g(out, filter="wobble-fine"))
 
 
@@ -613,25 +744,26 @@ def trail_svg(i, cream="#fff8ea"):
                    filter="wobble-fine"))
 
 
-TRAIL = [(1915, 760, 12), (1962, 722, 17), (2024, 686, 23)]
+TRAIL = [(1915, 760, 12), (1960, 726, 17), (2008, 698, 21)]
 
 
 # ------------------------------------------------------------------ God's light
-RAY_TARGET = (JX + 20, JY + 30)
+RAY_TARGET = (JX, JY - 140)       # Jonah's head / chest: he sits in the middle of the beam
+RAY_GRAD_Y1 = JY + 130            # where the rays' gradient ends (the ground)
 
 
 def ray_defs():
-    gy, ty = GAP[1], RAY_TARGET[1]
-    return (f'<linearGradient id="rayg" gradientUnits="userSpaceOnUse" x1="0" y1="{gy}" x2="0" y2="{ty + 100}">'
-            f'<stop offset="0" stop-color="#fff6d2" stop-opacity="0.85"/>'
-            f'<stop offset="0.6" stop-color="#ffeaa8" stop-opacity="0.5"/>'
-            f'<stop offset="1" stop-color="#ffe08e" stop-opacity="0.12"/></linearGradient>')
+    gy = GAP[1]
+    return (f'<linearGradient id="rayg" gradientUnits="userSpaceOnUse" x1="0" y1="{gy}" x2="0" y2="{RAY_GRAD_Y1}">'
+            f'<stop offset="0" stop-color="#fff6d2" stop-opacity="0.92"/>'
+            f'<stop offset="0.6" stop-color="#ffeaa8" stop-opacity="0.6"/>'
+            f'<stop offset="1" stop-color="#ffe08e" stop-opacity="0.16"/></linearGradient>')
 
 
 def ray_main():
     gx, gy = GAP
     tx, ty = RAY_TARGET
-    return math.degrees(math.atan2(ty - gy, tx - gx)), math.hypot(tx - gx, ty - gy) + 160
+    return math.degrees(math.atan2(ty - gy, tx - gx)), math.hypot(tx - gx, ty - gy) + 330
 
 
 def rays_svg(which):
@@ -649,12 +781,12 @@ def light_pool_svg():
     gx, gy = GAP
     main, length = ray_main()
     defs = (ray_defs() +
-            f'<linearGradient id="coneg" gradientUnits="userSpaceOnUse" x1="0" y1="{gy}" x2="0" y2="{RAY_TARGET[1] + 100}">'
-            f'<stop offset="0" stop-color="#fff2c4" stop-opacity="0.55"/>'
-            f'<stop offset="1" stop-color="#ffe39a" stop-opacity="0.2"/></linearGradient>' +
+            f'<linearGradient id="coneg" gradientUnits="userSpaceOnUse" x1="0" y1="{gy}" x2="0" y2="{RAY_GRAD_Y1}">'
+            f'<stop offset="0" stop-color="#fff2c4" stop-opacity="0.6"/>'
+            f'<stop offset="1" stop-color="#ffe39a" stop-opacity="0.22"/></linearGradient>' +
             S.rad_grad("pool", [(0, "#fff1c0", 0.85), (0.6, "#ffe39a", 0.35), (1, "#ffd77e", 0)]) +
             S.rad_grad("halo", [(0, "#fff6d6", 0.75), (0.6, "#ffe7a4", 0.32), (1, "#ffe0a0", 0)]))
-    body = f'<path d="{V2._fan(gx, gy + 10, length, [main], [20])}" fill="url(#coneg)" filter="url(#blur-lg)"/>'
+    body = f'<path d="{V2._fan(gx, gy + 10, length, [main], [13])}" fill="url(#coneg)" filter="url(#blur-lg)"/>'
     body += f'<ellipse cx="{JX + 20}" cy="{f1(JY - 125 * JS)}" rx="{f1(200 * JS)}" ry="{f1(190 * JS)}" fill="url(#halo)"/>'
     body += f'<ellipse cx="{JX + 20}" cy="{JY + 2}" rx="{f1(260 * JS)}" ry="{f1(58 * JS)}" fill="url(#pool)"/>'
     return doc(body, defs)
@@ -668,7 +800,7 @@ def warm_svg():
 # ------------------------------------------------------------------ people & creatures
 WALL_TOP = WY - WH
 WALK_PEOPLE = [  # (x, feet y, kind, variant, facing) on the wall walk / tower tops (feet behind the parapet)
-    (262, WY - WH - 90 + 28, "man", 0, 1), (352, WY - WH + 30, "child", 2, 1), (800, WY - WH + 26, "woman", 1, 1),
+    (262, WY - WH - 90 + 76, "man", 0, 1), (352, WY - WH + 30, "child", 2, 1), (800, WY - WH + 26, "woman", 1, 1),
     (915, WY - WH + 26, "child", 1, -1), (1118, WY - WH + 30, "man", 3, -1), (1212, WY - WH + 30, "woman", 3, 1),
     (1300, WY - WH + 30, "elder", 0, -1), (1590, WY - WH - 72 + 26, "child", 0, -1),
 ]
@@ -681,8 +813,40 @@ CROWD = [  # (x, y, kind, variant, facing, scale, style) on the plain in front o
 SHEEP = [(300, 1100, 0.5, 1), (400, 1124, 0.55, -1)]
 
 
+def thin_hops(hops, a, b, gap):
+    """Keep at most one hop group every ``gap`` s inside [a, b]: the crowd cheers less while Jonah speaks."""
+    out, last, prev_end, keep = [], -99.0, -99.0, True
+    for t0, d in hops:
+        if t0 - prev_end > 0.1:                         # a new group of hops starts
+            inside = a <= t0 <= b
+            keep = (not inside) or (t0 - last >= gap)
+            if keep and inside:
+                last = t0
+        if keep:
+            out.append((t0, d))
+        prev_end = t0 + d
+    return out
+
+
+def sheep_parts_sack(x, y, s, f):
+    """V2._sheep_parts for a sheep in its sackcloth blanket (as in s18 / s20): (body markup, head markup)."""
+    full = PR.animal(x, y, s, f, kind="sheep", sackcloth=True)
+    i = full.find("rotate(-24 54 -110)")
+    j = full.rfind("<ellipse", 0, i) if i >= 0 else -1
+    k = full.find("<g transform=")
+    k = full.find(">", k) + 1 if k >= 0 else 0
+    if j <= k or not full.endswith("</g></g>"):
+        return full, ""
+    return full[:j] + "</g></g>", full[:k] + full[j:]
+
+
 # ------------------------------------------------------------------ build
 def build(ctx):
+    with _local_exprs():            # the scene-local "hmph" face exists only while the drawings are built
+        return _build(ctx)
+
+
+def _build(ctx):
     sc = Scene(ctx, W=SW, H=SH)
     T = ctx.duration
     L = ctx.lines
@@ -693,32 +857,38 @@ def build(ctx):
     t_pan1 = L0.chunks[1].start + 2.6
     t_huff0 = L0.chunks[1].start + 1.5              # grumpy huff while the camera arrives
     t_stamp = L0.chunks[2].start + 0.12             # "他非常生气" stamps, anger mark
-    t_lookup = phrase_t(L0, "对上帝说")             # lifts his face to heaven
+    t_lookup = phrase_t(L0, "对上帝说", 0.75)       # lifts his face to heaven
     t_arms = L1.start + 0.02                        # "耶和华啊" arms up
-    t_wide = phrase_t(L1, "我早就知道")             # arms flung wide
+    t_wide = phrase_t(L1, "我早就知道", 0.12)       # arms flung wide
     t_b1 = L1.chunks[1].start - 0.32                # flashback bubble pops up ("所以我才急忙逃到他施去")
     t_watch = L1.chunks[1].start + 0.05             # Jonah looks up at it, arms crossed
-    t_run0 = t_b1 + 0.55
-    t_leap = L1.chunks[1].end - 0.75
-    t_land = t_leap + 0.42
-    t_sail1 = L2.start - 0.25
-    t_b1_out = L2.start - 0.42
+    t_b1_out = L2.start + 0.3                       # the flashback pops away on "因为我知道"
+    # tiny Jonah dashes along the pier on "急忙", leaps aboard on "他施", the ship sails off right after
+    t_run0 = min(max(phrase_t(L1, "急忙", 0.65) - 0.1, t_b1 + 0.55), t_b1_out - 2.1)
+    t_leap = t_run0 + RUN_N * RUN_DT
+    t_land = t_leap + 0.4
+    t_sail0, t_sail1 = t_land + 0.12, t_b1_out + 0.3
     t_shrug = L2.start + 0.02                       # "因为我知道" palms out
-    t_b2 = L2.start + 0.3                           # memory bubble
-    t_beat1 = phrase_t(L2, "慈爱")
-    t_beat2 = phrase_t(L2, "宽容")
+    t_b2 = max(phrase_t(L2, "你又慈爱", 0.15) - 0.15, t_b1_out + 0.45)   # memory bubble
+    t_beat1 = phrase_t(L2, "慈爱", 0.2)
+    t_beat2 = phrase_t(L2, "宽容", 0.28)
     t_wide2 = L2.chunks[1].start + 0.02             # "不轻易生气" arms wide again
-    t_grey = phrase_t(L2, "你说要降下")             # grey cloud gathers over the tiny city
+    t_grey = phrase_t(L2, "你说要降下", 0.45)       # grey cloud gathers over the tiny city
     t_shrug2 = L2.chunks[2].start + 0.02            # "只要人一认错"
-    t_melt = phrase_t(L2, "你就不忍心")             # the heart's light melts the cloud
-    t_cross = t_melt + 0.75                         # arms crossed + huff
+    t_melt = phrase_t(L2, "你就不忍心", 0.78)       # three golden rays shoot from the heart onto the cloud
+    t_gold = t_melt + 0.15                          # the rain stops, the cloud turns gold...
+    t_pop = t_melt + 0.75                           # ...and pops into white puffs; gold glow behind the city
+    t_cross = t_pop + 0.45                          # arms crossed + huff
     t_b2_out = L2.end + 0.2
     t_sit = L3.start + 0.05                         # "原来" plops down, sulking
-    t_eye = L3.chunks[2].start + 0.05               # "可是他不愿意…" side-eye at the cheering city
-    t_front = L3.chunks[3].start + 0.05             # "所以当初才逃跑了" huff, eyes front
+    c1 = L3.chunks[1]
+    t_fidget = c1.start + 0.5 * (c1.end - c1.start)  # re-crosses his arms tighter, with a huff
+    t_eye = L3.chunks[2].start + 0.05               # "可是他不愿意…" hop-turn: glares at the cheering city
+    t_front = L3.chunks[3].start + 0.05             # "所以当初才逃跑了" hops back: "hmph!", nose in the air
+    t_unhmph = min(t_front + 1.1, L4.start - 0.3)   # eyes open, chin down again
     t_light = L4.start - 0.1                        # "于是，上帝问约拿" clouds part, light pours down
     t_glance = L5.start + 0.08                      # "约拿，" he looks up into the light
-    t_turn = min(phrase_t(L5, "对吗") + 0.2, T - 1.6)  # turns his back to the light without answering
+    t_turn = min(phrase_t(L5, "对吗", 0.8) + 0.2, T - 1.6)  # turns his back to the light without answering
 
     # ---------------------------------------------------------------- SKY
     sc.add("sky", sky_svg(), wc=0.45)
@@ -744,25 +914,23 @@ def build(ctx):
 
     # ---------------------------------------------------------------- CITY
     sc.add("far", far_svg(), wc=0.7)
+    quiet = (L1.start - 0.3, L2.end + 0.4)          # the crowd cheers less while Jonah complains
 
-    # people on the wall walk (behind the parapet), waving now and then
+    # people on the wall walk (behind the parapet), in sackcloth, cheering now and then
     for i, (x, fy, kind, var, fc) in enumerate(WALK_PEOPLE):
         s = 0.42
-        frames = [doc(CH.citizen(x, fy, s, fc, kind=kind, variant=var, pose=p)) for p in ("stand", "cheer")]
-        hops = V12.hop_sched(70 + i, T, n=(1, 2), dur=(0.5, 0.8), rest=(1.0, 2.6))
+        frames = [doc(CH.citizen(x, fy, s, fc, kind=kind, variant=var, pose=p, attire="sackcloth",
+                                 expr="happy" if p == "stand" else None)) for p in ("stand", "cheer")]
+        hops = thin_hops(V12.hop_sched(70 + i, T, n=(1, 2), dur=(0.5, 0.8), rest=(1.0, 2.6)), *quiet, 5.0)
         sc.add(f"walk{i}", frames, frame_at=V12.hop_frame(hops, 0.12, 0.25), wc=0.5,
                motion=V12.hop_motion(x, fy, hops, 9))
 
     sc.add("wall", wall_svg(), wc=0.8)
-    sc.add("bunting", bunting_svg(), wc=0.5, boil=4)
-    pen = [pennant_svg(ph) for ph in (0.0, 2.1, 4.2)]
-    sc.add("pennants", pen, wc=0.5, frame_at=lambda t: float(int(t * 5) % 3))
-
     sc.add("plain", plain_svg(), wc=0.8)
 
-    # sheep grazing by the wall (hooves planted, heads nod)
+    # sheep in their sackcloth blankets grazing by the wall (hooves planted, heads nod)
     for i, (x, y, s, f) in enumerate(SHEEP):
-        body, head = V2._sheep_parts(x, y, s, f)
+        body, head = sheep_parts_sack(x, y, s, f)
         br = M.breathe(0.012, 2.6 + 0.3 * i, pivot=(x, y), phase=0.3 * i)
         sc.add(f"sheep{i}", doc(CH.ground_shadow(x, y, s, width=180, opacity=0.2) + body), motion=br)
         if head:
@@ -771,17 +939,18 @@ def build(ctx):
             sc.add(f"sheep{i}_head", doc(head), motion=lambda t, ang=ang, br=br, f=f, ny=ny, nx=nx, y=y: Tf(
                 dy=-(br(t).sy - 1) * (y - ny), rot=-ang(t) * f, px=nx, py=ny))
 
-    # the joyful crowd
+    # the cheering crowd (still in sackcloth, happy faces)
     for i, (x, y, kind, var, fc, s, style) in enumerate(CROWD):
-        frames = [doc(CH.citizen(x, y, s, fc, kind=kind, variant=var, pose=p)) for p in ("stand", "cheer")]
+        frames = [doc(CH.citizen(x, y, s, fc, kind=kind, variant=var, pose=p, attire="sackcloth",
+                                 expr="happy" if p == "stand" else None)) for p in ("stand", "cheer")]
         sc.add(f"crowd_sh{i}", doc(CH.ground_shadow(x, y, s, width=110 if kind == "child" else 120, opacity=0.2)),
                wc=0)
         if style == "hop":
-            hops = V12.hop_sched(10 + i, T, n=(2, 3), dur=(0.4, 0.52), rest=(0.6, 1.3))
+            hops = thin_hops(V12.hop_sched(10 + i, T, n=(2, 3), dur=(0.4, 0.52), rest=(0.6, 1.3)), *quiet, 6.0)
             sc.add(f"crowd{i}", frames, frame_at=V12.hop_frame(hops), wc=0.5,
                    motion=V12.hop_motion(x, y, hops, 26 * s / 0.6))
         else:
-            hops = V12.hop_sched(30 + i, T, n=(1, 1), dur=(0.9, 1.4), rest=(0.7, 1.6))
+            hops = thin_hops(V12.hop_sched(30 + i, T, n=(1, 1), dur=(0.9, 1.4), rest=(0.7, 1.6)), *quiet, 7.0)
             sc.add(f"crowd{i}", frames, frame_at=V12.hop_frame(hops, 0.0, 0.0), wc=0.5,
                    motion=M.combine(V12.hop_motion(x, y, hops, 5), M.breathe(0.01, 2.8, pivot=(x, y), phase=i * 0.2)))
 
@@ -805,6 +974,7 @@ def build(ctx):
 
     # ---------------------------------------------------------------- KNOLL + light on it
     sc.add("knoll", knoll_svg(), wc=0.85)
+    sc.add("bundle", bundle_svg(), wc=0.6)           # his booth sticks and cloth (s20 builds the booth)
 
     # the little lizard from s11 basking on the big stone, doing push-ups
     LIZ = (2200, knoll_y(2190) + 6 - 90)
@@ -823,17 +993,19 @@ def build(ctx):
         alpha=light_in(t) * (0.85 + 0.15 * math.sin(2 * math.pi * (t - t_light) / 2.6))))
     for k in range(2):
         sc.add(f"rays{k}", rays_svg(k), wc=0, reveal=reveal, motion=lambda t, k=k: Tf(
-            alpha=light_in(t) * (0.6 + 0.4 * (0.5 + 0.5 * math.sin(2 * math.pi * (t - t_light) / 2.2 + k * math.pi)))))
+            alpha=light_in(t) * (0.78 + 0.22 * (0.5 + 0.5 * math.sin(2 * math.pi * (t - t_light) / 2.2 + k * math.pi)))))
 
     # ---------------------------------------------------------------- JONAH
-    # frames: 0 cross, 1 cross_up, 2 complain, 3 complain2, 4 shrug, 5 sit_sulk, 6 sulk side-eye,
-    #         7 sulk looking up, 8 sit_sulk facing the city. (No blinks: the library's closed-eye faces
-    #         'sleepy' / 'peaceful' have a yawning / smiling mouth, which would flash a wrong mood.)
+    # frames: 0 cross, 1 cross_up, 2 complain, 3 complain2, 4 shrug, 5 sit_sulk, 6 sulk_b (arms re-crossed),
+    #         7 sulk looking up, 8 sit_sulk facing the city (the last frame; s20 starts on it), 9 glaring at
+    #         the city, 10 "hmph!". (No blinks: the library's closed-eye faces 'sleepy' / 'peaceful' have a
+    #         yawning / smiling mouth, which would flash a wrong mood.)
     jdefs = [("cross", None, 1), ("cross_up", None, 1), ("complain", None, 1), ("complain2", None, 1),
-             ("shrug", None, 1), ("sit_sulk", None, 1), ("sulk_eye", None, 1), ("sulk_up", None, 1),
-             ("sit_sulk", None, -1)]
+             ("shrug", None, 1), ("sit_sulk", None, 1), ("sulk_b", None, 1), ("sulk_up", None, 1),
+             ("sit_sulk", None, -1), ("sulk_glare", None, -1), ("sulk_hmph", None, 1)]
     jframes = [doc(jfig(JX, JY, JS, f, pose=p, expr=e)) for p, e, f in jdefs]
     SIT0 = 5
+    CROSSED = (0, 1, 5, 6, 8, 9, 10)
     # (time, frame, hop amplitude, dust, pop lines)
     sched = [(0.0, 0, 0, False, False),
              (t_lookup, 1, 0.6, False, False),
@@ -845,8 +1017,10 @@ def build(ctx):
              (t_shrug2, 4, 0.7, False, False),
              (t_cross, 0, 0.8, False, False),
              (t_sit, 5, 1.4, True, False),
-             (t_eye, 6, 0.4, False, False),
-             (t_front, 5, 0.6, False, False),
+             (t_fidget, 6, 0.5, False, False),
+             (t_eye, 9, 1.0, True, False),
+             (t_front, 10, 0.9, False, True),
+             (t_unhmph, 5, 0.35, False, False),
              (t_glance, 7, 0.6, False, True),
              (t_turn, 8, 1.0, True, False)]
 
@@ -887,7 +1061,9 @@ def build(ctx):
                 dy = -14 * amp * math.sin(math.pi * _clamp((u + 0.01) / 0.2))
         return sy, dy
 
-    huffs = [t_huff0, t_stamp, t_cross + 0.25, t_front + 0.3]
+    # (time, anger mark?) grumpy huffs: steam puffs from his head, the anger mark on the angriest ones
+    huffs = [(t_huff0, True), (t_stamp, True), (t_cross + 0.25, True), (t_fidget + 0.06, False),
+             (t_eye + 0.12, True), (t_front + 0.1, False)]
     stamps = [t_stamp]
 
     def jonah_motion(t):
@@ -895,7 +1071,7 @@ def build(ctx):
         sy = s
         rot = 0.0
         dy = 0.0
-        for th in huffs:                       # grumpy huff: a little squash
+        for th, _a in huffs:                   # grumpy huff: a little squash
             u = t - th
             if 0 <= u < 0.45:
                 sy *= 1 - 0.035 * math.sin(math.pi * u / 0.45)
@@ -907,9 +1083,9 @@ def build(ctx):
             u = t - ts
             if 0.15 <= u < 1.1:
                 rot += 1.3 * math.sin(2 * math.pi * u * 3.2) * (1 - M.progress(u, 0.6, 1.1, "sine"))
-        # side-eye at the cheering city: he leans back toward it a little
-        rot -= 2.6 * M.progress(t, t_eye - 0.05, t_eye + 0.3, "sine") * (1 - M.progress(t, t_front - 0.1, t_front, "sine"))
-        if base_frame(t) in (0, 1, 5, 6, 8):   # grumpy fidget while his arms are crossed
+        # glaring at the cheering city: he leans toward it
+        rot -= 2.2 * M.progress(t, t_eye + 0.15, t_eye + 0.5, "sine") * (1 - M.progress(t, t_front - 0.12, t_front - 0.01, "sine"))
+        if base_frame(t) in CROSSED:           # grumpy fidget while his arms are crossed (s20 replays it)
             rot += 0.7 * math.sin(2 * math.pi * t / 2.7) + 0.3 * math.sin(2 * math.pi * t / 1.3)
         hsy, hdy = hop(t)
         sy *= hsy
@@ -965,8 +1141,8 @@ def build(ctx):
 
     sc.add("jpop_lines", doc(S.g(lines_svg, filter="wobble-fine")), motion=lines_motion, wc=0.2)
 
-    # grumpy steam puffs + anger mark on each huff
-    for hi, th in enumerate(huffs):
+    # grumpy steam puffs (+ anger mark on the angriest huffs), placed by the head of the drawing at that time
+    for hi, (th, anger) in enumerate(huffs):
         p, e, f = jdefs[base_frame(th + 0.01)]
         hx0, hy0 = CH.body_points(jfig, JX, JY, JS, f, pose=p)["head"]
         for side_, (ox, oy) in enumerate([(-96, 4), (94, 12)]):
@@ -983,7 +1159,9 @@ def build(ctx):
                 return Tf(alpha=0.0)
 
             sc.add(f"puff{hi}_{side_}", doc(V11._puff(cx, cy, 25)), motion=puff_motion, wc=0.3)
-        ax, ay = hx0 + 52, hy0 - 62
+        if not anger:
+            continue
+        ax, ay = hx0 + 52 * f, hy0 - 62            # on the face side of the head
 
         def anger_motion(t, th=th, ax=ax, ay=ay):
             u = t - th + 0.04
@@ -1047,39 +1225,55 @@ def build(ctx):
 
     # bubble 1: the flashback to Joppa
     sc.add("b1_back", flash_back_svg(), motion=in_bubble(t_b1, t_b1_out), wc=0.5)
-    sx_, sy_, ss_ = SHIP
-    ship_bob = lambda t: M.progress(t, t_land + 0.05, t_sail1, "inout") * -70
-    ship_local = lambda t: Tf(dx=ship_bob(t), dy=3 * math.sin(2 * math.pi * t / 1.7),
-                              rot=1.2 * math.sin(2 * math.pi * t / 2.3), px=sx_, py=sy_)
-    sc.add("b1_ship", flash_ship_svg("back"), motion=in_bubble(t_b1, t_b1_out, ship_local), wc=0.4)
-    # tiny Jonah: runs down the pier, leaps aboard
-    run_frames = [doc(jfig(BX + 200, PIER_Y, ss_, -1, pose=p)) for p in ("run_a", "run_b", "stand")]
-    x_run0, x_run1, x_land = BX + 200, BX + 50, BX - 44
-    deck_y = SHIP[1] - 165 * ss_
 
-    def tiny_state(t):
-        if t < t_run0:
-            return 0.0, 0.0, 0.0
-        if t < t_leap:
-            u = (t - t_run0) / (t_leap - t_run0)
-            return float(int((t - t_run0) / 0.12) % 2), (x_run1 - x_run0) * u, 0.0
+    def ship_dx(t):
+        return -SAIL_DX * M.progress(t, t_sail0, t_sail1, "sine")
+
+    def ship_dy(t):
+        dip = 4 * math.sin(math.pi * _clamp((t - t_land) / 0.35)) if t >= t_land else 0.0   # he lands: it dips
+        return 3 * math.sin(2 * math.pi * t / 1.7) + dip
+
+    def ship_local(t):
+        return Tf(dx=ship_dx(t), dy=ship_dy(t), rot=1.2 * math.sin(2 * math.pi * t / 2.3), px=SHIP_X, py=WL)
+
+    def ship_frame(t):
         if t < t_land:
-            u = (t - t_leap) / (t_land - t_leap)
-            return 1.0, (x_run1 - x_run0) + (x_land - x_run1) * u, -46 * math.sin(math.pi * u) + (deck_y - PIER_Y) * u
-        return 2.0, (x_land - x_run0) + ship_bob(t), (deck_y - PIER_Y) + 3 * math.sin(2 * math.pi * t / 1.7)
+            return 0.0
+        return float(1 + min(N_CLIP - 1, int(round(-ship_dx(t) / CLIP_STEP))))
 
-    sc.add("b1_jonah", run_frames, frame_at=lambda t: tiny_state(t)[0], wc=0.3,
-           motion=in_bubble(t_b1, t_b1_out, lambda t: Tf(dx=tiny_state(t)[1], dy=tiny_state(t)[2],
-                                                          alpha=M.progress(t, t_run0 - 0.25, t_run0, "sine"))))
-    sc.add("b1_ship_front", flash_ship_svg("front"), motion=in_bubble(t_b1, t_b1_out, ship_local), wc=0.4)
+    sc.add("b1_ship", flash_ship_frames(), frame_at=ship_frame, motion=in_bubble(t_b1, t_b1_out, ship_local), wc=0.4)
+
+    # tiny Jonah: planted strides along the pier, then the last stride's drawing flies on an arc onto the deck;
+    # on landing the ship's own drawing (with him on deck) takes over
+    def run_frame(t):
+        return float(min(RUN_N - 1, max(0, int((t - t_run0) / RUN_DT))))
+
+    def run_local(t):
+        if t < t_run0 or t >= t_land:
+            return Tf(alpha=0.0)
+        if t < t_leap:
+            u = ((t - t_run0) / RUN_DT) % 1.0
+            return Tf(dy=-5 * math.sin(math.pi * u))
+        u = (t - t_leap) / (t_land - t_leap)
+        return Tf(dx=(LAND_X - RUN_XS[-1]) * u, dy=-52 * math.sin(math.pi * u) + (DECK_Y - PIER_Y) * u + u * ship_dy(t))
+
+    sc.add("b1_jonah", flash_run_frames(), frame_at=run_frame, wc=0.3, motion=in_bubble(t_b1, t_b1_out, run_local))
+    sc.add("b1_ship_front", flash_ship_front_svg(), wc=0.4, motion=in_bubble(
+        t_b1, t_b1_out, lambda t: Tf(alpha=0.0) if t >= t_land else ship_local(t)))
     sc.add("b1_sea", flash_sea_front_svg(), wc=0.4,
            motion=in_bubble(t_b1, t_b1_out, lambda t: Tf(dx=6 * math.sin(2 * math.pi * t / 2.5))))
     sc.add("b1_ring", ring_front_svg("#fff8ea", "#f4e2c3", "#bfe0ea", 11), motion=in_bubble(t_b1, t_b1_out), wc=0.5)
 
     # bubble 2: God's kindness
     sc.add("b2_back", memory_back_svg(), motion=in_bubble(t_b2, t_b2_out), wc=0.5)
-    sc.add("b2_cityglow", city_glow_svg(), wc=0, motion=in_bubble(
-        t_b2, t_b2_out, lambda t: Tf(alpha=M.progress(t, t_melt + 0.7, t_melt + 1.5, "sine"))))
+    sc.add("b2_cityglow", city_glow_svg(), wc=0, motion=in_bubble(t_b2, t_b2_out, lambda t: Tf(
+        alpha=M.progress(t, t_pop + 0.05, t_pop + 0.7, "sine") * (0.9 + 0.1 * math.sin(2 * math.pi * (t - t_pop) / 1.6)),
+        sy=0.8 + 0.2 * M.progress(t, t_pop, t_pop + 0.9, "out"), px=BX, py=CITY_Y)))
+    sc.add("b2_city", memory_city_svg(), motion=in_bubble(t_b2, t_b2_out), wc=0.5)
+    for k, idx in enumerate(((0, 2, 4), (1, 3))):       # twinkles over the saved city
+        sc.add(f"b2_twinkle{k}", twinkle_svg(idx), wc=0, motion=in_bubble(t_b2, t_b2_out, lambda t, k=k: Tf(
+            alpha=M.progress(t, t_pop + 0.2 + 0.2 * k, t_pop + 0.4 + 0.2 * k, "sine") *
+            (0.6 + 0.4 * math.cos(2 * math.pi * (t - t_pop - 0.2 - 0.2 * k) / 0.9)))))
 
     hx_, hy_ = HEART
     beats = [t_beat1, t_beat2, t_melt]
@@ -1101,24 +1295,47 @@ def build(ctx):
         sy=1 + 0.03 * math.sin(2 * math.pi * t / 1.1) + 0.12 * beat(t), px=hx_, py=hy_ + 30)))
     mx_, my_ = MCLOUD
 
+    def cloud_dx(t):
+        return 40 * (1 - M.progress(t, t_grey, t_grey + 0.9, "out")) + 3 * math.sin(t * 2.2)
+
+    # rain + bolt on their own layer: they stop as the rays reach the cloud
+    sc.add("b2_rain", [rain_svg(0), rain_svg(1)], wc=0.3, frame_at=lambda t: float(int(t * 8) % 2),
+           motion=in_bubble(t_b2, t_b2_out, lambda t: Tf(dx=cloud_dx(t), alpha=M.progress(
+               t, t_grey + 0.25, t_grey + 0.8, "sine") * (1 - M.progress(t, t_melt, t_gold + 0.15, "sine")))))
+
     def storm_local(t):
         a = M.progress(t, t_grey, t_grey + 0.6, "sine")
-        k = 1 - 0.75 * M.progress(t, t_melt + 0.3, t_melt + 1.2, "in")
-        a *= 1 - M.progress(t, t_melt + 0.8, t_melt + 1.25, "sine")
-        dx = 40 * (1 - M.progress(t, t_grey, t_grey + 0.9, "out")) + 3 * math.sin(t * 2.2)
-        return Tf(dx=dx, sx=k, sy=k, alpha=a, px=mx_, py=my_)
+        sx = sy = 1.0
+        if t >= t_pop - 0.12:
+            if t < t_pop:                   # anticipation squash
+                v = M.progress(t, t_pop - 0.12, t_pop, "sine")
+                sx, sy = 1 + 0.14 * v, 1 - 0.2 * v
+            else:                           # pop: gone in 0.15 s (opaque all the way, never a see-through cloud)
+                v = (t - t_pop) / 0.15
+                if v >= 1:
+                    return Tf(alpha=0.0)
+                k = 1 - M.ease("sine")(v)
+                sx, sy = 1.14 * k, 0.8 * k
+        return Tf(dx=cloud_dx(t), sx=sx, sy=sy, alpha=a, px=mx_, py=my_)
 
-    sc.add("b2_storm", storm_svg(), wc=0.4, motion=in_bubble(t_b2, t_b2_out, storm_local))
+    # grey -> gold: the same cloud outline in two colours
+    sc.add("b2_storm", [storm_cloud_svg(False), storm_cloud_svg(True)], wc=0.4,
+           frame_at=lambda t: M.progress(t, t_gold, t_gold + 0.35, "sine"),
+           motion=in_bubble(t_b2, t_b2_out, storm_local))
+    bx_, by_, _ba = beam_origin()
     sc.add("b2_beam", heart_beam_svg(), wc=0, motion=in_bubble(t_b2, t_b2_out, lambda t: Tf(
-        alpha=M.progress(t, t_melt - 0.1, t_melt + 0.4, "sine") * (1 - M.progress(t, t_melt + 1.3, t_melt + 2.0, "sine"))
-        * (0.85 + 0.15 * math.sin(t * 7)))))
+        sx=0.1 + 0.9 * M.progress(t, t_melt - 0.05, t_melt + 0.2, "out"),
+        sy=0.1 + 0.9 * M.progress(t, t_melt - 0.05, t_melt + 0.2, "out"),
+        alpha=M.progress(t, t_melt - 0.05, t_melt + 0.05, "sine") * (1 - M.progress(t, t_pop + 0.2, t_pop + 0.65, "sine"))
+        * (0.9 + 0.1 * math.sin(t * 9)), px=bx_, py=by_)))
 
     def melt_local(t):
-        u = t - (t_melt + 0.85)
-        if u < 0 or u > 1.1:
+        u = t - t_pop
+        if u < 0 or u > 0.75:
             return Tf(alpha=0.0)
-        return Tf(dy=-40 * M.ease("out")(u / 1.1), sx=0.6 + 0.6 * u, sy=0.6 + 0.6 * u,
-                  alpha=min(1.0, u / 0.1) * (1 - M.progress(u, 0.5, 1.1, "sine")), px=mx_, py=my_)
+        k = 0.4 + 1.1 * M.ease("out")(min(1.0, u / 0.55))
+        return Tf(dx=cloud_dx(t), dy=-10 * M.ease("out")(u / 0.75), sx=k, sy=k,
+                  alpha=1 - M.progress(u, 0.3, 0.75, "sine"), px=mx_, py=my_)
 
     sc.add("b2_melt", melt_puffs_svg(), wc=0.3, motion=in_bubble(t_b2, t_b2_out, melt_local))
     sc.add("b2_ring", ring_front_svg("#fff0c8", "#f6d9a0", "#f3c860", 12), motion=in_bubble(t_b2, t_b2_out), wc=0.5)
@@ -1133,7 +1350,7 @@ def build(ctx):
                motion=M.sway(2.4 + 0.3 * (i % 3), 3.4 + 0.25 * (i % 4), pivot=(x, y), phase=0.17 * i))
     sc.add("fg", foreground_svg(), wc=0.8)
 
-    # ---------------------------------------------------------------- CAMERA
+    # ---------------------------------------------------------------- CAMERA (the last key is s20's first view)
     sc.camera = M.cam_keys([
         (0.0, Cam(1240, 860, 2400)),
         (t_pan0, Cam(1275, 852, 2370)),
@@ -1159,21 +1376,30 @@ def build(ctx):
     # ---------------------------------------------------------------- SOUND
     sc.sfx("birds", 0, dur=T + 0.8, gain_db=-17, fade_in=0.8, fade_out=1.0)
     sc.sfx("wind_soft", 0, dur=T + 0.8, gain_db=-18, fade_in=0.8, fade_out=1.0)
-    sc.sfx("cheer", 0, dur=t_pan1 + 0.5, gain_db=-13, fade_in=0.8, fade_out=1.5, pan=-0.3)
+    # the cheering city: a very low bed under the whole scene (the crowd keeps cheering on the left), louder
+    # while the city fills the frame
+    sc.sfx("cheer", 0, dur=T + 0.8, gain_db=-24, fade_in=0.8, fade_out=1.0, pan=-0.45)
+    sc.sfx("cheer", 0, dur=t_pan1 + 0.5, gain_db=-14, fade_in=0.8, fade_out=1.5, pan=-0.3)
     sc.sfx("cheer", L3.chunks[1].start + 0.5, dur=t_front - L3.chunks[1].start, gain_db=-19, fade_in=1.2,
            fade_out=1.2, pan=-0.4)
     sc.sfx("thud", t_stamp + 0.28, gain_db=-12, pan=0.2)
     sc.sfx("cloth", t_arms, gain_db=-14, pan=0.2)
     sc.sfx("cloth", t_shrug, gain_db=-15, pan=0.2)
     sc.sfx("pop", t_b1, gain_db=-11, pan=0.4)
-    sc.sfx("footsteps_run", t_run0, dur=t_leap - t_run0, gain_db=-18, pan=0.4)
+    sc.sfx("footsteps_run", t_run0, dur=t_leap - t_run0, gain_db=-17, pan=0.45)
     sc.sfx("whoosh", t_leap, gain_db=-17, pan=0.4)
+    sc.sfx("thud", t_land, gain_db=-21, pan=0.35)
     sc.sfx("pop", t_b1_out + 0.1, gain_db=-14, pan=0.4)
     sc.sfx("pop", t_b2, gain_db=-11, pan=0.4)
     sc.sfx("sparkle", t_b2 + 0.1, gain_db=-12, pan=0.4)
-    sc.sfx("sparkle", t_melt + 0.2, gain_db=-11, pan=0.4)
+    sc.sfx("sparkle", t_melt, gain_db=-12, pan=0.45)
+    sc.sfx("pop", t_pop, gain_db=-11, pan=0.45)
+    sc.sfx("sparkle", t_pop + 0.15, gain_db=-14, pan=0.4)
     sc.sfx("pop", t_b2_out + 0.1, gain_db=-14, pan=0.4)
     sc.sfx("thud", t_sit + 0.08, gain_db=-8, pan=0.2)
+    sc.sfx("cloth", t_fidget, gain_db=-16, pan=0.1)
+    sc.sfx("thud", t_eye + 0.06, gain_db=-15, pan=0.1)
+    sc.sfx("cloth", t_front, gain_db=-14, pan=0.1)
     sc.sfx("chime", L4.start, gain_db=-6, pan=0.2)
     sc.sfx("sparkle", L5.start + 0.2, gain_db=-13, pan=0.2)
     sc.sfx("cloth", t_turn, gain_db=-14, pan=0.2)

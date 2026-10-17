@@ -9,20 +9,26 @@ the ridge to the village on the hill and on to the east (right).
     "名叫约拿" — Jonah gives a happy hop and waves.
   * "先知，就是替上帝传话的人" — a little golden light drops out of the clouds to Jonah (he cups his ear,
     smiling); on "传话" he turns to the neighbours, arm raised, and a speech bubble carrying the same golden
-    star goes to them; they listen and nod, then walk home up the path and over the ridge.
+    star goes to them; they listen and nod. As the bubble melts the girl skips off past her mother, who follows:
+    over the crest and up across the far meadow (planted-foot walk, shrinking with distance) to the village,
+    where they slip behind the front house (a cut-out of that house's own pixels covers them).
   * "有一天，上帝对约拿说" — Jonah kneels to pray; the clouds above him part and warm golden rays pour down
     (God is never drawn — only light, sparkles and his voice).
   * "约拿，你起来" — he opens his eyes, then rises (one-knee in-between, hop) and listens; "到尼尼微…" — a vision
-    opens far to the EAST (upper right): the great city of Nineveh.
+    opens far to the EAST (upper right): the great city of Nineveh; Jonah turns his face up toward it.
   * "城里的人做了许多坏事" — a grey cloud of wrongdoing gathers over the city, Jonah becomes worried; "我都看见了"
-    — the heavenly light swells once; "你要去大声警告他们" — hand on his chest: "me?"
+    — the heavenly light swells once; "你要去大声警告他们" — hand on his chest: "me?" (a few blinks in the holds)
   * "尼尼微在很远的东方" — the camera widens, a dashed road draws itself over the hills eastward to the vision,
-    Jonah points east; "那里的人很凶" — stern Assyrian soldiers with spears rise into the vision and Jonah steps
-    back, scared; "是以色列人的敌人" — hands on his head. Calm hold to the end.
+    Jonah points up at the vision; "那里的人很凶" — stern Assyrian soldiers, spear in fist and shield on arm,
+    rise into the vision and the gloom over the city deepens; Jonah drops his arm, uneasy (worried, no fear);
+    "是以色列人的敌人" — he folds his arms, grumpy brow, chin down, eyes away from the vision: displeased, not
+    afraid (his real reason is told later in the story, Jonah 4:2; s03 opens on his angry refusal). Calm hold
+    to the end.
 
 Pose / face changes are HARD switches (never crossfaded doubles), each sold by a small squash or hop and held
 >= 0.5 s. Every beat is keyed to the subtitle chunk that contains its phrase (``_when``), never to fixed times.
 """
+import bisect
 import math
 
 from art import characters as C
@@ -44,11 +50,38 @@ BX, BY, RX, RY = V.BX, V.BY, V.RX, V.RY   # the vision window
 # neighbours (stand on the dirt path, facing Jonah): mother (woman, variant 3) and her daughter (child, variant 1)
 MOM = dict(kind="woman", var=3, x=1296, y=1040, s=1.0, h=321)
 GIRL = dict(kind="child", var=1, x=1220, y=1082, s=1.08, h=224)
-CREST = (1322, 1018)                # where the path goes over the near ridge
-NEAR_SEED = 57                      # watercolour seed of the near-ground layer (shared with its cut-out)
-CUT_BOX = (1180, 960, 1420, 1260)   # the part of the near ground that hides the neighbours behind the crest
+NEAR_SEED = 57                      # watercolour seed of the near-ground layer
+
+# the neighbours' way home: over the crest of the near ridge, up across the far meadow (beside the painted
+# village road) and behind the front village house (v1 mid-hills art: house variant 3 at (1225, 884) x0.15,
+# with its little bush at the right corner). Figure scale follows a simple perspective: 1 at the start,
+# K_CREST on the ridge line, then ~ (y - HORIZON_Y) up the far meadow.
+CREST_Y = 1018
+HORIZON_Y = 856
+K_CREST, K_MIN = 0.88, 0.12
+K_STEP = 0.5                        # below this scale steps stop being planted exactly (invisible that small)
+BEHIND = [(1298, 880), (1278, 877), (1250, 875)]
+MOM_ROUTE = [(MOM["x"], MOM["y"]), (1300, 1012), (1302, 980), (1304, 950), (1305, 920), (1307, 898), (1308, 887),
+             (1307, 884)] + BEHIND
+# the girl (ahead of her mother) keeps to the road side, right of her mother's line, so she is not hidden by her;
+# from her corner she passes in front of the tall house before slipping behind the front one
+GIRL_ROUTE = [(GIRL["x"], GIRL["y"]), (1250, 1062), (1278, 1042), (1298, 1024), (1322, 1012), (1340, 1000),
+              (1346, 975), (1347, 945), (1347, 915), (1346, 895), (1345, 887), (1344, 884), (1324, 881)] + BEHIND
+HOUSE_FRONT_Y = 884.6               # feet above this line = behind the front village house
+HIDDEN_X = 1272                     # fully behind its wall (and bush) from here on (checked at 4x)
+VILLAGE_HOUSE = (1225, 884, 0.15, 3)
+MID_SEED = 17                       # watercolour seed of the mid-hills layer (= its default; the cut-out reuses it)
+HOUSE_BOX = (1168, 776, 1302, 894)
 
 PUNCT = "，、。：；！？,.!?:;"
+SUB_TOP = 940                       # output y where the subtitle band begins
+
+# closed-eye blink faces that keep the brow and mouth of the face they blink from. Added to the shared
+# expression table under s02-only names at import (no existing entry is changed).
+for _nm in ("worried", "surprised", "angry"):
+    _e = dict(C.EXPRS[_nm])
+    _e["eyes"] = "closed"
+    C.EXPRS.setdefault(f"s02_blink_{_nm}", _e)
 
 
 def _doc(body, defs=""):
@@ -151,10 +184,17 @@ def _walk_pose(k, A, N, t=4, swing=36, lift=20, drop=10):
 WAVE_A = C._P(h=-6, arms=(("fk", 14, 8), ("fk", -150, -160)), hands=("fist", "open"), expr="happy")
 WAVE_B = C._P(h=-6, arms=(("fk", 14, 8), ("fk", -146, -184)), hands=("fist", "open"), expr="happy")
 EXPLAIN = C._P(h=-4, arms=(("fk", 60, 120), ("fk", -8, -3)), hands=("open", "fist"))   # telling, palm up
-CLUTCH = C._P(t=-3, h=-4, arms=(("ik", "torso", 0.55, 0.74, 1), ("ik", "torso", 0.62, 0.70, 1)),
-              hands=("fist", "open"))
 RISE = C._P(t=4, h=-8, drop=70, legs=(("ik", 60, 1), (0, -92)), arms=(("fk", 30, 40), ("fk", 20, 50)),
             hands=("open", "open"), feet=(None, 100))
+# listening with the face turned up toward the vision (upper right): head tilted further up, eyes up-forward
+LOOK = dict(C.POSES["listen"], h=-22, look=(0.09, -0.07))
+# pointing up at the vision: the pointing (far) arm raised ~30 deg above level, head and eyes following it
+POINT_UP = dict(C.POSES["point"], h=-10, arms=(("fk", 116, 122), ("fk", -8, -3)), look=(0.07, -0.06))
+# uneasy: standing, arms down, still looking toward the vision
+UNEASY = dict(C.POSES["stand"], h=-6, look=(0.06, -0.05))
+# displeased: arms folded (sit_sulk's arms on a standing figure), chin down, eyes away from the vision
+CROSSED = C._P(t=-2, h=10, arms=(("ik", "torso", -0.2, 0.60, 1), ("ik", "torso", 1.25, 0.56, 1)),
+               far_front=True, look=(-0.07, 0.03))
 
 
 def _neighbour(n, pose_kw, expr, facing, x=None, y=None, label=""):
@@ -169,22 +209,53 @@ def _shadow(x, y, s, w=120, op=0.24):
     return C.ground_shadow(x, y, s, width=w, opacity=op)
 
 
-class _GroundCut:
-    """A rectangle of the near-ground layer's OWN pixels (rasterised and watercoloured exactly as the compositor
-    does it: same svg, seed and strength), drawn over a figure that has walked over the crest so the ground hides
-    it from the feet up. Transparent above the ridge line, so the figure's upper part still shows there."""
+class _Cut:
+    """A rectangle of a static layer's OWN pixels (rasterised and watercoloured exactly as the compositor does
+    it: same svg, seed and strength), optionally masked to the silhouette drawn by ``mask_svg``. Drawn right
+    after a figure that has walked behind that part of the layer, so the layer hides it."""
 
-    def __init__(self, svg, seed, box):
+    def __init__(self, svg, seed, box, mask_svg=None):
         self.svg, self.seed, self.box = svg.replace(S.BOIL_TOKEN, "1"), seed, box
+        self.mask_svg = mask_svg.replace(S.BOIL_TOKEN, "1") if mask_svg else None
         self.res = None
 
     def image(self):
         if self.res is None:
+            from PIL import ImageChops
             from engine import raster
             from engine import watercolor as WC
             im = WC.watercolor(raster.rasterize(self.svg, SW, SH), seed=self.seed, strength=1.0, edge=1.0)
-            self.res = (im.crop(self.box), self.box[:2])
+            im = im.crop(self.box)
+            if self.mask_svg:
+                mask = raster.rasterize(self.mask_svg, SW, SH).crop(self.box).getchannel("A")
+                im.putalpha(ImageChops.multiply(im.getchannel("A"), mask))
+            self.res = (im, self.box[:2])
         return self.res
+
+
+def _route(pts, y0, step=0.5):
+    """Dense samples (x, y, k, w, facing) along a walking route: k = relative figure scale (1 at the start,
+    K_CREST on the ridge line, then shrinking toward HORIZON_Y up the far meadow), w = distance walked in
+    figure px at relative scale 1 (a planted-foot step advances a fixed w), facing = walking direction."""
+    def kf(y):
+        if y >= CREST_Y:
+            return 1 - (1 - K_CREST) * _clamp((y0 - y) / max(1.0, y0 - CREST_Y))
+        return max(K_MIN, K_CREST * (y - HORIZON_Y) / (CREST_Y - HORIZON_Y))
+    out, w, face = [], 0.0, 1
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        seg = math.hypot(bx - ax, by - ay)
+        if bx - ax > 2:
+            face = 1
+        elif bx - ax < -2:
+            face = -1
+        n = max(1, int(seg / step))
+        for j in range(n):
+            x, y = ax + (bx - ax) * j / n, ay + (by - ay) * j / n
+            k = kf(y)
+            out.append((x, y, k, w, face))
+            w += seg / n / max(k, K_STEP)
+    out.append((pts[-1][0], pts[-1][1], kf(pts[-1][1]), w, face))
+    return out
 
 
 # ------------------------------------------------------------------ static art
@@ -346,32 +417,48 @@ def _helmet(hx, hy, R):
     return out
 
 
+# a soldier's stance: the near arm brought forward across the chest so its fist grips an upright spear just
+# outside the body's front edge (the shaft never hides behind the torso or head); the far arm carries the shield
+SPEAR_P = C._P(arms=(("fk", 14, 8), ("ik", "torso", 2.25, 0.60, 1)), hands=("fist", "fist"), expr="angry")
+
+
 def _soldier(x, y, s, var):
-    fig = C.citizen(x, y, s, -1, kind="man", variant=var, pose="stand", expr="angry")
-    bp = C.body_points(C.citizen, x, y, s, -1, kind="man", variant=var, pose="stand", expr="angry")
+    design, metrics = C._citizen_design("man", var, "normal"), C._ADULT
+
+    def draw(x_, y_, s_, f_, label="soldier"):
+        return _fig(design, metrics, x_, y_, s_, f_, SPEAR_P, "angry", label)
+    fig = draw(x, y, s, -1, f"soldier{var}")
+    bp = C.body_points(draw, x, y, s, -1)
     hx, hy = bp["head"]
     R = 44 * s
     nh = bp["hands"][1]
     ink = P["ink"]
-    # spear held upright in the near hand: shaft from the ground to well above the helmet, bronze leaf tip
+    # spear held upright in the near fist, drawn over the figure: shaft from the ground to well above the
+    # helmet, bronze leaf tip; then the fist again on top, so the shaft runs through the closed hand
+    sx_ = nh[0]
     top = hy - 300 * s
-    spear = (f'<path d="M{_f(nh[0])},{_f(y + 10)} L{_f(nh[0])},{_f(top)}" stroke="{ink}" '
+    spear = (f'<path d="M{_f(sx_)},{_f(y + 10)} L{_f(sx_)},{_f(top)}" stroke="{ink}" '
              f'stroke-width="{_f(13 * s)}" stroke-linecap="round"/>'
-             f'<path d="M{_f(nh[0])},{_f(y + 10)} L{_f(nh[0])},{_f(top)}" stroke="{P["wood"]}" '
+             f'<path d="M{_f(sx_)},{_f(y + 10)} L{_f(sx_)},{_f(top)}" stroke="{P["wood"]}" '
              f'stroke-width="{_f(7 * s)}" stroke-linecap="round"/>')
-    tip = (f'<path d="M{_f(nh[0])},{_f(top - 62 * s)} C{_f(nh[0] + 16 * s)},{_f(top - 30 * s)} '
-           f'{_f(nh[0] + 14 * s)},{_f(top - 4 * s)} {_f(nh[0])},{_f(top + 6 * s)} '
-           f'C{_f(nh[0] - 14 * s)},{_f(top - 4 * s)} {_f(nh[0] - 16 * s)},{_f(top - 30 * s)} '
-           f'{_f(nh[0])},{_f(top - 62 * s)} Z" fill="#d9b25e" stroke="{ink}" stroke-width="{_f(4 * s)}"/>')
-    # round shield on the far arm (behind the body, rim showing in front of the chest)
+    tip = (f'<path d="M{_f(sx_)},{_f(top - 62 * s)} C{_f(sx_ + 16 * s)},{_f(top - 30 * s)} '
+           f'{_f(sx_ + 14 * s)},{_f(top - 4 * s)} {_f(sx_)},{_f(top + 6 * s)} '
+           f'C{_f(sx_ - 14 * s)},{_f(top - 4 * s)} {_f(sx_ - 16 * s)},{_f(top - 30 * s)} '
+           f'{_f(sx_)},{_f(top - 62 * s)} Z" fill="#d9b25e" stroke="{ink}" stroke-width="{_f(4 * s)}"/>')
+    skin = C._CIT_COL[var % 4]["skin"]
+    fist = (f'<circle cx="{_f(nh[0])}" cy="{_f(nh[1])}" r="{_f(12 * s)}" fill="{skin}" stroke="{ink}" '
+            f'stroke-width="{_f(3.4 * s)}"/>'
+            f'<path d="M{_f(nh[0] - 5 * s)},{_f(nh[1] - 7 * s)} q{_f(5 * s)},{_f(5 * s)} 0,{_f(14 * s)}" fill="none" '
+            f'stroke="{ink}" stroke-width="{_f(2.2 * s)}" stroke-linecap="round"/>')
+    # round shield on the far arm
     fh = bp["hands"][0]
-    sh = (f'<circle cx="{_f(fh[0] - 6 * s)}" cy="{_f(fh[1] - 40 * s)}" r="{_f(62 * s)}" fill="#b5653f" '
+    sh = (f'<circle cx="{_f(fh[0] + 14 * s)}" cy="{_f(fh[1] - 40 * s)}" r="{_f(62 * s)}" fill="#b5653f" '
           f'stroke="{ink}" stroke-width="{_f(5 * s)}"/>'
-          f'<circle cx="{_f(fh[0] - 6 * s)}" cy="{_f(fh[1] - 40 * s)}" r="{_f(44 * s)}" fill="none" '
+          f'<circle cx="{_f(fh[0] + 14 * s)}" cy="{_f(fh[1] - 40 * s)}" r="{_f(44 * s)}" fill="none" '
           f'stroke="#e0b25a" stroke-width="{_f(7 * s)}"/>'
-          f'<circle cx="{_f(fh[0] - 6 * s)}" cy="{_f(fh[1] - 40 * s)}" r="{_f(13 * s)}" fill="#e0b25a" '
+          f'<circle cx="{_f(fh[0] + 14 * s)}" cy="{_f(fh[1] - 40 * s)}" r="{_f(13 * s)}" fill="#e0b25a" '
           f'stroke="{ink}" stroke-width="{_f(3.5 * s)}"/>')
-    return S.g(spear + tip, filter="wobble-fine") + fig + S.g(_helmet(hx, hy, R) + sh, filter="wobble-fine")
+    return fig + S.g(_helmet(hx, hy, R) + sh + spear + tip + fist, filter="wobble-fine")
 
 
 def _soldiers_svg(rises):
@@ -467,7 +554,7 @@ def build(ctx):
     l2 = L[2] if nL > 2 else l1
     t_god2 = w(("上帝对约拿", "上帝对他", "对约拿说"), d=l2.start + 0.9, after=l2.start - 0.01)
     t_light = t_god2 - 0.05                                             # the clouds part
-    t_kneel = min(t_light - 0.5, max(l2.start + 0.25, t_l1_end + 0.9))  # Jonah kneels to pray
+    t_kneel = min(t_light - 0.5, max(l2.start + 0.6, t_l1_end + 0.9))   # Jonah kneels to pray
     l3 = L[3] if nL > 3 else l2
     t_call = l3.start                                                    # "约拿，" — eyes open
     t_rise = w("你起来", d=t_call + 1.0)                                 # "你起来" — he rises
@@ -488,14 +575,15 @@ def build(ctx):
     else:
         t_point = None
         t_fierce = t_enemy = None
-    t_scared = t_fierce + 0.15 if t_fierce is not None else None
+    t_uneasy = t_fierce + 0.15 if t_fierce is not None else None
     t_soldiers = t_fierce - 0.45 if t_fierce is not None else None
-    t_hands = t_enemy - 0.1 if t_enemy is not None else None
+    t_fold = t_enemy - 0.1 if t_enemy is not None else None
 
     # ---------------------------------------------------------------- backdrop (static, flattened)
     sc.add("sky", V._sky_svg(), wc=0.45)
     sc.add("far_hills", V._far_hills_svg(), wc=0.8)
-    sc.add("mid_hills", V._mid_hills_svg())
+    mid_svg = V._mid_hills_svg()
+    sc.add("mid_hills", mid_svg, seed=MID_SEED)
 
     # ---------------------------------------------------------------- neighbours (built here, added below)
     N_W = 5
@@ -512,46 +600,46 @@ def build(ctx):
                    _doc(_shadow(GIRL["x"], GIRL["y"], GIRL["s"], 90) +
                         _neighbour(GIRL, dict(C.POSES["listen_chin"]), "happy", -1, label="li"))]
     nmom, ngirl = len(mom_frames), len(girl_frames)
-    mom_frames += [_doc(_shadow(MOM["x"], MOM["y"], MOM["s"]) +
-                        _neighbour(MOM, _walk_pose(k, mom_A, N_W), "happy", 1, label=f"w{k}"))
-                   for k in range(2 * N_W)]
-    girl_frames += [_doc(_shadow(GIRL["x"], GIRL["y"], GIRL["s"], 90) +
-                         _neighbour(GIRL, _walk_pose(k, girl_A, N_W, swing=34, lift=18, drop=3), "happy", 1,
-                                    label=f"w{k}"))
-                    for k in range(2 * N_W)]
+    for fc in (1, -1):        # walk cycles: right (up the slope), then left (round the house corner)
+        mom_frames += [_doc(_shadow(MOM["x"], MOM["y"], MOM["s"]) +
+                            _neighbour(MOM, _walk_pose(k, mom_A, N_W), "happy", fc, label=f"w{fc}{k}"))
+                       for k in range(2 * N_W)]
+        girl_frames += [_doc(_shadow(GIRL["x"], GIRL["y"], GIRL["s"], 90) +
+                             _neighbour(GIRL, _walk_pose(k, girl_A, N_W, swing=34, lift=18, drop=3), "happy", fc,
+                                        label=f"w{fc}{k}"))
+                        for k in range(2 * N_W)]
 
     t_turn_girl = max(t_walk0 + 1.8, (t_name or 4.0) - 1.2)             # the girl turns from the sheep to Jonah
     t_listen = t_say + 0.35
-    t_leave = t_l1_end + 0.38
+    t_leave = t_l1_end + 0.02                                           # as the speech bubble melts
 
-    def walker(n, A, hold, n_std, base_events, t_go, delay=0.0):
-        """Frame index + motion of a neighbour: hard-switched standing poses, then a planted-foot walk up the
-        path to the crest and down the far side, where the near ground's own pixels (a cut-out drawn right after
-        the figure) hide them from the feet up. Returns (frame_at, motion, behind(t))."""
+    def walker(n, A, hold, n_std, base_events, route, t_go):
+        """Frame index + motion of a neighbour: hard-switched standing poses, then a planted-foot walk along
+        ``route`` (see _route: shrinking with distance up the far meadow), ending behind the front village
+        house (a cut-out of its own pixels is drawn right after the figure). Returns (frame_at, motion,
+        behind(t), t_gone)."""
         sx0, sy0, s0 = n["x"], n["y"], n["s"]
-        seg0 = math.hypot(CREST[0] - sx0, CREST[1] - sy0)
-        stride = 2 * A * s0 * 0.94 / N_W               # px per drawing (scale shrinks a little on the way)
-        n_a = max(1, int(round(seg0 / stride)))         # drawings up to the crest
-        tg = t_go + delay
+        smp = _route(route, sy0)
+        ws = [p[3] for p in smp]
+        stride = 2 * A * s0 / N_W                      # distance per drawing at relative scale 1
+        n_draw = int(math.ceil(ws[-1] / stride))
         std = _sched(base_events)
-        s_c = s0 * 0.88
-        n_draw = n_a + int(math.ceil((n["h"] * s_c + 40) / (stride * 1.7))) + 3   # fully hidden by then
 
         def pos(i):
-            if i <= n_a:                                 # up the path to the crest (in front of the ridge)
-                u = i / n_a
-                return sx0 + (CREST[0] - sx0) * u, sy0 + (CREST[1] - sy0) * u, s0 + (s_c - s0) * u
-            j = i - n_a                                  # down the far side, sinking behind the ridge
-            return CREST[0] + j * stride * 0.2, CREST[1] + j * stride * 1.7, s_c * (1 - 0.025 * j)
+            j = min(len(smp) - 1, bisect.bisect_left(ws, i * stride))
+            return smp[j]
+
+        gone = next((i for i in range(n_draw + 1) if pos(i)[1] < HOUSE_FRONT_Y and pos(i)[0] < HIDDEN_X),
+                    n_draw + 1)
 
         def idx(t):
-            return int(math.floor((t - tg) / hold)) if t >= tg else -1
+            return int(math.floor((t - t_go) / hold)) if t >= t_go else -1
 
         def fa(t):
             i = idx(t)
             if i < 0:
                 return std(t)
-            return float(n_std + (i % (2 * N_W)))
+            return float(n_std + (0 if pos(i)[4] > 0 else 2 * N_W) + (i % (2 * N_W)))
 
         def mot(t):
             i = idx(t)
@@ -562,37 +650,53 @@ def build(ctx):
                     nod = 1.6 * max(0.0, math.sin(2 * math.pi * (t - t_listen) / 1.1))
                 return Tf(dy=_hop(t, t_turn_girl if n is GIRL else -9, 7, 0.26) + _hop(t, t_listen, 5, 0.26),
                           sy=br, rot=-nod, px=sx0, py=sy0)
-            if i > n_draw:
+            if i >= gone:
                 return Tf(alpha=0.0)
-            x, y, s = pos(i)
-            r = s / s0
-            return Tf(dx=x - sx0, dy=y - sy0, sx=r, sy=r * br, px=sx0, py=sy0)
+            x, y, k, _, _ = pos(i)
+            return Tf(dx=x - sx0, dy=y - sy0, sx=k, sy=k * br, px=sx0, py=sy0)
 
         def behind(t):
             i = idx(t)
-            return n_a < i <= n_draw
+            return 0 <= i < gone and pos(i)[1] < HOUSE_FRONT_Y
 
-        return fa, mot, behind
+        return fa, mot, behind, t_go + gone * hold
 
-    mom_fa, mom_m, mom_behind = walker(MOM, mom_A, 0.08, nmom, [(0, 0), (t_listen, 1)], t_leave)
-    girl_fa, girl_m, girl_behind = walker(GIRL, girl_A, 0.06, ngirl, [(0, 0), (t_turn_girl, 1), (t_listen + 0.12, 2)],
-                                          t_leave, delay=0.1)
+    # the girl skips off first, passing just behind her mother, who turns and follows her
+    girl_fa, girl_m, girl_behind, t_girl_gone = walker(
+        GIRL, girl_A, 0.05, ngirl, [(0, 0), (t_turn_girl, 1), (t_listen + 0.12, 2)], GIRL_ROUTE, t_leave)
+    mom_fa, mom_m, mom_behind, t_mom_gone = walker(
+        MOM, mom_A, 0.075, nmom, [(0, 0), (t_listen, 1)], MOM_ROUTE, t_leave + 0.45)
+
+    hx_, hy_, hs_, hv_ = VILLAGE_HOUSE
+    house_cut = _Cut(mid_svg, MID_SEED, HOUSE_BOX,
+                     mask_svg=_doc(S.g(PR.house(hx_, hy_, hs_, variant=hv_), filter="wobble")))
 
     near_svg = V._near_ground_svg()
     sc.add("near_ground", near_svg, seed=NEAR_SEED)
-    crest_cut = _GroundCut(near_svg, NEAR_SEED, CUT_BOX)
 
     # the dashed road east draws itself from Jonah's feet outward, over the ridge and the hills to the vision
     if t_east0 is not None:
-        t_tr0, t_tr1 = t_east0 + 0.25, t_east0 + 2.6
+        # its first stretch lies under the subtitle band, so the reveal starts where the road comes out from
+        # under it (measured with the camera of that moment) and grows fastest at first: the visible road
+        # grows from the start of "尼尼微在很远的东方"
+        t_tr0, t_tr1 = t_east0 + 0.05, t_east0 + 2.4
         span = TRAIL_Y[0] - TRAIL_Y[1]
+        f0_box = []
+
+        def trail_frac(t):
+            if not f0_box:
+                cam = sc.camera(t_tr0)
+                y_band = cam.y + (SUB_TOP - 540) * cam.w / 1920
+                f0_box.append(_clamp((TRAIL_Y[0] - y_band) / span, 0.0, 0.5))
+            f0 = f0_box[0]
+            u = 1 - (1 - M.progress(t, t_tr0, t_tr1, "linear")) ** 2
+            return _clamp(f0 + (1 - f0) * u + 10 / span * u)
         sc.add("trail", _trail_svg(), wc=0.3,
                motion=lambda t: Tf(alpha=M.progress(t, t_tr0 - 0.1, t_tr0 + 0.2, "sine")),
-               reveal=lambda t: {"mode": "up", "soft": 30,
-                                 "frac": _clamp((M.progress(t, t_tr0, t_tr1, "inout") * (span + 40) + 10) / span)})
+               reveal=lambda t: {"mode": "up", "soft": 30, "frac": trail_frac(t)})
 
     # ---------------------------------------------------------------- sky things
-    for i, (cx, cy, cw, ch, sd, v) in enumerate([(150, 132, 280, 86, 5, 7), (2150, 160, 260, 84, 6, 6),
+    for i, (cx, cy, cw, ch, sd, v) in enumerate([(232, 132, 280, 86, 5, 5), (2150, 160, 260, 84, 6, 6),
                                                   (1700, 540, 200, 62, 8, 9)]):
         sc.add(f"cloud_small{i}", _doc(S.g(S.cloud(cx, cy, cw, ch, "#fdf6e8", seed=sd, sw=3, shade_fill="#efdcc4"),
                                            filter="wobble")), motion=M.drift(vx=v))
@@ -641,22 +745,23 @@ def build(ctx):
         M.keys([(t_vis, {"alpha": 0}), (t_vis + 0.45, {"alpha": 1})], "sine"),
         lambda t: Tf(dy=5 * math.sin(2 * math.pi * (t - t_vis - 0.95) / 4.6)) if t > t_vis + 0.95 else Tf())
     sc.add("vision", V._bubble_svg(), motion=vis, wc=0.7)
-    darker = (lambda t: 1.0 + 0.35 * M.progress(t, t_soldiers, t_soldiers + 1.0, "sine")) if t_soldiers else (lambda t: 1.0)  # noqa
+    darker = (lambda t: 1.0 + 0.36 * M.progress(t, t_soldiers, t_soldiers + 1.0, "sine")) if t_soldiers else (lambda t: 1.0)  # noqa
     sc.add("gloom", V._gloom_svg(), wc=0, motion=M.combine(
-        vis, lambda t: Tf(alpha=min(1.0, M.progress(t, t_bad0, t_bad0 + 1.6, "sine") * darker(t)))))
+        vis, lambda t: Tf(alpha=min(1.0, 0.74 * M.progress(t, t_bad0, t_bad0 + 1.6, "sine") * darker(t)))))
     sc.add("grey_cloud", V._grey_cloud_svg(), motion=M.combine(
         vis, M.keys([(t_bad0, {"alpha": 0, "dy": 26}), (t_bad0 + 1.4, {"alpha": 1, "dy": 0})], "out"),
         lambda t: Tf(dx=6 * math.sin(2 * math.pi * t / 5.0))), wc=0.6)
     if t_soldiers is not None:
-        steps = 7
+        # 15 drawings at 1/25 s: each soldier rises over 8 drawings (eased in and out), staggered by 3
+        steps, sol_hold = 15, 0.04
         sol_frames = []
         for i in range(1, steps + 1):
-            rises = [M.ease("out")(_clamp((i - d) / 3.0)) for d in (0, 1.0, 2.0)]
+            rises = [M.ease("sine")(_clamp((i - d) / 8.0)) for d in (0, 3.0, 6.0)]
             rises = [rises[0], rises[2], rises[1]]           # left, then right, then the middle one
             sol_frames.append(_soldiers_svg(rises))
         sc.add("soldiers", sol_frames, wc=0.6, motion=M.combine(
             vis, lambda t: Tf(alpha=1.0 if t >= t_soldiers else 0.0)),
-            frame_at=lambda t: float(min(steps - 1, max(0, int((t - t_soldiers) / 0.075)))))
+            frame_at=lambda t: float(min(steps - 1, max(0, int((t - t_soldiers) / sol_hold)))))
 
     sc.add("smoke", V._smoke_svg(), wc=0, motion=M.combine(
         M.sway(3.0, 4.2, pivot=(1252, 812)), M.pulse(0.6, 1.0, 3.1),
@@ -664,13 +769,19 @@ def build(ctx):
 
     # ---------------------------------------------------------------- the neighbours (each followed by the
     # near-ground cut-out that hides them once they are over the crest)
+    # standing, the girl (nearer) is in front of her mother; walking, she is ahead of her (farther away), so
+    # her walk drawings go behind the mother. The swap happens on her first walk drawing (a hard pose change).
+    sc.add("girl_walk", girl_frames[ngirl:], frame_at=lambda t: max(0.0, girl_fa(t) - ngirl),
+           motion=lambda t: girl_m(t) if t >= t_leave else Tf(alpha=0.0), seed=301)
+    sc.add_dynamic("girl_cut", lambda t: house_cut.image() if girl_behind(t) else None)
     sc.add("mom", mom_frames, frame_at=mom_fa, motion=mom_m, seed=303)
-    sc.add_dynamic("mom_cut", lambda t: crest_cut.image() if mom_behind(t) else None)
-    sc.add("girl", girl_frames, frame_at=girl_fa, motion=girl_m, seed=301)
-    sc.add_dynamic("girl_cut", lambda t: crest_cut.image() if girl_behind(t) else None)
+    sc.add_dynamic("mom_cut", lambda t: house_cut.image() if mom_behind(t) else None)
+    sc.add("girl", girl_frames[:ngirl], frame_at=lambda t: min(float(ngirl - 1), girl_fa(t)),
+           motion=lambda t: girl_m(t) if t < t_leave else Tf(alpha=0.0), seed=301)
 
     # ---------------------------------------------------------------- sheep (v1): planted hooves, turning heads
-    t_bleat = t_walk0 + 0.6
+    # the sheep bleats in the narrator's first pause (after "很久很久以前，"), not on the words
+    t_bleat = w("很久很久以前", 1.0, d=t_walk0 + 1.2) + 0.06
     def head_angle(i):
         if i == 0:
             return lambda t: 11 * (M.progress(t, t_bleat - 0.2, t_bleat + 0.05, "out") -
@@ -752,11 +863,17 @@ def build(ctx):
     addf("rise", jdoc(_jfig(JX, JY, JS, RISE, "surprised", "rise"), 170))
     addf("rise_n", jdoc(_jfig(JX, JY, JS, RISE, "peaceful", "rise_n"), 170))
     addf("listen_s", jdoc(C.jonah(JX, JY, JS, 1, pose="listen", expr="surprised")))
-    addf("listen_w", jdoc(C.jonah(JX, JY, JS, 1, pose="listen", expr="worried", marks=False)))
+    addf("look_s", jdoc(_jfig(JX, JY, JS, LOOK, "surprised", "look_s")))
+    addf("look_s_b", jdoc(_jfig(JX, JY, JS, LOOK, "s02_blink_surprised", "look_s_b")))
+    addf("look_w", jdoc(_jfig(JX, JY, JS, LOOK, "worried", "look_w", marks=False)))
+    addf("look_w_b", jdoc(_jfig(JX, JY, JS, LOOK, "s02_blink_worried", "look_w_b", marks=False)))
     addf("confess", jdoc(C.jonah(JX, JY, JS, 1, pose="confess", expr="worried")))
-    addf("point", jdoc(C.jonah(JX, JY, JS, 1, pose="point", expr="worried")))
-    addf("scared", jdoc(C.jonah(JX, JY, JS, 1, expr="scared", marks=False)))
-    addf("clutch", jdoc(_jfig(JX, JY, JS, CLUTCH, "worried", "clutch", marks=False)))
+    addf("confess_b", jdoc(C.jonah(JX, JY, JS, 1, pose="confess", expr="s02_blink_worried")))
+    addf("point", jdoc(_jfig(JX, JY, JS, POINT_UP, "worried", "point_up")))
+    addf("uneasy", jdoc(_jfig(JX, JY, JS, UNEASY, "worried", "uneasy")))
+    addf("uneasy_b", jdoc(_jfig(JX, JY, JS, UNEASY, "s02_blink_worried", "uneasy_b")))
+    addf("crossed", jdoc(_jfig(JX, JY, JS, CROSSED, "angry", "crossed")))
+    addf("crossed_b", jdoc(_jfig(JX, JY, JS, CROSSED, "s02_blink_angry", "crossed_b")))
 
     ev = [(0.0, J["stand"]), (t_arrive + hold_j, J["stand"]), (t_arrive + 0.75, J["blink"]),
           (t_arrive + 0.88, J["stand"])]
@@ -769,25 +886,40 @@ def build(ctx):
         hops.append((tw, 12))
         squashes.append((tw + 1.2, 0.025))
     t_look = t_orb1 - 0.55
+    t_gaze = min(t_vis + 1.2, t_worry - 0.6)          # he turns his face up toward the vision once it has landed
     ev += [(t_look - 0.9, J["blink"]), (t_look - 0.77, J["happy"]), (t_look, J["listen_h"]),
            (t_say - 0.05, J["preach"]), (t_l1_end + 0.1, J["happy"]),
            (t_kneel - 0.14, J["rise_n"]), (t_kneel, J["kneel"]),
            (t_call + 0.05, J["kneel_s"]),
            (t_rise, J["rise"]), (t_rise + 0.2, J["listen_s"]),
-           (t_worry, J["listen_w"]), (t_me, J["confess"])]
+           (t_gaze, J["look_s"]), (t_worry, J["look_w"]), (t_me, J["confess"])]
     hops += [(t_look, 8), (t_say - 0.05, 10), (t_rise + 0.2, 16)]
-    squashes += [(t_l1_end + 0.1, 0.02), (t_kneel, 0.05), (t_call + 0.05, 0.03), (t_worry, 0.03), (t_me, 0.035)]
+    squashes += [(t_l1_end + 0.1, 0.02), (t_kneel, 0.05), (t_call + 0.05, 0.03), (t_gaze, 0.02), (t_worry, 0.03),
+                 (t_me, 0.035)]
+    holds = [(t_gaze, t_worry, "look_s"), (t_worry, t_me, "look_w")]
+    t_end_conf = t_point if t_point is not None else T
+    holds.append((t_me, t_end_conf, "confess"))
     if t_point is not None:
         ev += [(t_point, J["point"])]
         hops.append((t_point, 9))
-    if t_scared is not None:
-        ev += [(t_scared, J["scared"])]
-        hops.append((t_scared, 10))
-    if t_hands is not None:
-        ev += [(t_hands, J["clutch"])]
-        squashes.append((t_hands, 0.04))
+    if t_uneasy is not None:                          # "很凶": arm drops, uneasy (no fear, no step back)
+        ev += [(t_uneasy, J["uneasy"])]
+        squashes.append((t_uneasy, 0.03))
+        holds.append((t_uneasy, t_fold if t_fold is not None else T, "uneasy"))
+    if t_fold is not None:                            # "敌人": arms folded, grumpy, eyes away; held to the end
+        ev += [(t_fold, J["crossed"])]
+        squashes.append((t_fold, 0.04))
+        holds.append((t_fold, T - 1.05, "crossed"))
+    # blinks (0.13 s) in the long holds: one every ~1.6-2 s, never within 0.5 s of a pose change
+    for a_, b_, key in holds:
+        n_bl = int((b_ - a_ - 0.8) / 1.5)
+        if b_ - a_ >= 1.25:
+            n_bl = max(1, n_bl)
+        for j_ in range(n_bl):
+            tb = a_ + (b_ - a_) * (j_ + 1) / (n_bl + 1) + (0.15 if j_ % 2 else -0.1)
+            tb = min(max(tb, a_ + 0.55), b_ - 0.6)
+            ev += [(tb, J[key + "_b"]), (tb + 0.13, J[key])]
     j_fa = _sched(ev)
-    step_back = (lambda t: -26 * M.progress(t, t_scared, t_scared + 0.3, "out")) if t_scared else (lambda t: 0.0)
 
     def j_m(t):
         if t < t_arrive + hold_j:
@@ -801,7 +933,7 @@ def build(ctx):
             sx, sy = sx * a, sy * b
         dy = sum(_hop(t, th, h) for th, h in hops)
         br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)
-        return Tf(dx=step_back(t), dy=dy, sx=sx, sy=sy * br, px=JX, py=JY)
+        return Tf(dy=dy, sx=sx, sy=sy * br, px=JX, py=JY)
     sc.add("jonah", jf, frame_at=j_fa, motion=j_m, seed=213)
 
     # ---------------------------------------------------------------- the speech bubble with God's golden word
@@ -889,12 +1021,12 @@ def build(ctx):
     sc.sfx("birds", 0, dur=T + 0.8, gain_db=-14, fade_in=0.8, fade_out=1.0)
     sc.sfx("wind_soft", 0, dur=T + 0.8, gain_db=-16, fade_in=0.8, fade_out=1.0)
     sc.sfx("footsteps", t_walk0, dur=t_arrive - t_walk0 + 0.1, gain_db=-17, pan=-0.2)
-    sc.sfx("sheep", t_bleat, gain_db=-16, pan=0.35)
+    sc.sfx("sheep", t_bleat, gain_db=-19, pan=0.35)
     sc.sfx("sparkle", t_orb1 - 0.1, gain_db=-13)
     sc.sfx("pop", t_sb0, gain_db=-12, pan=0.15)
-    sc.sfx("footsteps", t_leave, dur=1.4, gain_db=-21, pan=0.3)
+    sc.sfx("footsteps", t_leave, dur=max(1.0, t_mom_gone - t_leave - 0.3), gain_db=-23, pan=0.3)
     sc.sfx("cloth", t_kneel, gain_db=-14)
-    sc.sfx("chime", t_light, gain_db=-6)
+    sc.sfx("chime", t_light - 0.15, gain_db=-9)          # starts in the pause before "上帝对约拿说"
     sc.sfx("cloth", t_rise, gain_db=-15)
     sc.sfx("sparkle", t_vis + 0.1, gain_db=-10, pan=0.5)
     sc.sfx("chime", t_seen, gain_db=-15)

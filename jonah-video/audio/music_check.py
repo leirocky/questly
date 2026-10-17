@@ -936,8 +936,10 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     for n, msg in viol[:200]:
         w(f"    ! {msg}")
     clashes, expected = check_clashes(sc)
-    w(f"  sustained m2/m9 against non-chord tones that resolve (passing/suspension/gliss, by design): {len(expected)}")
-    w(f"  UNEXPECTED sustained m2/m9 clashes (overlap >= 0.3 s, both notes >= 0.4 s): {len(clashes)}")
+    w(f"  sustained m2/m9/m16/M7/M14 explained by design (resolving non-chord tones, glissandi, pedal chords, "
+      f"maj7 chord tones): {len(expected)}")
+    w(f"  UNEXPECTED sustained m2/m9/m16/M7/M14 clashes (rendered durations incl. let-ring and echo tails; overlap "
+      f">= 0.3 s, both notes >= 0.4 s): {len(clashes)}")
     for a, b2, ov in clashes[:40]:
         w(f"    ~ {a.t:7.2f}s {a.part}:{name(a.pitch)} ({a.role}) vs {b2.part}:{name(b2.pitch)} ({b2.role}) "
           f"overlap {ov:.2f}s")
@@ -946,7 +948,8 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     for n in rng[:20]:
         w(f"    ! {n.seg.cue.id} {n.part} {name(n.pitch)}")
     checks.append(("harmony: every note in scale / chord or a resolved non-chord tone", not viol, f"{len(viol)} violations"))
-    checks.append(("no unexpected sustained m2/m9 clashes", not clashes, f"{len(clashes)}"))
+    checks.append(("no unexpected sustained m2/m9/m16/M7/M14 clashes (incl. ring and echo tails)", not clashes,
+                   f"{len(clashes)}"))
     checks.append(("all notes inside instrument ranges", not rng, f"{len(rng)}"))
     w("")
 
