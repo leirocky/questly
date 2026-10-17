@@ -334,6 +334,45 @@ class Cue:
         """Middle of the pause before line i (cue-relative): where musical changes should land."""
         return (self.lines[i - 1][1] + self.lines[i][0]) / 2 if i > 0 else self.lines[0][0] / 2
 
+    # ------------------------------------------------------------ phrase-based hit points
+    def find(self, phrase):
+        """Index of the (first) line whose text contains phrase."""
+        for i, ln in enumerate(self.scene["lines"]):
+            if phrase in ln["text"]:
+                return i
+        raise KeyError(f"{self.id}: no line contains {phrase!r}")
+
+    def at(self, phrase, end=False):
+        """Cue-relative time where phrase starts (end=True: where it ends) in the narration.
+
+        Uses the recognised subtitle-chunk timings; inside a chunk the position is interpolated
+        by characters (punctuation counts half)."""
+        i = self.find(phrase)
+        ln = self.scene["lines"][i]
+        chunks = ln.get("chunks") or [{"text": ln["text"], "start": ln["start"], "end": ln["end"]}]
+        k0 = ln["text"].index(phrase) + (len(phrase) if end else 0)
+        pos = 0
+        for ch in chunks:
+            txt = ch["text"]
+            j = ln["text"].find(txt, pos)
+            if j < 0:
+                j = pos
+            if j <= k0 <= j + len(txt):
+                w = lambda s: sum(0.5 if c in "，。！？：；、" else 1.0 for c in s)
+                frac = w(txt[:k0 - j]) / max(1e-9, w(txt))
+                return float(ch["start"] + frac * (ch["end"] - ch["start"]))
+            pos = j + len(txt)
+        return float(ln["end"] if end else ln["start"])
+
+    def line_of(self, phrase):
+        """(start, end) of the line containing phrase (cue-relative)."""
+        return self.lines[self.find(phrase)]
+
+    def pause_after(self, i):
+        """(start, end) of the pause after line i (to the next line, or to the cue end)."""
+        b = self.lines[i + 1][0] if i + 1 < len(self.lines) else self.dur
+        return self.lines[i][1], b
+
     def pauses(self, min_len=0.22):
         """Pauses between consecutive lines of this cue: [(start, end)] cue-relative."""
         return [(a[1], b[0]) for a, b in zip(self.lines, self.lines[1:]) if b[0] - a[1] >= min_len]

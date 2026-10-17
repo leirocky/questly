@@ -11,7 +11,9 @@ Examples (run from jonah-video/):
   python3 tools/sfx_audition.py rain thunder       # a subset
   python3 tools/sfx_audition.py --seed 3 --each    # another variation + one large spectrogram per effect
   python3 tools/sfx_audition.py --checks           # + API checks (names, determinism, seeds, dur/param edge cases)
+                                                   #   and behaviour checks (night pauses, oars strokes, rooster crow)
   python3 tools/sfx_audition.py --sweep            # + loudness sweep: loops 2/4/6/9/13 s x 8 seeds, one-shots x 8 seeds
+  python3 tools/sfx_audition.py --sweep --seeds 64 coins rooster   # a deeper sweep (more seeds) of a few effects
   python3 tools/sfx_audition.py --debug waves_calm # + component / layer-vs-bed levels logged by the generators
   python3 tools/sfx_audition.py --all              # --checks --sweep --side
 
@@ -367,18 +369,18 @@ def _sweep_job(job):
     return out
 
 
-def sweep(names, log, workers=4):
+def sweep(names, log, workers=4, seeds=SWEEP_SEEDS):
     loops = [n for n in names if sfx.NAMES[n][0] == "loop"]
     shots = [n for n in names if sfx.NAMES[n][0] == "oneshot"]
-    jobs = [(n, d, s) for n in loops for d in SWEEP_DURS for s in SWEEP_SEEDS]
-    jobs += [(n, None, s) for n in shots for s in SWEEP_SEEDS]
+    jobs = [(n, d, s) for n in loops for d in SWEEP_DURS for s in seeds]
+    jobs += [(n, None, s) for n in shots for s in seeds]
     t0 = time.time()
     with ProcessPoolExecutor(workers) as ex:
         res = list(ex.map(_sweep_job, jobs, chunksize=2))
     log(f"Sweep: {len(jobs)} renders in {time.time() - t0:.0f} s ({workers} workers)")
     ok = True
     if loops:
-        log(f"  loops: integrated LUFS min..max over seeds {SWEEP_SEEDS.start}-{SWEEP_SEEDS.stop - 1} per length; "
+        log(f"  loops: integrated LUFS min..max over seeds {seeds.start}-{seeds.stop - 1} per length; "
             f"flag: outside {LOOP_RANGE[0]:.0f}..{LOOP_RANGE[1]:.0f} or > 1.5 dB from target, |L/R| > 1.5 dB, seam, "
             "300 Hz high-pass loss > 6 dB, peak > 0.9")
         log("  " + f"{'loop':<14}{'target':>7}" + "".join(f"{f'{d:g} s':>15}" for d in SWEEP_DURS)
@@ -408,8 +410,8 @@ def sweep(names, log, workers=4):
             log("  " + f"{n:<14}{sfx.LOOP_LUFS[n]:7.1f}" + "".join(f"{c:>15}" for c in cells)
                 + f"{lr:10.1f}{pk:10.2f}{-hp:11.1f}{sm:10.2f}" + (f"  !! {', '.join(bad)}" if bad else "  ok"))
     if shots:
-        log("  one-shots over seeds: momentary max (target +-2 dB), peak (0.5..0.7), tail (<= -40 dB), "
-            "300 Hz high-pass loss (<= 6 dB), |L/R| (<= 1.5 dB)")
+        log(f"  one-shots over seeds {seeds.start}-{seeds.stop - 1}: momentary max (target +-2 dB), peak (0.5..0.7), "
+            "tail (<= -40 dB), 300 Hz high-pass loss (<= 6 dB), |L/R| (<= 1.5 dB)")
         for n in shots:
             rr = [r for r in res if r["name"] == n]
             mom = np.array([r["mom"] for r in rr])
@@ -429,9 +431,10 @@ def sweep(names, log, workers=4):
             if lr > 1.5:
                 bad.append("L/R")
             ok &= not bad
+            nt = sum(r["tail"] > -40 for r in rr)
             log(f"  {n:<14} mom {mom.min():6.1f}..{mom.max():6.1f}  peak {pk.min():.2f}..{pk.max():.2f}  "
-                f"tail max {tail:6.1f} dB  hp300 max -{hp:4.1f} dB  |L/R| max {lr:3.1f}"
-                + (f"  !! {', '.join(bad)}" if bad else "  ok"))
+                f"tail max {tail:6.1f} dB" + (f" ({nt}/{len(rr)} seeds over)" if nt else "")
+                + f"  hp300 max -{hp:4.1f} dB  |L/R| max {lr:3.1f}" + (f"  !! {', '.join(bad)}" if bad else "  ok"))
     log("Sweep: " + ("ALL OK" if ok else "FLAGGED (see above)"))
     return ok
 
@@ -522,7 +525,98 @@ def api_checks(names, log):
     x1 = sfx.make("gull", None, SR, seed=1, calls=1)
     x3 = sfx.make("gull", None, SR, seed=1, calls=3)
     check(np.abs(x1).max() > 0 and not np.array_equal(x1, x3), "gull calls=1 / calls=3 differ")
+    behaviour_checks(names, check)
     return ok
+
+
+def _spy(kernel, on_kernel, on_place):
+    """Temporarily wrap sfx.<kernel> and sfx._place: on_kernel(args) when the kernel is made, on_place(buf, x, i0)
+    for every placement. Returns a restore function."""
+    k0, p0 = getattr(sfx, kernel), sfx._place
+
+    def k1(*a, **kw):
+        on_kernel(a)
+        return k0(*a, **kw)
+
+    def p1(buf, x, i0, *a, **kw):
+        on_place(buf, x, i0)
+        return p0(buf, x, i0, *a, **kw)
+
+    setattr(sfx, kernel, k1)
+    sfx._place = p1
+
+    def restore():
+        setattr(sfx, kernel, k0)
+        sfx._place = p0
+    return restore
+
+
+def behaviour_checks(names, check):
+    """Rhythm / structure promises of individual effects (instrumented renders, so they test the generator itself)."""
+    if "night" in names:
+        # every cricket pauses now and then (the nearest one drops back to about half level) at the default length
+        ev = []
+        restore = _spy("_k_chirp", lambda a: ev.append([a[2], 0.0]),
+                       lambda buf, x, i0: ev[-1].__setitem__(1, float(np.abs(x).max()))
+                       if x.ndim == 1 and len(x) < len(buf) and ev else None)
+        try:
+            worst = []
+            for seed in range(4):
+                ev.clear()
+                sfx.make("night", sfx.NAMES["night"][1], SR, seed=seed)
+                groups = []
+                for fc, pk in ev:
+                    for g in groups:
+                        if abs(fc / g[0][0] - 1) < 0.02:
+                            g.append((fc, pk))
+                            break
+                    else:
+                        groups.append([(fc, pk)])
+                worst += [min(pk for _, pk in g) / max(pk for _, pk in g) if max(pk for _, pk in g) > 0 else 1.0
+                          for g in groups]                # a cricket that never sounds fails too
+        finally:
+            restore()
+        check(max(worst) < 0.6, f"night: every cricket pauses or drops back at the default length, seeds 0-3 "
+              f"(softest chirp / loudest per cricket: max {max(worst):.2f})")
+    if "oars" in names:
+        # a whole number of evenly spaced strokes at any loop length, close to the 1.4 s cycle
+        ons = []
+        pending = [False]
+
+        def on_place(buf, x, i0):
+            if pending[0]:
+                ons.append((len(buf), i0 % len(buf)))
+                pending[0] = False
+
+        restore = _spy("_k_oar", lambda a: pending.__setitem__(0, True), on_place)
+        try:
+            res = []
+            for T in (2.3, 3.5, 5.0, 7.7, 11.9):
+                ons.clear()
+                sfx.make("oars", T, SR, seed=3)
+                n = int(round(T * SR))
+                tt = np.sort([i for L, i in ons if L == n]) / SR
+                st = [tt[0]]
+                for v in tt[1:]:                     # two blades per stroke, a few ms apart
+                    if v - st[-1] > 0.1:
+                        st.append(v)
+                g = np.diff(np.append(st, st[0] + T))
+                res.append((T, g.mean(), (g.max() - g.min()) / g.mean()))
+        finally:
+            restore()
+        check(all(abs(m / 1.4 - 1) <= 0.25 and s <= 0.25 for _, m, s in res),
+              "oars: evenly spaced strokes near 1.4 s at 2.3-11.9 s loops ("
+              + ", ".join(f"{T:g} s: {m:.2f} s +-{50 * s:.0f}%" for T, m, s in res) + ")")
+    if "rooster" in names:
+        # the crow itself lasts over a second (10 ms RMS within 25 dB of its loudest)
+        lens = []
+        for seed in range(4):
+            m = sfx.make("rooster", None, SR, seed=seed).mean(axis=1).astype(np.float64)
+            h = int(0.01 * SR)
+            e = 10 * np.log10((m[: len(m) // h * h].reshape(-1, h) ** 2).mean(axis=1) + 1e-20)
+            on = np.flatnonzero(e > e.max() - 25)
+            lens.append((on[-1] + 1 - on[0]) * 0.01)
+        check(min(lens) >= 1.0, f"rooster: the crow lasts over a second, seeds 0-3 ({min(lens):.2f}-{max(lens):.2f} s)")
 
 
 def main():
@@ -537,6 +631,7 @@ def main():
     ap.add_argument("--each", action="store_true", help="also write spec_<name>.png per effect")
     ap.add_argument("--debug", action="store_true", help="print component levels logged by the generators")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--seeds", type=int, default=len(SWEEP_SEEDS), help="seeds per sweep cell (default 8)")
     a = ap.parse_args()
     if a.all:
         a.checks = a.sweep = a.side = True
@@ -579,7 +674,7 @@ def main():
         log("API checks: " + ("ALL PASS" if good else "FAILURES (see above)"))
     if a.sweep:
         log()
-        good &= sweep(names, log, a.workers)
+        good &= sweep(names, log, a.workers, range(max(1, a.seeds)))
     plot_grid(results, audio, OUT / "spectrograms.png")
     if a.side:
         plot_grid(results, audio, OUT / "spectrograms_side.png", side=True)

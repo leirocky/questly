@@ -87,7 +87,7 @@ NAMES = {
     "coins": ("oneshot", 0.8, "a few small coins clinking into a hand"),
     "horn": ("oneshot", 2.2, "herald's ram's horn (shofar) call: three warm brassy notes, not shrill"),
     "hammer": ("oneshot", 1.5, "a few wooden mallet knocks on a stake / pole, small wood resonance"),
-    "rooster": ("oneshot", 1.5, "gentle, friendly rooster crow at dawn"),
+    "rooster": ("oneshot", 1.7, "gentle, friendly rooster crow at dawn (~1.1 s cock-a-doodle-doo + soft tail)"),
 }
 
 LOOP_LUFS = {
@@ -1525,9 +1525,18 @@ def _oars(rng, n, sr, p):
     """Rowing, one stroke every ``cycle`` s (1.4), a little irregular in timing and strength. Each stroke, for both
     oars (a few ms apart, left and right): the blade dips in (soft plunk + splash), pulls a gurgling swirl of water
     while the wooden oarlock creaks under the load, lifts out with a small splash and a trickle of drips, and knocks
-    softly in its lock on the recovery. Under it a low bed of water along the hull that surges after each pull."""
+    softly in its lock on the recovery. Under it a low bed of water along the hull that surges after each pull.
+
+    The loop always holds a whole number of evenly spaced strokes: the stroke period is the one closest to ``cycle``
+    that divides the loop length (within 23 % of it for loops of 2.3 s or more, within 8 % from 8 s; a loop under
+    ~2 s holds a single stroke, time-compressed when the loop is shorter than ``cycle``)."""
     T = n / sr
-    times, per = _beats(rng, T, float(p["cycle"]), jitter=0.05, tol=0.2)
+    cyc = float(p["cycle"])
+    k = max(1, int(np.floor(T / cyc + 1e-9)))
+    if T / (k * cyc) > cyc * (k + 1) / T:        # k + 1 strokes are closer to the wanted tempo (log scale)
+        k += 1
+    per = T / k
+    times = np.mod(rng.uniform(0, per) + np.arange(k) * per + rng.uniform(-0.05, 0.05, k) * per, T)
     sc = min(1.0, per / 1.4)                     # faster strokes are compressed in time
     C = _Clock(T)
     surge = np.zeros(C.K)
@@ -1671,7 +1680,10 @@ def _k_sap(rng, sr):
 # ---- night
 def _night(rng, n, sr, p):
     """Calm night: 2-3 crickets (``density``) chirping -- pure 3.1-4.1 kHz tones in 2-4 short pulses every 0.5-1.1 s,
-    each now and then pausing -- a soft distant cricket chorus, and a faint, slow night breeze in the leaves."""
+    each chirp a little different (pitch, pulse widths, now and then one pulse more or less). In loops of 4 s or
+    more every cricket pauses now and then (about every 5-9 s, for 1.2-3 s; the nearest one only drops back to half
+    level), so the chirping is never metronomic. Under them a soft distant cricket chorus that comes and goes in slow
+    waves, and a faint, slow night breeze in the leaves."""
     T = n / sr
     C = _Clock(T)
     ts = np.arange(n) / sr
@@ -1681,23 +1693,35 @@ def _night(rng, n, sr, p):
     fcs = rng.permutation(np.linspace(3100, 4100, k)) * rng.uniform(0.97, 1.03, k)
     for i in range(k):
         dist = 1.0 if i == 0 else rng.uniform(0.45, 0.9)
-        chirp = _k_chirp(rng, sr, fcs[i], int(rng.integers(2, 5)), rng.uniform(0.012, 0.02), rng.uniform(0.028, 0.04))
+        npul, pw, ps = int(rng.integers(2, 5)), rng.uniform(0.012, 0.02), rng.uniform(0.028, 0.04)
         times, _ = _beats(rng, T, rng.uniform(0.5, 1.1), jitter=0.03, tol=0.2)
-        pn = _pnoise(rng, T, 0.07)                          # pauses now and then (periodic: seamless)
+        # pauses: explicit windows on the circle (seamless), soft 0.3 s edges; none in loops under 4 s
+        pz = _ptimes(rng, T, rng.uniform(5.0, 9.0), 0.5) if T >= 4.0 else np.zeros(0)
+        half = np.minimum(rng.uniform(1.2, 3.0, len(pz)), 0.3 * T) / 2
         lo = 0.5 if i == 0 else 0.0                          # the nearest cricket never stops completely
         for t0 in times:
-            gv = lo + (1 - lo) * _smoothstep((pn(t0) + 0.8) / 0.6)
+            gv = 1.0
+            for c, h in zip(pz, half):
+                dd = abs((t0 - c + T / 2) % T - T / 2)       # circular distance to the pause centre
+                gv *= _smoothstep((dd - (h - 0.3)) / 0.3)
+            gv = lo + (1 - lo) * gv
+            np_i = int(np.clip(npul + (rng.integers(-1, 2) if rng.random() < 0.2 else 0), 2, 5))
+            chirp = _k_chirp(rng, sr, fcs[i] * rng.uniform(0.996, 1.004), np_i, pw * rng.uniform(0.9, 1.1),
+                             ps * rng.uniform(0.95, 1.05))
             if gv > 0.02:
                 _place(cr, chirp * dist * gv * rng.uniform(0.85, 1.0), int(t0 * sr), pans[i])
     _dbg("crickets", cr)
-    ch = np.zeros((n, 2))                                    # distant chorus: soft continuous trills
+    ch = np.zeros((n, 2))                                    # distant chorus: soft trills in slow waves, with gaps
+    fg = max(1, round(rng.uniform(0.1, 0.2) * T)) / T        # a gap every 5-10 s (whole cycles per loop)
+    ph0 = rng.uniform(0, TAU)
     for pan in _spread(rng, 2, 0.6, 0.1):
         fc = rng.uniform(2700, 3200)
-        car = _cnoise(rng, n, sr, lambda f: _gauss(f, fc, 35))
+        car = _cnoise(rng, n, sr, lambda f: _gauss(f, fc, 70))
         fam = max(1, round(rng.uniform(25, 40) * T)) / T
         am = (0.5 + 0.5 * np.cos(TAU * fam * ts + rng.uniform(0, TAU))) ** 2
         sw = np.clip(0.6 + 0.4 * _pnoise(rng, T, 0.15)(ts), 0.15, None)
-        _place(ch, car * am * sw * 0.07, 0, pan)
+        gate = _smoothstep((0.25 + 0.5 * np.cos(TAU * fg * ts + ph0 + rng.uniform(-0.6, 0.6))) / 0.5)
+        _place(ch, car * am * sw * gate * 0.045, 0, pan)
     _dbg("chorus", ch)
     x = _verb(cr + ch, _ir(rng, sr, 1.0, 0.02, 5000), 0.45, circular=True)
     gust = np.zeros((2, C.K))                                # the breeze: slow soft breaths every ~7 s
@@ -1733,9 +1757,13 @@ def _k_chirp(rng, sr, fc, npul, pw, ps):
 
 
 # ---- cheer (joyful crowd)
+_CLAP_DB = 6.5     # median clap level over the rest of the crowd in the 1-3 kHz band (first 10 ms), dB
+
+
 def _cheer(rng, n, sr, p):
     """A joyful crowd in the distance: excited babble and happy wordless shouts ('yaaay', 'woo-hoo', 'hey!', 'oooh')
-    that swell up together every few seconds, a few people clapping, over a bright murmur bed (``density`` = voices).
+    that swell up together every few seconds, a few people clapping (level set against the crowd in the claps' 1-3 kHz
+    band, so they read in every variation), over a bright murmur bed (``density`` = voices).
     Voices are formant-synthesised at 16 kHz like ``crowd`` and resampled (circular)."""
     T = n / sr
     C = _Clock(T)
@@ -1782,15 +1810,16 @@ def _cheer(rng, n, sr, p):
     vox = (v4[:, :2] + v4[:, 2:]) * actn
     _dbg("voices", vox)
     cl = np.zeros((n, 2))                                    # a few people clapping
+    onsets = []
     for t0 in _ptimes(rng, T, 3.5 / p["density"], 0.6, min_one=True):
         pan, rate, dist = rng.uniform(-0.7, 0.7), rng.uniform(3.5, 5.0), rng.uniform(0.4, 1.0)
         hand = rng.uniform(900, 1500)
         for j in range(rng.integers(3, 8)):
             tc = t0 + j / rate + rng.uniform(-0.012, 0.012)
-            _place(cl, _k_clap(rng, sr, hand) * dist * rng.uniform(0.7, 1.0) * 4.5, int(tc * sr), pan)
-    _dbg("claps", cl)
-    _dbg_vs("claps vs voices", cl, vox, 1000, 3000, sr)
-    x = _verb(vox + cl, _ir(rng, sr, 0.9, 0.015, 3000), 1.0, circular=True) * 0.5
+            _place(cl, _k_clap(rng, sr, hand) * dist * rng.uniform(0.7, 1.0), int(tc * sr), pan)
+            onsets.append(int(tc * sr))
+    ir = _ir(rng, sr, 0.9, 0.015, 3000)
+    xv, xc = (_verb(v, ir, 1.0, circular=True) * 0.5 for v in (vox, cl))
     lv = 0.5 * (1 + 0.2 * _pnoise(rng, T, 0.1)(C.t)) * act
     fl = [1 + 0.35 * _pnoise(rng, T, 4.0)(C.t) for _ in range(2)]
 
@@ -1800,7 +1829,24 @@ def _cheer(rng, n, sr, p):
 
     bed = _bed(rng, n, sr, mask, corr=0.2)
     _dbg("murmur bed", bed)
-    return x + bed
+    # Clap level is set against everything else in their 1-3 kHz band, so they read in every variation: the median
+    # clap's first 10 ms sits _CLAP_DB over the voices + murmur at that moment.
+    def band(z):
+        return _fft_shape(z.mean(axis=1), sr, lambda f: _bpm(f, 1000, 3000, 4))
+
+    cb, rb = band(xc), band(xv + bed)
+    idx = (np.asarray(onsets)[:, None] + np.arange(int(0.01 * sr))[None, :]) % n
+    d = 10 * np.log10((np.mean(cb[idx] ** 2, axis=1) + 1e-20) / (np.mean(rb[idx] ** 2, axis=1) + 1e-20))
+    gdb = float(np.clip(_CLAP_DB - np.median(d), -10.0, 20.0))
+    if _DEBUG is not None:
+        q = np.percentile(d, [10, 50, 90]) + gdb
+        _DEBUG.append(f"[{'claps vs crowd':<16}] 1000-3000 Hz, first 10 ms of each clap vs voices + murmur: "
+                      f"p10 {q[0]:+5.1f} dB, median {q[1]:+5.1f} dB, p90 {q[2]:+5.1f} dB (clap gain {gdb:+.1f} dB)")
+    xc *= 10 ** (gdb / 20)
+    _dbg("claps", xc)
+    _dbg("voices + murmur", xv + bed)
+    return xv + xc + bed
+
 
 
 _SHOUTS = {   # syllables: (duration range, vowel start/middle/end, pitch knots at u = 0, 0.3, 0.7, 1, aspirated)
@@ -2433,8 +2479,8 @@ def _pop(rng, sr, p):
 
 def _coins(rng, sr, p):
     """A few small coins dropped into a cupped hand: a soft palm pat as the first lands, short bright coin-on-coin
-    clinks (inharmonic disc modes kept below 6.5 kHz, quickly damped by the hand) and a little settling jingle; all
-    done by ~0.4 s."""
+    clinks (inharmonic disc modes kept below 6.5 kHz, quickly damped by the hand) and a little settling jingle that
+    starts by 0.26 s; all done by ~0.38 s."""
     L = 0.8
     m = int(L * sr)
     t = np.arange(m) / sr
@@ -2446,12 +2492,13 @@ def _coins(rng, sr, p):
     alt = _Alt(rng, 0.05, 0.3)
     tc, i = t1, 0
     nc = rng.integers(4, 7)
-    while i < nc and tc < 0.3:
+    while i < nc and tc < 0.22:
         a = (1.0 if i == 0 else rng.uniform(0.55, 0.9)) * (1 - 0.06 * i)
         k = _k_clink(rng, sr, rng.uniform(1400, 2400), rng.uniform(0.025, 0.045) * (1 - 0.06 * i))
         _place(x, k * a, int(tc * sr), alt(), wrap=False)
         i += 1
         tc += rng.uniform(0.035, 0.075)
+    tc = min(tc, 0.26)              # the jingle settles in time (the tail before the end fade stays below -40 dB)
     for _ in range(rng.integers(2, 4)):                       # settling jingle
         tc += rng.uniform(0.012, 0.025)
         k = _k_clink(rng, sr, rng.uniform(1700, 2600), rng.uniform(0.015, 0.025))
@@ -2555,29 +2602,31 @@ def _k_mallet(rng, sr, f):
 
 
 def _rooster(rng, sr, p):
-    """Gentle, friendly rooster crow at dawn ('cock-a-doodle-doo'): three short voiced syllables climbing in pitch and
-    a long last one that rises and falls away, warm formants and only a soft rasp, a little distance (reverb), no
-    harsh top; done by ~0.9 s."""
-    L = 1.3
+    """Gentle, friendly rooster crow at dawn ('cock-a-doodle-doo', ~1.1 s): three short voiced syllables climbing in
+    pitch and a long last one (~0.65 s) that holds high and then falls away. A nasal, harmonic-rich call (formants
+    near 1 kHz, 2 kHz and 2.7 kHz over a flat harmonic tilt, so harmonics 2-5 sit within ~12 dB of the fundamental)
+    but only a soft rasp, a little distance (short open-air reverb) and nothing above the 5 kHz low-pass; done by
+    ~1.2 s."""
+    L = 1.6
     m = int(L * sr)
     t = np.arange(m) / sr
     base = rng.uniform(430, 500) * float(p["pitch"])
     j = rng.uniform(0.97, 1.03, 4)
     syl = [  # (start, duration, pitch knots over u = 0..1, (F1, F2), gain, attack, release)
-        (0.03, 0.10 * j[0], (0.95, 1.1), (720, 1300), 0.6, 0.012, 0.03),
-        (0.17, 0.08 * j[1], (1.1, 1.18), (850, 1500), 0.65, 0.012, 0.03),
-        (0.29, 0.13 * j[2], (1.2, 1.35), (650, 1100), 0.85, 0.015, 0.04),
-        (0.46, 0.42 * j[3], (1.3, 1.5, 1.45, 1.1, 0.95), (700, 1150), 1.0, 0.03, 0.15),
+        (0.03, 0.11 * j[0], (0.95, 1.1), (950, 1800), 0.6, 0.012, 0.03),
+        (0.18, 0.09 * j[1], (1.1, 1.2), (1050, 2050), 0.65, 0.012, 0.03),
+        (0.31, 0.16 * j[2], (1.2, 1.38), (900, 1850), 0.85, 0.015, 0.04),
+        (0.51, 0.64 * j[3], (1.32, 1.5, 1.52, 1.48, 1.38, 1.12), (1000, 2150), 1.0, 0.03, 0.2),
     ]
     f0 = np.full(m, base)
     env = np.zeros(m)
-    F1 = np.full(m, 700.0)
-    F2 = np.full(m, 1200.0)
+    F1 = np.full(m, 950.0)
+    F2 = np.full(m, 1900.0)
     for s, d, kn, (a1, a2), g, att, rel in syl:
         u = (t - s) / d
         seg = (u >= -0.15) & (u <= 1.25)
         f0[seg] = base * np.interp(u[seg], np.linspace(0, 1, len(kn)), kn)
-        F1[seg], F2[seg] = a1, a2 * np.interp(u[seg], [0, 1], [1.0, 0.9])
+        F1[seg], F2[seg] = a1, a2 * np.interp(u[seg], [0, 1], [1.0, 0.88])
         env += g * _bump(t, s, d, att, rel)
     f0 = ndimage.gaussian_filter1d(f0, 0.008 * sr) * (1 + 0.012 * _pnoise(rng, L, 25)(t))
     F1, F2 = (ndimage.gaussian_filter1d(F, 0.01 * sr) for F in (F1, F2))
@@ -2587,14 +2636,14 @@ def _rooster(rng, sr, p):
     v = np.zeros(m)
     for k in range(1, 13):
         fk = k * f0
-        a = sum(g / np.sqrt(((F ** 2 - fk ** 2) / (fk * B)) ** 2 + 1) for F, B, g in ((F1, 220, 1.0), (F2, 320, 0.6),
-                                                                                    (2700.0, 450, 0.15)))
-        v += a * k ** -1.1 * np.cos(k * ph) * (fk < 0.45 * sr)
+        a = sum(g / np.sqrt(((F ** 2 - fk ** 2) / (fk * B)) ** 2 + 1) for F, B, g in ((F1, 260, 1.0), (F2, 300, 0.5),
+                                                                                    (2700.0, 400, 0.2)))
+        v += a * k ** -0.7 * np.cos(k * ph) * (fk < 0.45 * sr)
     rasp = np.clip(1 + 0.18 * _nrms(_filt(rng.standard_normal(m), "bp", (60, 160), sr)), 0.3, None)
     y = _norm(v * rasp) * env
     y += 0.03 * _nrms(_filt(rng.standard_normal(m), "bp", (1000, 3500), sr)) * env
     _dbg("crow", y)
-    return _verb(y, _ir(rng, sr, 0.45, 0.025, 4500), 0.3)
+    return _verb(y, _ir(rng, sr, 0.35, 0.025, 4500), 0.25)
 
 
 _LOOPS = {
