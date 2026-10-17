@@ -609,21 +609,35 @@ def build(ctx):
 
     # God's question still hangs in the air at the start: soft warm light from the upper left, fading as Jonah
     # turns his back on it (never a figure: only light)
-    shafts = ""
-    for i, (a, w) in enumerate([(33, 60), (40, 110), (47, 80), (54, 120), (61, 70)]):
-        r = math.radians(a)
-        ox, oy = 180, -220
-        ln = 1650
-        ux, uy = math.cos(r), math.sin(r)
-        nx, ny = -uy, ux
-        p = [(ox + nx * 12, oy + ny * 12), (ox + ux * ln + nx * w, oy + uy * ln + ny * w),
-             (ox + ux * ln - nx * w, oy + uy * ln - ny * w), (ox - nx * 12, oy - ny * 12)]
-        shafts += '<path d="M' + " L".join(f"{x:.0f},{y:.0f}" for x, y in p) + ' Z" fill="url(#lg)"/>'
-    light = doc(S.g(shafts, filter="blur-md") +
-                f'<ellipse cx="420" cy="80" rx="560" ry="320" fill="url(#lr)"/>'
-                f'<ellipse cx="{XJ0 - 10}" cy="{GY - 230}" rx="250" ry="330" fill="url(#lr)" opacity="0.55"/>',
-                S.lin_grad("lg", [(0, "#fff6d8", 0.9), (0.55, "#fff0c4", 0.5), (1, "#ffefc0", 0)], x2=1, y2=1) +
-                S.rad_grad("lr", [(0, "#fffbe8", 0.8), (0.5, "#fff3cc", 0.35), (1, "#ffefc0", 0)]))
+    ox, oy = 200, -150                         # off-frame, upper left
+    jx, jy = XJ0 - 20, GY - 200
+
+    def fan(length, angles, widths):
+        d = ""
+        for a, w in zip(angles, widths):
+            a0, a1, am = math.radians(a - w / 2), math.radians(a + w / 2), math.radians(a)
+            p0 = (ox + 18 * math.cos(am - 1.2), oy + 18 * math.sin(am - 1.2))
+            p3 = (ox + 18 * math.cos(am + 1.2), oy + 18 * math.sin(am + 1.2))
+            p1 = (ox + length * math.cos(a0), oy + length * math.sin(a0))
+            p2 = (ox + length * math.cos(a1), oy + length * math.sin(a1))
+            d += f"M{p0[0]:.0f},{p0[1]:.0f} L{p1[0]:.0f},{p1[1]:.0f} L{p2[0]:.0f},{p2[1]:.0f} L{p3[0]:.0f},{p3[1]:.0f} Z "
+        return d
+    gdef = (f'<linearGradient id="rayg" gradientUnits="userSpaceOnUse" x1="{ox}" y1="{oy}" x2="{jx}" y2="{jy + 300}">'
+            f'<stop offset="0" stop-color="#fff4cc" stop-opacity="0.85"/>'
+            f'<stop offset="0.6" stop-color="#ffe7a0" stop-opacity="0.5"/>'
+            f'<stop offset="1" stop-color="#ffdf8c" stop-opacity="0.12"/></linearGradient>'
+            f'<linearGradient id="coneg" gradientUnits="userSpaceOnUse" x1="{ox}" y1="{oy}" x2="{jx}" y2="{jy + 300}">'
+            f'<stop offset="0" stop-color="#fff2c4" stop-opacity="0.6"/>'
+            f'<stop offset="1" stop-color="#ffe39a" stop-opacity="0.1"/></linearGradient>' +
+            S.rad_grad("halo", [(0, "#fff6d6", 0.75), (0.6, "#ffe7a4", 0.32), (1, "#ffe0a0", 0)]) +
+            S.rad_grad("pool", [(0, "#fff1c0", 0.8), (0.6, "#ffe39a", 0.3), (1, "#ffd77e", 0)]))
+    ln = math.hypot(jx - ox, jy - oy) + 260
+    aim = math.degrees(math.atan2(jy - oy, jx - ox))
+    light = doc(f'<path d="{fan(ln, [aim], [13])}" fill="url(#coneg)" filter="url(#blur-lg)"/>'
+                f'<path d="{fan(ln, [aim - 7, aim - 3.5, aim, aim + 3.6, aim + 7.5], [2.6, 1.8, 3.0, 1.9, 2.5])}" '
+                f'fill="url(#rayg)" filter="url(#soft)"/>'
+                f'<ellipse cx="{jx}" cy="{GY - 210}" rx="210" ry="290" fill="url(#halo)"/>'
+                f'<ellipse cx="{jx + 10}" cy="{GY - 4}" rx="260" ry="62" fill="url(#pool)"/>', gdef)
     a_light = lambda t: 0.85 * (1 - M.progress(t, t_turn - 0.1, t_turn + 1.1, "sine"))
     sc.add("god_light_sky", light, wc=0, motion=lambda t: Tf(alpha=a_light(t) * (0.9 + 0.1 * math.sin(t * 3))))
 
