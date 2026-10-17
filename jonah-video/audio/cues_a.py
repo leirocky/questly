@@ -277,8 +277,8 @@ def storm(c):
         brass = p in ("tbn", "tuba", "horn", "brass")
         s1.expr(p, [(0, -8), (max(0.5, q_ls0 - 0.9), -8), (q_ls0, -14), (max(q_ls0 + 1, q_le0 - 0.3), -10),
                     (24, -3)])
-        s2.expr(p, [(0, -1), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -5)])
-        s3.expr(p, [(0, -5), (max(0.5, q_ls2 - 0.2), -6), (q_ls2 + 0.8, -14 if brass else -12),
+        s2.expr(p, [(0, -1), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -6)])
+        s3.expr(p, [(0, -6), (max(0.5, q_ls2 - 0.2), -7), (q_ls2 + 0.8, -14 if brass else -12),
                     (max(q_ls2 + 1, q_le2 - 0.3), -14 if brass else -12), (min(27.9, q_le2 + 1.2), -4), (28, -4)])
     # Jonah asleep in the hold: a real hush after the cargo swell
     s4.expr(["trem_lo", "trem_va", "cb", "clar", "bsn", "timp"], [(0, -9), (16, -11)])

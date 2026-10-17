@@ -90,7 +90,7 @@ MAN_B = dict(x=4350, y=1278, s=1.0, v=3)
 SHAKE_DX = 99                        # each man steps this far toward the other to shake hands
 KID_G = dict(x=4600, y=1306, s=0.85, v=1)    # the little girl
 KID_B = dict(x=4815, y=1298, s=1.0, v=0)     # the big boy
-MOTHER = dict(x=5040, y=1212, s=0.92, v=2)
+MOTHER = dict(x=4995, y=1212, s=0.92, v=2)
 
 HOUSES = ((1180, 0, 1), (1620, 2, -1), (2190, 1, 1), (2600, 3, -1), (3080, 0, 1), (3420, 2, 1), (3880, 1, -1),
           (4260, 3, 1), (4720, 0, -1), (5150, 2, 1))
@@ -1199,7 +1199,7 @@ def build(ctx):
 
     # ---- the families ----
     # background prayers (already kneeling)
-    backs = [("woman", 3, 3720, 1150, 0.78, 1), ("elder", 2, 5225, 1176, 0.82, -1)]
+    backs = [("woman", 3, 3720, 1150, 0.78, 1)]
     for i, (kind, v, x, y, s, f) in enumerate(backs):
         fr = [doc(person(kind, v, x, y, s, f, "kneel_pray", "peaceful")),
               doc(person(kind, v, x, y, s, f, "kneel_pray", "worried")),
@@ -1293,8 +1293,8 @@ def build(ctx):
                ["out", "in"], pivot=ty0)))
 
     # behind them a young man comforts an old neighbour (a hand on his shoulder), then they kneel together
-    ex_, ey_, es_ = 4472, 1160, 0.82
-    yx_, yy_, ys_ = 4345, 1165, 0.85
+    ex_, ey_, es_ = 5236, 1166, 0.82
+    yx_, yy_, ys_ = 5112, 1170, 0.85
     t_help = snap(within(c4a, 0.33))
     efr = [doc(person("elder", 0, ex_, ey_, es_, -1, "sad", "sad")),
            doc(person("elder", 0, ex_, ey_, es_, -1, "stand", "happy")),

@@ -621,7 +621,9 @@ class Score:
                     a.d = max(0.03, b.t - 0.012 - a.t)
 
     def expression_curve(self, part, t):
-        pts = sorted(self.expr.get(part, []))
+        # stable sort by time only: where one segment's last point and the next segment's first
+        # point share an instant, the later-written (next) segment's value applies after it
+        pts = sorted(self.expr.get(part, []), key=lambda x: x[0])
         if pts:
             ts, dbs = zip(*pts)
             db = np.interp(t, ts, dbs)

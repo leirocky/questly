@@ -109,12 +109,12 @@ def booth(c):
           q=4, vel=52, role="arp")
     b.mel("pz_cb", "G1:1/2 r:3/2 | C2:1/2 r:3/2 | G1:1/2 r:3/2 | D2:1/2 r:3/2 | G1:1/2 r:3/2", q=4, vel=58,
           role="bass")
-    b.pad(["vla", "vln2"], 2, 57, 69, q0=12, vel=38, bass_ref=(38, 50))       # into the shade
+    b.pad(["vla", "vln2"], 2, 57, 69, q0=12, vel=46, bass_ref=(38, 50))       # into the shade
     for k in range(10):                                # little hammer taps
         if k % 4 != 3:
             drum(b, 4 + 0.5 + k, 76 if k % 2 else 77, 40)
     b.expr(["pz_hi", "guitar", "pz_cb", "hand"], [(0, -2), (14, -2)])
-    b.expr(["vla", "vln2", "cb"], [(0, -10), (4, -18), (12, -18), (14, -13)])
+    b.expr(["vla", "vln2", "cb"], [(0, -10), (4, -18), (12, -14), (14, -11)])
     # sitting in the shade, waiting: lazy flute, slow plucks
     s.mel("flute", "B4:2 | C5:2 | D5:2 | C5:1 A4:1 | B4:2", vel=48)
     s.mel("pz_lo", "E2:1/2 r:1/2 B2:1/2 r:1/2 | C3:1/2 r:1/2 G2:1/2 r:1/2 | G2:1/2 r:1/2 D3:1/2 r:1/2 | "
@@ -122,7 +122,8 @@ def booth(c):
     s.mel("guitar", "r:1/2 [B3,E4]:1/2 r:1 | r:1/2 [C4,E4]:1/2 r:1 | r:1/2 [B3,D4]:1/2 r:1 | "
                     "r:1/2 [C4,E4]:1/2 r:1/2 [C4,F#4]:1/2 | [B3,D4]:1 r:1", vel=44, role="arp")
     s.pad(["vla", "vln2"], 2, 55, 69, vel=38, bass_ref=(36, 50))
-    s.expr(["flute", "pz_lo", "guitar"], [(0, -5), (10, -6)])
+    s.expr("flute", [(0, -10), (1.0, -5), (10, -6)])
+    s.expr(["pz_lo", "guitar"], [(0, -8), (1.0, -5), (10, -6)])
     s.expr(["vla", "vln2"], [(0, -12), (10, -12)])
 
 
@@ -251,8 +252,8 @@ def worm(c):
     # 'Yes! I am angry! I am furious!': a stubborn stomp at the end of each exclamation (from the
     # subtitle-chunk timing), a soft low pedal in between
     r.add("pz_cb", 0, 0.5, "G1", 56, "bass")
-    bassline(r, "cb", 28, 40, 44)
-    r.expr("cb", [(0, -12), (4, -12)])
+    bassline(r, "cb", 28, 40, 52)
+    r.expr("cb", [(0, -9), (4, -10)])
     for k, ph in enumerate(("对！", "我就是生气！", "我气极了！")):
         t_st = c.at(ph, end=True) + 0.03
         q_st = r.q_of(c.t0 + t_st)
@@ -345,9 +346,9 @@ def end(c):
     b.add("cb", 0, 3, "D2", 54, "bass")
     a.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn"], [(0, -16), (1.5, -12), (3, -11), (36, -11)])
     a.expr("choir", [(24, -20), (27, -15), (36, -15)])
-    b.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn", "choir"], [(0, -13), (0.75, -12), (1.5, -13), (3, -28)])
+    b.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn", "choir"], [(0, -15), (0.75, -14), (1.5, -15), (3, -28)])
     a.expr(["harp", "celesta"], [(0, -13), (1.5, -9), (3, -6), (36, -6)])
-    b.expr(["harp", "celesta"], [(0, -9), (3, -12)])
+    b.expr(["harp", "celesta"], [(0, -11), (3, -14)])
 
 
 def generic(c):

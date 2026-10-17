@@ -114,6 +114,12 @@ def jfig(x, y, s, pose, expr=None, marks=True, **over):
     """Jonah drawn by the library rig, optionally with a modified pose record (e.g. kneeling with raised arms).
     Returns (markup, head_chain, bbox) where head_chain(markup_in_head_coords) places markup on his head (same
     transform chain as the head-cloth), and bbox is the anchor-relative bbox at scale 1."""
+    # NOTE: this leans on private internals of art/characters.py (POSES, _figure, _jonah_design, _ADULT,
+    # _wrap_out, _LAST, the design dict's 'front' callback and its state keys, and the figure's outer
+    # <g transform>). Fail loudly if any of that changes, rather than silently drawing the seaweed off his head.
+    for name in ("POSES", "_figure", "_jonah_design", "_ADULT", "_wrap_out", "_LAST"):
+        assert hasattr(C, name), f"s12 jfig: art.characters.{name} is gone — update s12_deep.jfig"
+    assert pose in C.POSES, f"s12 jfig: unknown pose {pose!r}"
     ps = dict(C.POSES[pose])
     ps.update(over)
     D = C._jonah_design(False)
@@ -124,9 +130,14 @@ def jfig(x, y, s, pose, expr=None, marks=True, **over):
         return ""
     D["front"] = front
     inner, bbox = C._figure(D, C._ADULT, ps, expr or ps["expr"], 1, marks)
-    tf = re.match(r'<g transform="([^"]+)">', inner).group(1)
+    assert {"Hc", "ha", "R"} <= cap.keys(), (
+        "s12 jfig: the design 'front' callback was not called with Hc/ha/m.R — the seaweed cannot be placed")
+    m = re.match(r'<g transform="([^"]+)">', inner)
+    assert m, "s12 jfig: the figure markup no longer starts with <g transform=...> — head chain unknown"
+    tf = m.group(1)
     markup = C._wrap_out(inner, x, y, s, 1, f"jonah-{pose}")
     pts = dict(C._LAST)
+    assert "head" in pts and "hands" in pts, "s12 jfig: art.characters._LAST lacks head/hands"
     hc, ha = cap["Hc"], cap["ha"]
 
     def chain(head_markup):
@@ -595,17 +606,22 @@ def glow_bulbs(spots, seed=0):
 # ================================================================== effects
 
 
-def bubble_fx(sources, seed=3, t_end=1e9):
-    """Bubbles from moving emitters. sources: (emitter(t)->(x, y), t0, t1, rate, rise, size, spread, alpha)."""
+def bubble_fx(sources, seed=3, t_end=1e9, avoid=None):
+    """Bubbles from moving emitters.
+    sources: (emitter(t)->(x, y), t0, t1, rate, rise, size, spread, alpha[, vx]); vx = sideways drift px/s.
+    avoid(t) -> (x, y, r_in, r_out) or None: bubbles fade out inside that circle (Jonah's face, stage px)."""
     rng = np.random.default_rng(seed)
     parts = []
-    for src, t0, t1, rate, rise, size, spread, alpha in sources:
+    for src in sources:
+        fn, t0, t1, rate, rise, size, spread, alpha = src[:8]
+        vx = src[8] if len(src) > 8 else 0.0
         n = max(1, int((t1 - t0) * rate))
         ts = t0 + (np.arange(n) + rng.uniform(0, 1, n)) / rate
         for i in range(n):
-            ex, ey = src(ts[i])
+            ex, ey = fn(ts[i])
             parts.append((ts[i], ex + rng.uniform(-spread, spread), ey + rng.uniform(-spread, spread) * 0.5,
-                          rng.uniform(*size), rise * rng.uniform(0.7, 1.3), rng.uniform(0, 6.3), alpha))
+                          rng.uniform(*size), rise * rng.uniform(0.7, 1.3), rng.uniform(0, 6.3), alpha,
+                          vx * rng.uniform(0.75, 1.25)))
     arr = np.array(parts, np.float64)
 
     def fx(frame, t, view):
@@ -614,13 +630,19 @@ def bubble_fx(sources, seed=3, t_end=1e9):
         live = arr[(arr[:, 0] <= t) & (arr[:, 0] > t - 5)]
         if not len(live):
             return frame
+        face = avoid(t) if avoid is not None else None
         ov = None
         d = None
-        for ts, x, y, r, sp, ph, al in live:
+        for ts, x, y, r, sp, ph, al, vx in live:
             age = t - ts
             yy = y - sp * age - 22 * age * age
-            xx = x + 10 * math.sin(age * 4.5 + ph) * min(1, age * 2)
+            xx = x + vx * age + 10 * math.sin(age * 4.5 + ph) * min(1, age * 2)
             fade = min(1.0, age / 0.12, max(0.0, (5 - age) / 1.0))
+            if face is not None:
+                fd = math.hypot(xx - face[0], yy - face[1])
+                fade *= min(1.0, max(0.0, (fd - face[2]) / (face[3] - face[2])))
+                if fade <= 0.02:
+                    continue
             ox, oy = view.to_out(xx, yy)
             rr = r * view.scale * (0.55 + 0.45 * min(1.0, age / 0.4))
             if not (-40 < ox < frame.size[0] + 40 and -40 < oy < frame.size[1] + 40):
@@ -755,7 +777,7 @@ def build(ctx):
     t_wf0 = L3.end + 0.08                               # the page is fully golden-white ...
     t_wf1 = L3.end + 0.20                               # ... until here
     T_SW = (t_wf0 + t_wf1) / 2                          # switch deep -> belly under the white-out
-    t_wo0 = t_wf0 - 0.85                                # white-out starts
+    t_wo0 = L3.end - 0.5                                # white-out starts (late: '救了上来' must read clearly)
     t_wo1 = max(t_wf1 + 0.6, L4.start + 0.2)            # ... and has cleared
     t_vow = chunk_t(L4, "答应", 0.3) + 0.05              # '我答应你的事，一定会做到' — hands folded, a vow
     t_nod = phrase_t(L4, "一定会做到", fallback=0.55)
@@ -987,7 +1009,7 @@ def build(ctx):
 
     # ---------------------------------------------------------- light from above (prayer heard) + beam
     top_light = doc(f'<ellipse cx="{JXD - 20}" cy="700" rx="1000" ry="820" fill="url(#tl)"/>',
-                    defs=S.rad_grad("tl", [(0, "#7a5418", 1), (0.4, "#64400f", 0.7), (0.75, "#3a2408", 0.25),
+                    defs=S.rad_grad("tl", [(0, "#8a4c12", 1), (0.4, "#74380a", 0.7), (0.75, "#3e1c06", 0.25),
                                            (1, "#000000", 0)]))
 
     def top_light_m(t):
@@ -1002,9 +1024,9 @@ def build(ctx):
                    f'L{BX - 380 * wk:.0f},{FLOOR + 60} Z" fill="url(#dbeam)"/>')
     beam_doc = doc(S.g(beam_d, filter="blur-lg"),
                    defs=f'<linearGradient id="dbeam" gradientUnits="userSpaceOnUse" x1="0" y1="300" x2="0" '
-                        f'y2="{FLOOR + 60}"><stop offset="0" stop-color="#6e4a16" stop-opacity="0.3"/>'
-                        f'<stop offset="0.25" stop-color="#6e4a16"/><stop offset="0.9" stop-color="#5a3a10"/>'
-                        f'<stop offset="1" stop-color="#5a3a10" stop-opacity="0.3"/></linearGradient>')
+                        f'y2="{FLOOR + 60}"><stop offset="0" stop-color="#8a4c12" stop-opacity="0.3"/>'
+                        f'<stop offset="0.25" stop-color="#8a4c12"/><stop offset="0.9" stop-color="#74380a"/>'
+                        f'<stop offset="1" stop-color="#74380a" stop-opacity="0.3"/></linearGradient>')
 
     # it reaches down from above: stretched from its top (cheap; no per-frame mask)
     sc.add("deep_beam", beam_doc, z=104.2, wc=0, blend="add", motion=deep_gate(M.combine(
@@ -1015,7 +1037,7 @@ def build(ctx):
     # warm glow around Jonah: a tiny light at his hands on '就想起了耶和华', fullest when he is lifted
     hands_k = jfig(JXD, FLOOR, JSD, "kneel_pray")[2]["hands"][1]
     jglow = doc(f'<circle cx="{hands_k[0]:.0f}" cy="{hands_k[1]:.0f}" r="420" fill="url(#jg)"/>',
-                defs=S.rad_grad("jg", [(0, "#7a5a26", 1), (0.3, "#5c4018", 0.8), (0.65, "#2e1e08", 0.35),
+                defs=S.rad_grad("jg", [(0, "#8c541a", 1), (0.3, "#6c3c12", 0.8), (0.65, "#361a06", 0.35),
                                        (1, "#000000", 0)]))
 
     # ---------------------------------------------------------- currents swirling around him (L0)
@@ -1123,11 +1145,13 @@ def build(ctx):
     ucx, ucy = (up_probe[0] + up_probe[2]) / 2 * JSD, (up_probe[1] + up_probe[3]) / 2 * JSD
     UC = (JXD - 10, FLOOR - 150)                         # bbox centre at the start of the lift
     up_mk, up_chain, up_info = jfig(UC[0] - ucx, UC[1] - ucy, JSD, "float", expr="happy", **FLOAT_UP)
-    RISE = 1100.0
+    RISE = 1000.0
 
     def rise_y(t):
-        u = max(0.0, t - t_lift - 0.12)
-        return -min(RISE, 70 * u + 150 * u * u)
+        """Front-loaded lift (he leaves the sand right after the squash-hop) that eases off smoothly under the
+        white-out instead of stopping: RISE * tanh(raw / RISE) has the raw curve's start and no hard stop."""
+        u = max(0.0, t - t_lift)
+        return -RISE * math.tanh((160 * u + 120 * u * u) / RISE)
 
     def up_m(t):
         hop = M.keys([(t_lift, {"sy": 0.9, "sx": 1.04, "dy": 6}), (t_lift + 0.14, {"sy": 1.06, "sx": 0.97, "dy": -8}),
@@ -1169,15 +1193,23 @@ def build(ctx):
            frame_at=lambda t: float(round(4 + 4 * math.sin(2 * math.pi * t / 3.2 + 1.0))))
 
     # ================================================================ camera
-    deep_cam = M.cam_keys([
+    deep_keys = M.cam_keys([
         (0, Cam(1080, CAM_Y0, 1880)),
         (t_sink0 - 0.1, Cam(1076, CAM_Y0 + 30, 1820)),
         (t_land + 0.1, Cam(1066, 1790, 1880)),
         (t_kneel, Cam(1062, 1832, 1740)),
         (t_pr + 0.2, Cam(1062, 1832, 1720)),
         (L3.start, Cam(1066, 1770, 1880)),
-        (t_wf0, Cam(1070, 1230, 1960)),
+        (t_wf0, Cam(1070, 1770, 1960)),
     ], ["sine", "sine", "sine", "linear", "sine", "inout"])
+    CAM_FOLLOW = 0.7      # the camera rises with 70% of his lift (eased in), so he climbs steadily in frame
+
+    def deep_cam(t):
+        c = deep_keys(t)
+        if t <= t_lift:
+            return c
+        k = CAM_FOLLOW * progress(t, t_lift, t_lift + 1.5, "in")
+        return Cam(c.x, c.y + k * rise_y(t), c.w, c.rot)
     belly_cam = M.cam_keys([(T_SW, Cam(955, 600, W * 0.86)), (T, Cam(930, 592, W * 0.8))], "sine")
     sc.camera = lambda t: deep_cam(t) if t < T_SW else belly_cam(t)
 
@@ -1186,21 +1218,43 @@ def build(ctx):
 
     faint_head, kneel_head = sf_info["head"], kn_info["head"]
 
+    # bubble emitters sit just in front of / beside the face (never on it) and drift a little to +x, so the
+    # bubbles rise beside his face instead of across his eyes; bubble_fx also fades any bubble that wanders
+    # over the current head (FACE_R*: stage px around the head centre)
     def jonah_mouth(t):
         if t < t_land:
-            return apply_tf((float_head[0] + 40, float_head[1] + 30), float_m(t), JB0)
+            return apply_tf((float_head[0] + 75, float_head[1] + 35), float_m(t), JB0)
         if t < t_kneel:
-            return faint_head[0] + 22, faint_head[1] + 22
-        return kneel_head[0] + 30, kneel_head[1] + 18
+            return faint_head[0] + 66, faint_head[1] + 12
+        return kneel_head[0] + 64, kneel_head[1] + 24
 
     up_head = up_info["head"]
 
     def up_mouth(t):
         b = up_m(t)
-        return apply_tf((up_head[0] + 30, up_head[1] + 30), b, UC)
+        return apply_tf((up_head[0] + 74, up_head[1] + 30), b, UC)
 
-    def light_level(t):          # prayer stream: rises on '我的祷告，一直达到了你的面前'
-        return progress(t, t_pr - 0.1, t_pr + 1.6, "sine") * (1 - 0.5 * progress(t, t_lift, t_lift + 1.0))
+    HR = fl_info["R"] * JSD                             # head radius in stage px (~46)
+    FACE_R0, FACE_R1 = 1.2 * HR, 1.55 * HR
+
+    def head_now(t):
+        if t < t_land:
+            hx, hy = apply_tf(float_head, float_m(t), JB0)
+        elif t < t_kneel:
+            hx, hy = faint_head
+        elif t < t_lift:
+            hx, hy = kneel_head
+        elif t < T_SW:
+            hx, hy = apply_tf(up_head, up_m(t), UC)
+        else:
+            return None
+        return hx, hy, FACE_R0, FACE_R1
+
+    def light_level(t):          # prayer stream: rises on '我的祷告，一直达到了你的面前'; gone before the cut
+        if t >= T_SW:
+            return 0.0
+        return (progress(t, t_pr - 0.1, t_pr + 1.6, "sine") * (1 - 0.5 * progress(t, t_lift, t_lift + 1.0)) *
+                (1 - progress(t, t_wo0, t_wf0, "sine")))
 
 
     def dream(t):                 # the soft memory vignette (a touch deeper while he is about to give up)
@@ -1226,11 +1280,13 @@ def build(ctx):
         FX.sparkles((300, 1700, 1850, 2150), count=14, t1=T_SW, color=(160, 245, 225), size=(4, 9),
                     period=2.2, drift=-6, seed=19),
         bubble_fx([
-            (jonah_mouth, 0.2, t_land, 1.6, 95, (5, 12), 10, 190),
-            (lambda t: (JXD + 40, FLOOR - 40), t_land, t_land + 0.25, 30, 120, (5, 14), 70, 200),
-            (jonah_mouth, t_land + 0.4, t_lift, 0.5, 70, (4, 9), 6, 150),
-            (up_mouth, t_lift, T_SW, 3.0, 160, (5, 12), 20, 200),
-        ], t_end=T_SW),
+            (jonah_mouth, 0.2, t_land, 1.6, 95, (5, 12), 10, 190, 12),
+            # the landing burst: two puffs beside him (out of the sand), not up through his face
+            (lambda t: (JXD - 210, FLOOR - 30), t_land, t_land + 0.25, 22, 120, (5, 14), 40, 200),
+            (lambda t: (JXD + 240, FLOOR - 30), t_land, t_land + 0.25, 22, 120, (5, 14), 40, 200),
+            (jonah_mouth, t_land + 0.4, t_lift, 0.5, 70, (4, 9), 6, 150, 13),
+            (up_mouth, t_lift, T_SW, 3.0, 160, (5, 12), 14, 200, 14),
+        ], t_end=T_SW, avoid=head_now),
         prayer_stream((hands_k[0], hands_k[1] - 20), hands_k[1] - 1250, light_level),
         V.twinkles((JXD - 360, 1250, JXD + 320, 2050), count=22, t0=t_beam1 - 0.4, color=(255, 236, 170),
                    size=(8, 18), drift=0, seed=23, face=None),
@@ -1245,7 +1301,9 @@ def build(ctx):
     ]
 
     # ================================================================ sound
-    sc.sfx("underwater", 0, dur=T_SW + 0.4, gain_db=-12, fade_in=0.8, fade_out=0.9)
+    # the same belly bed as s11 (underwater -12, heartbeat -12, drip -19): the deep is his memory, the water
+    # sound runs on through it, so coming back to the belly sounds like the belly we left
+    sc.sfx("underwater", 0, dur=T + 0.1, gain_db=-12, fade_in=0.8, fade_out=0.9)
     sc.sfx("bubbles", 0.3, dur=t_land - 0.3, gain_db=-20, fade_in=0.8, fade_out=0.8)
     sc.sfx("cloth", t_weed + 0.15, gain_db=-19)
     sc.sfx("whoosh", t_sink0 + 0.2, gain_db=-20, pan=0.0)
@@ -1257,12 +1315,12 @@ def build(ctx):
     sc.sfx("whoosh", t_lift + 0.1, gain_db=-12)
     sc.sfx("bubbles", t_lift + 0.1, dur=1.6, gain_db=-16, fade_out=0.6)
     sc.sfx("chime", t_wo0 + 0.3, gain_db=-10)
-    sc.sfx("heartbeat", T_SW - 0.3, dur=T - T_SW + 0.4, gain_db=-14, fade_in=0.9, fade_out=0.9)
-    sc.sfx("drip", T_SW - 0.3, dur=T - T_SW + 0.4, gain_db=-20, fade_in=0.9, fade_out=0.9, density=0.6)
+    sc.sfx("heartbeat", T_SW - 0.3, dur=T - T_SW + 0.4, gain_db=-12, fade_in=0.9, fade_out=0.9)
+    sc.sfx("drip", T_SW - 0.3, dur=T - T_SW + 0.4, gain_db=-19, fade_in=0.9, fade_out=0.9, density=0.6)
     for td in drips:
         sc.sfx("pop", td + fall, gain_db=-20, pan=-0.45)
     sc.sfx("cloth", t_vow - 0.05, gain_db=-17)
     sc.sfx("cloth", t_sal - 0.05, gain_db=-17)
-    sc.sfx("chime", t_sal, gain_db=-8)
+    sc.sfx("chime", t_sal, gain_db=-11)
     sc.sfx("sparkle", t_sal + 0.15, gain_db=-10)
     return sc

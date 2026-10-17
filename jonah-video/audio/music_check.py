@@ -553,11 +553,13 @@ def storm_sections(sc):
 
 def handoff_steps(mono, sr, sc, boundaries, win=HANDOFF_WIN, hop=0.05):
     """Largest level step between adjacent `win` windows around each boundary (t, span after it).
-    Steps within 0.3 s of a 'hit' sync (an intended attack) are not counted.
+    Not counted: steps within 0.3 s of a 'hit' sync (an intended attack), and drops within 0.4 s
+    of the start of a spoken line (the designed speech ducking engaging).
     Returns [(t boundary, label, step dB, at s)]."""
     cs = np.concatenate([[0.0], np.cumsum(mono ** 2)])
     n = int(win * sr)
     hits = np.array([actual for _, _, _, actual, kind in sc.syncs if kind == "hit"] or [-99.0])
+    onsets = np.array([a for a, _ in sc.speech_iv] or [-99.0])
 
     def lvl(t):
         a = int(t * sr)
@@ -572,6 +574,8 @@ def handoff_steps(mono, sr, sc, boundaries, win=HANDOFF_WIN, hop=0.05):
             if np.abs(hits - t).min() <= 0.3:
                 continue
             d = lvl(t) - lvl(t - win)
+            if d < 0 and np.abs(onsets - t).min() <= 0.4:
+                continue
             if np.isfinite(d) and abs(d) > abs(best[0]):
                 best = (d, t)
         out.append((t0, label, best[0], best[1]))
@@ -778,7 +782,8 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     steps = handoff_steps(mono, sr, sc, bounds)
     big = [f"{lbl} {d:+.1f} dB at {at:.2f} s" for t0, lbl, d, at in steps if abs(d) > HANDOFF_DB]
     w(f"HAND-OFFS (largest step between adjacent {int(HANDOFF_WIN * 1000)} ms windows at each scene start, through the "
-      f"dissolve, and at each segment start; steps within 0.3 s of an attack sync excluded):")
+      f"dissolve, and at each segment start; steps within 0.3 s of an attack sync, and drops as a line starts "
+      f"(the speech ducking), excluded):")
     w("  " + ", ".join(f"{lbl[:16]} {d:+.1f}" for t0, lbl, d, at in steps))
     checks.append((f"smooth hand-offs and entrances (no step > {HANDOFF_DB:.0f} dB between adjacent "
                    f"{int(HANDOFF_WIN * 1000)} ms windows)", not big,

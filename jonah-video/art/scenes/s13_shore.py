@@ -350,7 +350,7 @@ def god_rays(src, head):
     a0 = math.degrees(math.atan2(hy - sy, hx - sx))
     dist = math.hypot(hx - sx, hy - sy)
     b = ""
-    for da, wdt, k in ((-17, 5.0, 0.9), (-9, 6.5, 1.0), (-1, 8.5, 1.08), (7.5, 6.0, 1.0), (15.5, 4.5, 0.9)):
+    for da, wdt, k in ((-20, 4.5, 0.88), (-10, 6.0, 1.0), (0, 7.5, 1.08), (10, 5.5, 1.0), (19.5, 4.0, 0.88)):
         r0, r1 = 30, dist * k + 40
         p0, p1 = math.radians(a0 + da - wdt / 2), math.radians(a0 + da + wdt / 2)
         pts = [(sx + r0 * math.cos(p0), sy + r0 * math.sin(p0)),
@@ -424,10 +424,10 @@ def steam(emitters):
     for i, (x, y, h_) in enumerate(emitters):
         ph = 1.7 * i
         pts = [(x + 9 * math.sin(ph + k * 1.4) * (0.4 + 0.6 * k / 4), y - h_ * k / 4) for k in range(5)]
-        b += (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="#fffaf0" stroke-width="12" '
-              f'stroke-linecap="round" opacity="0.6"/>')
+        b += (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="#fffaf0" stroke-width="13" '
+              f'stroke-linecap="round" opacity="0.85"/>')
     return doc(f'<g filter="url(#s13stm)">{b}</g>',
-               '<filter id="s13stm" x="-80%" y="-50%" width="260%" height="200%"><feGaussianBlur stdDeviation="5.5"/>'
+               '<filter id="s13stm" x="-80%" y="-50%" width="260%" height="200%"><feGaussianBlur stdDeviation="5"/>'
                '</filter>')
 
 
@@ -999,7 +999,7 @@ def build(ctx):
             up = t >= t_cut_joy
             return Tf(dx=4 * math.sin(2 * math.pi * (u * 1.2 + ph)) + (up_dx if up else 0.0),
                       dy=-55 * u + (up_dy if up else 0.0) + jt.dy,
-                      sx=0.85 + 0.3 * u, sy=0.85 + 0.35 * u, alpha=0.7 * env * math.sin(math.pi * u) ** 1.3,
+                      sx=0.85 + 0.3 * u, sy=0.85 + 0.35 * u, alpha=0.9 * env * math.sin(math.pi * u) ** 1.2,
                       px=sx0, py=sy0)
         return m
     sc.add("steam_a", stm_a, z=16.2, wc=0, motion=steam_m(0.0))
@@ -1250,7 +1250,7 @@ def build(ctx):
             ov.circle(ox, oy, r, (186, 224, 238, int(170 * a)))
             ov.circle(ox - r * 0.32, oy - r * 0.32, max(0.6, r * 0.34), (255, 255, 252, int(220 * a)))
         for seg, a in arcs:
-            ov.polyline(seg, (100, 70, 46, int(200 * a)), 4.5 * view.scale)
+            ov.polyline(seg, (110, 80, 54, int(150 * a)), 3.6 * view.scale)
         for ox, oy, ux, uy, r, ln, a in tears:
             e = 2.0 * view.scale
             ov.poly(tear_poly(ox, oy, ux, uy, r + e, ln + e * 1.2), (92, 62, 40, int(215 * a)))
