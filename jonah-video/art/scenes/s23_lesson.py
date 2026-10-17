@@ -71,11 +71,11 @@ FIGS = []                # [(name, bbox, heart_spot)]
 HEARTS = {}
 
 # ------------------------------------------------------------------ the memory bubble (stage px)
-BC = (2200, 292)         # bubble centre (in the sky over the city, up-left of Jonah's head)
-BRX, BRY = 290, 205      # outer radii
+BC = (2195, 290)         # bubble centre (in the sky over the city, up-left of Jonah's head)
+BRX, BRY = 300, 214      # outer radii
 B_INSET = 20             # cream rim width
 BUB_PIV = (2440, 420)    # it grows out of the trail (lower right)
-BPX, BPY, BPS = 2125, 452, 0.4      # memory castor root + scale
+BPX, BPY, BPS = 2132, 424, 0.46     # memory castor root + scale
 TRAIL = [(2628, 396, 9), (2590, 372, 13), (2545, 346, 18)]
 
 # the dry leaf that falls into Jonah's hand
@@ -240,14 +240,14 @@ def build(ctx):
     t_night1 = when(["一夜长起来", "一夜长"], t_grow_line + 3.5)
     t_night2 = when(["一夜又", "又枯", "又干"], t_night1 + 1.8)
     t_dead = when(["枯死了", "干死了", "枯死", "干死"], t_night2 + 0.8)
-    t_tender = when(["心疼它", "爱惜它"], t_dead + 1.0)        # "你都这么心疼它" -> sorry, tender
+    t_tender = when(["你都这么", "你尚且", "心疼它", "爱惜它"], t_dead + 1.0)        # "你都这么心疼它" -> sorry, tender
     t_city = when(["尼尼微"], t_tender + 2.5)
     t_many = when(["十二万"], t_city + 1.5)
     t_kids = when(["分不清左右", "左右手", "不能分辨"], t_many + 2.0)
     t_lr = when(["左右手"], t_kids + 0.6)
     t_dunno = when(["不知道"], t_kids + 3.5)
     t_wrong = when(["什么是错"], t_dunno + 1.8)
-    t_beasts = when(["牛羊", "牲畜"], t_dunno + 3.6)
+    t_beasts = when(["还有许多", "牛羊", "牲畜"], t_dunno + 3.6)
     t_how = when(["我怎么能", "我怎能", "怎么能"], t_beasts + 2.4)
     t_care = when(["心疼他们", "爱惜他们", "不心疼", "不爱惜"], t_how + 1.0)
 
@@ -563,7 +563,7 @@ def build(ctx):
 
     for (qx, qy, j) in q_spots:
         tq = t_q0 + 0.15 * j
-        sc.add(f"q{j}", doc(_qmark(qx, qy, 0.82)), z=9.2, wc=0.2, motion=lambda t, qx=qx, qy=qy, tq=tq: Tf(
+        sc.add(f"q{j}", doc(_qmark(qx, qy, 1.0)), z=9.2, wc=0.2, motion=lambda t, qx=qx, qy=qy, tq=tq: Tf(
             dy=-4 * math.sin(2 * math.pi * (t - tq) / 1.1),
             rot=8 * math.sin(2 * math.pi * (t - tq) / 1.9),
             sx=0.4 + 0.6 * M.progress(t, tq, tq + 0.3, "back"), sy=0.4 + 0.6 * M.progress(t, tq, tq + 0.3, "back"),
@@ -874,7 +874,7 @@ def build(ctx):
         stars += _star4(sx_, sy_, srng.uniform(4, 8))
     night = doc(f'<g clip-path="url(#bubin)"><rect x="{x0b}" y="{y0b}" width="{wb}" height="{hb_}" fill="url(#bnight)"/>'
                 f'{stars}</g>',
-                clip + S.lin_grad("bnight", [(0, "#34416f"), (0.55, "#5d5f95"), (0.85, "#a98aa6"), (1, "#c79a9c")]))
+                clip + S.lin_grad("bnight", [(0, "#4a5690"), (0.5, "#7a76ac"), (0.8, "#bf98b2"), (1, "#e2b3a6")]))
     day = doc(f'<g clip-path="url(#bubin)"><rect x="{x0b}" y="{y0b}" width="{wb}" height="{hb_}" fill="url(#bday)"/>'
               f'<circle cx="{BC[0] - 165}" cy="{BC[1] - 80}" r="34" fill="#fcd877" stroke="#eaa951" stroke-width="3"/>'
               f'<circle cx="{BC[0] - 165}" cy="{BC[1] - 80}" r="70" fill="#fff2c0" opacity="0.35"/></g>',

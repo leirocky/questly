@@ -9,6 +9,7 @@ import random
 from art import characters as C
 from art import props as PR
 from art import style as S
+from art.scenes_v1 import s02_call as V2
 from art.style import P
 from engine import fx as FX
 from engine import motion as M
@@ -185,7 +186,7 @@ JX, JS = 640.0, 1.15                      # Jonah's kneeling spot on the coast r
 GAP = (690, 170)                          # where the clouds part (God's light comes from here)
 CITY = (1380, 1880, 598, 0.36)            # the distant Nineveh skyline: x0, x1, ground y, scale
 CITY_C = (1630, 505)                      # its middle (glow / trail target)
-SIGN = (1360, 858, 0.8)                   # the signpost of s03 (他施 west, 尼尼微 east) on the far verge
+SIGN = (1572, 812, 0.7)                   # the signpost of s03 (他施 west, 尼尼微 east) on the far verge
 ROAD_X = [-60, 300, 640, 1000, 1300, 1550, 1700, 1800]
 ROAD_TOP = [990, 955, 932, 905, 872, 828, 770, 708]
 ROAD_BOT = [1260, 1140, 1045, 990, 950, 900, 812, 716]
@@ -193,7 +194,7 @@ SHORE = [(-60, 1010), (150, 900), (380, 790), (600, 700), (780, 640), (930, 600)
 INNER = [(-60, 1120), (200, 990), (430, 870), (640, 782), (820, 708), (960, 646), (1060, 612), (1120, 600)]
 CREST = [(980, 592), (1100, 622), (1400, 658), (1800, 700), (2200, 690), (2680, 680)]
 
-A_W, N_W, HOLD_W = 40.0, 5, 0.095         # walk rig: stride half-length, drawings per step, s per drawing
+A_W, N_W, HOLD_W = 40.0, 5, 0.12         # walk rig: stride half-length, drawings per step, s per drawing
 
 PUNCT = "，、。：；！？,.!?:;"
 
@@ -566,6 +567,28 @@ def gull_frames(x, y, s_, facing):
     return [doc(PR.gull(x, y, s_, facing, wing=w)) for w in (1.0, 0.5, 0.0, -0.5, -1.0)]
 
 
+BFLY = (1180, 800)
+
+
+def butterfly_svg(open_k):
+    """Small pale-yellow butterfly seen from above, wings opened by open_k (0..1) (as in s02)."""
+    x, y = BFLY
+    ink = P["ink"]
+    k = max(0.12, open_k)
+    out = ""
+    for side in (-1, 1):
+        ux, lx = x + side * 15 * k, x + side * 11 * k
+        out += (f'<ellipse cx="{f1(ux)}" cy="{f1(y - 7)}" rx="{f1(15 * k)}" ry="13" fill="#f7d978" stroke="{ink}" '
+                f'stroke-width="2.4" transform="rotate({-side * 18} {f1(ux)} {f1(y - 7)})"/>')
+        out += (f'<ellipse cx="{f1(lx)}" cy="{f1(y + 9)}" rx="{f1(10 * k)}" ry="9" fill="#f3b45e" stroke="{ink}" '
+                f'stroke-width="2.2"/>')
+        out += f'<circle cx="{f1(x + side * 17 * k)}" cy="{f1(y - 9)}" r="{f1(3.2 * k + 1)}" fill="#e98a52"/>'
+    out += f'<ellipse cx="{x}" cy="{y + 1}" rx="3.4" ry="13" fill="{P["ink_soft"]}" stroke="{ink}" stroke-width="1.6"/>'
+    out += (f'<path d="M{x - 1},{y - 11} q-6,-10 -11,-12 M{x + 1},{y - 11} q6,-10 11,-12" fill="none" '
+            f'stroke="{ink}" stroke-width="1.6" stroke-linecap="round"/>')
+    return doc(S.g(out, filter="wobble-fine"))
+
+
 def orb_svg(x, y):
     defs = S.rad_grad("s14orb", [(0, "#fffbe8", 1), (0.28, "#ffe48a", 0.9), (0.6, "#ffcf5a", 0.35),
                                  (1, "#ffc850", 0)])
@@ -617,8 +640,12 @@ def build(ctx):
     t_city = w("尼尼微", 0.0, d=L1.start + 1.8, after=L1.start - 0.01) - 0.1   # the far city lights up
     t_look = t_city + 0.25                                     # ... and he looks over at it
     t_word = L1.at("把我告诉你的话")                             # God's word: a little light comes down to him
-    t_orb1 = t_word + 1.15                                     # ... and melts into his heart
-    t_tell = w("说给", 0.0, d=t_word + 1.9, after=t_word)        # "说给城里的人听": a golden path to the city
+    t_orb1 = t_word + 1.0                                      # ... and melts into his heart
+    # "说给城里的人听": a golden path to the city. God's voice lingers on this half of the chunk (the comma pause
+    # sits at ~40 % of it on the voice take), so a character-count estimate would be late here.
+    c_word = next(c for c in L1.chunks if "把我告诉你的话" in c.text) if L1.chunks else L1
+    t_tell = c_word.start + 0.41 * (c_word.end - c_word.start) if "说给" in c_word.text else \
+        w("说给", 0.0, d=t_word + 1.6, after=t_word)
     t_trail1 = t_tell + 1.5
     t_quiet = L1.end + 0.2                                     # God has finished speaking: the light softens
     t_obey = w("听话", 0.0, d=L2.start + 1.3, after=L2.start - 0.01) - 0.12   # "约拿听话了": he nods
@@ -638,7 +665,7 @@ def build(ctx):
         (t_quiet + 0.4, Cam(1000, 600, 1860)),
         (t_rise - 0.2, CAM_W),
         (t_walk + 0.3, Cam(960, 604, 1780)),
-        (T, Cam(1330, 604, 1860)),
+        (T, Cam(1250, 604, 1860)),
     ], ["sine", "sine", "sine", "sine", "sine", "inout"])
     sc.camera = cam
     cam_x0 = CAM_L1.x
@@ -677,7 +704,7 @@ def build(ctx):
                         + 0.35 * math.sin(math.pi * _clamp((t - t_trail1 + 0.2) / 1.2))) * \
         (1 - 0.6 * part(t, L2.start, L2.start + 2.0, "sine"))   # noqa: E731
     sc.add("city_glow", city_glow_svg(), z=2.1, wc=0, blend="add",
-           motion=M.combine(par(0.3), lambda t: Tf(alpha=min(1.0, city_a(t)))))
+           motion=M.combine(par(0.3), lambda t: Tf(alpha=min(0.85, 0.85 * city_a(t)))))
 
     # ---------------------------------------------------------------- the coast (static) + living water
     sc.add("land", land_svg(), z=3)
@@ -702,6 +729,27 @@ def build(ctx):
     for i, (x, y, s_, ln, per) in enumerate(palms):
         sc.add(f"palm{i}", palm_svg(x, y, s_, ln), z=3.5 + i * 0.01,
                motion=M.sway(0.8, per, (x, y), phase=i * 0.21))
+
+    # sheep grazing in the meadow (planted hooves, the heads dip to the grass: v1 s02 split)
+    for i, (x, y, s_, f, per, ph) in enumerate(((1830, 965, 0.5, -1, 4.2, 0.0), (1975, 1000, 0.56, -1, 5.1, 0.45))):
+        body, head = V2._sheep_parts(x, y, s_, f)
+        br = M.breathe(0.012, 2.6 + 0.3 * i, pivot=(x, y), phase=0.3 * i)
+        sc.add(f"sheep{i}", doc(C.ground_shadow(x, y, s_, width=180, opacity=0.2) + body), z=3.45 + i * 0.01,
+               motion=br)
+        if head:
+            nx, ny = PR.local_to_stage(x, y, s_, f, *V2.SHEEP_NECK)
+
+            def head_m(t, br=br, f=f, nx=nx, ny=ny, y=y, per=per, ph=ph):
+                dip = 16 * (0.5 + 0.5 * math.sin(2 * math.pi * (t / per + ph))) ** 3
+                return Tf(dy=-(br(t).sy - 1) * (y - ny), rot=dip * f, px=nx, py=ny)
+            sc.add(f"sheep{i}_head", doc(head), z=3.455 + i * 0.01, motion=head_m)
+
+    # a butterfly over the flowers by the road
+    sc.add("butterfly", [butterfly_svg(k) for k in (1.0, 0.55, 0.15)], z=7.5, wc=0.4,
+           frame_at=lambda t: float((0, 1, 2, 1)[int(t * 14) % 4]),
+           motion=lambda t: Tf(dx=120 * math.sin(2 * math.pi * t / 11.0) + 40 * math.sin(2 * math.pi * t / 3.9 + 1),
+                               dy=40 * math.sin(2 * math.pi * t / 6.7 + 0.6) + 10 * math.sin(2 * math.pi * t * 1.6),
+                               rot=8 * math.sin(2 * math.pi * t / 2.2)))
 
     # ---------------------------------------------------------------- golden rays (behind Jonah)
     src = (GAP[0] + 10, -220)
@@ -747,12 +795,13 @@ def build(ctx):
           (t_word, J["chest"]), (t_orb1 - 0.05, J["chest_p"]), (t_tell, J["city"]),
           (t_tell + 1.6, J["city_b"]), (t_tell + 1.6 + blink, J["city"]),
           (L2.start + 0.2, J["chest"]),
-          (t_obey, J["nod"]), (t_obey + 0.3, J["chest"]), (t_obey + 0.58, J["nod"]), (t_obey + 0.95, J["chest"]),
+          (t_obey, J["nod"]), (t_obey + 0.26, J["chest"]), (t_obey + 0.52, J["nod"]),
+          (min(t_obey + 0.82, t_rise - 0.12), J["chest"]),
           (t_rise, J["rise"]), (t_stand, J["stand"]), (t_stand + 0.35, J["stand_b"]),
           (t_stand + 0.35 + blink, J["stand"])]
     hops = [(t_call, 8), (t_rise, 10), (t_stand, 14)]
-    squashes = [(t_open, 0.02), (t_look, 0.02), (t_word, 0.025), (t_tell, 0.02), (t_obey, 0.03),
-                (t_obey + 0.58, 0.03), (t_stand + 0.28, 0.04)]
+    squashes = [(t_open, 0.02), (t_look, 0.02), (t_word, 0.025), (t_tell, 0.02), (t_stand + 0.28, 0.04)]
+    nods = [t_obey, t_obey + 0.52]
     n_draw = int(math.ceil((T + 0.2 - t_walk) / HOLD_W))
     xs = [JX]
     for i in range(n_draw + 1):
@@ -777,7 +826,7 @@ def build(ctx):
             s_ = walk_scale(x) / JS
             return Tf(dx=x - JX, dy=road_y(x) - JY, sx=s_, sy=s_, px=JX, py=JY)
         br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)
-        nod = 0.0
+        nod = sum(5 * math.sin(math.pi * _clamp((t - tn) / 0.3)) for tn in nods if tn <= t <= tn + 0.3)
         return Tf(dy=dy + nod, sx=sx, sy=sy * br, px=JX, py=JY)
     sc.add("staff", doc(staff_alone(JX + STAFF_DX * JS, JY, JS)), z=4.9,
            motion=lambda t: Tf(alpha=1.0 if t < t_rise else 0.0))
@@ -818,8 +867,13 @@ def build(ctx):
     # ---------------------------------------------------------------- effects
     sc.fx = [
         FX.motes((0, 200, SW, 1150), count=24, color=(255, 246, 214), size=(3, 6), alpha=100),
-        FX.sparkles((JX - 260, 260, JX + 330, JY - 40), count=24, t0=t_light + 0.4, t1=t_quiet + 1.0,
+        # golden sparkles round Jonah while God speaks (three boxes that keep clear of his face)
+        FX.sparkles((JX - 260, 280, JX + 300, JY - 420), count=14, t0=t_light + 0.4, t1=t_quiet + 1.0,
                     color=(255, 238, 170), size=(8, 18), period=1.7, drift=-8, seed=19),
+        FX.sparkles((JX - 300, JY - 400, JX - 125, JY - 50), count=7, t0=t_light + 0.5, t1=t_quiet + 1.0,
+                    color=(255, 238, 170), size=(7, 15), period=1.5, drift=-6, seed=23),
+        FX.sparkles((JX + 75, JY - 400, JX + 300, JY - 50), count=7, t0=t_light + 0.6, t1=t_quiet + 1.0,
+                    color=(255, 238, 170), size=(7, 15), period=1.9, drift=-6, seed=29),
         FX.sparkles((CITY[0] - 40, CITY_C[1] - 150, CITY[1] + 40, CITY[2] + 10), count=16, t0=t_city + 0.3,
                     t1=L2.start + 0.8, color=(255, 240, 180), size=(8, 16), period=1.3, drift=0, seed=31),
         FX.sparkles((orb1[0] - 90, orb1[1] - 80, orb1[0] + 90, orb1[1] + 60), count=10, t0=t_orb1 - 0.1,

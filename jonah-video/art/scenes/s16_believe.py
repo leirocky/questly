@@ -624,12 +624,13 @@ def build(ctx):
     t_hope = within(c1c, 0.54)               # "表示愿意改": peaceful faces, hopeful light
 
     # ---- sky, sun, clouds, far city ----
+    # sky + far city are one static group; the clouds drift in front of it, high above the skyline
     sc.add("sky", sky_svg(), z=0, wc=0.6)
+    sc.add("far", far_svg(), z=0.5)
     sc.add("clouds_hi", clouds_svg([(380, 150, 420, 120, 3), (1180, 90, 340, 100, 4), (1960, 170, 380, 110, 5)]),
            z=1, motion=M.drift(vx=6))
-    sc.add("clouds_lo", clouds_svg([(760, 330, 260, 78, 6), (1640, 300, 230, 70, 7)], "#fbead2", "#efc9a0"),
+    sc.add("clouds_lo", clouds_svg([(930, 250, 250, 74, 6), (1640, 290, 230, 70, 7)], "#fbead2", "#efc9a0"),
            z=1.2, motion=M.drift(vx=-4))
-    sc.add("far", far_svg(), z=2)
 
     # doves gliding far over the roofs (sparse, slow)
     fr_r, fr_l = dove_frames(1), dove_frames(-1)
