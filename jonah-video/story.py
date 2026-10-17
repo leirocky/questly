@@ -12,7 +12,8 @@ TITLE = "约拿的故事"
 SUBTITLE = "圣经绘本 · 约拿书"
 
 # Each scene: id (matches art/scenes/<id>.py), a short English note for the
-# illustrators and composer, music mood, and its lines: (speaker, text[, pause_after_s]).
+# illustrators and composer, music mood, optional transition into the scene
+# (ffmpeg xfade name, default "fade"), and its lines: (speaker, text[, pause_after_s]).
 SCENES = [
     {
         "id": "s01_title",
@@ -79,20 +80,21 @@ SCENES = [
         "id": "s07_belly",
         "note": "Jonah 1:17-2:9. Inside the fish for three days and nights; Jonah prays in the dark.",
         "mood": "belly",
+        "transition": "fadeblack",
         "lines": [
             ("N", "约拿在大鱼的腹中，过了三天三夜。"),
             ("N", "他在黑暗中向上帝祷告："),
             ("J", "我在患难中求告你，你就应允我。"),
-            ("J", "救恩出于耶和华！"),
+            ("J", "救恩属于耶和华！"),
         ],
     },
     {
         "id": "s08_shore",
         "note": "Jonah 2:10. God speaks to the fish; it spits Jonah out onto dry land.",
         "mood": "shore",
+        "transition": "circleopen",
         "lines": [
-            ("N", "上帝吩咐大鱼，"),
-            ("N", "大鱼就把约拿吐到了陆地上。"),
+            ("N", "上帝吩咐大鱼，大鱼就把约拿吐到了陆地上。"),
         ],
     },
     {
@@ -135,7 +137,7 @@ SCENES = [
         "mood": "lesson",
         "lines": [
             ("G", "约拿，这棵蓖麻不是你栽种的，"),
-            ("G", "你尚且爱惜它。"),
+            ("G", "你尚且这样爱惜它。"),
             ("G", "尼尼微有十二万多不能分辨左右手的人，"),
             ("G", "还有许多牲畜，我怎能不爱惜呢？"),
         ],

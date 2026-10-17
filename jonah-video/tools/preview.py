@@ -5,6 +5,7 @@ Examples (run from jonah-video/):
   python3 tools/preview.py s04_storm --times 0,2.5,7  # specific times (s)
   python3 tools/preview.py s04_storm --lines          # one still at the middle of every narration line
   python3 tools/preview.py s04_storm --clip           # full scene clip (with voice) -> build/preview/<id>.mp4
+  python3 tools/preview.py s04_storm --bench          # per-frame render cost
 Outputs go to build/preview/.
 """
 import argparse
@@ -45,6 +46,7 @@ def main():
     ap.add_argument("--clip", action="store_true")
     ap.add_argument("--n", type=int, default=6)
     ap.add_argument("--nosubs", action="store_true")
+    ap.add_argument("--bench", action="store_true", help="time 30 frames single-threaded")
     a = ap.parse_args()
 
     tl = load_timeline()
@@ -53,6 +55,17 @@ def main():
     out_dir = BUILD / "preview"
     out_dir.mkdir(parents=True, exist_ok=True)
     D = sc.ctx.duration
+
+    if a.bench:
+        import cv2
+        cv2.setNumThreads(1)
+        r = compositor.Renderer(sc)
+        tb = time.time()
+        for i in range(30):
+            r.frame_array(D * i / 30)
+        ms = (time.time() - tb) / 30 * 1000
+        print(f"bench: {ms:.0f} ms/frame single-threaded (budget 450 ms) — {'OK' if ms < 450 else 'TOO SLOW'}")
+        return
 
     if a.clip:
         vid = out_dir / f"{a.scene}_silent.mp4"

@@ -26,7 +26,7 @@ from engine.paths import BUILD, CACHE, FPS, MODELS, SR, ensure_dirs  # noqa: E40
 VOICES = {
     "N": {"engine": "matcha", "sid": 0, "speed": 1.05, "fx": None, "gain_db": 0.0},
     "G": {"engine": "kokoro", "sid": 101, "speed": 1.0, "fx": "divine", "gain_db": 0.0},
-    "J": {"engine": "kokoro", "sid": 95, "speed": 1.08, "fx": None, "gain_db": 0.0},
+    "J": {"engine": "kokoro", "sid": 91, "speed": 1.08, "fx": None, "gain_db": 0.0},
 }
 # Per-scene overrides of a speaker's effect (Jonah praying inside the fish).
 SCENE_FX = {("s07_belly", "J"): "cave"}
@@ -146,20 +146,20 @@ def apply_fx(x, sr, fx):
         return x
     if fx == "divine":
         # Warm, softly echoing voice from heaven: low-shelf warmth + airy hall reverb.
-        ir = _reverb_ir(sr, 2.2, 3.2, 5000, seed=7, predelay_s=0.035)
-        wet = signal.fftconvolve(x, ir)[: len(x) + int(1.2 * sr)]
+        ir = _reverb_ir(sr, 1.8, 4.2, 5000, seed=7, predelay_s=0.035)
+        wet = signal.fftconvolve(x, ir)[: len(x) + int(1.0 * sr)]
         dry = np.concatenate([x, np.zeros(len(wet) - len(x), np.float32)])
         b, a = signal.butter(2, 220 / (sr / 2), "low")
         warm = signal.lfilter(b, a, dry)
-        return (dry + 0.35 * warm + 0.30 * wet).astype(np.float32)
+        return (dry + 0.35 * warm + 0.17 * wet).astype(np.float32)
     if fx == "cave":
         # Inside the fish: muffled, boomy, short dense reverb.
-        b, a = signal.butter(4, 2600 / (sr / 2), "low")
+        b, a = signal.butter(2, 4200 / (sr / 2), "low")
         muff = signal.lfilter(b, a, x)
         ir = _reverb_ir(sr, 1.4, 4.5, 1800, seed=11, predelay_s=0.02)
         wet = signal.fftconvolve(muff, ir)[: len(x) + int(0.9 * sr)]
         dry = np.concatenate([muff, np.zeros(len(wet) - len(x), np.float32)])
-        return (0.85 * dry + 0.45 * wet).astype(np.float32)
+        return (0.9 * dry + 0.22 * wet).astype(np.float32)
     raise ValueError(fx)
 
 
@@ -214,6 +214,7 @@ def build():
             cur = start + speech_len + pause
         dur = frames(lines[-1]["end"] + tail)
         scenes.append({"id": sc["id"], "mood": sc["mood"], "note": sc["note"],
+                       "transition": sc.get("transition", "fade"),
                        "start": frames(t_scene), "duration": dur, "lines": lines})
         t_scene = frames(t_scene + dur - story.XFADE)
 
