@@ -4,8 +4,9 @@ Engines (sherpa-onnx, models in .cache/models — see README):
   * matcha-icefall-zh-baker + vocos-22khz   -> narrator (clear female voice)
   * ZipVoice (distill, zh-en, Emilia)       -> God, Jonah, captain, sailors, king. Zero-shot: each male
     voice takes its timbre from a short Kokoro v1.1-zh prompt clip, while ZipVoice (trained on natural
-    conversational speech) supplies the prosody and pauses. Chinese goes through a pinyin lexicon built
-    with pypinyin in context (voice/zv_lexicon.py), so polyphones follow their words.
+    conversational speech) supplies the prosody and pauses.
+  Both front ends get pronunciation lexicons generated from the script (voice/lexicons.py): readings in
+  context plus tone sandhi, so polyphones follow their words.
   * Kokoro v1.1-zh                          -> optional direct engine for the male voices (MALE_ENGINE).
 
 Each utterance is synthesised whole, checked by ASR (retried with other settings when it misreads),
@@ -70,7 +71,7 @@ def _engine(name):
                 matcha=so.OfflineTtsMatchaModelConfig(
                     acoustic_model=str(d / "model-steps-3.onnx"),
                     vocoder=str(MODELS / "vocos-22khz-univ.onnx"),
-                    lexicon=str(d / "lexicon.txt"),
+                    lexicon=str(_narrator_lexicon()[0]),
                     tokens=str(d / "tokens.txt"),
                     dict_dir=str(d / "dict"),
                 ),
@@ -95,10 +96,8 @@ def _engine(name):
             rule_fsts=f"{d}/phone-zh.fst,{d}/date-zh.fst,{d}/number-zh.fst",
         )
     elif name == "zipvoice":
-        from voice import zv_lexicon
-
         d = MODELS / "sherpa-onnx-zipvoice-distill-zh-en-emilia"
-        lex = zv_lexicon.build(story.SCENES, PROMPTS.values(), d / "tokens.txt")
+        lex = _zipvoice_lexicon()
         cfg = so.OfflineTtsConfig(
             model=so.OfflineTtsModelConfig(
                 zipvoice=so.OfflineTtsZipvoiceModelConfig(
@@ -115,6 +114,44 @@ def _engine(name):
     return _engines[name]
 
 
+def _engine_texts():
+    from voice import lexicons as LX
+
+    n, z = LX.texts_by_engine(story.SCENES, [k for k, v in VOICES.items() if v["engine"] == "matcha"])
+    return n, z + list(PROMPTS.values())
+
+
+def _narrator_lexicon():
+    """(path, version) of the narrator lexicon: matcha's own merged with script-specific fixes."""
+    from voice import lexicons as LX
+
+    if "narrator" not in _lex:
+        _lex["narrator"] = LX.narrator_lexicon(_engine_texts()[0])
+    return _lex["narrator"]
+
+
+def _zipvoice_content():
+    from voice import lexicons as LX
+
+    if "zv" not in _lex:
+        _lex["zv"] = LX.zipvoice_content(_engine_texts()[1])
+    return _lex["zv"]
+
+
+def _zipvoice_lexicon():
+    content = _zipvoice_content()
+    tokens = MODELS / "sherpa-onnx-zipvoice-distill-zh-en-emilia" / "tokens.txt"
+    valid = {line.split("\t")[0] for line in open(tokens, encoding="utf-8")}
+    bad = [ln for ln in content.splitlines() if any(t not in valid for t in ln.split()[1:])]
+    if bad:
+        raise ValueError(f"ZipVoice lexicon has tokens the model does not know: {bad[:5]}")
+    path = CACHE / "zipvoice_lexicon.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    return path
+
+
+_lex = {}
 _asr = None
 
 
@@ -160,8 +197,9 @@ def synth_raw(text, voice):
     """Synthesize (cached) and return float32 mono at the engine's sample rate."""
     extra = ""
     if voice["engine"] == "zipvoice":
-        from voice import zv_lexicon
-        extra = zv_lexicon.version()
+        extra = hashlib.sha1(_zipvoice_content().encode()).hexdigest()[:12]
+    elif voice["engine"] == "matcha":
+        extra = _narrator_lexicon()[1]
     path = _cache_path(text, voice, extra)
     if path.exists():
         x, sr = sf.read(path, dtype="float32")

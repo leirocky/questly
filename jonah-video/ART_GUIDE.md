@@ -65,7 +65,7 @@ Declare sound with `sc.sfx(name, at, dur=..., gain_db=..., pan=...)` using these
 
 | loops (pass `dur`) | one-shots (`dur=None`) |
 | --- | --- |
-| `waves_calm`, `waves_storm`, `storm_wind`, `rain`, `wind_soft`, `wind_hot`, `ship_creak`, `underwater`, `bubbles`, `heartbeat`, `drip`, `footsteps`, `footsteps_run`, `crowd`, `birds`, `snore`, `heat` | `thunder` (~3.5 s), `splash` (~1.5 s), `splash_small` (~0.8 s), `whoosh` (~0.8 s), `gulp` (~1 s), `spit` (~0.8 s), `thud` (~0.4 s), `chime` (~2.5 s divine shimmer), `sparkle` (~1.2 s), `grow` (~2 s rising), `wither` (~2 s falling), `crunch` (~1.5 s nibbling), `gull` (~1.5 s), `lots` (~1.5 s wooden rattle), `cloth` (~0.8 s), `sheep` (~1 s), `pop` (~0.3 s) |
+| `waves_calm`, `waves_storm`, `storm_wind`, `rain`, `wind_soft`, `wind_hot`, `ship_creak`, `underwater`, `bubbles`, `heartbeat`, `drip`, `footsteps`, `footsteps_run`, `crowd`, `birds`, `snore`, `heat`, `oars` (rhythmic rowing strokes), `fire` (small altar flame crackle), `night` (soft crickets), `cheer` (joyful crowd) | `thunder` (~3.5 s), `splash` (~1.5 s), `splash_small` (~0.8 s), `whoosh` (~0.8 s), `gulp` (~1 s), `spit` (~0.8 s), `thud` (~0.4 s), `chime` (~2.5 s divine shimmer), `sparkle` (~1.2 s), `grow` (~2 s rising), `wither` (~2 s falling), `crunch` (~1.5 s nibbling), `gull` (~1.5 s), `lots` (~1.5 s wooden rattle), `cloth` (~0.8 s), `sheep` (~1 s), `pop` (~0.3 s), `coins` (~0.8 s clink), `horn` (~2 s herald horn), `hammer` (~1.5 s wooden knocks), `rooster` (~1.5 s gentle crow) |
 
 Ambiences (waves, wind, rain) usually run the whole scene with ~0.8 s fades so they overlap the dissolves;
 one-shots (splash, thunder, gulp) go exactly on the visual event. Narration is the priority: keep ambiences at
