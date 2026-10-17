@@ -56,8 +56,8 @@ SEA_RIGHT = 2260           # sea layers end under the quay / behind the harbour 
 SEA_FAR_R = 2950           # the far sea ends behind the eastern hills (no sea on the Nineveh side)
 
 P1X, P2X = 2120, 1950      # pier sailors: P1 carries a crate, P2 swings a jar up to the ship
-DECK_SAILOR_LX = 90        # deck sailor (local ship x): by the mast, catches the jar, then hauls the halyard
-CAPTAIN_LX = 230           # captain near the bow
+DECK_SAILOR_LX = 72        # deck sailor (local ship x): by the mast, catches the jar, then hauls the halyard
+CAPTAIN_LX = 262           # captain near the bow
 
 SHIP_SEED = 211            # shared watercolour seed: ship_back and the unrolling sail band match pixel for pixel
 OLIVE_LEAF, OLIVE_DARK, OLIVE_BARK = "#a3b08a", "#7d8c69", "#9a8c78"
@@ -207,9 +207,9 @@ def far_svg():
         w = rng.uniform(16, 44) * (0.6 + (y - hz) / 300)
         body += (f'<path d="M{f1(x)},{f1(y)} l{f1(w)},0" stroke="#fbfdf6" stroke-width="2.6" '
                  f'stroke-linecap="round" opacity="{rng.uniform(0.35, 0.7):.2f}"/>')
-    # a distant ship on the horizon, behind the town end of the harbour where nothing covers it
-    # (hull below its waterline painted over with sea)
-    for x, y, s, f in ((2350, 592, 0.075, -1),):
+    # a distant ship on the open sea to the west (ahead of the departing ship; hull below its waterline painted
+    # over with sea)
+    for x, y, s, f in ((1050, 594, 0.07, -1),):
         body += PR.ship(x, y, s, f, sail="full", lantern=False)
         body += f'<rect x="{x - 70}" y="{y}" width="140" height="16" fill="url(#s3farsea)"/>'
     # the rocks off Joppa (they slide into place west of the departing ship by the end)
@@ -231,7 +231,15 @@ def far_svg():
     body += S.g(rocks, filter="wobble")
     # far hills to the east (toward Nineveh): they run past the right edge of the stage and hide the end of
     # the far sea, so there is only land and sky on the Nineveh side
-    far_hills = S.path(S.hill(2000, 4100, 640, 175, seed=11, bottom=900, bumps=5), fill="url(#s3hill1)", sw=2.5)
+    # (the west end tapers down into the sea as a cape: the parallax slides it out from behind the town)
+    rh = random.Random(11)
+    hp = [(2000 + 2100 * i / 10, 640 - 175 * math.sin(math.pi * i / 10) * rh.uniform(0.75, 1.1)) for i in range(1, 10)]
+    top = [(1590, 614), (1720, 605), (1860, 596), (2000, 590)] + hp + [(4100, 640)]
+    far_d = (S.smooth_path(top, closed=False) + " L4100,900 L2330,900 C2160,800 1920,694 1660,628 "
+             "Q1615,620 1590,614 Z")
+    far_hills = S.path(far_d, fill="url(#s3hill1)", sw=2.5)
+    far_hills += (f'<path d="M1585,618 Q1640,626 1700,640 C1900,690 2050,740 2160,790" stroke="{P["foam"]}" '
+                  f'stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>')
     near_hills = S.path(S.hill(2850, 4050, 880, 280, seed=4, bottom=1000, bumps=3), fill="url(#s3hill2)", sw=3)
     body += S.g(far_hills, filter="wobble")
     trees = ""
@@ -246,7 +254,7 @@ def far_svg():
         grove += tree(x, y, sc, seed=i + 10, haze=0.12)
     grove = S.g(grove, filter="wobble-fine")
     # sheep grazing on the slope behind Jonah (well clear of his refusing palm and of the signboards)
-    for x, y, f in ((3195, 728, 1), (3252, 718, -1), (3045, 770, 1)):
+    for x, y, f in ((3165, 724, 1), (3220, 713, -1)):
         grove += PR.animal(x, y, 0.2, f, kind="sheep")
     body += grove
     return doc(body, defs)
@@ -660,21 +668,23 @@ def sail_roll_svg():
 
 def halyard_svg(hauling, hands):
     """Halyard down the mast; while hauling it runs from the mast to the deck sailor's fists."""
-    mx = SHIP_X + 10 * K + 3          # just in front of the mast centre line
+    mx = SHIP_X + 10 * K + 15         # hangs just beside the mast, on the side the pull pose's rope line rises to
     top = SHIP_WL - 846 * K
-    rope = P["sackcloth_dark"]
+    rope = S.mix(P["sackcloth"], P["wood_light"], 0.4)
+    block = (f'<ellipse cx="{f1(mx)}" cy="{f1(top + 10)}" rx="6" ry="8" fill="{P["wood_dark"]}" '
+             f'stroke="{P["ink"]}" stroke-width="2.4"/>')
     if not hauling:
-        d = f"M{f1(mx)},{f1(top)} L{f1(mx + 1)},{f1(RAIL - 18)}"
+        d = f"M{f1(mx)},{f1(top + 12)} L{f1(mx + 2)},{f1(RAIL - 16)}"
     else:
         (fx, fy), (nx, ny) = hands     # far fist (next to the mast), near fist
-        d = (f"M{f1(mx)},{f1(top)} L{f1(mx + 1)},{f1(fy - 5)} L{f1(fx)},{f1(fy)} L{f1(nx)},{f1(ny)} "
+        d = (f"M{f1(mx)},{f1(top + 12)} L{f1(mx)},{f1(fy - 14)} L{f1(fx)},{f1(fy)} L{f1(nx)},{f1(ny)} "
              f"Q{f1(nx - 22)},{f1(ny + 8)} {f1(nx - 26)},{f1(ny + 46)}")
-    body = (f'<path d="{d}" stroke="{P["ink"]}" stroke-width="5.6" fill="none" stroke-linejoin="round" '
+    body = (f'<path d="{d}" stroke="{P["ink"]}" stroke-width="6.4" fill="none" stroke-linejoin="round" '
             f'stroke-linecap="round"/>'
-            f'<path d="{d}" stroke="{rope}" stroke-width="2.8" fill="none" stroke-linejoin="round" '
-            f'stroke-linecap="round"/>')
+            f'<path d="{d}" stroke="{rope}" stroke-width="3.2" fill="none" stroke-linejoin="round" '
+            f'stroke-linecap="round"/>' + block)
     if not hauling:
-        body += (f'<rect x="{f1(mx - 9)}" y="{f1(RAIL - 24)}" width="20" height="7" rx="3" fill="{P["wood_dark"]}" '
+        body += (f'<rect x="{f1(mx - 8)}" y="{f1(RAIL - 22)}" width="18" height="7" rx="3" fill="{P["wood_dark"]}" '
                  f'stroke="{P["ink"]}" stroke-width="2"/>')
     return doc(S.g(body, filter="wobble-fine"))
 
@@ -695,7 +705,7 @@ def deck_cargo_svg():
         return SHIP_WL + (-165 - 75 * (abs(lx) / 480) ** 3.2) * K
 
     # two amphorae at the bow (partly behind the captain)
-    for lx, sc, rot in ((300, 0.5, -4), (336, 0.46, 6)):
+    for lx, sc, rot in ((322, 0.48, -4), (354, 0.44, 6)):
         x = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, lx, 0)[0]
         out += PR.jar(x, deck_y(lx) - 80 * sc, sc, rot=rot)
     # a stack of crates and a sack at the stern (Jonah hides beside them)
@@ -721,31 +731,40 @@ STERN_X = SHIP_X + 470 * K
 
 
 def wake_svg():
-    """Bow wave (a bold foam 'V'), foam along the waterline and a short wake at the stern (moves with the ship)."""
-    y = 951
+    """Bow wave (a foam crest hugging the bow and a bold diverging foam 'V'), foam along the waterline and a
+    short wake at the stern (moves with the ship). Cream strokes with a soft teal under-shadow so they read
+    on the light water."""
+    y = 950                       # visible waterline (the sea_front surface)
     bow, stern = BOW_X, STERN_X
-    fo = P["foam"]
-    out = (  # the bow wave: a curling crest and two diverging foam strokes
-        f'<path d="M{f1(bow - 34)},{f1(y + 6)} q22,-30 58,-22 q24,6 38,-6" stroke="{fo}" stroke-width="8" '
-        f'fill="none" stroke-linecap="round" opacity="0.95"/>'
-        f'<path d="M{f1(bow - 26)},{f1(y + 10)} Q{f1(bow + 60)},{f1(y + 26)} {f1(bow + 170)},{f1(y + 40)}" '
-        f'stroke="{fo}" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.9"/>'
-        f'<path d="M{f1(bow - 12)},{f1(y + 2)} Q{f1(bow + 80)},{f1(y + 6)} {f1(bow + 190)},{f1(y + 2)}" '
-        f'stroke="{fo}" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.9"/>'
-        f'<path d="M{f1(bow - 52)},{f1(y + 24)} q46,-10 100,0" stroke="{fo}" stroke-width="5" fill="none" '
-        f'stroke-linecap="round" opacity="0.75"/>'
-        # foam along the waterline
-        f'<path d="M{f1(bow + 200)},{f1(y + 3)} C{f1(bow + 330)},{f1(y + 9)} {f1(stern - 250)},{f1(y + 9)} '
-        f'{f1(stern - 60)},{f1(y + 3)}" stroke="{fo}" stroke-width="5" fill="none" stroke-linecap="round" '
-        f'opacity="0.7"/>')
+    fo = "#fbf8ee"
+    sh = S.mix(P["sea"], P["sea_deep"], 0.35)
+
+    def stroke(d, w, op=0.95):
+        return (f'<path d="{d}" stroke="{sh}" stroke-width="{w + 4}" fill="none" stroke-linecap="round" '
+                f'opacity="{op * 0.35:.2f}" transform="translate(0,3)"/>'
+                f'<path d="{d}" stroke="{fo}" stroke-width="{w}" fill="none" stroke-linecap="round" '
+                f'stroke-linejoin="round" opacity="{op:.2f}"/>')
+
+    out = ""
+    # crest piled up against the bow
+    out += stroke(f"M{f1(bow - 46)},{f1(y + 8)} Q{f1(bow - 30)},{f1(y - 10)} {f1(bow - 6)},{f1(y - 6)} "
+                  f"Q{f1(bow + 14)},{f1(y - 2)} {f1(bow + 40)},{f1(y + 2)}", 10)
+    # the 'V': one arm along the hull, one angling toward the viewer
+    out += stroke(f"M{f1(bow - 30)},{f1(y + 8)} Q{f1(bow + 70)},{f1(y + 8)} {f1(bow + 220)},{f1(y + 4)}", 8)
+    out += stroke(f"M{f1(bow - 36)},{f1(y + 12)} Q{f1(bow + 40)},{f1(y + 30)} {f1(bow + 180)},{f1(y + 46)}", 7)
+    out += stroke(f"M{f1(bow + 70)},{f1(y + 34)} q40,10 90,16", 5, 0.8)
+    for dx, dy, r in ((-58, -6, 5), (-44, -18, 4), (-66, 6, 3.5)):             # spray drops
+        out += (f'<circle cx="{f1(bow + dx)}" cy="{f1(y + dy)}" r="{r}" fill="{fo}" stroke="{sh}" '
+                f'stroke-width="1.5" opacity="0.9"/>')
+    # foam along the waterline
+    out += stroke(f"M{f1(bow + 230)},{f1(y + 5)} C{f1(bow + 360)},{f1(y + 10)} {f1(stern - 250)},{f1(y + 10)} "
+                  f"{f1(stern - 60)},{f1(y + 5)}", 5, 0.75)
     for i in range(5):
         x = stern - 60 + i * 70
-        yy = y + 4 + i * 7
-        out += (f'<path d="M{f1(x)},{f1(yy)} q{34 + i * 8},-10 {70 + i * 14},0" stroke="{fo}" '
-                f'stroke-width="{7 - i * 1.0:.1f}" fill="none" stroke-linecap="round" opacity="{0.9 - i * 0.14:.2f}"/>'
-                f'<path d="M{f1(x + 20)},{f1(yy + 16 + i * 3)} q{30 + i * 6},-8 {60 + i * 12},0" stroke="{fo}" '
-                f'stroke-width="{4.5 - i * 0.6:.1f}" fill="none" stroke-linecap="round" '
-                f'opacity="{0.7 - i * 0.1:.2f}"/>')
+        yy = y + 6 + i * 7
+        out += stroke(f"M{f1(x)},{f1(yy)} q{34 + i * 8},-10 {70 + i * 14},0", 7 - i * 1.0, 0.9 - i * 0.14)
+        out += stroke(f"M{f1(x + 20)},{f1(yy + 16 + i * 3)} q{30 + i * 6},-8 {60 + i * 12},0", 4.5 - i * 0.6,
+                      0.7 - i * 0.1)
     return doc(S.g(out, filter="wobble-fine"))
 
 
@@ -819,7 +838,7 @@ def build(ctx):
     # ---------------------------------------------------------------- camera (precomputed, smoothed, monotonic pans)
     X_HOLD, Y0 = 3090, 640
     X_DOCK = 1540            # where the follow target arrives as Jonah takes off: no overshoot, no reversal
-    X_END = 1250             # settles here (lagging behind the departing ship) before the closing dissolve
+    X_END = 1300             # settles here (lagging behind the departing ship) before the closing dissolve
     t_cam_end = T - 0.95
 
     cam_w_f = M.keys([(0, {"dx": 1600}), (T_TURN, {"dx": 1560}), (T_RUN + 1.1, {"dx": 1900}),
@@ -893,8 +912,8 @@ def build(ctx):
     sc.add("halyard", [halyard_svg(False, pull_hands), halyard_svg(True, pull_hands)], motion=ship_tf,
            frame_at=lambda t: 1.0 if t >= T_SAIL else 0.0, wc=0.4)
 
-    # the sail unrolls down from the yard: the full-sail band is revealed top-down over the furled ship,
-    # led by a rolled bundle; once it is down ship_back switches to its 'full' frame (identical pixels)
+    # the sail unrolls down from the yard: the full-sail band is revealed top-down over the furled ship (no
+    # crossfade), led by a rolled bundle
     BB_TOP = SHIP_WL - 948 * K           # top of the band layer's content (pennant / masthead)
     BB_BOT = SHIP_WL - 200 * K
 
@@ -909,9 +928,11 @@ def build(ctx):
         return {"mode": "down", "frac": min(1.0, max(0.0, (ey - BB_TOP) / (BB_BOT - BB_TOP))), "soft": 10}
 
     def sail_tf(t):
+        # stays on after the drop (fully revealed, so no mask cost): ship_back switches to 'full' underneath it
+        # only to add the lowest bits of the sheets, so the switch is invisible and the halyard stays behind
+        # the sail
         b = ship_tf(t)
-        a = 1.0 if T_SAIL <= t < T_SAIL_DONE else 0.0
-        return Tf(b.dx, b.dy, b.rot, b.sx, b.sy, a, b.px, b.py)
+        return Tf(b.dx, b.dy, b.rot, b.sx, b.sy, 1.0 if t >= T_SAIL else 0.0, b.px, b.py)
 
     sc.add("sail", sail_band_svg(), motion=sail_tf, reveal=sail_reveal, seed=SHIP_SEED)
 
@@ -1009,8 +1030,8 @@ def build(ctx):
     def water_tf(alpha_fn):
         return lambda t: (lambda b: Tf(b.dx, b.dy * 0.4, 0, b.sx, b.sy, alpha_fn(t), b.px, b.py))(ship_tf(t))
 
-    sc.add("hull_shadow", hull_shadow_svg(), motion=water_tf(lambda t: 1.0), wc=0.3)
-    sc.add("wake", wake_svg(), motion=water_tf(lambda t: M.progress(t, T_DEPART, T_DEPART + 0.8, "sine")))
+    sc.add("hull_shadow", hull_shadow_svg(), motion=water_tf(lambda t: 1.0), wc=0.2)
+    sc.add("wake", wake_svg(), motion=water_tf(lambda t: M.progress(t, T_DEPART, T_DEPART + 0.8, "sine")), wc=0.2)
 
     # foam dashes shed by the bow: they stay put in the water, so they stream back along the hull
     rngf = random.Random(77)
@@ -1035,15 +1056,17 @@ def build(ctx):
         x0 = int(min(x for _, x, _, _, _ in live) - 20)
         x1 = int(max(x + ln for _, x, _, ln, _ in live) + 40)
         y0, y1 = SHIP_WL - 24, SHIP_WL + 40
-        im = Image.new("RGBA", (max(1, x1 - x0), y1 - y0), (0, 0, 0, 0))
+        ss = 2                                          # supersampled, then reduced: soft round dashes
+        im = Image.new("RGBA", (max(1, x1 - x0) * ss, (y1 - y0) * ss), (0, 0, 0, 0))
         d = ImageDraw.Draw(im)
         for age, x, y, ln, op in live:
             a = op * min(1.0, age / 0.15) * (1 - age / FOAM_LIFE) ** 1.3
-            xx = x - x0 + 14 * age                      # a slow drift with the water
-            yy = y - y0 + 3 * age
-            w = 5 if age < 0.6 else 4
-            d.line([(xx, yy), (xx + ln * (1 - 0.3 * age / FOAM_LIFE), yy)], fill=(244, 248, 241, int(235 * a)),
-                   width=w)
+            xx = (x - x0 + 14 * age) * ss                # a slow drift with the water
+            yy = (y - y0 + 3 * age) * ss
+            r = (3.0 if age < 0.6 else 2.4) * ss
+            L = ln * (1 - 0.3 * age / FOAM_LIFE) * ss
+            d.rounded_rectangle([xx, yy - r, xx + L, yy + r], radius=r, fill=(251, 248, 238, int(235 * a)))
+        im = im.resize((im.width // ss, im.height // ss), Image.BILINEAR).filter(ImageFilter.GaussianBlur(0.6))
         return im, (x0, y0)
 
     sc.add_dynamic("foam", foam_fn)

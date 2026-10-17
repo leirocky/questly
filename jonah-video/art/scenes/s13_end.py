@@ -1,22 +1,27 @@
 """Scene 13 — closing page: God's love is wider than the sea and higher than the sky.
 
 One wide sunset double-page spread on a 2800 x 1620 stage (no cuts):
-  * WEST (left): the calm sea under the setting sun, a golden glitter path, the little ship sailing toward
-    the sun and the great fish leaping happily out of the water.
+  * WEST (left): the calm sea under the setting sun, a golden glitter path, the little ship (with three
+    sailors on deck) sailing toward the sun and the great fish leaping happily out past the ship — it leaps
+    from the mid sea band, so at that depth it is about twice the ship's length (a really huge fish).
   * MIDDLE: Jonah standing peacefully on a grassy hill, looking out over it all.
-  * EAST (right): a golden plain with the city of Nineveh glowing in the last light.
-  * ABOVE: a huge, high dusk sky — sunset gradient, clouds, the evening star and the first stars.
+  * EAST (right): a golden plain with the city of Nineveh glowing in the last light, a few townspeople at the
+    end of the road.
+  * ABOVE: a huge, high dusk sky — sunset gradient, layered evening clouds, the evening star and the first stars.
 
 Timing (all keyed to the narration, phrase times derived from ctx.lines):
-  * line 0 "上帝的爱，比海更宽，比天更高。": the camera pulls back from Jonah to the full spread ("比海更宽":
-    the sea opens up and the great fish leaps across the sun's glitter path; "比天更高": the frame grows upward,
-    the sky deepens and the evening star and first stars come out).
-  * line 1 "他愿意给每一个人，重新开始的机会。": warm golden light blooms from the sun over everything (rays,
-    glow, motes), Nineveh's lamps light up and sparkle, Jonah closes his eyes in the warm light, doves fly in
-    from the east — two land beside Jonah, three glide on toward the sunset — and the fish leaps once more.
-  * after the narration: a hand-lettered end card '约拿的故事 · 完' fades in high in the sky, a swash is drawn
+  * line 0 "上帝的爱，比海更宽，比天更高。": two-stage camera. "比海更宽": the frame widens (top kept low,
+    drifting west) so the sea opens up and the great fish leaps across the sun's glitter path; "比天更高": the
+    frame tilts up and grows to the full spread, the sky deepens and the evening star and first stars come out.
+  * line 1 "他愿意给每一个人，重新开始的机会。": the camera pushes in on Jonah; warm golden light blooms from the
+    sun over everything (rays, glow, motes, a warm rim on Jonah's sun side), Nineveh's lamps light up and the
+    townspeople step into the light, the sailors wave, Jonah closes his eyes in the warm light, doves fly in
+    from the east above the city — two land beside Jonah, three glide on toward the sunset — and the fish leaps
+    once more. The camera then eases back out to make room for the end card.
+  * end of the narration: a hand-lettered end card '约拿的故事 · 完' fades in high in the sky, a swash is drawn
     out from its centre and a small heart pops in (chime). The film then fades out (assemble.py).
 """
+import bisect
 import math
 import random
 
@@ -45,8 +50,9 @@ JONAH_S = 0.8
 CITY_X0, CITY_X1, CITY_Y, CITY_S = 1770, 2690, 986, 0.5
 CARD_X, CARD_Y = 1400, 412   # end-card text baseline centre
 
-SHIP_X, SHIP_S = 965, 0.19
-FISH_S = 0.3
+SHIP_X, SHIP_S = 1000, 0.19
+FISH_S = 0.32            # leaps from the MID band (same depth as the ship): ~2x the ship's length
+SPLASH_K = 0.8           # splash / ripple size at the mid-band depth
 
 
 def doc(body, defs=""):
@@ -67,6 +73,40 @@ def hill_y(x):
 def bez(p0, p1, p2, u):
     a, b, c = (1 - u) ** 2, 2 * u * (1 - u), u * u
     return a * p0[0] + b * p1[0] + c * p2[0], a * p0[1] + b * p1[1] + c * p2[1]
+
+
+def bez3(p0, c1, c2, p3, u):
+    v = 1 - u
+    a, b, c, d = v * v * v, 3 * v * v * u, 3 * v * u * u, u * u * u
+    return (a * p0[0] + b * c1[0] + c * c2[0] + d * p3[0], a * p0[1] + b * c1[1] + c * c2[1] + d * p3[1])
+
+
+def smooth_keys(keys):
+    """Monotone cubic (Fritsch-Carlson) interpolation through (t, v) keys: smooth velocity through
+    intermediate keys, no overshoot, flat at the ends and at local extrema/holds."""
+    ts = [k[0] for k in keys]
+    vs = [k[1] for k in keys]
+    n = len(keys)
+    d = [(vs[i + 1] - vs[i]) / (ts[i + 1] - ts[i]) for i in range(n - 1)]
+    m = [0.0] * n
+    for i in range(1, n - 1):
+        if d[i - 1] * d[i] > 0:
+            h0, h1 = ts[i] - ts[i - 1], ts[i + 1] - ts[i]
+            w1, w2 = 2 * h1 + h0, h1 + 2 * h0
+            m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i])
+
+    def f(t):
+        if t <= ts[0]:
+            return vs[0]
+        if t >= ts[-1]:
+            return vs[-1]
+        i = min(n - 2, bisect.bisect_right(ts, t) - 1)
+        h = ts[i + 1] - ts[i]
+        s = (t - ts[i]) / h
+        h00, h10 = 2 * s ** 3 - 3 * s ** 2 + 1, s ** 3 - 2 * s ** 2 + s
+        h01, h11 = -2 * s ** 3 + 3 * s ** 2, s ** 3 - s ** 2
+        return h00 * vs[i] + h10 * h * m[i] + h01 * vs[i + 1] + h11 * h * m[i + 1]
+    return f
 
 
 # ============================================================================ sky
@@ -172,63 +212,106 @@ def sunset_cloud(cx, cy, w, h, seed, top, lit):
     return body, defs
 
 
+def soft_cloud(cx, cy, w, h, seed, top, lit, op=0.85):
+    """Ink-less high cloud: lighter, softer, further away."""
+    gid = f"e13s{seed}"
+    defs = (f'<linearGradient id="{gid}" x1="0" y1="0" x2="0" y2="1">'
+            f'<stop offset="0" stop-color="{top}"/><stop offset="1" stop-color="{lit}"/></linearGradient>')
+    body = f'<g opacity="{op}">' + S.cloud(cx, cy, w, h, f"url(#{gid})", seed=seed, sw=0) + "</g>"
+    return body, defs
+
+
+def streak_cloud(cx, cy, w, h, col, op, seed):
+    """Thin wind-drawn streak cloud (a few overlapping soft ellipses)."""
+    rng = random.Random(seed)
+    body = ""
+    for k in range(4):
+        body += (f'<ellipse cx="{f1(cx + rng.uniform(-0.18, 0.18) * w)}" cy="{f1(cy + (k - 1.5) * h * 0.55)}" '
+                 f'rx="{f1(w / 2 * rng.uniform(0.45, 0.95))}" ry="{f1(h * rng.uniform(0.45, 0.8))}" fill="{col}" '
+                 f'opacity="{op * rng.uniform(0.7, 1.0):.2f}"/>')
+    return f'<g filter="url(#soft)">{body}</g>'
+
+
 def clouds_svg():
-    items = [  # cx, cy, w, h, seed, top colour, lit underside
-        (300, 650, 330, 84, 3, "#d9a3b6", "#ffd9a0"),
-        (1010, 745, 250, 62, 5, "#dca3b2", "#ffdca0"),
-        (1890, 700, 220, 58, 7, "#cf9db6", "#fbc9a0"),
-        (2390, 560, 400, 100, 2, "#b993b8", "#f7c1a2"),
-        (2620, 250, 250, 66, 9, "#9c87b4", "#d9a6b6"),
-        (230, 300, 240, 64, 4, "#9f88b6", "#dca8b8"),
-        (690, 175, 180, 48, 8, "#8b7fb0", "#c79bb6"),
-    ]
-    body, defs = "", ""
-    for it in items:
+    """Varied evening sky: two big layered clouds lit from below near the horizon (inked), one small inked
+    puff over the sea, ink-less soft puffs higher up and thin streaks highest (clear of the end-card box)."""
+    inked, defs = "", ""
+    for it in (  # back layer first: cx, cy, w, h, seed, top colour, lit underside
+            (470, 640, 330, 84, 11, "#c497b4", "#f4c2a4"),
+            (300, 695, 480, 108, 3, "#d9a3b6", "#ffd9a0"),
+            (2590, 545, 330, 86, 12, "#ab8db6", "#e8b4ac"),
+            (2400, 600, 520, 112, 2, "#b993b8", "#f7c1a2"),
+            (1030, 772, 250, 58, 5, "#dca3b2", "#ffdca0")):
         b, d = sunset_cloud(*it)
-        body += b
+        inked += b
         defs += d
-    return doc(S.g(body, filter="wobble"), defs)
+    soft = ""
+    for it in ((1880, 735, 210, 48, 7, "#cf9db6", "#fbc9a0", 0.8), (210, 330, 230, 58, 4, "#a48cba", "#dcabbb", 0.7)):
+        b, d = soft_cloud(*it)
+        soft += b
+        defs += d
+    streaks = (streak_cloud(2540, 240, 560, 16, "#b8a0c8", 0.75, 1) +
+               streak_cloud(400, 165, 440, 13, "#a996c4", 0.7, 2) +
+               streak_cloud(2290, 330, 300, 10, "#c7a6c4", 0.6, 3))
+    return doc(streaks + soft + S.g(inked, filter="wobble"), defs)
 
 
 # ============================================================================ sea
 
 
-def sea_svg():
-    """Far sea (horizon to bottom) + the mid band the ship sails on, with soft wave strokes (one static layer)."""
-    defs = (f'<linearGradient id="e13far" gradientUnits="userSpaceOnUse" x1="0" y1="{HORIZON}" x2="0" y2="{SH}">'
-            '<stop offset="0" stop-color="#e4b0a6"/><stop offset="0.12" stop-color="#ad8fad"/>'
-            '<stop offset="0.4" stop-color="#6d7aa6"/><stop offset="1" stop-color="#46578a"/></linearGradient>'
-            f'<linearGradient id="e13mid" gradientUnits="userSpaceOnUse" x1="0" y1="{MID_WL}" x2="0" y2="{SH}">'
-            '<stop offset="0" stop-color="#9886ae"/><stop offset="0.3" stop-color="#6879a6"/>'
-            '<stop offset="1" stop-color="#3f5285"/></linearGradient>' +
-            S.rad_grad("e13seaglow", [(0, "#ffe2a4", 0.55), (0.5, "#f9c495", 0.2), (1, "#f9c495", 0)]))
-    far = f'<rect x="-20" y="{HORIZON}" width="{SW + 40}" height="{SH - HORIZON + 20}" fill="url(#e13far)"/>'
-    far += f'<ellipse cx="{SUN[0]}" cy="{HORIZON + 40}" rx="700" ry="120" fill="url(#e13seaglow)"/>'
-    far += (f'<path d="M-20,{HORIZON} L{SW + 20},{HORIZON}" stroke="{P["ink"]}" stroke-width="2.5" '
-            f'opacity="0.6"/>')
+def _sea_strokes():
+    """Soft wave strokes: (far-band markup, mid-band markup) — same random sequence as before the split."""
     rng = random.Random(5)
-    strokes = ""
+    far, mid = "", ""
     for _ in range(26):
         x = rng.uniform(-20, 1650)
         y = rng.uniform(HORIZON + 10, MID_WL - 12)
         ln = rng.uniform(30, 90) * (0.6 + (y - HORIZON) / 140)
-        strokes += (f'<path d="M{f1(x)},{f1(y)} q{f1(ln / 2)},-4 {f1(ln)},0" stroke="#f6dcc8" stroke-width="2.5" '
-                    f'fill="none" stroke-linecap="round" opacity="0.6"/>')
-    mid = S.path(S.wave_band(MID_WL, 4, 300, 0.7, x0=-60, x1=1760, bottom=SH + 60), fill="url(#e13mid)", sw=3)
+        far += (f'<path d="M{f1(x)},{f1(y)} q{f1(ln / 2)},-4 {f1(ln)},0" stroke="#f6dcc8" stroke-width="2.5" '
+                f'fill="none" stroke-linecap="round" opacity="0.6"/>')
     for _ in range(30):
         x = rng.uniform(-20, 1700)
         y = rng.uniform(MID_WL + 18, NEAR_WL - 10)
         ln = rng.uniform(40, 120)
-        strokes += (f'<path d="M{f1(x)},{f1(y)} q{f1(ln / 2)},-6 {f1(ln)},0" stroke="#d9c6e0" stroke-width="3" '
-                    f'fill="none" stroke-linecap="round" opacity="0.55"/>')
+        mid += (f'<path d="M{f1(x)},{f1(y)} q{f1(ln / 2)},-6 {f1(ln)},0" stroke="#d9c6e0" stroke-width="3" '
+                f'fill="none" stroke-linecap="round" opacity="0.55"/>')
+    return far, mid
+
+
+def sea_far_svg():
+    """Far sea from the horizon down (the great fish leaps out of the water in front of it)."""
+    defs = (f'<linearGradient id="e13far" gradientUnits="userSpaceOnUse" x1="0" y1="{HORIZON}" x2="0" y2="{SH}">'
+            '<stop offset="0" stop-color="#e4b0a6"/><stop offset="0.12" stop-color="#ad8fad"/>'
+            '<stop offset="0.4" stop-color="#6d7aa6"/><stop offset="1" stop-color="#46578a"/></linearGradient>' +
+            S.rad_grad("e13seaglow", [(0, "#ffe2a4", 0.55), (0.5, "#f9c495", 0.2), (1, "#f9c495", 0)]))
+    # only the strip down to just below the mid band's top edge is ever visible (the mid band, the plain and the
+    # hill cover the rest), so the layer stops there — much cheaper to move with the camera every frame
+    far_h = MID_WL + 45 - HORIZON
+    far = f'<rect x="-20" y="{HORIZON}" width="{SW + 40}" height="{far_h}" fill="url(#e13far)"/>'
+    far += (f'<clipPath id="e13farclip"><rect x="-20" y="{HORIZON}" width="{SW + 40}" height="{far_h}"/></clipPath>'
+            f'<ellipse cx="{SUN[0]}" cy="{HORIZON + 40}" rx="700" ry="120" fill="url(#e13seaglow)" '
+            f'clip-path="url(#e13farclip)"/>')
+    far += (f'<path d="M-20,{HORIZON} L{SW + 20},{HORIZON}" stroke="{P["ink"]}" stroke-width="2.5" '
+            f'opacity="0.6"/>')
+    strokes, _ = _sea_strokes()
+    return doc(S.g(far, filter="wobble") + S.g(strokes, filter="wobble-fine"), defs)
+
+
+def sea_mid_svg():
+    """The mid sea band the ship sails on (drawn in front of the leaping fish, so it hides the fish's dive)."""
+    defs = (f'<linearGradient id="e13mid" gradientUnits="userSpaceOnUse" x1="0" y1="{MID_WL}" x2="0" y2="{SH}">'
+            '<stop offset="0" stop-color="#9886ae"/><stop offset="0.3" stop-color="#6879a6"/>'
+            '<stop offset="1" stop-color="#3f5285"/></linearGradient>')
+    # (its lower part is always hidden by the near band and the hill, so it ends at NEAR_WL + 45)
+    mid = S.path(S.wave_band(MID_WL, 4, 300, 0.7, x0=-60, x1=1760, bottom=NEAR_WL + 45), fill="url(#e13mid)", sw=3)
     crest = S.path(S.wave_line(MID_WL - 3, 4, 300, 0.7, x0=-60, x1=1760), stroke=False,
                    extra='stroke="#fbe6c8" stroke-width="4" fill="none" opacity="0.55"')
-    return doc(S.g(far, filter="wobble") + S.g(mid + crest, filter="wobble") + S.g(strokes, filter="wobble-fine"),
-               defs)
+    _, strokes = _sea_strokes()
+    return doc(S.g(mid + crest, filter="wobble") + S.g(strokes, filter="wobble-fine"), defs)
 
 
-def glitter_svg(seed):
-    """The sun's golden path on the water (horizon .. near waterline)."""
+def glitter_svg(seed, y0=HORIZON + 6, y1=NEAR_WL - 6):
+    """The sun's golden path on the water; only the rows with y0 <= y < y1 are drawn (same random sequence)."""
     rng = random.Random(seed)
     body = ""
     y = HORIZON + 6
@@ -238,8 +321,10 @@ def glitter_svg(seed):
         for _ in range(n):
             x = SUN[0] + rng.uniform(-half, half)
             ln = rng.uniform(10, 26) * (0.7 + (y - HORIZON) / 180)
-            body += (f'<rect x="{f1(x - ln / 2)}" y="{f1(y)}" width="{f1(ln)}" height="{f1(3 + (y - HORIZON) / 90)}" '
-                     f'rx="2" fill="#ffe9a8" opacity="{rng.uniform(0.55, 0.95):.2f}"/>')
+            op = rng.uniform(0.55, 0.95)
+            if y0 <= y < y1:
+                body += (f'<rect x="{f1(x - ln / 2)}" y="{f1(y)}" width="{f1(ln)}" '
+                         f'height="{f1(3 + (y - HORIZON) / 90)}" rx="2" fill="#ffe9a8" opacity="{op:.2f}"/>')
         y += 7 + (y - HORIZON) * 0.05
     return doc(body)
 
@@ -280,15 +365,28 @@ def land_svg():
             '<stop offset="0" stop-color="#eec08a"/><stop offset="0.35" stop-color="#d9b877"/>'
             '<stop offset="1" stop-color="#a9ad62"/></linearGradient>'
             '<linearGradient id="e13hill" x1="0" y1="0" x2="1" y2="0">'
-            '<stop offset="0" stop-color="#b9bf62"/><stop offset="0.42" stop-color="#a7bb5e"/>'
-            '<stop offset="0.62" stop-color="#8eac57"/><stop offset="1" stop-color="#6f8a55"/></linearGradient>'
+            '<stop offset="0" stop-color="#bcbd63"/><stop offset="0.42" stop-color="#a6b65d"/>'
+            '<stop offset="0.62" stop-color="#8ca858"/><stop offset="1" stop-color="#6f8757"/></linearGradient>'
+            # cool violet shade deepening down the near slope (the low sun only lights the crest)
             f'<linearGradient id="e13hillsh" gradientUnits="userSpaceOnUse" x1="0" y1="1100" x2="0" y2="{SH}">'
-            '<stop offset="0" stop-color="#4b4a6a" stop-opacity="0"/>'
-            '<stop offset="0.3" stop-color="#4b4a6a" stop-opacity="0.06"/>'
-            '<stop offset="1" stop-color="#3f3d63" stop-opacity="0.5"/></linearGradient>' +
+            '<stop offset="0" stop-color="#58487a" stop-opacity="0"/>'
+            '<stop offset="0.25" stop-color="#58487a" stop-opacity="0.13"/>'
+            '<stop offset="1" stop-color="#3f3766" stop-opacity="0.55"/></linearGradient>'
+            # the east slope faces away from the sun: extra cool shade toward the right
+            '<linearGradient id="e13hillcool" gradientUnits="userSpaceOnUse" x1="1550" y1="0" x2="2800" y2="0">'
+            '<stop offset="0" stop-color="#5a4a80" stop-opacity="0"/>'
+            '<stop offset="1" stop-color="#5a4a80" stop-opacity="0.24"/></linearGradient>'
+            # warm gold-rose sunset glaze along the crest (multiplied, like a transparent watercolour wash),
+            # strongest on the sun (west) side
+            '<linearGradient id="e13glaze" gradientUnits="userSpaceOnUse" x1="250" y1="0" x2="2500" y2="0">'
+            '<stop offset="0" stop-color="#ffc48a" stop-opacity="0.75"/>'
+            '<stop offset="0.4" stop-color="#ffc890" stop-opacity="0.6"/>'
+            '<stop offset="0.62" stop-color="#ffc0a8" stop-opacity="0.3"/>'
+            '<stop offset="1" stop-color="#ffc0a8" stop-opacity="0"/></linearGradient>' +
             S.rad_grad("e13jglow", [(0, "#ffe7a8", 0.55), (1, "#ffe7a8", 0)]))
-    # far lavender hills behind the city
-    far_hills = (S.path(S.hill(1480, 2200, HORIZON + 6, 70, seed=4, bumps=2), fill="#c59bab", sw=2.5) +
+    # far lavender hills behind the city; the near one starts behind the plain (top at HORIZON-2 from x=1565)
+    # so no side edge or fill shows on the sea
+    far_hills = (S.path(S.hill(1590, 2200, HORIZON + 6, 70, seed=4, bumps=2), fill="#c59bab", sw=2.5) +
                  S.path(S.hill(2050, 2880, HORIZON + 6, 95, seed=6, bumps=2), fill="#b994ab", sw=2.5))
     # plain: from the shoreline (horizon at x~1560) eastward; its near edge disappears behind the hill
     shore = [(1565, HORIZON - 2), (1470, 980), (1340, 1025), (1210, 1080), (1090, 1145), (990, 1220)]
@@ -335,9 +433,17 @@ def land_svg():
 
     # Jonah's hill
     pts = [(x, hill_y(x)) for x in range(-80, SW + 81, 40)]
-    hd = S.smooth_path(pts, closed=False) + f" L{SW + 80},{SH + 80} L-80,{SH + 80} Z"
-    hill = (f'<path d="{hd}" fill="url(#e13hill)" stroke="{P["ink"]}" stroke-width="4" stroke-linejoin="round"/>'
-            f'<path d="{hd}" fill="url(#e13hillsh)"/>')
+    crest_d = S.smooth_path(pts, closed=False)
+    hd = crest_d + f" L{SW + 80},{SH + 80} L-80,{SH + 80} Z"
+    hill = f'<path d="{hd}" fill="url(#e13hill)"/>'
+    hill_ink = f'<path d="{crest_d}" fill="none" stroke="{P["ink"]}" stroke-width="4" stroke-linejoin="round"/>'
+    # (each glaze element carries its own clip so it blends with the hill as its backdrop)
+    clip = 'clip-path="url(#e13hillclip)"'
+    glaze = (f'<clipPath id="e13hillclip"><path d="{hd}"/></clipPath>'
+             f'<rect x="-80" y="1000" width="{SW + 160}" height="{SH}" fill="url(#e13hillsh)" {clip}/>'
+             f'<rect x="-80" y="1000" width="{SW + 160}" height="{SH}" fill="url(#e13hillcool)" {clip}/>'
+             f'<g {clip} style="mix-blend-mode:multiply"><path d="{crest_d}" fill="none" stroke="url(#e13glaze)" '
+             f'stroke-width="240" filter="url(#blur-md)"/></g>')
     hatch = ""
     rng2 = random.Random(44)
     for _ in range(26):   # soft darker / lighter dabs of grass colour
@@ -366,8 +472,10 @@ def land_svg():
     rim = S.path(S.smooth_path(rim_pts, closed=False), stroke=False,
                  extra='stroke="#f4e39a" stroke-width="7" fill="none" opacity="0.75" stroke-linecap="round"')
     # sandy shore at the lower left where the hill meets the sea, with a foam line
-    sand_top = [(x, hill_y(x) + 3) for x in range(-80, 1000, 40)]
-    sand_bot = [(x, hill_y(x) + 46 + 10 * math.sin(x / 90)) for x in range(960, -81, -40)]
+    # (the strip tapers to a point at its east end instead of stopping in a vertical cut)
+    sand_top = [(x, hill_y(x) + 3) for x in range(-80, 1001, 40)]
+    sand_bot = [(x, hill_y(x) + 3 + (43 + 10 * math.sin(x / 90)) * min(1.0, max(0.0, (985 - x) / 300)))
+                for x in range(1000, -81, -40)]
     sd = S.smooth_path(sand_top, closed=False) + "".join(f" L{f1(x)},{f1(y)}" for x, y in sand_bot) + " Z"
     sand = f'<path d="{sd}" fill="#ecc99a" opacity="0.95"/>'
     shore_foam = S.path(S.smooth_path([(x, hill_y(x) - 2) for x in range(-80, 1010, 40)], closed=False),
@@ -404,10 +512,12 @@ def land_svg():
         front += PR.grass_tuft(x, hill_y(x) + dy, sc_, variant=v)
     front += PR.bush(2330, hill_y(2330) + 40, 0.75, 1) + PR.bush(470, hill_y(470) + 60, 0.6, 3)
 
+    # the hill and everything on it share one wobble so the sunset glaze / shade stays inside the inked edge
+    hill_group = (hill + S.g(hatch, filter="wobble-fine") + sand + shore_foam + rocks +
+                  S.g(fl, filter="wobble-fine") + front + glaze + hill_ink + rim)
     body = (S.g(far_hills, filter="wobble") + city_glow + city +
             S.g(plain + fields + road + foam, filter="wobble") + deco + sheep +
-            S.g(hill + rim, filter="wobble") + S.g(hatch, filter="wobble-fine") + S.g(sand + shore_foam + rocks, filter="wobble") +
-            halo + shadow + S.g(fl, filter="wobble-fine") + front)
+            S.g(hill_group, filter="wobble") + halo + shadow)
     return doc(body, defs)
 
 
@@ -448,9 +558,21 @@ def lights_svg(pts):
 # ============================================================================ ship / fish / splash
 
 
-def ship_svg(x, wl):
+# sailors on deck: (local x on the ship, variant, facing); the middle one waves during line 1 (Jonah 1:16 —
+# the sailors who were saved too)
+SAILORS = ((175, 2, 1), (-120, 1, 1), (-265, 3, -1))
+WAVE_POSES = ("stand", "pray", "lift")
+
+
+def ship_svg(x, wl, wave_pose="stand"):
     clip = f'<clipPath id="e13shipclip"><rect x="{x - 400}" y="{wl - 400}" width="800" height="{400 + 4}"/></clipPath>'
-    ship = PR.ship(x, wl, SHIP_S, facing=-1, sail="full", lantern=True)
+    crew = ""
+    for i, (lx, var, fc) in enumerate(SAILORS):
+        sx, sy = PR.local_to_stage(x, wl, SHIP_S, -1, lx, PR.SHIP_DECK_Y)
+        pose = wave_pose if i == 1 else "stand"
+        crew += C.sailor(sx, sy, SHIP_S, facing=fc, variant=var, pose=pose, expr="happy", marks=False)
+    ship = (PR.ship(x, wl, SHIP_S, facing=-1, sail="full", lantern=True, part="back") + crew +
+            PR.ship(x, wl, SHIP_S, facing=-1, sail="full", lantern=True, part="front"))
     wake = (f'<path d="M{x - 115},{wl + 2} q60,-7 120,-2 q50,4 95,1" stroke="{P["foam"]}" stroke-width="4" '
             f'fill="none" stroke-linecap="round" opacity="0.85"/>'
             f'<path d="M{x + 70},{wl + 9} q50,-4 110,0" stroke="{P["foam"]}" stroke-width="3" fill="none" '
@@ -458,33 +580,79 @@ def ship_svg(x, wl):
     return doc(f'<g clip-path="url(#e13shipclip)">{ship}</g>' + S.g(wake, filter="wobble-fine"), clip)
 
 
-def splash_svg(x, y):
+def splash_svg(x, y, k=1.0):
     rng = random.Random(int(x) + 3)
     drops = ""
     for i in range(8):
         a = math.radians(-160 + 140 * i / 7 + rng.uniform(-8, 8))
-        dist = rng.uniform(45, 95)
+        dist = rng.uniform(45, 95) * k
         dx, dy = math.cos(a) * dist, math.sin(a) * dist * 1.15
-        r = rng.uniform(6, 11)
+        r = rng.uniform(6, 11) * k
         rot = math.degrees(a) + 90
         drops += (f'<ellipse cx="{f1(x + dx)}" cy="{f1(y + dy)}" rx="{f1(r * 0.7)}" ry="{f1(r)}" '
                   f'transform="rotate({f1(rot)} {f1(x + dx)} {f1(y + dy)})" fill="{P["foam"]}" '
-                  f'stroke="{P["ink"]}" stroke-width="2.5"/>')
-    crown = (f'<path d="M{x - 78},{y + 4} C{x - 66},{y - 30} {x - 48},{y - 58} {x - 30},{y - 34} '
-             f'C{x - 20},{y - 70} {x + 6},{y - 82} {x + 14},{y - 40} C{x + 30},{y - 66} {x + 56},{y - 52} '
-             f'{x + 58},{y - 22} C{x + 70},{y - 30} {x + 80},{y - 10} {x + 82},{y + 4} Z" fill="{P["foam"]}" '
-             f'stroke="{P["ink"]}" stroke-width="3"/>')
-    base = (f'<ellipse cx="{x}" cy="{y + 4}" rx="98" ry="15" fill="{P["foam"]}" stroke="{P["ink"]}" '
-            f'stroke-width="2.5" opacity="0.95"/>')
+                  f'stroke="{P["ink"]}" stroke-width="{f1(2.5 * k)}"/>')
+
+    def X(v):
+        return f1(x + v * k)
+
+    def Y(v):
+        return f1(y + v * k)
+    crown = (f'<path d="M{X(-78)},{Y(4)} C{X(-66)},{Y(-30)} {X(-48)},{Y(-58)} {X(-30)},{Y(-34)} '
+             f'C{X(-20)},{Y(-70)} {X(6)},{Y(-82)} {X(14)},{Y(-40)} C{X(30)},{Y(-66)} {X(56)},{Y(-52)} '
+             f'{X(58)},{Y(-22)} C{X(70)},{Y(-30)} {X(80)},{Y(-10)} {X(82)},{Y(4)} Z" fill="{P["foam"]}" '
+             f'stroke="{P["ink"]}" stroke-width="{f1(3 * k)}"/>')
+    base = (f'<ellipse cx="{x}" cy="{Y(4)}" rx="{f1(98 * k)}" ry="{f1(15 * k)}" fill="{P["foam"]}" '
+            f'stroke="{P["ink"]}" stroke-width="{f1(2.5 * k)}" opacity="0.95"/>')
     return doc(S.g(base + crown + drops, filter="wobble-fine"))
 
 
-def ripple_svg(x, y):
-    body = (f'<ellipse cx="{x}" cy="{y}" rx="70" ry="11" fill="none" stroke="{P["foam"]}" stroke-width="5" '
-            f'opacity="0.85"/>'
-            f'<ellipse cx="{x}" cy="{y + 2}" rx="120" ry="18" fill="none" stroke="{P["foam"]}" stroke-width="3.5" '
-            f'opacity="0.55"/>')
+def ripple_svg(x, y, k=1.0):
+    body = (f'<ellipse cx="{x}" cy="{y}" rx="{f1(70 * k)}" ry="{f1(11 * k)}" fill="none" stroke="{P["foam"]}" '
+            f'stroke-width="{f1(5 * k)}" opacity="0.85"/>'
+            f'<ellipse cx="{x}" cy="{f1(y + 2 * k)}" rx="{f1(120 * k)}" ry="{f1(18 * k)}" fill="none" '
+            f'stroke="{P["foam"]}" stroke-width="{f1(3.5 * k)}" opacity="0.55"/>')
     return doc(S.g(body, filter="wobble-fine"))
+
+
+# ============================================================================ townspeople / Jonah's rim light
+
+# tiny Ninevites at the end of the road in front of the wall: (x, y, kind, variant, facing, waves)
+TOWNSFOLK = ((2128, 978, "child", 0, 1, True), (2166, 984, "man", 0, 1, False), (2200, 990, "woman", 2, 1, False),
+             (2262, 989, "child", 1, -1, True), (2296, 985, "woman", 1, -1, False), (2334, 980, "elder", 0, -1, False))
+TOWN_S = 0.085
+
+
+def town_svg(lit, phase):
+    """Townspeople in the dusk (lit=False: dim violet silhouettes) or stepping into the warm lamp light
+    (lit=True, with a soft glow behind them). phase 0/1 swaps the two children's poses (waving)."""
+    people = ""
+    for i, (x, y, kind, var, fc, waves) in enumerate(TOWNSFOLK):
+        pose = ("cheer" if (phase + i) % 2 == 0 else "stand") if waves else "stand"
+        people += C.citizen(x, y, TOWN_S, facing=fc, kind=kind, variant=var, pose=pose, expr="happy", marks=False)
+    if lit:
+        defs = ('<filter id="e13townlit" x="-10%" y="-10%" width="120%" height="120%"><feColorMatrix type="matrix" '
+                'values="1.02 0 0 0 0.04  0 0.95 0 0 0.02  0 0 0.82 0 0  0 0 0 1 0"/></filter>')
+        glow = ('<ellipse cx="2232" cy="974" rx="150" ry="42" fill="#ffd9a0" opacity="0.55" '
+                'filter="url(#soft)"/>')
+        return doc(glow + f'<g filter="url(#e13townlit)">{people}</g>', defs)
+    defs = ('<filter id="e13towndim" x="-10%" y="-10%" width="120%" height="120%"><feColorMatrix type="matrix" '
+            'values="0.22 0.06 0 0 0.2  0.04 0.2 0 0 0.15  0.05 0.05 0.26 0 0.25  0 0 0 1 0"/></filter>')
+    return doc(f'<g filter="url(#e13towndim)">{people}</g>', defs)
+
+
+def rim_svg(markup):
+    """Warm sunset rim light on the west (sun-facing) edge of a figure: a band 3..10 px inside its left
+    silhouette edge (just inside the ink line), in warm gold."""
+    defs = ('<filter id="e13rim" x="-20%" y="-20%" width="140%" height="140%">'
+            '<feOffset in="SourceAlpha" dx="3" dy="0" result="o1"/>'
+            '<feOffset in="SourceAlpha" dx="10" dy="1" result="o2"/>'
+            '<feComposite in="o1" in2="o2" operator="out" result="band"/>'
+            '<feComposite in="band" in2="SourceAlpha" operator="in" result="band2"/>'
+            '<feGaussianBlur in="band2" stdDeviation="1.3" result="bb"/>'
+            '<feFlood flood-color="#ffd27e" result="c"/>'
+            '<feComposite in="c" in2="bb" operator="in"/></filter>')
+    return doc(f'<g filter="url(#e13rim)">{markup}</g>', defs)
 
 
 # ============================================================================ doves
@@ -504,19 +672,22 @@ def dove_frames():
 
 
 class DoveFlight:
-    """Quadratic-Bezier flight from p0 (t0) to p2 (t1); optional landing (then 'stand')."""
+    """Cubic-Bezier flight p0 -> p3 (control points c1, c2) from t0 to t1; optional landing (then 'stand').
+    Non-landing doves can shrink (scale_end) and fade (alpha_end over the last 40% of the path) into the
+    sunset glow."""
 
-    def __init__(self, t0, t1, p0, p1, p2, scale, land=False, phase=0.0, flap_fps=15.0, glide=(1.1, 0.7),
-                 scale_end=None):
-        self.t0, self.t1, self.p0, self.p1, self.p2 = t0, t1, p0, p1, p2
+    def __init__(self, t0, t1, p0, c1, c2, p3, scale, land=False, phase=0.0, flap_fps=15.0, glide=(1.1, 0.7),
+                 scale_end=None, alpha_end=1.0):
+        self.t0, self.t1, self.p0, self.c1, self.c2, self.p3 = t0, t1, p0, c1, c2, p3
         self.scale, self.land, self.phase, self.flap_fps, self.glide = scale, land, phase, flap_fps, glide
         self.scale_end = scale if scale_end is None else scale_end
+        self.alpha_end = alpha_end
 
     def pos(self, t):
         u = min(1.0, max(0.0, (t - self.t0) / (self.t1 - self.t0)))
         if self.land:
             u = 1 - (1 - u) ** 1.6   # slow down for the landing
-        return bez(self.p0, self.p1, self.p2, u)
+        return bez3(self.p0, self.c1, self.c2, self.p3, u)
 
     def motion(self, t):
         if t < self.t0 - 0.05:
@@ -529,7 +700,8 @@ class DoveFlight:
             bobv = 6 * math.sin(2 * math.pi * (t * 1.6 + self.phase))
         u = min(1.0, max(0.0, (t - self.t0) / (self.t1 - self.t0)))
         k = M.lerp(self.scale, self.scale_end, u)
-        return Tf(dx=x - DOVE_BASE[0], dy=y - DOVE_BASE[1] + bobv * k, sx=k, sy=k,
+        a = M.lerp(1.0, self.alpha_end, M.progress(u, 0.6, 1.0, "sine"))
+        return Tf(dx=x - DOVE_BASE[0], dy=y - DOVE_BASE[1] + bobv * k, sx=k, sy=k, alpha=a,
                   px=DOVE_BASE[0], py=DOVE_BASE[1])
 
     def frame(self, t):
@@ -630,6 +802,45 @@ def warm_svg():
 # ============================================================================ build
 
 
+# tufts on the hill next to Jonah: (x, variant, scale) — each on its own layer with a rotation sway
+TUFTS = ((1215, 2, 0.75), (1290, 0, 0.6), (1545, 0, 0.62), (1660, 2, 0.8), (1010, 0, 0.8), (1840, 1, 0.75),
+         (860, 2, 0.9), (2050, 0, 0.9))
+
+# great-fish leap geometry (the fish leaps out of the MID band, behind it)
+LEAP_RISE, LEAP_DROP = 200, 205      # centre starts LEAP_RISE below the waterline, apex LEAP_DROP above it
+LEAP_U_END = 1.16                    # keep diving past u=1 until even the tail tip is under the mid band
+SNOUT = (590, 20)                    # snout tip, local fish coords at scale 1 facing right (mouth 0.12)
+
+
+def leap_pose(u, xa, xb, fc):
+    x = xa + (xb - xa) * u
+    y = MID_WL + LEAP_RISE - (LEAP_RISE + LEAP_DROP) * 4 * u * (1 - u)
+    rot = fc * (-40 + 86 * M.ease("sine")(min(1.0, max(0.0, u))))
+    return x, y, rot
+
+
+def leap_snout(u, xa, xb, fc):
+    x, y, rot = leap_pose(u, xa, xb, fc)
+    lx, ly = SNOUT[0] * FISH_S * fc, SNOUT[1] * FISH_S
+    r = math.radians(rot)
+    return x + lx * math.cos(r) - ly * math.sin(r), y + lx * math.sin(r) + ly * math.cos(r)
+
+
+def leap_crossings(xa, xb, fc):
+    """(u, x) where the snout breaks the surface going up, and where it re-enters going down."""
+    out, above = [], False
+    for i in range(int(LEAP_U_END * 500) + 1):
+        u = i / 500
+        sx, sy = leap_snout(u, xa, xb, fc)
+        if not above and sy < MID_WL:
+            out.append((u, sx - fc * 30))
+            above = True
+        elif above and sy > MID_WL:
+            out.append((u, sx))
+            break
+    return out
+
+
 def build(ctx):
     sc = Scene(ctx, W=SW, H=SH)
     T = ctx.duration
@@ -639,15 +850,19 @@ def build(ctx):
     t_sky = L0.start + 0.697 * d0       # "比天更高"
     t_all = L1.start                    # "他愿意给每一个人"
     t_new = L1.start + 0.53 * d1        # "重新开始的机会"
-    t_card = L1.end + 0.05              # end card
+    t_card = L1.end - 0.1               # end card (fully readable ~0.4 s later, well before the film fade-out)
 
     # ------------------------------------------------------------------ sky
     sc.add("sky", sky_svg(), wc=0.55)
     sc.add("dusk", dusk_svg(stars_markup(2, 8, 30)), wc=0,
            motion=M.keys([(t_sky - 0.3, {"alpha": 0}), (t_sky + 1.6, {"alpha": 0.8}), (T, {"alpha": 1.0})], "sine"))
     star_in = lambda a, b: M.keys([(a, {"alpha": 0}), (b, {"alpha": 1})], "sine")  # noqa: E731
-    sc.add("stars_a", stars_svg(1, 10, 34), wc=0,
-           motion=M.combine(star_in(t_sky + 0.1, t_sky + 1.3), M.pulse(0.55, 1.0, 1.9)))
+    # three star fields with their own twinkle period / phase, so the stars do not pulse in unison
+    for k, (seed, nb, ns, per, ph) in enumerate(((1, 4, 12, 1.7, 0.0), (11, 3, 11, 2.3, 0.37),
+                                                  (23, 3, 11, 2.9, 0.71))):
+        a = t_sky + 0.1 + 0.2 * k
+        sc.add(f"stars_{k}", stars_svg(seed, nb, ns), wc=0,
+               motion=M.combine(star_in(a, a + 1.2), M.pulse(0.3, 1.0, per, ph)))
     ev = (600, 560)
     sc.add("evening_star", evening_star_svg(*ev), wc=0,
            motion=M.combine(M.keys([(t_sky - 0.1, {"alpha": 0, "s": 0.2}), (t_sky + 0.45, {"alpha": 1, "s": 1.0})],
@@ -655,50 +870,42 @@ def build(ctx):
     sc.add("sun", sun_svg(), motion=M.keys([(0, {"dy": 0}), (T, {"dy": 58})], "linear"))
     sc.add("clouds", clouds_svg(), motion=M.drift(vx=7))
 
-    # ------------------------------------------------------------------ sea
-    sc.add("sea", sea_svg())
-    glit = [glitter_svg(s) for s in (1, 2, 3)]
-    sc.add("glitter", glit + [glit[0]], wc=0.3, frame_at=lambda t: (t * 2.6) % 3.0,
+    # ------------------------------------------------------------------ sea: far band, fish, mid band, ship, near
+    sc.add("sea_far", sea_far_svg())
+    glit = [glitter_svg(s, HORIZON + 6, MID_WL) for s in (1, 2, 3)]
+    sc.add("glitter_far", glit + [glit[0]], wc=0.3, frame_at=lambda t: (t * 2.6) % 3.0,
            motion=M.pulse(0.75, 1.0, 2.3))
-    ship_wl = MID_WL + 2
-    sc.add("ship", ship_svg(SHIP_X, ship_wl), motion=M.combine(
-        M.drift(vx=-9),
-        M.sway(1.6, 3.6, pivot=(SHIP_X, ship_wl)),
-        M.bob(3, 2.9)))
 
-    # the great fish: two happy leaps (behind the near sea band)
+    # the great fish: two happy leaps out past the ship ("比海更宽", and again on "重新开始的机会")
     leaps = [  # (start, duration, x_start_centre, x_end_centre, facing)
-        (t_sea - 0.12, 1.35, 770, 330, -1),
-        (t_new - 0.25, 1.35, 200, 610, 1),
+        (t_sea - 0.12, 1.35, 740, 380, -1),
+        (t_new - 0.25, 1.35, 300, 650, 1),
     ]
     splash_events = []
     for i, (ls, ld, xa, xb, fc) in enumerate(leaps):
-        fx0, fy0 = (xa + xb) / 2, NEAR_WL
+        fx0, fy0 = (xa + xb) / 2, MID_WL
         frames = [doc(PR.fish(fx0, fy0, FISH_S, facing=fc, eye="happy", mouth=0.12, tail=tv))
                   for tv in (0.65, 0.0, -0.65)]
-        rise, drop = 185, 190
 
         def fish_motion(t, ls=ls, ld=ld, xa=xa, xb=xb, fc=fc, fx0=fx0, fy0=fy0):
             u = (t - ls) / ld
-            if u <= 0 or u >= 1:
+            if u <= 0 or u >= LEAP_U_END:
                 return Tf(alpha=0.0)
-            x = xa + (xb - xa) * u
-            y = NEAR_WL + rise - (rise + drop) * 4 * u * (1 - u)
-            rot = fc * (-40 + 86 * M.ease("sine")(u))
+            x, y, rot = leap_pose(u, xa, xb, fc)
             return Tf(dx=x - fx0, dy=y - fy0, rot=rot, px=fx0, py=fy0)
 
         sc.add(f"fish{i}", frames, motion=fish_motion, seed=90 + i,
                frame_at=lambda t: float((0, 1, 2, 1)[int(t * 9) % 4]))
-        # waterline crossings for the splashes
-        ue = 0.13
-        ur = 0.84
-        splash_events.append((ls + ue * ld, xa + (xb - xa) * ue + fc * 95))
-        splash_events.append((ls + ur * ld, xa + (xb - xa) * ur + fc * 40))
+        for u, xs in leap_crossings(xa, xb, fc):
+            splash_events.append((ls + u * ld, xs))
 
-    sc.add("sea_near", near_sea_svg(), motion=M.combine(M.bob(9, 6.0, axis="x"), M.bob(2.5, 3.1)))
+    sc.add("sea_mid", sea_mid_svg())
+    glit_m = [glitter_svg(s, MID_WL, NEAR_WL - 6) for s in (1, 2, 3)]
+    sc.add("glitter_mid", glit_m + [glit_m[0]], wc=0.3, frame_at=lambda t: (t * 2.6) % 3.0,
+           motion=M.pulse(0.75, 1.0, 2.3))
 
-    sp0 = (600, NEAR_WL)
-    sp_svg, rp_svg = splash_svg(*sp0), ripple_svg(*sp0)
+    sp0 = (600, MID_WL)
+    sp_svg, rp_svg = splash_svg(*sp0, k=SPLASH_K), ripple_svg(*sp0, k=SPLASH_K)
     for k, (ts, xs) in enumerate(splash_events):
         dx = xs - sp0[0]
         sc.add(f"ripple{k}", rp_svg, wc=0.4, seed=71, motion=M.combine(
@@ -708,32 +915,57 @@ def build(ctx):
         sc.add(f"splash{k}", sp_svg, wc=0.4, seed=73, motion=M.combine(
             M.keys([(ts - 0.01, {"alpha": 0, "sx": 0.3, "sy": 0.2}), (ts + 0.02, {"alpha": 1, "sx": 0.45, "sy": 0.35}),
                     (ts + 0.28, {"alpha": 1, "sx": 1.0, "sy": 1.0}), (ts + 0.75, {"alpha": 0, "sx": 1.15, "sy": 0.7})],
-                   "out", pivot=(sp0[0], sp0[1] + 8)),
+                   "out", pivot=(sp0[0], sp0[1] + 8 * SPLASH_K)),
             M.still(Tf(dx=dx))))
         sc.sfx("splash_small", ts - 0.03, gain_db=-16, pan=-0.6)
 
-    # ------------------------------------------------------------------ land, city, Jonah
+    # the ship with its sailors; the middle sailor waves both arms during line 1 (stepped, no blending)
+    ship_wl = MID_WL + 2
+
+    def ship_frame(t):
+        if t < t_all - 0.1 or t > t_card + 0.6:
+            return 0.0
+        return float((1, 2)[int((t - t_all) * 3.2) % 2])
+    sc.add("ship", [ship_svg(SHIP_X, ship_wl, p) for p in WAVE_POSES], frame_at=ship_frame, motion=M.combine(
+        M.drift(vx=-9),
+        M.sway(1.6, 3.6, pivot=(SHIP_X, ship_wl)),
+        M.bob(3, 2.9)))
+
+    sc.add("sea_near", near_sea_svg(), motion=M.combine(M.bob(9, 6.0, axis="x"), M.bob(2.5, 3.1)))
+
+    # ------------------------------------------------------------------ land, city, townspeople, Jonah
     sc.add("land", land_svg())
     pts = city_lights()
     sc.add("city_lights", lights_svg(pts), wc=0, motion=M.combine(
         M.keys([(0, {"alpha": 0.45}), (t_all - 0.2, {"alpha": 0.55}), (t_all + 1.0, {"alpha": 1.0})], "sine"),
         M.pulse(0.85, 1.0, 1.7)))
 
+    t_l0, t_l1 = t_all - 0.2, t_all + 0.9
+
+    def town_frame(t):
+        p = M.progress(t, t_l0, t_l1, "sine")
+        if p < 1.0:
+            return p                       # dusk silhouettes -> lit (same drawing, so a crossfade is clean)
+        if t > t_card + 0.6:
+            return 1.0
+        return float(1 + int((t - t_l1) * 2.5) % 2)   # the children wave (stepped)
+    sc.add("town", [town_svg(False, 0), town_svg(True, 0), town_svg(True, 1)], wc=0.5, frame_at=town_frame)
+
     jy = hill_y(JONAH_X) + 4
     j_frames = [doc(C.jonah(JONAH_X, jy, JONAH_S, 1, pose="stand", expr=e)) for e in ("happy", "peaceful")]
     t_eyes_close, t_eyes_open = t_all + 0.55, t_new + 0.45
+    j_breathe = M.breathe(0.012, 3.4, pivot=(JONAH_X, jy))
     sc.add("jonah", j_frames, seed=55,
            frame_at=lambda t: 1.0 if t_eyes_close <= t < t_eyes_open else 0.0,
-           motion=M.breathe(0.012, 3.4, pivot=(JONAH_X, jy)))
+           motion=j_breathe)
+    # warm sunset rim on his west (sun) side while the golden light blooms
+    sc.add("jonah_rim", rim_svg(C.jonah(JONAH_X, jy, JONAH_S, 1, pose="stand", expr="happy")), wc=0,
+           motion=M.combine(j_breathe, M.keys([(t_all - 0.2, {"alpha": 0}), (t_all + 1.3, {"alpha": 0.9})], "sine")))
 
-    tufts = []
-    for sw_ in (-0.6, 0.0, 0.6):
-        body = ""
-        for x, v, s in ((1215, 2, 0.75), (1290, 0, 0.6), (1545, 0, 0.62), (1660, 2, 0.8), (1010, 0, 0.8),
-                        (1840, 1, 0.75), (860, 2, 0.9), (2050, 0, 0.9)):
-            body += PR.grass_tuft(x, hill_y(x) + 8, s, variant=v, sway=sw_ * (0.8 if v == 2 else 1.0))
-        tufts.append(doc(body))
-    sc.add("tufts", tufts, frame_at=lambda t: 1.0 + 0.999 * math.sin(2 * math.pi * t / 3.2))
+    for k, (x, v, s) in enumerate(TUFTS):
+        by = hill_y(x) + 8
+        sc.add(f"tuft{k}", doc(PR.grass_tuft(x, by, s, variant=v)),
+               motion=M.sway(3.2 if v == 2 else 2.4, 3.0 + 0.3 * (k % 3), pivot=(x, by), phase=k * 0.17))
 
     # foreground framing in the lower corners (in the cool shade of the hill), gently swaying
     shade_f = ('<filter id="e13fgshade" x="-10%" y="-10%" width="120%" height="120%"><feColorMatrix type="matrix" '
@@ -759,50 +991,64 @@ def build(ctx):
     def gy(x):  # dove 'stand' feet are at +38*scale below its anchor
         return hill_y(x) - 38 * LD + 3
     flights = [
-        DoveFlight(t_all + 0.05, t_new + 0.35, (2900, 380), (1950, 700), (1530, gy(1530)), LD, land=True,
-                   phase=0.1),
-        DoveFlight(t_all + 0.35, t_new + 0.75, (2930, 480), (2050, 800), (1612, gy(1612)), LD * 0.96, land=True,
-                   phase=0.45),
-        # a little flock glides on westward over Jonah, toward the sunset, growing smaller in the distance
-        DoveFlight(t_all + 0.15, T + 0.4, (2920, 660), (1800, 660), (640, 850), 0.9, phase=0.3, scale_end=0.42),
-        DoveFlight(t_all + 0.55, T + 0.7, (2960, 750), (1900, 740), (780, 890), 0.8, phase=0.7, scale_end=0.38),
-        DoveFlight(t_all + 0.85, T + 0.5, (2940, 600), (1750, 700), (560, 885), 0.85, phase=0.55, scale_end=0.4),
+        # two come in high over Nineveh (above its skyline) and land beside Jonah
+        DoveFlight(t_all + 0.05, t_new + 0.35, (2900, 400), (2150, 420), (1620, 640), (1530, gy(1530)), LD,
+                   land=True, phase=0.1),
+        DoveFlight(t_all + 0.35, t_new + 0.75, (2930, 470), (2200, 480), (1680, 680), (1612, gy(1612)), LD * 0.96,
+                   land=True, phase=0.45),
+        # a little flock glides on westward above the skyline and under the end card, shrinking and fading into
+        # the sunset glow; end points spread out and well clear of the ship
+        DoveFlight(t_all + 0.15, T + 0.15, (2920, 540), (2150, 550), (1250, 700), (420, 805), 0.85, phase=0.3,
+                   scale_end=0.35, alpha_end=0.6),
+        DoveFlight(t_all + 0.55, T + 0.05, (2960, 600), (2200, 610), (1300, 690), (660, 795), 0.8, phase=0.7,
+                   scale_end=0.33, alpha_end=0.6),
+        DoveFlight(t_all + 0.85, T + 0.2, (2940, 480), (2100, 520), (1150, 710), (250, 825), 0.85, phase=0.55,
+                   scale_end=0.35, alpha_end=0.6),
     ]
     for k, fl in enumerate(flights):
         sc.add(f"dove{k}", dframes, seed=77, motion=fl.motion, frame_at=fl.frame)
 
     # ------------------------------------------------------------------ end card
     sc.add("card_glow", card_glow_svg(), wc=0, motion=M.keys([(t_card - 0.1, {"alpha": 0}),
-                                                               (t_card + 0.7, {"alpha": 1})], "sine"))
+                                                               (t_card + 0.5, {"alpha": 1})], "sine"))
     sc.add("card_text", card_text_svg(), wc=0, motion=M.combine(
-        M.keys([(t_card, {"alpha": 0, "s": 0.95, "dy": 18}), (t_card + 0.6, {"alpha": 1, "s": 1.0, "dy": 0})], "out",
+        M.keys([(t_card, {"alpha": 0, "s": 0.95, "dy": 18}), (t_card + 0.4, {"alpha": 1, "s": 1.0, "dy": 0})], "out",
                pivot=(CARD_X, CARD_Y - 50)),
         M.breathe(0.004, 4.0, pivot=(CARD_X, CARD_Y - 50))))
-    sw0, sw1 = t_card + 0.3, t_card + 0.95
+    sw0, sw1 = t_card + 0.15, t_card + 0.7
     sc.add("swash_l", swash_svg(-1), wc=0,
            reveal=lambda t: {"mode": "right", "frac": M.progress(t, sw0, sw1, "inout"), "soft": 30},
            motion=M.keys([(sw0 - 0.01, {"alpha": 0}), (sw0, {"alpha": 1})], "linear"))
     sc.add("swash_r", swash_svg(1), wc=0,
            reveal=lambda t: {"mode": "left", "frac": M.progress(t, sw0, sw1, "inout"), "soft": 30},
            motion=M.keys([(sw0 - 0.01, {"alpha": 0}), (sw0, {"alpha": 1})], "linear"))
-    th = t_card + 0.5
+    th = t_card + 0.3
     sc.add("heart", heart_svg(), wc=0, motion=M.combine(
         M.keys([(th, {"alpha": 0, "s": 0.2}), (th + 0.12, {"alpha": 1}), (th + 0.45, {"s": 1.0})], "back",
                pivot=HEART),
         heartbeat(th + 0.6)))
 
     # ------------------------------------------------------------------ camera
-    W0, W1 = 1500.0, 2720.0
-    B0, B1 = 1430.0, 1556.0
+    # (time, centre x, viewport width, viewport bottom); interpolated with a monotone cubic so the move flows
+    # through the intermediate keys. "比海更宽": widen with the top kept low (mostly horizontal growth, drifting
+    # west over the sea); "比天更高": tilt up and finish the zoom so the sky grows upward; line 1: push in on
+    # Jonah (eyes closing, doves landing); then ease back out so the end card has room.
+    t_a = t_sky - 0.07
+    t_b = L0.end + 0.1
+    t_c = L1.start + 0.05
+    t_push = L1.start + 0.55 * d1
+    t_out0 = max(t_push + 0.1, t_new + 0.3)
+    t_out1 = t_card + 0.5
+    ck = [(0.0, 1400, 1500, 1430), (0.5, 1400, 1500, 1430), (t_a, 1250, 2080, 1600), (t_b, 1400, 2720, 1556),
+          (t_c, 1400, 2720, 1556), (t_push, 1335, 2300, 1562), (t_out0, 1335, 2300, 1562),
+          (t_out1, 1400, 2640, 1558), (max(T, t_out1 + 0.5), 1400, 2600, 1555)]
+    cx_f = smooth_keys([(k[0], k[1]) for k in ck])
+    cw_f = smooth_keys([(k[0], k[2]) for k in ck])
+    cb_f = smooth_keys([(k[0], k[3]) for k in ck])
 
     def cam(t):
-        s = M.progress(t, 0.5, 3.75, "inout")
-        w = M.lerp(W0, W1, s)
-        bottom = M.lerp(B0, B1, s)
-        p = M.progress(t, 3.9, T, "sine")
-        w2 = w - 50 * p
-        cy = bottom - w * 9 / 32 - 10 * p
-        return Cam(JONAH_X, cy, w2)
+        w = cw_f(t)
+        return Cam(cx_f(t), cb_f(t) - w * 9 / 32, w)
     sc.camera = cam
 
     # ------------------------------------------------------------------ fx

@@ -10,6 +10,7 @@
 output frame, so the whole film reads as printed on textured paper.
 """
 import hashlib
+import os
 from functools import lru_cache
 
 import numpy as np
@@ -67,7 +68,9 @@ def watercolor(img, seed=0, strength=1.0, edge=1.0, grain=1.0):
     out = np.dstack([out_rgb, out_a])
     res = Image.fromarray((out * 255 + 0.5).astype(np.uint8), "RGBA")
     path.parent.mkdir(parents=True, exist_ok=True)
-    res.save(path)
+    part = path.with_name(f"{key}.{os.getpid()}.part.png")
+    res.save(part)
+    os.replace(part, path)  # atomic: concurrent readers see the old state or the whole file
     return res
 
 

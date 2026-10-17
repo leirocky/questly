@@ -49,7 +49,7 @@ KS = 1.15                  # king scale
 THRONE_X, THRONE_Y = 430, 1240
 SPOT_X, SPOT_Y = 770, 1258  # where the king stands, sits in ashes and kneels
 RISE_X = 600               # where he first stands up, just in front of the throne's footstool
-MSG_X, MSG_Y, MSG_S, MSG_V = 1150, 1262, 1.1, 2   # messenger: man variant 2 (olive robe, long dark hair)
+MSG_X, MSG_Y, MSG_S, MSG_V = 1180, 1262, 1.1, 2   # messenger: man variant 2 (olive robe, long dark hair)
 GAP_X = 1965               # where the grey cloud parts and the golden light breaks through
 BUNDLE_X, BUNDLE_Y = THRONE_X - 8, THRONE_Y - 74 * KS   # folded robe + crown resting on the throne cushion
 
@@ -103,7 +103,7 @@ def sky_grey_svg():
 
 def sky_gold_svg():
     """Clear sky after God's mercy: pale blue-cream at the top (keeps some contrast) warming to gold at the sun."""
-    defs = (S.lin_grad("s10skyw", [(0, "#d6e3dc"), (0.3, "#f1dcb0"), (0.68, "#fae2b0"), (1, "#fff1d2")]) +
+    defs = (S.lin_grad("s10skyw", [(0, "#c4dfea"), (0.3, "#e9e0c6"), (0.64, "#fae2b0"), (1, "#fff1d2")]) +
             S.rad_grad("s10sun", [(0, "#fff8dc", 1), (0.25, "#ffefb8", 0.85), (0.6, "#ffe09a", 0.35),
                                   (1, "#ffd98a", 0)]))
     body = (f'<rect x="-20" y="-20" width="{SW + 40}" height="{SKY_H + 20}" fill="url(#s10skyw)"/>'
@@ -369,28 +369,22 @@ def bundle_svg():
 
 
 def puff_svg(cx, cy, rx, ry, seed=0, k=1.0):
-    """A cartoon 'quick change' puff: a ring of cream dust puffs and swirl lines around a figure (not its face)."""
-    ink, rng = P["ink"], random.Random(seed)
-    fill, shade = "#f3e7cc", "#e2cfa6"
-    puffs, lines = "", ""
-    n = 9
-    for i in range(n):
-        a = math.radians(-40 + 260 * i / (n - 1) + rng.uniform(-8, 8))     # sides and bottom, never the head
-        px, py = cx + rx * math.cos(a), cy + ry * math.sin(a)
-        r = k * rng.uniform(20, 32)
-        d = S.blob(px, py, r * 1.2, r, 0.2, 8, seed * 31 + i)
-        puffs += (f'<path d="{d}" fill="{fill}" stroke="{ink}" stroke-width="{3.5 * k:.1f}"/>'
-                  f'<ellipse cx="{f1(px + r * 0.2)}" cy="{f1(py + r * 0.35)}" rx="{f1(r * 0.7)}" ry="{f1(r * 0.3)}" '
-                  f'fill="{shade}" opacity="0.7"/>')
-    for a0, sgn in ((-30, 1), (150, -1), (60, 1), (200, -1)):
-        pts = []
-        for j in range(9):
-            a = math.radians(a0 + sgn * 70 * j / 8)
-            rr = 1.18 + 0.1 * j / 8
-            pts.append((cx + rx * rr * math.cos(a), cy + ry * rr * math.sin(a)))
+    """A cartoon 'quick change' poof: small soft dust clouds hugging the sides and feet of a figure, and a few
+    short whoosh lines at its sides (never over the face)."""
+    rng = random.Random(seed)
+    dust = ""
+    for i, deg in enumerate((-25, 8, 40, 72, 108, 140, 172, 205)):
+        a = math.radians(deg + rng.uniform(-6, 6))
+        px, py = cx + rx * 0.92 * math.cos(a), cy + ry * 0.95 * math.sin(a)
+        w = k * rng.uniform(62, 84)
+        dust += S.cloud(px, py, w, w * 0.62, "#f1e6cc", seed=seed * 17 + i, puffs=3, sw=2.4, shade_fill="#dfcda8")
+    lines = ""
+    for a0, span, rr in ((-48, 40, 1.22), (-8, 34, 1.32), (188, -40, 1.22), (148, -34, 1.32)):
+        pts = [(cx + rx * rr * math.cos(math.radians(a0 + span * j / 6)),
+                cy + ry * rr * 0.92 * math.sin(math.radians(a0 + span * j / 6))) for j in range(7)]
         lines += (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="{P["ink_soft"]}" '
-                  f'stroke-width="{5 * k:.1f}" stroke-linecap="round" opacity="0.8"/>')
-    return doc(S.g(lines + puffs, filter="wobble-fine"))
+                  f'stroke-width="{4.5 * k:.1f}" stroke-linecap="round" opacity="0.75"/>')
+    return doc(S.g(lines, filter="wobble-fine") + S.g(dust, filter="wobble-fine", opacity=0.92))
 
 
 def ash_heap(x, y, s, part):
@@ -423,7 +417,8 @@ def ash_heap(x, y, s, part):
         out += (f'<path d="M98,-40 L132,-62" stroke="{ink}" stroke-width="11" stroke-linecap="round"/>'
                 f'<path d="M98,-40 L132,-62" stroke="{coal}" stroke-width="6" stroke-linecap="round"/>')
         for cx, cy, r in ((-86, -40, 8), (-40, -60, 6), (34, -36, 7), (110, -16, 6)):
-            out += f'<path d="{S.blob(cx, cy, r * 1.3, r, 0.25, 7, cx + 300)}" fill="{coal}" stroke="{ink}" stroke-width="2.5"/>'
+            out += (f'<path d="{S.blob(cx, cy, r * 1.3, r, 0.25, 7, cx + 300)}" fill="{coal}" stroke="{ink}" '
+                    f'stroke-width="2.5"/>')
     else:
         pts = [(-186, 2), (-170, -8), (-136, -18), (-90, -24), (-36, -26), (20, -27), (76, -24), (126, -18),
                (162, -9), (180, 2)]
@@ -436,10 +431,12 @@ def ash_heap(x, y, s, part):
             out += (f'<circle cx="{f1(px)}" cy="{f1(py)}" r="{f1(rng.uniform(1.6, 3.0))}" '
                     f'fill="{rng.choice((mid, dark, coal))}" opacity="0.65"/>')
         for cx, cy, r in ((-112, -8, 6), (-14, -12, 5), (92, -9, 6)):
-            out += f'<path d="{S.blob(cx, cy, r * 1.3, r, 0.25, 7, cx + 500)}" fill="{coal}" stroke="{ink}" stroke-width="2.4"/>'
+            out += (f'<path d="{S.blob(cx, cy, r * 1.3, r, 0.25, 7, cx + 500)}" fill="{coal}" stroke="{ink}" '
+                    f'stroke-width="2.4"/>')
         for _ in range(12):
             px = rng.choice((-1, 1)) * rng.uniform(176, 206)
-            out += f'<circle cx="{f1(px)}" cy="{f1(rng.uniform(-5, 0))}" r="{f1(rng.uniform(2, 3.6))}" fill="{mid}" opacity="0.75"/>'
+            out += (f'<circle cx="{f1(px)}" cy="{f1(rng.uniform(-5, 0))}" r="{f1(rng.uniform(2, 3.6))}" '
+                    f'fill="{mid}" opacity="0.75"/>')
     return f'<g transform="translate({f1(x)},{f1(y)}) scale({s:.3f})" filter="url(#wobble-fine)">{out}</g>'
 
 
@@ -477,7 +474,7 @@ def exclaim_svg(x, y, s=1.0):
 # crowd: (name, kind, variant, x, y, scale, facing). Scales follow the depth: far 0.55, back 0.66, mid 0.8,
 # front 0.95 (the king 1.15 and the messenger 1.1 stand on the raised dais, slightly hierarchical).
 CROWD = {
-    "far": [("man", 2, 942, 1058, 0.55, 1), ("woman", 0, 997, 1062, 0.55, -1), ("elder", 1, 1050, 1056, 0.55, -1)],
+    "far": [("man", 2, 930, 1058, 0.55, 1), ("woman", 0, 985, 1062, 0.55, 1), ("elder", 1, 1038, 1056, 0.55, -1)],
     "back_l": [("man", 0, 1440, 1094, 0.66, 1), ("woman", 1, 1548, 1100, 0.66, -1),
                ("elder", 3, 1765, 1092, 0.66, 1), ("man", 2, 1872, 1098, 0.66, -1)],
     "back_r": [("woman", 3, 1990, 1094, 0.66, 1), ("man", 1, 2096, 1100, 0.66, -1),
@@ -518,17 +515,19 @@ def group_frames(members):
 
 
 def rays_svg(src, spread, a_mid, n=9, length=2100, seed=4):
+    """Separate soft sunbeams fanning down from src; they start faint at the source (no hard apex)."""
     sx, sy = src
     defs = (f'<radialGradient id="s10ray" gradientUnits="userSpaceOnUse" cx="{sx}" cy="{sy}" r="{length}">'
-            f'<stop offset="0" stop-color="#ffe6a0" stop-opacity="0.6"/>'
-            f'<stop offset="0.5" stop-color="#ffd27a" stop-opacity="0.26"/>'
+            f'<stop offset="0" stop-color="#ffe6a0" stop-opacity="0"/>'
+            f'<stop offset="0.12" stop-color="#ffe6a0" stop-opacity="0.5"/>'
+            f'<stop offset="0.5" stop-color="#ffd27a" stop-opacity="0.24"/>'
             f'<stop offset="1" stop-color="#ffc864" stop-opacity="0"/></radialGradient>')
     rng = random.Random(seed)
     d = ""
     for i in range(n):
-        a = math.radians(a_mid - spread / 2 + spread * i / (n - 1) + rng.uniform(-2.5, 2.5))
-        wa = math.radians(rng.uniform(2.0, 3.8))
-        r0, r1 = 40, length
+        a = math.radians(a_mid - spread / 2 + spread * i / (n - 1) + rng.uniform(-2.0, 2.0))
+        wa = math.radians(rng.uniform(1.3, 2.5))
+        r0, r1 = 40, length * rng.uniform(0.72, 1.0)
         pts = [(sx + r0 * math.cos(a - wa / 4), sy + r0 * math.sin(a - wa / 4)),
                (sx + r1 * math.cos(a - wa), sy + r1 * math.sin(a - wa)),
                (sx + r1 * math.cos(a + wa), sy + r1 * math.sin(a + wa)),
@@ -539,15 +538,15 @@ def rays_svg(src, spread, a_mid, n=9, length=2100, seed=4):
 
 def gleam_svg(cx, cy, rx, ry):
     """Warm golden light behind the parting cloud (normal blend, drawn above the cool gloom glaze)."""
-    defs = S.rad_grad("s10gleam", [(0, "#fff7dc", 1), (0.3, "#ffe9a8", 0.95), (0.62, "#ffd98a", 0.6),
-                                   (1, "#ffcf73", 0)])
+    defs = S.rad_grad("s10gleam", [(0, "#ffeeb4", 1), (0.4, "#ffde92", 0.92), (0.72, "#ffd27c", 0.5),
+                                   (1, "#ffc864", 0)])
     return doc(f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="url(#s10gleam)"/>', defs)
 
 
 def glaze_svg(warm):
     """Full-frame multiply glaze: cool gloom under the cloud, or a light warm gold for God's mercy."""
     if warm:
-        stops = [(0, "#ffd9a0", 0.2), (0.45, "#ffe2b0", 0.17), (1, "#ffdcaa", 0.15)]
+        stops = [(0, "#ffdcaa", 0.1), (0.4, "#ffe2b0", 0.15), (1, "#ffdcaa", 0.18)]
     else:
         stops = [(0, "#8d90ad", 0.62), (0.38, "#9a9cb6", 0.5), (0.68, "#a9a8bc", 0.3), (1, "#b4b1c0", 0.2)]
     defs = S.lin_grad("s10glaze", stops)
@@ -648,8 +647,9 @@ def build(ctx):
            motion=lambda t: Tf(alpha=1.0 if t < t_gold1 + 0.05 else 0.0))
     sc.add("sky_gold", sky_gold_svg(), z=1, wc=0.6,
            motion=M.keys([(t_gold0, {"alpha": 0}), (t_gold1, {"alpha": 1})], "sine"))
+    # fair-weather clouds come in only after the grey banks in front of them have gone (no show-through)
     sc.add("fair", fair_clouds_svg(), z=1.5, motion=M.combine(
-        M.keys([(t_gold0 + 0.8, {"alpha": 0}), (t_gold1 + 0.3, {"alpha": 1})], "sine"), M.drift(vx=4, t0=t_gold0)))
+        M.keys([(l2.start + 2.3, {"alpha": 0}), (l2.start + 3.4, {"alpha": 1})], "sine"), M.drift(vx=4, t0=t_gold0)))
 
     # ---- city & square (static) ----
     sc.add("city", city_svg(), z=8)
@@ -704,7 +704,8 @@ def build(ctx):
         tk, tj = kid_wave[name], kid_joy[name]
         s, pv = m[4], (m[2], m[3])
         # kneel -> cheer is a real pose change: crouch, swap at the bottom, spring up, then two more joy hops
-        jumps = hop(tj, [(-0.12, {"dy": 0, "sy": 1}), (0, {"dy": 7 * s, "sy": 0.94}), (0.18, {"dy": -32 * s, "sy": 1.03}),
+        jumps = hop(tj, [(-0.12, {"dy": 0, "sy": 1}), (0, {"dy": 7 * s, "sy": 0.94}),
+                         (0.18, {"dy": -32 * s, "sy": 1.03}),
                          (0.36, {"dy": 0, "sy": 1}), (0.7, {"dy": 0}), (0.88, {"dy": -24 * s}), (1.06, {"dy": 0}),
                          (1.5, {"dy": 0}), (1.66, {"dy": -16 * s}), (1.82, {"dy": 0})],
                     pv, ["in", "out", "in", "linear", "out", "in", "linear", "out", "in"])
@@ -768,8 +769,9 @@ def build(ctx):
     # quick-change puff over the robe swap
     pk = (SPOT_X - 6, SPOT_Y - 190)
     sc.add("puff_king", puff_svg(pk[0], pk[1], 118, 178, seed=3, k=1.1), z=26.5, wc=0.5,
-           motion=hop(t_sack, [(-0.07, {"alpha": 0, "s": 0.75, "rot": 0}), (0.02, {"alpha": 1, "s": 0.95, "rot": 4}),
-                               (0.16, {"alpha": 0.9, "s": 1.06, "rot": 8}), (0.38, {"alpha": 0, "s": 1.18, "rot": 12})],
+           motion=hop(t_sack, [(-0.06, {"alpha": 0, "s": 0.8, "dy": 0}), (0.02, {"alpha": 1, "s": 0.97, "dy": -4}),
+                               (0.14, {"alpha": 0.85, "s": 1.06, "dy": -12}),
+                               (0.32, {"alpha": 0, "s": 1.14, "dy": -24})],
                       pk, ["out", "sine", "in"]))
 
     # the folded robe with the crown on top arcs from his hands onto the throne seat ("laid his robe from him")
@@ -812,11 +814,12 @@ def build(ctx):
                M.breathe(0.01, 2.8, pivot=mp, phase=0.6)))
     pm = (MSG_X + 6, MSG_Y - 165)
     sc.add("puff_msg", puff_svg(pm[0], pm[1], 96, 150, seed=8, k=0.95), z=28.5, wc=0.5,
-           motion=hop(t_msg_kneel, [(-0.07, {"alpha": 0, "s": 0.75}), (0.02, {"alpha": 1, "s": 0.95}),
-                                    (0.16, {"alpha": 0.85, "s": 1.06}), (0.36, {"alpha": 0, "s": 1.16})],
+           motion=hop(t_msg_kneel, [(-0.06, {"alpha": 0, "s": 0.8, "dy": 0}), (0.02, {"alpha": 1, "s": 0.97, "dy": -4}),
+                                    (0.14, {"alpha": 0.85, "s": 1.06, "dy": -10}),
+                                    (0.32, {"alpha": 0, "s": 1.14, "dy": -20})],
                       pm, ["out", "sine", "in"]))
     mh = C.body_points(C.citizen, MSG_X, MSG_Y, MSG_S, -1, kind="man", variant=MSG_V, pose="stand")["head"]
-    sc.add("arcs", [arcs_svg(mh[0] - 66, mh[1] + 30, -1, k) for k in (1, 2, 3)], z=29, wc=0,
+    sc.add("arcs", [arcs_svg(mh[0] - 58, mh[1] + 30, -1, k) for k in (1, 2, 3)], z=29, wc=0,
            frame_at=lambda t: float(int(t * 7) % 3),
            motion=M.keys([(0, {"alpha": 1}), (t_point - 0.2, {"alpha": 1}), (t_point, {"alpha": 0})], "sine"))
 
@@ -852,7 +855,8 @@ def build(ctx):
     # ---- golden light behind the parting cloud: above the gloom, below the banks, so it shows warm in the gap
     sc.add("gleam", gleam_svg(GAP_X, 150, 250, 330), z=40.1, wc=0, motion=M.combine(
         M.keys([(s0 - 0.05, {"alpha": 0, "sx": 0.5, "sy": 0.7}), (s0 + 0.7, {"alpha": 1, "sx": 1.0, "sy": 1.0}),
-                (t_gold1 - 0.3, {"alpha": 1, "sx": 1.5, "sy": 1.25}), (t_gold1 + 0.6, {"alpha": 0, "sx": 1.7, "sy": 1.3})],
+                (t_gold1 - 0.3, {"alpha": 1, "sx": 1.5, "sy": 1.25}),
+                (t_gold1 + 0.6, {"alpha": 0, "sx": 1.7, "sy": 1.3})],
                ["out", "sine", "sine"], pivot=(GAP_X, 0)),
         M.pulse(0.9, 1.0, 2.6)))
 
@@ -882,9 +886,9 @@ def build(ctx):
     sc.add("warm", glaze_svg(True), z=40.6, wc=0, blend="multiply",
            motion=M.keys([(t_gold0, {"alpha": 0}), (t_gold1 + 0.4, {"alpha": 1})], "sine"))
     rsrc = (GAP_X, 120)
-    sc.add("rays", rays_svg(rsrc, 62, 98, n=10, length=1650), z=41, wc=0, blend="add",
+    sc.add("rays", rays_svg(rsrc, 72, 98, n=9, length=1650), z=41, wc=0, blend="add",
            motion=M.combine(M.keys([(s0 + 0.15, {"alpha": 0, "sx": 0.45, "sy": 0.35}), (s0 + 1.0, {"alpha": 1}),
-                                    (t_gold1, {"sx": 1.0, "sy": 1.0}), (t_gold1 + 1.2, {"alpha": 0.8})],
+                                    (t_gold1, {"sx": 1.0, "sy": 1.0}), (t_gold1 + 1.2, {"alpha": 0.75})],
                                    ["sine", "out", "sine"], pivot=rsrc),
                             M.pulse(0.8, 1.0, 3.2), M.sway(1.2, 7.0, rsrc)))
 

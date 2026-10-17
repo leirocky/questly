@@ -2,12 +2,19 @@
 the horizon, gulls flying across, and the book title appearing with the narration.
 
 Beats (all derived from ctx.duration and ctx.lines[0]; nothing hard-coded to the voice take):
-  start        calm, readable frame: the fish's back and dorsal fin above the swell, the ship rocking on the
-               horizon, a pair of gulls flying in above the ship, a far gull high on the left, sun rising
-  ~0.8 s ..    the great fish slowly arches up out of the sea (soft splash crest, water drops), splash sfx
+  start        calm, readable frame: only the fish's back and dorsal fin above the swell (tail kept low and the
+               water in front of the head nearly opaque, so no fin or eye reads ambiguously), the ship rocking on
+               the horizon, a pair of gulls flying in above the ship, a far gull high on the left, sun rising
+  ~0.8 s ..    the great fish arches up and forward out of the sea: nose up while rising, then the back curves
+               over and the tail lifts clear at the top of the arc (soft splash crest, a burst of spray that
+               falls back, drops shed from the back), soft splash sfx
   line 0       "圣经绘本" -> the ribbon header unfurls (chime); "约拿的故事" -> the five big title characters
                pop in one by one on their syllables (fractions of the line measured from the voice take)
   end          calm hold: the fish hovers at the top of its arc, blinks and waves its tail; slow push-in
+
+Edges: the camera starts slightly inside the stage (>= 26 px margin) because the full-width sea bands bob
+sideways; the foreground crests only "swell" by scaling about their outer stage corner, so their cut edges
+never move into view.
 """
 import math
 
@@ -42,14 +49,15 @@ SYLLABLE_FRAC = (0.52, 0.61, 0.705, 0.765, 0.85)
 GULL_BASE = (1056, 560)
 GULL_S = 0.7
 WINGS = (1.0, 0.5, 0.0, -0.5, -1.0)
-FLAP_SEQ = (0, 1, 2, 3, 4, 3, 2, 1)
+FLAP_SEQ = (2, 1, 0, 1, 2, 3, 4, 3)     # starts from the glide pose (wing 0)
 GULL_X0, GULL_V, GULL_Y, GULL_LAG = 480, 320, 556, 0.5     # near pair: start x, speed px/s, path height, lag
 
-FISH_TAILS = (-0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75)
+FISH_TAILS = tuple(float(v) for v in np.linspace(-0.75, 0.75, 13))   # 13 phases; closed eye on even ones
 TAIL_PERIOD = 1.5
 
 SKY_TOP, SKY_MAUVE, SKY_PEACH, SKY_GLOW = "#b7a6d4", "#dcb8cf", "#f4c6a6", "#fbe3b6"
 CREAM = "#fff6e3"
+DROP = "#f2fbff"                # water droplets
 
 
 def doc(body, defs=""):
@@ -129,7 +137,7 @@ def far_sea():
     defs = (f'<linearGradient id="s1far" gradientUnits="userSpaceOnUse" x1="0" y1="{HORIZON}" x2="0" y2="{MID_Y + 20}">'
             f'<stop offset="0" stop-color="{S.mix(P["sea_pale"], SKY_GLOW, 0.35)}"/>'
             f'<stop offset="1" stop-color="{S.mix(P["sea_light"], P["sea_pale"], 0.3)}"/></linearGradient>')
-    b = S.path(S.wave_band(HORIZON, 3, 260, 0.3, bottom=MID_Y + 60), fill="url(#s1far)", sw=3)
+    b = S.path(S.wave_band(HORIZON, 3, 260, 0.3, bottom=H + 60), fill="url(#s1far)", sw=3)
     r = np.random.default_rng(4)
     for _ in range(26):
         x, y = r.uniform(0, W), r.uniform(HORIZON + 16, MID_Y - 6)
@@ -192,11 +200,12 @@ def glitter_frames():
     return out
 
 
-def fish_front():
-    """Sea band in front of the fish; its top is translucent so the submerged body shows faintly."""
+def fish_front(top_op=0.6):
+    """Sea band in front of the fish; its top is translucent (top_op) so the submerged body shows faintly."""
     defs = (f'<linearGradient id="s1ff" gradientUnits="userSpaceOnUse" x1="0" y1="{FISH_WL - 16}" x2="0" y2="{FISH_WL + 230}">'
-            f'<stop offset="0" stop-color="{P["sea_light"]}" stop-opacity="0.6"/>'
-            f'<stop offset="0.16" stop-color="{S.mix(P["sea_light"], P["sea"], 0.5)}" stop-opacity="0.9"/>'
+            f'<stop offset="0" stop-color="{P["sea_light"]}" stop-opacity="{top_op}"/>'
+            f'<stop offset="0.16" stop-color="{S.mix(P["sea_light"], P["sea"], 0.5)}" '
+            f'stop-opacity="{max(0.9, top_op)}"/>'
             f'<stop offset="0.3" stop-color="{S.mix(P["sea_light"], P["sea"], 0.75)}"/>'
             f'<stop offset="0.6" stop-color="{P["sea"]}"/>'
             f'<stop offset="1" stop-color="{S.mix(P["sea"], P["sea_deep"], 0.6)}"/></linearGradient>')
@@ -224,7 +233,7 @@ def _foam_blobs(blobs, sw=6.0):
 
 
 def _water_crest(x, y, lean, h, w):
-    """A soft mound of water peeling up and over toward `lean`, with a foam lip and a little spray."""
+    """A soft mound of water peeling up and over toward `lean`, with a foam lip (spray: see drops_fx)."""
     def X(k):
         return x + lean * w * k
     water = S.mix(P["sea_light"], P["foam"], 0.25)
@@ -245,10 +254,6 @@ def _water_crest(x, y, lean, h, w):
             lip.append((X(k0 + (k1 - k0) * u), y - h * (h0 + (h1 - h0) * u), h * (r0 + (r1 - r0) * u)))
     lip.append((X(ctrl[-1][0]), y - h * ctrl[-1][1], h * ctrl[-1][2]))
     b += _foam_blobs(lip, 5)
-    # spray
-    for k, (dx, dy, r) in enumerate(((0.75, -1.2, 0.09), (0.98, -0.95, 0.07), (0.62, -1.45, 0.06), (1.1, -0.6, 0.05))):
-        b += (f'<circle cx="{X(dx):.1f}" cy="{y + dy * h:.1f}" r="{max(3.0, r * h):.1f}" fill="{P["foam"]}" '
-              f'stroke="{P["ink"]}" stroke-width="2.5"/>')
     return b
 
 
@@ -327,20 +332,35 @@ def curl_wave(x, y, s, flip, seed):
     for k, (a0, a1, yy) in enumerate(((-90, 120, -40), (-60, 200, 20), (60, 330, 70))):
         b += (f'<path d="M{P_(a0, yy)} Q{P_((a0 + a1) / 2, yy - 18)} {P_(a1, yy)}" stroke="{P["foam"]}" '
               f'stroke-width="{6 * s:.1f}" fill="none" opacity="0.5" stroke-linecap="round"/>')
-    # spray drops off the curl tip
-    for k, (dx, dy, rr) in enumerate(((470, -150, 10), (500, -110, 7), (455, -205, 7), (520, -170, 5))):
-        cx_, cy_ = x + flip * dx * s, y + dy * s
-        b += (f'<circle cx="{cx_:.1f}" cy="{cy_:.1f}" r="{rr * s:.1f}" fill="{P["foam"]}" stroke="{P["ink"]}" '
-              f'stroke-width="{2.5 * s:.1f}"/>')
     return b
 
 
+def curl_spray(x, y, s, flip):
+    """Spray drops off the curl tip of curl_wave(x, y, s, flip): light bluish-white with a thin, light outline
+    and a highlight. On their own wc=0 layer — the watercolour pass greys such small shapes into pebbles."""
+    b = ""
+    for dx, dy, rr in ((470, -150, 10), (500, -110, 7), (455, -205, 7), (520, -170, 5)):
+        cx_, cy_ = x + flip * dx * s, y + dy * s
+        b += (f'<circle cx="{cx_:.1f}" cy="{cy_:.1f}" r="{rr * s:.1f}" fill="{DROP}" stroke="{P["ink"]}" '
+              f'stroke-opacity="0.45" stroke-width="{1.8 * s:.1f}"/>'
+              f'<circle cx="{cx_ - rr * s * 0.38:.1f}" cy="{cy_ - rr * s * 0.4:.1f}" r="{max(1.2, rr * s * 0.25):.1f}" '
+              f'fill="#fffffa" opacity="0.9"/>')
+    return b
+
+
+CURL_L, CURL_R = (-30, 1060, 0.9, 1), (2150, 1080, 0.8, -1)     # x, y, scale, flip
+
+
 def crest_left():
-    return doc(S.g(curl_wave(-30, 1060, 0.9, 1, 1), filter="wobble"))
+    return doc(S.g(curl_wave(*CURL_L, 1), filter="wobble"))
 
 
 def crest_right():
-    return doc(S.g(curl_wave(2150, 1080, 0.8, -1, 2), filter="wobble"))
+    return doc(S.g(curl_wave(*CURL_R, 2), filter="wobble"))
+
+
+def crest_spray(curl):
+    return doc(S.g(curl_spray(*curl), filter="wobble-fine"))
 
 
 # ================================================================== title
@@ -392,15 +412,58 @@ def ribbon():
 # ================================================================== motion helpers
 
 
+def hermite(keys):
+    """Smooth curve through (t, value, slope) keys (cubic Hermite); clamps outside the key range."""
+    def f(t):
+        if t <= keys[0][0]:
+            return keys[0][1]
+        for (t0, v0, m0), (t1, v1, m1) in zip(keys, keys[1:]):
+            if t <= t1:
+                h = t1 - t0
+                u = (t - t0) / h
+                u2, u3 = u * u, u * u * u
+                return ((2 * u3 - 3 * u2 + 1) * v0 + (u3 - 2 * u2 + u) * h * m0 + (-2 * u3 + 3 * u2) * v1 +
+                        (u3 - u2) * h * m1)
+        return keys[-1][1]
+    return f
+
+
 def fish_motion(T, t_rise0, t_rise1):
-    """Back-only at the start, a slow graceful arch up out of the sea, then a gentle hover at the top."""
-    key = M.keys([(0, {"dx": 0, "dy": 150, "rot": -1}),
-                  (t_rise0, {"dx": 6, "dy": 142, "rot": -2}),
-                  (t_rise1, {"dx": 50, "dy": -38, "rot": -19}),
-                  (T, {"dx": 100, "dy": -18, "rot": -12})],
-                 curve=["sine", "inout", "sine"], pivot=(FISH_X, FISH_Y))
+    """Back-only at the start, then an arc up AND forward out of the sea: nose up while rising, the back
+    curving over (nose coming down) at the top, then a gentle hover. Each channel has its own smooth curve
+    so the arc never stops and restarts at a key."""
+    R = t_rise1 - t_rise0
+    tm = t_rise0 + 0.45 * R
+    dx = hermite([(0, 0, 5), (t_rise0, 5, 20), (t_rise0 + 0.5 * R, 75, 95), (t_rise1, 130, 45), (T, 175, 3)])
+    dy = hermite([(0, 180, -2), (t_rise0, 176, -20), (tm, 82, -215), (t_rise1, -42, 0), (t_rise1 + 0.9, -30, 8),
+                  (T, -24, 0)])
+    rot = hermite([(0, -4, 0), (t_rise0, -4.5, -6), (t_rise0 + 0.55 * R, -18, -4), (t_rise1 + 0.1, -11, 9),
+                   (t_rise1 + 1.0, -8, 1.5), (T, -7.5, 0)])
+    key = lambda t: Tf(dx=dx(t), dy=dy(t), rot=rot(t), px=FISH_X, py=FISH_Y)
     wob = lambda t: Tf(rot=0.9 * math.sin(2 * math.pi * t / TAIL_PERIOD + 0.6))
     return M.combine(key, M.bob(5, 2.8, 0.1), wob)
+
+
+def tail_value(t, t_rise0, t_rise1):
+    """Tail bend -0.75..0.75 (+ = up). The upper lobe tip sits higher than the back, so before the rise the
+    tail is held fully down (it stays under the surface while only the back and dorsal fin show); the beat
+    widens in as the fish rises, and the tail is held up for ~0.5 s at the top of the arc so the lobe lifts
+    clear of the water."""
+    osc = math.sin(2 * math.pi * t / TAIL_PERIOD)
+    ramp = M.progress(t, t_rise0, t_rise0 + 0.6, "sine")
+    v = FISH_TAILS[0] * (1 - ramp) + FISH_TAILS[-1] * osc * ramp
+    hold = M.progress(t, t_rise1 - 0.45, t_rise1 - 0.15, "sine") * (1 - M.progress(t, t_rise1 + 0.35, t_rise1 + 0.7,
+                                                                                   "sine"))
+    return v * (1 - hold) + FISH_TAILS[-1] * hold
+
+
+def corner_swell(cx, cy, period, phase, ax, ay):
+    """A foreground crest breathing like a swell: scaled about its outer stage corner (cx, cy), so the edges
+    where the drawing is cut by the stage never move into view (unlike a sway or a bob)."""
+    def m(t):
+        a = 2 * math.pi * (t / period + phase)
+        return Tf(sx=1 + ax * math.sin(a), sy=1 + ay * math.sin(a + 0.9), px=cx, py=cy)
+    return m
 
 
 def fish_point(tf, lx, ly):
@@ -428,7 +491,11 @@ def gull_path(x0, vx, ymid, bend, scale, wob=0.0, phase=0.0):
 
 
 def flap(phase, beat=0.58, flap_for=1.4, glide_for=1.0):
+    """Wing flipbook index: a few whole wing beats, then a glide. FLAP_SEQ starts on the glide pose and the
+    flapping lasts a whole number of beats, so both the start and the end of a flap run meet the glide pose
+    without a jump."""
     step = beat / len(FLAP_SEQ)
+    flap_for = max(1, round(flap_for / beat)) * beat
 
     def f(t):
         cyc = (t + phase) % (flap_for + glide_for)
@@ -442,7 +509,9 @@ def flap(phase, beat=0.58, flap_for=1.4, glide_for=1.0):
 
 
 def drops_fx(fmot, t_rise0, t_rise1, T, seed=7):
-    """Water drops shed from the fish's back while it rises, then a few flicked off its tail."""
+    """Water drops: a burst of spray off both splash crests as the fish breaks the surface (thrown up and
+    outward, falling back in), drops shed from the fish's back while it rises, then a few flicked off its
+    tail. Light bluish-white with a thin light outline and a highlight; each drop grows in over 2 frames."""
     rng = np.random.default_rng(seed)
     # spawn only behind the gill line and throw them backward, so no drop ever crosses the face
     back = [(-560, -130), (-440, -205), (-300, -265), (-160, -300), (-20, -312), (110, -306)]
@@ -460,8 +529,16 @@ def drops_fx(fmot, t_rise0, t_rise1, T, seed=7):
         ts = rng.uniform(t_rise1, T - 0.6)
         x, y = fish_point(fmot(ts), rng.uniform(-800, -700), rng.uniform(-300, -120))
         parts.append((ts, x, y, rng.uniform(-140, -30), rng.uniform(-220, -60), rng.uniform(4, 7)))
+    # spray burst off the two crests (they follow the fish's forward travel)
+    for side, off in ((1, CREST_FRONT), (-1, CREST_REAR)):
+        for i in range(14):
+            ts = rng.uniform(t_rise0 + 0.08, t_rise0 + 0.6)
+            x = FISH_X + off + fmot(ts).dx + side * rng.uniform(-30, 70)
+            y = FISH_WL - rng.uniform(25, 80)
+            parts.append((ts, x, y, side * rng.uniform(30, 170), rng.uniform(-400, -170), rng.uniform(3.5, 7.5)))
     g = 1150.0
-    foam, ink = (244, 248, 241), (75, 52, 38)
+    fill, ink, hi = (242, 251, 255), (75, 52, 38), (255, 255, 250)
+    grow = 2.0 / 30
 
     def fx(frame, t, view):
         live = []
@@ -472,17 +549,21 @@ def drops_fx(fmot, t_rise0, t_rise1, T, seed=7):
             x, y = x0 + vx * a, y0 + vy * a + 0.5 * g * a * a
             if y > FISH_WL + 6:
                 continue
-            live.append((x, y, r, vy + g * a, vx))
+            live.append((x, y, r, vy + g * a, min(1.0, a / grow)))
         if not live:
             return frame
         ov = Image.new("RGBA", frame.size, (0, 0, 0, 0))
         d = ImageDraw.Draw(ov)
-        for x, y, r, vyy, vxx in live:
+        for x, y, r, vyy, k in live:
             ox, oy = view.to_out(x, y)
-            rr = r * view.scale
+            rr = r * view.scale * (0.45 + 0.55 * k)
             st = min(1.8, 1 + abs(vyy) / 900)
-            d.ellipse([ox - rr, oy - rr * st, ox + rr, oy + rr], fill=(*foam, 235), outline=(*ink, 200),
-                      width=max(1, int(round(2 * view.scale))))
+            a = 0.35 + 0.65 * k
+            d.ellipse([ox - rr, oy - rr * st, ox + rr, oy + rr], fill=(*fill, int(235 * a)),
+                      outline=(*ink, int(110 * a)), width=2 if rr >= 6.5 else 1)
+            hr = max(1.0, rr * 0.24)
+            hx, hy = ox - rr * 0.38, oy - rr * st * 0.4
+            d.ellipse([hx - hr, hy - hr, hx + hr, hy + hr], fill=(*hi, int(230 * a)))
         frame.alpha_composite(ov)
         return frame
     return fx
@@ -528,19 +609,25 @@ def build(ctx):
 
     # ---- the great fish
     fmot = fish_motion(T, t_rise0, t_rise1)
-    fr = [doc(PR.fish(FISH_X, FISH_Y, FISH_S, 1, eye=e, tail=tl)) for e in ("open", "closed") for tl in FISH_TAILS]
+    # 13 open-eye tail phases + 7 closed-eye ones (the even phases; a blink snaps to the nearest of them)
+    fr = ([doc(PR.fish(FISH_X, FISH_Y, FISH_S, 1, eye="open", tail=tl)) for tl in FISH_TAILS] +
+          [doc(PR.fish(FISH_X, FISH_Y, FISH_S, 1, eye="closed", tail=tl)) for tl in FISH_TAILS[::2]])
     n_t = len(FISH_TAILS)
+    lo, hi = FISH_TAILS[0], FISH_TAILS[-1]
     blinks = [t_rise1 + 0.75, say.end + 0.55]
 
     def fish_frame(t):
-        v = math.sin(2 * math.pi * t / TAIL_PERIOD)          # -1..1
-        f = int(round((v + 1) / 2 * (n_t - 1)))             # nearest tail phase (crossfades would ghost)
+        v = tail_value(t, t_rise0, t_rise1)
+        f = int(round((v - lo) / (hi - lo) * (n_t - 1)))    # nearest tail phase (crossfades would ghost)
         if any(b <= t < b + 0.16 for b in blinks):
-            f += n_t
+            f = n_t + int(round(f / 2))
         return float(f)
     sc.add("fish", fr, motion=fmot, frame_at=fish_frame, seed=11)
 
-    sc.add("fish_front", fish_front(), motion=sea_m(6, -14, 0.3))
+    # the water in front of the fish: nearly opaque at the top while only the back shows (no ghost of the
+    # submerged eye), turning translucent as the fish rises so the body shows faintly through it
+    sc.add("fish_front", [fish_front(0.95), fish_front(0.6)], motion=sea_m(6, -14, 0.3),
+           frame_at=lambda t: M.progress(t, t_rise0 - 0.1, t_rise0 + 0.5, "sine"))
 
     def ripple_m(phase):
         def m(t):
@@ -565,9 +652,11 @@ def build(ctx):
     sc.add("crest", splash_crest(), motion=crest_m, boil=5)
 
     sc.add("near_sea", near_sea(), motion=sea_m(7, 18, 0.55))
-    sc.add("crest_l", crest_left(), motion=M.combine(M.sway(1.6, 3.6, pivot=(100, 1150)), M.bob(7, 3.6, 0.1)))
-    sc.add("crest_r", crest_right(), motion=M.combine(M.sway(-1.6, 3.9, pivot=(2000, 1160), phase=0.4),
-                                                      M.bob(7, 3.9, 0.5)))
+    swell_l, swell_r = corner_swell(0, H, 3.6, 0.1, 0.018, 0.03), corner_swell(W, H, 3.9, 0.5, 0.016, 0.03)
+    sc.add("crest_l", crest_left(), motion=swell_l)
+    sc.add("crest_l_spray", crest_spray(CURL_L), motion=swell_l, wc=0)
+    sc.add("crest_r", crest_right(), motion=swell_r)
+    sc.add("crest_r_spray", crest_spray(CURL_R), motion=swell_r, wc=0)
 
     # ---- gulls flying across, dipping under the title
     # a pair in formation: gull_b trails gull_a by GULL_LAG s, a little higher and farther away
@@ -576,7 +665,9 @@ def build(ctx):
     sc.add("gull_a", gull_frames, motion=gull_path(GULL_X0, GULL_V, GULL_Y, 60, 1.0, wob=5), frame_at=flap(0.0))
 
     # ---- title: ribbon header with "圣经绘本", then the five characters on their syllables
-    def unfurl(t, t0=say.start - 0.1):
+    t_rib = say.start - 0.1              # the ribbon unfurls just before the voice
+
+    def unfurl(t, t0=t_rib):
         if t < t0:
             return Tf(alpha=0)
         u = M.progress(t, t0, t0 + 0.6, "linear")
@@ -599,12 +690,15 @@ def build(ctx):
         sc.add(f"title_{i}", title_char(ch, x, TITLE_Y), wc=0, motion=pop)
 
     t_done = say.start + SYLLABLE_FRAC[-1] * L + 0.4
-    sc.camera = M.cam_keys([(0, Cam(W / 2, H / 2, W)), (T, Cam(1046, 588, W * 0.9))], "sine")
+    # starts slightly inside the stage: >= 26 px margin at the sides, 15 px top/bottom (the sea bands bob up
+    # to 18 px sideways and 7 px vertically)
+    sc.camera = M.cam_keys([(0, Cam(W / 2, H / 2, W * 0.975)), (T, Cam(1046, 588, W * 0.9))], "sine")
     sc.fx = [
         FX.sparkles((1420, 712, 2000, 980), count=16, color=(255, 244, 210), size=(6, 14), period=1.8, drift=0,
                     seed=3),
-        FX.sparkles((120, 760, 1380, 1040), count=10, color=(250, 252, 240), size=(5, 11), period=2.2, drift=0,
-                    seed=4),
+        # light on the open water only: below the fish's waterline, so no glint ever sits on its body
+        FX.sparkles((120, FISH_WL + 22, 1380, 1040), count=10, color=(250, 252, 240), size=(5, 11), period=2.2,
+                    drift=0, seed=4),
         drops_fx(fmot, t_rise0, t_rise1, T),
         FX.sparkles((300, 230, 450, 440), count=3, t0=t_done, color=(255, 240, 190), size=(9, 17), period=2.0,
                     drift=0, seed=9),
@@ -615,6 +709,8 @@ def build(ctx):
 
     sc.sfx("waves_calm", 0, dur=T + 1, gain_db=-8, fade_in=1.0, fade_out=1.0)
     sc.sfx("gull", 0.45, gain_db=-12, pan=-0.45)
-    sc.sfx("splash_small", t_rise0 + 0.15, gain_db=-14, pan=-0.15)
-    sc.sfx("chime", say.start, gain_db=-10)
+    # a soft water rush as the fish breaks the surface (softened attack; splash_small is a 'crate plop')
+    sc.sfx("splash", t_rise0 + 0.05, gain_db=-18, pan=-0.1, fade_in=0.15)
+    # on the ribbon (which starts 0.1 s before the voice), so the chime's attack comes before "圣"
+    sc.sfx("chime", t_rib, gain_db=-10)
     return sc

@@ -26,22 +26,46 @@ from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
 
-SH = 2440            # stage height
+SH = 2120            # stage height
 DECK_CUT = 1190      # near (cut) edge of the deck floor
 HOLD_TOP = 1262      # top of the hold interior
 RAIL_TOP = 800       # top of the far bulwark
 DECK_BACK = 892      # where the deck floor meets the far bulwark
-FLOOR = 2190         # hold floor line (back wall foot)
 
-# ---- hold: framed to match the last frame of s04 (Jonah's head at output ~(1066, 699), figure scale ~1.84)
-HS = 1.15                         # people scale in the hold
-HJ = (1386, 2123)                 # sleeping Jonah's anchor (top of the sack bed)
-CAM_HOLD0 = Cam(1477, 1934, 1200)
-CAM_HOLD1 = Cam(1322, 1880, 1560)
-HOLD_LAMP = (1438, 1677)          # hook of the hanging lantern
-HX = 1790                         # hatch centre (deck opening and hold ladder line up)
-LAD_TOP = (1731, 1850)            # ladder rails at HOLD_TOP
-LAD_BOT = (1883, 2002)            # ladder rails at the floor
+# ---- hold: the opening frame continues the LAST FRAME OF s04 (Jonah asleep on grain sacks, head on the right,
+# lantern, ladder up to the hatch). Elements are placed from their s04 end-frame OUTPUT positions through hp():
+# the opening camera CAM_HOLD0 maps stage (H0) to the frame centre at HK output px per stage px, the same scale as
+# s04's final figure (Jonah ~1.84 x on screen). If s04's ending is reframed, re-measure the S04_* points.
+H0, HK = (1381.0, 1552.0), 1.6
+CAM_HOLD0 = Cam(H0[0], H0[1], 1920 / HK)
+
+
+def hp(ox, oy):
+    """s04 end-frame output px -> s05 stage px (opening camera)."""
+    return (H0[0] + (ox - 960) / HK, H0[1] + (oy - 540) / HK)
+
+
+S04_HEAD = (1066, 788)            # sleeping Jonah's head centre
+S04_FLOOR = 1042                  # floor line
+S04_LAMP = (894, 218)             # lantern hook
+S04_LADDER = ((1515, 200), (1715, 201), (1667, 1056), (1867, 1057))   # rails: top-left, top-right, bottom l, r
+HS = 1.15                         # people scale in the hold (on screen ~1.84 x in the opening frame)
+FLOOR = round(hp(0, S04_FLOOR)[1])                      # hold floor line (back wall foot)
+HJ = (round(hp(*S04_HEAD)[0] - 136.43 * HS), round(hp(*S04_HEAD)[1] + 78.6 * HS))   # Jonah's anchor (bed top)
+HOLD_LAMP = tuple(round(v) for v in hp(*S04_LAMP))
+HX = 1790                         # hatch centre (deck opening; the hold ladder below lines up with it)
+
+
+def _ladder_rails():
+    (a, b, c, d) = [hp(*q) for q in S04_LADDER]
+    k = (c[0] - a[0]) / (c[1] - a[1])
+    top = (a[0] - k * (a[1] - HOLD_TOP + 6), b[0] - k * (b[1] - HOLD_TOP + 6))
+    bot = (c[0] + k * (FLOOR + 12 - c[1]), d[0] + k * (FLOOR + 12 - d[1]))
+    return tuple(round(v) for v in top), tuple(round(v) for v in bot)
+
+
+LAD_TOP, LAD_BOT = _ladder_rails()                      # ladder rails at HOLD_TOP - 6 and at FLOOR + 12
+CAM_HOLD1 = Cam(1322, FLOOR - 338, 1560)                # wider, after the captain arrives
 
 # ---- deck
 CAM_DECK = Cam(1295, 680, 1620)   # end of the rise (the captain at the far left is still out of frame)
@@ -447,35 +471,36 @@ def deck_foreground():
 
 # ============================================================== hold (echoes the s04 hold)
 
-def fishing_net(x0, y0, x1, y1, seed=0):
-    """A fishing net hung from two pegs, sagging, with cork floats along the top rope."""
-    r = random.Random(seed)
-    sag = 50
-    top = f"M{x0},{y0} Q{(x0 + x1) / 2},{y0 + sag} {x1},{y0}"
-    hem = [(x0 - 10, y0 + 30)]
-    for i in range(1, 8):
-        u = i / 8
-        hem.append((x0 + (x1 - x0) * u, y1 + 20 * math.sin(math.pi * u) + r.uniform(-10, 10)))
-    hem.append((x1 + 10, y0 + 30))
-    d = top + " L" + " L".join(f"{x:.1f},{y:.1f}" for x, y in hem[::-1]) + " Z"
-    body = f'<path d="{d}" fill="#b89a62" fill-opacity="0.3" {S.STROKE_THIN}/>'
+def grid_net(x0, y0, x1, y1):
+    """s04's net: a square-mesh fishing net hung flat on the wall from a rope between two pegs."""
+    body = f'<path d="M{x0},{y0} L{x1},{y0} L{x1 - 6},{y1} L{x0 + 8},{y1 + 6} Z" fill="#b89a62" fill-opacity="0.22"/>'
     mesh = ""
-    for i in range(-6, 14):
-        xa = x0 + i * 28
-        mesh += f'M{xa},{y0} l{(y1 - y0) * 0.55:.1f},{y1 - y0 + 40} M{xa + 100},{y0} l{-(y1 - y0) * 0.55:.1f},{y1 - y0 + 40} '
-    cid = f"net{x0}{y0}"
-    body += (f'<clipPath id="{cid}"><path d="{d}"/></clipPath>'
-             f'<path d="{mesh}" clip-path="url(#{cid})" stroke="#d6b77a" stroke-width="3" fill="none"/>'
-             f'<path d="{mesh}" clip-path="url(#{cid})" stroke="{S.INK}" stroke-width="1.2" fill="none" opacity="0.45"/>')
-    body += f'<path d="{top}" fill="none" stroke="#c9a76a" stroke-width="8" stroke-linecap="round"/>'
-    for i in range(1, 5):
-        u = i / 5
-        x = x0 + (x1 - x0) * u
-        y = y0 + sag * 2 * u * (1 - u)
-        body += f'<ellipse cx="{x:.1f}" cy="{y + 5:.1f}" rx="13" ry="9" fill="{P["gold"]}" {S.STROKE_THIN}/>'
-    for x in (x0, x1):
-        body += f'<circle cx="{x}" cy="{y0}" r="9" fill="{P["wood_dark"]}" {S.STROKE_THIN}/>'
+    n = 9
+    for i in range(n + 1):
+        x = x0 + (x1 - x0) * i / n
+        mesh += f"M{x:.1f},{y0} L{x + (2 if i % 2 else -2):.1f},{y1} "
+    m = 5
+    for j in range(1, m + 1):
+        y = y0 + (y1 - y0) * j / m
+        mesh += f"M{x0:.1f},{y:.1f} Q{(x0 + x1) / 2:.1f},{y + 6:.1f} {x1:.1f},{y:.1f} "
+    body += f'<path d="{mesh}" stroke="{S.INK}" stroke-width="7" fill="none" stroke-linecap="round"/>'
+    body += f'<path d="{mesh}" stroke="#e4cf9c" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+    body += (f'<path d="M{x0 - 14},{y0} L{x1 + 14},{y0}" stroke="{S.INK}" stroke-width="10" stroke-linecap="round"/>'
+             f'<path d="M{x0 - 14},{y0} L{x1 + 14},{y0}" stroke="#c9a76a" stroke-width="5" stroke-linecap="round"/>')
+    for x in (x0 - 14, x1 + 14):
+        body += f'<circle cx="{x}" cy="{y0}" r="8" fill="{P["wood_dark"]}" {S.STROKE_THIN}/>'
     return S.g(body, filter="wobble-fine")
+
+
+def oar(x0, x1, xb, y):
+    """An oar racked on the wall: shaft x0..x1, blade out to xb."""
+    wl, wd = P["wood_light"], P["wood_dark"]
+    out = (f'<path d="M{x0},{y} L{x1},{y}" stroke="{S.INK}" stroke-width="16" stroke-linecap="round"/>'
+           f'<path d="M{x0},{y} L{x1},{y}" stroke="{wl}" stroke-width="9" stroke-linecap="round"/>')
+    out += (f'<path d="M{x1 - 10},{y - 4} Q{(x1 + xb) / 2},{y - 22} {xb},{y - 6} Q{xb + 8},{y + 4} {xb},{y + 12} '
+            f'Q{(x1 + xb) / 2},{y + 22} {x1 - 10},{y + 4} Z" fill="{S.mix(wl, P["sand"], 0.3)}" {S.STROKE_THIN}/>')
+    out += f'<path d="M{x1},{y} L{xb - 12},{y + 2}" stroke="{wd}" stroke-width="2.5" opacity="0.5"/>'
+    return out
 
 
 def sack_bed(x0, x1, top, bottom, jx):
@@ -502,7 +527,7 @@ def sack_bed(x0, x1, top, bottom, jx):
     bed += S.path(S.blob(px_, py_, 82, 30, 0.08, 10, seed=3), fill=S.mix(P["headcloth"], sc_, 0.45), sw=4)
     bed += (f'<path d="M{px_ - 50},{py_ - 6} Q{px_},{py_ + 6} {px_ + 52},{py_ - 7}" fill="none" stroke="{scd}" '
             f'stroke-width="2.5" opacity="0.5"/>')
-    tx = x0 + 40
+    tx = x0 - 20
     bed += S.path(f"M{tx},{top + 2} Q{tx - 9},{top - 30} {tx + 20},{top - 32} L{tx + 78},{top - 32} "
                   f"Q{tx + 92},{top - 14} {tx + 78},{top + 2} Z", fill=P["jonah_sash"], sw=4)
     bed += f'<path d="M{tx + 6},{top - 15} L{tx + 78},{top - 15}" stroke="{S.shade(P["jonah_sash"], -0.35)}" stroke-width="3"/>'
@@ -510,70 +535,92 @@ def sack_bed(x0, x1, top, bottom, jx):
 
 
 def hold_layer():
-    wood, wd, wl = P["wood"], P["wood_dark"], P["wood_light"]
-    defs = (S.lin_grad("hwall", [(0, "#5b3520"), (0.3, "#8a5631"), (0.7, "#9d6439"), (1, "#6e4127")]) +
+    """The hold below deck, laid out like the end of s04 (see hp()), widened with more cargo for the wider shot."""
+    wood, wd = P["wood"], P["wood_dark"]
+    defs = (S.lin_grad("hwall", [(0, "#6b3f23"), (0.35, "#93603a"), (1, "#7a4a2a")]) +
             S.lin_grad("hfloor", [(0, "#a8713f"), (1, "#7a4a2a")]) +
-            S.rad_grad("hvig", [(0, "#2a160c", 0), (0.6, "#2a160c", 0.08), (1, "#2a160c", 0.7)], cx=0.62, cy=0.62) +
-            S.lin_grad("shaft", [(0, "#cfe0ea", 0.45), (1, "#cfe0ea", 0.0)]))
+            S.rad_grad("hvig", [(0, "#2a160c", 0), (0.6, "#2a160c", 0.06), (1, "#2a160c", 0.62)], cx=0.58, cy=0.6) +
+            S.lin_grad("shaft", [(0, "#cfe0ea", 0.42), (1, "#cfe0ea", 0.0)]))
     b = f'<rect x="-30" y="{HOLD_TOP - 10}" width="{W + 60}" height="{FLOOR - HOLD_TOP + 20}" fill="url(#hwall)"/>'
-    ys = [HOLD_TOP + 60 + 66 * i for i in range(15)]
-    for i in range(0, len(ys) - 1, 2):
-        b += f'<rect x="-30" y="{ys[i]}" width="{W + 60}" height="{ys[i + 1] - ys[i]}" fill="#3b2416" opacity="0.06"/>'
-    b += plank_lines(-30, W + 30, ys, seed=21, opacity=0.36, joint_every=(380, 820))
-    # upright timbers (like s04's posts)
-    for x in (260, 700, 1177, 1702, 2060):
-        b += (f'<rect x="{x - 32}" y="{HOLD_TOP}" width="64" height="{FLOOR - HOLD_TOP}" fill="{wd}" {S.STROKE}/>'
-              f'<path d="M{x - 14},{HOLD_TOP + 20} L{x - 12},{FLOOR - 20}" stroke="{wood}" stroke-width="8" opacity="0.8"/>')
-    # ceiling (underside of the deck), beam ends and the hatch with grey storm light
-    b += f'<rect x="-30" y="{HOLD_TOP - 6}" width="{W + 60}" height="46" fill="#4e2e1b" {S.STROKE}/>'
-    for x in range(60, W + 40, 330):
-        if 1640 < x < 1900:
-            continue
-        b += (f'<rect x="{x}" y="{HOLD_TOP}" width="72" height="84" rx="6" fill="{wood}" {S.STROKE}/>'
-              f'<circle cx="{x + 36}" cy="{HOLD_TOP + 60}" r="7" fill="{wd}"/>')
-    b += f'<rect x="{HX - 90}" y="{HOLD_TOP - 8}" width="180" height="52" fill="#a9b8c4" {S.STROKE}/>'
-    for i in range(6):
-        x = HX - 76 + i * 28
-        b += f'<path d="M{x},{HOLD_TOP - 4} l-6,40" stroke="#e6edf0" stroke-width="2.5" opacity="0.8"/>'
-    b += S.g(f'<path d="M{HX - 90},{HOLD_TOP + 40} L{HX + 90},{HOLD_TOP + 40} L{HX + 240},{FLOOR + 30} '
-             f'L{HX - 160},{FLOOR + 30} Z" fill="url(#shaft)"/>', filter="soft")
+    ys = [HOLD_TOP + 70 + 58 * i for i in range(11)]
+    b += plank_lines(-30, W + 30, [y for y in ys if y < FLOOR - 10], seed=21, opacity=0.36, joint_every=(300, 640))
+    # upright timbers (s04's posts) and the dark frame timbers at the edges of s04's view
+    for x in [hp(485, 0)[0], hp(1335, 0)[0], 560, 2050]:
+        b += (f'<rect x="{x - 26:.0f}" y="{HOLD_TOP}" width="52" height="{FLOOR - HOLD_TOP}" fill="{wd}" {S.STROKE}/>'
+              f'<path d="M{x - 10:.0f},{HOLD_TOP + 20} L{x - 9:.0f},{FLOOR - 20}" stroke="{wood}" stroke-width="7" opacity="0.8"/>')
+    for x in [hp(35, 0)[0], hp(1885, 0)[0]]:
+        b += f'<rect x="{x - 30:.0f}" y="{HOLD_TOP}" width="60" height="{FLOOR - HOLD_TOP}" fill="{S.shade(wd, -0.25)}" {S.STROKE}/>'
+    # ceiling (underside of the deck) with beam ends over the posts, the grated hatch with rain and grey light
+    # (the ceiling reaches up over the lower part of the deck's cut band, which s04's ending does not show)
+    b += f'<rect x="-30" y="{HOLD_TOP - 54}" width="{W + 60}" height="100" fill="#4e2e1b" {S.STROKE}/>'
+    b += f'<rect x="-30" y="{HOLD_TOP - 54}" width="{W + 60}" height="10" fill="{P["jonah_sash"]}" opacity="0.8"/>'
+    b += f'<rect x="-30" y="{HOLD_TOP + 34}" width="{W + 60}" height="14" fill="{wood}" opacity="0.7" {S.STROKE_THIN}/>'
+    for x in [hp(485, 0)[0], hp(1335, 0)[0], 560, 2050]:
+        b += f'<rect x="{x - 26:.0f}" y="{HOLD_TOP + 30}" width="52" height="46" rx="6" fill="{wood}" {S.STROKE}/>'
+    hx0, hx1 = HX - 100, HX + 100
+    b += f'<rect x="{hx0}" y="{HOLD_TOP - 8}" width="{hx1 - hx0}" height="50" fill="#a9b8c4" {S.STROKE}/>'
+    r = random.Random(5)
+    for _ in range(9):
+        x = r.uniform(hx0 + 8, hx1 - 14)
+        b += f'<path d="M{x:.0f},{HOLD_TOP - 4} l-5,{r.uniform(20, 38):.0f}" stroke="#e6edf0" stroke-width="2.5" opacity="0.8"/>'
+    for x in range(hx0 + 30, hx1, 46):
+        b += f'<rect x="{x - 6}" y="{HOLD_TOP - 8}" width="12" height="50" fill="{wood}" {S.STROKE_THIN}/>'
+    b += S.g(f'<path d="M{hx0},{HOLD_TOP + 44} L{hx1},{HOLD_TOP + 44} L{hx1 + 150},{FLOOR + 30} '
+             f'L{hx0 - 40},{FLOOR + 30} Z" fill="url(#shaft)"/>', filter="soft")
     # floor with planks running toward the back wall
     b += f'<rect x="-30" y="{FLOOR}" width="{W + 60}" height="{SH - FLOOR + 30}" fill="url(#hfloor)" {S.STROKE}/>'
-    vx, vy = 1420, 1700
-    for x in range(-900, W + 1000, 130):
+    vx, vy = H0[0], FLOOR - 420
+    for x in range(-900, W + 1000, 120):
         xa = vx + (x - vx) * (FLOOR - vy) / (SH + 40 - vy)
-        b += f'<line x1="{xa:.0f}" y1="{FLOOR}" x2="{x}" y2="{SH + 40}" stroke="{S.INK}" stroke-width="3" opacity="0.32"/>'
-    for y in (FLOOR + 60, FLOOR + 150):
-        b += f'<line x1="-30" y1="{y}" x2="{W + 30}" y2="{y}" stroke="{S.INK}" stroke-width="3" opacity="0.25"/>'
-    b += f'<ellipse cx="{HX + 20}" cy="{FLOOR + 62}" rx="140" ry="18" fill="#9fb3bd" opacity="0.5" {S.STROKE_THIN}/>'
-    b += f'<ellipse cx="{HX}" cy="{FLOOR + 58}" rx="56" ry="6" fill="#dfeaf0" opacity="0.6"/>'
+        b += f'<line x1="{xa:.0f}" y1="{FLOOR}" x2="{x}" y2="{SH + 40}" stroke="{S.INK}" stroke-width="3" opacity="0.3"/>'
+    for y in (FLOOR + 50, FLOOR + 120):
+        b += f'<line x1="-30" y1="{y}" x2="{W + 30}" y2="{y}" stroke="{S.INK}" stroke-width="3" opacity="0.22"/>'
+    b += f'<ellipse cx="{HX + 40}" cy="{FLOOR + 52}" rx="130" ry="16" fill="#9fb3bd" opacity="0.5" {S.STROKE_THIN}/>'
+    b += f'<ellipse cx="{HX + 20}" cy="{FLOOR + 48}" rx="50" ry="5" fill="#dfeaf0" opacity="0.6"/>'
     b = S.g(b, filter="wobble")
-    # wall gear: net, a rack with two rolled mats, a hanging rope coil
-    b += fishing_net(930, 1690, 1150, 1815, seed=3)
-    rack = ""
-    for yy in (1712, 1760):
-        rack += f'<rect x="1205" y="{yy}" width="200" height="12" rx="5" fill="{wl}" {S.STROKE_THIN}/>'
-    for (x, y) in ((1225, 1700), (1250, 1748)):
-        rack += (f'<rect x="{x}" y="{y - 22}" width="150" height="40" rx="20" fill="{S.mix(P["sand"], P["sackcloth"], 0.4)}" '
-                 f'{S.STROKE_THIN}/><ellipse cx="{x + 150 - 8}" cy="{y - 2}" rx="9" ry="18" fill="{P["sackcloth_dark"]}" {S.STROKE_THIN}/>')
-    rack += f'<circle cx="1200" cy="1960" r="9" fill="{wd}" {S.STROKE_THIN}/>'
-    b += S.g(rack, filter="wobble-fine") + PR.rope_coil(1210, 2032, 0.8)
-    # cargo: amphorae tied in a row (left), crates and sacks
+    # wall gear like s04: square net, two racked oars, a hanging rope coil
+    nx0, ny0 = hp(100, 225)
+    nx1, ny1 = hp(470, 420)
+    b += grid_net(round(nx0), round(ny0), round(nx1), round(ny1))
+    oars = ""
+    for (oa, ob, oc, oy) in ((90, 560, 745, 482), (90, 600, 800, 548)):
+        x0_, y_ = hp(oa, oy)
+        oars += oar(round(x0_), round(hp(ob, 0)[0]), round(hp(oc, 0)[0]), round(y_))
+    for ox in (150, 360):
+        px_, py_ = hp(ox, 515)
+        oars += f'<rect x="{px_ - 7:.0f}" y="{py_ - 34:.0f}" width="14" height="70" rx="5" fill="{wd}" {S.STROKE_THIN}/>'
+    b += S.g(oars, filter="wobble-fine")
+    peg = hp(512, 655)
+    b += f'<circle cx="{peg[0]:.0f}" cy="{peg[1]:.0f}" r="7" fill="{wd}" {S.STROKE_THIN}/>'
+    rc = hp(530, 752)
+    b += PR.rope_coil(rc[0], rc[1], 0.72)
+    # cargo: s04's crate with a sack on it and a smaller crate (left), tied amphorae (right); more for the wide shot
+    cargo = ""
+    c1 = hp(365, 948)
+    cargo += PR.crate(c1[0], c1[1], 1.0) + PR.sack(c1[0] - 8, c1[1] - 56, 0.64, seed=8)
+    c2 = hp(150, 968)
+    cargo += PR.crate(c2[0], c2[1], 0.86, rot=-2)
+    cargo += PR.crate(660, FLOOR - 48 * 1.3 + 6, 1.3) + PR.sack(745, FLOOR + 8, 1.0, seed=6)
+    cargo += PR.jar(600, FLOOR - 120, 0.9, rot=-5)
+    j1, j2 = hp(1420, 922), hp(1556, 930)
+    cargo += PR.jar(j1[0], j1[1], 0.96, rot=-4) + PR.jar(j2[0], j2[1], 0.94, rot=5, color=S.mix(P["terracotta"], P["sand"], 0.35))
     rope = S.mix(P["sackcloth"], P["sand"], 0.35)
-    cargo = PR.crate(560, FLOOR - 48 * 1.35 + 8, 1.35) + PR.crate(590, FLOOR - 48 * 1.35 - 140, 1.2, rot=-3)
-    cargo += PR.sack(760, FLOOR + 10, 1.2, seed=8)
-    cargo += PR.jar(905, 2096, 1.05, rot=-6) + PR.jar(1000, 2098, 1.02, rot=4, color=S.mix(P["terracotta"], P["sand"], 0.35))
-    cargo += PR.jar(1090, 2102, 1.0, rot=-3)
-    cargo += (f'<path d="M855,2075 Q1000,2098 1140,2078" fill="none" stroke="{S.INK}" stroke-width="10" stroke-linecap="round"/>'
-              f'<path d="M855,2075 Q1000,2098 1140,2078" fill="none" stroke="{rope}" stroke-width="5" stroke-linecap="round"/>')
-    cargo += PR.crate(2060, FLOOR - 48 * 1.35 + 8, 1.35) + PR.crate(2075, FLOOR - 48 * 1.35 - 136, 1.2, rot=3)
+    ra, rb = hp(1350, 885), hp(1625, 892)
+    cargo += (f'<path d="M{ra[0]:.0f},{ra[1]:.0f} Q{(ra[0] + rb[0]) / 2:.0f},{ra[1] + 12:.0f} {rb[0]:.0f},{rb[1]:.0f}" fill="none" '
+              f'stroke="{S.INK}" stroke-width="9" stroke-linecap="round"/>'
+              f'<path d="M{ra[0]:.0f},{ra[1]:.0f} Q{(ra[0] + rb[0]) / 2:.0f},{ra[1] + 12:.0f} {rb[0]:.0f},{rb[1]:.0f}" fill="none" '
+              f'stroke="{rope}" stroke-width="4.5" stroke-linecap="round"/>')
+    cargo += PR.crate(2030, FLOOR - 48 * 1.25 + 6, 1.25) + PR.crate(2040, FLOOR - 48 * 1.25 - 128, 1.1, rot=3)
     b += cargo
-    b += thick_ladder(LAD_TOP, HOLD_TOP - 6, LAD_BOT, FLOOR + 12, rungs=11)
-    b += sack_bed(1146, 1725, HJ[1], FLOOR + 6, HJ[0])
-    b += PR.sack(1088, FLOOR + 12, 1.0, seed=2) + PR.sack(1810, FLOOR + 14, 0.95, seed=5)
-    # lantern rope from the ceiling to the hook
-    b += f'<path d="M{HOLD_LAMP[0]},{HOLD_TOP + 40} L{HOLD_LAMP[0]},{HOLD_LAMP[1] + 4}" stroke="{S.INK}" stroke-width="4"/>'
-    b += f'<rect x="-30" y="{HOLD_TOP - 10}" width="{W + 60}" height="{SH - HOLD_TOP + 40}" fill="url(#hvig)"/>'
+    b += thick_ladder(LAD_TOP, HOLD_TOP - 6, LAD_BOT, FLOOR + 12, rungs=8)
+    bx0, bx1 = hp(540, 0)[0], hp(1290, 0)[0] + 30
+    b += sack_bed(round(bx0), round(bx1), HJ[1], FLOOR + 6, HJ[0])
+    s1 = hp(1355, 1044)
+    b += PR.sack(s1[0], s1[1], 0.62, seed=2)
+    b += f'<path d="M{HOLD_LAMP[0]},{HOLD_TOP + 44} L{HOLD_LAMP[0]},{HOLD_LAMP[1] + 4}" stroke="{S.INK}" stroke-width="4"/>'
+    b += (f'<rect x="{HOLD_LAMP[0] - 12}" y="{HOLD_TOP + 40}" width="24" height="14" rx="4" fill="{wd}" '
+          f'{S.STROKE_THIN}/>')
+    b += f'<rect x="-30" y="{HOLD_TOP - 54}" width="{W + 60}" height="{SH - HOLD_TOP + 84}" fill="url(#hvig)"/>'
     return doc(b, defs)
 
 
@@ -682,28 +729,26 @@ def build(ctx):
     L = ctx.lines
     sc = Scene(ctx, W=W, H=SH)
 
-    def at(i, f):
-        return L[i].start + f * (L[i].end - L[i].start)
-
     # ---------------------------------------------------------------- key times (all from the narration)
     # hold: the captain comes in after the cross-dissolve and wakes Jonah ("船长叫醒了他")
     t_cap_in0 = max(0.8, L[0].start + 0.2)          # enters from beyond the right edge after the dissolve
-    t_crouch = t_cap_in0 + 0.55
-    t_shake0, t_shake1 = t_crouch + 0.04, t_crouch + 0.34
+    t_crouch = t_cap_in0 + 0.5
+    t_shake0, t_shake1 = t_crouch + 0.04, t_crouch + 0.32
     t_situp = t_shake1                               # Jonah sits up rubbing his eye; the captain stands back
-    t_cpoint = t_situp + 0.12                        # captain points up the ladder
-    t_standup = t_cpoint + 0.14                      # Jonah gets to his feet
+    t_cpoint = t_situp + 0.1                         # captain points up the ladder
+    t_standup = t_cpoint + 0.12                      # Jonah gets to his feet
     t_walk = t_standup + 0.2                         # ...and heads for the ladder
     t_pan0 = t_standup - 0.08                        # gentle rise to the deck (sine, ~1.4 s)
     t_pan1 = t_pan0 + 1.4
     # deck ("水手们抽签，签落在了约拿身上")
     t_glow = L[1].start + 0.45                       # the lot glows in Jonah's hand
-    t_draw = t_glow - 0.08                           # he pulls it out of the pot
+    t_raise = t_glow - 0.1                           # ...which he holds up high
+    t_draw = t_glow - 0.2                            # he pulls the last stick out of the pot
     t_reach = t_draw - 0.16                          # his hand goes to the last stick
     t_jwalk1 = t_reach - 0.02
     t_out = t_jwalk1 - 0.5                           # steps out of the hatch and walks to the pot
     t_climb0 = t_out - 0.38                          # head and shoulders rise through the hatch
-    t_s1_reach = min(L[0].end - 0.42, t_climb0 - 0.1)
+    t_s1_reach = t_pan1 - 0.42                       # S1 draws as soon as the deck is in view
     t_s1_lift = t_s1_reach + 0.24
     t_s1_stand = t_s1_lift + 0.28
     t_turn = t_out + 0.02                            # the pot-holder turns to offer the pot to Jonah
@@ -771,6 +816,7 @@ def build(ctx):
 
     # Jonah climbing up through the hatch (cut off below the hatch lip)
     climb = ClimbSprite([("walk_a", -1, "worried"), ("walk_b", -1, "worried")])
+    climb.images()                     # rasterise now (disk-cached) so render workers never need Chromium
     y_lo, y_hi = CLIP_Y + 338, JY + 5
 
     def climb_fn(t):
@@ -933,7 +979,7 @@ def build(ctx):
         if lot:
             where, marked = lot
             far, near = C.hand_positions(C.jonah, JX0, JY, 1.0, facing, pose=pose)
-            if where == "up":          # held up high in the raised hand
+            if where in ("up", "fist"):  # sticking up out of the fist (raised hand, or just pulled out)
                 mk += PR.lot(far[0] + 2 * facing, far[1] - 30, 1.1, rot=-78 * facing, marked=marked)
             elif where == "chest":     # pressed to his chest: "it's me"
                 mk += PR.lot(near[0] - 4 * facing, near[1] + 4, 1.1, rot=-24 * facing, marked=marked)
@@ -941,7 +987,7 @@ def build(ctx):
                 mk += PR.lot(near[0] + 2 * facing, near[1] + 26, 1.0, rot=84 * facing, marked=marked)
         return mk
     jfr = [jframe("walk_a", -1, "worried"), jframe("walk_b", -1, "worried"),
-           jframe("point", -1, "worried"),
+           jframe("point", -1, "worried"), jframe("point", -1, "worried", ("fist", False)),
            jframe("preach", -1, "worried", ("up", False)), jframe("preach", -1, "surprised", ("up", True)),
            jframe("confess", -1, "surprised", ("chest", True)),
            jframe("confess", -1, "sorry", ("chest", True)),
@@ -954,14 +1000,16 @@ def build(ctx):
             return float(int(max(0.0, t - t_out) / 0.14) % 2)
         if t < t_draw:
             return 2.0
-        if t < t_glow:
+        if t < t_raise:
             return 3.0
+        if t < t_glow:
+            return 4.0
         if t < t_glow + 0.16:
-            return 3.0 + (t - t_glow) / 0.16
-        for tk, idx in ((t_open, 9), (t_calm, 8), (t_sea, 7), (t_confess, 6), (t_jback0, 5)):
+            return 4.0 + (t - t_glow) / 0.16
+        for tk, idx in ((t_open, 10), (t_calm, 9), (t_sea, 8), (t_confess, 7), (t_jback0, 6)):
             if t >= tk:
                 return float(idx)
-        return 4.0
+        return 5.0
     jwalk_dx = keyed([(t_out, HX - JX0), (t_jwalk1, 0.0)], "linear")
 
     def jstep(t):
@@ -975,7 +1023,7 @@ def build(ctx):
             return Tf(dx=jwalk_dx(t), dy=(y_hi - JY) * (1 - u) - 5 * abs(math.sin(math.pi * (t - t_out) / 0.14)))
         u = M.progress(t, t_jback0, t_jback1, "sine")
         return Tf(dx=jstep(t), dy=-10 * math.sin(math.pi * u))
-    jswitch = [t_reach, t_draw, t_jback0, t_confess, t_sea, t_calm, t_open]
+    jswitch = [t_reach, t_raise, t_jback0, t_confess, t_sea, t_calm, t_open]
     sc.add("jonah", [doc(f) for f in jfr], z=23, frame_at=j_at,
            motion=alive(JX0, JY, jswitch, 0.1, extra=j_extra))
 
@@ -1045,7 +1093,7 @@ def build(ctx):
                 (t_glow + 0.25, Cam(CAM_DECK.x - 5, CAM_DECK.y - 4, CAM_DECK.w + 10)),
                 (t_glow + 1.3, CAM_WIDE), (t_confess, CAM_WIDE), (L[3].start - 0.1, CAM_PUSH), (T, CAM_END)]
     cam_base = M.cam_keys(cam_keys, "sine")
-    roll0 = -0.77                          # s04 ends with the hold tilted ~0.8 deg clockwise
+    roll0 = -0.6                           # s04 ends with the hold tilted ~0.4-0.9 deg clockwise
 
     def cam(t):
         c = cam_base(t)
@@ -1059,7 +1107,7 @@ def build(ctx):
         FX.lightning([t_thunder], dur=0.5, strength=0.22),
         FX.sparkles((jxe - 170, JY - 400, jxe + 170, JY - 40), count=24, t0=t_glow - 0.05, t1=t_sea + 0.6,
                     color=(255, 226, 140), size=(8, 18), period=1.3, drift=-18, seed=5),
-        FX.motes((900, 1700, 2000, 2160), count=26, t1=t_pan1, color=(255, 228, 170), size=(3, 6), alpha=130),
+        FX.motes((850, 1380, 1950, FLOOR - 30), count=26, t1=t_pan1, color=(255, 228, 170), size=(3, 6), alpha=130),
     ]
 
     # ---------------------------------------------------------------- sound

@@ -67,12 +67,16 @@ def rasterize(svg, w, h):
     )
     page.set_content(html)
     page.evaluate("document.fonts.ready.then(() => 1)")
-    tmp = path.with_suffix(".tmp.png")
-    page.screenshot(path=str(tmp), omit_background=True, clip={"x": 0, "y": 0, "width": w, "height": h})
-    im = Image.open(tmp).convert("RGBA")
+    tag = f"{os.getpid()}"
+    shot = path.with_name(f"{key}.{tag}.shot.png")
+    page.screenshot(path=str(shot), omit_background=True, clip={"x": 0, "y": 0, "width": w, "height": h})
+    im = Image.open(shot).convert("RGBA")
     if im.size != (w, h):
         # Downsample in premultiplied space so transparent edges stay clean.
         im = im.convert("RGBa").resize((w, h), Image.LANCZOS).convert("RGBA")
-    im.save(path)
-    tmp.unlink(missing_ok=True)
+    # Write then rename, so concurrent renderers never read a half-written cache file.
+    part = path.with_name(f"{key}.{tag}.part.png")
+    im.save(part)
+    os.replace(part, path)
+    shot.unlink(missing_ok=True)
     return im

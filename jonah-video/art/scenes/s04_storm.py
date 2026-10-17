@@ -1,20 +1,24 @@
 """Scene 4 — the storm (Jonah 1:4-5).
 
-Line 0  God hurls a great wind on the sea: dark clouds roll in, big rounded foam-crested waves heave, rain,
-        lightning.
-Line 1  The ship pitches hard (about +-10 deg), the sail tears in a lightning flash, a wave bursts over the bow,
-        the camera shakes.
+Line 0  God hurls a great wind on the sea: after a calm, readable first beat dark clouds roll in, big rounded
+        foam-crested waves heave, rain, lightning (bold tapering bolts reaching out of the cloud undersides).
+Line 1  The ship pitches hard (about +-10 deg), the sail tears at the first flash peak (scraps fly off downwind),
+        a wave bursts over the bow, the camera shakes.
 Line 2  The frightened sailors (one prays to his god) heave a jar, a crate, another jar and a sack overboard:
-        each flies in a spinning arc and splashes into the sea.
-Line 3  The camera dives into the hull (the ship opens in cutaway) and the hold blooms into a warm lantern-lit
-        room where Jonah sleeps peacefully on grain sacks under a swinging lantern, 'Z z z' drifting up.
+        hard pose cuts sold by keyed lean / squash, each piece flies in a spinning arc and splashes into the sea.
+Line 3  The hull opens in cutaway and the camera holds the contrast (crew panicking above, Jonah asleep below)
+        through '约拿却躺在船舱底下'; then it dives in: the outside darkens, the hold painting blooms outward from
+        the hull opening, and on '呼呼大睡' we are in the warm lantern-lit hold where Jonah sleeps on grain sacks,
+        breathing in time with the snore, 'Z z z' drifting up, rain and flickers still visible through the hatch.
 
 Stage 2400 x 1350. Everything aboard shares one ship transform ``ship_tf(t)``; the hold is a separate
-full-resolution painting attached to the ship at scale K (its Jonah sits exactly on the cutaway's Jonah), so the
-camera can zoom into it without blur.
+full-resolution painting attached to the ship at scale K (its Jonah sits exactly on the cutaway's Jonah, its
+cargo is laid out like the cutaway's), so the camera can zoom into it without blur.
 """
+import json
 import math
 import random
+from dataclasses import replace
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -25,7 +29,7 @@ from art import style as S
 from art.style import P
 from engine import motion as M
 from engine.motion import Cam, Tf
-from engine.paths import OUT_H, OUT_W
+from engine.paths import CACHE, OUT_H, OUT_W
 from engine.scene import Scene
 
 W, H = 2400, 1350
@@ -40,16 +44,33 @@ DECK = SY + PR.SHIP_DECK_Y * SS
 
 # hold painting: its own 2400 x 1350 canvas, framed around Q0, attached to the ship at scale K
 Q0 = (1215.0, 712.0)
+V0 = (1215.0, 627.0)           # painting point at the centre of the final view (high enough to show the hatch)
 JS = 1.75                      # Jonah's scale inside the painting
 J_PAINT = (1080.0, 1000.0)     # Jonah's anchor in the painting
 K = SS / JS                    # painting px -> stage px
 VIEW_W_INT = 1900.0            # painting px across the frame when the dive ends
 LANTERN_HOOK = (1150.0, 322.0)
-HATCH = (1650, 1950)
+HATCH = (1690, 1990)           # hatch opening x range in the painting
+HATCH_Y = (150, 256)           # hatch opening y range (the deck beam runs across below it)
+
+# where '呼呼大睡' starts, as a fraction of narration line 3 (measured on the voice take: the comma pause sits
+# at 0.64-0.70 of the line)
+L3_SLEEP_FRAC = 0.66
+
+# cool storm light over everything outside (ship, crew, cargo); the lanterns and the hold stay warm
+GRADE_DEFS = ('<filter id="stormgrade" x="-5%" y="-5%" width="110%" height="110%" '
+              'color-interpolation-filters="sRGB">'
+              '<feColorMatrix type="saturate" values="0.84"/>'
+              '<feColorMatrix type="matrix" values="0.87 0 0 0 0  0 0.9 0 0 0  0 0 0.97 0 0.012  0 0 0 1 0"/>'
+              '</filter>')
 
 
 def doc(body, defs=""):
     return S.svg_doc(body, defs, w=W, h=H)
+
+
+def graded(markup):
+    return f'<g filter="url(#stormgrade)">{markup}</g>'
 
 
 def ship_pt(lx, ly):
@@ -61,6 +82,13 @@ def deck_y_at(x):
     """Stage y of the deck / hull top at stage x (the deck rises toward bow and stern)."""
     lx = (x - SX) / (SS * SF)
     return SY + (PR.SHIP_DECK_Y - 75 * (abs(lx) / 480) ** 3.2) * SS
+
+
+def opening_rect():
+    """The cutaway hold opening (props.SHIP_INTERIOR) in stage px, un-rotated ship: (x0, y0, x1, y1)."""
+    x0, y0, x1, y1 = PR.SHIP_INTERIOR
+    (ax, ay), (bx, by) = ship_pt(x0, y0), ship_pt(x1, y1)
+    return min(ax, bx), min(ay, by), max(ax, bx), max(ay, by)
 
 
 # ---------------------------------------------------------------- transforms
@@ -75,25 +103,29 @@ def apply(tf, x, y):
 
 
 def compose(a, b):
-    """Transform 'a after b' (b applied first); b must carry its pivot. Uniform scales only."""
+    """Transform 'a after b' (b applied first); b must carry its pivot. a must have a uniform scale."""
     qx, qy = apply(a, b.px + b.dx, b.py + b.dy)
     return Tf(qx - b.px, qy - b.py, a.rot + b.rot, a.sx * b.sx, a.sy * b.sy, a.alpha * b.alpha, b.px, b.py)
 
 
-def keyf(keys, curve="sine"):
-    """Piecewise eased scalar keyframes [(t, v), ...] -> f(t)."""
-    keys = sorted(keys)
+def keyc(keys, curves="sine"):
+    """Piecewise eased scalar keyframes [(t, v), ...] -> f(t); ``curves`` is one easing name or one per segment."""
+    keys = sorted(keys, key=lambda k: k[0])
+    cv = curves if isinstance(curves, (list, tuple)) else [curves] * max(1, len(keys) - 1)
 
     def f(t):
         if t <= keys[0][0]:
             return keys[0][1]
         if t >= keys[-1][0]:
             return keys[-1][1]
-        for (t0, a), (t1, b) in zip(keys, keys[1:]):
+        for i, ((t0, a), (t1, b)) in enumerate(zip(keys, keys[1:])):
             if t0 <= t <= t1:
-                return a + (b - a) * M.progress(t, t0, t1, curve)
+                return a + (b - a) * M.progress(t, t0, t1, cv[min(i, len(cv) - 1)])
         return keys[-1][1]
     return f
+
+
+keyf = keyc
 
 
 def integrate(freq, t0, t1, n_per_s=240):
@@ -118,7 +150,68 @@ def flick(u):
                + 0.25 * math.exp(-u / 0.2))
 
 
+# ---------------------------------------------------------------- snore -> breathing
+
+def snore_inhale_peaks(scene_id, at, dur):
+    """Scene times at which the snore cue (as audio/mix.py will render it: same seed, rate and length) reaches the
+    end of each inhale. Cached on disk; [] if the sound library is unavailable."""
+    key = f"{scene_id}:snore:{float(at)}:{float(dur):.4f}"
+    path = CACHE / "s04_snore_peaks.json"
+    try:
+        cache = json.loads(path.read_text())
+    except Exception:
+        cache = {}
+    if key in cache:
+        return [at + p for p in cache[key]]
+    try:
+        import zlib
+
+        from scipy import signal
+
+        from audio import sfx
+        from engine.paths import SR
+        seed = zlib.crc32(f"{scene_id}:snore:{float(at)}".encode()) & 0xFFFF
+        x = np.asarray(sfx.make("snore", dur, SR, seed=seed), np.float64)
+        x = x.mean(axis=1) if x.ndim == 2 else x
+        y = signal.sosfiltfilt(signal.butter(4, (150, 360), "bandpass", fs=SR, output="sos"), x)
+        hop = SR // 100                                     # 10 ms blocks
+        nb = len(y) // hop
+        e = (y[:nb * hop] ** 2).reshape(nb, hop).mean(axis=1)
+        env = np.sqrt(np.convolve(e, np.ones(6) / 6, "same"))
+        pk, _ = signal.find_peaks(env, height=0.4 * env.max(), distance=200)
+        rel = [round(i / 100, 3) for i in pk]
+    except Exception:
+        return []
+    cache[key] = rel
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(cache))
+    except Exception:
+        pass
+    return [at + p for p in rel]
+
+
+def breath_curve(peaks, per=3.5, rise=1.3, fall=1.55):
+    """Chest in [-1, 1]: rises over the inhale to a maximum at each inhale end, sinks over the whistling exhale,
+    rests between cycles. Extrapolated with ``per`` before / after the known cycles."""
+    if not peaks:
+        return lambda t: math.sin(2 * math.pi * t / per)
+    pk = sorted(peaks)
+    cand = [pk[0] - per * j for j in range(1, 6)] + pk + [pk[-1] + per * j for j in range(1, 6)]
+
+    def f(t):
+        v = -1.0
+        for p in cand:
+            if p - rise <= t <= p:
+                v = max(v, -1 + 2 * M.progress(t, p - rise, p, "sine"))
+            elif p < t <= p + fall:
+                v = max(v, 1 - 2 * M.progress(t, p, p + fall, "sine"))
+        return v
+    return f
+
+
 # ---------------------------------------------------------------- drawing helpers
+
 
 def fm(v):
     return f"{v:.1f}"
@@ -279,25 +372,59 @@ def burst(x, y, s=1.0, seed=0, n=5, spread=62, height=150, lean=0.0):
     return out
 
 
-def bolt_svg(x, y0, y1, seed, sway=1):
-    """Friendly rounded zigzag lightning bolt with a soft glow."""
+def bolt_svg(x, y0, y1, seed, sway=1, w0=34.0):
+    """Bold picture-book lightning bolt: a filled, jagged ribbon that is widest at the top (which starts inside a
+    cloud bank) and tapers to a point, with one short tapering fork and a soft glow behind."""
     r = random.Random(seed)
-    pts = [(x, y0)]
     n = 6
+    pts = [(x, y0)]
     for i in range(1, n + 1):
         u = i / n
-        pts.append((x + sway * (r.uniform(30, 75) if i % 2 else -r.uniform(10, 45)) + 40 * u * sway,
-                    y0 + (y1 - y0) * u))
-    d = "M" + " L".join(f"{px:.1f},{py:.1f}" for px, py in pts)
+        off = r.uniform(26, 50) if i % 2 else -r.uniform(12, 30)
+        pts.append((x + sway * (off + 44 * u), y0 + (y1 - y0) * u))
+    hw = [w0 * (1 - i / n) ** 0.8 + 2.0 for i in range(n + 1)]
+
+    def ribbon(cl, ws):
+        left, right = [], []
+        for i, ((px, py), h) in enumerate(zip(cl[:-1], ws[:-1])):
+            notch = 0.0 if i == 0 else 0.45 * h * (1 if i % 2 else -1)
+            left.append((px - h, py + notch))
+            right.append((px + h, py - notch))
+        return left + [cl[-1]] + right[::-1]
+
+    def poly(p):
+        return "M" + " L".join(f"{fm(a)},{fm(b)}" for a, b in p) + " Z"
+
+    main = poly(ribbon(pts, hw))
     bx, by = pts[2]
-    d2 = f"M{bx:.1f},{by:.1f} L{bx - sway * 60:.1f},{by + 70:.1f} L{bx - sway * 48:.1f},{by + 125:.1f}"
-    out = (f'<g filter="url(#bglow)"><path d="{d}" fill="none" stroke="{P["glow"]}" stroke-width="80" '
-           f'opacity="0.55" stroke-linecap="round" stroke-linejoin="round"/></g>')
-    line = ""
-    for dd, w in ((d, 26), (d2, 16)):
-        line += f'<path d="{dd}" fill="none" stroke="{INK}" stroke-width="{w}" stroke-linecap="round" stroke-linejoin="round"/>'
-        line += f'<path d="{dd}" fill="none" stroke="#fff4c8" stroke-width="{w - 10}" stroke-linecap="round" stroke-linejoin="round"/>'
-    return out + S.g(line, filter="wobble-fine")
+    fork_cl = [(bx, by), (bx - sway * 62, by + 62), (bx - sway * 74, by + 128)]
+    fork = poly(ribbon(fork_cl, [hw[2] * 0.55, hw[2] * 0.3, 0]))
+    core = "M" + " L".join(f"{fm(a)},{fm(b)}" for a, b in pts[:-1])
+    glow = (f'<g filter="url(#bglow)"><path d="{core}" fill="none" stroke="{P["glow"]}" stroke-width="96" '
+            f'opacity="0.5" stroke-linecap="round" stroke-linejoin="round"/></g>')
+    body = (f'<path d="{fork}" fill="#fff0b4" stroke="{INK}" stroke-width="5" stroke-linejoin="round"/>'
+            f'<path d="{main}" fill="#fff3c2" stroke="{INK}" stroke-width="6" stroke-linejoin="round"/>'
+            f'<path d="{core}" fill="none" stroke="#fffcef" stroke-width="7" opacity="0.75" '
+            f'stroke-linecap="round" stroke-linejoin="round"/>')
+    return glow + S.g(body, filter="wobble-fine")
+
+
+def scrap_svg(cx, cy, seed, s=1.0):
+    """A small torn piece of the striped sail."""
+    r = random.Random(seed)
+    k = 7
+    pts = []
+    for i in range(k):
+        a = 2 * math.pi * i / k + r.uniform(-0.2, 0.2)
+        rad = s * r.uniform(0.7, 1.15) * (1 if i % 2 else 0.78)
+        pts.append((cx + 34 * rad * math.cos(a), cy + 20 * rad * math.sin(a)))
+    d = "M" + " L".join(f"{fm(a)},{fm(b)}" for a, b in pts) + " Z"
+    cid = f"scr{seed}"
+    stripe = (f'<rect x="{fm(cx - 6 * s)}" y="{fm(cy - 40 * s)}" width="{fm(20 * s)}" height="{fm(80 * s)}" '
+              f'fill="{P["sail_stripe"]}" transform="rotate(14 {fm(cx)} {fm(cy)})"/>')
+    return (f'<clipPath id="{cid}"><path d="{d}"/></clipPath>'
+            f'<path d="{d}" fill="{P["sail"]}"/><g clip-path="url(#{cid})">{stripe}</g>'
+            f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="3.5" stroke-linejoin="round"/>')
 
 
 def wind_svg(x, y, L, seed, curl=1.0):
@@ -335,14 +462,16 @@ def pennant_pts(phase):
     return top + bot[::-1]
 
 
+
 BOLT_DEFS = '<filter id="bglow" x="-300%" y="-30%" width="700%" height="160%"><feGaussianBlur stdDeviation="26"/></filter>'
 
 
 # ---------------------------------------------------------------- frame effects (local versions)
 
 def rain_fx(t0, t1, density=1.0, angle=-15, length=42, speed=1750, color=(222, 232, 242), alpha=80, width=2,
-            seed=5):
-    """Like engine.fx.rain, but each streak trails behind its drop (aligned with the motion)."""
+            seed=5, hole=None):
+    """Like engine.fx.rain, but each streak trails behind its drop (aligned with the motion).
+    hole(t, view) -> list of output-px points or None: a polygon kept free of rain (the open hold)."""
     n = int(420 * density)
     rng = np.random.default_rng(seed)
     x0 = rng.uniform(0, OUT_W + 400, n)
@@ -366,6 +495,9 @@ def rain_fx(t0, t1, density=1.0, angle=-15, length=42, speed=1750, color=(222, 2
         for i in range(n):
             d.line([(x[i], y[i]), (x[i] - ln[i] * dx, y[i] - ln[i] * dy)], fill=(*color, int(alpha * k * al[i])),
                    width=width)
+        poly = hole(t, view) if hole else None
+        if poly:
+            d.polygon(poly, fill=(0, 0, 0, 0))
         frame.alpha_composite(ov)
         return frame
     return fx
@@ -408,8 +540,36 @@ def motes_fx(region_fn, count, t0, color=(255, 236, 190), seed=13):
 
 # ---------------------------------------------------------------- the hold painting
 
-def hold_svg(core=None):
-    """core=(cx, cy, r0, r1): only a soft disc of the room (first stage of the reveal)."""
+def hatch_slats():
+    """Grating over the hatch opening (also drawn over the hatch rain layer)."""
+    hx0, hx1 = HATCH
+    hy0, hy1 = HATCH_Y
+    wood = P["wood"]
+    out = ""
+    for x in range(hx0 + 45, hx1, 70):
+        out += f'<rect x="{x - 9}" y="{hy0}" width="18" height="{hy1 - hy0 + 4}" fill="{wood}" stroke="{INK}" stroke-width="4"/>'
+    out += (f'<rect x="{hx0}" y="{hy0 + 44}" width="{hx1 - hx0}" height="15" fill="{wood}" stroke="{INK}" '
+            f'stroke-width="4"/>')
+    return out
+
+
+def hatch_rain_svg(seed):
+    """Rain streaks seen through the hatch (one frame of a small boil loop)."""
+    hx0, hx1 = HATCH
+    hy0, hy1 = HATCH_Y
+    r = random.Random(seed)
+    lines = ""
+    for _ in range(26):
+        x, y = r.uniform(hx0 + 4, hx1 + 20), r.uniform(hy0 - 30, hy1 - 6)
+        L = r.uniform(26, 44)
+        lines += (f'<line x1="{x:.0f}" y1="{y:.0f}" x2="{x - 0.3 * L:.0f}" y2="{y + L:.0f}" stroke="#dde7f0" '
+                  f'stroke-width="3.5" stroke-linecap="round" opacity="{r.uniform(0.45, 0.85):.2f}"/>')
+    clip = f'<clipPath id="hrc"><rect x="{hx0 + 3}" y="{hy0 + 3}" width="{hx1 - hx0 - 6}" height="{hy1 - hy0}"/></clipPath>'
+    return doc(f'{clip}<g clip-path="url(#hrc)">{lines}</g>' + S.g(hatch_slats(), filter="wobble-fine"))
+
+
+def hold_svg(clip=None):
+    """The hold painting. clip=(x0, y0, x1, y1, feather): only a soft-edged rectangle of it (reveal stages)."""
     wd, wood, wl = P["wood_dark"], P["wood"], P["wood_light"]
     rope = S.mix(P["sackcloth"], P["sand"], 0.35)
     defs = (S.lin_grad("hf", [(0, S.mix(wl, wood, 0.3)), (1, S.mix(wood, wd, 0.55))])
@@ -456,13 +616,22 @@ def hold_svg(core=None):
         ribs += f'<path d="{d}" fill="none" stroke="{wl}" stroke-width="12" opacity="0.5" transform="translate(-14,0)"/>'
         ribs += f'<path d="{d}" fill="none" stroke="{S.shade(wd, -0.3)}" stroke-width="10" opacity="0.5" transform="translate(18,0)"/>'
     b += S.g(ribs, filter="wobble")
-    # two spare oars resting on pegs along the wall (broad rounded blades)
+    # two spare oars resting on pegs along the wall: round shafts tapering into darker flat blades
     oars = ""
+    blade_col = S.mix(wood, wd, 0.35)
     for y, x0_, x1_ in ((575, 250, 1010), (640, 300, 1060)):
-        oars += f'<path d="M{x0_},{y} L{x1_ - 200},{y - 4}" fill="none" stroke="{INK}" stroke-width="24" stroke-linecap="round"/>'
-        oars += f'<path d="M{x0_},{y} L{x1_ - 200},{y - 4}" fill="none" stroke="{wl}" stroke-width="15" stroke-linecap="round"/>'
-        oars += f'<rect x="{x1_ - 230}" y="{y - 36}" width="230" height="64" rx="30" fill="{wl}" stroke="{INK}" stroke-width="4.5"/>'
-        oars += f'<path d="M{x1_ - 210},{y - 4} L{x1_ - 30},{y - 4}" stroke="{wood}" stroke-width="4" opacity="0.6"/>'
+        xs = x1_ - 236
+        oars += f'<path d="M{x0_},{y} L{xs + 30},{y - 2}" fill="none" stroke="{INK}" stroke-width="24" stroke-linecap="round"/>'
+        oars += f'<path d="M{x0_},{y} L{xs + 30},{y - 2}" fill="none" stroke="{wl}" stroke-width="15" stroke-linecap="round"/>'
+        oars += f'<path d="M{x0_ + 10},{y - 4} L{xs},{y - 6}" stroke="{S.shade(wl, 0.3)}" stroke-width="3" opacity="0.6"/>'
+        blade = (f"M{xs},{y - 8} C{xs + 70},{y - 10} {xs + 110},{y - 36} {x1_ - 52},{y - 36} "
+                 f"Q{x1_ + 4},{y - 34} {x1_ + 4},{y - 4} Q{x1_ + 4},{y + 28} {x1_ - 52},{y + 28} "
+                 f"C{xs + 110},{y + 28} {xs + 70},{y + 6} {xs},{y + 6} Z")
+        oars += S.path(blade, fill=blade_col, sw=4.5)
+        oars += (f'<path d="M{xs + 40},{y - 12} C{xs + 90},{y - 18} {xs + 130},{y - 28} {x1_ - 52},{y - 28} '
+                 f'Q{x1_ - 6},{y - 27} {x1_ - 4},{y - 6}" fill="none" stroke="{wl}" stroke-width="4" opacity="0.7"/>')
+        oars += (f'<path d="M{xs + 12},{y - 1} L{x1_ - 24},{y - 3}" fill="none" stroke="{S.shade(wd, -0.25)}" '
+                 f'stroke-width="3.5" opacity="0.55"/>')
     for x in (440, 640):
         oars += f'<rect x="{x - 10}" y="558" width="20" height="104" rx="6" fill="{wd}" stroke="{INK}" stroke-width="4"/>'
     b += S.g(oars, filter="wobble-fine")
@@ -479,25 +648,27 @@ def hold_svg(core=None):
     b += S.g(net, transform="translate(0,56)", filter="wobble-fine", opacity=0.9)
     b += f'<circle cx="790" cy="742" r="11" fill="{wd}" stroke="{INK}" stroke-width="4"/>'
     b += PR.rope_coil(790, 838, 1.25)
-    # ceiling: deck planks from below, the hatch with the storm outside, the long beam
+    # ceiling: deck planks from below, the hatch (storm sky, rain, grating) above the long beam
     hx0, hx1 = HATCH
-    ceil = f'<rect x="-20" y="-90" width="{W + 40}" height="320" fill="{S.shade(wd, -0.35)}"/>'
+    hy0, hy1 = HATCH_Y
+    ceil = f'<rect x="-20" y="-40" width="{W + 40}" height="330" fill="{S.shade(wd, -0.35)}"/>'
     for x in range(-40, W + 40, 95):
-        ceil += f'<line x1="{x}" y1="-90" x2="{x}" y2="228" stroke="{INK}" stroke-width="3" opacity="0.5"/>'
-    ceil += f'<rect x="{hx0}" y="-90" width="{hx1 - hx0}" height="316" fill="url(#hatchsky)" stroke="{INK}" stroke-width="5"/>'
+        ceil += f'<line x1="{x}" y1="-40" x2="{x}" y2="288" stroke="{INK}" stroke-width="3" opacity="0.5"/>'
+    ceil += (f'<rect x="{hx0 - 16}" y="{hy0 - 16}" width="{hx1 - hx0 + 32}" height="{hy1 - hy0 + 40}" '
+             f'fill="{S.mix(wood, wd, 0.25)}" stroke="{INK}" stroke-width="5"/>')
+    ceil += (f'<rect x="{hx0}" y="{hy0}" width="{hx1 - hx0}" height="{hy1 - hy0 + 20}" fill="url(#hatchsky)" '
+             f'stroke="{INK}" stroke-width="4"/>')
     rr = random.Random(5)
-    for k in range(24):
-        xx, yy = rr.uniform(hx0 + 10, hx1 - 10), rr.uniform(0, 200)
-        ceil += f'<line x1="{xx:.0f}" y1="{yy:.0f}" x2="{xx - 8:.0f}" y2="{yy + 30:.0f}" stroke="#d6e2ee" stroke-width="3" opacity="0.6"/>'
-    for x in range(hx0 + 45, hx1, 70):
-        ceil += f'<rect x="{x - 9}" y="-90" width="18" height="316" fill="{wood}" stroke="{INK}" stroke-width="4"/>'
-    for y in (70, 160):
-        ceil += f'<rect x="{hx0}" y="{y - 8}" width="{hx1 - hx0}" height="16" fill="{wood}" stroke="{INK}" stroke-width="4"/>'
-    ceil += f'<rect x="-20" y="196" width="{W + 40}" height="60" fill="{S.mix(wood, wd, 0.3)}" stroke="{INK}" stroke-width="5"/>'
-    ceil += f'<rect x="-20" y="201" width="{W + 40}" height="12" fill="{wl}" opacity="0.45"/>'
+    for k in range(12):
+        xx, yy = rr.uniform(hx0 + 10, hx1 - 10), rr.uniform(hy0 + 4, hy1 - 30)
+        ceil += f'<line x1="{xx:.0f}" y1="{yy:.0f}" x2="{xx - 8:.0f}" y2="{yy + 26:.0f}" stroke="#d6e2ee" stroke-width="3" opacity="0.35"/>'
+    ceil += hatch_slats()
+    ceil += f'<rect x="{hx0 - 16}" y="{hy0 - 16}" width="{hx1 - hx0 + 32}" height="10" fill="{wl}" opacity="0.5"/>'
+    ceil += f'<rect x="-20" y="256" width="{W + 40}" height="60" fill="{S.mix(wood, wd, 0.3)}" stroke="{INK}" stroke-width="5"/>'
+    ceil += f'<rect x="-20" y="261" width="{W + 40}" height="12" fill="{wl}" opacity="0.45"/>'
     for x in (330, 760, 1580, 2080):
-        ceil += f'<rect x="{x - 36}" y="184" width="72" height="82" rx="8" fill="{wood}" stroke="{INK}" stroke-width="5"/>'
-    b += S.g(ceil, transform="translate(0,60)", filter="wobble")
+        ceil += f'<rect x="{x - 36}" y="244" width="72" height="82" rx="8" fill="{wood}" stroke="{INK}" stroke-width="5"/>'
+    b += S.g(ceil, filter="wobble")
     b += (f'<path d="M{hx0 + 20},296 L{hx1 - 20},296 L{hx1 + 160},1110 L{hx0 + 40},1110 Z" fill="url(#shaft)" '
           f'filter="url(#blur-md)"/>')
     # ladder up to the hatch
@@ -523,16 +694,16 @@ def hold_svg(core=None):
     fl += f'<ellipse cx="{hx0 + 150}" cy="1150" rx="150" ry="22" fill="{P["storm_sea_light"]}" opacity="0.55" stroke="{INK}" stroke-width="3"/>'
     fl += f'<ellipse cx="{hx0 + 120}" cy="1145" rx="60" ry="7" fill="#dfeaf0" opacity="0.6"/>'
     b += S.g(fl, filter="wobble")
-    # cargo, left: amphorae tied in a row, sacks
-    lc = PR.jar(360, 975, 1.6, rot=-6) + PR.jar(505, 980, 1.55, rot=4, color=S.mix(P["terracotta"], P["sand"], 0.35))
-    lc += PR.jar(645, 985, 1.5, rot=-3)
-    lc += f'<path d="M280,945 Q490,980 710,950" fill="none" stroke="{INK}" stroke-width="13" stroke-linecap="round"/>'
-    lc += f'<path d="M280,945 Q490,980 710,950" fill="none" stroke="{rope}" stroke-width="7" stroke-linecap="round"/>'
-    lc += PR.sack(770, 1118, 1.15, seed=3) + PR.sack(270, 1122, 1.2, rot=-5, seed=8)
+    # cargo laid out like the ship's cutaway: crates and sacks toward the bow (left), amphorae lashed together
+    # by the sleeper's head toward the stern (right, before the ladder)
+    lc = PR.crate(420, 1050, 1.4, rot=-3) + PR.sack(250, 1122, 1.2, rot=-5, seed=8)
+    lc += PR.crate(640, 1026, 1.55) + PR.sack(628, 935, 1.0, seed=5)
     b += lc
-    # cargo, right: crates and sacks
-    rc = PR.crate(2010, 1045, 1.6) + PR.crate(2200, 1058, 1.45) + PR.crate(2090, 905, 1.35, rot=3)
-    rc += PR.sack(1630, 1120, 1.1, seed=11) + PR.sack(2110, 836, 1.0, seed=4)
+    rc = PR.jar(1668, 990, 1.5, rot=-4) + PR.jar(1772, 996, 1.42, rot=5, color=S.mix(P["terracotta"], P["sand"], 0.35))
+    rc += f'<path d="M1595,958 Q1720,990 1840,962" fill="none" stroke="{INK}" stroke-width="13" stroke-linecap="round"/>'
+    rc += f'<path d="M1595,958 Q1720,990 1840,962" fill="none" stroke="{rope}" stroke-width="7" stroke-linecap="round"/>'
+    rc += PR.sack(1575, 1121, 1.05, seed=11)
+    rc += PR.crate(2190, 1046, 1.5) + PR.sack(2180, 960, 0.95, seed=4)
     b += rc
     # bed of grain sacks with a sack pillow (Jonah lies on it on his own layer)
     jx, jy = J_PAINT
@@ -560,21 +731,25 @@ def hold_svg(core=None):
     # warm lamplight pooling on the wall and floor + dark warm corners
     b += f'<ellipse cx="{lhx}" cy="{lhy + 380}" rx="1100" ry="760" fill="url(#lampglow)"/>'
     b += S.rect_bg("url(#vig)", W, H)
-    # foreground timbers framing the view
+    # foreground timbers framing the view (inside the final framing), a sack in the near left corner
     fg = ""
-    for x, lean in ((170, 1), (2230, -1)):
+    for x, lean in ((300, 1), (2105, -1)):
         d = f"M{x - 40 * lean},-40 Q{x + 55 * lean},700 {x - 20 * lean},{H + 40}"
         fg += f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="150"/>'
         fg += f'<path d="{d}" fill="none" stroke="{S.shade(wd, -0.4)}" stroke-width="138"/>'
         fg += f'<path d="{d}" fill="none" stroke="{wood}" stroke-width="12" opacity="0.4" transform="translate({30 * lean},0)"/>'
     b += S.g(fg, filter="wobble")
+    b += S.g(PR.sack(452, 1210, 1.45, rot=8, seed=21), opacity=1.0, extra='filter="url(#fgdark)"')
+    defs += ('<filter id="fgdark" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" '
+             'values="0.42 0 0 0 0.02  0 0.36 0 0 0.01  0 0 0.32 0 0  0 0 0 1 0"/></filter>')
     body = f'<g mask="url(#edgefade)">{b}</g>'
-    if core:
-        cx, cy, r0, r1 = core
-        defs += (f'<radialGradient id="coreg" cx="{cx}" cy="{cy}" r="{r1}" gradientUnits="userSpaceOnUse">'
-                 f'<stop offset="{r0 / r1:.3f}" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>'
-                 f'<mask id="coremask"><rect x="-20" y="-20" width="{W + 40}" height="{H + 40}" fill="url(#coreg)"/></mask>')
-        body = f'<g mask="url(#coremask)">{body}</g>'
+    if clip:
+        x0, y0, x1, y1, fe = clip
+        defs += (f'<filter id="clipblur" filterUnits="userSpaceOnUse" x="-200" y="-200" width="{W + 400}" '
+                 f'height="{H + 400}"><feGaussianBlur stdDeviation="{fe}"/></filter>'
+                 f'<mask id="clipmask"><rect x="{x0:.1f}" y="{y0:.1f}" width="{x1 - x0:.1f}" height="{y1 - y0:.1f}" '
+                 f'rx="{min(60, fe * 2):.0f}" fill="#fff" filter="url(#clipblur)"/></mask>')
+        body = f'<g mask="url(#clipmask)">{body}</g>'
     return doc(body, defs)
 
 
@@ -586,25 +761,26 @@ def build(ctx):
     l0, l1, l2, l3 = ctx.lines[:4]
 
     # --------------------------------------------------- timing (all derived from the narration)
-    STRIKES = [(l0.start + 0.95, 0.36), (l1.start, 0.45), (l2.start + 0.25, 0.34)]  # (time, flash strength)
-    T_TEAR = l1.start + 0.04
+    STRIKES = [(l0.start + 1.3, 0.36), (l1.start, 0.45), (l2.start + 0.25, 0.34)]  # (time, flash strength)
+    T_TEAR = l1.start + 0.03            # the sail tears at the first flash peak
     T_CRASH = l1.start + 0.12
     rel = [l2.start + 1.1, l2.start + 1.5, l2.start + 2.05, l2.start + 2.4]           # A, B, A, B releases
-    T_DIVE0 = max(l2.end, rel[-1] + 0.62)
-    T_CUT = (T_DIVE0, T_DIVE0 + 0.4)
-    T_DIVE1 = T_DIVE0 + 1.5
-    T_REV = (T_DIVE0 + 0.75, T_DIVE0 + 1.25)
+    T_CUT = (max(l2.end - 0.1, rel[-1] + 0.5), max(l2.end - 0.1, rel[-1] + 0.5) + 0.4)  # the hull opens
+    t_sleep = l3.start + L3_SLEEP_FRAC * (l3.end - l3.start)                         # '呼呼大睡'
+    T_DIVE0 = max(T_CUT[1] + 0.7, t_sleep - 0.95)   # hold the contrast through '约拿却躺在船舱底下'
+    T_DIVE1 = T_DIVE0 + 1.35
+    T_REV = (T_DIVE0 + 0.4, T_DIVE0 + 0.95)         # the room blooms out of the hull opening
     T_IN = T_REV[1]
-    T_ZZZ = T_REV[0] + 0.15
-    T_HATCH = l3.start + 2.05
+    T_ZZZ = T_REV[0] + 0.3
+    T_HATCH = [T_IN + 0.35, T_IN + 1.1]              # lightning still flickering through the hatch
 
     # --------------------------------------------------- the ship's motion
     pitch_amp = keyf([(0, 3.0), (0.6, 3.5), (2.4, 7.5), (l1.start - 0.1, 10.5), (l1.end - 0.1, 10.5),
-                      (l2.start + 0.4, 6.0), (T_DIVE0, 5.5), (T_DIVE1, 3.2), (T, 2.8)])
+                      (l2.start + 0.4, 6.0), (T_CUT[0], 5.5), (T_DIVE1, 3.2), (T, 2.8)])
     bob_amp = keyf([(0, 8), (2.4, 20), (l1.start - 0.1, 30), (l1.end - 0.1, 30), (l2.start + 0.4, 18),
-                    (T_DIVE0, 15), (T_DIVE1, 8), (T, 7)])
+                    (T_CUT[0], 15), (T_DIVE1, 8), (T, 7)])
     freq = keyf([(0, 1 / 3.6), (2.0, 1 / 2.8), (l1.start - 0.2, 1 / 2.2), (l1.end, 1 / 2.2), (l2.start + 0.5, 1 / 2.9),
-                 (T_DIVE0, 1 / 3.4), (T, 1 / 3.8)])
+                 (T_CUT[0], 1 / 3.4), (T, 1 / 3.8)])
     phase = integrate(freq, -1.0, T + 1.0)
     sea_amp = keyf([(0, 0.45), (0.5, 0.5), (2.6, 1.0), (l1.end, 1.1), (l2.start + 0.5, 0.9), (T, 0.85)])
 
@@ -661,27 +837,33 @@ def build(ctx):
     sc.add("sky_light", doc(sky_light + horizon, light_defs), wc=0.7,
            motion=M.keys([(0, {"alpha": 1}), (0.4, {"alpha": 1}), (l0.end - 0.1, {"alpha": 0})], "sine"))
 
-    # lightning bolts appear at each strike (behind the big clouds, which they come out of)
-    bolts = [(430, 330, 760, 1), (1960, 300, 760, -1), (720, 320, 770, 1)]
+    # rolling storm clouds: a slow drift during the calm opening, then they roll in while line 0 is spoken
+    CL = ((160, 160, 720, 270), (650, 100, 780, 250), (420, 370, 840, 240), (1060, 270, 620, 200))
+    CR = ((2240, 150, 780, 280), (1750, 95, 720, 240), (1960, 370, 840, 230), (1390, 230, 580, 190))
+    m_left = M.combine(M.keys([(0, {"dx": -820, "dy": -60}), (0.5, {"dx": -790, "dy": -58}),
+                               (l0.end + 0.1, {"dx": 0, "dy": 0})], ["sine", "inout"]),
+                       M.drift(vx=6), M.bob(6, 5.0))
+    m_right = M.combine(M.keys([(0, {"dx": 760, "dy": -50}), (0.5, {"dx": 735, "dy": -48}),
+                                (l0.end + 0.4, {"dx": 0, "dy": 0})], ["sine", "inout"]),
+                        M.drift(vx=-5), M.bob(7, 4.4, 0.3))
+
+    # lightning bolts (behind the cloud banks): each starts ~50 px inside the underside of a bank cloud as it
+    # is placed at that strike time
+    bolt_spec = [(m_left, CL[3], -0.3, 700, -1), (m_right, CR[2], 0.05, 770, -1), (m_left, CL[2], 0.25, 760, -1)]
+    bolts = []
+    for (ts, _), (mm, (cx, cy, cw, ch), fr, y1, sway) in zip(STRIKES, bolt_spec):
+        mv = mm(ts)
+        bolts.append((cx + fr * cw + mv.dx, cy + 0.5 * ch - 50 + mv.dy, y1, sway))
     for i, ((ts, _), (bx, by0, by1, sway)) in enumerate(zip(STRIKES, bolts)):
         sc.add(f"bolt{i}", doc(bolt_svg(bx, by0, by1, seed=7 + i, sway=sway), BOLT_DEFS), wc=0,
                motion=(lambda ts_: lambda t: Tf(alpha=bolt_alpha(t - ts_)))(ts))
 
-    # rolling storm clouds
     cl, cr = P["storm_cloud"], S.mix(P["storm_cloud"], P["storm_cloud_light"], 0.3)
     under, rim = S.mix(P["storm_sky_top"], INK, 0.25), "#9aa6ba"
-    left = "".join(storm_cloud(x, y, w_, h_, 40 + i, (cl, cr)[i % 2], under, rim)
-                   for i, (x, y, w_, h_) in enumerate(((160, 160, 720, 270), (650, 100, 780, 250),
-                                                       (420, 370, 840, 240), (1060, 270, 620, 200))))
-    right = "".join(storm_cloud(x, y, w_, h_, 60 + i, (cl, cr)[i % 2], under, rim)
-                    for i, (x, y, w_, h_) in enumerate(((2240, 150, 780, 280), (1750, 95, 720, 240),
-                                                        (1960, 370, 840, 230), (1390, 230, 580, 190))))
-    sc.add("clouds_left", doc(S.g(left, filter="wobble")), wc=0.9,
-           motion=M.combine(M.keys([(0, {"dx": -820, "dy": -60}), (l0.end - 0.1, {"dx": 0, "dy": 0})], "out"),
-                            M.drift(vx=6), M.bob(6, 5.0)))
-    sc.add("clouds_right", doc(S.g(right, filter="wobble")), wc=0.9,
-           motion=M.combine(M.keys([(0, {"dx": 760, "dy": -50}), (l0.end + 0.2, {"dx": 0, "dy": 0})], "out"),
-                            M.drift(vx=-5), M.bob(7, 4.4, 0.3)))
+    left = "".join(storm_cloud(x, y, w_, h_, 40 + i, (cl, cr)[i % 2], under, rim) for i, (x, y, w_, h_) in enumerate(CL))
+    right = "".join(storm_cloud(x, y, w_, h_, 60 + i, (cl, cr)[i % 2], under, rim) for i, (x, y, w_, h_) in enumerate(CR))
+    sc.add("clouds_left", doc(S.g(left, filter="wobble")), wc=0.9, motion=m_left)
+    sc.add("clouds_right", doc(S.g(right, filter="wobble")), wc=0.9, motion=m_right)
 
     gusts = [(l0.start + 0.15, 1500, 300, 560), (l0.start + 0.55, 700, 470, 480), (l0.start + 1.1, 1950, 470, 440),
              (l0.start + 1.6, 1100, 230, 600), (l1.start + 0.25, 450, 330, 460), (l1.start + 0.85, 1750, 400, 520)]
@@ -699,42 +881,90 @@ def build(ctx):
            wc=1.0, motion=wave_motion(18, 34, -0.4, 0.5, lag=0.25))
 
     # --------------------------------------------------- the ship (back), crew, cargo, ship (front)
+    ox0, oy0, ox1, oy1 = opening_rect()
+
     def ship_back(sail, cut):
-        return doc(PR.ship(SX, SY, SS, SF, sail=sail, cutaway=cut, part="back", flag=False) +
-                   PR.rope_coil(ship_pt(-150, -165)[0], DECK, SS * 0.9))
-    tear = lambda t: M.progress(t, T_TEAR, T_TEAR + 0.22, "sine")          # noqa: E731
+        base = (PR.ship(SX, SY, SS, SF, sail=sail, cutaway=cut, part="back", flag=False)
+                + PR.rope_coil(ship_pt(-150, -165)[0], DECK, SS * 0.9))
+        out = graded(base)
+        if cut:   # the lantern-lit hold stays warm
+            out += (f'<clipPath id="holdwarm"><rect x="{ox0 + 9:.1f}" y="{oy0 + 9:.1f}" width="{ox1 - ox0 - 18:.1f}" '
+                    f'height="{oy1 - oy0 - 14:.1f}" rx="30"/></clipPath><g clip-path="url(#holdwarm)">{base}</g>')
+        return doc(out, GRADE_DEFS)
     cutf = lambda t: M.progress(t, *T_CUT, "sine")                          # noqa: E731
     sc.add("ship_back", [ship_back("full", False), ship_back("torn", False), ship_back("torn", True)],
-           motion=ship_tf, frame_at=lambda t: tear(t) + cutf(t))
+           motion=ship_tf, frame_at=lambda t: float(t >= T_TEAR) + cutf(t))
 
     flags = []
     for ph in (0.0, 1.6, 3.2):
         pts = [ship_pt(*q) for q in pennant_pts(ph)]
-        flags.append(doc(S.g(S.path(S.smooth_path(pts, closed=True, tension=0.6), fill=P["sail_stripe"], sw=3.5),
-                             filter="wobble-fine")))
-    sc.add("pennant", flags, motion=ship_tf, frame_at=lambda t: 2 - abs(((t * 5.0) % 4) - 2))
+        flags.append(doc(graded(S.g(S.path(S.smooth_path(pts, closed=True, tension=0.6), fill=P["sail_stripe"],
+                                           sw=3.5), filter="wobble-fine")), GRADE_DEFS))
+    sc.add("pennant", flags, motion=ship_tf, frame_at=lambda t: float(int(t * 6) % 3))
+
+    # scraps of sail torn off at the flash, flying away downwind (left) in tumbling arcs
+    st_tear = ship_tf(T_TEAR)
+    for i, (lx, ly, dxe, peak, drop, spin, dur, s) in enumerate((
+            (292, -790, -520, 70, 60, -420, 0.75, 1.7), (300, -690, -430, 30, 150, 380, 0.65, 1.35),
+            (318, -610, -600, 55, 110, -300, 0.8, 1.5))):
+        x0_, y0_ = apply(st_tear, *ship_pt(lx, ly))
+
+        def scrap_m(t, x0_=x0_, y0_=y0_, dxe=dxe, peak=peak, drop=drop, spin=spin, dur=dur, i=i):
+            if t < T_TEAR or t > T_TEAR + dur:
+                return Tf(alpha=0.0, px=x0_, py=y0_)
+            u = (t - T_TEAR) / dur
+            xo = dxe * (1 - (1 - u) ** 2)
+            yo = -4 * peak * u * (1 - u) + drop * u * u
+            return Tf(xo, yo, spin * u, 0.55 + 0.45 * abs(math.cos(9 * u + i)), 1.0,
+                      1 - M.progress(u, 0.6, 1.0, "sine"), x0_, y0_)
+        sc.add(f"scrap{i}", doc(graded(S.g(scrap_svg(x0_, y0_, 90 + i, s), filter="wobble-fine")), GRADE_DEFS),
+               wc=0.5, motion=scrap_m)
 
     # sleeping Jonah inside the cutaway hold (small; the hold painting takes over during the dive)
     jx_c, jy_c = ship_pt(*PR.SHIP_SLEEP)
     sc.add("jonah_cut", doc(C.jonah(jx_c, jy_c, SS, -1, pose="sleep", marks=False)),
-           motion=on_ship(lambda t: Tf(alpha=cutf(t) * (1 - M.progress(t, T_REV[0] + 0.05, T_REV[0] + 0.35, "sine")),
+           motion=on_ship(lambda t: Tf(alpha=cutf(t) * (1 - M.progress(t, T_REV[0] + 0.02, T_REV[0] + 0.18, "sine")),
                                        px=jx_c, py=jy_c)))
 
-    # sailors: A (bow side, throws to the left), B (stern side, throws right), C (by the mast, prays)
-    AX, BX, CX = 1020.0, 1450.0, 1272.0
+    # sailors: A (bow side, throws to the left), B (stern side, throws right), C (beside the mast, prays)
+    AX, BX, CX = 1020.0, 1462.0, 1330.0
+    s0 = STRIKES[0][0]
+    T_PRAY = STRIKES[2][0] + 0.1
+    GRAB, LIFT, FT = 0.48, 0.22, 0.16   # carry pose this long before release, throw pose this long before,
+    #                                     the throw pose held this long after (then a bent-forward follow-through)
 
-    def trembler(x, amp, t0, t1, seed):
+    def trembler(amp, t0, t1, seed):
         def m(t):
             k = amp * M.progress(t, t0, t0 + 0.2) * (1 - M.progress(t, t1 - 0.2, t1))
-            return Tf(dx=k * math.sin(t * 47 + seed), dy=0.4 * k * math.sin(t * 31 + seed), px=x, py=DECK)
+            return k * math.sin(t * 47 + seed), 0.4 * k * math.sin(t * 31 + seed)
         return m
 
     def pose_track(times):
-        """Flipbook index for poses listed in the order used; one quick crossfade per switch time."""
-        return lambda t: sum(M.progress(t, ts, ts + 0.05, "linear") for ts in times)
+        """Flipbook index for poses listed in the order used: a hard cut at each switch time."""
+        return lambda t: float(sum(t >= ts for ts in times))
+
+    def heave_keys(throws):
+        """Forward lean (deg, + = toward the sea) and vertical squash for a sailor's throws."""
+        lk, lc, sk, scv = [(0.0, 0.0)], [], [(0.0, 1.0)], []
+        for tr in throws:
+            lk += [(tr - LIFT, 0.0), (tr - 0.07, -8.0), (tr + 0.05, 12.0), (tr + 0.42, 0.0)]
+            lc += ["linear", "sine", "out", "back"]
+            tg = tr - GRAB
+            sk += [(tg - 0.001, 1.0), (tg, 0.95), (tg + 0.24, 1.0)]
+            scv += ["linear", "linear", "out"]
+        return keyc(lk, lc), keyc(sk, scv)
+
+    def actor(x, facing, lean, squash, trem):
+        """Sailor body motion on deck (pivot at the feet): tremble, keyed lean and squash."""
+        def m(t):
+            ddx, ddy = trem(t)
+            sy = squash(t)
+            return Tf(ddx, ddy, facing * lean(t), 1 + 0.5 * (1 - sy), sy, 1.0, x, DECK)
+        return m
 
     def sailor_frames(x, facing, variant, poses):
-        return [doc(C.sailor(x, DECK, SS, facing, variant=variant, pose=p, expr=e)) for p, e in poses]
+        return [doc(graded(C.sailor(x, DECK, SS, facing, variant=variant, pose=p, expr=e)), GRADE_DEFS)
+                for p, e in poses]
 
     def carry_over(sx, facing, variant):
         hc = C.hand_positions(C.sailor, sx, DECK, SS, facing, variant=variant, pose="carry")
@@ -745,45 +975,72 @@ def build(ctx):
     A_carry, A_over = carry_over(AX, -1, 0)
     B_carry, B_over = carry_over(BX, 1, 1)
     tA1, tB1, tA2, tB2 = rel
-    s0 = STRIKES[0][0]
-    GRAB, LIFT = 0.48, 0.22          # carry pose this long before release, throw pose this long before
+
+    # C: worried -> scared at the first strike -> prays at the third, slowly tilting his raised arms up and out
+    # over the rail (clear of the mast and of B)
+    c_lean = keyc([(0, 0.0), (T_PRAY, 0.0), (T_PRAY + 1.4, 6.0)], ["linear", "sine"])
+
+    def c_motion(t):
+        ddx, ddy = trembler(2.2, s0, T_PRAY + 0.1, 3)(t)
+        k = M.progress(t, T_PRAY, T_PRAY + 0.5, "sine")
+        ddx += 1.4 * k * math.sin(t * 8.5)
+        rot = -1 * c_lean(t) + k * 1.2 * math.sin(2 * math.pi * (t - T_PRAY) / 2.4)
+        return Tf(ddx, ddy, rot, 1, 1, 1, CX, DECK)
+
+    z_crew = len(sc.layers) + len(sc.dynamics)    # A's cargo rests behind A's legs: drawn just below the crew
     sc.add("sailor_C", sailor_frames(CX, -1, 3, [("stand", "worried"), ("scared", None), ("pray", None)]),
-           motion=on_ship(trembler(CX, 2.2, s0, T + 1, 3)), frame_at=pose_track([s0 + 0.08, STRIKES[2][0] + 0.1]))
+           motion=on_ship(c_motion), frame_at=pose_track([s0 + 0.08, T_PRAY]))
+    leanA, sqA = heave_keys([tA1, tA2])
+    actA = actor(AX, -1, leanA, sqA, trembler(2.0, s0, tA1 - GRAB, 1))
     sc.add("sailor_A", sailor_frames(AX, -1, 0, [("point", "surprised"), ("scared", None), ("carry", None),
-                                                 ("throw", None), ("carry", None), ("throw", None), ("scared", None)]),
-           motion=on_ship(trembler(AX, 2.0, s0, tA1 - GRAB, 1)),
-           frame_at=pose_track([s0 + 0.05, tA1 - GRAB, tA1 - LIFT, tA2 - GRAB, tA2 - LIFT, tA2 + 0.55]))
+                                                 ("throw", None), ("carry", None), ("throw", None), ("carry", None),
+                                                 ("scared", None)]),
+           motion=on_ship(actA),
+           frame_at=pose_track([s0 + 0.05, tA1 - GRAB, tA1 - LIFT, tA1 + FT, tA2 - LIFT, tA2 + FT, tA2 + 0.62]))
+    leanB, sqB = heave_keys([tB1, tB2])
+    actB = actor(BX, 1, leanB, sqB, trembler(2.0, s0 + 0.1, tB1 - GRAB, 2))
     sc.add("sailor_B", sailor_frames(BX, 1, 1, [("stand", "worried"), ("scared", None), ("carry", None),
-                                                ("throw", None), ("carry", None), ("throw", None), ("scared", None)]),
-           motion=on_ship(trembler(BX, 2.0, s0 + 0.1, tB1 - GRAB, 2)),
-           frame_at=pose_track([s0 + 0.12, tB1 - GRAB, tB1 - LIFT, tB2 - GRAB, tB2 - LIFT, tB2 + 0.6]))
+                                                ("throw", None), ("carry", None), ("throw", None), ("carry", None),
+                                                ("scared", None)]),
+           motion=on_ship(actB),
+           frame_at=pose_track([s0 + 0.12, tB1 - GRAB, tB1 - LIFT, tB1 + FT, tB2 - LIFT, tB2 + FT, tB2 + 0.62]))
 
     # the sea surface in front of the ship (for splash timing): near-wave function + its motion
     gx = lambda x: min(1.0, abs(x - SX) / 950) ** 1.4                        # noqa: E731
     f_near = wave_fn(lambda x: 1004 - 75 * gx(x), lambda x: 16 + 100 * gx(x), 600, 0.75, p=2.0, lean=0.3)
-    near_drop = lambda t: 115 * M.progress(t, T_DIVE0 - 0.1, T_CUT[1] + 0.15, "inout")   # noqa: E731
+    near_drop = lambda t: 115 * M.progress(t, T_CUT[0] - 0.1, T_CUT[1] + 0.15, "inout")   # noqa: E731
     near_m = wave_motion(22, 46, 0.3, 2.0, lag=0.1, drop=near_drop)
 
     def surface(x, t):
         m = near_m(t)
         return f_near(x - m.dx) + m.dy
 
-    # cargo: rests on deck -> grabbed (carry) -> overhead (throw) -> released in a spinning arc -> splash
+    # cargo: rests on deck -> grabbed (carry) -> overhead (throw) -> released in a spinning arc -> splash.
+    # While held it follows the thrower's lean / squash, so it stays in his hands.
     splashes = []
 
-    def cargo(name, svg, rest, carry, over, t_rel, land, spin, half_h, fly=0.72, peak=170):
+    def cargo(name, svg, rest, carry, over, t_rel, land, spin, half_h, act, fly=0.72, peak=170, z=None):
         t_grab, t_up = t_rel - GRAB, t_rel - LIFT
         top = (over[0], over[1] - half_h + 12)
 
         def local_pos(t):
+            if t < t_grab:
+                return rest
             if t < t_up:
-                u = M.progress(t, t_grab, t_grab + 0.16, "out")
+                u = M.progress(t, t_grab, t_grab + 0.12, "out")
                 return (rest[0] + (carry[0] - rest[0]) * u, rest[1] + (carry[1] - rest[1]) * u)
-            u = M.progress(t, t_up, t_up + 0.12, "out")
-            return (carry[0] + (top[0] - carry[0]) * u, carry[1] + (top[1] - carry[1]) * u)
+            return top                       # snaps overhead with the cut to the throw pose
 
-        st = ship_tf(t_rel)
-        sx_, sy_ = apply(st, *top)
+        def held(t):
+            p = local_pos(t)
+            inner = Tf(p[0] - rest[0], p[1] - rest[1], 0, 1, 1, 1, rest[0], rest[1])
+            if t >= t_grab:
+                inner = compose(act(t), inner)
+            return compose(ship_tf(t), inner)
+
+        rel_tf = held(t_rel)
+        sx_, sy_ = apply(rel_tf, *rest)
+        rot0 = rel_tf.rot
 
         def make_path(lx):
             return lambda u: (sx_ + (lx - sx_) * u, sy_ + (land[1] - sy_) * u - 4 * peak * u * (1 - u))
@@ -809,28 +1066,34 @@ def build(ctx):
 
         def m(t):
             if t < t_rel:
-                p = local_pos(t)
-                return compose(ship_tf(t), Tf(p[0] - rest[0], p[1] - rest[1], 0, 1, 1, 1, rest[0], rest[1]))
+                return held(t)
             u = (t - t_rel) / fly
             if t > t_hit + 0.35:
                 return Tf(alpha=0.0, px=rest[0], py=rest[1])
             x, y = path(u)
-            return Tf(x - rest[0], y - rest[1], st.rot + spin * u, 1, 1, 1, rest[0], rest[1])
-        sc.add(name, doc(svg), motion=m)
+            return Tf(x - rest[0], y - rest[1], rot0 + spin * u, 1, 1, 1, rest[0], rest[1])
+        sc.add(name, doc(graded(svg), GRADE_DEFS), motion=m, z=z)
         splashes.append((t_hit, hx_, surface(hx_, t_hit) + 10, name))
 
-    a_cr = (A_carry[0] + 6, deck_y_at(A_carry[0]) - 37)
-    a_jar = (A_carry[0] - 2, a_cr[1] - 46 - 50)
+    # A's crate stands behind his legs, his jar on the deck behind him (toward the stern), clear of his
+    # pointing hand; both are drawn just below the crew so his hands overlap them while he holds them
+    a_cr = (AX + 45, deck_y_at(AX + 45) - 37)
+    a_jar = (AX + 118, deck_y_at(AX + 118) - 51)
     b_jar = (B_carry[0], deck_y_at(B_carry[0]) - 53)
-    b_sack = (B_carry[0] + 64, deck_y_at(B_carry[0] + 64) + 2)
-    cargo("cargo_A2", PR.crate(*a_cr, 0.78), a_cr, A_carry, A_over, tA2, (560, 1130), -320, 40)
-    cargo("cargo_A1", PR.jar(*a_jar, 0.62), a_jar, A_carry, A_over, tA1, (660, 1120), -400, 52)
+    b_sack = (B_carry[0] + 52, deck_y_at(B_carry[0] + 52) + 2)
+    cargo("cargo_A2", PR.crate(*a_cr, 0.78), a_cr, A_carry, A_over, tA2, (560, 1130), -320, 40, actA,
+          z=z_crew - 0.6)
+    cargo("cargo_A1", PR.jar(*a_jar, 0.62), a_jar, A_carry, A_over, tA1, (660, 1120), -400, 52, actA,
+          z=z_crew - 0.5)
     cargo("cargo_B1", PR.jar(*b_jar, 0.66, color=S.mix(P["terracotta"], P["sand"], 0.35)), b_jar, B_carry, B_over,
-          tB1, (1860, 1120), 380, 55)
+          tB1, (1860, 1120), 380, 55, actB)
     cargo("cargo_B2", PR.sack(*b_sack, 0.62, seed=6), b_sack, (B_carry[0], B_carry[1] + 32),
-          (B_over[0], B_over[1] + 40), tB2, (1960, 1130), 300, 40)
+          (B_over[0], B_over[1] + 40), tB2, (1960, 1130), 300, 40, actB)
 
-    sc.add("ship_front", doc(PR.ship(SX, SY, SS, SF, sail="torn", part="front")), motion=ship_tf)
+    # front of the ship (cool storm light), its stern lantern stays warm
+    lan = PR.lantern(*ship_pt(-428, -372), 0.85 * SS)
+    sc.add("ship_front", doc(graded(PR.ship(SX, SY, SS, SF, sail="torn", part="front", lantern=False)) + lan,
+                             GRADE_DEFS), motion=ship_tf)
 
     # --------------------------------------------------- sea in front of the ship
     sc.add("sea_near", doc(sea_layer(f_near, P["storm_sea"], P["storm_sea_light"], S.shade(P["storm_sea"], -0.3),
@@ -846,9 +1109,10 @@ def build(ctx):
                                                    (ts_ + 0.85, {"sy": 0.3, "sx": 1.2, "alpha": 0})],
                                                   ["linear", "out", "sine", "in"], pivot=(x_, y_ + 10)))(ts, x, y))
 
-    # a big wave bursting over the bow as the ship nearly breaks
+    # a big wave bursting over the bow as the ship nearly breaks; its plume fans away from the deck (and from
+    # sailor A's face)
     bx, by = ship_pt(455, -60)
-    sc.add("bow_crash", doc(burst(bx - 40, by + 40, 1.7, seed=12, n=6, spread=55, height=190, lean=-14)), wc=0.5,
+    sc.add("bow_crash", doc(burst(bx - 40, by + 40, 1.7, seed=12, n=6, spread=48, height=150, lean=-32)), wc=0.5,
            motion=M.keys([(T_CRASH - 0.01, {"sy": 0.15, "sx": 0.6, "alpha": 0}), (T_CRASH, {"alpha": 1}),
                           (T_CRASH + 0.28, {"sy": 1.0, "sx": 1.0}),
                           (T_CRASH + 0.75, {"sy": 0.95, "sx": 1.1, "alpha": 0.95}),
@@ -860,9 +1124,20 @@ def build(ctx):
                                    S.shade(P["storm_sea"], -0.45), 540, 36, 4, foam_size=0.8)),
            wc=1.0, motion=wave_motion(12, 30, 1.6, 3.0, lag=-0.15, drop=lambda t: 1.4 * near_drop(t)))
 
+    # --------------------------------------------------- the dive: the outside darkens around the hull opening
+    dim_d = (f"M-20,-20 H{W + 20} V{H + 20} H-20 Z "
+             f"M{ox0 + 10:.1f},{oy0 + 10:.1f} H{ox1 - 10:.1f} V{oy1 - 12:.1f} H{ox0 + 10:.1f} Z")
+    dim_a = lambda t: (0.74 * M.progress(t, T_DIVE0 + 0.1, T_REV[0] + 0.08, "sine")      # noqa: E731
+                       + 0.24 * M.progress(t, T_REV[0] + 0.08, T_REV[0] + 0.24, "sine"))
+    sc.add("dim", doc(f'<path d="{dim_d}" fill="#24150d" fill-rule="evenodd" filter="url(#blur-md)"/>'), wc=0,
+           motion=lambda t: replace(ship_tf(t), alpha=dim_a(t)))
+
     # --------------------------------------------------- the hold painting, attached to the ship at scale K
     H0 = (jx_c - K * (J_PAINT[0] - Q0[0]), jy_c - K * (J_PAINT[1] - Q0[1]))
     place = Tf(H0[0] - Q0[0], H0[1] - Q0[1], 0, K, K, 1, Q0[0], Q0[1])
+
+    def to_paint(x, y):
+        return Q0[0] + (x - H0[0]) / K, Q0[1] + (y - H0[1]) / K
 
     def in_hold(local=None):
         def m(t):
@@ -873,30 +1148,50 @@ def build(ctx):
     jx, jy = J_PAINT
     rc = (jx + 130, jy - 120)
 
-    # two-stage bloom: first a soft disc of the room around the sleeper, then the whole hold
-    core_a = lambda t: M.progress(t, T_REV[0], T_REV[0] + 0.3, "sine") * (t < T_REV[1] + 0.05)      # noqa: E731
-    full_a = lambda t: M.progress(t, T_REV[0] + 0.22, T_REV[1], "sine")                             # noqa: E731
-    sc.add("hold_core", hold_svg(core=(rc[0], rc[1], 330, 720)), wc=1.0, seed=101,
-           motion=in_hold(lambda t: Tf(alpha=core_a(t), px=Q0[0], py=Q0[1])))
+    # the reveal grows outward from the hull opening: the opening itself, then two wider soft rectangles, then all
+    px0, py0 = to_paint(ox0, oy0)
+    px1, py1 = to_paint(ox1, oy1)
+    full_a = lambda t: M.progress(t, T_REV[0] + 0.28, T_REV[1] - 0.03, "sine")        # noqa: E731
+    # (inset x, inset y, feather), fade-in window after T_REV[0]; each stage is dropped once the next one fully
+    # covers it
+    stages = [((14, 14, 10), 0.0, 0.15), ((-190, -150, 50), 0.08, 0.25), ((-520, -400, 120), 0.17, 0.36)]
+    t_off = [T_REV[0] + 0.26, T_REV[0] + 0.37, T_REV[1]]
+    for i, ((ix, iy, fe), a0, a1) in enumerate(stages):
+        sc.add(f"hold_r{i}", hold_svg(clip=(px0 + ix, py0 + iy, px1 - ix, py1 - iy, fe)), wc=1.0, seed=101,
+               motion=in_hold(lambda t, a0=a0, a1=a1, off=t_off[i]: Tf(
+                   alpha=M.progress(t, T_REV[0] + a0, T_REV[0] + a1, "sine") * (t < off),
+                   px=Q0[0], py=Q0[1])))
     sc.add("hold", hold_svg(), wc=1.0, seed=101, motion=in_hold(lambda t: Tf(alpha=full_a(t), px=Q0[0], py=Q0[1])))
 
-    fade_in = lambda t: M.progress(t, T_REV[0] + 0.05, T_REV[0] + 0.35, "sine")      # noqa: E731
-    breath = lambda t: math.sin(2 * math.pi * (t - T_ZZZ) / 3.5)                     # noqa: E731
+    # snore cue -> Jonah's breathing (chest highest at the end of each inhale of the actual sound)
+    snore_at = round(T_CUT[0] + 0.25, 3)
+    snore_dur = round(T + 0.6 - snore_at, 3)
+    peaks = []
+    for k in range(8):   # choose a variation whose inhale falls inside the hold, before the scene's dissolve
+        at_k = round(snore_at + 0.07 * k, 3)
+        pk = snore_inhale_peaks(ctx.id, at_k, round(T + 0.6 - at_k, 3))
+        if not pk or any(T_IN + 0.15 <= p <= T - 1.25 for p in pk):
+            snore_at, snore_dur, peaks = at_k, round(T + 0.6 - at_k, 3), pk
+            break
+    else:
+        peaks = snore_inhale_peaks(ctx.id, snore_at, snore_dur)
+    breath = breath_curve(peaks)
+
+    fade_in = lambda t: M.progress(t, T_REV[0] + 0.02, T_REV[0] + 0.18, "sine")       # noqa: E731
     sc.add("jonah", doc(C.jonah(jx, jy, JS, -1, pose="sleep", marks=False)),
-           motion=in_hold(lambda t: Tf(0, 0, 0, 1 + 0.006 * breath(t), 1 + 0.022 * breath(t), fade_in(t), jx, jy)))
+           motion=in_hold(lambda t: Tf(0, 0, 0, 1 + 0.006 * breath(t), 1 + 0.024 * breath(t), fade_in(t), jx, jy)))
 
     lhx, lhy = LANTERN_HOOK
     swing = lambda t: 8 * math.sin(2 * math.pi * t / 3.1 + 0.6) - 0.6 * ship_tf(t).rot     # noqa: E731
-    lamp_vis = lambda t: M.progress(t, T_REV[0] + 0.2, T_REV[0] + 0.6, "sine")         # noqa: E731
     glow = f'<ellipse cx="{lhx + 60}" cy="{lhy + 400}" rx="600" ry="520" fill="url(#lg2)"/>'
     sc.add("lamp_glow", doc(glow, S.rad_grad("lg2", [(0, "#ffd890", 0.5), (0.35, "#ffc870", 0.22), (1, "#ffc060", 0)])),
            wc=0, blend="add",
            motion=in_hold(lambda t: Tf(0, 0, swing(t), 1, 1,
-                                       lamp_vis(t) * (0.85 + 0.1 * math.sin(t * 7.3) + 0.05 * math.sin(t * 12.1)),
+                                       full_a(t) * (0.85 + 0.1 * math.sin(t * 7.3) + 0.05 * math.sin(t * 12.1)),
                                        lhx, lhy)))
     sc.add("lantern", doc(f'<line x1="{lhx}" y1="{lhy - 10}" x2="{lhx}" y2="{lhy + 44}" stroke="{INK}" stroke-width="5"/>'
                           + PR.lantern(lhx, lhy + 34, 1.5)),
-           motion=in_hold(lambda t: Tf(0, 0, swing(t), 1, 1, lamp_vis(t), lhx, lhy)))
+           motion=in_hold(lambda t: Tf(0, 0, swing(t), 1, 1, full_a(t), lhx, lhy)))
 
     # Z z z drifting up from the sleeper's head
     head = (jx + 240, jy - 140)
@@ -909,13 +1204,13 @@ def build(ctx):
             if t < T_ZZZ + delay:
                 return Tf(alpha=0.0, px=head[0], py=head[1])
             u = ((t - T_ZZZ - delay) % per) / per
-            a = min(1.0, u / 0.15) * (1 - M.progress(u, 0.6, 1.0, "sine"))
+            a = min(1.0, u / 0.15) * (1 - M.progress(u, 0.6, 1.0, "sine")) * full_a(t)
             s = 0.45 + 0.75 * u
             return Tf(70 + 190 * u + 26 * math.sin(u * 6.0), -30 - 330 * u, -12 + 22 * u, s, s, a,
                       head[0] + 50, head[1] - 70)
         sc.add(f"z{i}", zsvg, wc=0, motion=in_hold(zm))
 
-    # drips from the hatch and a cold flash through it (the storm still rages above)
+    # drips from the hatch, rain boiling in the hatch and cold flickers through it (the storm still rages above)
     hx0 = HATCH[0]
     drop = (f'<path d="M{hx0 + 150},312 Q{hx0 + 162},336 {hx0 + 150},344 Q{hx0 + 138},336 {hx0 + 150},312 Z" '
             f'fill="{P["sea_pale"]}" stroke="{INK}" stroke-width="3"/>')
@@ -925,27 +1220,33 @@ def build(ctx):
             if t < T_REV[0]:
                 return Tf(alpha=0.0, px=hx0 + 150, py=320)
             u = ((t + i * 0.65) % per) / per
-            return Tf(0, 790 * u * u, 0, 1, 1, min(1.0, u / 0.1) * (1 - M.progress(u, 0.85, 1.0)), hx0 + 150, 320)
+            return Tf(0, 790 * u * u, 0, 1, 1, min(1.0, u / 0.1) * (1 - M.progress(u, 0.85, 1.0)) * full_a(t),
+                      hx0 + 150, 320)
         sc.add(f"drip{i}", doc(drop), wc=0, motion=in_hold(dm))
+    sc.add("hatch_rain", [hatch_rain_svg(s) for s in (1, 2, 3)], wc=0,
+           motion=in_hold(lambda t: Tf(alpha=full_a(t), px=Q0[0], py=Q0[1])), frame_at=lambda t: float(int(t * 11) % 3))
     flash = (f'<path d="M{HATCH[0] + 20},296 L{HATCH[1] - 20},296 L{HATCH[1] + 200},1110 L{HATCH[0] + 20},1110 Z" '
              f'fill="#9fb6e0" opacity="0.45" filter="url(#blur-lg)"/>'
-             f'<ellipse cx="{(HATCH[0] + HATCH[1]) / 2}" cy="200" rx="260" ry="150" fill="#c8d6f0" opacity="0.8" '
-             f'filter="url(#blur-md)"/>')
+             f'<ellipse cx="{(HATCH[0] + HATCH[1]) / 2}" cy="{(HATCH_Y[0] + HATCH_Y[1]) / 2}" rx="260" ry="150" '
+             f'fill="#c8d6f0" opacity="0.8" filter="url(#blur-md)"/>')
     sc.add("hatch_flash", doc(flash), wc=0, blend="add",
-           motion=in_hold(lambda t: Tf(alpha=0.65 * flick(t - T_HATCH), px=Q0[0], py=Q0[1])))
+           motion=in_hold(lambda t: Tf(alpha=max(0.65 * flick(t - T_HATCH[0]), 0.42 * flick(t - T_HATCH[1])),
+                                       px=Q0[0], py=Q0[1])))
 
     # warm lamplight bloom that carries the eye from the storm into the hold during the reveal
     bloom = f'<circle cx="{rc[0]}" cy="{rc[1]}" r="1150" fill="url(#bl)"/>'
     sc.add("bloom", doc(bloom, S.rad_grad("bl", [(0, "#ffd890", 0.17), (0.45, "#f6b860", 0.1), (1, "#f0a050", 0)])),
            wc=0, blend="add",
-           motion=in_hold(lambda t: Tf(alpha=M.progress(t, T_REV[0] - 0.1, T_REV[0] + 0.45, "sine")
-                                       * (1 - M.progress(t, T_REV[0] + 0.5, T_REV[1] + 0.35, "sine")),
+           motion=in_hold(lambda t: Tf(alpha=M.progress(t, T_REV[0] - 0.1, T_REV[0] + 0.4, "sine")
+                                       * (1 - M.progress(t, T_REV[0] + 0.45, T_REV[1] + 0.35, "sine")),
                                        px=Q0[0], py=Q0[1])))
 
     # --------------------------------------------------- camera
+    CAM_CONTRAST = Cam(1225, 795, 1350)   # crew panicking on deck above, Jonah asleep in the open hold below
     cam_ext = M.cam_keys([(0, Cam(1200, 690, 2200)), (l0.end, Cam(1205, 680, 2120)),
                           (l2.start - 0.1, Cam(1210, 675, 2060)), (l2.start + 0.9, Cam(1225, 650, 1660)),
-                          (T_DIVE0, Cam(1230, 660, 1630))], "inout")
+                          (T_CUT[0], Cam(1230, 660, 1630)), (T_DIVE0 + 0.4, CAM_CONTRAST)],
+                         ["inout", "inout", "inout", "inout", "sine"])
     cam_ext = M.cam_shake(cam_ext, amp=15, t0=l1.start - 0.02, t1=l1.end + 0.1, freq=7.5, seed=3)
     cam_ext = M.cam_shake(cam_ext, amp=5, t0=s0, t1=s0 + 0.7, freq=9, seed=5)
     cam_ext = M.cam_shake(cam_ext, amp=6, t0=STRIKES[2][0], t1=STRIKES[2][0] + 0.7, freq=9, seed=8)
@@ -955,21 +1256,45 @@ def build(ctx):
         if u <= 0:
             return cam_ext(t)
         st = ship_tf(t)
-        hx, hy = apply(st, *H0)
+        hx, hy = apply(compose(st, place), *V0)
         ce = cam_ext(t)
         w_end = VIEW_W_INT * K * (1 - 0.04 * M.progress(t, T_DIVE1, T, "sine"))
         w = math.exp(math.log(ce.w) + (math.log(w_end) - math.log(ce.w)) * u)   # even-feeling zoom
-        return Cam(ce.x + (hx - ce.x) * u, ce.y + (hy - ce.y) * u, w, ce.rot + (0.4 * st.rot - ce.rot) * u)
+        return Cam(ce.x + (hx - ce.x) * u, ce.y + (hy - ce.y) * u, w, ce.rot + (0.7 * st.rot - ce.rot) * u)
     sc.camera = camera
 
-    # cull the outside world once the hold fills the frame (render time)
-    inside = {"bloom", "hold_core", "hold", "jonah", "lamp_glow", "lantern", "hatch_flash", "z0", "z1", "z2", "drip0", "drip1"}
+    # cull the outside world (render time): everything but the dim once the dim (>= 0.98) and the opened stages of
+    # the hold hide it, the dim itself once the hold painting fills the whole frame
+    def view_in_painting(t, margin=72):
+        cam = camera(t)
+        tf = compose(ship_tf(t), place)
+        hw, hh = cam.w / 2, cam.w * 9 / 32
+        cr, sr_ = math.cos(math.radians(cam.rot)), math.sin(math.radians(cam.rot))
+        r = math.radians(tf.rot)
+        for ax, ay in ((-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)):
+            x, y = cam.x + cr * ax - sr_ * ay, cam.y + sr_ * ax + cr * ay
+            ox_, oy_ = apply(tf, tf.px, tf.py)          # where the painting pivot lands
+            dx_, dy_ = x - ox_, y - oy_
+            qx = tf.px + (math.cos(r) * dx_ + math.sin(r) * dy_) / K
+            qy = tf.py + (-math.sin(r) * dx_ + math.cos(r) * dy_) / K
+            if not (margin <= qx <= W - margin and margin <= qy <= H - margin):
+                return False
+        return True
+
+    t_cull = T + 1
+    for t in np.arange(T_IN, T + 0.001, 1 / 30):
+        if all(view_in_painting(tt) for tt in np.arange(t, T + 0.001, 1 / 30)):
+            t_cull = float(t)
+            break
+    inside = {"bloom", "hold_r0", "hold_r1", "hold_r2", "hold", "jonah", "lamp_glow", "lantern", "hatch_flash",
+              "hatch_rain", "z0", "z1", "z2", "drip0", "drip1"}
+    t_hidden = T_REV[0] + 0.26
     for lay in sc.layers:
         if lay.name in inside or lay.motion is None:
             continue
 
-        def culled(t, m0=lay.motion):
-            return Tf(alpha=0.0) if t > T_IN + 0.05 else m0(t)
+        def culled(t, m0=lay.motion, tc=(t_cull if lay.name == "dim" else min(t_cull, t_hidden))):
+            return Tf(alpha=0.0) if t > tc else m0(t)
         lay.motion = culled
 
     # --------------------------------------------------- effects
@@ -979,24 +1304,37 @@ def build(ctx):
         x1, y1 = apply(st, 1650, 1000)
         return (min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
 
-    sc.fx = [rain_fx(0.45, T_IN, density=0.85, angle=-16), flash_fx(STRIKES), motes_fx(hold_region, 24, T_IN - 0.3)]
-    sc.meta = dict(STRIKES=STRIKES, rel=rel, splashes=[s[:3] for s in splashes], T_DIVE0=T_DIVE0, T_REV=T_REV,
-                   T_IN=T_IN, T_HATCH=T_HATCH, T_CRASH=T_CRASH, H0=H0, ship_tf=ship_tf, place=place)
+    def rain_hole(t, view):
+        if t < T_CUT[0] + 0.2:
+            return None
+        st = ship_tf(t)
+        return [view.to_out(*apply(st, x, y)) for x, y in ((ox0, oy0), (ox1, oy0), (ox1, oy1), (ox0, oy1))]
+
+    sc.fx = [rain_fx(0.45, T_REV[0] + 0.35, density=0.85, angle=-16, hole=rain_hole), flash_fx(STRIKES),
+             motes_fx(hold_region, 24, T_IN - 0.3)]
+    sc.meta = dict(STRIKES=STRIKES, rel=rel, splashes=[s[:3] for s in splashes], T_CUT=T_CUT, T_DIVE0=T_DIVE0,
+                   T_DIVE1=T_DIVE1, T_REV=T_REV, T_IN=T_IN, T_HATCH=T_HATCH, T_CRASH=T_CRASH, T_TEAR=T_TEAR,
+                   t_cull=t_cull, snore=(snore_at, snore_dur, peaks), H0=H0, ship_tf=ship_tf, place=place,
+                   camera=camera, bolts=bolts)
 
     # --------------------------------------------------- sound
     out_end = T_IN + 0.4
-    for name, g_out, g_in, t0 in (("storm_wind", -9, -12, 0.0), ("waves_storm", -9, -12, 0.0), ("rain", -10, -12, 0.3)):
+    t_in_amb = T_REV[0] - 0.3
+    for name, g_out, g_in, t0 in (("storm_wind", -9, -17, 0.0), ("waves_storm", -9, -15, 0.0), ("rain", -10, -17, 0.3)):
         sc.sfx(name, t0, dur=out_end - t0, gain_db=g_out, fade_in=0.8, fade_out=1.2)
-        sc.sfx(name, T_DIVE0 + 0.6, dur=T - T_DIVE0 - 0.6 + 0.6, gain_db=g_in, fade_in=1.0, fade_out=0.8)
+        sc.sfx(name, t_in_amb, dur=T + 0.6 - t_in_amb, gain_db=g_in, fade_in=1.0, fade_out=0.8)
+    sc.sfx("drip", T_REV[0], dur=T + 0.6 - T_REV[0], gain_db=-16, fade_in=0.6, fade_out=0.8)
     sc.sfx("ship_creak", 0, dur=T + 0.6, gain_db=-11, fade_in=0.8, fade_out=0.8)
     sc.sfx("ship_creak", l1.start - 0.1, dur=l1.end - l1.start + 0.8, gain_db=-6, fade_in=0.1, fade_out=0.5)
     for (ts, _), (bx_, *_r) in zip(STRIKES, bolts):
         sc.sfx("thunder", ts, gain_db=-6, pan=max(-0.6, min(0.6, (bx_ - 1200) / 1300)))
-    sc.sfx("thunder", T_HATCH, gain_db=-14)
+    sc.sfx("thunder", T_HATCH[0], gain_db=-14, pan=0.3)
+    sc.sfx("thunder", T_HATCH[1], gain_db=-17, pan=0.3)
+    sc.sfx("cloth", T_TEAR, gain_db=-12, pan=-0.3)
     sc.sfx("splash", T_CRASH + 0.05, gain_db=-8, pan=-0.4)
     for ts, x, _, _ in splashes:
         sc.sfx("splash_small", ts, gain_db=-7, pan=max(-0.8, min(0.8, (x - 1200) / 1100)))
     for tr, pan in zip(rel, (-0.3, 0.3, -0.3, 0.3)):
         sc.sfx("whoosh", tr, gain_db=-15, pan=pan)
-    sc.sfx("snore", T_CUT[0] + 0.3, dur=T - T_CUT[0] + 0.1, gain_db=-8, fade_in=0.5, fade_out=0.6)
+    sc.sfx("snore", snore_at, dur=snore_dur, gain_db=-8, fade_in=0.5, fade_out=0.6)
     return sc
