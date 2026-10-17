@@ -247,8 +247,8 @@ def row(c):
     t_crash = c.le(i_waves) + 0.03
     q_crash = max(r2.q_of(c.t0 + t_crash), 13.0)
     timp_roll(r2, min(12.5, q_crash - 2.5), q_crash - 0.1, midi("A2"), 40, 66)
-    r2.add("okit", q_crash, 1, 57, 70, "perc", "h")
-    r2.add("okit", q_crash, 1, 36, 80, "perc", "h")
+    r2.add("okit", q_crash, 1, 57, 62, "perc", "h")
+    r2.add("okit", q_crash, 1, 36, 72, "perc", "h")
     r2.sync("the waves win (crash)", q_crash, t_crash)
     r2.sync("the waves rise higher (stroke in the pause)", 0, t_waves)
     q_hard = r1.q_of(c.t0 + q0_hard)

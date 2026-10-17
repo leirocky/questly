@@ -145,8 +145,8 @@ def king(c):
     a.mel("cb", "G2:3 | F2:3 | Eb2:3 | D2:3", vel=48, role="bass")
     a.pad(["vla", "vln2"], 2, 55, 70, vel=42, bass_ref=(50, 55))
     a.mel("horn", "Bb3:3 | A3:3 | G3:3 | F#3:3", vel=44, role="counter")
-    a.expr(["vla", "vln2", "vc", "cb", "horn"], [(0, -12), (12, -11)])
-    a.expr("vln_mel", [(0, -8), (12, -9)])
+    a.expr(["vla", "vln2", "vc", "cb", "horn"], [(0, -13.5), (12, -12.5)])
+    a.expr("vln_mel", [(0, -9.5), (12, -10.5)])
     # herald: a horn call under '国王又派人在全城宣告', a timpani stroke and a soft drum roll
     h.mel("horn", "D4:3/4:a D4:1/4 G4:1 | Bb4:3/4 A4:1/4 F#4:1", vel=64)
     h.sync("herald horn", 0, t_h)

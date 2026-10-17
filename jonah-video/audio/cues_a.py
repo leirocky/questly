@@ -181,8 +181,8 @@ def flee(c):
     s.mel("bsn", "A2:1/2 B2:1/2 C#3:1/2 D3:1/2 E3:1/2 F3:1/2 G3:1/2 A3:1/2:a", q=8, vel=58)
     s.mel("clar", "A4:1/2 B4:1/2 C#5:1/2 D5:1/2 E5:1/2 F5:1/2 G5:1/2 A5:1/2:a", q=8, vel=56)
     s.expr(["vla", "vln2", "vln1"], [(0, -12), (8, -12)])
-    s.expr(["harp", "pz_lo", "pz_cb"], [(0, -5), (12, -5)])
-    s.expr(["bsn", "clar"], [(8, -9), (12, -7)])
+    s.expr(["harp", "pz_lo", "pz_cb"], [(0, -6.5), (12, -6.5)])
+    s.expr(["bsn", "clar"], [(8, -11), (12, -9)])
 
 
 def _rolling(seg, vel, q0=0.0, q1=None, accent=8):

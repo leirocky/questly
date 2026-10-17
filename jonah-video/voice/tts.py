@@ -640,6 +640,9 @@ def build():
     timeline = {"fps": FPS, "xfade": story.XFADE, "duration": total, "title": story.TITLE,
                 "subtitle": story.SUBTITLE, "scenes": scenes}
     (BUILD / "timeline.json").write_text(json.dumps(timeline, ensure_ascii=False, indent=1))
+    for v in VOICES.values():   # prompt clips too (Matcha's are stochastic): needed to re-voice a changed line
+        if v.get("prompt"):
+            _prompt(v)
     (BUILD / "voice" / "takes.txt").write_text("\n".join(sorted(USED_TAKES)) + "\n")
 
     # Place every line on one mono voice track.
