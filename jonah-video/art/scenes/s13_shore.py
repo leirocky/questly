@@ -8,8 +8,10 @@ Iris-open into the scene: the centre of the first frame is the fish's head and b
 
   start           the great fish drifts out at sea, back and head above the water (the rest of its body is a
                   teal shape under the surface), eye closed, tail wagging lazily.
-  '上帝吩咐'       God speaks (never a figure): warm golden rays reveal from the sun and end on the fish's head; a
-                  gold glow and rim light settle on it (one pulse on '吩咐'), sparkles twinkle round it.
+  '上帝吩咐'       God speaks (never a figure): the clouds right above the fish part, gold on their inner edges, and
+                  warm golden rays pour down from the gap onto the fish's head (the visual language of s02 / s14;
+                  the sun stays plain sunshine); a gold glow and top rim light settle on it (one pulse on '吩咐'),
+                  sparkles twinkle round it.
   '那条大鱼'       the fish opens its eye with a little hop and gives a nod — and sets off for the shore.
   '大鱼就游到岸边' it swims in (bow wave, wake, spray; the camera pans with it) and on '岸边' surges up out of the
                   water in the shallows (water streams off its back, a ripple ring).
@@ -18,12 +20,12 @@ Iris-open into the scene: the centre of the first frame is the fish's head and b
   '陆地上'         and lands on his bottom on the sand (puff of sand, bounce), dizzy, stars circling his head; the
                   standing gull takes off. The fish closes its mouth with a happy smile, watches him a moment,
                   turns round behind a splash and swims away out to sea.
-  '约拿浑身湿漉漉的' the camera moves in; he shakes himself like a wet puppy (a burst of drops) and looks at himself,
-                  dripping all over.
+  '约拿浑身湿漉漉的' the camera moves in first and holds still; he shakes himself like a wet puppy (drops flung off
+                  his silhouette, shake arcs by his head) and looks at himself, dripping all over.
   '可是他又看见了太阳' sunlight streams down onto him; on '看见' he opens his arms to the warm sun (hop cut); faint
                   steam rises from his drying robe; the sun pulses on '太阳'.
-  '他得救了！'      he springs up, arms raised, golden sparkles round him; far out at sea the fish's tail waves
-                  goodbye.
+  '他得救了！'      he springs up, arms raised, golden sparkles round him; once he has landed, far out at sea the
+                  fish's tail waves goodbye and sinks gently.
   end             calm hold: Jonah in the sunshine, waves lapping, palms swaying.
 
 Pose changes are hard cuts hidden by a squash-and-hop / shake (no crossfaded doubles). All times are keyed to
@@ -60,10 +62,18 @@ FAR = (700.0, 560.0, 0.5)                  # the fish out at sea at the start: a
 YW_SWIM = 10.0                             # waterline (fish-local px) while swimming: the mouth at the surface
 YW_REST = (WATER_Y - FY0) / FS             # ~207: the near water band's top when resting at the shore
 VEIL_BOX = (236, 170, 1604, 994)           # pinned crop of the underwater veil layer (reference placement)
-SEAT_IN = (400.0, 175.0)                   # Jonah's seat inside the open mouth (fish-local px)
+SEAT_IN = (400.0, 186.0)                   # Jonah's seat inside the open mouth, on the tongue (fish-local px)
 JS_SIT_IN = 0.8                            # ... and his scale there
 HEAD_L = (330.0, -150.0)                   # the fish's head / eye region (fish-local px)
 JONAH_X = LAND[0]
+# God's light comes from a gap in the clouds above the fish (as in s02_call / s14_again), never from the sun
+CLOUD_VX = 12.0                            # all clouds drift right this fast (px/s)
+CL = (760, 160, 300, 80, 21)               # the parting cloud pair (cx, cy, w, h, seed), touching at rest
+CR = (1045, 150, 290, 78, 22)
+PART_L, PART_R = -80.0, 105.0              # how far each cloud moves aside when they part
+GAP = (910.0, 150.0)                       # middle of the gap once parted (at rest, before the drift)
+RAY_SRC = (GAP[0], GAP[1] - 40)            # the rays start just inside the gap (behind the cloud edges)
+RAY_TGT = (885.0, 485.0)                   # ...and end on the far fish's head (rays layer drifts with the clouds)
 
 
 def doc(body, defs=""):
@@ -131,13 +141,30 @@ def sun_rays():
 
 def clouds():
     sh = "#d9e6ee"
-    b = (S.cloud(520, 150, 360, 110, "#fbf6ec", seed=11, sw=3, shade_fill=sh) +
-         S.cloud(1060, 96, 250, 78, "#fbf6ec", seed=12, sw=3, shade_fill=sh) +
+    b = (S.cloud(390, 172, 320, 96, "#fbf6ec", seed=11, sw=3, shade_fill=sh) +
          S.cloud(1960, 130, 330, 100, "#fbf6ec", seed=13, sw=3, shade_fill=sh) +
          S.cloud(60, 330, 260, 80, "#fbf6ec", seed=14, sw=3, shade_fill=sh) +
          S.cloud(2480, 268, 200, 64, "#fbf6ec", seed=16, sw=3, shade_fill=sh) +
          S.cloud(2120, 262, 220, 70, "#fbf6ec", seed=15, sw=3, shade_fill=sh))
     return doc(S.g(b, filter="wobble"))
+
+
+def cloud_one(item):
+    """One cloud of the parting pair (same look as clouds())."""
+    cx, cy, w, h, seed = item
+    return doc(S.g(S.cloud(cx, cy, w, h, "#fbf6ec", seed=seed, sw=3, shade_fill="#d9e6ee"), filter="wobble"))
+
+
+def cloud_rim(item, gx, gy, rx, ry, uid):
+    """Soft gold light on the inner edge of a parting cloud, masked to the cloud's own silhouette (the s14_again
+    / v1 s09 technique)."""
+    cx, cy, w, h, seed = item
+    sil = S.cloud(cx, cy, w, h, "#ffffff", seed=seed, sw=0)
+    defs = (f'<mask id="s13rm{uid}" maskUnits="userSpaceOnUse" x="0" y="-100" width="{W}" height="500">'
+            f'<g filter="url(#wobble)">{sil}</g></mask>'
+            + S.rad_grad(f"s13rg{uid}", [(0, "#f8cc66", 0.95), (0.55, "#f2b848", 0.55), (1, "#f2b848", 0)]))
+    return doc(f'<g mask="url(#s13rm{uid})"><ellipse cx="{gx}" cy="{gy}" rx="{rx}" ry="{ry}" '
+               f'fill="url(#s13rg{uid})"/></g>', defs)
 
 
 def landscape():
@@ -171,19 +198,34 @@ def mid_waves():
     return doc(S.g(b, filter="wobble"))
 
 
-def near_water():
-    """Water band in front of the fish's belly, running up onto the sand along the shoreline (v1, widened)."""
-    defs = S.lin_grad("s13near", [(0, "#62c5c7", 0.8), (0.22, "#52b6c3", 0.94), (1, "#3d9bb7", 1)])
+CORNER = (1240 + DX, 786)                  # where the near water band's top meets the beach
+
+
+def _near_top_pts():
     pts = []
     x = -222
-    while x <= 1236 + DX:
+    while x <= CORNER[0] - 4:
         pts.append((x, WATER_Y + 8 * math.sin(x / 95.0) + 4 * math.sin(x / 31.0)))
         x += 34
+    return pts
+
+
+def near_water():
+    """Water band in front of the fish's belly, running up onto the sand along the shoreline (v1, widened).
+    Its top ink line is a separate layer (near_ink); the scallop foam fades out before the shore corner and
+    the shoreline lace curls round the corner over the join."""
+    defs = S.lin_grad("s13near", [(0, "#62c5c7", 0.8), (0.22, "#52b6c3", 0.94), (1, "#3d9bb7", 1)])
+    cx, cy = CORNER
+    defs += (f'<linearGradient id="s13scal" gradientUnits="userSpaceOnUse" x1="{cx - 120}" y1="0" x2="{cx - 50}" '
+             f'y2="0"><stop offset="0" stop-color="{P["foam"]}" stop-opacity="0.85"/>'
+             f'<stop offset="1" stop-color="{P["foam"]}" stop-opacity="0"/></linearGradient>')
+    pts = _near_top_pts()
     top = S.smooth_path(pts, closed=False)
-    sh = [(905 + DX, 1270), (968 + DX, 1110), (1040 + DX, 985), (1130 + DX, 872), (1240 + DX, 786)]
-    d = top + f" L{1240 + DX},786 L{1130 + DX},872 L{1040 + DX},985 L{968 + DX},1110 L{905 + DX},1270 L-222,1270 Z"
-    body = S.path(d, fill="url(#s13near)", sw=4)
-    foam = f'<path d="{V._scallop_band(pts[:-1], 14, 22)}" fill="{P["foam"]}" opacity="0.85"/>'
+    sh = [(905 + DX, 1270), (968 + DX, 1110), (1040 + DX, 985), (1130 + DX, 872), CORNER]
+    d = top + f" L{cx},{cy} L{1130 + DX},872 L{1040 + DX},985 L{968 + DX},1110 L{905 + DX},1270 L-222,1270 Z"
+    body = S.path(d, fill="url(#s13near)", stroke=False)
+    body += S.path(S.smooth_path(sh, closed=False), sw=4)          # ink along the shore side (under the lace)
+    foam = f'<path d="{V._scallop_band([p for p in pts if p[0] < cx - 40], 14, 22)}" fill="url(#s13scal)"/>'
     for i, (x, y, w) in enumerate([(40 + DX, 870, 240), (420 + DX, 905, 280), (760 + DX, 858, 190),
                                    (150 + DX, 985, 300), (560 + DX, 1015, 250), (60 + DX, 1100, 260),
                                    (520 + DX, 1135, 230), (-60, 880, 300), (130, 960, 260), (-20, 1060, 280),
@@ -194,7 +236,25 @@ def near_water():
     lace = S.smooth_path(sh, closed=False)
     foam += (f'<path d="{lace}" fill="none" stroke="{P["foam"]}" stroke-width="18" stroke-linecap="round" '
              f'opacity="0.92"/>')
+    # the lace curls round the corner and runs a little way along the band's top, tapering, over the join
+    foam += (f'<path d="M{cx + 4},{cy - 2} Q{cx - 34},{cy + 6} {cx - 92},{cy + 4}" fill="none" '
+             f'stroke="{P["foam"]}" stroke-width="15" stroke-linecap="round" opacity="0.9"/>'
+             f'<path d="M{cx - 60},{cy + 6} Q{cx - 100},{cy + 9} {cx - 138},{cy + 7}" fill="none" '
+             f'stroke="{P["foam"]}" stroke-width="8" stroke-linecap="round" opacity="0.75"/>')
     return doc(S.g(body + foam, filter="wobble"), defs)
+
+
+def near_ink():
+    """The near water band's top ink line (its own layer so it can soften once the fish has gone), fading out
+    over the last ~90 px before the shore corner so it never pokes into the shoreline lace."""
+    cx = CORNER[0]
+    defs = (f'<linearGradient id="s13nink" gradientUnits="userSpaceOnUse" x1="{cx - 150}" y1="0" x2="{cx - 60}" '
+            f'y2="0"><stop offset="0" stop-color="{S.INK}" stop-opacity="1"/>'
+            f'<stop offset="1" stop-color="{S.INK}" stop-opacity="0"/></linearGradient>')
+    pts = [p for p in _near_top_pts() if p[0] < cx - 50]
+    b = (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="url(#s13nink)" stroke-width="4" '
+         f'stroke-linecap="round" stroke-linejoin="round"/>')
+    return doc(S.g(b, filter="wobble"), defs)
 
 
 def gull_pair(wa, wb):
@@ -281,28 +341,52 @@ def wake(seed):
     return doc(S.g(b, filter="wobble-fine"))
 
 
-def god_rays(head):
-    """Warm rays streaming from the sun and ending on the far fish's head, plus a halo round the head."""
+def god_rays(src, head):
+    """God's light: warm rays pouring down from the gap in the clouds and ending on the far fish's head, a glow
+    in the gap itself and a halo round the head. Drawn below the parting clouds, so the rays come out from
+    between them."""
+    sx, sy = src
     hx, hy = head
-    a0 = math.degrees(math.atan2(hy - SUN[1], hx - SUN[0]))
-    dist = math.hypot(hx - SUN[0], hy - SUN[1])
+    a0 = math.degrees(math.atan2(hy - sy, hx - sx))
+    dist = math.hypot(hx - sx, hy - sy)
     b = ""
-    for da, wdt, k in ((-10, 4.5, 0.94), (-5, 3.2, 1.04), (0, 6.5, 1.08), (5.5, 3.8, 1.0), (10, 5.0, 0.9)):
-        r0, r1 = 100, dist * k + 30
+    for da, wdt, k in ((-17, 5.0, 0.9), (-9, 6.5, 1.0), (-1, 8.5, 1.08), (7.5, 6.0, 1.0), (15.5, 4.5, 0.9)):
+        r0, r1 = 30, dist * k + 40
         p0, p1 = math.radians(a0 + da - wdt / 2), math.radians(a0 + da + wdt / 2)
-        pts = [(SUN[0] + r0 * math.cos(p0), SUN[1] + r0 * math.sin(p0)),
-               (SUN[0] + r1 * math.cos(p0 - 0.02), SUN[1] + r1 * math.sin(p0 - 0.02)),
-               (SUN[0] + r1 * math.cos(p1 + 0.02), SUN[1] + r1 * math.sin(p1 + 0.02)),
-               (SUN[0] + r0 * math.cos(p1), SUN[1] + r0 * math.sin(p1))]
+        pts = [(sx + r0 * math.cos(p0), sy + r0 * math.sin(p0)),
+               (sx + r1 * math.cos(p0 - 0.03), sy + r1 * math.sin(p0 - 0.03)),
+               (sx + r1 * math.cos(p1 + 0.03), sy + r1 * math.sin(p1 + 0.03)),
+               (sx + r0 * math.cos(p1), sy + r0 * math.sin(p1))]
         b += f'<path d="M{" L".join(f"{x:.0f},{y:.0f}" for x, y in pts)} Z" fill="url(#s13ray)"/>'
-    defs = (f'<linearGradient id="s13ray" gradientUnits="userSpaceOnUse" x1="{SUN[0]}" y1="{SUN[1]}" '
+    defs = (f'<linearGradient id="s13ray" gradientUnits="userSpaceOnUse" x1="{sx}" y1="{sy}" '
             f'x2="{hx}" y2="{hy}"><stop offset="0" stop-color="#fff4c4" stop-opacity="0.95"/>'
-            f'<stop offset="0.55" stop-color="#ffe48a" stop-opacity="0.75"/>'
-            f'<stop offset="0.9" stop-color="#ffe08a" stop-opacity="0.45"/>'
+            f'<stop offset="0.5" stop-color="#ffe48a" stop-opacity="0.75"/>'
+            f'<stop offset="0.88" stop-color="#ffe08a" stop-opacity="0.45"/>'
             f'<stop offset="1" stop-color="#ffe08a" stop-opacity="0.15"/></linearGradient>')
     defs += S.rad_grad("s13halo", [(0, "#fff2b8", 0.75), (0.45, "#ffe9a0", 0.35), (1, "#ffe9a0", 0)])
-    glow = f'<ellipse cx="{hx - 10}" cy="{hy - 20}" rx="300" ry="230" fill="url(#s13halo)"/>'
+    defs += S.rad_grad("s13gap", [(0, "#fff6d0", 0.95), (0.5, "#ffe9a8", 0.5), (1, "#ffe9a8", 0)])
+    glow = (f'<ellipse cx="{sx}" cy="{sy + 50}" rx="170" ry="120" fill="url(#s13gap)"/>'
+            f'<ellipse cx="{hx - 10}" cy="{hy - 20}" rx="300" ry="230" fill="url(#s13halo)"/>')
     return doc(S.g(b, filter="soft") + glow, defs)
+
+
+def head_rim():
+    """Gold rim light along the top edges of the fish's head, back and dorsal fin, lit from the cloud gap
+    right above it (adapted from v1 head_rim(), whose light came from the upper left): the silhouette minus
+    itself shifted down, softened, kept inside the silhouette, faded out away from the head."""
+    hx, hy = FX0 + HEAD_L[0], FY0 + HEAD_L[1]
+    fishm = PR.fish(FX0, FY0, FS, 1, mouth=0.0, eye="open", tail=0.0)
+    defs = ('<filter id="s13rim" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">'
+            '<feOffset in="SourceAlpha" dx="5" dy="26" result="o"/>'
+            '<feComposite in="SourceAlpha" in2="o" operator="out" result="r"/>'
+            '<feGaussianBlur in="r" stdDeviation="6" result="rb"/>'
+            '<feComposite in="rb" in2="SourceAlpha" operator="in" result="ri"/>'
+            '<feFlood flood-color="#fff4c4"/>'
+            '<feComposite in2="ri" operator="in"/></filter>' +
+            S.rad_grad("s13rimfade", [(0, "#ffffff", 1), (0.55, "#ffffff", 0.85), (1, "#ffffff", 0)]) +
+            f'<mask id="s13rimmask" maskUnits="userSpaceOnUse" x="0" y="0" width="{W}" height="{H}">'
+            f'<ellipse cx="{hx - 60}" cy="{hy - 40}" rx="520" ry="380" fill="url(#s13rimfade)"/></mask>')
+    return doc(f'<g mask="url(#s13rimmask)"><g filter="url(#s13rim)">{fishm}</g></g>', defs)
 
 
 def sun_beam(target):
@@ -333,16 +417,36 @@ def warm_pool():
     return doc(f'<ellipse cx="{x}" cy="{y}" rx="330" ry="190" fill="url(#s13pool)"/>', defs)
 
 
-def steam(x, y):
-    """Three faint wisps of steam (drying in the sun)."""
+def steam(emitters):
+    """Soft warm wisps of steam rising from the given points (his head-cloth and shoulders) as he dries in the
+    sun: wide, well-blurred strokes, so they read as vapour rather than scratches."""
     b = ""
-    for dx_, h_, ph in ((0, 70, 0.0), (30, 92, 1.6), (58, 62, 3.0)):
-        pts = [(x + dx_ + 10 * math.sin(ph + k * 1.5), y - h_ * k / 4) for k in range(5)]
-        b += (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="#fffaf0" stroke-width="6" '
-              f'stroke-linecap="round" opacity="0.85"/>')
+    for i, (x, y, h_) in enumerate(emitters):
+        ph = 1.7 * i
+        pts = [(x + 9 * math.sin(ph + k * 1.4) * (0.4 + 0.6 * k / 4), y - h_ * k / 4) for k in range(5)]
+        b += (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="#fffaf0" stroke-width="12" '
+              f'stroke-linecap="round" opacity="0.6"/>')
     return doc(f'<g filter="url(#s13stm)">{b}</g>',
-               '<filter id="s13stm" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6"/>'
+               '<filter id="s13stm" x="-80%" y="-50%" width="260%" height="200%"><feGaussianBlur stdDeviation="5.5"/>'
                '</filter>')
+
+
+def tongue_mound(seat):
+    """The back of the fish's tongue rising under Jonah inside the open mouth (stage px at the reference fish
+    placement; drawn inside the mouth clip), with a soft contact shadow under his seat. Continues the props
+    tongue (#e48a8c), whose own top dips below the waterline just left of his seat."""
+    loc = [(300, 182), (340, 186), (380, 185), (420, 186), (465, 192), (510, 206), (560, 236)]
+    top = [PR.local_to_stage(FX0, FY0, FS, 1, *p) for p in loc]
+    low = [PR.local_to_stage(FX0, FY0, FS, 1, *p) for p in ((600, 360), (280, 360), (290, 240))]
+    tc = "#e48a8c"
+    d = S.smooth_path(top, closed=False) + "".join(f" L{x:.1f},{y:.1f}" for x, y in low) + " Z"
+    b = f'<path d="{d}" fill="{tc}"/>'
+    b += (f'<path d="{S.smooth_path(top[1:], closed=False)}" fill="none" stroke="{S.INK}" stroke-width="3.2" '
+          f'stroke-linecap="round"/>')
+    hx, hy = PR.local_to_stage(FX0, FY0, FS, 1, 455, 200)
+    b += f'<ellipse cx="{hx:.1f}" cy="{hy:.1f}" rx="34" ry="6" fill="{S.shade(tc, 0.35)}" opacity="0.6"/>'
+    b += (f'<ellipse cx="{seat[0] - 6:.1f}" cy="{seat[1] + 3:.1f}" rx="66" ry="9" fill="#5a1a24" opacity="0.4"/>')
+    return S.g(b, filter="wobble-fine")
 
 
 def tail_wave(tail):
@@ -418,20 +522,22 @@ def build(ctx):
     t_look = word_t(L1, "看见")                           # opens his arms to the sun (hop cut)
     t_sunword = word_t(L1, "太阳")                        # the sun pulses
     t_joy = word_t(L1, "得救") - 0.02                     # 他得救了: springs up, arms raised
-    t_tail = t_joy - 0.05                                 # the fish's tail waves goodbye far out at sea
+    t_tail = min(t_joy + 0.55, T - 1.75)                  # after he lands: the fish's tail waves goodbye
 
     # ---- painting
     # sky + landscape are consecutive static layers (flattened into one image); the sun's ray crown (kept above
     # the horizon) and the clouds are drawn over them
     sc.add("sky", sky(), z=0, wc=0.6)
     sc.add("landscape", landscape(), z=0.1)
+    # the sun is plain sunshine: it only swells a little when Jonah sees it again (God's light comes from the
+    # parting clouds above the fish, as in s02 / s14)
     sc.add("sun_rays", sun_rays(), z=0.5, wc=0.4,
-           motion=lambda t: Tf(rot=2.0 * t, sx=1 + 0.16 * bump(t, t_sunword - 0.25, t_sunword + 1.2)
+           motion=lambda t: Tf(rot=2.0 * t, sx=1 + 0.11 * bump(t, t_sunword - 0.25, t_sunword + 1.2)
                                + 0.05 * progress(t, t_sun0, t_look),
-                               sy=1 + 0.16 * bump(t, t_sunword - 0.25, t_sunword + 1.2)
+                               sy=1 + 0.11 * bump(t, t_sunword - 0.25, t_sunword + 1.2)
                                + 0.05 * progress(t, t_sun0, t_look),
                                alpha=0.85 + 0.15 * math.sin(2 * math.pi * t / 3.1), px=SUN[0], py=SUN[1]))
-    sc.add("clouds", clouds(), z=1, motion=M.drift(vx=12))
+    sc.add("clouds", clouds(), z=1, motion=M.drift(vx=CLOUD_VX))
     pal = [shifted(V.palms(s)) for s in (-0.35, 0.0, 0.35)]
     sc.add("palms", pal, z=3, frame_at=lambda t: 1 + math.sin(2 * math.pi * t / 3.6))
 
@@ -443,13 +549,27 @@ def build(ctx):
                                                                                      "sine"))
     reveal_t1 = t_light0 + 0.75
 
+    # ---- God speaks: the clouds above the fish part (gold on their inner edges) and rays pour down onto it
+    def part(t):
+        return progress(t, t_light0 - 0.1, t_light0 + 1.1, "inout")
+    cl_m = lambda t: Tf(dx=PART_L * part(t) + CLOUD_VX * t)    # noqa: E731
+    cr_m = lambda t: Tf(dx=PART_R * part(t) + CLOUD_VX * t)    # noqa: E731
+    rim_a = lambda t: Tf(alpha=light_env(t) * (0.9 + 0.1 * math.exp(-((t - t_pulse) / 0.2) ** 2)))   # noqa: E731
+    sc.add("cloud_l", cloud_one(CL), z=4.2, motion=cl_m)
+    sc.add("cloud_r", cloud_one(CR), z=4.25, motion=cr_m)
+    sc.add("rim_l", cloud_rim(CL, CL[0] + 140, CL[1] + 12, 150, 105, "l"), z=4.22, wc=0,
+           motion=M.combine(cl_m, rim_a))
+    sc.add("rim_r", cloud_rim(CR, CR[0] - 135, CR[1] + 12, 145, 100, "r"), z=4.27, wc=0,
+           motion=M.combine(cr_m, rim_a))
+
     def rays_reveal(t):
         if t >= reveal_t1:
             return {"mode": "down", "frac": 1.0}
         return {"mode": "radial", "frac": progress(t, t_light0, reveal_t1, "out"), "soft": 140,
-                "cx": SUN[0], "cy": SUN[1]}
-    sc.add("god_rays", god_rays(HEADF), z=4, wc=0, reveal=rays_reveal,
-           motion=lambda t: Tf(alpha=(1 - progress(t, t_light1 - 0.1, t_light1 + 0.6, "sine")) * float(t >= t_light0)))
+                "cx": RAY_SRC[0], "cy": RAY_SRC[1]}
+    sc.add("god_rays", god_rays(RAY_SRC, RAY_TGT), z=4, wc=0, reveal=rays_reveal,
+           motion=lambda t: Tf(dx=CLOUD_VX * t,
+                               alpha=(1 - progress(t, t_light1 - 0.1, t_light1 + 0.6, "sine")) * float(t >= t_light0)))
     sc.add("mid_waves", mid_waves(), z=5, wc=0.5, wc_edge=0,
            motion=M.combine(M.bob(5, 3.1), M.bob(14, 4.7, 0.2, axis="x")))
     sc.add("swash", shifted(V.swash()), z=6,
@@ -544,7 +664,11 @@ def build(ctx):
         ax, ay, sx, sy, rot = fish_pose(t)
         if t > t_away + 1.6:
             return Tf(alpha=0.0)
-        return Tf(dx=ax - FX0, dy=ay - FY0, rot=rot, sx=sx / FS, sy=sy / FS, px=FX0, py=FY0)
+        # mid-turn (nearly edge-on) the fish would be a tall thin sliver poking out of the splash crown: hide it
+        # for those 1-2 frames, the crown covers the cut
+        th = progress(t, t_turn0, t_turn1, "inout")
+        a = 0.0 if 0.0 < th < 1.0 and abs(math.cos(math.pi * th)) < 0.22 else 1.0
+        return Tf(dx=ax - FX0, dy=ay - FY0, rot=rot, sx=sx / FS, sy=sy / FS, alpha=a, px=FX0, py=FY0)
 
     def yw_local(t):
         """Waterline on the fish (local px): at the mouth while swimming, down to the near band on arrival."""
@@ -599,7 +723,7 @@ def build(ctx):
         return m
     sc.add("head_glow", shifted(V.head_glow(), DX, FDY), z=10.5, wc=0, motion=glow_m(0.3, 0.1))
     sc.add("head_light", shifted(V.head_light(), DX, FDY), z=10.55, wc=0, blend="add", motion=glow_m(0.8, 0.25))
-    sc.add("head_rim", shifted(V.head_rim(), DX, FDY), z=10.6, wc=0, motion=glow_m(0.85, 0.15))
+    sc.add("head_rim", head_rim(), z=10.6, wc=0, motion=glow_m(0.85, 0.15))
 
     # ---- Jonah: sitting inside the open mouth, spat out, somersaults, lands on the sand
     piv = (LAND[0], LAND[1] - 132 * JS)          # body centre of the 'fall' figure drawn at LAND
@@ -732,7 +856,8 @@ def build(ctx):
     # the layer moves with the fish. One frame per mouth step, then one per video frame while he leaves.
     seat = PR.local_to_stage(FX0, FY0, FS, 1, *SEAT_IN)
     j_sit_in = C.jonah(seat[0], seat[1], JS_SIT_IN, 1, pose="sit", expr="surprised", wet=True)
-    in_frames = [doc(PR.in_fish_mouth(j_sit_in, FX0, FY0, FS, 1, mouth=k / 8)) for k in range(1, 9)]
+    tongue = tongue_mound(seat)
+    in_frames = [doc(PR.in_fish_mouth(tongue + j_sit_in, FX0, FY0, FS, 1, mouth=k / 8)) for k in range(1, 9)]
     n0 = int(math.ceil(t_spit * FPS - 1e-6))
     n1 = int(math.ceil(t_out * FPS - 1e-6))
     spit_times = [n / FPS for n in range(n0, n1)]
@@ -742,7 +867,7 @@ def build(ctx):
         Jm = V.tf_matrix(Tf(dx=x - piv[0], dy=y - piv[1], rot=r, sx=k, sy=k, px=piv[0], py=piv[1]))
         loc = np.linalg.inv(V.tf_matrix(fish_tf(tk))) @ Jm
         fig = f'<g transform="{V.svg_matrix(loc)}">{j_fall}</g>'
-        in_frames.append(doc(PR.in_fish_mouth(fig, FX0, FY0, FS, 1, mouth=1.0)))
+        in_frames.append(doc(PR.in_fish_mouth(tongue + fig, FX0, FY0, FS, 1, mouth=1.0)))
 
     def jin_idx(t):
         if t < t_spit:
@@ -751,15 +876,28 @@ def build(ctx):
         return float(min(len(in_frames) - 1, 8 + max(0, int(round((t - spit_times[0]) * FPS)))))
 
     def jin_motion(t):
+        """Moves with the fish; while he sits inside he breathes (a ~1.5 px vertical scale about his seat,
+        composed with the fish's transform)."""
         if t < t_open0 or t >= t_out:
             return Tf(alpha=0.0)
-        return fish_tf(t)
+        f = fish_tf(t)
+        if t >= t_spit:
+            return f
+        sb = 1 + 0.009 * math.sin(2 * math.pi * (t - t_open0) / 1.7)
+        r = math.radians(f.rot)
+        oy = f.sy * (1 - sb) * (seat[1] - FY0)           # keeps the seat fixed: R S (0, (1 - sb)(seat_y - FY0))
+        return Tf(dx=f.dx - math.sin(r) * oy, dy=f.dy + math.cos(r) * oy, rot=f.rot, sx=f.sx, sy=f.sy * sb,
+                  alpha=f.alpha, px=f.px, py=f.py)
     sc.add("jonah_in", in_frames, z=12, motion=jin_motion, frame_at=jin_idx)
     sc.add("jonah", j_frames, z=16, motion=lambda t: Tf(alpha=0.0) if t < t_out else jonah_tf(t),
            frame_at=jonah_idx)
     sc.add("fish_front", front, z=13, motion=fish_tf, frame_at=fish_idx)
 
-    sc.add("near_water", near_water(), z=14, motion=M.combine(M.bob(5, 2.9, 0.1), M.bob(10, 4.1, axis="x")))
+    near_m = M.combine(M.bob(5, 2.9, 0.1), M.bob(10, 4.1, axis="x"))
+    sc.add("near_water", near_water(), z=14, motion=near_m)
+    # its top ink line softens once the fish has gone (otherwise it reads like a ledge across the open sea)
+    sc.add("near_ink", near_ink(), z=14.05, wc=0.5,
+           motion=M.combine(near_m, lambda t: Tf(alpha=1 - 0.6 * progress(t, t_away + 1.3, t_away + 2.4, "sine"))))
 
     # ripple rings: the arrival surge (at the bow), the spit and the turn
     def ring(tc, k, dx0, dy0=0.0):
@@ -781,7 +919,9 @@ def build(ctx):
             return Tf(alpha=0.0)
         rise = progress(t, t_turn0 - 0.03, t_turn0 + 0.12, "out")
         fall = progress(t, t_turn0 + 0.16, t_turn1 + 0.24, "in")
-        return Tf(sx=lerp(0.6, 1.08, rise) * (1 + 0.15 * fall), sy=lerp(0.15, 1.0, rise) * (1 - 0.85 * fall),
+        mid = math.sin(math.pi * progress(t, t_turn0, t_turn1, "inout"))    # bigger crown while the fish is edge-on
+        return Tf(sx=lerp(0.6, 1.08, rise) * (1 + 0.15 * fall) * (1 + 0.18 * mid),
+                  sy=lerp(0.15, 1.0, rise) * (1 - 0.85 * fall) * (1 + 0.32 * mid),
                   alpha=1 - progress(t, t_turn1, t_turn1 + 0.24, "sine"), px=FX0, py=WATER_Y + 8)
     sc.add("splash", shifted(V.splash_crown()), z=14.6, wc=0.5, motion=splash_m)
 
@@ -837,11 +977,17 @@ def build(ctx):
                                (0.85 + 0.15 * bump(t, t_sunword - 0.2, t_sunword + 1.3)
                                 + 0.2 * bump(t, t_joy_peak - 0.2, t_joy_peak + 1.4))))
 
+    # steam rises from the top of his head-cloth and his front shoulder (not across the head-cloth flap at the
+    # back of his head); it follows him when he springs up
     st_sit = C.body_points(C.jonah, LAND[0], LAND[1], JS, -1, pose="sit_happy", wet=True)
     st_up = C.body_points(C.jonah, LAND[0], LAND[1], JS, -1, pose="arms_up", wet=True)
-    sx0, sy0 = LAND[0] + 40, st_sit["shoulders"][0][1] + 30       # behind his back (he faces left)
-    up_dy = st_up["shoulders"][0][1] - st_sit["shoulders"][0][1]
-    stm = steam(sx0, sy0)
+    htx, hty = st_sit["head_top"]
+    shx, shy = st_sit["shoulders"][0]
+    up_dx = st_up["head_top"][0] - htx
+    up_dy = st_up["head_top"][1] - hty
+    sx0, sy0 = htx, hty
+    stm_a = steam([(htx - 20, hty + 8, 58), (htx + 24, hty + 12, 50), (shx - 32, shy - 6, 46)])
+    stm_b = steam([(htx + 2, hty + 6, 64), (shx - 44, shy - 2, 42)])
 
     def steam_m(ph):
         def m(t):
@@ -850,13 +996,14 @@ def build(ctx):
             u = ((t - t_look) / 2.6 + ph) % 1.0
             env = progress(t, t_look + 0.2, t_look + 1.2, "sine") * (1 - 0.4 * progress(t, T - 1.5, T, "sine"))
             jt = jonah_tf(t)
-            dyp = up_dy if t >= t_cut_joy else 0.0
-            return Tf(dx=4 * math.sin(2 * math.pi * (u * 1.2 + ph)), dy=-60 * u + dyp + jt.dy,
-                      sx=0.85 + 0.35 * u, sy=0.85 + 0.35 * u, alpha=0.75 * env * math.sin(math.pi * u) ** 1.3,
+            up = t >= t_cut_joy
+            return Tf(dx=4 * math.sin(2 * math.pi * (u * 1.2 + ph)) + (up_dx if up else 0.0),
+                      dy=-55 * u + (up_dy if up else 0.0) + jt.dy,
+                      sx=0.85 + 0.3 * u, sy=0.85 + 0.35 * u, alpha=0.7 * env * math.sin(math.pi * u) ** 1.3,
                       px=sx0, py=sy0)
         return m
-    sc.add("steam_a", stm, z=16.2, wc=0, motion=steam_m(0.0))
-    sc.add("steam_b", stm, z=16.21, wc=0, motion=M.combine(steam_m(0.5), M.still(Tf(dx=24))))
+    sc.add("steam_a", stm_a, z=16.2, wc=0, motion=steam_m(0.0))
+    sc.add("steam_b", stm_b, z=16.21, wc=0, motion=steam_m(0.5))
 
     # far out at sea, the fish's tail waves goodbye
     tw_frames = [tail_wave(v) for v in (-1.0, -0.4, 0.4, 1.0)]
@@ -866,7 +1013,7 @@ def build(ctx):
         if t < t_tail or t > t_tail + 1.3:
             return Tf(alpha=0.0)
         u = t - t_tail
-        up = progress(u, 0.0, 0.3, "out") * (1 - progress(u, 0.95, 1.3, "in"))
+        up = progress(u, 0.0, 0.35, "out") * (1 - progress(u, 0.85, 1.3, "sine"))      # rises, waves, sinks gently
         return Tf(dy=60 * (1 - up), alpha=min(1.0, u / 0.08) * (1 - progress(u, 1.15, 1.3)))
     sc.add("tail_wave", tw_frames, z=5.5, motion=tail_m, frame_at=lambda t: float(TWF[int(t * 9) % 6]))
 
@@ -896,10 +1043,16 @@ def build(ctx):
 
     # ---- camera: on the fish out at sea (iris opens on its head), pans with it to the shore, holds wide for
     # the spit, then moves in on Jonah for the second line and settles before the dissolve.
+    # The push-in happens BEFORE the wet-puppy shake (it is over by t_shake - 0.05) and the frame holds still
+    # (a few px of drift) through the shake, so the shake reads clearly; the fish's turn and splash stay on its
+    # left side.
+    t_push0 = t_land + 0.5
+    t_push1 = max(t_push0 + 0.8, t_shake - 0.05)
+    t_hold1 = max(t_push1 + 0.3, t_sun0)
     cam = M.cam_keys([(0, Cam(990, 590, 1920)), (t_swim0, Cam(1010, 592, 1920)),
                       (t_arrive + 0.4, Cam(1450, 600, 1960)), (t_spit - 0.3, Cam(1468, 598, 1990)),
-                      (t_land + 0.3, Cam(1480, 600, 1985)), (L1.start - 0.25, Cam(1490, 604, 1970)),
-                      (t_shake1 + 0.1, Cam(1700, 728, 1600)), (t_sun0, Cam(1704, 726, 1590)),
+                      (t_land + 0.3, Cam(1480, 600, 1985)), (t_push0, Cam(1483, 601, 1981)),
+                      (t_push1, Cam(1680, 700, 1680)), (t_hold1, Cam(1686, 702, 1670)),
                       (t_sunword + 0.2, Cam(1642, 606, 1860)), (T, Cam(1638, 603, 1870))],
                      ["linear", "sine", "sine", "sine", "sine", "sine", "linear", "sine", "linear"])
     sc.camera = M.cam_shake(cam, amp=7, t0=t_land, t1=t_land + 0.35, freq=14, seed=5)
@@ -930,18 +1083,34 @@ def build(ctx):
     turn_line = [(FX0 + dx, WATER_Y - 6) for dx in np.linspace(-260, 260, 9)]
     turn_spray = V.ballistic(turn_line, t_turn0 + 0.02, 34, (-125, -55), (300, 760), (2.2, 5.5), (0.35, 0.55),
                              1900, 83, spread=(16, 6))
-    body_pts = [(LAND[0] + dx, LAND[1] - dy) for dx, dy in ((-60, 60), (-20, 120), (20, 170), (0, 210),
-                                                             (40, 90), (-90, 20), (60, 30))]
-    shake_a = V.ballistic(body_pts, t_shake + 0.06, 32, (-200, -120), (280, 660), (3.2, 7.0), (0.38, 0.62), 1900,
-                          71, spread=(16, 16))
-    shake_b = V.ballistic(body_pts, t_shake + 0.26, 32, (-60, 20), (280, 660), (3.2, 7.0), (0.38, 0.62), 1900, 72,
-                          spread=(16, 16))
-    shake_c = V.ballistic(body_pts, t_shake + 0.16, 14, (-130, -50), (300, 600), (2.6, 5.5), (0.35, 0.55), 1900, 73,
-                          spread=(16, 16))
     sets = [(s_, False, WATER_Y + 12) for s_ in bow_sets] + [(arrive_drops, False, WATER_Y + 12),
                                                             (spray, True, WATER_Y + 12),
                                                             (turn_spray, False, WATER_Y + 12)]
-    sets += [(s_, False, LAND[1] + 20) for s_ in (shake_a, shake_b, shake_c)]
+
+    # the wet-puppy shake flings drops off his silhouette edge (head-cloth sides and top, arms, back, hem),
+    # outward, in time with the swings (a swing to the right throws drops right, then left...). Drawn as
+    # ink-edged teardrops stretched along their flight.
+    sp = C.body_points(C.jonah, LAND[0], LAND[1], JS, -1, pose="sit", wet=True)
+    jhx, jhy = sp["head"]
+    bl, bt, br, bb = sp["bbox"]
+    EDGE = {-1: [((jhx - 56, jhy - 2), (-210, -150)), ((jhx - 26, jhy - 46), (-150, -105)),
+                 ((bl + 52, jhy + 78), (-205, -150)), ((bl + 18, bb - 30), (-190, -150))],
+            1: [((jhx + 58, jhy + 4), (-40, 10)), ((jhx + 28, jhy - 44), (-80, -35)),
+                ((br - 18, jhy + 70), (-40, 5)), ((br - 4, bb - 28), (-30, -5))]}
+    tear_sets = []
+    for k, (dt_, side, n) in enumerate(((0.05, 1, 3), (0.145, -1, 3), (0.24, 1, 3), (0.335, -1, 3),
+                                        (0.43, 1, 2))):
+        tb = t_shake + dt_
+        Jb = V.tf_matrix(jonah_tf(tb))
+        for e, (pt, ang) in enumerate(EDGE[side]):
+            tear_sets.append(V.ballistic(V.apply(Jb, pt), tb - 0.02, n, ang, (260, 540), (5.0, 9.0), (0.32, 0.5),
+                                         1900, 700 + 10 * k + e, spread=(5, 5)))
+
+    def tear_poly(ox, oy, ux, uy, r, ln):
+        phi = math.atan2(uy, ux)
+        pts = [(ox + r * math.cos(phi + math.radians(-105 + 21 * j)), oy + r * math.sin(phi + math.radians(-105 + 21 * j)))
+               for j in range(11)]
+        return pts + [(ox - ux * (r + ln), oy - uy * (r + ln))]
 
     # drips: drops forming and falling from Jonah's beard, hands and hem (pose-dependent emitters)
     def emitters(pose):
@@ -1014,12 +1183,34 @@ def build(ctx):
             ox, oy = view.to_out(x, y)
             tx, ty = view.to_out(x, y - vy * 0.012 - r * 0.8)
             drops.append((ox, oy, r * view.scale, 1.0, tx, ty))
+        tears = []
+        if t_shake <= t < t_shake1 + 0.6:
+            for P_ in tear_sets:
+                for i, x, y, vx, vy, fr in V.live_particles(P_, t, LAND[1] + 20):
+                    if t - P_["t0"][i] < 0.1 and math.hypot(x - jhx, y - jhy) < 64:
+                        continue                         # never a drop on his face while it is being flung
+                    ox, oy = view.to_out(x, y)
+                    spd = math.hypot(vx, vy) or 1.0
+                    r = P_["r"][i] * view.scale
+                    tears.append((ox, oy, vx / spd, vy / spd, r, r * (1.2 + min(1.4, spd / 420)), 1 - fr ** 3))
+        arcs = []
+        if t_shake <= t < t_shake1:
+            v = (t - t_shake) / (t_shake1 - t_shake)
+            env = min(1.0, v / 0.12) * (1 - progress(v, 0.6, 1.0, "sine"))
+            for side in (-1, 1):
+                c0 = 180.0 if side < 0 else 0.0
+                for R, span, w in ((86, 40, 1.0), (106, 26, 0.75)):
+                    arcs.append(([view.to_out(jhx + R * math.cos(math.radians(c0 + a)),
+                                              jhy - 4 + R * math.sin(math.radians(c0 + a)))
+                                  for a in np.linspace(-span / 2, span / 2, 7)], env * w))
         lines = []
         if t_spit + 0.04 < t < t_land:
+            jx, jy, _, js = flight(t)
+            jr = 125 * js                                # keep the speed lines off Jonah himself
             for off in (-26, 0, 26):
                 seg = []
                 for kk in range(7):
-                    tt = t - 0.025 - kk * 0.022
+                    tt = t - 0.07 - kk * 0.022
                     if tt < t_spit:
                         break
                     x, y, _, _ = flight(tt)
@@ -1028,7 +1219,10 @@ def build(ctx):
                     x2, y2, _, _ = flight(tt + 0.01)
                     nx, ny = -(y2 - y), (x2 - x)
                     n = math.hypot(nx, ny) or 1
-                    seg.append(view.to_out(x + off * nx / n, y + off * ny / n))
+                    px_, py_ = x + off * nx / n, y + off * ny / n
+                    if math.hypot(px_ - jx, py_ - jy) < jr:
+                        continue
+                    seg.append(view.to_out(px_, py_))
                 if len(seg) > 2:
                     lines.append(seg)
         stars = []
@@ -1042,7 +1236,8 @@ def build(ctx):
                 stars.append((view.to_out(sx_, sy_ + tf.dy), (11 + 3 * math.sin(ang)) * view.scale, k,
                               0.6 + 0.4 * math.sin(ang)))
         allpts = [(p[0], p[1]) for p in drops] + [(p[4], p[5]) for p in drops] + [q for s_ in lines for q in s_] + \
-            [s_[0] for s_ in stars]
+            [s_[0] for s_ in stars] + [(p[0], p[1]) for p in tears] + \
+            [(p[0] - p[2] * (p[4] + p[5]), p[1] - p[3] * (p[4] + p[5])) for p in tears] + [q for a_ in arcs for q in a_[0]]
         if not allpts:
             return frame
         ov = V.Overlay(allpts, 40)
@@ -1054,6 +1249,13 @@ def build(ctx):
             ov.polyline([(tx, ty), (ox, oy)], (196, 228, 238, int(70 * a)), max(1.0, r * 1.1))
             ov.circle(ox, oy, r, (186, 224, 238, int(170 * a)))
             ov.circle(ox - r * 0.32, oy - r * 0.32, max(0.6, r * 0.34), (255, 255, 252, int(220 * a)))
+        for seg, a in arcs:
+            ov.polyline(seg, (100, 70, 46, int(200 * a)), 4.5 * view.scale)
+        for ox, oy, ux, uy, r, ln, a in tears:
+            e = 2.0 * view.scale
+            ov.poly(tear_poly(ox, oy, ux, uy, r + e, ln + e * 1.2), (92, 62, 40, int(215 * a)))
+            ov.poly(tear_poly(ox, oy, ux, uy, r, ln), (198, 232, 243, int(250 * a)))
+            ov.circle(ox - r * 0.3, oy - r * 0.32, max(0.8, r * 0.3), (255, 255, 252, int(235 * a)))
         for (ox, oy), r, k, front_ in stars:
             star = []
             for j in range(10):
@@ -1065,8 +1267,11 @@ def build(ctx):
         return ov.paste(frame)
 
     sc.fx = [
-        FX.sparkles((300, 560, 1500, 760), count=10, color=(255, 252, 236), size=(5, 10), period=1.4, drift=0,
-                    seed=88),
+        # sun glints on the open water, kept off the fish (far left of it; nearer ones only once it has gone)
+        FX.sparkles((20, 600, 320, 780), count=4, color=(255, 252, 236), size=(5, 10), period=1.4, drift=0,
+                    seed=86),
+        FX.sparkles((850, 560, 1500, 770), count=7, t0=t_away + 1.0, color=(255, 252, 236), size=(5, 10),
+                    period=1.4, drift=0, seed=88),
         FX.sparkles((500, 840, 1600, 1000), count=12, color=(255, 252, 236), size=(5, 11), period=1.5, drift=0,
                     seed=87),
         FX.sparkles((HEADF[0] - 230, HEADF[1] - 190, HEADF[0] + 200, HEADF[1] + 120), count=18, t0=t_light0 + 0.3,
@@ -1079,7 +1284,7 @@ def build(ctx):
     # ---- sound
     sc.sfx("waves_calm", 0, dur=T, gain_db=-10, fade_in=0.8, fade_out=0.8)
     sc.sfx("chime", t_light0 + 0.2, gain_db=-12)
-    sc.sfx("gull", 0.3, gain_db=-17, pan=0.4)
+    sc.sfx("gull", t_swim0 + 0.6, gain_db=-17, pan=0.4)
     sc.sfx("whoosh", t_swim0 + 0.1, gain_db=-17, pan=-0.3)
     sc.sfx("splash_small", t_arrive - 0.12, gain_db=-13, pan=-0.1)
     sc.sfx("gulp", t_heave + 0.05, gain_db=-15, pan=-0.1)

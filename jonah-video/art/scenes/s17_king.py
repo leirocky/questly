@@ -69,7 +69,7 @@ BUNDLE_X, BUNDLE_Y = THRONE_X - 8, THRONE_Y - 74 * KS
 
 MSG = dict(x=1130, y=1157, s=1.08, v=2)     # the messenger (later blows the horn)
 SCR = dict(x=1005, y=1100, s=0.98, v=3)     # the king's scribe (later reads the decree)
-HORN_X, READ_X = 1640, 1770                  # their places on the terrace
+HORN_X, READ_X = 1760, 1450                  # their places on the terrace (horn at the open end)
 
 # ------------------------------------------------------------------ street / yard geometry
 BACK_Y = 1000                        # ground line of the house row at the back of the street
@@ -352,7 +352,7 @@ def plank_markup(cx, cy, s=1.0):
 
 def mat_markup(cx, cy, s=1.0):
     """A woven reed mat (water-trough cover), centred at (cx, cy)."""
-    w, h = (TROUGH[1] - TROUGH[0] + 26) * s, 20 * s
+    w, h = (TROUGH[1] - TROUGH[0] + 26) * s, 30 * s
     out = (f'<rect x="{f1(cx - w / 2)}" y="{f1(cy - h / 2)}" width="{f1(w)}" height="{f1(h)}" rx="{6 * s}" '
            f'fill="#d8b36a" stroke="{INK}" stroke-width="{3.5 * s:.1f}"/>')
     for k in range(1, 12):
@@ -770,13 +770,13 @@ def build(ctx):
     t_speak = snap(c1.start + 0.1)             # "国王又派人…": the king speaks
     t_attn = snap(c1.start + 0.3)              # the two straighten up
     t_go = snap(c1.start + 0.85)               # ...and walk out to the terrace
-    t_arrive = t_go + 1.15
+    t_arrive = t_go + 1.35
     t_horn = snap(t_arrive + 0.12)             # the messenger lifts the horn
     t_blow = t_horn + 0.18
-    t_scroll = snap(t_arrive + 0.42)           # the scribe unrolls the decree
+    t_scroll = snap(t_go + 1.65)               # the scribe (who followed) unrolls the decree
     t_read = L2.start + 0.05                   # the king's words are read out
     t_horn_down = snap(L2.start + 0.35)
-    t_lid = snap(within(c2a, 0.55))            # "都不可以吃": the farmer lifts the plank...
+    t_lid = snap(within(c2a, 0.68))            # "都不可以吃": the farmer lifts the plank...
     t_lid_on = t_lid + 0.42                    # ...and lays it over the manger
     t_mat = snap(c2b.start + 0.12)             # "也不可以喝": the girl pulls the mat
     t_mat_on = t_mat + 0.38
@@ -905,11 +905,11 @@ def build(ctx):
                     "out", pivot=(ax, SPOT_Y))
     sc.add("ash_back", doc(V.ash_heap(ax, SPOT_Y, KS, "back")), z=6.5, motion=ash_in)
     sc.add("ash_front", doc(V.ash_heap(ax, SPOT_Y, KS, "front")), z=7.5, motion=ash_in)
-    for nm, tt, w, sd in (("ash_puff1", t_ash, 380, 3), ("ash_puff2", t_sit, 300, 5)):
+    for nm, tt, w, sd, a in (("ash_puff1", t_ash, 300, 3, 0.6), ("ash_puff2", t_sit, 240, 5, 0.5)):
         pv = (ax, SPOT_Y - 20)
         sc.add(nm, doc(ash_cloud_markup(ax, SPOT_Y - 20, w, sd)), z=7.6, wc=0.5,
-               motion=hop(tt, [(-0.02, {"alpha": 0, "s": 0.6, "dy": 0}), (0.08, {"alpha": 0.95, "s": 0.95}),
-                               (0.7, {"alpha": 0, "s": 1.25, "dy": -40})], pv, ["out", "sine"]))
+               motion=hop(tt, [(-0.02, {"alpha": 0, "s": 0.6, "dy": 0}), (0.08, {"alpha": a, "s": 0.95}),
+                               (0.6, {"alpha": 0, "s": 1.3, "dy": -60})], pv, ["out", "sine"]))
 
     # the king: stands in front of the throne, steps forward, takes off his crown, turns to the throne, changes
     # into sackcloth (puff), turns back, sits in the ashes, bows (sorry), speaks the decree, bows again
@@ -1041,8 +1041,8 @@ def build(ctx):
                rfr(1, "stand", "neutral"),           # 5
                rfr(1, "point", "call", open_scroll)]  # 6 reading the decree
     r_dist = READ_X - rx_
-    r_go = t_go - 0.3
-    r_arr = t_arrive + 0.25
+    r_go = t_go + 0.3
+    r_arr = r_go + 1.0
     r_walk = walk_sched(r_go, r_arr, 3)
     r_base = cuts([(0, 0), (t_bow + 0.1, 1), (t_attn, 2), (r_arr, 5), (t_scroll, 6)])
     rp = (rx_, ry_)
@@ -1292,6 +1292,25 @@ def build(ctx):
         M.keys([(t_take, {"dy": 0}), (t_take + 0.13, {"dy": -40}), (t_take + 0.3, {"dy": ty1[1] - ty0[1]})],
                ["out", "in"], pivot=ty0)))
 
+    # behind them a young man comforts an old neighbour (a hand on his shoulder), then they kneel together
+    ex_, ey_, es_ = 4472, 1160, 0.82
+    yx_, yy_, ys_ = 4345, 1165, 0.85
+    t_help = snap(within(c4a, 0.33))
+    efr = [doc(person("elder", 0, ex_, ey_, es_, -1, "sad", "sad")),
+           doc(person("elder", 0, ex_, ey_, es_, -1, "stand", "happy")),
+           doc(person("elder", 0, ex_, ey_, es_, -1, "kneel_pray", "worried")),
+           doc(person("elder", 0, ex_, ey_, es_, -1, "kneel_pray", "peaceful"))]
+    yfr = [doc(person("man", 2, yx_, yy_, ys_, 1, "stand", "sorry")),
+           doc(person("man", 2, yx_, yy_, ys_, 1, "point", "happy")),
+           doc(person("man", 2, yx_, yy_, ys_, 1, "kneel_pray", "worried")),
+           doc(person("man", 2, yx_, yy_, ys_, 1, "kneel_pray", "peaceful"))]
+    for nm, fr, x, y, s, dts in (("help_elder", efr, ex_, ey_, es_, (0.35, 0.3, 0.2)),
+                                 ("help_man", yfr, yx_, yy_, ys_, (0.0, 0.2, 0.1))):
+        ta, tk, th = snap(t_help + dts[0]), snap(t_kneel + dts[1]), snap(t_hope + dts[2])
+        sc.add(nm, fr, z=11.0 + (0.01 if nm == "help_man" else 0), frame_at=cuts([(0, 0), (ta, 1), (tk, 2), (th, 3)]),
+               motion=M.combine(dip(ta, s, (x, y), 5), dip(tk, s, (x, y)), dip(th, s, (x, y), 4),
+                                M.breathe(0.01, 3.1, pivot=(x, y), phase=0.2 if nm == "help_man" else 0.7)))
+
     # their mother watches, then kneels with them
     mo = MOTHER
     mofr = [doc(person("woman", mo["v"], mo["x"], mo["y"], mo["s"], -1, "listen", "worried")),
@@ -1342,7 +1361,7 @@ def build(ctx):
     sc.sfx("cloth", t_sack, gain_db=-8)
     sc.sfx("cloth", t_sit - 0.05, gain_db=-14)
     sc.sfx("footsteps", t_go, dur=t_arrive - t_go, gain_db=-14, fade_in=0.05, fade_out=0.2, rate=1 / WALK_P)
-    sc.sfx("horn", t_blow, dur=1.6, gain_db=-11, pan=-0.1, fade_out=0.5)
+    sc.sfx("horn", t_blow, dur=1.3, gain_db=-11, pan=-0.1, fade_out=0.5)
     sc.sfx("horn", t_blow + 1.0, dur=1.4, gain_db=-22, pan=0.5, fade_out=0.5)
     sc.sfx("thud", t_lid_on, gain_db=-10)
     sc.sfx("thud", t_mat_on, gain_db=-15, pan=0.3)

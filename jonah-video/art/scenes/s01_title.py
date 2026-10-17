@@ -13,17 +13,21 @@ Beats (all derived from ctx.duration and ctx.lines[0]; nothing hard-coded to the
                over and the tail lifts clear at the top of the arc during "圣经绘本" (soft splash crest, a burst
                of spray that falls back, drops shed from the back), soft splash sfx
   line 0       "圣经绘本" -> the ribbon header unfurls just before the voice (chime); "约拿的故事" -> the five big
-               title characters pop in one by one on their syllables (fractions of the line, re-measured on the
-               v2 voice take)
+               title characters pop in one by one on their syllables. The syllables are located at build time
+               in the line's voice clip (see syllable_onsets: the pause after 绘本 and the end of speech, with
+               fixed ratios in between), so a regenerated voice take stays in sync; fallback: fractions of the
+               line measured on the 2.44 s v2 take
   end          calm hold (~1.5 s): the fish hovers at the top of its arc, blinks and waves its tail, the gull pair
-               glides on toward the sun (their speed is derived from the scene length so they are still in view at
-               the end), slow push-in
+               glides on toward the sun and passes well above it (the lead gull glides there, wings level; their
+               speed is derived from the scene length so they are still in view at the end), slow push-in; the sea
+               ambience fades out across the closing dissolve
 
 Edges: the camera starts slightly inside the stage (>= 26 px margin) because the full-width sea bands bob
 sideways; the foreground crests only "swell" by scaling about their outer stage corner, so their cut edges
 never move into view.
 """
 import math
+import sys
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -34,6 +38,7 @@ from art.style import P, W, H
 from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
+from engine.paths import BUILD
 from engine.scene import Scene
 
 # ------------------------------------------------------------------ layout (stage px)
@@ -49,10 +54,15 @@ NEAR_Y = 1052                   # top of the near-sea band
 TITLE = "约拿的故事"
 TITLE_Y, TITLE_SIZE, TITLE_STEP = 418, 200, 214
 RIB_X, RIB_Y = W / 2, 150       # ribbon header centre
-# where each title syllable starts, as a fraction of narration line 0 (measured on the v2 voice take
-# build/voice/lines/s01_title_00.wav, 2.574 s: onsets of 约 1.36, 拿 1.55 (the n murmur), 的 1.82, 故 1.98,
-# 事 2.20 s from the clip start, from the energy envelope / spectral flux; 圣经绘本 spans 0.04-1.26 s)
-SYLLABLE_FRAC = (0.528, 0.603, 0.707, 0.769, 0.854)
+# Where each title syllable starts. Primary: measured in the voice clip at build time (syllable_onsets):
+# t_a = end of the >= 0.25 s pause after 绘本 (the 约 onset), t_b = end of speech, and the five onsets at
+# t_a + SYLLABLE_RATIO * (t_b - t_a); these ratios fit both the 2.574 s and the 2.44 s takes to ~0.03 s.
+# Fallback (clip missing or unreadable): fractions of narration line 0, measured on the 2.44 s v2 take
+# build/voice/lines/s01_title_00.wav: 约 1.415, 拿 1.56 (the n murmur), 的 1.81 (burst), 故 1.94 (burst),
+# 事 2.125 (sh onset) s from the clip start; 圣经绘本 runs 0.04-1.06 s, then a 0.35 s pause.
+SYLLABLE_RATIO = (0.0, 0.147, 0.401, 0.533, 0.721)
+SYLLABLE_FRAC = (0.580, 0.639, 0.742, 0.795, 0.871)
+SYLLABLE_L = 2.44               # length of the take SYLLABLE_FRAC was measured on (s)
 
 GULL_BASE = (1056, 560)
 GULL_S = 0.7
@@ -60,6 +70,13 @@ WINGS = (1.0, 0.5, 0.0, -0.5, -1.0)
 FLAP_SEQ = (2, 1, 0, 1, 2, 3, 4, 3)     # starts from the glide pose (wing 0)
 GULL_X0, GULL_Y, GULL_LAG = 480, 556, 0.5     # near pair: start x, path height, lag of the second gull (s)
 GULL_X1 = 1840          # where the leading gull is at the end of the scene (still inside the final view)
+# The pair's paths rise toward both ends (y = ymid - bend * ((x - W/2) / 1100)^2): they dip under the title in
+# the middle and pass above the rising sun on the right. The lead gull bends more and glides (wings level) from
+# the glide window before it reaches the sun, so neither its belly nor a down-stroke wing grazes the rim (>= 20 px
+# clear). The trailing gull keeps the v1 bend (more would lift its up-stroke wing into 事) and only rises a little
+# after it has passed the title (GULL_B_RISE: x0, x1, px), so it is ~29 px clear of the rim at the end too.
+GULL_A_BEND, GULL_B_BEND = 160, 60
+GULL_B_RISE = (1580, 1760, 25)
 
 FISH_TAILS = tuple(float(v) for v in np.linspace(-0.75, 0.75, 13))   # 13 phases; closed eye on even ones
 TAIL_PERIOD = 1.5
@@ -484,10 +501,14 @@ def fish_point(tf, lx, ly):
     return px + tf.dx + c * (x - px) - s * (y - py), py + tf.dy + s * (x - px) + c * (y - py)
 
 
-def gull_path(x0, vx, ymid, bend, scale, wob=0.0, phase=0.0):
+def gull_path(x0, vx, ymid, bend, scale, wob=0.0, phase=0.0, rise=None):
+    """rise = (xa, xb, px): an extra smooth climb of px between x = xa and x = xb."""
     def pos(t):
         x = x0 + vx * t
         y = ymid - bend * ((x - W / 2) / 1100) ** 2 + wob * math.sin(1.9 * t + phase)
+        if rise:
+            u = min(1.0, max(0.0, (x - rise[0]) / (rise[1] - rise[0])))
+            y -= rise[2] * u * u * (3 - 2 * u)
         return x, y
 
     def m(t):
@@ -499,19 +520,76 @@ def gull_path(x0, vx, ymid, bend, scale, wob=0.0, phase=0.0):
     return m
 
 
-def flap(phase, beat=0.58, flap_for=1.4, glide_for=1.0):
+def flap(phase, beat=0.58, flap_for=1.4, glide_for=1.0, glide_from=None):
     """Wing flipbook index: a few whole wing beats, then a glide. FLAP_SEQ starts on the glide pose and the
     flapping lasts a whole number of beats, so both the start and the end of a flap run meet the glide pose
-    without a jump."""
+    without a jump. With glide_from = t, the bird glides from the start of the glide window that contains or
+    precedes t to the end of the scene (it switches only at a window start, so there is no jump)."""
     step = beat / len(FLAP_SEQ)
     flap_for = max(1, round(flap_for / beat)) * beat
+    cycle = flap_for + glide_for
+    t_glide = math.inf
+    if glide_from is not None:
+        c = (glide_from + phase) % cycle
+        t_glide = glide_from - (c - flap_for) if c >= flap_for else glide_from - c - glide_for
 
     def f(t):
-        cyc = (t + phase) % (flap_for + glide_for)
-        if cyc < flap_for:
+        cyc = (t + phase) % cycle
+        if cyc < flap_for and t < t_glide:
             return float(FLAP_SEQ[int(cyc / step) % len(FLAP_SEQ)])
         return 2.0          # glide (wing 0)
     return f
+
+
+# ================================================================== voice timing
+
+
+def _speech_span(path, floor_db=-40.0, min_pause=0.25):
+    """(t_a, t_b, length) in s for a voice clip: t_a = end of its longest >= min_pause silence (here the
+    pause after 绘本), t_b = end of speech; from a 5 ms RMS envelope (silence = floor_db below the peak).
+    None if there is no such pause."""
+    import soundfile as sf
+    x, sr = sf.read(str(path), dtype="float32", always_2d=True)
+    x = x.mean(axis=1)
+    hop = max(1, int(0.005 * sr))
+    n = len(x) // hop
+    if n < 10:
+        return None
+    rms = np.sqrt(np.mean(x[:n * hop].reshape(n, hop) ** 2, axis=1) + 1e-12)
+    idx = np.flatnonzero(20 * np.log10(rms / rms.max()) > floor_db)
+    if len(idx) < 2:
+        return None
+    gaps = (np.diff(idx) - 1) * hop / sr
+    j = int(np.argmax(gaps))
+    if gaps[j] < min_pause:
+        return None
+    return idx[j + 1] * hop / sr, (idx[-1] + 1) * hop / sr, len(x) / sr
+
+
+def syllable_onsets(ctx, L):
+    """Onsets of 约 拿 的 故 事 in s from the start of line 0 (the clip is placed at the line start)."""
+    path = BUILD / "voice" / "lines" / f"{ctx.id}_00.wav"
+    try:
+        span = _speech_span(path)
+    except Exception as e:                              # missing / unreadable clip
+        span, why = None, f"{type(e).__name__}: {e}"
+    else:
+        why = "no pause after 绘本 found"
+    if span is not None:
+        t_a, t_b, n = span
+        if not (0.3 * n < t_a < 0.8 * n and 0.5 < t_b - t_a < 0.6 * n):
+            span, why = None, f"implausible span {t_a:.2f}-{t_b:.2f} s in a {n:.2f} s clip"
+    if span is not None:
+        if abs(n - L) > 0.03:
+            print(f"[{ctx.id}] warning: the voice clip is {n:.3f} s but line 0 in timeline.json is {L:.3f} s — "
+                  f"timeline.json is out of date (python3 build.py voice); title pops follow the clip",
+                  file=sys.stderr)
+        return [t_a + r * (t_b - t_a) for r in SYLLABLE_RATIO]
+    if abs(L - SYLLABLE_L) > 0.03:
+        print(f"[{ctx.id}] warning: could not measure {path.name} ({why}) and line 0 is {L:.3f} s, not the "
+              f"{SYLLABLE_L} s take SYLLABLE_FRAC was measured on — the title pops may be out of sync",
+              file=sys.stderr)
+    return [f * L for f in SYLLABLE_FRAC]
 
 
 # ================================================================== effects
@@ -586,6 +664,7 @@ def build(ctx):
     T = ctx.duration
     say = ctx.lines[0]
     L = say.end - say.start
+    onsets = syllable_onsets(ctx, L)       # 约 拿 的 故 事, s from the line start
     # the fish surfaces just before the narration starts (after the film's fade-in, so the first second is
     # calm) and reaches the top of its arch during "圣经绘本"
     t_rise0 = max(1.0, say.start - 0.6)
@@ -672,9 +751,11 @@ def build(ctx):
     # a pair in formation: gull_b trails gull_a by GULL_LAG s, a little higher and farther away; an unhurried
     # speed that keeps both in view until the end of the scene
     GULL_V = (GULL_X1 - GULL_X0) / T
-    sc.add("gull_b", gull_frames, motion=gull_path(GULL_X0 - GULL_V * GULL_LAG, GULL_V, GULL_Y - 20, 60, 0.8,
-                                                   wob=5, phase=1.3), frame_at=flap(0.35))
-    sc.add("gull_a", gull_frames, motion=gull_path(GULL_X0, GULL_V, GULL_Y, 60, 1.0, wob=5), frame_at=flap(0.0))
+    sc.add("gull_b", gull_frames, motion=gull_path(GULL_X0 - GULL_V * GULL_LAG, GULL_V, GULL_Y - 20, GULL_B_BEND,
+                                                   0.8, wob=5, phase=1.3, rise=GULL_B_RISE), frame_at=flap(0.35))
+    t_sun = (SUN[0] - SUN_R - 30 - GULL_X0) / GULL_V      # the lead gull nears the sun's left edge
+    sc.add("gull_a", gull_frames, motion=gull_path(GULL_X0, GULL_V, GULL_Y, GULL_A_BEND, 1.0, wob=5),
+           frame_at=flap(0.0, glide_from=t_sun))
 
     # ---- title: ribbon header with "圣经绘本", then the five characters on their syllables
     t_rib = say.start - 0.1              # the ribbon unfurls just before the voice
@@ -689,7 +770,7 @@ def build(ctx):
     x0 = W / 2 - TITLE_STEP * (len(TITLE) - 1) / 2
     for i, ch in enumerate(TITLE):
         x = x0 + i * TITLE_STEP
-        t0 = say.start + SYLLABLE_FRAC[i] * L - 0.06
+        t0 = say.start + onsets[i] - 0.06
 
         def pop(t, t0=t0, x=x, i=i):
             if t < t0:
@@ -701,7 +782,7 @@ def build(ctx):
             return Tf(dy=dy, sx=s, sy=s, alpha=a, px=x, py=TITLE_Y - 70)
         sc.add(f"title_{i}", title_char(ch, x, TITLE_Y), wc=0, motion=pop)
 
-    t_done = say.start + SYLLABLE_FRAC[-1] * L + 0.4
+    t_done = say.start + onsets[-1] + 0.4
     # starts slightly inside the stage: >= 26 px margin at the sides, 15 px top/bottom (the sea bands bob up
     # to 18 px sideways and 7 px vertically)
     sc.camera = M.cam_keys([(0, Cam(W / 2, H / 2, W * 0.975)), (T, Cam(1046, 588, W * 0.9))], "sine")
@@ -719,7 +800,8 @@ def build(ctx):
     ]
     sc.subtitles = False  # the title is already on the page
 
-    sc.sfx("waves_calm", 0, dur=T + 1, gain_db=-8, fade_in=1.0, fade_out=1.0)
+    # the sea fades out across the closing dissolve (s02 is an inland village; its first words start there)
+    sc.sfx("waves_calm", 0, dur=T + 0.3, gain_db=-10, fade_in=1.0, fade_out=1.3)
     sc.sfx("gull", 0.45, gain_db=-12, pan=-0.45)
     # a soft water rush as the fish breaks the surface (softened attack; splash_small is a 'crate plop')
     sc.sfx("splash", t_rise0 + 0.05, gain_db=-18, pan=-0.1, fade_in=0.15)

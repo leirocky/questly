@@ -30,6 +30,10 @@ narration chunks (a phrase inside a chunk is placed by its character index), wit
 import math
 import random
 
+import cv2
+import numpy as np
+from PIL import Image
+
 from art import characters as C
 from art import props as PR
 from art import style as S
@@ -38,6 +42,7 @@ from art.style import P
 from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
+from engine.paths import OUT_H, OUT_W
 from engine.scene import Scene
 
 SW, SH = 2800, 1575
@@ -87,13 +92,8 @@ def sky_gold_svg():
             S.rad_grad("s18sun", [(0, "#fff8dc", 1), (0.25, "#ffefb8", 0.85), (0.6, "#ffe09a", 0.35),
                                   (1, "#ffd98a", 0)]))
     body = (f'<rect x="-20" y="-20" width="{SW + 40}" height="{SKY_Y + 40}" fill="url(#s18skyw)"/>'
-            f'<ellipse cx="{GAP_X}" cy="240" rx="980" ry="640" fill="url(#s18sun)"/>')
+            f'<ellipse cx="{GAP_X}" cy="250" rx="940" ry="520" fill="url(#s18sun)"/>')
     return doc(body, defs)
-
-
-def sky_grey_svg():
-    defs = S.lin_grad("s18skyg", [(0, "#7c8096"), (0.45, "#9a9bae"), (0.8, "#b9b6b8"), (1, "#cbc2b6")])
-    return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SKY_Y + 40}" fill="url(#s18skyg)"/>', defs)
 
 
 def fair_clouds_svg():
@@ -360,25 +360,84 @@ def roof_people():
 # ============================================================================ light
 
 
-def glaze_svg(warm):
-    if warm:
-        stops = [(0, "#ffdcaa", 0.1), (0.45, "#ffe2b0", 0.14), (1, "#ffdcaa", 0.16)]
-    else:
-        stops = [(0, "#8d90ad", 0.56), (0.4, "#9a9cb6", 0.42), (0.7, "#a9a8bc", 0.27), (1, "#b4b1c0", 0.19)]
-    return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SH + 40}" fill="url(#s18glaze)"/>',
-               S.lin_grad("s18glaze", stops))
+def light_fx(gloom_a, hole_r, gap, warm_a, glow_a, glow_s, glow_c, glow_r=(900, 520)):
+    """One cheap output-space pass (instead of three full-frame glaze layers, see the render budget):
+
+    * gloom: a cool multiply glaze under the heavy cloud (strongest at the top of the frame). From God's mercy
+      on it lifts outward from the cloud gap: a soft elliptical hole of radius hole_r(t) (stage px) centred on
+      ``gap`` lets the light spread over the city, while gloom_a(t) thins what is left;
+    * warm: a light golden multiply glaze, warm_a(t);
+    * glow: a warm screen glow over the roofs where the rays land (glow_c, radii glow_r * glow_s(t)), glow_a(t).
+    The maps are computed on a 1/8-resolution grid and upsampled (they are all soft).
+    """
+    f = 8
+    gw, gh = OUT_W // f, OUT_H // f
+    X, Y = np.meshgrid((np.arange(gw) + 0.5) * f, (np.arange(gh) + 0.5) * f)
+    v = (Y / OUT_H)[..., None]
+    gstr = np.interp(Y / OUT_H, [0, 0.4, 0.7, 1.0], [0.62, 0.55, 0.36, 0.22])[..., None]
+    top, bot = np.array([0x8d, 0x90, 0xad]) / 255.0, np.array([0xb4, 0xb1, 0xc0]) / 255.0
+    gdark = gstr * (1 - (top * (1 - v) + bot * v))           # darkening per channel at full gloom
+    wdark = 0.14 * (1 - np.array([255, 223, 174]) / 255.0)
+    gcol = np.array([255, 196, 92], np.float64)
+
+    def up(small):
+        return cv2.resize(small, (OUT_W, OUT_H), interpolation=cv2.INTER_LINEAR)
+
+    def fx(frame, t, view):
+        ag, aw, al = gloom_a(t), warm_a(t), glow_a(t)
+        if ag <= 0.003 and aw <= 0.003 and al <= 0.003:
+            return frame
+        arr = np.array(frame)                                 # RGBA uint8 copy
+        if ag > 0.003 or aw > 0.003:
+            mult = np.ones((gh, gw, 3))
+            if ag > 0.003:
+                d = gdark * ag
+                R = hole_r(t) * view.scale
+                if R > 1:
+                    cx, cy = view.to_out(*gap)
+                    dist = np.sqrt(((X - cx) / 1.35) ** 2 + (Y - cy) ** 2)
+                    hole = np.clip((R - dist) / (0.6 * R + 60) + 0.5, 0, 1)
+                    d = d * (1 - hole)[..., None]
+                mult *= 1 - d
+            if aw > 0.003:
+                mult *= 1 - wdark * aw
+            m8 = np.full((gh, gw, 4), 255, np.uint8)
+            m8[..., :3] = np.clip(mult * 255 + 0.5, 0, 255)
+            arr = cv2.multiply(arr, up(m8), scale=1 / 255.0)
+        if al > 0.003:
+            cx, cy = view.to_out(*glow_c)
+            k = glow_s(t) * view.scale
+            r = np.sqrt(((X - cx) / (glow_r[0] * k)) ** 2 + ((Y - cy) / (glow_r[1] * k)) ** 2)
+            a = np.interp(r, [0, 0.45, 1.0], [0.5, 0.26, 0.0]) * al
+            s8 = np.zeros((gh, gw, 4), np.uint8)
+            s8[..., :3] = np.clip(gcol * a[..., None] + 0.5, 0, 255)
+            arr = cv2.subtract(255, cv2.multiply(cv2.subtract(255, arr), cv2.subtract(255, up(s8)), scale=1 / 255.0))
+        return Image.fromarray(arr, "RGBA")
+    return fx
 
 
-def glow_svg(cx, cy, rx, ry):
-    """Warm light spreading over the roofs from where the rays land (screen blend)."""
-    defs = S.rad_grad("s18glow", [(0, "#ffca66", 0.5), (0.45, "#ffbf5c", 0.26), (1, "#ffb850", 0)])
-    return doc(f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="url(#s18glow)"/>', defs)
+# cloud colours: v1's pre-darkened greys divided by the gloom they now sit under (the gloom is applied after
+# all layers by light_fx); the lit colours are v1's
+CLOUD_DARK = {"back": ("#8a8ea0", "#6d7085"), "front": ("#7f8396", "#64677b"), "low": ("#7b7f92", "#606377")}
+
+
+def bank_frames(items, kind, rect=None):
+    out = []
+    for fill, shade in (CLOUD_DARK[kind], V.CLOUD_LIT[kind]):
+        extra = ""
+        if rect:
+            x0, x1, y1 = rect
+            extra = f'<rect x="{x0}" y="-40" width="{x1 - x0}" height="{y1 + 40}" fill="{fill}"/>'
+        out.append(V.cloud_bank_svg(items, fill, shade, extra=extra))
+    return out
 
 
 # grey cloud banks over the city: (items, kind, rect)
 BANKS = {
-    "back_l": ([(240, 60, 920, 360, 71), (900, 30, 860, 330, 72)], "back", (-40, 1240, 150)),
-    "back_r": ([(2440, 50, 960, 350, 73), (2790, 90, 620, 300, 74)], "back", (2020, 2900, 150)),
+    "back_l": ([(240, 60, 920, 360, 71), (900, 30, 860, 330, 72), (260, 300, 760, 300, 83)], "back",
+               (-40, 1240, 230)),
+    "back_r": ([(2440, 50, 960, 350, 73), (2790, 90, 620, 300, 74), (2700, 300, 640, 280, 84)], "back",
+               (2020, 2900, 230)),
     "back_c": ([(GAP_X, 120, 860, 360, 75)], "back", (1260, 2020, 160)),
     "front_l": ([(1080, 250, 1060, 380, 76)], "front", (560, 1580, 190)),
     "front_r": ([(2230, 260, 1020, 360, 77)], "front", (1740, 2900, 190)),
@@ -438,15 +497,12 @@ def build(ctx):
     t_glad = t_spared + 0.1                                 # relief and joy
     t_cheer0 = t_whole + 0.15                               # the city cheers, from the centre outward
 
-    # ---- sky ----
-    sc.add("sky_grey", sky_grey_svg(), z=0, wc=0.5,          # skipped once the gold sky is fully in
-           motion=lambda t: Tf(alpha=1.0 if t < t_gold1 + 0.05 else 0.0))
-    sc.add("sky_gold", sky_gold_svg(), z=0.5, wc=0.6,
-           motion=M.keys([(t_gold0, {"alpha": 0}), (t_gold1, {"alpha": 1})], "sine"))
-    sc.add("fair", fair_clouds_svg(), z=1, motion=M.combine(
-        M.keys([(t_spared + 0.9, {"alpha": 0}), (t_spared + 2.2, {"alpha": 1})], "sine"), M.drift(vx=5, t0=t_spared)))
+    # ---- sky and city: one static group (the grey of the storm comes from the gloom in light_fx) ----
+    sc.add("sky", sky_gold_svg(), z=0, wc=0.6)
     sc.add("mountains", mountains_svg(), z=1.5)
     sc.add("city", city_svg(), z=2)
+    sc.add("fair", fair_clouds_svg(), z=2.4, motion=M.combine(
+        M.keys([(t_spared + 0.9, {"alpha": 0}), (t_spared + 2.2, {"alpha": 1})], "sine"), M.drift(vx=5, t0=t_spared)))
 
     # ---- neighbours on the roofs and in the street: pray -> glad (wave from the centre) -> cheer ----
     def dist_delay(gx, k=0.00045):
@@ -485,8 +541,8 @@ def build(ctx):
                          (hop_t + 0.52, {"dy": -14 * s}), (hop_t + 0.68, {"dy": 0})], ["out", "in", "out", "in"])]
         sc.add(name, doc(body), z=z, motion=M.combine(*parts))
 
-    animal_layer("goat", "goat", 2235, 1412, 0.82, -1, 29.0, t_peace + 0.45, per=2.5, ph=0.2)
-    animal_layer("lamb", "sheep", 2045, 1436, 0.82, -1, 29.5, t_peace + 0.2, per=2.2, ph=0.6)
+    animal_layer("goat", "goat", 2190, 1410, 0.82, -1, 29.0, t_peace + 0.45, per=2.5, ph=0.2)
+    animal_layer("lamb", "sheep", 2000, 1436, 0.82, -1, 29.5, t_peace + 0.2, per=2.2, ph=0.6)
 
     # the family
     fam_wonder = {"grandpa": 0.3, "father": 0.15, "girl": 0.0, "mother": 0.22, "boy": 0.08}
@@ -567,10 +623,6 @@ def build(ctx):
                                        "out", pivot=DOVE_REF),
                                 M.bob(6, 0.9, phase=ph, axis="y")))
 
-    # ---- gloom (lifts from the moment God shows mercy) ----
-    sc.add("gloom", glaze_svg(False), z=40, wc=0, blend="multiply",
-           motion=M.keys([(t_mercy, {"alpha": 1}), (t_gold1 + 0.3, {"alpha": 0})], "sine"))
-
     # ---- golden light behind the cloud: kindles while God sees, bursts through the gap ----
     sc.add("gleam", V.gleam_svg(GAP_X, 330, 280, 360), z=40.1, wc=0, motion=M.combine(
         M.keys([(0, {"alpha": 0.3, "sx": 0.5, "sy": 0.6}), (t_see, {"alpha": 0.3, "sx": 0.5, "sy": 0.6}),
@@ -608,25 +660,26 @@ def build(ctx):
     for name, (z, pdx, gdx, gdy, ge, f0, f1_, dr, pv, s1, pdy) in plan.items():
         items, kind, rect = BANKS[name]
         fa = lit_c if name.endswith("_c") else lit
-        sc.add(f"cloud_{name}", V.bank_frames(items, kind, rect), z=z, frame_at=fa,
+        sc.add(f"cloud_{name}", bank_frames(items, kind, rect), z=z, frame_at=fa,
                motion=cloud_motion(pdx, gdx, gdy, t_mercy + ge * dur, t_mercy + f0 * dur, t_mercy + f1_ * dur,
                                    dr, pv, s1, pdy, churn=5.0))
 
-    # ---- warm light of God's mercy ----
-    sc.add("warm", glaze_svg(True), z=40.6, wc=0, blend="multiply",
-           motion=M.keys([(t_gold0, {"alpha": 0}), (t_gold1 + 0.4, {"alpha": 1})], "sine"))
+    # ---- God's mercy: golden rays pour down through the gap ----
     rsrc = (GAP_X, 330)
     sc.add("rays", V.rays_svg(rsrc, 92, 97, n=11, length=1600, seed=6), z=41, wc=0, blend="add",
            motion=M.combine(M.keys([(t_mercy + 0.05, {"alpha": 0, "sx": 0.4, "sy": 0.3}), (t_mercy + 0.75, {"alpha": 1}),
-                                    (t_spared + 0.8, {"sx": 1.0, "sy": 1.0}), (t_whole + 1.5, {"alpha": 0.45})],
+                                    (t_spared + 0.8, {"sx": 1.0, "sy": 1.0}), (t_whole + 1.5, {"alpha": 0.4})],
                                    ["sine", "out", "sine"], pivot=rsrc),
                             M.pulse(0.8, 1.0, 3.2), M.sway(1.0, 7.0, rsrc)))
-    gc = (GAP_X, 1020)
-    sc.add("glow", glow_svg(gc[0], gc[1], 900, 520), z=41.1, wc=0, blend="screen",
-           motion=M.combine(M.keys([(t_mercy + 0.3, {"alpha": 0, "s": 0.25}), (t_spared, {"alpha": 0.75, "s": 0.8}),
-                                    (t_whole + 0.6, {"alpha": 0.36, "s": 1.7}), (T, {"alpha": 0.28, "s": 1.9})],
-                                   ["out", "sine", "sine"], pivot=gc),
-                            M.pulse(0.9, 1.0, 3.0)))
+    # gloom lifting outward from the gap, warm glaze, warm glow spreading over the roofs (see light_fx)
+    gloom_a = M.keys([(t_mercy, {"alpha": 1}), (t_gold1 + 0.3, {"alpha": 0})], "sine")
+    hole = M.keys([(t_mercy + 0.1, {"s": 0}), (t_mercy + 0.9, {"s": 500}), (t_gold1, {"s": 3400})], ["out", "sine"])
+    warm_a = M.keys([(t_gold0, {"alpha": 0}), (t_gold1 + 0.4, {"alpha": 1})], "sine")
+    glow = M.combine(M.keys([(t_mercy + 0.3, {"alpha": 0, "s": 0.25}), (t_spared, {"alpha": 0.75, "s": 0.8}),
+                             (t_whole + 0.6, {"alpha": 0.36, "s": 1.7}), (T, {"alpha": 0.28, "s": 1.9})],
+                            ["out", "sine", "sine"]), M.pulse(0.9, 1.0, 3.0))
+    light = light_fx(lambda t: gloom_a(t).alpha, lambda t: hole(t).sx, (GAP_X, 500), lambda t: warm_a(t).alpha,
+                     lambda t: glow(t).alpha, lambda t: glow(t).sx, (GAP_X, 1020))
 
     # ---- camera: close over the praying roof, a little up toward the light, then the whole city ----
     sc.camera = M.cam_keys([
@@ -639,6 +692,7 @@ def build(ctx):
 
     # ---- effects ----
     sc.fx = [
+        light,
         FX.sparkles((200, 300, 2600, 1150), count=34, t0=t_gold0 + 0.6, t1=T + 1, color=(255, 238, 172),
                     size=(9, 20), drift=-10, seed=31),
         FX.sparkles((300, 600, 2500, 1250), count=26, t0=t_peace - 0.2, t1=T + 1, color=(255, 230, 150),
