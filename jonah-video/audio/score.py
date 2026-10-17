@@ -13,9 +13,12 @@ Tonal plan (hand-offs by common tone or dominant -> tonic):
   a D pedal, a first hijaz glimpse of Nineveh) -> s03 flee D dorian (run / tiptoe question / Joppa /
   ship, scale run) -> s04 storm D minor (build, peak hit, cargo, sleeping Jonah) -> s05 hold D minor
   6/8 (muffled, rocking) -> urgent pulse -> s06 lots (ticking council, rattle, ping, questions,
-  Jonah's theme on the horn in D major, fear, diminished stinger) -> s07 waves 6/8 -> lament ->
-  s08 rowing strokes (D minor, Neapolitan Eb climb, crash) -> hushed prayer -> s09 storm reprise,
-  splash, sudden D major calm, plagal hymn -> s10 sinking Dmaj7-Bm7, the great-fish motif, gulp
+  Jonah's theme on the horn in D major, fear, diminished stinger on a low piano stab) -> s07 waves
+  6/8 over a D pedal (Dm | Eb/D | Dm | E dim7/D | Gm/D | A7: low piano rocking, low brass swelling
+  per wave -- no tremolo, no timpani) -> lament -> s08 rowing strokes (D minor, Neapolitan Eb climb,
+  crash after '...回到岸边') -> hushed prayer -> s09 storm reprise growing out of the prayer, splash
+  (bass drum + timpani), the storm cut dead, sudden D major calm, plagal hymn -> s10 sinking
+  Dmaj7-Bm7 (echo drops on the shared tones D-F#-A), the great-fish motif, gulp
   D-C#-B -> s11 B minor belly (warm G for '别怕', heartbeat, prayer) -> s12 sinking lament bass,
   deceptive V-VI turn to G on '想起了耶和华', rise, radiant D on '救恩属于耶和华' -> s13 shore G
   (fish motif in G, pop, sunny Jonah motif) -> s14 the second call (same shimmer and God's chords),
@@ -23,9 +26,14 @@ Tonal plan (hand-offs by common tone or dominant -> tonic):
   surprise, humble G minor -> s17 king: sarabande G-F-Eb-D, herald horn, processional decree, Bb
   hope, half cadence -> s18 mercy G major -> s19 happy G, grumpy G minor bassoon, tender Eb, the
   flight recalled, God's question (call chords in G) -> s20 booth G (plucked) -> s21 night, plant
-  grows (bVI-bVII-I), shade, waltz -> s22 dawn, worm (chromatic pizzicato), heat (open fifths, wind),
-  hush, stubborn stomps -> s23 lesson G 6/8 (theme on piano, ends on A7) -> s24 end: Bm7-Gmaj7-
-  Em7-A7sus4 question, then the theme in D, warm and full, final D chord ringing to the end.
+  grows (bVI-bVII-I), shade, waltz whose last G chord rings into the dissolve -> s22 dawn, worm
+  (chromatic pizzicato, the bite on '咬了蓖麻'), heat (open fifths, wind), hush, stubborn stomps at
+  the ends of Jonah's exclamations -> s23 lesson G 6/8 (theme on piano, ends on A7) -> s24 end:
+  Bm7-Gmaj7-Em7-A7sus4 question with ~2 s of reflective pause, then the theme in D swelling in,
+  warm and full, final D chord ringing to the end.
+
+Pads never double a seventh or a dominant's leading tone that a melodic line already sounds; the
+melodic line resolves it (theory.voice_lead: resolution and doubled-tendency costs).
 
 The Jonah theme (D major, 6/8, q = quarter note):
   b1 D  F#5:1 E5:1/2 D5:1 A4:1/2        motif x (3-2-1-5, lilting long-short)

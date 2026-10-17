@@ -1,10 +1,17 @@
 """Cues s19-s24: Jonah's anger, the booth, the plant, the worm and the heat, God's lesson, the end."""
 from audio.cues_a import THEME
-from audio.scorelib import broken, bassline, drop_spoken, drum, fill, gliss, pulse, roll, timp_roll, tops
-from audio.theory import midi
+from audio.scorelib import (
+    bassline,
+    broken,
+    drop_spoken,
+    drum,
+    fill,
+    tops,
+)
 
 
 def angry(c):
+    c.gain(-0.4)
     t_sour = c.at("只有约拿")
     t_tender = c.gap(c.find("又慈爱"))
     t_expl = c.gap(c.find("原来"))
@@ -43,6 +50,20 @@ def angry(c):
                    "r:1/2 [G2,D3]:1/2 r:1/2 [G2,D3]:1/2 | r:1/2 [C3,G3]:1/2 r:1/2 [C3,G3]:1/2 | "
                    "r:1/2 [D3,A3]:1/2 r:1/2 [D3,C4]:1/2 | r:2", vel=52, role="harmony")
     g.add("pz_hi", 0, 0.5, "Bb4", 60, "arp", "h")
+    # a grumpy 'harrumph' (bassoon grunt, a falling fourth, and a pizzicato chord) in the pause
+    # after the first line, wherever it falls -- the music does not rest there
+    p0, p1 = c.pause_after(c.find("只有约拿"))
+    q_h = round(g.q_of(c.t0 + p0 + 0.04) * 4) / 4
+    if p1 - p0 >= 0.3 and 0 < q_h < g.n_q - 1.0:
+        ch = g.chord_at(q_h + 0.25)
+        root = ch.bass_note(43, 54)
+        up = root + 7 if (root + 7) % 12 in ch.pcset else root + 12
+        g.score.notes[:] = [n for n in g.score.notes
+                            if not (n.seg is g and n.part in ("bsn", "pz_lo") and q_h - 0.3 < n.q < q_h + 1.0)]
+        g.add("bsn", q_h, 0.25, up, 70, "melody", "s")
+        g.add("bsn", q_h + 0.25, 0.5, root, 80, "melody", "s")
+        g.add("pz_lo", q_h + 0.25, 0.5, root, 62, "harmony", "h")
+        g.add("pz_lo", q_h + 0.25, 0.5, up, 58, "harmony", "h")
     g.add("vc", 14, 2, "D3", 40, "bass")                 # a held D that melts into the tender E-flat
     g.add("cb", 14, 2, "D2", 40, "bass")
     g.expr(["vc", "cb"], [(14, -15), (16, -12)])
@@ -52,8 +73,8 @@ def angry(c):
     t.pad(["vla", "vln2"], 2, 55, 70, vel=44, bass_part="vc", bass_lo=40, bass_hi=51)
     bassline(t, "cb", 28, 39, 44)
     broken(t, "harp", 0, 12, (0, 2, 4, 5, 4, 2), 39, 51, vel=40, thin=True)
-    t.expr(["vla", "vln2", "vc", "cb"], [(0, -12), (2, -10), (12, -10)])
-    t.expr(["vln_mel", "harp"], [(0, -9), (12, -9)])
+    t.expr(["vla", "vln2", "vc", "cb"], [(0, -15), (2, -10), (12, -10)])
+    t.expr(["vln_mel", "harp"], [(0, -14), (1.5, -9), (12, -9)])
     # the narrator explains: reflective clarinet, then the flight figure recalled ('所以当初才逃跑了')
     x.mel("clar", "D5:2 C5:1 Bb4:1 | C5:2 Bb4:1 G4:1 | r:4", vel=54)
     x.mel("bsn", "D3:1/2:s F#3:1/2:s A3:1/2:s r:1/2 C4:1/2:s A3:1/2:s F#3:1/2:s D3:1/2:s", q=8, vel=58)
@@ -88,11 +109,12 @@ def booth(c):
           q=4, vel=52, role="arp")
     b.mel("pz_cb", "G1:1/2 r:3/2 | C2:1/2 r:3/2 | G1:1/2 r:3/2 | D2:1/2 r:3/2 | G1:1/2 r:3/2", q=4, vel=58,
           role="bass")
+    b.pad(["vla", "vln2"], 2, 57, 69, q0=12, vel=38, bass_ref=(38, 50))       # into the shade
     for k in range(10):                                # little hammer taps
         if k % 4 != 3:
             drum(b, 4 + 0.5 + k, 76 if k % 2 else 77, 40)
     b.expr(["pz_hi", "guitar", "pz_cb", "hand"], [(0, -2), (14, -2)])
-    b.expr(["vla", "vln2", "cb"], [(0, -10), (4, -18)])
+    b.expr(["vla", "vln2", "cb"], [(0, -10), (4, -18), (12, -18), (14, -13)])
     # sitting in the shade, waiting: lazy flute, slow plucks
     s.mel("flute", "B4:2 | C5:2 | D5:2 | C5:1 A4:1 | B4:2", vel=48)
     s.mel("pz_lo", "E2:1/2 r:1/2 B2:1/2 r:1/2 | C3:1/2 r:1/2 G2:1/2 r:1/2 | G2:1/2 r:1/2 D3:1/2 r:1/2 | "
@@ -105,6 +127,7 @@ def booth(c):
 
 
 def vine(c):
+    c.gain(-1.3)
     t_grow = c.at("一夜之间")
     t_shade = c.gap(c.find("宽宽的叶子"))
     t_waltz = c.gap(c.find("非常非常高兴"))       # the waltz downbeat lands as the line starts
@@ -151,8 +174,13 @@ def vine(c):
     w.mel("pz_lo", "G2:1 r:2 | D2:1 r:2 | G2:1 r:2", vel=70, role="bass")
     w.mel("pz_hi", "r:1 [B3,D4,G4]:1 [B3,D4,G4]:1 | r:1 [A3,C4,F#4]:1 [A3,C4,F#4]:1 | r:1 [B3,D4,G4]:1 r:1",
           vel=52, role="harmony")
+    for k, nm in enumerate(["G2", "D3", "B3", "G4", "B4"]):          # the last chord rings on
+        w.add("harp", 6 + 0.08 * k, 3 - 0.08 * k, nm, 48 - 2 * k, "arp", "r")
+    w.pad(["vla", "vln2", "vln1"], 3, 55, 74, q0=6, vel=44, bass_ref=(31, 43))
     w.expr(["flute", "glock"], [(0, -7), (6, -7), (9, -13)])
     w.expr(["pz_lo", "pz_hi"], [(0, -3), (6, -5), (9, -12)])
+    w.expr("harp", [(6, -8), (9, -10)])
+    w.expr(["vla", "vln2", "vln1"], [(6, -16), (7, -14), (9, -14)])
 
 
 def worm(c):
@@ -174,9 +202,8 @@ def worm(c):
     q.prog("Bb/D:3@D-minor | C/D:3/2 D:3/2")
     r.prog("Gm:2 | D7:1@G-harmonic Gm:1")
     w.sync("the little worm", 0, t_worm)
-    q_bite = w.q_of(c.t0 + t_bite)
-    q_bite = min(max(round(q_bite * 2) / 2, 3.0), 5.0)
-    w.sync("the worm bites (chomp)", q_bite, w.t(q_bite) - c.t0)
+    q_bite = min(max(w.q_of(c.t0 + t_bite), 1.0), 11.0)
+    w.sync("the worm bites (chomp)", q_bite, t_bite)
     h.sync("dry heat and the east wind (drum)", 0, t_heat)
     # dawn: a sleepy G major, a bird-like flute call
     d.pad(["vla", "vln2"], 2, 55, 71, vel=40, bass_ref=(31, 43))
@@ -221,14 +248,29 @@ def worm(c):
     broken(q, "harp", 0, 6, (0, 1, 2, 3, 4, 5), 50, 61, vel=36, thin=True)
     q.expr("choir", [(0, -13), (1.5, -10), (6, -10)])
     q.expr(["vc", "cb", "harp"], [(0, -10), (6, -10)])
-    # 'Yes! I am angry!': stubborn stomps
-    r.mel("bsn", "G2:1/2:a r:1/2 G2:1/2:a r:1/2 | F#2:1/2:s r:1/2 G2:1/2:a r:1/2", vel=72)
-    r.mel("pz_cb", "G1:1/2 r:1/2 G1:1/2 r:1/2 | D2:1/2 r:1/2 G1:1/2 r:1/2", vel=70, role="bass")
-    r.mel("pz_lo", "r:1/2 [G2,D3]:1/2 r:1/2 [G2,D3]:1/2 | r:1/2 [D3,C4]:1/2 r:1/2 [G2,D3]:1/2", vel=50, role="harmony")
-    r.expr(["bsn", "pz_cb", "pz_lo"], [(0, -7), (4, -6)])
+    # 'Yes! I am angry! I am furious!': a stubborn stomp at the end of each exclamation (from the
+    # subtitle-chunk timing), a soft low pedal in between
+    r.add("pz_cb", 0, 0.5, "G1", 56, "bass")
+    bassline(r, "cb", 28, 40, 44)
+    r.expr("cb", [(0, -12), (4, -12)])
+    for k, ph in enumerate(("对！", "我就是生气！", "我气极了！")):
+        t_st = c.at(ph, end=True) + 0.03
+        q_st = r.q_of(c.t0 + t_st)
+        if not 0 <= q_st < r.n_q - 0.25:
+            continue
+        ch = r.chord_at(q_st)
+        root = ch.bass_note(43, 54)
+        r.add("bsn", q_st, 0.5, root, 74 + 3 * k, "melody", "s")
+        r.add("pz_cb", q_st, 0.5, ch.bass_note(28, 40), 72 + 2 * k, "bass", "h")
+        r.add("pz_lo", q_st, 0.5, root, 54, "harmony", "h")
+        r.add("pz_lo", q_st, 0.5, root + 7 if (root + 7) % 12 in ch.pcset else root + 12, 50, "harmony", "h")
+        drum(r, q_st, 41, 58 + 4 * k)
+        r.sync(f"stubborn stomp {k + 1}", q_st, t_st)
+    r.expr(["bsn", "pz_cb", "pz_lo", "hand"], [(0, -7), (4, -6)])
 
 
 def lesson(c):
+    c.gain(-1.2)
     t_b = c.gap(c.find("十二万"))
     a = c.seg(0, t_b, 6, "6/8", "G major", nominal=72, label="lesson-theme")
     b = c.seg(t_b, c.dur, 6, "6/8", "G major", nominal=66, rit=0.3, rit_q=3, label="lesson-city")
@@ -240,6 +282,7 @@ def lesson(c):
     b.mel("piano", "D6:1 B5:1/2 A5:1 F#5:1/2 | G5:3 | B5:1 A5:1/2 G5:1 E5:1/2 | E5:1 G5:1/2 C6:1 B5:1/2 | "
                    "A5:3/2 C6:1 B5:1/2 | B5:1 A5:1/2 G5:3/2", vel=62)
     for s in (a, b):
+        s.duck(3.0, parts=["piano"])               # the theme sings in the pauses, steps back under God's words
         broken(s, "piano", 0, s.n_q, (0, 2, 4, 5, 4, 2), 43, 54, vel=32, accent=6, role="arp", thin=True)
         s.pad(["vla", "vln2", "vln2"], 3, 52, 71, vel=46, bass_part="vc", bass_lo=40, bass_hi=51)
         bassline(s, "cb", 28, 39, 44)
@@ -252,8 +295,10 @@ def lesson(c):
 def end(c):
     """A gentle reflective pause under the open question, the theme warm and full, the final chord."""
     i_q = c.find("如果你是约拿")
-    i_love = i_q + 1
-    t_theme = c.le(i_q) + 0.65 * (c.ls(i_love) - c.le(i_q))
+    i_love = c.find("上帝的爱")
+    # about 2 s of the long pause stay reflective (A7sus4, the celesta's question); the theme then
+    # swells in just before the narrator answers
+    t_theme = max(c.le(i_q) + 0.5 * (c.ls(i_love) - c.le(i_q)), c.ls(i_love) - 0.45)
     t_cad = min(c.le(len(c.lines) - 1) + 0.03, c.dur - 2.0)
     q = c.seg(0, t_theme, 4, "6/8", "D major", nominal=66, rit=0.2, label="end-question")
     a = c.seg(t_theme, t_cad, 12, "6/8", "D major", nominal=82, rit=0.12, label="end-theme")
@@ -272,11 +317,13 @@ def end(c):
         q.add("harp", qq, 3, nm, 38, "arp")
     fill(c, "celesta", c.pause_or_gap(i_q), n=2, lo=74, hi=86, vel=40)
     p0, p1 = c.pause_after(i_q)
-    q_p = q.q_of(c.t0 + p0 + 0.25)
-    if q_p < 11.2:
-        q.mel("celesta", "A5:1/2 D6:1/2 E6:1", q=max(9.0, round(q_p * 2) / 2), vel=40, role="arp")
-    q.expr(["vla", "vln2", "cb"], [(0, -16), (12, -17)])
-    q.expr(["harp", "celesta"], [(0, -9), (12, -10)])
+    qs = max(9.0, round(q.q_of(c.t0 + p0 + 0.25) * 2) / 2)
+    room = q.n_q - 0.25 - qs                  # the figure must end before the theme's downbeat
+    if room >= 1.0:
+        k = min(1.0, room / 2.0)
+        q.mel("celesta", f"A5:{0.5 * k} D6:{0.5 * k} E6:{1.0 * k}", q=qs, vel=40, role="arp")
+    q.expr(["vla", "vln2", "cb"], [(0, -13), (12, -14)])
+    q.expr(["harp", "celesta"], [(0, -8), (12, -9)])
     # the theme, warm and full: violins, horn counter-melody, harp, celesta in the pauses, choir in
     # the last phrase
     a.mel("vln_mel", " | ".join(THEME) + " | B5:1 A5:1/2 G5:1 D5:1/2 | E5:3/2 C#5:1 D5:1/2 | "
@@ -296,11 +343,11 @@ def end(c):
     b.pad("choir", 3, 55, 74, vel=52, bass_ref=(40, 55))
     bassline(a, "cb", 28, 39, 52)
     b.add("cb", 0, 3, "D2", 54, "bass")
-    a.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn"], [(0, -12), (1.5, -11), (36, -11)])
+    a.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn"], [(0, -16), (1.5, -12), (3, -11), (36, -11)])
     a.expr("choir", [(24, -20), (27, -15), (36, -15)])
-    b.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn", "choir"], [(0, -9), (0.75, -8), (1.5, -9), (3, -28)])
-    a.expr(["harp", "celesta"], [(0, -6), (36, -6)])
-    b.expr(["harp", "celesta"], [(0, -6), (3, -9)])
+    b.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn", "choir"], [(0, -13), (0.75, -12), (1.5, -13), (3, -28)])
+    a.expr(["harp", "celesta"], [(0, -13), (1.5, -9), (3, -6), (36, -6)])
+    b.expr(["harp", "celesta"], [(0, -9), (3, -12)])
 
 
 def generic(c):

@@ -1,10 +1,20 @@
 """Cues s09-s13: overboard and the calm, the great fish, inside the fish, the prayer from the deep,
 the shore."""
-from audio.scorelib import broken, bassline, drum, fill, gliss, roll, timp_roll, tops
+from audio.scorelib import (
+    bassline,
+    broken,
+    drum,
+    echo_drop,
+    fill,
+    gliss,
+    timp_roll,
+    tops,
+)
 from audio.theory import midi
 
 
 def overboard(c):
+    c.gain(-1.2)
     i_calm = c.find("海就平静了")
     t_calm = c.ls(i_calm)                         # the calm arrives exactly as this line starts
     t_splash = (c.le(i_calm - 1) + t_calm) / 2 if i_calm > 0 else t_calm - 0.3
@@ -17,30 +27,34 @@ def overboard(c):
     b.prog("D:2 G/D:2 | D:4")
     h.prog("D:1 G/D:1 D:1 A/C#:1 | Bm:1 G:1 D/A:1 A:1 | G:2 D:2")
     q_sp = min(a.q_of(c.t0 + t_splash), 11.75)
-    a.sync("Jonah thrown in (splash)", q_sp, a.t(q_sp) - c.t0)
+    a.sync("Jonah thrown in (splash)", q_sp, t_splash)
     b.sync("sea calm: D major + harp glissando", 0, t_calm, kind="change")
-    # the storm one last time while they lift Jonah, a crash as he hits the water
-    a.pad(["trem_va", "trem_hi", "trem_hi"], 3, 52, 77, vel=66, bass_ref=(28, 40))
+    # the storm one last time while they lift Jonah: it grows out of the hushed prayer into the
+    # splash (bass drum and timpani, no cymbal), then stops dead so the calm is heard on '一下子'
+    a.pad(["trem_va", "trem_hi", "trem_hi"], 3, 52, 77, q1=q_sp + 0.25, vel=66, bass_ref=(28, 40))
     for q0, q1, ch in a.chord_spans():
         r = ch.bass_note(36, 47)
         fifth = r + 7 if (r + 7) % 12 in ch.pcset else r + 12
         for k in range(int(round((min(q1, q_sp) - q0) / 0.5))):
             a.add("vc_fast", q0 + k * 0.5, 0.5, [r, fifth, r + 12, fifth][k % 4], 66, "bass", "s")
-        a.add("cb", q0, q1 - q0, ch.bass_note(28, 40), 56, "bass")
+        if q0 < q_sp:
+            a.add("cb", q0, min(q1, q_sp + 0.25) - q0, ch.bass_note(28, 40), 56, "bass")
     timp_roll(a, 0, 8, midi("D2"), 40, 56)
     timp_roll(a, 8, 10, midi("D2"), 56, 64)
     timp_roll(a, 10, q_sp - 0.1, midi("A2"), 64, 76)
-    a.mel("horn", "D4:4 | D4:4 | D4:2 C#4:2", vel=64)
+    for q0, q1, nm in ((0, 8, "D4"), (8, 10, "D4"), (10, 12, "C#4")):
+        if q0 < q_sp:
+            a.add("horn", q0, min(q1, q_sp) - q0, nm, 64, "melody")
     a.add("timp", q_sp, 0.5, "A2", 96, "timp", "h")
     a.add("okit", q_sp, 1, 36, 92, "perc", "h")
-    a.add("okit", q_sp, 1, 57, 72, "perc", "h")
     a.add("pz_cb", q_sp, 0.5, "A1", 90, "bass", "h")
     a.add("pz_lo", q_sp, 0.5, "A2", 84, "bass", "h")
     q_l0 = a.q_of(c.t0 + c.ls(0))
     a.expr(["trem_va", "trem_hi", "vc_fast", "cb", "horn", "timp"],
-           [(0, -6), (max(0.5, q_l0), -12), (8, -11), (max(8.5, q_sp - 1), -7), (q_sp, -3), (12, -12)])
+           [(0, -14), (max(0.5, q_l0), -12), (8, -11), (max(8.5, q_sp - 1), -7), (q_sp, -3),
+            (q_sp + 0.25, -30), (12, -30)])
     # calm: D major strings + a quick rising harp glissando exactly on the line; a flute in the pause
-    gliss(b, "harp", 0, 0.45, midi("D3"), midi("D6"), v0=36, v1=62)
+    gliss(b, "harp", 0, 0.45, midi("D3"), midi("D6"), v0=32, v1=45)
     b.pad(["vla", "vln2", "vln1"], 3, 57, 78, vel=50, bass_part="vc", bass_lo=38, bass_hi=50)
     b.add("cb", 0, 8, "D2", 44, "bass")
     broken(b, "harp", 0.5, 8, (0, 2, 4, 5, 4, 2), 38, 50, vel=36, thin=True)
@@ -73,8 +87,8 @@ def swallow(c):
     s.pad("pad", 3, 52, 71, vel=56, bass_ref=(35, 50))
     s.pad("ooh", 2, 57, 72, vel=44, bass_ref=(35, 50))
     s.mel("cb", "D2:3 | B1:3", vel=46, role="bass")
-    for q, nm in [(0.25, "A6"), (1.0, "F#6"), (1.75, "C#6"), (2.5, "A5"), (3.5, "F#6"), (4.25, "D6"), (5.0, "B5")]:
-        s.add("echo_cel", q, 0.5, nm, 58, "arp", "r")
+    for q, nm in [(0.25, "A6"), (1.0, "F#6"), (1.75, "D6"), (2.5, "A5"), (3.5, "F#6"), (4.25, "D6"), (5.0, "A5")]:
+        echo_drop(s, q, nm, 58, earliest=q - 0.5)
     broken(s, "harp", 0, 6, (7, 6, 5, 4, 3, 2), 38, 50, vel=36, step=0.5, accent=2, ring=False)
     s.expr(["pad", "ooh", "cb"], [(0, -12), (6, -11)])
     s.expr(["echo_cel", "harp"], [(0, -6), (6, -7)])
@@ -98,7 +112,7 @@ def swallow(c):
     f.pad(["vla", "vln2"], 2, 57, 74, vel=40, bass_ref=(35, 50))
     f.expr(["tuba", "contrab", "glock"], [(0, -7), (4, -6), (8, -8), (12, -6)])
     f.expr(["pad", "vla", "vln2"], [(0, -12), (8, -12), (12, -10)])
-    f.expr("tbn", [(8, -18), (12, -11)])
+    f.expr("tbn", [(8, -14), (12, -10)])
     # gulp: an accent, then the bass sinks D-C#-B into the dark belly
     g.sync("gulp accent", 0, t_gulp)
     g.mel("tuba", "D2:1:a C#2:1 B1:1", vel=80, role="bass")
@@ -125,11 +139,12 @@ def belly(c):
     d.prog("Em/B:3 | Bm:3")
     p.prog("Bm:3 | Em:3 | F#sus4:3/2@B-harmonic F#:3/2@B-harmonic")
     b.sync("'别怕' -- a warm chord", 0, t_fear, kind="change")
+    c.score.cave.append((c.t0, c.t1, 0.6))
     # darkness: warm pad, a low drone, sparse echoing celesta drops
     a.pad("pad", 3, 50, 69, vel=58, bass_ref=(35, 47))
     a.add("cb", 0, 3, "B1", 50, "bass")
-    a.add("echo_cel", 1.0, 0.5, "F#6", 54, "arp", "r")
-    a.add("echo_cel", 2.25, 0.5, "D6", 50, "arp", "r")
+    echo_drop(a, 0.5, "F#6", 54)
+    echo_drop(a, 2.25, "D6", 50)
     # '可是别怕，约拿还活着！': a warm G major, the celesta glows
     b.pad("pad", 3, 50, 69, vel=58, bass_ref=(31, 47))
     b.add("cb", 0, 3, "G1", 48, "bass")
@@ -142,7 +157,7 @@ def belly(c):
         drum(d, q, 41, 40)
         drum(d, q + 0.4, 41, 30)
     for q, nm in [(1.0, "G6"), (3.75, "F#6"), (5.25, "B5")]:
-        d.add("echo_cel", q, 0.5, nm, 52, "arp", "r")
+        echo_drop(d, q, nm, 52)
     # Jonah prays: the humming choir enters, the cellos sing low
     p.pad("pad", 3, 50, 69, vel=54, bass_ref=(35, 47))
     p.pad("ooh", 3, 54, 72, vel=50, bass_ref=(35, 47))
@@ -171,6 +186,9 @@ def deep(c):
     r.prog("Bm:2 G:2 | Em7:2 A:2 | G:2 Asus4:1 A:1")
     s.prog("D:4")
     b.sync("turning point: '想起了耶和华'", 0, t_turn, kind="change")
+    # out of the cave: its dark reverb fades from the turning point, so the rise and the radiant
+    # D major sound in the open hall
+    c.score.cave.append((c.t0, c.t0 + t_turn, min(3.0, max(1.0, t_salv - t_turn - 0.5))))
     s.sync("radiant D major: '救恩属于耶和华'", 0, t_salv, kind="change")
     # sinking images: a descending bass to the roots of the mountains, swirling harp waters
     a.pad("pad", 3, 50, 69, vel=56, bass_ref=(36, 50))
@@ -178,8 +196,9 @@ def deep(c):
     a.mel("vc", "B2:2 A2:2 | G2:2 F#2:2 | E2:2 D2:2 | C#2:2 F#2:2", vel=46, role="bass")
     a.mel("cb", "B1:2 A1:2 | G1:2 F#1:2 | E1:2 r:2 | r:2 F#1:2", vel=44, role="bass")
     broken(a, "harp", 0, 16, (6, 5, 4, 3, 4, 5), 47, 59, vel=34, step=0.5, accent=2, thin=True)
-    for q, nm in [(1.5, "F#6"), (5.5, "D6"), (9.5, "B5")]:
-        a.add("echo_cel", q, 0.5, nm, 50, "arp", "r")
+    echo_drop(a, 1.5, "F#6", 50)
+    echo_drop(a, 4.25, "D6", 50, dq=0.25, art="", earliest=3.75)       # its echo stays over G
+    echo_drop(a, 9.5, "B5", 50)
     a.expr(["pad", "vla", "vln2", "vc", "cb"], [(0, -12), (12, -11), (16, -10)])
     a.expr(["harp", "echo_cel"], [(0, -8), (16, -9)])
     # he remembered the LORD: G major (deceptive V -> VI), the choir and strings turn warm
@@ -201,7 +220,7 @@ def deep(c):
     s.add("cb", 0, 4, "D2", 52, "bass")
     gliss(s, "harp", 0, 0.5, midi("D3"), midi("A6"), v0=36, v1=60)
     s.add("glock", 0.5, 2, "F#6", 40, "arp", "r")
-    s.add("celesta", 1.0, 3, "A6", 40, "arp", "r")
+    s.add("celesta", 1.0, 2, "A6", 40, "arp", "r")            # rings out before the shore's G
     timp_roll(s, 0, 3.5, midi("D2"), 30, 44)
     s.expr(["choir", "vla", "vln2", "vln1", "vc", "cb"], [(0, -10), (1, -8), (3, -8), (4, -9)])
 
@@ -214,6 +233,7 @@ def shore(c):
     a.prog("G:2 | C/G:1 G:1 | G:2 | C/G:1 G:1 | Em:2 | Am:1 D7:1")
     b.prog("G:2 | G:2 | C:2 | G/D:1 D7:1 | G:2 | C:1 D7:1 | G:2")
     b.sync("Jonah spat out onto the land (pop)", 0, t_spit)
+    b.duck(3.0, parts=["flute", "glock"])          # the sunny tune steps back under '约拿浑身湿漉漉的...'
     # the fish swims to the shore: its motif in G, light (pizzicato, harp, glockenspiel)
     motif = "G1:1/2:s B1:1/2:s D2:1/2:s E2:1 D2:1/2:s B1:1/2:s r:1/2"
     a.mel("tuba", motif, vel=56)

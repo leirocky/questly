@@ -5,8 +5,9 @@
 The score is generated from the timeline (scene starts, line timings), rendered with
 fluidsynth and MuseScore_General.sf3 (dry), then mixed here: per-bus convolution reverb
 (synthetic hall impulse response), an echo line for the celesta drops inside the fish, an
-extra dark "cave" reverb during the belly scene, a high-pass, loudness normalisation and a
-gentle look-ahead peak limiter.  Output: 48 kHz stereo WAV of exactly timeline['duration'].
+extra dark "cave" reverb inside the fish (s11 and s12 up to its turning point), a high-pass,
+loudness normalisation and a gentle look-ahead peak limiter.  Output: 48 kHz stereo WAV of
+exactly timeline['duration'].
 """
 import shutil
 import tempfile
@@ -82,11 +83,15 @@ def echo(x, delay, fb=0.42, taps=6):
     return y
 
 
-def window_env(n, t0, t1, ramp=0.6):
+def window_env(n, t0, t1, ramp=0.6, release=None):
+    """0..1 window: rises over `ramp` s before t0, holds to t1, falls over `release` s (default
+    ramp) after it (raised-cosine shaped)."""
     t = np.arange(n) / SR
+    rel = ramp if release is None else release
     up = np.clip((t - (t0 - ramp)) / ramp, 0, 1)
-    dn = np.clip(((t1 + ramp) - t) / ramp, 0, 1)
-    return np.minimum(up, dn)
+    dn = np.clip(((t1 + rel) - t) / rel, 0, 1)
+    x = np.minimum(up, dn)
+    return x * x * (3 - 2 * x)
 
 
 def limit(x, ceiling=CEILING, release=0.12, stats=None):
@@ -138,9 +143,11 @@ def render(timeline, out_path):
 
     hall = make_ir(2.1, seed=11)
     cave = make_ir(3.6, seed=23, pre=0.05, dark=1.8)
-    bellies = [c for c in sc.cues if c.mood == "belly"]      # s11 + s12: one dark cave
-    cave_env = (window_env(n, min(c.t0 for c in bellies), max(c.t1 for c in bellies))[:, None]
-                if bellies else np.zeros((n, 1)))
+    # the dark cave: the cues inside the fish declare their windows (Score.cave); s12 leaves the cave
+    # from its turning point on, so the rise and the radiant D major sound in the open hall
+    cave_env = np.zeros((n, 1))
+    for t0, t1, rel in sc.cave:
+        cave_env[:, 0] = np.maximum(cave_env[:, 0], window_env(n, t0, t1, release=rel))
 
     dry = np.zeros((n, 2))
     hall_in = np.zeros((n, 2))

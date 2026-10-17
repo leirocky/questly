@@ -3,27 +3,33 @@
 "你猜怎么样？尼尼微的人听了，竟然都相信了上帝！ / 他们禁食，就是不吃饭。大人小孩都换上粗粗的麻布衣服，向上帝认错，
 表示愿意改。"
 
-One 2400 x 1350 stage: the market square of Nineveh in the late afternoon (the same square s15 ends in: Jonah on
-his stone step on the left, townspeople on the right), a herald on a stone plinth at the back, a market stall
-with bread and fruit on the right.
+One 2400 x 1350 stage: the market square of Nineveh in the late afternoon (like the square s15 ends in: Jonah on
+his stone step on the left, townspeople facing him), a herald on a stone plinth at the back, a market stall with
+bread, pomegranates, dates and grapes on the right (merchant behind his table), a bread oven with smoke, a well.
+Featured "from the greatest to the least": an elder with a stick, the merchant, a mother and her little girl.
 
-  line 0  "你猜怎么样？"          calm: the people (still in their bright robes) stand worried, facing Jonah;
-                                  the camera pushes in gently.
+  line 0  "你猜怎么样？"          calm: the people (still in bright robes) stand worried, facing a stern Jonah; a
+                                  few turn to their neighbour; the camera pushes in gently.
           "尼尼微的人听了，"      faces turn thoughtful one after the other (hand to chin).
-          "竟然都相信了上帝！"    the surprise: eyes go wide, then they nod and lower their eyes (sorry); a few
-                                  golden twinkles over the crowd; Jonah is surprised too ("!").
-  line 1  "他们禁食，"            the herald turns, blows his horn and proclaims the fast (sound arcs).
-          "就是不吃饭。"          a little girl reaches for the bread; the merchant throws a cloth over all his
-                                  food; she pulls her hand back and nods; the oven smoke at the back dies away.
-          "大人小孩都换上粗粗的麻布衣服，"  in little cloth-puffs, grown-ups first (elder, herald, mother, merchant,
-                                  the rows behind) then the children, everyone changes into burlap sackcloth and
-                                  stands with bowed head; the child wriggles in the scratchy cloth.
-          "向上帝认错，"          they kneel in a wave, palms together, eyes downcast;
-          "表示愿意改。"          their faces become peaceful and a soft warm hopeful light opens in the sky.
-                                  Calm hold for the dissolve.
+          "竟然都相信了上帝！"    the surprise: eyes go wide ('o'), Jonah is surprised too ("!"), then everyone nods
+                                  and lowers their eyes (sorry); a few golden twinkles over the crowd. Jonah stays
+                                  uneasy from here on (foreshadows ch. 4).
+  line 1  (end of line 0)         the herald turns and blows a long bronze horn (toot marks);
+          "他们禁食，"            he proclaims the fast (pointing, sound arcs); the little girl reaches for the bread;
+          "就是不吃饭。"          the merchant flings up a linen cloth that floats down over all his food; she pulls
+                                  her hand back, surprised, and nods; the oven smoke dies away.
+          "大人小孩都换上粗粗的麻布衣服，"  in burlap-coloured cloth-puffs the change runs across the square, grown-ups
+                                  first (elder, mother, herald, the rows on the left, the merchant, the rows on the
+                                  right) and the little girl on "小孩"; they stand in sackcloth with bowed heads, the
+                                  camera moves close; the girl wriggles in the scratchy cloth, her mother sighs.
+          "向上帝认错，"          they kneel in a wave, palms together, eyes downcast (the elder lays down his stick);
+          "表示愿意改。"          faces turn peaceful, the solemn rosy dusk eases and a soft warm glow opens in the
+                                  sky; the camera settles on the whole kneeling square. Calm hold for the dissolve.
 
 Pose changes are hard cuts (no crossfades between different drawings) hidden at the bottom of a squash-and-hop
-or under a cloth-puff; expression-only changes are cuts as well. All times come from the narration chunks.
+or under a cloth-puff; expression-only changes are cuts as well. All times come from the narration chunks
+(fractions only inside one chunk). Puff, smoke, dove and glaze layers are small or only active briefly; the
+two light glazes cover only the part of the stage they tint (render budget).
 """
 import math
 import random
@@ -50,7 +56,7 @@ H_X, H_S = 1250, 0.66
 # the market stall is drawn in local coordinates (designed around x 1420.., table front edge y 1110) and placed
 # with TABLE_K / TABLE_ORG
 TABLE_K = 1.08
-TABLE_ORG = (1444, 1120)    # stage position of the local point (1420, 1110) = the table's front-left corner
+TABLE_ORG = (1444, 1128)    # stage position of the local point (1420, 1110) = the table's front-left corner
 
 
 def tpt(lx, ly):
@@ -65,10 +71,10 @@ def tplace(body):
 
 TABLE_X0, TABLE_X1, TABLE_TOP, TABLE_BACK = 1420, 1890, 1110, 1080   # (local) table front edge / back edge
 TABLE_FLOOR = 1215
-R_X, R_Y, R_S = tpt(1668, 1160)[0], tpt(1668, 1160)[1], 1.06   # merchant, behind his table
+R_X, R_Y, R_S = tpt(1740, 1160)[0], tpt(1740, 1160)[1], 1.06   # merchant, behind his table
 E_X, E_Y, E_S = 800, 1232, 1.12    # elder
 W_X, W_Y, W_S = 1140, 1245, 1.12   # mother
-K_X, K_Y, K_S = 1392, 1254, 1.12   # her little girl
+K_X, K_Y, K_S = 1392, 1240, 1.12   # her little girl
 OVEN_X, OVEN_Y = 560, 784
 
 CROWD = {   # (kind, variant, x, y, scale, facing in line 0, facing when kneeling)
@@ -119,10 +125,15 @@ def hop(t0, keys, pivot, curves="sine"):
     return M.keys([(t0 + dt, d) for dt, d in keys], curves, pivot=pivot)
 
 
-def dip(tc, s, pv, depth=8):
+def dip(tc, s, pv, depth=8, squash=0.955):
     """Squash-and-hop that hides a pose cut at tc (the cut happens at the bottom of the squash)."""
-    return hop(tc, [(-0.14, {"dy": 0, "sy": 1}), (0, {"dy": depth * s, "sy": 0.955}),
+    return hop(tc, [(-0.16, {"dy": 0, "sy": 1}), (0, {"dy": depth * s, "sy": squash}),
                     (0.13, {"dy": -3 * s, "sy": 1.015}), (0.28, {"dy": 0, "sy": 1})], pv, ["in", "out", "sine"])
+
+
+def sink(tc, s, pv):
+    """Kneeling down: a deeper squash (the standing figure sinks toward the kneeling height before the cut)."""
+    return dip(tc, s, pv, depth=16, squash=0.92)
 
 
 def nod(t0, pv, deg=3.0, n=2, period=0.42):
@@ -251,7 +262,6 @@ def well_svg(cx, by):
             f'A{rx},{ry} 0 0 1 {cx - rx},{ry0} Z')
     cid = "s16well"
     courses = ""
-    r = random.Random(4)
     for k in range(1, 4):
         yy = ry0 + h * k / 4
         courses += f'<path d="M{cx - rx},{f1(yy)} A{rx},{ry} 0 0 0 {cx + rx},{f1(yy)}"/>'
@@ -378,35 +388,41 @@ def table_svg():
 
 
 def cover_svg():
-    """A striped woven cloth thrown over all the food on the table (the fast): lumps of the bread stack, the
-    pomegranates, the dates and the grapes show through it."""
+    """A striped woven linen cloth thrown over all the food on the table (the fast): it hugs the bread stack, the
+    pomegranates, the dates and the grapes, so their lumps show through, and hangs a little over the front."""
     x0, x1 = TABLE_X0, TABLE_X1
-    top = [(x0 - 8, 1142), (x0 - 4, 1100), (1444, 1062), (1470, 1040), (1500, 1028), (1534, 1036), (1566, 1060),
-           (1604, 1040), (1642, 1032), (1682, 1042), (1714, 1062), (1748, 1050), (1786, 1048), (1818, 1062),
-           (1846, 1046), (1874, 1056), (x1 + 6, 1094), (x1 + 10, 1140)]
+    top = [(x0 - 6, 1128), (x0 - 2, 1094), (1440, 1066), (1462, 1036), (1500, 1018), (1532, 1014), (1566, 1040),
+           (1582, 1062), (1600, 1028), (1642, 1008), (1686, 1018), (1706, 1050), (1720, 1066), (1738, 1048),
+           (1772, 1030), (1806, 1040), (1822, 1060), (1840, 1036), (1862, 1022), (1884, 1040), (x1 + 4, 1080),
+           (x1 + 8, 1126)]
     hem = []
     n = 14
     for i in range(1, n):
-        xx = x1 + 10 - (x1 + 18 - x0) * i / n
-        hem.append((xx, 1140 + (7 if i % 2 else 0)))
-    d = S.smooth_path(top + hem, closed=True, tension=0.8)
+        xx = x1 + 8 - (x1 + 14 - x0) * i / n
+        hem.append((xx, 1126 + (5 if i % 2 else 0)))
+    d = S.smooth_path(top + hem, closed=True, tension=0.75)
     cid = "s16cover"
-    inner = (f'<path d="M{x0 - 20},1112 L{x1 + 20},1112 L{x1 + 20},1122 L{x0 - 20},1122 Z" '
-             f'fill="{P["terracotta"]}"/>'
-             f'<path d="M{x0 - 20},1128 L{x1 + 20},1128 L{x1 + 20},1133 L{x0 - 20},1133 Z" fill="#3f79a8"/>')
-    for cx, cy, rx, ry in ((1505, 1040, 60, 18), (1642, 1036, 52, 14), (1772, 1052, 50, 10)):
-        inner += f'<ellipse cx="{cx - 10}" cy="{cy - 4}" rx="{rx * 0.7}" ry="{ry * 0.6}" fill="#fff6e2" opacity="0.7"/>'
-    for xx in (1570, 1716, 1820):
-        inner += f'<path d="M{xx},1050 Q{xx + 4},1080 {xx - 2},1110" stroke="#cdb88e" stroke-width="10" ' \
-                 f'fill="none" opacity="0.5" stroke-linecap="round"/>'
-    body = (f'<clipPath id="{cid}"><path d="{d}"/></clipPath><path d="{d}" fill="#eee0bf"/>'
+    linen, shade_c, crease = "#e4cfa0", "#c9ae7f", "#b99c6c"
+    inner = ""
+    # soft shade on the right flank of every lump (light comes from the low sun on the left of the stall)
+    for cx, cy, rx, ry in ((1548, 1052, 26, 40), (1690, 1046, 24, 42), (1802, 1058, 20, 30), (1880, 1062, 14, 26)):
+        inner += f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="{shade_c}" opacity="0.55"/>'
+    for cx, cy, rx, ry in ((1494, 1030, 30, 9), (1634, 1022, 28, 8), (1766, 1042, 24, 7)):
+        inner += f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="#f4e6c4" opacity="0.8"/>'
+    inner += (f'<path d="M{x0 - 20},1104 L{x1 + 20},1104 L{x1 + 20},1114 L{x0 - 20},1114 Z" fill="{P["terracotta"]}"/>'
+              f'<path d="M{x0 - 20},1118 L{x1 + 20},1118 L{x1 + 20},1122 L{x0 - 20},1122 Z" fill="#3f79a8"/>')
+    folds = ""
+    for (xa, ya), (xb, yb) in (((1500, 1040), (1474, 1100)), ((1540, 1036), (1560, 1098)),
+                               ((1630, 1030), (1612, 1100)), ((1676, 1036), (1700, 1098)),
+                               ((1770, 1050), (1756, 1100)), ((1860, 1046), (1872, 1098))):
+        folds += f'<path d="M{xa},{ya} Q{(xa + xb) / 2 + 6},{(ya + yb) / 2} {xb},{yb}"/>'
+    inner += f'<g stroke="{crease}" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8">{folds}</g>'
+    body = (f'<clipPath id="{cid}"><path d="{d}"/></clipPath><path d="{d}" fill="{linen}"/>'
             f'<g clip-path="url(#{cid})">{inner}</g>'
             f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="4" stroke-linejoin="round"/>')
-    fringe = "".join(f'<path d="M{f1(xx)},{1143 + (4 if k % 2 else 0)} l{(k % 3) - 1},12" stroke="#c9a978" '
-                     f'stroke-width="3.5" stroke-linecap="round"/>'
-                     for k, xx in enumerate(range(x0 + 2, x1 + 6, 14)))
-    folds = "".join(f'<path d="M{xx},1100 Q{xx + 6},1120 {xx - 2},1138"/>' for xx in (1462, 1590, 1700, 1836))
-    body += fringe + f'<g stroke="#bda67c" stroke-width="3" fill="none" stroke-linecap="round">{folds}</g>'
+    body += "".join(f'<path d="M{f1(xx)},{1129 + (4 if k % 2 else 0)} l{(k % 3) - 1},11" stroke="#b9975f" '
+                    f'stroke-width="3.5" stroke-linecap="round"/>'
+                    for k, xx in enumerate(range(x0 + 2, x1 + 6, 14)))
     return doc(S.g(tplace(body), filter="wobble-fine"))
 
 
@@ -542,6 +558,17 @@ def arcs_svg(x, y, facing, k, s=1.0):
     return doc(S.g(out, filter="wobble-fine"))
 
 
+def toot_svg(x, y, k):
+    """Three short burst strokes fanning out of the horn's bell (k = 0..2 flicker)."""
+    out = ""
+    for i, a in enumerate((-70, -40, -10)):
+        aa = math.radians(a + (k - 1) * 3)
+        r0, r1 = 14 + 4 * ((i + k) % 2), 40 + 6 * ((i + k) % 3)
+        out += (f'<path d="M{f1(x + r0 * math.cos(aa))},{f1(y + r0 * math.sin(aa))} L{f1(x + r1 * math.cos(aa))},'
+                f'{f1(y + r1 * math.sin(aa))}" stroke="{INK}" stroke-width="4.5" stroke-linecap="round"/>')
+    return doc(S.g(out, filter="wobble-fine"))
+
+
 def exclaim_svg(x, y, s=1.0):
     body = (f'<path d="M{x - 9 * s},{y - 70 * s} L{x + 9 * s},{y - 70 * s} L{x + 5 * s},{y - 20 * s} '
             f'L{x - 5 * s},{y - 20 * s} Z" fill="#c9714a" stroke="{INK}" stroke-width="{4 * s}" '
@@ -557,19 +584,20 @@ def exclaim_svg(x, y, s=1.0):
 
 
 def smoke_svg(cx, cy, r, seed):
-    return doc(f'<path d="{S.blob(cx, cy, r, r * 0.8, 0.18, 9, seed)}" fill="#efe6da" stroke="{P["ink_soft"]}" '
+    return doc(f'<path d="{S.blob(cx, cy, r, r * 0.8, 0.18, 9, seed)}" fill="#e4dbd0" stroke="{P["ink_soft"]}" '
                f'stroke-width="2.5" opacity="0.75" filter="url(#wobble-fine)"/>')
 
 
 def glaze_svg(kind):
-    if kind == "dusk":      # solemn evening: rosy-lilac sky, slightly dimmer square (multiply)
-        stops = [(0, "#bfa0c4", 0.42), (0.4, "#dcb4b4", 0.26), (0.62, "#e9bfa8", 0.16), (1, "#efc6a2", 0.1)]
+    if kind == "dusk":      # solemn evening: rosy-lilac sky and city, fading out over the square (multiply)
+        h = 1080
+        stops = [(0, "#bfa0c4", 0.42), (0.5, "#dcb4b4", 0.26), (0.8, "#e9bfa8", 0.13), (1, "#efc6a2", 0)]
         defs = S.lin_grad("s16dusk", stops)
-        return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SH + 40}" fill="url(#s16dusk)"/>', defs)
+        return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{h + 20}" fill="url(#s16dusk)"/>', defs)
     # hope: a warm golden glow opening in the sky above the kneeling people (screen)
     defs = S.rad_grad("s16hope", [(0, "#ffe9b0", 0.95), (0.3, "#ffd98e", 0.6), (0.62, "#ffcf80", 0.22),
                                   (1, "#ffcf80", 0)])
-    return doc(f'<ellipse cx="1220" cy="120" rx="1500" ry="980" fill="url(#s16hope)"/>', defs)
+    return doc('<ellipse cx="1220" cy="60" rx="1450" ry="900" fill="url(#s16hope)"/>', defs)
 
 
 DOVE_REF = (300, 300)
@@ -661,9 +689,10 @@ def build(ctx):
             born = t - u * per
             if born > smoke_stop:
                 return Tf(alpha=0)
+            fade = 1 - M.progress(t, smoke_stop, smoke_stop + 1.2, "sine")    # the oven goes cold
             return Tf(dx=18 * u + 8 * math.sin(t * 1.3 + i), dy=-170 * u, sx=0.6 + 0.8 * u, sy=0.6 + 0.8 * u,
-                      alpha=0.85 * math.sin(math.pi * u), px=OVEN_X, py=OVEN_Y - 90)
-        sc.add(f"smoke{i}", smoke_svg(OVEN_X, OVEN_Y - 96, 22, 50 + i), z=2.9, wc=0.4, motion=smot)
+                      alpha=0.85 * math.sin(math.pi * u) * fade, px=OVEN_X, py=OVEN_Y - 90)
+        sc.add(f"smoke{i}", smoke_svg(OVEN_X, OVEN_Y - 96, 24, 50 + i), z=3.1, wc=0.4, motion=smot)
 
     # ---- crowd groups: stand worried -> listen -> sorry (believe) -> sackcloth (sad) -> kneel sorry -> peaceful
     def group_frames(members, turn):
@@ -719,10 +748,11 @@ def build(ctx):
     # ---- Jonah on his step: watches; surprised at "竟然" ----
     jp = (J_X, J_Y)
     jsh = C.ground_shadow(J_X, J_Y, J_S, 120)
-    jfr = [doc(jsh + C.jonah(J_X, J_Y, J_S, 1, pose="stand")),
-           doc(jsh + C.jonah(J_X, J_Y, J_S, 1, pose="stand", expr="surprised"))]
+    jfr = [doc(jsh + C.jonah(J_X, J_Y, J_S, 1, pose="stand", expr="angry")),       # stern, as s15 ends
+           doc(jsh + C.jonah(J_X, J_Y, J_S, 1, pose="stand", expr="surprised")),
+           doc(jsh + C.jonah(J_X, J_Y, J_S, 1, pose="stand", expr="worried"))]     # uneasy (foreshadows ch. 4)
     tj1, tj2 = snap(t_wow + 0.1), snap(t_wow + 1.5)
-    sc.add("jonah", jfr, z=9, frame_at=cuts([(0, 0), (tj1, 1), (tj2, 0)]),
+    sc.add("jonah", jfr, z=9, frame_at=cuts([(0, 0), (tj1, 1), (tj2, 2)]),
            motion=M.combine(hop(tj1, [(0, {"dy": 0}), (0.1, {"dy": -8}), (0.24, {"dy": 0})], jp),
                             M.breathe(0.008, 3.1, pivot=jp, phase=0.2)))
     jh = C.body_points(C.jonah, J_X, J_Y, J_S, 1, pose="stand")["head_top"]
@@ -752,6 +782,11 @@ def build(ctx):
                                                (1.1, {"rot": 0})], hp),
                             dip(t_call, H_S, hp), dip(th[5], H_S, hp),
                             M.breathe(0.009, 2.9, pivot=hp, phase=0.4)))
+    bell = (hhead[0] + 15 * H_S + 146 * H_S + 26 * H_S, hhead[1] + 20 * H_S - 78 * H_S - 22 * H_S)
+    sc.add("horn_toot", [toot_svg(bell[0], bell[1], k) for k in (0, 1, 2)], z=30, wc=0,
+           frame_at=lambda t: float(int(t * 9) % 3),
+           motion=M.keys([(t_horn + 0.12, {"alpha": 0}), (t_horn + 0.22, {"alpha": 1}), (t_call - 0.12, {"alpha": 1}),
+                          (t_call, {"alpha": 0})], "sine"))
     hb = C.body_points(C.citizen, H_X, PLINTH_TOP, H_S, 1, kind="man", variant=0, pose="point")["head"]
     sc.add("herald_arcs", [arcs_svg(hb[0] + 34 * H_S, hb[1] + 14 * H_S, 1, k, 1.0) for k in (1, 2, 3)], z=30, wc=0,
            frame_at=lambda t: float(int(t * 7) % 3),
@@ -766,24 +801,25 @@ def build(ctx):
     def merchant(pose, attire="normal", expr=None):
         return doc(C.citizen(R_X, R_Y, R_S, -1, kind="man", variant=1, pose=pose, attire=attire, expr=expr))
     rfr = [merchant("stand", expr="worried"), merchant("listen"), merchant("listen", expr="surprised"),
-           merchant("stand", expr="sorry"), merchant("point", expr="neutral"), merchant("stand", expr="sorry"),
+           merchant("stand", expr="sorry"), merchant("cheer", expr="neutral"), merchant("stand", expr="sorry"),
            merchant("sad", "sackcloth"), merchant("kneel_pray", "sackcloth", "sorry"),
            merchant("kneel_pray", "sackcloth", "peaceful")]
-    tr = [snap(t_heard + 0.05), snap(t_wow + 0.05), snap(t_believe), snap(t_cover - 0.12), snap(t_cover + 0.55),
+    tr = [snap(t_heard + 0.05), snap(t_wow + 0.05), snap(t_believe), snap(t_cover - 0.3), snap(t_cover + 0.34),
           snap(t_change + 0.9), snap(t_kneel + 0.36), snap(t_hope + 0.15)]
     sc.add("merchant", rfr, z=14, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(tr)]),
            motion=M.combine(dip(tr[0], R_S, rp, 4), nod(tr[2] + 0.05, rp, 2.0, 2), dip(tr[3], R_S, rp),
-                            dip(tr[4], R_S, rp, 4), dip(tr[6], R_S, rp), M.breathe(0.008, 3.3, pivot=rp, phase=0.7)))
+                            dip(tr[4], R_S, rp, 4), sink(tr[6], R_S, rp), M.breathe(0.008, 3.3, pivot=rp, phase=0.7)))
     puffs_at.append((tr[5], R_X, R_Y - 200, 120, 150, R_S))
     sc.add("table", table_svg(), z=15)
-    cp = tpt((TABLE_X0 + TABLE_X1) / 2, TABLE_TOP)
     ap = tpt((TABLE_X0 + TABLE_X1) / 2, 714)
+    # the cloth billows up out of his hands and settles over all the food
+    hem = tpt((TABLE_X0 + TABLE_X1) / 2, 1150)
     sc.add("cover", cover_svg(), z=15.5, motion=M.keys(
-        [(t_cover - 0.02, {"alpha": 0, "dy": -70, "sx": 0.9, "sy": 0.7}),
-         (t_cover + 0.06, {"alpha": 1}),
-         (t_cover + 0.32, {"dy": 0, "sx": 1.0, "sy": 1.0}),
-         (t_cover + 0.42, {"sx": 1.02, "sy": 0.95}),
-         (t_cover + 0.58, {"sx": 1.0, "sy": 1.0})], ["linear", "in", "out", "sine"], pivot=cp))
+        [(t_cover - 0.24, {"alpha": 0, "dy": -40, "sx": 0.72, "sy": 1.25}),
+         (t_cover - 0.12, {"alpha": 1, "dy": -78, "sx": 0.86, "sy": 1.3}),
+         (t_cover + 0.26, {"dy": 0, "sx": 1.0, "sy": 1.0}),
+         (t_cover + 0.36, {"sx": 1.025, "sy": 0.93}),
+         (t_cover + 0.52, {"sx": 1.0, "sy": 1.0})], ["out", "in", "out", "sine"], pivot=hem))
     sc.add("awning", awning_svg(), z=16, motion=lambda t: Tf(sy=1 + 0.006 * math.sin(t * 2.3), px=ap[0], py=ap[1]))
 
     # ---- the four in front: the elder, the mother, her little girl (and the merchant behind his table) ----
@@ -800,7 +836,7 @@ def build(ctx):
     sc.add("elder", efr, z=20, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(te)]),
            motion=M.combine(dip(te[0], E_S, ep, 5), hop(te[1], [(0, {"dy": 0}), (0.1, {"dy": -7}), (0.22, {"dy": 0})],
                                                          ep),
-                            nod(te[2] + 0.05, ep, 2.4, 2), dip(te[4], E_S, ep, 10),
+                            nod(te[2] + 0.05, ep, 2.4, 2), sink(te[4], E_S, ep),
                             M.breathe(0.008, 3.6, pivot=ep, phase=0.1)))
     puffs_at.append((te[3], E_X, E_Y - 160, 130, 180, E_S))
 
@@ -816,7 +852,8 @@ def build(ctx):
     sc.add("mother", wfr, z=20.5, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(tw)]),
            motion=M.combine(dip(tw[0], W_S, wp, 5), hop(tw[1], [(0, {"dy": 0}), (0.1, {"dy": -7}), (0.22, {"dy": 0})],
                                                          wp),
-                            nod(tw[2] + 0.05, wp, 2.4, 2), dip(tw[4], W_S, wp, 10),
+                            nod(tw[2] + 0.05, wp, 2.4, 2), sink(tw[4], W_S, wp),
+                            hop(t_rough + 0.55, [(0, {"sy": 1}), (0.35, {"sy": 1.025}), (0.8, {"sy": 1})], wp),
                             M.breathe(0.009, 3.2, pivot=wp, phase=0.5)))
     puffs_at.append((tw[3], W_X, W_Y - 160, 125, 175, W_S))
 
@@ -840,7 +877,7 @@ def build(ctx):
                             # scratchy sackcloth: a little wriggle
                             hop(t_rough, [(0, {"rot": 0}), (0.12, {"rot": 3}), (0.24, {"rot": -3}),
                                           (0.36, {"rot": 2.5}), (0.48, {"rot": -2}), (0.6, {"rot": 0})], kp),
-                            dip(tk[7], K_S, kp, 8), M.breathe(0.012, 2.6, pivot=kp, phase=0.3)))
+                            sink(tk[7], K_S, kp), M.breathe(0.012, 2.6, pivot=kp, phase=0.3)))
     puffs_at.append((tk[6], K_X, K_Y - 110, 90, 120, K_S))
 
     # ---- cloth-puffs over every sackcloth change ----
@@ -875,8 +912,8 @@ def build(ctx):
     D = Cam(1060, 880, 1560)
     E = Cam(1180, 750, 2120)
     sc.camera = M.cam_keys([
-        (0, A), (c0a.start, A), (t_believe + 0.6, B), (t_horn - 0.2, B), (t_cover + 0.9, Cw), (t_change + 1.2, Cw),
-        (t_rough + 0.75, D), (t_kneel + 0.3, D), (t_hope + 0.6, E), (T, Cam(1186, 748, 2100)),
+        (0, A), (c0a.start, A), (t_believe + 0.6, B), (t_horn - 0.2, B), (t_cover + 0.9, Cw), (t_change + 1.0, Cw),
+        (t_rough + 0.95, D), (t_kneel + 0.2, D), (t_hope + 1.2, E), (T, Cam(1186, 748, 2100)),
     ], ["sine", "sine", "sine", "inout", "sine", "inout", "sine", "inout", "sine"])
 
     # ---- effects ----
@@ -894,7 +931,7 @@ def build(ctx):
     sc.sfx("wind_soft", 0, dur=T + 0.8, gain_db=-20, fade_in=0.8, fade_out=0.8)
     sc.sfx("sparkle", t_believe, gain_db=-15)
     sc.sfx("horn", t_horn + 0.15, gain_db=-13, pan=0.1)
-    sc.sfx("cloth", t_cover, gain_db=-9, pan=0.4)
+    sc.sfx("cloth", t_cover - 0.2, gain_db=-9, pan=0.4)
     sc.sfx("cloth", t_change + 0.05, gain_db=-12, pan=-0.2)
     sc.sfx("cloth", t_kid, gain_db=-12, pan=0.2)
     sc.sfx("sparkle", t_hope + 0.3, gain_db=-14)

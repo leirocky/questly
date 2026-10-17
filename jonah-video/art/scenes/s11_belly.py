@@ -7,25 +7,35 @@ Story beats (all keyed to the narration chunks, never to fixed times):
   L0 '大鱼的肚子里又黑又湿。'   the scene opens very dark; the glowing nubs on the walls light up one by one and
                                  show the wet belly; drops fall from the kelp and the ceiling into the puddles.
                                  Jonah lies curled up on the floor, wet, eyes closed.
-     '可是别怕，约拿还活着！'    he stirs on '别怕' and sits up on '约拿还活着', rubbing his eye (alive!).
+     '可是别怕，约拿还活着！'    he stirs on '别怕' and pops up to sit on '约拿还活着', eyes wide (surprised: he is
+                                 alive!), then blinks into a relieved smile with a little wiggle (face visible).
   L1 '…过了三天三夜。'          he sits hugging his knees, sad and soaked; a soft glow opens at the top of the
                                  belly and three suns and three moons pop up one by one (day, night, day, ...),
-                                 each sun warming and each moon cooling the light a little; as the days pass
-                                 he slowly dries (same drawing wet -> dry, a slow dissolve, no pose change).
-     '他在那里，向上帝祷告：'   the row of days fades; on '向上帝祷告' he kneels with folded hands — a hard
-                                 pose cut sold by a squash-and-hop (he kneels on v1's spot, dry, as in s12).
-  L2 '我遇到危险，向你求救，你就回答了我。'   earnest prayer (worried face, gentle rocking); a tiny warmth
-                                 gathers at his hands, and on '你就回答了我' a faint warm glow blooms around him.
+                                 each sun warming and each moon cooling the light a little. He stays wet.
+     '他在那里，向上帝祷告：'   the full row of days holds through '他在那里'; on '向上帝祷告' he kneels with
+                                 folded hands — a hard pose cut sold by a squash-and-hop, which also hides the
+                                 wet -> dry costume change (he kneels on v1's spot, dry, as in s12) — and the
+                                 row drifts away.
+  L2 '我遇到危险，向你求救，你就回答了我。'   earnest prayer (worried face, gentle rocking); a small warm ember
+                                 glows at his hands, a few single sparkles drift up from them on '向你求救', and on
+                                 '你就回答了我' a faint warm glow blooms around him.
   L3 '我从很深很深的地方呼喊，'  golden sparkles rise from him up through the dark (his prayer rising).
      '你就听见了我的声音。'     God hears: a soft golden beam comes down from above, the glow grows, the walls
                                  near him warm up, and Jonah opens his eyes and lifts his face, hopeful.
+                                 The glow is deliberately capped at about half of s12's finale
+                                 ('救恩属于耶和华', glow fullest) so the story's light keeps building there.
 The last second is a calm hold (Jonah kneeling in the glow) that dissolves into s12.
+Ground shadows sit on their own still layers, so hops and wiggles never lift a contact shadow off the floor.
 
 God is never drawn: only warm light, a beam and sparkles.
 Note: engine blend="screen" saturates (cv2.add clips before the subtract), so glows here use "add"/"normal".
 """
 import math
 import random
+
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw
 
 from art import characters as C
 from art import props as PR
@@ -73,6 +83,52 @@ def masked_doc(inner_doc, cx, cy, r, stops, tag):
     return S.svg_doc(f'<g mask="url(#mk{tag})">{inner_doc}</g>', defs=defs)
 
 
+def lut_tint(color, alpha_fn, mode="multiply"):
+    """FX.tint for 'multiply' / 'screen' with the same per-channel maths, done as one uint8 lookup table
+    (cv2.LUT) instead of float arrays over the whole frame — several times cheaper."""
+    col = np.array(color, np.float64) / 255.0
+    v = np.arange(256, dtype=np.float64) / 255.0
+
+    def fx(frame, t, view):
+        a = float(alpha_fn(t))
+        if a <= 0.003:
+            return frame
+        lut = np.empty((1, 256, 4), np.uint8)
+        for c in range(3):
+            f = v * (1 - a + a * col[c]) if mode == "multiply" else 1 - (1 - v) * (1 - a * col[c])
+            lut[0, :, c] = (np.clip(f, 0, 1) * 255 + 0.5).astype(np.uint8)
+        lut[0, :, 3] = np.arange(256, dtype=np.uint8)
+        return Image.fromarray(cv2.LUT(np.asarray(frame), lut), "RGBA")
+    return fx
+
+
+def hand_sparkles(x, y, cues, dur=1.7, rise=170, size=12, color=(255, 232, 160), face=None):
+    """A few single sparkles that leave (x, y) — Jonah's folded hands — and drift up, one per cue
+    (start time, sideways drift px). They fade out over his face (v1's face mask)."""
+    mask = V._face_mask(face)
+
+    def fx(frame, t, view):
+        live = [(t0, sdx) for t0, sdx in cues if t0 <= t < t0 + dur]
+        if not live:
+            return frame
+        ov = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(ov)
+        for i, (t0, sdx) in enumerate(live):
+            u = (t - t0) / dur
+            xx = x + sdx * u + 7 * math.sin(2 * math.pi * u * 1.3 + i)
+            yy = y - rise * M.ease("out")(u)
+            tw = 0.7 + 0.3 * math.sin((t - t0) * 9 + i)
+            env = min(1.0, u / 0.12, (1 - u) / 0.45) * mask(xx, yy)
+            a = int(240 * env * tw)
+            if a <= 4:
+                continue
+            ox, oy = view.to_out(xx, yy)
+            V._star(d, ox, oy, size * view.scale * (0.55 + 0.45 * tw) * (1 - 0.3 * u), color, a)
+        frame.alpha_composite(ov)
+        return frame
+    return fx
+
+
 def swap(t_on, t_off):
     """Hard on/off switch of a pose layer (no crossfade between different poses)."""
     return lambda t: Tf(alpha=1.0 if t_on <= t < t_off else 0.0)
@@ -106,11 +162,13 @@ def build(ctx):
     t_dark = L0.start                                   # '大鱼的肚子里又黑又湿'
     t_wet = phrase_t(L0, "又湿")                         # a drop falls on 'wet'
     t_fear = L0.at("别怕")                               # '可是别怕' — Jonah stirs
-    t_alive = phrase_t(L0, "约拿还活着")                  # ... and sits up: he is alive!
+    t_alive = phrase_t(L0, "约拿还活着")                  # ... and sits up, eyes wide: he is alive!
+    t_glad = t_alive + 0.8                              # blink-cut to a relieved smile (+ little wiggle)
     t_sit = L1.start - 0.25                             # settles into a sad sit before the days start
     t_guo = phrase_t(L1, "过了三天三夜")                  # '过了三天三夜'
     t_ye = phrase_t(L1, "三夜", where=0.5)               # the last moon lands on '夜'
     t_pray = phrase_t(L1, "向上帝祷告")                   # kneels to pray
+    t_qiu = phrase_t(L2, "向你求救")                      # '向你求救' — single sparkles leave his hands
     t_answer = phrase_t(L2, "你就回答")                   # '你就回答了我' — faint glow blooms
     t_deep = L3.start                                   # '我从很深很深的地方呼喊' — sparkles rise
     t_heard = L3.at("你就听见")                           # '你就听见了我的声音' — God hears
@@ -124,15 +182,18 @@ def build(ctx):
 
     warm = masked_doc(V.belly_svg(V.WARM, "w", "#2a1420", 0.65), GX + 40, GY + 40, 900,
                       [(0, 1), (0.35, 0.85), (0.7, 0.3), (1, 0)], "w")
+    # glow caps: s11 only *begins* the warm light (God hears); s12's finale ('救恩属于耶和华') is the fullest
     sc.add("belly_warm", warm, seed=11, wc_edge=0.0, motion=M.keys(
-        [(t_answer - 0.2, {"alpha": 0}), (t_answer + 1.6, {"alpha": 0.32}), (t_heard - 0.1, {"alpha": 0.36}),
-         (t_heard + 1.6, {"alpha": 0.85})], ["sine", "linear", "inout"]))
+        [(t_answer - 0.2, {"alpha": 0}), (t_answer + 1.6, {"alpha": 0.18}), (t_heard - 0.1, {"alpha": 0.21}),
+         (t_heard + 1.6, {"alpha": 0.45})], ["sine", "linear", "inout"]))
 
-    # wet glints on the walls twinkle softly ('又湿'); they fade a little as the warm light comes
+    # wet glints on the walls twinkle softly ('又湿'); they fade a little as the warm light comes.
+    # Each glint is its own tiny layer (same twinkle per set): one layer per scattered set would warp a
+    # near-full-stage bounding box every frame.
     glint_sets = []
     for gset in range(3):
         rr = random.Random(900 + gset)
-        body = ""
+        body = []
         for _ in range(7):
             gi = rr.choice((NEAR_I - 3, NEAR_I - 2, NEAR_I - 1, NEAR_I - 1, NEAR_I - 1))
             u = rr.uniform(0.25, 0.75)
@@ -141,32 +202,35 @@ def build(ctx):
             p0 = V._wall_pt(gi, u, a0)
             p1 = V._wall_pt(gi, u, a0 + math.radians(rr.uniform(3, 6)))
             kk = V.KS[gi] + (V.KS[gi + 1] - V.KS[gi]) * u
-            body += (f'<path d="M{p0[0]:.1f},{p0[1]:.1f} L{p1[0]:.1f},{p1[1]:.1f}" stroke="#bfe4e4" '
-                     f'stroke-width="{9 * kk:.1f}" stroke-linecap="round" opacity="0.35" filter="url(#soft)"/>'
-                     f'<path d="M{p0[0]:.1f},{p0[1]:.1f} L{p1[0]:.1f},{p1[1]:.1f}" stroke="#eafcfa" '
-                     f'stroke-width="{3 * kk:.1f}" stroke-linecap="round" opacity="0.8"/>'
-                     f'<circle cx="{(p0[0] + p1[0]) / 2:.1f}" cy="{(p0[1] + p1[1]) / 2:.1f}" r="{4.5 * kk:.1f}" '
-                     f'fill="#f4fffc"/>')
+            body.append(f'<path d="M{p0[0]:.1f},{p0[1]:.1f} L{p1[0]:.1f},{p1[1]:.1f}" stroke="#bfe4e4" '
+                        f'stroke-width="{9 * kk:.1f}" stroke-linecap="round" opacity="0.35" filter="url(#soft)"/>'
+                        f'<path d="M{p0[0]:.1f},{p0[1]:.1f} L{p1[0]:.1f},{p1[1]:.1f}" stroke="#eafcfa" '
+                        f'stroke-width="{3 * kk:.1f}" stroke-linecap="round" opacity="0.8"/>'
+                        f'<circle cx="{(p0[0] + p1[0]) / 2:.1f}" cy="{(p0[1] + p1[1]) / 2:.1f}" '
+                        f'r="{4.5 * kk:.1f}" fill="#f4fffc"/>')
         glint_sets.append(body)
-    glint_fade = M.keys([(t_answer, {"alpha": 1.0}), (t_heard + 1.2, {"alpha": 0.45})], "sine")
+    glint_fade = M.keys([(t_answer, {"alpha": 1.0}), (t_heard + 1.2, {"alpha": 0.75})], "sine")
     for gset, body in enumerate(glint_sets):
         per = (2.3, 2.9, 3.4)[gset]
 
         def gl(t, per=per, ph=gset / 3.0):
             v = 0.5 + 0.5 * math.sin(2 * math.pi * (t / per + ph))
             return Tf(alpha=0.12 + 0.88 * v ** 3)
-        sc.add(f"glints{gset}", S.svg_doc(body), wc=0, motion=M.combine(gl, glint_fade))
+        gm = M.combine(gl, glint_fade)
+        for gk, one in enumerate(body):
+            sc.add(f"glints{gset}_{gk}", S.svg_doc(one), wc=0, motion=gm)
 
     # glowing nubs: dim in the dark, they light up one by one on '大鱼的肚子里又黑' and pulse softly;
-    # they dim a little when God's light comes
+    # they dim a little when God's light comes. (The last cluster sits lower on the right wall than v1's, so it
+    # stays clear of the last moon of the 'days' row instead of showing through the crescent's hollow.)
     clusters = [[(NEAR_I - 1, 0.2, 195, 0.95)], [(NEAR_I, 0.45, 236, 1.2)], [(NEAR_I - 1, 0.5, 318, 0.9)],
-                [(NEAR_I - 1, 0.55, 12, 0.8)], [(NEAR_I - 2, 0.45, 300, 0.7)]]
+                [(NEAR_I - 1, 0.55, 12, 0.8)], [(NEAR_I - 2, 0.45, 345, 0.7)]]
     for j, cl in enumerate(clusters):
         doc, (cx, cy) = glow_cluster(cl)
         ton = t_dark + 0.15 + 0.42 * j
         sc.add(f"nubs{j}", doc, wc=0.3, motion=M.combine(
             M.keys([(ton, {"alpha": 0.2, "s": 0.85}), (ton + 0.35, {"alpha": 1.0, "s": 1.06}),
-                    (ton + 0.6, {"s": 1.0}), (t_heard, {"alpha": 1.0}), (t_heard + 1.2, {"alpha": 0.55})],
+                    (ton + 0.6, {"s": 1.0}), (t_heard, {"alpha": 1.0}), (t_heard + 1.2, {"alpha": 0.75})],
                    ["out", "inout", "linear", "sine"], pivot=(cx, cy)),
             M.pulse(0.65, 1.0, 2.6 + 0.35 * j, 0.21 * j)))
 
@@ -176,23 +240,26 @@ def build(ctx):
         defs=S.rad_grad("halo", [(0, "#ffe6a6", 0.55), (0.22, "#fbd38a", 0.4), (0.52, "#f2ad5c", 0.2),
                                  (1, "#e8913f", 0)]))
     glow_keys = M.keys([(t_answer - 0.2, {"alpha": 0, "s": 0.3}),
-                        (t_answer + 1.4, {"alpha": 0.3, "s": 0.55}), (t_heard - 0.2, {"alpha": 0.38, "s": 0.66}),
-                        (t_heard + 1.4, {"alpha": 0.8, "s": 1.0})],
+                        (t_answer + 1.4, {"alpha": 0.22, "s": 0.5}), (t_heard - 0.2, {"alpha": 0.27, "s": 0.58}),
+                        (t_heard + 1.4, {"alpha": 0.5, "s": 0.8})],
                        ["out", "linear", "inout"], pivot=(GX, GY))
     sc.add("halo", halo, wc=0, motion=M.combine(glow_keys, M.breathe(0.03, 2.8, pivot=(GX, GY))))
 
-    # the first, faint warmth: a tiny glow at his folded hands while he cries out, blooming around him on
-    # '你就回答了我' (additive dark gold, so it stays warm over the purple instead of turning grey)
+    # the first warmth: a small, readable ember at his folded hands while he cries out (a point of light, not a
+    # bloom), widening into a soft glow around him on '你就回答了我' (additive dark gold, so it stays warm over
+    # the purple instead of turning grey)
     hands = C.hand_positions(C.jonah, JX, JY, JS, 1, pose="kneel_pray")[1]
     ember = S.svg_doc(f'<circle cx="{GX:.0f}" cy="{GY + 20:.0f}" r="460" fill="url(#emb)"/>',
-                      defs=S.rad_grad("emb", [(0, "#6a4818", 1), (0.3, "#56360f", 0.85), (0.65, "#2e1a08", 0.4),
+                      defs=S.rad_grad("emb", [(0, "#8a6224", 1), (0.22, "#6e4a18", 0.9), (0.55, "#3a2410", 0.45),
                                               (1, "#000000", 0)]))
+    hdx, hdy = hands[0] - GX, hands[1] - GY - 20
     sc.add("ember", ember, wc=0, blend="add", motion=M.combine(
-        M.keys([(L2.start + 0.5, {"alpha": 0, "s": 0.22, "dx": hands[0] - GX, "dy": hands[1] - GY - 20}),
-                (t_answer - 0.3, {"alpha": 0.55, "s": 0.32}),
-                (t_answer + 1.5, {"alpha": 1.0, "s": 0.85, "dx": 0, "dy": 0}),
-                (t_heard + 1.4, {"alpha": 0.5, "s": 1.15})],
-               ["sine", "inout", "inout"], pivot=(GX, GY + 20)),
+        M.keys([(L2.start + 0.2, {"alpha": 0, "s": 0.2, "dx": hdx, "dy": hdy}),
+                (L2.start + 1.5, {"alpha": 0.8, "s": 0.27}),
+                (t_answer - 0.2, {"alpha": 0.85, "s": 0.3}),
+                (t_answer + 1.5, {"alpha": 0.75, "s": 0.62, "dx": 0, "dy": 0}),
+                (t_heard + 1.4, {"alpha": 0.6, "s": 0.85})],
+               ["sine", "linear", "inout", "inout"], pivot=(GX, GY + 20)),
         M.breathe(0.035, 2.8, pivot=(GX, GY + 20), phase=0.2)))
 
     rays = S.svg_doc(S.path(S.rays(GX, GY, 200, 760, n=14, width_deg=4.5), fill="url(#rayg)", stroke=False,
@@ -201,7 +268,7 @@ def build(ctx):
                           f'<stop offset="0.2" stop-color="#6e4c22"/><stop offset="1" stop-color="#6e4c22" '
                           f'stop-opacity="0"/></radialGradient>')
     sc.add("rays", rays, wc=0, blend="add", motion=M.combine(
-        M.keys([(t_heard - 0.2, {"alpha": 0, "s": 0.8}), (t_heard + 1.4, {"alpha": 0.75, "s": 1.0})], "out",
+        M.keys([(t_heard - 0.2, {"alpha": 0, "s": 0.75}), (t_heard + 1.4, {"alpha": 0.3, "s": 0.88})], "out",
                pivot=(GX, GY)),
         lambda t: Tf(rot=2.0 * t, px=GX, py=GY)))
 
@@ -226,26 +293,30 @@ def build(ctx):
                      defs=S.lin_grad("beam", [(0, "#4a3a20", 0.0), (0.15, "#4a3a20", 1), (0.75, "#3e2a14", 0.8),
                                               (1, "#3e2a14", 0.0)]))
     sc.add("beam", beam, wc=0, blend="add", motion=M.combine(
-        M.keys([(t_heard - 0.3, {"alpha": 0}), (t_heard + 1.3, {"alpha": 0.8})], "sine"), M.pulse(0.85, 1.0, 3.1)))
+        M.keys([(t_heard - 0.3, {"alpha": 0}), (t_heard + 1.3, {"alpha": 0.45})], "sine"), M.pulse(0.85, 1.0, 3.1)))
 
     gold_top = S.svg_doc(
         f'<ellipse cx="{TOP[0]}" cy="{TOP[1] - 30}" rx="420" ry="190" fill="url(#gt)"/>',
         defs=S.rad_grad("gt", [(0, "#9a7a40", 1), (0.45, "#7a5a28", 0.6), (1, "#6a4a20", 0)]))
     sc.add("gold_top", gold_top, wc=0, blend="add", motion=M.combine(
-        M.keys([(t_deep + 0.8, {"alpha": 0}), (t_heard, {"alpha": 0.35}), (t_heard + 1.0, {"alpha": 0.85})],
+        M.keys([(t_deep + 0.8, {"alpha": 0}), (t_heard, {"alpha": 0.2}), (t_heard + 1.0, {"alpha": 0.5})],
                "sine"),
         M.breathe(0.04, 2.6, pivot=TOP)))
 
     # ---------------------------------------------------------- Jonah
-    # lies curled up (wet) -> sits up rubbing his eye -> sits hugging his knees, sad -> kneels and prays
-    # every change is a hard cut sold by a squash / hop; poses are held >= 1.5 s
+    # lies curled up (wet) -> pops up to sit, eyes wide (alive!) -> blinks into a relieved smile -> sits hugging
+    # his knees, sad -> kneels and prays. Pose changes are hard cuts sold by a squash / hop; expression changes
+    # are hard cuts like a blink (never crossfades); poses are held >= 1.5 s.
     # the sleeper lies with his head (on the left) right under the spot where his head will be when he sits up,
-    # so the cut reads as "he sits up" rather than a jump
+    # so the cut reads as "he sits up" rather than a jump.
+    # Contact shadows are separate still layers under the figures, so hops never lift them off the floor.
     SLX = JX + 215
     sleep_sh = C.ground_shadow(SLX - 70, JY, 1.0, width=470, opacity=0.42)
     shadow = C.ground_shadow(JX + 10, JY, 1.0, width=320, opacity=0.4)
+    sc.add("shadow_sleep", S.svg_doc(sleep_sh), motion=swap(-1, t_alive))
+    sc.add("shadow", S.svg_doc(shadow), motion=swap(t_alive, 1e9))
 
-    sleep = S.svg_doc(sleep_sh + C.jonah(SLX, JY, JS, 1, pose="sleep", wet=True, marks=False))
+    sleep = S.svg_doc(C.jonah(SLX, JY, JS, 1, pose="sleep", wet=True, marks=False))
 
     def breath_lying(t):
         u = math.sin(2 * math.pi * t / 3.3)
@@ -256,26 +327,28 @@ def build(ctx):
                   ["sine", "sine", "linear", "sine", "inout"], pivot=(SLX, JY))
     sc.add("jonah_sleep", sleep, motion=M.combine(swap(-1, t_alive), stir, breath_lying))
 
-    wake = S.svg_doc(shadow + C.jonah(JX, JY, JS, 1, pose="wake", wet=True))
-    pop_up = M.keys([(t_alive, {"sy": 0.9, "sx": 1.05, "dy": 8}), (t_alive + 0.14, {"sy": 1.05, "sx": 0.98, "dy": -16}),
-                     (t_alive + 0.36, {"sy": 1.0, "sx": 1.0, "dy": 0}),
-                     # a happy little stretch-wiggle while he is sitting up
-                     (t_alive + 0.7, {"rot": 0}), (t_alive + 1.05, {"rot": -2.2}), (t_alive + 1.45, {"rot": 1.2}),
-                     (t_sit - 0.45, {"rot": 0}),
-                     (t_sit - 0.15, {"sy": 1.0, "dy": 0}), (t_sit, {"sy": 0.95, "dy": 4})],
-                    ["out", "inout", "linear", "sine", "sine", "sine", "linear", "inout"], pivot=(JX, JY))
-    sc.add("jonah_wake", wake, motion=M.combine(swap(t_alive, t_sit), pop_up))
-
-    sit = [S.svg_doc(shadow + C.jonah(JX, JY, JS, 1, pose="sit", expr="sad", wet=w)) for w in (True, False)]
-    sit_m = M.keys([(t_sit, {"sy": 0.93, "dy": 6}), (t_sit + 0.3, {"sy": 1.0, "dy": 0}),
+    # sitting (wet the whole time, hands on his knees): surprised -> happy -> sad. One flipbook, hard cuts.
+    # Pivot on the ground between seat and heels, so the squash keeps both on the floor and the wiggle (<= 1.2
+    # deg) moves them by only ~1.5 px.
+    SPV = (JX + 65, JY)
+    wg = max(0.4, min(0.85, t_sit - 0.12 - t_glad))     # the wiggle fits between the smile and the sad cut
+    sit =[S.svg_doc(C.jonah(JX, JY, JS, 1, pose="sit", expr=e, wet=True)) for e in ("surprised", "happy", "sad")]
+    sit_m = M.keys([(t_alive, {"sy": 0.9, "sx": 1.05, "dy": 8}), (t_alive + 0.14, {"sy": 1.05, "sx": 0.98, "dy": -16}),
+                    (t_alive + 0.36, {"sy": 1.0, "sx": 1.0, "dy": 0}),
+                    # blink into a smile, then a happy little wiggle (he is alive!)
+                    (t_glad + 0.05, {"rot": 0}), (t_glad + 0.35 * wg, {"rot": -1.2}),
+                    (t_glad + 0.68 * wg, {"rot": 1.0}), (t_glad + wg, {"rot": 0}),
+                    # a little sigh as he settles in for the long wait
+                    (t_sit, {"sy": 0.96, "dy": 0}), (t_sit + 0.35, {"sy": 1.0}),
                     (t_pray - 0.15, {"sy": 1.0, "dy": 0}), (t_pray, {"sy": 0.95, "dy": 4})],
-                   ["back", "linear", "inout"], pivot=(JX, JY))
-    sc.add("jonah_sit", sit, frame_at=lambda t: M.progress(t, pops[1], pops[5] + 0.3, "sine"),
-           motion=M.combine(swap(t_sit, t_pray), sit_m, M.breathe(0.012, 3.4, pivot=(JX, JY))))
+                   ["out", "inout", "linear", "sine", "sine", "sine", "inout", "back", "linear", "inout"], pivot=SPV)
+    sc.add("jonah_sit", sit, frame_at=lambda t: 0.0 if t < t_glad else (1.0 if t < t_sit else 2.0),
+           motion=M.combine(swap(t_alive, t_pray), sit_m, M.breathe(0.012, 3.4, pivot=SPV)))
 
-    # three days later he kneels, dry again; worried while he cries out -> peaceful when God answers ->
-    # eyes open, hopeful, when God hears him (expression swaps are hard cuts, like a blink)
-    kneel = [S.svg_doc(shadow + C.jonah(JX, JY, JS, 1, pose="kneel_pray", expr=e))
+    # three days later he kneels, dry again (the costume change hides in this squash-and-hop cut); worried while
+    # he cries out -> peaceful when God answers -> eyes open, hopeful, when God hears him (expression swaps are
+    # hard cuts, like a blink)
+    kneel = [S.svg_doc(C.jonah(JX, JY, JS, 1, pose="kneel_pray", expr=e))
              for e in ("worried", "peaceful", "happy")]
     t_e1, t_e2 = t_answer + 0.25, t_heard + 0.45
     lift0, lift1 = t_heard + 0.2, t_heard + 1.0
@@ -284,7 +357,7 @@ def build(ctx):
         a = M.progress(t, L2.start - 0.3, L2.start + 0.6, "sine") * (1 - 0.6 * M.progress(t, lift0, lift1, "sine"))
         return Tf(rot=1.1 * a * math.sin(2 * math.pi * (t - L2.start) / 3.4))
     kneel_m = M.keys([(t_pray, {"sy": 0.92, "sx": 1.03, "dy": 8}), (t_pray + 0.32, {"sy": 1.0, "sx": 1.0, "dy": 0}),
-                      (lift0, {"rot": 0, "dy": 0}), (lift1, {"rot": -3.0, "dy": -5})],
+                      (lift0, {"rot": 0, "dy": 0}), (lift1, {"rot": -2.0, "dy": 0})],
                      ["back", "linear", "out"], pivot=(JX, JY))
     sc.add("jonah_kneel", kneel, frame_at=lambda t: 0.0 if t < t_e1 else (1.0 if t < t_e2 else 2.0),
            motion=M.combine(swap(t_pray, 1e9), kneel_m, M.with_pivot(rock, (JX, JY)),
@@ -351,7 +424,9 @@ def build(ctx):
     DS = 1.2
     DX, DY0 = tipx, tipy + 8
     DTOP = DY0 - 16 * DS
-    kelp_drips = (t_dark + 0.5, t_alive + 1.4, L2.start + 0.9, t_deep + 0.9)
+    # only while the narrator talks about the wet belly (L0) — none under Jonah's prayer, where the soft drip
+    # ambience carries the wetness
+    kelp_drips = (t_dark + 0.5, t_alive + 1.4)
     fall = 0.5
     sfx_plips = []
 
@@ -391,8 +466,8 @@ def build(ctx):
 
     # drips from the ceiling (the inner edge of a rib) into the shiny puddles on the floor: one on '又湿'
     ceil = [  # (x, top y, puddle y, times)
-        (1330.0, 205.0, 818.0, (t_wet - 0.35, t_sit + 0.25, L2.start + 0.25)),
-        (1215.0, 192.0, 906.0, (t_alive + 0.3, t_pray + 1.0, t_deep + 0.5)),
+        (1330.0, 205.0, 818.0, (t_wet - 0.35, t_sit + 0.25)),
+        (1215.0, 192.0, 906.0, (t_alive + 0.3,)),
     ]
     for k, (cx, cy0, py, times) in enumerate(ceil):
         fall_c = math.sqrt((py - cy0) / 900.0) * 0.62
@@ -416,8 +491,9 @@ def build(ctx):
 
     # ---------------------------------------------------------- three days and three nights
     # A round glow opens at the top while the narrator says '约拿在大鱼的肚子里'; then a sun, a moon, a sun ...
-    # pop up one by one, the last moon landing on '夜'. They hold through '他在那里' and fade as he kneels.
-    fade0, fade1 = t_pray - 0.45, t_pray + 0.55
+    # pop up one by one, the last moon landing on '夜'. The full row holds through '他在那里' (~1.7 s for small
+    # viewers to take in 'three days and three nights') and drifts away as he begins to pray.
+    fade0, fade1 = t_pray + 0.2, t_pray + 1.2
     top_glow = S.svg_doc(
         f'<ellipse cx="{TOP[0]}" cy="{TOP[1] + 4}" rx="560" ry="135" fill="url(#tg)"/>',
         defs=S.rad_grad("tg", [(0, "#fff4d8", 0.5), (0.6, "#f6e2c0", 0.3), (1, "#f0d8b0", 0)]))
@@ -451,13 +527,11 @@ def build(ctx):
                     v = max(v, min(1.0, u / 0.15) * (1 - u) ** 1.5)
             return v
         return a
-    tint_warm = FX.tint((255, 214, 150), lambda t: 0.09 * day_tint(True)(t), mode="screen")
-    tint_cool = FX.tint((150, 160, 215), lambda t: 0.16 * day_tint(False)(t), mode="multiply")
+    tint_warm = lut_tint((255, 214, 150), lambda t: 0.09 * day_tint(True)(t), mode="screen")
+    tint_cool = lut_tint((150, 160, 215), lambda t: 0.16 * day_tint(False)(t), mode="multiply")
 
-    # ---------------------------------------------------------- camera: slow push-in towards Jonah
-    sc.camera = M.cam_keys([(0, Cam(W / 2, H / 2, W)), (L1.start, Cam(1030, 580, W * 0.93)),
-                            (t_pray, Cam(1010, 570, W * 0.9)), (T, Cam(935, 600, W * 0.8))],
-                           ["sine", "sine", "sine"])
+    # ---------------------------------------------------------- camera: one slow, continuous push-in towards Jonah
+    sc.camera = M.cam_keys([(0, Cam(W / 2, H / 2, W)), (T, Cam(935, 600, W * 0.8))], "sine")
 
     # ---------------------------------------------------------- particles (kept off Jonah's face)
     head = C.body_points(C.jonah, JX, JY, JS, 1, pose="kneel_pray")["head"]
@@ -475,6 +549,9 @@ def build(ctx):
         FX.tint((14, 10, 24), opening_dark),
         tint_warm, tint_cool,
         FX.motes((0, 100, W, 950), count=18, color=(160, 205, 200), size=(3, 6), alpha=55, seed=5),
+        # '向你求救': three single sparkles leave his folded hands (drifting away from his face)
+        hand_sparkles(hands[0] + 6, hands[1] - 6, [(t_qiu - 0.05, 40), (t_qiu + 0.4, 85), (t_qiu + 0.85, 20)],
+                      face=face),
         V.rising_sparkles(GX + 10, JY - 20, 150, 230, 40, prayer_level, face=face),
         V.twinkles((GX - 330, GY - 330, GX + 330, GY + 180), count=18, t0=t_heard + 0.2,
                    color=(255, 240, 190), size=(8, 18), drift=-8, seed=17, face=face),
@@ -484,10 +561,10 @@ def build(ctx):
     sc.sfx("underwater", 0, dur=T + 0.1, gain_db=-12, fade_in=0.8, fade_out=0.9)
     sc.sfx("heartbeat", 0, dur=T + 0.1, gain_db=-12, fade_in=0.8, fade_out=0.9)
     sc.sfx("drip", 0, dur=T + 0.1, gain_db=-19, fade_in=0.8, fade_out=0.9, density=0.6)
-    for tl, pan in sfx_plips:
-        sc.sfx("pop", tl, gain_db=-20, pan=pan)
+    for tl, pan in sfx_plips:                      # quiet, so they don't sound like the day / night icon pops
+        sc.sfx("pop", tl, gain_db=-24, pan=pan)
     sc.sfx("cloth", t_alive - 0.05, gain_db=-15)
-    sc.sfx("cloth", t_sit - 0.05, gain_db=-18)
+    sc.sfx("cloth", t_sit - 0.05, gain_db=-20)
     sc.sfx("cloth", t_pray - 0.05, gain_db=-16)
     for i, ti in enumerate(pops):
         sc.sfx("pop", ti, gain_db=-17, pan=(i - 2.5) * 0.12)

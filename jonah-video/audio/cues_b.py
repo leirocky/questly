@@ -2,8 +2,21 @@
 
 Three consecutive 'lots' scenes (s05-s07, ~1.5 min) get three different textures: a muffled,
 rocking hold with an urgent repeated-note pulse; a ticking, rattling council with a bell ping, a
-hymn-like answer and a creeping fear; rising waves and a lament."""
-from audio.scorelib import broken, bassline, drum, fill, pulse, roll, timp_roll, tops
+hymn-like answer and a creeping fear; waves that grow over a D pedal (low piano rocking in 6/8,
+low brass swelling with every wave -- no tremolo, no timpani, so the sea scenes s04-s09 do not
+sound like one loop) and a lament."""
+import math
+
+from audio.scorelib import (
+    bassline,
+    broken,
+    drum,
+    fill,
+    pulse,
+    roll,
+    span_end,
+    timp_roll,
+)
 from audio.theory import midi
 
 
@@ -16,7 +29,6 @@ def captain(c):
     a.pad(["trem_lo", "trem_va"], 2, 45, 62, vel=40, bass_ref=(33, 45))
     a.mel("cb", "D2:3 | Bb1:3/2 A1:3/2", vel=46, role="bass")
     broken(a, "harp", 0, 6, (0, 2, 4, 2, 4, 2), 38, 50, vel=36, accent=4)
-    timp_roll(a, 0, 6, midi("D2"), 26, 32, rate=10)
     a.expr(["trem_lo", "trem_va", "cb"], [(0, -10), (6, -9)])
     a.expr(["clar", "harp"], [(0, -7), (6, -8)])
     # "Wake up!": an urgent repeated-note pulse (violas), pizzicato basses, the horn's wake-up call
@@ -27,10 +39,33 @@ def captain(c):
                    "Bb2:1 r:1 F2:1 r:1 | G2:1 r:1 A2:1 r:1", vel=60, role="bass")
     bassline(b, "cb", 28, 40, 48)
     b.pad(["vla", "vln1"], 2, 62, 79, q0=8, vel=44, bass_ref=(28, 40))
-    q_call = b.q_of(c.t0 + c.le(c.find("快醒醒")))
-    q_call = min(max(q_call, 7.0), 7.5)
-    b.add("horn", q_call, 8 - q_call, "A4", 70, "melody")
-    b.add("horn", 8, 2, "D5", 66, "melody")
+    # the horn's wake-up call sits in the pause after '...你怎么还在睡觉？': an A4 pickup as the line
+    # ends, D5 on the next eighth, released before the captain speaks again
+    p0, p1 = c.pause_after(c.find("快醒醒"))
+    q_pick = b.q_of(c.t0 + p0 + 0.03)
+    q_top = math.ceil((q_pick + 0.2) * 2) / 2
+    q_end = b.q_of(c.t0 + p1 - 0.05)
+
+    def common(q0, q1, lo, hi):                    # pitches belonging to every chord from q0 to q1
+        chs = [ch for _, _, ch in b.chord_spans(q0, q1)]
+        return [p for p in range(lo, hi + 1) if all(p % 12 in ch.pcset for ch in chs)]
+
+    tops_ = common(q_top, q_end, 65, 74)
+    if not tops_:                                  # the call ends where the harmony moves on
+        q_end = min(q_end, span_end(b, q_top))
+        tops_ = common(q_top, q_end, 65, 74)
+    picks = common(q_pick, q_top, 62, 71)
+    if p1 - p0 >= 0.5 and q_end - q_top >= 0.25 and tops_ and picks:
+        top = midi("D5") if midi("D5") in tops_ else max(tops_)
+        pick = max([p for p in picks if p <= top - 3] or picks)
+        b.add("horn", q_pick, q_top - q_pick, pick, 70, "melody")
+        b.add("horn", q_top, q_end - q_top, top, 66, "melody")
+    else:                                          # no room: one short accented call and a stroke
+        ch = b.chord_at(q_pick)
+        dq = min(0.5, span_end(b, q_pick) - q_pick)
+        top = midi("D5") if 2 in ch.pcset else max(ch.tones(65, 74))
+        b.add("horn", q_pick, min(0.25, dq), top, 74, "melody", "S")
+        b.add("timp", q_pick, dq, ch.bass_note(38, 50), 60, "timp")
     b.add("timp", 0, 1, "D2", 62, "timp")
     b.expr("vln2", [(0, -6), (16, -8), (24, -10)])
     b.expr(["pz_lo", "cb"], [(0, -5), (24, -6)])
@@ -57,7 +92,7 @@ def lots(c):
     a.pad(["vla", "vln2"], 2, 53, 70, vel=40, bass_ref=(33, 45))
     for k in range(16):
         drum(a, k + 0.5, 77 if k % 2 else 76, 34 + (4 if k % 4 == 3 else 0))
-    fill(c, "clar", c.pause_or_gap(1), n=2, lo=62, hi=77, vel=46)
+    fill(c, "clar", c.pause_or_gap(c.find("我们来抽签")), n=2, lo=62, hi=77, vel=46)
     a.expr(["pz_lo", "cb", "vla", "vln2"], [(0, -9), (16, -8)])
     # the lots are shaken: an accelerating rattle and a timpani crescendo, a breath, then the ping
     b = c.seg(t_cast, t_ping, 1, "4/4", "D minor", nominal=96, label="lots-cast")
@@ -96,9 +131,9 @@ def lots(c):
     h.pad("choir", 3, 57, 76, q0=3, vel=52, bass_ref=(38, 50))
     h.mel("cb", "D2:3 | G1:3 | D2:3/2 A1:3/2", vel=46, role="bass")
     broken(h, "harp", 0, 9, (0, 2, 4, 5, 4, 2), 38, 50, vel=40, thin=True)
-    h.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -10), (9, -9)])
+    h.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -15), (1.5, -10), (9, -9)])
     h.expr("choir", [(3, -18), (4.5, -11), (9, -11)])
-    h.expr(["horn", "harp"], [(0, -7), (9, -7)])
+    h.expr(["horn", "harp"], [(0, -12), (1.0, -7), (9, -7)])
     # the sailors are terrified: the storm creeps back (tremolo, a pulsing cello, timpani)
     f = c.seg(t_fear, t_sting, 5, "4/4", "D minor", nominal=96, label="lots-fear")
     f.prog("Dm:4 | Gm/D:4 | Dm:4 | Bb/D:4 | Gm/Bb:4")
@@ -106,50 +141,52 @@ def lots(c):
     pulse(f, "vc_fast", 0, 20, 0.5, 50, 38, 50, idx=0, art="s", role="bass", accent=8, every=4)
     f.mel("cb", "D2:4 | D2:4 | D2:4 | D2:4 | Bb1:4", vel=48, role="bass")
     timp_roll(f, 0, 12, midi("D2"), 26, 40)
-    timp_roll(f, 12, 19.75, midi("D2"), 40, 60)
+    timp_roll(f, 12, 19.75, midi("D2"), 38, 54)
     q_afraid = f.q_of(c.t0 + c.at("更加害怕"))
-    f.expr(["trem_va", "trem_hi", "vc_fast", "cb"], [(0, -14), (max(1, q_afraid - 2), -11), (19.2, -6), (20, -12)])
+    f.expr(["trem_va", "trem_hi", "vc_fast", "cb"], [(0, -14), (max(1, q_afraid - 2), -12), (19.2, -10), (20, -13)])
     # "How could you do such a thing?": a diminished seventh in the pause, then the half cadence
     s = c.seg(t_sting, c.dur, 1, "4/4", "D minor", nominal=92, label="lots-sting")
+    s.duck(2.0)
     s.prog("C#dim7:2@D-harmonic A:2@D-harmonic")
     s.sync("sailors' shock (diminished chord)", 0, t_sting)
-    s.pad(["trem_va", "trem_hi", "trem_hi"], 3, 53, 74, vel=70, bass_ref=(33, 46))
+    s.pad(["trem_va", "trem_hi", "trem_hi"], 3, 53, 74, vel=66, bass_ref=(33, 46))
     s.add("cb_fast", 0, 2, "E2", 66, "bass")
     s.add("cb_fast", 2, 2, "A1", 54, "bass")
-    s.add("timp", 0, 1, "E2", 84, "timp", "h")
+    for nm in ("E2", "Bb2", "C#3", "G3"):              # a low piano stab (the timpani stay with the storm)
+        s.add("piano", 0, 1, nm, 74, "arp", "h")
     s.add("pz_lo", 0, 1, "E3", 80, "bass", "h")
-    s.add("pz_hi", 0, 1, "G4", 78, "arp", "h")
-    s.add("pz_hi", 0, 1, "C#5", 76, "arp", "h")
-    s.add("pz_hi", 0, 1, "Bb5", 74, "arp", "h")
+    s.add("pz_hi", 0, 1, "G4", 74, "arp", "h")
+    s.add("pz_hi", 0, 1, "C#5", 72, "arp", "h")
+    s.add("pz_hi", 0, 1, "Bb5", 70, "arp", "h")
     s.add("okit", 0, 1, 36, 64, "perc", "h")
-    s.expr(["trem_va", "trem_hi", "cb_fast"], [(0, -3), (0.5, -12), (4, -14)])
+    q_l = s.q_of(c.t0 + c.ls(i_q))
+    s.expr(["trem_va", "trem_hi", "cb_fast"], [(0, -5), (0.4, -13), (max(0.5, q_l), -16), (4, -16)])
 
 
 def confess(c):
     t_j = c.gap(c.find("把我抬起来"))
-    # the waves grow: rolling 6/8 cellos, swelling tremolo, timpani swells per bar
+    # the waves grow: a low piano rocks in 6/8 over a D pedal (cellos and basses hold it), the low
+    # brass swell with every wave; the harmony leans ever harder on the tonic: upper neighbour Eb,
+    # then a diminished seventh, the minor subdominant, and the dominant at last
     w = c.seg(0, t_j, 6, "6/8", "D minor", nominal=108, label="confess-waves")
-    w.duck(1.0)
-    w.prog("Dm:3 | Dm:3 | Bb:3 | Bb:3 | Gm:3 | A:3@D-harmonic")
-    w.pad(["trem_va", "trem_hi", "trem_hi"], 3, 52, 77, vel=62, bass_ref=(28, 40))
-    for a, b, ch in w.chord_spans():
-        r = ch.bass_note(36, 47)
-        lad = [p for p in range(r, r + 25) if p % 12 in ch.pcset]
-        figure = [lad[0], lad[1], lad[2], lad[3], lad[2], lad[1]]
-        for k, p in enumerate(figure):
-            w.add("vc_fast", a + 0.5 * k, 0.5, p, 58 + (8 if k == 0 else 0), "arp", "s")
-        w.add("cb_fast", a, b - a, ch.bass_note(28, 40), 60, "bass")
-    for bar in range(6):
-        timp_roll(w, 3 * bar, 3 * bar + 2.5, midi("A2" if bar == 5 else "D2"), 26 + 4 * bar, 40 + 6 * bar)
-    for p in ("trem_va", "trem_hi", "vc_fast", "cb_fast"):
-        pts = []
-        for bar in range(6):
-            depth = -13 + 1.2 * bar
-            pts += [(3 * bar, depth - 3), (3 * bar + 1.6, depth + 3), (3 * bar + 2.9, depth - 2)]
-        w.expr(p, pts)
+    w.duck(1.5)
+    w.prog("Dm:3 | Eb/D:3@D-phrygian | Dm:3 | Edim7/D:3@D-harmonic | Gm/D:3 | A7:3@D-harmonic")
+    for bar, (a, b, ch) in enumerate(w.chord_spans()):
+        bass = ch.bass_note(33, 44)
+        ups = [p for p in range(bass + 5, bass + 30) if p % 12 in ch.upper]
+        for k, p in enumerate([bass, ups[0], ups[1], ups[2], ups[1], ups[0]]):
+            w.add("piano", a + 0.5 * k, 3.0 if k == 0 else 0.5, p, 44 + 3 * bar + (8 if k == 0 else 0), "arp")
+    bassline(w, "cb", 28, 40, 50)
+    bassline(w, "vc", 45, 56, 44)                       # D3 ... A2: an octave above the basses
+    w.pad(["tbn", "tbn", "horn", "horn"], 4, 46, 67, vel=60, center=57, bass_ref=(33, 44))
+    for bar in range(6):                   # one wave per bar, each a little higher
+        depth = -15 + 1.3 * bar
+        w.expr(["tbn", "horn"], [(3 * bar, depth - 9), (3 * bar + 1.4, depth + 2), (3 * bar + 2.9, depth - 7)])
+        w.expr(["vc", "cb"], [(3 * bar, depth - 2), (3 * bar + 1.4, depth + 1), (3 * bar + 2.9, depth - 2)])
+    w.expr("piano", [(0, -8), (18, -5)])
     # Jonah confesses: lament bass D-C-Bb-A under a chain of clarinet 4-3 suspensions
     s = c.seg(t_j, c.dur, 4, "4/4", "D minor", nominal=100, rit=0.15, label="confess-lament")
-    s.duck(1.5)
+    s.duck(2.5)
     s.prog("Dsus2:2 Dm:2 | Csus4:2 Am/C:2 | Gm/Bb:4 | Asus4:2 A:2@D-harmonic")
     s.mel("clar", "r:2 F4:4 E4:4 D4:4 C#4:2", vel=64)
     s.mel("cb", "D2:4 | C2:4 | Bb1:4 | A1:4", vel=48, role="bass")
@@ -157,9 +194,9 @@ def confess(c):
     s.pad(["vla", "vln2", "vln1"], 3, 55, 77, vel=38, center=66, bass_ref=(33, 44))
     s.mel("pz_lo", "r:1 D3:1 r:1 D3:1 | r:1 C3:1 r:1 C3:1 | r:1 Bb2:1 r:1 Bb2:1 | r:1 A2:1 r:1 A2:1",
           vel=36, role="bass")
-    fill(c, "celesta", c.pause_or_gap(len(c.lines) - 1), n=2, lo=67, hi=84, vel=40, up=False)
+    fill(c, "celesta", c.pause_or_gap(c.find("这场大风浪")), n=2, lo=67, hi=84, vel=40, up=False)
     s.expr(["vla", "vln2", "vln1", "vc", "cb", "pz_lo"], [(0, -10), (8, -7), (12, -7), (16, -10)])
-    s.expr("clar", [(0, -6), (8, -5), (12, -5), (16, -7)])
+    s.expr("clar", [(0, -9), (8, -8), (12, -8), (16, -10)])
 
 
 def _strokes(seg, bars, vel):
@@ -187,7 +224,11 @@ def row(c):
     r1 = c.seg(0, t_waves, 4, "4/4", "D minor", nominal=116, label="row-strokes")
     r2 = c.seg(t_waves, t_pray, 4, "4/4", "D minor", nominal=134, label="row-waves")
     r3 = c.seg(t_pray, c.dur, 5, "4/4", "D minor", nominal=70, rit=0.12, label="row-prayer")
-    r2.duck(1.0)
+    r3.hush = True
+    r1.duck(3.0)
+    r2.duck(3.0)
+    r1.gain(1.5)
+    r2.gain(0.3)
     r1.prog("Dm:4 | Gm/D:4 | Dm:4 | Bb/D:2 A/C#:2@D-harmonic")
     r2.prog("Dm:4 | Eb:4@D-phrygian | Gm/Bb:4 | A:4@D-harmonic")
     r3.prog("Dm:4 | Bb:2 F/A:2 | Gm:2 Dm/F:2 | Gm/Bb:2 Asus4:1 A:1@D-harmonic | Dm:2 Asus4:1 A:1@D-harmonic")
@@ -201,17 +242,20 @@ def row(c):
     r1.pad(["trem_va", "trem_hi", "trem_hi", "trem_hi"], 4, 53, 81, vel=54, bass_ref=(28, 40))
     r2.pad(["trem_va", "trem_hi", "trem_hi", "trem_hi"], 4, 53, 81, vel=60, bass_ref=(28, 40))
     r2.pad(["tbn", "tbn", "brass"], 3, 50, 70, q0=12, vel=70, center=60, bass_ref=(28, 40))
-    timp_roll(r2, 12.5, 15.75, midi("A2"), 40, 66)
-    q_crash = r2.q_of(c.t0 + c.le(i_waves)) + 0.1
-    q_crash = min(max(q_crash, 15.0), 15.6)
+    # the waves win: a crash just after '...都没有办法回到岸边。' (the sync's target is the narration, so a
+    # clamp that moves it shows up in music_check)
+    t_crash = c.le(i_waves) + 0.03
+    q_crash = max(r2.q_of(c.t0 + t_crash), 13.0)
+    timp_roll(r2, min(12.5, q_crash - 2.5), q_crash - 0.1, midi("A2"), 40, 66)
     r2.add("okit", q_crash, 1, 57, 70, "perc", "h")
     r2.add("okit", q_crash, 1, 36, 80, "perc", "h")
-    r2.sync("the waves win (crash)", q_crash, r2.t(q_crash) - c.t0)
+    r2.sync("the waves win (crash)", q_crash, t_crash)
+    r2.sync("the waves rise higher (stroke in the pause)", 0, t_waves)
     q_hard = r1.q_of(c.t0 + q0_hard)
     for p in ("vc_fast", "cb_fast", "horn", "timp", "hand", "trem_va", "trem_hi"):
-        r1.expr(p, [(0, -13), (max(0.5, q_hard - 1), -12), (q_hard + 1, -9), (16, -8)])
-        r2.expr(p, [(0, -14), (12, -13), (q_crash - 0.4, -13), (q_crash, -5), (16, -9)])
-    r2.expr(["tbn", "brass"], [(12, -18), (q_crash - 0.3, -13), (q_crash, -6), (16, -9)])
+        r1.expr(p, [(0, -13), (max(0.5, q_hard - 1), -11), (q_hard + 1, -7), (16, -6)])
+        r2.expr(p, [(0, -12), (12, -11), (q_crash - 0.4, -11), (q_crash, -3), (16, -8)])
+    r2.expr(["tbn", "brass"], [(12, -18), (q_crash - 0.3, -13), (q_crash, -4), (16, -8)])
     # the hushed prayer: humming choir, soft low strings, the storm still rumbling far off
     r3.pad("ooh", 3, 55, 72, vel=56, bass_ref=(36, 50))
     r3.pad(["vla", "vln2"], 2, 53, 69, vel=42, bass_part="vc", bass_lo=40, bass_hi=51)

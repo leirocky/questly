@@ -125,6 +125,7 @@ class Seg:
         self.n_q = bars * self.bar_q
         self.scale = Scale(scale)
         self.label = label
+        self.hush = False          # a deliberately hushed close of a loud cue (storm-sleep, row-prayer)
         self.chords = []           # (q0, q1, Chord, local Scale or None)
         self.local_scales = []     # (q0, q1, Scale)
         res = 1 / 96
@@ -233,10 +234,18 @@ class Seg:
             for q, db in points:
                 self.score.expr[p].append((self.t(q), float(db)))
 
-    def duck(self, db):
-        """Extra attenuation (dB, all parts) while narration is spoken inside this segment: for
-        passages whose texture is full, so the words stay clear while the pauses keep their weight."""
-        self.score.ducks.append((self.t0, self.t1, float(db)))
+    def duck(self, db, parts=None, q0=None, q1=None):
+        """Extra attenuation (dB) while narration is spoken inside this segment (or its q0..q1 part):
+        for passages whose texture is full, so the words stay clear while the pauses keep their
+        weight.  parts: only these parts (default: all)."""
+        t0 = self.t0 if q0 is None else self.t(q0)
+        t1 = self.t1 if q1 is None else self.t(q1)
+        self.score.ducks.append((t0, t1, float(db), None if parts is None else frozenset(
+            [parts] if isinstance(parts, str) else parts)))
+
+    def gain(self, db):
+        """A fader on this segment (dB, all parts), cross-faded over 0.5 s at its edges."""
+        self.score.gains.append((self.t0, self.t1, float(db)))
 
     def sync(self, label, q, target_rel, kind="hit"):
         """Record a hit point: musical position q should land at cue-relative time target_rel.
@@ -272,16 +281,26 @@ class Seg:
             vids.append(f"{pt}.{seen[pt]}")
             seen[pt] += 1
         prev_bass = None
+        prev_chord = None
         if prev is None and link:
             last = self.score.last_voicing.get(fam)
             if last is not None and abs(last[0] - self.t(spans[0][0])) < 0.35 and len(last[1]) >= n:
                 prev, prev_bass = tuple(sorted(last[1])[:n]), last[2]      # lowest voices continue
+                prev_chord = last[3]
         own = set(vids) | ({f"{bass_part}.0"} if bass_part else set())
         guides = self.score.guides_at([self.t(a) for a, _, _ in spans], own)
+        # tendency tones a melodic line already sounds at the end of a chord are not doubled
+        lines = self.score.sounding_pcs([self.t(b) - 0.06 for _, b, _ in spans], own)
+        avoid = []
+        for (_, _, ch), pcs in zip(spans, lines):
+            av = {ch.seventh} if ch.seventh is not None else set()
+            if ch.quality == "7" and ch.third is not None:
+                av.add(ch.third)                                   # the leading tone of a V7
+            avoid.append(frozenset(av & pcs))
         vs = voice_lead(chords, n, lo, hi, basses=basses, center=center, prev=prev, tops=tops,
-                        prev_bass=prev_bass, guides=guides)
+                        prev_bass=prev_bass, guides=guides, prev_chord=prev_chord, avoid=avoid)
         self.score.voicings.append((f"{self.label}:{'/'.join(plist)}", [c.sym for c in chords], vs, basses))
-        self.score.last_voicing[fam] = (self.t(spans[-1][1]), vs[-1], basses[-1] if basses else None)
+        self.score.last_voicing[fam] = (self.t(spans[-1][1]), vs[-1], basses[-1] if basses else None, chords[-1])
         notes = []
         for v in range(n):
             cur = None
@@ -332,6 +351,11 @@ class Cue:
 
     def seg(self, r0, r1, bars, meter, scale, **kw):
         return Seg(self, self.t0 + r0, self.t0 + r1, bars, meter, scale, **kw)
+
+    def gain(self, db):
+        """A fader on the whole cue (dB, all parts), cross-faded over 0.5 s at the scene starts: sets
+        the cue's place in the film's dynamic arc without touching its internal balance."""
+        self.score.gains.append((self.t0, self.t1, float(db)))
 
     def ls(self, i):
         return self.lines[i][0]
@@ -411,7 +435,9 @@ class Score:
         self.voicings = []         # (label, chord symbols, voicings, bass pitches) from Seg.pad
         self.last_voicing = {}     # family -> (end time s, last voicing, last bass) for pad continuity
         self.guide_notes = None    # voice -> [(t0, t1, pitch, role)] from a previous build pass
-        self.ducks = []            # (t0, t1, dB): extra speech ducking per segment (Seg.duck)
+        self.ducks = []            # (t0, t1, dB, parts or None): extra speech ducking (Seg.duck)
+        self.cave = []             # (t0, t1, fade-out s): windows of the dark cave reverb (music.py)
+        self.gains = []            # (t0, t1, dB): cue / segment faders (Cue.gain, Seg.gain)
         self.speech_iv = []
         for s in timeline["scenes"]:
             for ln in s["lines"]:
@@ -426,27 +452,88 @@ class Score:
             else:
                 self.phrases.append([a, b])
 
-    def guides_at(self, times, own):
-        """For each time: [(pitch before, pitch at, fifths_only)] of the other voices of the previous
-        build pass that have an onset exactly there (and were sounding just before)."""
-        out = [[] for _ in times]
-        if not self.guide_notes:
-            return out
+    GUIDE_ROLES = ("melody", "counter", "pad", "bass", "harmony")
+
+    def _current_guides(self):
+        """voice -> (onsets, [(t0, t1, pitch, role)]) of the notes written so far in this pass
+        (indexed incrementally; rebuilt when notes were removed)."""
+        if not hasattr(self, "_cg") or len(self.notes) < self._cg_n:
+            self._cg, self._cg_n = defaultdict(list), 0
+        if len(self.notes) > self._cg_n:
+            dirty = set()
+            for n in self.notes[self._cg_n:]:
+                if PARTS[n.part].drum or n.role not in self.GUIDE_ROLES:
+                    continue
+                self._cg[n.voice].append((n.seg.t(n.q), n.seg.t(n.q + n.dq), n.pitch, n.role))
+                dirty.add(n.voice)
+            for v in dirty:
+                self._cg[v].sort()
+            self._cg_n = len(self.notes)
+            self._cg_idx = {v: ([x[0] for x in lst], lst) for v, lst in self._cg.items()}
+        return getattr(self, "_cg_idx", {})
+
+    def sounding_pcs(self, times, own, roles=("melody", "counter", "harmony")):
+        """For each time: pitch classes sounded then by melodic lines (melody, counter-melody,
+        chordal parts) other than `own` -- this pass where written, else the previous pass."""
         import bisect
-        for vid, (onsets, lst) in self.guide_notes.items():
+        out = [set() for _ in times]
+        cur = self._current_guides()
+        prev = self.guide_notes or {}
+
+        def at(index, tk):
+            onsets, lst = index
+            i = bisect.bisect_right(onsets, tk) - 1
+            while i >= 0 and tk - lst[i][0] < 8.0:
+                if lst[i][1] > tk and lst[i][3] in roles:
+                    return lst[i][2]
+                i -= 1
+            return None
+
+        for vid in set(cur) | set(prev):
             if vid in own:
                 continue
             for k, tk in enumerate(times):
-                i = bisect.bisect_left(onsets, tk - 2e-3)
-                if i >= len(lst) or abs(lst[i][0] - tk) >= 2e-3 or i == 0:
-                    continue
-                at, before = lst[i], lst[i - 1]
-                if before[1] < tk - 0.15:
-                    continue
-                out[k].append((before[2], at[2], at[3] == "pad" and before[3] == "pad"))
+                p = at(cur[vid], tk) if vid in cur else None
+                if p is None and vid in prev:
+                    written = vid in cur and cur[vid][1][0][0] <= tk <= cur[vid][1][-1][1]
+                    p = None if written else at(prev[vid], tk)
+                if p is not None:
+                    out[k].add(p % 12)
         return out
 
-    def guide_index(self, roles=("melody", "counter", "pad", "bass", "harmony")):
+    def guides_at(self, times, own):
+        """For each time: [(pitch before, pitch at, fifths_only)] of the other voices that have an
+        onset exactly there (and were sounding just before): the parts already written in this
+        build pass, and the rest of the score from the previous pass."""
+        out = [[] for _ in times]
+        import bisect
+        cur = self._current_guides()
+        prev = self.guide_notes or {}
+
+        def change(index, tk):
+            onsets, lst = index
+            i = bisect.bisect_left(onsets, tk - 2e-3)
+            if i >= len(lst) or abs(lst[i][0] - tk) >= 2e-3 or i == 0:
+                return None
+            at, before = lst[i], lst[i - 1]
+            if before[1] < tk - 0.15:
+                return None
+            return before[2], at[2], at[3] == "pad" and before[3] == "pad"
+
+        for vid in set(cur) | set(prev):
+            if vid in own:
+                continue
+            for k, tk in enumerate(times):
+                # this pass where the voice is already written there, else the previous pass
+                g = change(cur[vid], tk) if vid in cur else None
+                if g is None and vid in prev:
+                    written = vid in cur and cur[vid][1][0][0] <= tk + 2e-3 <= cur[vid][1][-1][1]
+                    g = None if written else change(prev[vid], tk)
+                if g is not None:
+                    out[k].append(g)
+        return out
+
+    def guide_index(self, roles=GUIDE_ROLES):
         idx = defaultdict(list)
         for n in self.notes:
             if PARTS[n.part].drum or n.role not in roles:
@@ -540,9 +627,13 @@ class Score:
         else:
             db = np.full_like(t, -3.0)
         extra = np.zeros_like(t, dtype=float)
-        for a, b, d in self.ducks:                      # 0.3 s ramps at the window edges
+        for a, b, d, parts in self.ducks:               # 0.3 s ramps at the window edges
+            if parts is not None and part not in parts:
+                continue
             w = np.clip(np.minimum(t - (a - 0.3), (b + 0.3) - t) / 0.3, 0, 1)
             extra = np.maximum(extra, d * w)
+        for a, b, g in self.gains:                      # faders, 0.5 s cross-fades at the edges
+            db = db + g * np.clip(np.minimum(t - (a - 0.25), (b + 0.25) - t) / 0.5, 0, 1)
         db = db - (PARTS[part].duck_db + extra) * self.speech(t)
         return np.minimum(db, 0.0)
 

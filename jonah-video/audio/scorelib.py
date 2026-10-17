@@ -112,6 +112,7 @@ def fill(cue, part, pause, n=3, lo=72, hi=96, vel=48, up=True, frac=0.85):
     tones = ch.tones(lo, hi)
     start = len(tones) // 3
     pick = tones[start:start + n] if up else tones[start:start + n][::-1]
+    echo = part == "echo_cel"
     for k, pch in enumerate(pick):
         tk = t0 + k * dt
         if tk >= seg.t1 - 0.02:
@@ -119,7 +120,14 @@ def fill(cue, part, pause, n=3, lo=72, hi=96, vel=48, up=True, frac=0.85):
         qk = seg.q_of(tk)
         if seg.chord_at(qk) is not ch:
             break
-        seg.add(part, qk, span_end(seg, qk) - qk, pch, vel + 4 * k, "arp")
+        dq = span_end(seg, qk) - qk
+        if echo and not _tail_fits(seg, qk, dq, pch, ECHO_TAIL):
+            # the echo would ring on into the next chord: use a tone the two chords share
+            alt = [p for p in tones if _tail_fits(seg, qk, dq, p, ECHO_TAIL)]
+            if not alt:
+                continue
+            pch = min(alt, key=lambda p: abs(p - pch))
+        seg.add(part, qk, dq, pch, vel + 4 * k, "arp")
 
 
 def drum(seg, q, key, vel, part="hand"):
@@ -159,3 +167,35 @@ def sustain_q(seg, t_rel_cue):
 
 def tops(*names):
     return [midi(x) for x in names]
+
+
+ECHO_TAIL = 1.5      # s: the echo bus (music.py, 0.5 s ping-pong) repeats a note for about this long
+RING = 0.6           # s: a let-ring ('r') note sounds this long past its written end (Score.perform)
+
+
+def _tail_fits(seg, q, dq, pitch, tail):
+    """True when a note at q (dq quarters + tail seconds of ring/echo) sounds only over chords of
+    this cue that contain its pitch class."""
+    t_a, t_b = seg.t(q), seg.t(q + dq) + tail
+    if t_b > seg.cue.t1 - 0.05:              # the next cue's harmony is not known yet
+        return False
+    for sg in seg.cue.segs:
+        for a, b, ch, _ in sg.chords:
+            ov = min(sg.t(b), t_b) - max(sg.t(a), t_a)
+            if ov > 0.05 and pitch % 12 not in ch.pcset:
+                return False
+    return True
+
+
+def echo_drop(seg, q, pitch, vel, dq=0.5, art="r", part="echo_cel", earliest=None):
+    """An echoing celesta drop at q, or at the latest quarter-step before it (down to `earliest`,
+    default q - 2) whose ring and echo tail stay over chords containing the pitch; else none."""
+    pitch = midi(pitch) if isinstance(pitch, str) else int(pitch)
+    tail = (ECHO_TAIL if part == "echo_cel" else 0.0) + (RING if "r" in art else 0.0)
+    lo = max(0.0, q - 2.0 if earliest is None else earliest)
+    qq = q
+    while qq >= lo - 1e-9:
+        if _tail_fits(seg, qq, dq, pitch, tail):
+            return seg.add(part, qq, dq, pitch, vel, "arp", art)
+        qq -= 0.25
+    return None

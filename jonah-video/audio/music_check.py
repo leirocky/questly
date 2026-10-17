@@ -4,7 +4,12 @@ Harmony check: every pitched note is tested against its segment's scale(s) and t
 sounding.  Harmonic roles (pad, bass, arp, harmony, timpani) must be chord tones for every chord
 they sound through.  Melodic roles may use non-chord tones only when they behave like real
 non-chord tones (passing, neighbour, suspension, appoggiatura, anticipation, escape, or short
-unaccented notes); chromatic notes are allowed only as chromatic passing/neighbour notes.
+unaccented notes); chromatic notes are allowed only as chromatic passing/neighbour notes.  Notes
+are also judged by how long they really sound: a let-ring note (+0.6 s) or a celesta drop on the
+echo bus (+1.5 s of repeats) must not ring on over a chord that does not contain it.
+
+Levels are K-weighted (ITU-R BS.1770 LUFS, pyloudnorm): integrated loudness per cue and per
+storm section, and short-term (3 s) loudness for the loudest moment of every cue.
 """
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -39,9 +44,54 @@ def _overlapping_chords(n):
     return out
 
 
+ECHO_TAIL = 1.5      # s of audible repeats on the echo bus (music.py: 0.5 s ping-pong, -7.5 dB per repeat)
+
+
+def sounding_end(n):
+    """When a performed note stops sounding: its rendered end (articulation, let-ring) plus the
+    echo bus's repeats."""
+    return n.t + n.d + (ECHO_TAIL if PARTS[n.part].bus == "echo" else 0.0)
+
+
+def chord_timeline(sc):
+    """[(t0, t1, Chord)] of the whole score in time order."""
+    out = [(s_.t(a), s_.t(b), ch) for c in sc.cues for s_ in c.segs for a, b, ch, _ in s_.chords]
+    out.sort(key=lambda x: x[0])
+    return out
+
+
+def chords_between(timeline, t0, t1, min_ov=0.0):
+    """[(overlap s, Chord)] of the chords sounding between t0 and t1."""
+    import bisect
+    starts = [x[0] for x in timeline]
+    i = max(0, bisect.bisect_right(starts, t0) - 1)
+    out = []
+    while i < len(timeline) and timeline[i][0] < t1:
+        a, b, ch = timeline[i]
+        ov = min(b, t1) - max(a, t0)
+        if ov > min_ov:
+            out.append((ov, ch))
+        i += 1
+    return out
+
+
 def check_harmony(sc):
     stats = Counter()
     viol = []
+    ctl = chord_timeline(sc)
+    # ring and echo tails: what still sounds after the written end must fit the chords it meets
+    for n in sc.notes:
+        if PARTS[n.part].drum or n.role in ("perc", "gliss"):
+            continue
+        tw, te = n.seg.t(n.q + n.dq), sounding_end(n)
+        if te - tw <= 0.15:
+            continue
+        stats["notes with a let-ring / echo tail"] += 1
+        bad = sorted({ch.sym for ov, ch in chords_between(ctl, tw, te, 0.15) if n.pitch % 12 not in ch.pcset})
+        if bad:
+            viol.append((n, f"{n.seg.cue.id}/{n.seg.label} q={n.q:.2f} {n.part} {name(n.pitch)} ({n.role}): its "
+                            f"{'echo' if PARTS[n.part].bus == 'echo' else 'let-ring'} tail ({te - tw:.1f} s) rings on "
+                            f"over {bad}"))
     lines = defaultdict(list)
     for n in sc.notes:
         if PARTS[n.part].drum or n.role == "perc":
@@ -146,22 +196,39 @@ def check_harmony(sc):
     return stats, viol
 
 
-def check_clashes(sc, min_overlap=0.3, min_dur=0.4):
-    """Sustained minor-second / minor-ninth collisions between simultaneously sounding notes.
+CLASH_IVS = (1, 13, 25, 11, 23)     # minor 2nd / 9th / 16th, major 7th / 14th
 
-    Returns (unexpected, expected): 'expected' ones involve a classified non-chord tone
-    (passing note, suspension, ...) or a glissando, i.e. dissonance that resolves by design."""
+
+def check_clashes(sc, min_overlap=0.3, min_dur=0.4):
+    """Sustained minor-second-class (m2, m9, m16) and major-seventh-class (M7, M14) collisions
+    between notes that really sound together (rendered durations, let-ring and echo tails).
+
+    Returns (unexpected, expected).  Expected: a classified non-chord tone (passing note,
+    suspension, ...) or glissando is involved; or a pedal chord's bass against its upper chord
+    (Eb/D); or, wider than a semitone, two tones of the declared chord (a maj7 chord's M7)."""
+    ctl = chord_timeline(sc)
     notes = sorted([n for n in sc.notes if not PARTS[n.part].drum and n.role != "perc"], key=lambda n: n.t)
     out, exp = [], []
     active = []
     for n in notes:
-        active = [a for a in active if a.t + a.d > n.t + min_overlap]
+        active = [a for a in active if sounding_end(a) > n.t + min_overlap]
         for a in active:
             iv = abs(a.pitch - n.pitch)
-            if iv in (1, 13) and min(a.d, n.d) >= min_dur:
-                ov = min(a.t + a.d, n.t + n.d) - n.t
-                if ov >= min_overlap:
-                    (exp if (getattr(a, "nct", None) or getattr(n, "nct", None)) else out).append((a, n, ov))
+            if iv not in CLASH_IVS or min(sounding_end(a) - a.t, sounding_end(n) - n.t) < min_dur:
+                continue
+            t1 = min(sounding_end(a), sounding_end(n))
+            ov = t1 - n.t
+            if ov < min_overlap:
+                continue
+            t0 = max(a.seg.t(a.q), n.seg.t(n.q))          # written onsets (strings are pre-rolled)
+            chs = [ch for _, ch in chords_between(ctl, t0, t1, 0.2)]
+            pa, pb = a.pitch % 12, n.pitch % 12
+            pedal = any(ch.pedal and ({pa, pb} & {ch.bass}) and ({pa, pb} - {ch.bass}) <= ch.upper for ch in chs)
+            declared = iv > 1 and chs and all(pa in ch.pcset and pb in ch.pcset for ch in chs)
+            if getattr(a, "nct", None) or getattr(n, "nct", None) or pedal or declared:
+                exp.append((a, n, ov))
+            else:
+                out.append((a, n, ov))
         active.append(n)
     return out, exp
 
@@ -433,12 +500,82 @@ def _rms_db(x):
 
 
 SMR_MIN = 15.0          # dB, broadband speech-to-music ratio per line in the simulated mix
-STORM_OVER_MEDIAN = 6.0  # dB, the storm may be at most this much louder (RMS) than the median cue
-STORM_PEAK_OVER_MEDIAN = 5.0   # dB, the storm-peak segment (hit + horn call) vs the median cue
+SMR_BAND_MIN = 12.0     # dB, the same in the 1-4 kHz band that carries most of the intelligibility
+STORM_OVER_MEDIAN = 6.0  # LU, the storm section may be at most this much louder than the median cue
+STORM_LEAD = 1.5        # LU, every storm section must be at least this much louder than every non-storm cue
+STORM_ST_LEAD = 0.5     # LU, the storm's loudest 3 s must beat every other cue's loudest 3 s by this much
+STORM_PEAK_OVER_MEDIAN = 5.0   # LU, the storm-peak segment (hit + horn call) vs the median cue
 PEAK_WINDOW_OVER_MEDIAN = 10.0  # dB, loudest 400 ms of the score vs its median 400 ms level
 
 
-HANDOFF_DB = 10.0      # dB, largest level step across a scene start (1 s windows)
+HANDOFF_DB = 8.0       # dB, largest level step between two adjacent 250 ms windows at a scene or segment start
+HANDOFF_WIN = 0.25     # s
+
+
+# ITU-R BS.1770 K-weighting at 48 kHz (high shelf + RLB high-pass)
+_K_SOS = np.array([[1.53512485958697, -2.69169618940638, 1.19839281085285, 1.0, -1.69065929318241, 0.73248077421585],
+                   [1.0, -2.0, 1.0, 1.0, -1.99004745483398, 0.99007225036621]])
+
+
+def k_weighted_power(x, sr):
+    """Per-sample K-weighted power summed over the channels (BS.1770, 48 kHz)."""
+    from scipy import signal as sg
+    assert sr == 48000, "K-weighting coefficients are for 48 kHz"
+    y = sg.sosfilt(_K_SOS, x, axis=0)
+    return (y ** 2).sum(axis=1) if y.ndim > 1 else y ** 2
+
+
+def integrated_lufs(x, sr):
+    """Gated integrated loudness (LUFS) of a stretch of audio (>= 0.4 s)."""
+    import pyloudnorm as pyln
+    if len(x) < int(0.4 * sr):
+        return float("nan")
+    v = pyln.Meter(sr).integrated_loudness(x)
+    return float(v) if np.isfinite(v) else float("nan")
+
+
+def short_term(power, sr, win=3.0, hop=0.1):
+    """Short-term loudness (3 s windows, LUFS) every hop s: (window centre times, values)."""
+    cs = np.concatenate([[0.0], np.cumsum(power)])
+    w, h = int(win * sr), int(hop * sr)
+    st = np.arange(0, len(power) - w, h)
+    return (st + w / 2) / sr, -0.691 + 10 * np.log10((cs[st + w] - cs[st]) / w + 1e-15)
+
+
+def storm_sections(sc):
+    """{cue id: [(t0, t1)]} of every storm cue without its deliberately hushed close (Seg.hush)."""
+    out = {}
+    for c in sc.cues:
+        if c.mood == "storm":
+            out[c.id] = [(s_.t0, s_.t1) for s_ in c.segs if not s_.hush]
+    return out
+
+
+def handoff_steps(mono, sr, sc, boundaries, win=HANDOFF_WIN, hop=0.05):
+    """Largest level step between adjacent `win` windows around each boundary (t, span after it).
+    Steps within 0.3 s of a 'hit' sync (an intended attack) are not counted.
+    Returns [(t boundary, label, step dB, at s)]."""
+    cs = np.concatenate([[0.0], np.cumsum(mono ** 2)])
+    n = int(win * sr)
+    hits = np.array([actual for _, _, _, actual, kind in sc.syncs if kind == "hit"] or [-99.0])
+
+    def lvl(t):
+        a = int(t * sr)
+        if a < 0 or a + n > len(mono):
+            return float("nan")
+        return 10 * np.log10((cs[a + n] - cs[a]) / n + 1e-12)
+
+    out = []
+    for t0, span, label in boundaries:
+        best = (0.0, t0)
+        for t in np.arange(t0 - win, t0 + span, hop):
+            if np.abs(hits - t).min() <= 0.3:
+                continue
+            d = lvl(t) - lvl(t - win)
+            if np.isfinite(d) and abs(d) > abs(best[0]):
+                best = (d, t)
+        out.append((t0, label, best[0], best[1]))
+    return out
 
 # Hit points the v2 score must place, defined by the narration text: (scene, phrase, mode, kind)
 #   mode 'line'   = start of the utterance containing the phrase
@@ -449,6 +586,8 @@ REQUIRED_HITS = [
     ("s02_call", "你起来", "gap", "change"),                  # God speaks: the choir enters
     ("s04_storm", "大浪一个接着一个", "gap", "hit"),           # storm peak
     ("s06_lots", "抽中的正是约拿", "phrase", "hit"),           # the lot falls on Jonah
+    ("s08_row", "海浪越翻越高", "end", "hit"),                 # the waves win (crash after the line)
+    ("s09_overboard", "海就平静了", "gap", "hit"),             # splash, in the pause before the calm
     ("s09_overboard", "海就平静了", "line", "change"),         # sudden calm
     ("s10_swallow", "安排好了一条大鱼", "gap", "hit"),         # the great-fish motif
     ("s10_swallow", "一口就把约拿吞了下去", "phrase", "hit"),   # gulp
@@ -463,6 +602,8 @@ REQUIRED_HITS = [
     ("s21_vine", "一夜之间", "phrase", "hit"),                 # the plant grows
     ("s21_vine", "非常非常高兴", "gap", "hit"),                # happy waltz
     ("s22_worm", "小虫子", "phrase", "hit"),                   # the little worm
+    ("s22_worm", "咬了蓖麻", "phrase", "hit"),                 # the worm bites
+    ("s22_worm", "我气极了", "end", "hit"),                    # Jonah's last stubborn stomp
     ("s24_end", "连我们不喜欢的人", "end", "hit"),              # final cadence
 ]
 
@@ -504,10 +645,6 @@ def required_hits(sc, timeline, tol=0.05):
                  if cid == sid and k == kind and abs(actual - target) <= tol]
         out.append((sid, ph, mode, kind, target, min(cands, key=lambda x: abs(x[0] - target)) if cands else None))
     return out
-
-
-def rows_db(rows):
-    return [(c.id, r) for c, r in rows]
 
 
 def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
@@ -569,11 +706,13 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     w("")
 
     # ---------------------------------------------------------------- per-scene levels
-    w("PER-SCENE LEVELS (cue window = scene start -> next scene start; 'speech' = while a line is spoken)")
-    w(f"{'scene':14s} {'mood':8s} {'start':>7s} {'len':>6s} {'RMS dB':>7s} {'peak dB':>8s} "
-      f"{'speech RMS':>10s} {'gap RMS':>8s} {'L-R dB':>7s} {'onsets/s speech':>16s} {'gaps':>6s}")
+    w("PER-SCENE LEVELS (cue window = scene start -> next scene start; 'speech' = while a line is spoken;")
+    w("LUFS = gated integrated K-weighted loudness of the cue; ST max = its loudest 3 s window, short-term LUFS)")
+    w(f"{'scene':14s} {'mood':8s} {'start':>7s} {'len':>6s} {'LUFS':>6s} {'ST max':>7s} {'at':>7s} {'RMS dB':>7s} "
+      f"{'peak dB':>8s} {'speech RMS':>10s} {'gap RMS':>8s} {'L-R dB':>7s} {'onsets/s speech':>16s} {'gaps':>6s}")
     speech = sc.speaking(np.arange(len(x)) / sr)
-    rows = []
+    st_t, st_l = short_term(k_weighted_power(x, sr), sr)
+    lufs, st_max = {}, {}
     for c in sc.cues:
         a, b = int(c.t0 * sr), int(c.t1 * sr)
         seg = mono[a:b]
@@ -583,35 +722,67 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
         rg = _rms_db(seg[~sp]) if (~sp).sum() > sr * 0.3 else float("nan")
         lr = _rms_db(x[a:b, 0]) - _rms_db(x[a:b, 1])
         ds, dg = onset_density(sc, c)
-        rows.append((c, r))
-        w(f"{c.id:14s} {c.mood:8s} {c.t0:7.2f} {c.dur:6.2f} {r:7.1f} {20 * np.log10(np.abs(x[a:b]).max()):8.1f} "
+        lufs[c.id] = integrated_lufs(x[a:b], sr)
+        k = (st_t >= c.t0) & (st_t < c.t1)
+        j = int(np.argmax(np.where(k, st_l, -np.inf)))
+        st_max[c.id] = (float(st_l[j]), float(st_t[j])) if k.any() else (float("nan"), c.t0)
+        w(f"{c.id:14s} {c.mood:8s} {c.t0:7.2f} {c.dur:6.2f} {lufs[c.id]:6.1f} {st_max[c.id][0]:7.1f} "
+          f"{st_max[c.id][1]:7.1f} {r:7.1f} {20 * np.log10(np.abs(x[a:b]).max()):8.1f} "
           f"{rs:10.1f} {rg:8.1f} {lr:7.1f} {ds:16.1f} {dg:6.1f}")
     w("")
-    loud_c = max(rows, key=lambda r: r[1])[0]
-    quiet_c = min(rows, key=lambda r: r[1])[0]
-    med = float(np.median([r for _, r in rows]))
-    storm_r = max((r for c, r in rows if c.mood == "storm"), default=float("nan"))
-    seg_rms = {sg_.label: _rms_db(mono[int(sg_.t0 * sr):int(sg_.t1 * sr)]) for c in sc.cues for sg_ in c.segs}
-    quiet_seg = min(seg_rms, key=seg_rms.get)
-    w(f"loudest cue: {loud_c.id} ({loud_c.mood}), quietest cue: {quiet_c.id} ({quiet_c.mood}), quietest segment: "
-      f"{quiet_seg} ({seg_rms[quiet_seg]:.1f} dB); median cue RMS {med:.1f} dB, loudest storm cue {storm_r:.1f} dB = "
-      f"median {storm_r - med:+.1f} dB; end-question segment {seg_rms.get('end-question', float('nan')):.1f} dB")
-    checks.append(("a storm cue (s04 storm or s08 rowing) is the loudest cue", loud_c.mood == "storm",
-                   f"{loud_c.id} {dict(rows_db(rows))[loud_c.id]:.1f} dB"))
-    checks.append(("belly (or the end's open question) is the quietest", quiet_c.mood == "belly"
+    by_id = {c.id: c for c in sc.cues}
+    med = float(np.nanmedian(list(lufs.values())))
+    loud_c = by_id[max(lufs, key=lambda k_: lufs[k_])]
+    quiet_c = by_id[min(lufs, key=lambda k_: lufs[k_])]
+    seg_lufs = {sg_.label: integrated_lufs(x[int(sg_.t0 * sr):int(sg_.t1 * sr)], sr) for c in sc.cues for sg_ in c.segs}
+    seg_lufs = {k_: v for k_, v in seg_lufs.items() if np.isfinite(v)}
+    quiet_seg = min(seg_lufs, key=seg_lufs.get)
+    sections = storm_sections(sc)
+    sec_lufs = {cid: integrated_lufs(np.concatenate([x[int(a_ * sr):int(b_ * sr)] for a_, b_ in iv]), sr)
+                for cid, iv in sections.items()}
+    others = {cid: v for cid, v in lufs.items() if by_id[cid].mood != "storm"}
+    top_other = max(others, key=others.get) if others else None
+    w(f"loudest cue: {loud_c.id} ({loud_c.mood}) {lufs[loud_c.id]:.1f} LUFS, quietest cue: {quiet_c.id} ({quiet_c.mood}) "
+      f"{lufs[quiet_c.id]:.1f} LUFS, quietest segment: {quiet_seg} ({seg_lufs[quiet_seg]:.1f} LUFS); median cue "
+      f"{med:.1f} LUFS; loudest non-storm cue {top_other} {others.get(top_other, float('nan')):.1f} LUFS")
+    lead = {cid: v - others[top_other] for cid, v in sec_lufs.items()} if others else {}
+    for cid, v in sec_lufs.items():
+        w(f"storm section {cid} (without its hushed close): {v:.1f} LUFS = median {v - med:+.1f} LU, loudest non-storm "
+          f"cue {lead[cid]:+.1f} LU")
+    checks.append(("a storm cue (s04 storm or s08 rowing) is the loudest cue (integrated LUFS)", loud_c.mood == "storm",
+                   f"{loud_c.id} {lufs[loud_c.id]:.1f} LUFS"))
+    checks.append((f"every storm section (hushed close excluded) >= {STORM_LEAD} LU above every non-storm cue",
+                   bool(lead) and min(lead.values()) >= STORM_LEAD,
+                   ", ".join(f"{cid} {v:+.1f} LU vs {top_other}" for cid, v in lead.items())))
+    storm_st = max((st_max[cid] for cid in sections), default=(float("nan"), 0.0))
+    other_st = max(((v, cid) for cid, v in st_max.items() if by_id[cid].mood != "storm"),
+                   default=((float("nan"), 0.0), ""))
+    w(f"loudest 3 s: storm {storm_st[0]:.1f} LUFS at {storm_st[1]:.1f} s; loudest other cue {other_st[1]} "
+      f"{other_st[0][0]:.1f} LUFS at {other_st[0][1]:.1f} s")
+    checks.append((f"the storm's loudest 3 s beat every other cue's loudest 3 s by >= {STORM_ST_LEAD} LU (finale included)",
+                   storm_st[0] - other_st[0][0] >= STORM_ST_LEAD,
+                   f"storm {storm_st[0]:.1f} at {storm_st[1]:.1f} s vs {other_st[1]} {other_st[0][0]:.1f} at "
+                   f"{other_st[0][1]:.1f} s ({storm_st[0] - other_st[0][0]:+.1f} LU)"))
+    checks.append(("belly (or the end's open question) is the quietest (LUFS)", quiet_c.mood == "belly"
                    or quiet_seg == "end-question", f"quietest cue {quiet_c.id}, quietest segment {quiet_seg}"))
-    checks.append((f"storm no more than {STORM_OVER_MEDIAN:.0f} dB above the median cue",
-                   storm_r - med <= STORM_OVER_MEDIAN, f"{storm_r - med:+.1f} dB"))
-    # hand-offs: level 1 s before vs 1 s after every scene start (inside the cross-dissolve)
-    jumps = []
-    for c in sc.cues[1:]:
-        a = int(c.t0 * sr)
-        jumps.append((c.id, _rms_db(mono[a:a + sr]) - _rms_db(mono[max(0, a - sr):a])))
-    big = [f"{cid} {d:+.1f}" for cid, d in jumps if abs(d) > HANDOFF_DB]
-    w("HAND-OFFS (RMS of the 1 s after each scene start minus the 1 s before, dB): "
-      + ", ".join(f"{cid[:3]} {d:+.1f}" for cid, d in jumps))
-    checks.append((f"smooth hand-offs (level step at every scene start within +-{HANDOFF_DB:.0f} dB)", not big,
-                   ", ".join(big) or f"max {max(abs(d) for _, d in jumps):.1f} dB"))
+    worst_storm = max(sec_lufs.values(), default=float("nan"))
+    checks.append((f"storm no more than {STORM_OVER_MEDIAN:.0f} LU above the median cue",
+                   worst_storm - med <= STORM_OVER_MEDIAN, f"{worst_storm - med:+.1f} LU"))
+    if "storm-peak" in seg_lufs:
+        checks.append((f"storm-peak segment no more than {STORM_PEAK_OVER_MEDIAN:.0f} LU above the median cue",
+                       seg_lufs["storm-peak"] - med <= STORM_PEAK_OVER_MEDIAN, f"{seg_lufs['storm-peak'] - med:+.1f} LU"))
+    # hand-offs and entrances: adjacent 250 ms windows across every scene start (through the 1 s
+    # dissolve) and every segment start
+    bounds = ([(c.t0, 1.25, c.id) for c in sc.cues[1:]]
+              + [(sg_.t0, 0.5, sg_.label) for c in sc.cues for sg_ in c.segs[1:]])
+    steps = handoff_steps(mono, sr, sc, bounds)
+    big = [f"{lbl} {d:+.1f} dB at {at:.2f} s" for t0, lbl, d, at in steps if abs(d) > HANDOFF_DB]
+    w(f"HAND-OFFS (largest step between adjacent {int(HANDOFF_WIN * 1000)} ms windows at each scene start, through the "
+      f"dissolve, and at each segment start; steps within 0.3 s of an attack sync excluded):")
+    w("  " + ", ".join(f"{lbl[:16]} {d:+.1f}" for t0, lbl, d, at in steps))
+    checks.append((f"smooth hand-offs and entrances (no step > {HANDOFF_DB:.0f} dB between adjacent "
+                   f"{int(HANDOFF_WIN * 1000)} ms windows)", not big,
+                   ", ".join(big) or f"max {max(abs(d) for _, _, d, _ in steps):.1f} dB"))
     gaps = []
     hop = int(0.05 * sr)
     env = np.sqrt(np.convolve(mono ** 2, np.ones(hop) / hop, "same"))[::hop]
@@ -651,22 +822,29 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     # ---------------------------------------------------------------- speech-to-music ratio in the mix
     smr = line_smr(timeline, x, sr, Path(wav_path).parent / "voice.wav")
     w(f"SPEECH-TO-MUSIC RATIO per line (simulated mix.py: music -> -27 LUFS, ducked 7 dB under speech; "
-      f"active-speech frames; FAIL below {SMR_MIN:.0f} dB broadband)")
+      f"active-speech frames; FAIL below {SMR_MIN:.0f} dB broadband or {SMR_BAND_MIN:.0f} dB in 1-4 kHz)")
     if smr is None:
         w("  SKIPPED: build/audio/voice.wav not found")
         checks.append(("speech-to-music ratio >= 15 dB on every line", None, "voice.wav missing"))
     else:
         w(f"  {'scene':12s} {'line':>4s} {'SMR':>6s} {'1-4kHz':>7s} {'worst 200ms':>11s}  text")
-        fails = []
+        fails, fails_b = [], []
         for sid, i, text, r, rb, rw in smr:
             flag = "  FAIL" if r < SMR_MIN else ""
             if flag:
                 fails.append(f"{sid} L{i} {r:.1f}")
+            if rb < SMR_BAND_MIN:
+                fails_b.append(f"{sid} L{i} {rb:.1f}")
+                flag += "  FAIL(1-4k)"
             w(f"  {sid:12s} {i:4d} {r:6.1f} {rb:7.1f} {rw:11.1f}  {text}{flag}")
         vals = [r for *_, r, rb, rw in smr]
-        w(f"  min {min(vals):.1f} dB, median {np.median(vals):.1f} dB")
+        vb = [rb for *_, r, rb, rw in smr]
+        w(f"  min {min(vals):.1f} dB, median {np.median(vals):.1f} dB; 1-4 kHz min {min(vb):.1f} dB, median "
+          f"{np.median(vb):.1f} dB")
         checks.append((f"speech-to-music ratio >= {SMR_MIN:.0f} dB on every line", not fails,
                        f"min {min(vals):.1f} dB" + (f"; fails {fails}" if fails else "")))
+        checks.append((f"speech-to-music ratio in the 1-4 kHz band >= {SMR_BAND_MIN:.0f} dB on every line", not fails_b,
+                       f"min {min(vb):.1f} dB" + (f"; fails {fails_b}" if fails_b else "")))
     w("")
 
     # ---------------------------------------------------------------- spectral balance
@@ -694,9 +872,6 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
             if sg_.label == "worm-heat":
                 checks.append(("worm-heat audible (RMS >= -33 dB) and not shrill (2.5-6k share < -10 dB)",
                                _rms_db(seg) >= -33 and vals[3] < -10, f"RMS {_rms_db(seg):.1f} dB, 2.5-6k {vals[3]:.1f} dB"))
-            if sg_.label == "storm-peak":
-                checks.append((f"storm-peak segment no more than {STORM_PEAK_OVER_MEDIAN:.0f} dB above the median cue",
-                               _rms_db(seg) - med <= STORM_PEAK_OVER_MEDIAN, f"{_rms_db(seg) - med:+.1f} dB"))
     # the biggest short-term jump: loudest 400 ms window vs the film's median 400 ms level
     win, hop_ = int(0.4 * sr), int(0.05 * sr)
     cs = np.concatenate([[0.0], np.cumsum(mono ** 2)])

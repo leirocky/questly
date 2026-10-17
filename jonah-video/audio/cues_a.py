@@ -1,5 +1,5 @@
 """Cues s01-s04: title, the call, the flight, the storm."""
-from audio.scorelib import (broken, bassline, drum, fill, roll, timp_roll, tops)
+from audio.scorelib import broken, drum, fill, roll, timp_roll
 from audio.theory import midi
 
 # The Jonah theme (D major, 6/8): b1-b8
@@ -9,6 +9,7 @@ THEME = ["F#5:1 E5:1/2 D5:1 A4:1/2", "B4:1 D5:1/2 G5:1 F#5:1/2", "E5:3/2 C#5:1 D
 
 def title(c):
     """Jonah theme b1-b2: music box over harp and soft strings (D major, 6/8)."""
+    c.gain(-0.6)                    # the film's dynamic arc: every cue but the storm sits below it
     s = c.seg(0, c.dur, 2, "6/8", "D major", nominal=80, label="title")
     s.duck(1.0)
     s.prog("D:3 | G:3")
@@ -16,8 +17,8 @@ def title(c):
     s.mel("celesta", "F#5:1 E5:1/2 D5:1 A4:1/2 | B4:1 D5:1/2 G5:1 F#5:1/2", vel=56)
     broken(s, "harp", 0, 6, (0, 2, 4, 6, 4, 2), 38, 49, vel=46)
     s.pad(["vla", "vln2", "vln2"], 3, 54, 69, bass_part="vc", bass_lo=38, bass_hi=50, vel=50)
-    s.expr(["vla", "vln2", "vc"], [(0, -16), (1.5, -9), (6, -8)])
-    s.expr(["mbox", "celesta", "harp"], [(0, -6), (6, -7)])
+    s.expr(["vla", "vln2", "vc"], [(0, -19), (1.5, -12), (6, -11)])
+    s.expr(["mbox", "celesta", "harp"], [(0, -9), (6, -10)])
 
 
 def shimmer(c, t0, t1, label):
@@ -67,6 +68,7 @@ def god_voice(c, t0, t1, bars, label, second=False):
 def call(c):
     """Theme b3-b7 under the opening lines, shimmer for 'God said to Jonah:', God's voice, and a
     first, distant glimpse of Nineveh (D hijaz) for 'far to the east... Israel's enemy'."""
+    c.gain(-0.7)
     tS = c.gap(c.find("上帝对约拿说"))
     i_g = c.find("你起来")
     tG = c.gap(i_g)
@@ -86,15 +88,16 @@ def call(c):
     # far to the east: Nineveh's own colour (D hijaz), oboe over a D pedal and a distant drum
     e = c.seg(tE, c.dur, 2, "4/4", "D hijaz", nominal=72, rit=0.1, label="call-east")
     e.prog("D:2 Gm/D:2 | Eb:2 D:2")                         # bII - I: the hijaz cadence
+    e.duck(1.5)
     e.mel("oboe", "A4:1 Bb4:1/2 A4:1/2 G4:1 F#4:1 | G4:1 Bb4:1/2 G4:1/2 F#4:2", vel=60)
     e.pad(["vla", "vln2"], 2, 50, 66, vel=44, bass_ref=(38, 50))
     e.mel("cb", "D2:4 | Eb2:2 D2:2", vel=48, role="bass")
     e.mel("vc", "D3:4 | Eb3:2 D3:2", vel=44, role="bass")
-    for q, v in ((0, 58), (2, 46), (4, 56), (6, 44)):
+    for q, v in ((0, 52), (2, 40), (4, 50), (6, 38)):
         drum(e, q, 45, v)
     e.add("bsn", 7.5, 0.5, "A2", 58, "melody", "s")           # anacrusis into the flight
     e.expr(["vla", "vln2", "vc", "cb"], [(0, -8), (8, -9)])
-    e.expr("oboe", [(0, -6), (8, -7)])
+    e.expr("oboe", [(0, -9), (8, -10)])
 
 
 def _run_figure(seg, bar, sym, part, octv, vel):
@@ -122,6 +125,7 @@ def _pizz_bars(seg, syms, q0=0, vel_lo=64, vel_cb=70, vel_hi=46):
 
 
 def flee(c):
+    c.gain(-1.2)
     tW = c.gap(c.find("为什么不想去"))
     tJ = c.gap(c.find("约帕城"))
     tS = c.gap(c.find("付了船钱"))
@@ -143,7 +147,7 @@ def flee(c):
     w.mel("pz_hi", "r:1 [D4,F4,Bb4]:1/2 r:1/2 r:1 [D4,F4,Bb4]:1/2 r:1/2 | r:1 [D4,G4,Bb4]:1/2 r:1/2 "
                    "r:1 [D4,G4,Bb4]:1/2 r:1/2 | r:1 [D4,E4,A4]:1/2 r:1/2 r:1 [C#4,E4,A4]:1/2 r:1/2",
           vel=44, role="harmony")
-    w.mel("clar", "r:2 F4:1/2 G4:1/2 A4:1/2 Bb4:1/2 | D5:1 r:1 Bb4:1/2 A4:1/2 G4:1 | r:1 A4:1/2 D5:1/2 E5:1 r:1",
+    w.mel("clar", "r:2 F4:1/2 G4:1/2 A4:1/2 Bb4:1/2 | D5:1 r:1 Bb4:1/2 A4:1/2 G4:1 | r:1 A4:1/2 D5:1/2 E5:2",
           vel=60)
     w.expr(["pz_lo", "pz_hi"], [(0, -6), (12, -6)])
     w.expr("clar", [(0, -7), (12, -6)])
@@ -178,7 +182,7 @@ def flee(c):
     s.mel("clar", "A4:1/2 B4:1/2 C#5:1/2 D5:1/2 E5:1/2 F5:1/2 G5:1/2 A5:1/2:a", q=8, vel=56)
     s.expr(["vla", "vln2", "vln1"], [(0, -12), (8, -12)])
     s.expr(["harp", "pz_lo", "pz_cb"], [(0, -5), (12, -5)])
-    s.expr(["bsn", "clar"], [(8, -6), (12, -5)])
+    s.expr(["bsn", "clar"], [(8, -9), (12, -7)])
 
 
 def _rolling(seg, vel, q0=0.0, q1=None, accent=8):
@@ -207,8 +211,9 @@ def storm(c):
     s2 = c.seg(t_hit, t_cargo, 5, "4/4", "D minor", nominal=168, label="storm-peak")
     s3 = c.seg(t_cargo, t_sleep, 7, "4/4", "D minor", nominal=166, label="storm-cargo")
     s4 = c.seg(t_sleep, c.dur, 4, "4/4", "D minor", nominal=112, rit=0.2, label="storm-sleep")
+    s4.hush = True
     for seg in (s1, s2, s3):
-        seg.duck(2.0)
+        seg.duck(3.0)               # well below the words; the storm roars in the pauses
     s1.prog("Dm:4 | Dm:4 | Bb:4 | Bb:4 | Gm:4 | Gm/Bb:2 A:2@D-harmonic")
     s2.prog("Dm:4 | Bb:4 | Gm:2 A:2@D-harmonic | Dm:2 A7:2@D-harmonic | Dm:2 A/C#:2@D-harmonic")
     s3.prog("Dm:4 | Bb:4 | Gm:2 A:2@D-harmonic | Dm:4 | Bb:2 C:2 | Dm:2 Gm:2 | A:4@D-harmonic")
@@ -247,15 +252,15 @@ def storm(c):
             s3.add("okit", q, 1, 36, 70, "perc")
             s3.add("timp", q, 1, "D2" if q != 16 else "Bb2", 70, "timp")
     # timpani: hit on the storm downbeat, rolls that crescendo into the pauses
-    s1.add("timp", 0, 1, "D2", 80, "timp", "h")             # answers the flight's run
+    s1.add("timp", 0, 1, "D2", 72, "timp", "h")             # answers the flight's run
     timp_roll(s1, 1, 8, midi("D2"), 34, 46)
     timp_roll(s1, 8, 16, midi("D2"), 40, 50)
     timp_roll(s1, 16, 22, midi("D2"), 46, 60)
     timp_roll(s1, 22, 23.75, midi("A2"), 60, 78)
-    s2.add("timp", 0, 1, "D2", 88, "timp", "h")
+    s2.add("timp", 0, 1, "D2", 80, "timp", "h")
     timp_roll(s2, 1, 8, midi("D2"), 40, 50)
     s2.mel("timp", "G2:1 r:1 A2:1 r:1 | D2:1 r:1 A2:1 r:1 | D2:1 r:1 A2:1 A2:1", q=8, vel=56, role="timp")
-    s3.add("timp", 0, 1, "D2", 84, "timp", "h")
+    s3.add("timp", 0, 1, "D2", 68, "timp", "h")
     timp_roll(s3, 24, 27.75, midi("A2"), 48, 70)
     timp_roll(s4, 0, 10, midi("D2"), 40, 20)
     s2.add("okit", 0, 1, 36, 74, "perc", "h")           # concert bass drum on the peak
@@ -265,13 +270,15 @@ def storm(c):
     s4.mel("clar", "F4:3/2 E4:1/2 D4:3/2 A3:1/2 | D4:4 | r:4 | r:4", vel=56)
     s4.mel("bsn", "r:4 | r:4 | r:2 D3:2 | Bb2:2 A2:2", vel=50)
     # dynamics: build under line 0 -> surge in the pause -> sfz hit, subito piano under line 1
-    # -> surge + horn call in the pause -> receding under line 2 -> swell -> hush
+    # -> surge + horn call in the pause -> receding under line 2 -> swell -> hush.  The storm is the
+    # loudest music of the film (music_check), so its surges are near full level.
     loud = ("trem_hi", "trem_va", "vc_fast", "cb_fast", "tbn", "tuba", "horn", "brass", "timp")
     for p in loud:
         brass = p in ("tbn", "tuba", "horn", "brass")
-        s1.expr(p, [(0, -7), (max(0.5, q_ls0 - 0.9), -7), (q_ls0, -14), (max(q_ls0 + 1, q_le0 - 0.3), -10),
-                    (24, -4)])
-        s2.expr(p, [(0, 0), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -7)])
-        s3.expr(p, [(0, -7), (max(0.5, q_ls2 - 0.2), -7), (q_ls2 + 0.8, -14 if brass else -12),
-                    (max(q_ls2 + 1, q_le2 - 0.3), -14 if brass else -12), (min(27.9, q_le2 + 1.2), -6), (28, -6)])
-    s4.expr(["trem_lo", "trem_va", "cb", "clar", "bsn", "timp"], [(0, -5), (16, -7)])
+        s1.expr(p, [(0, -8), (max(0.5, q_ls0 - 0.9), -8), (q_ls0, -14), (max(q_ls0 + 1, q_le0 - 0.3), -10),
+                    (24, -3)])
+        s2.expr(p, [(0, -1), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -5)])
+        s3.expr(p, [(0, -5), (max(0.5, q_ls2 - 0.2), -6), (q_ls2 + 0.8, -14 if brass else -12),
+                    (max(q_ls2 + 1, q_le2 - 0.3), -14 if brass else -12), (min(27.9, q_le2 + 1.2), -4), (28, -4)])
+    # Jonah asleep in the hold: a real hush after the cargo swell
+    s4.expr(["trem_lo", "trem_va", "cb", "clar", "bsn", "timp"], [(0, -9), (16, -11)])

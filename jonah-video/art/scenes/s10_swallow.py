@@ -7,13 +7,18 @@ reef rocks rise into view a little faster than the rest (parallax).
 
   line 0  '约拿往下沉，一直往下沉。'  Jonah sinks slowly and dreamily through the light shafts, a trickle of
           bubbles rising from him; jellyfish and a little school of fish drift by.
-  line 1  '可是，上帝早就为约拿安排好了一条大鱼。'  warm golden glints in the deep ('可是'); the great fish
-          rises out of the blue below, first a soft shadow, then clear and friendly (happy eye) by '大鱼'.
-          Jonah notices it (expression cut hidden by a squash-hop).
+  line 1  '可是，上帝早就为约拿安排好了一条大鱼。'  one soft warm-gold beam slants down from the surface past
+          Jonah into the deep ('可是'/'上帝'), with golden glints; the great fish rises diagonally out of the
+          blue at the lower left, first a dark shadow, then warming into view, clear and friendly (happy eye)
+          by '大鱼'. Jonah notices it (expression cut hidden by a squash-hop).
   line 2  '大鱼游过来，张开大嘴，' the fish swims up to Jonah, spots him (eye opens) and opens its mouth wide;
           '一口就把约拿吞了下去！' it lunges and gulps him (v1 hand-off: the moving Jonah is pulled into the
-          opening and replaced by a darkened copy clipped inside the closing mouth), wiggles happily, bubbles.
+          opening and replaced by a darkened copy clipped inside the closing mouth), wiggles happily, bubbles;
+          on '吞了下去' a little cartoon swallow-lump slides down its belly.
   tail    the happy fish glides on; the camera eases in on it (the next scene opens inside its belly).
+
+The camera pushes in gently while the mouth opens and eases back out with the glide. Key moments are placed
+with phrase_time() (chunk + character share), never with fixed times or fixed fractions of a line.
 
 Reuses the approved v1 underwater art / gulp mechanics from art/scenes_v1/s06_fish.py.
 """
@@ -51,6 +56,25 @@ UW_DEFS = V.UW_DEFS      # s6uwt (underwater tint), s6uwd (inside the mouth), s6
 
 def doc(body, defs=""):
     return S.svg_doc(body, defs=defs, w=W, h=H)
+
+
+PUNCT = set("，。！？、；：,.!?;:…“”‘’\"' ")
+
+
+def phrase_time(line, phrase):
+    """When the narrator reaches ``phrase``: the start of the subtitle chunk that contains it plus the phrase's
+    share of that chunk by character offset (punctuation not counted). Falls back to the whole line when no
+    chunk has it, so a re-generated voice with different chunking still gives a sensible time."""
+    for c in line.chunks:
+        if phrase in c.text:
+            txt, t0, t1 = c.text, c.start, c.end
+            break
+    else:
+        txt, t0, t1 = line.text, line.start, line.end
+    i = txt.index(phrase)
+    n = sum(ch not in PUNCT for ch in txt)
+    k = sum(ch not in PUNCT for ch in txt[:i])
+    return t0 + (t1 - t0) * k / max(1, n)
 
 
 def hermite(keys):
@@ -129,7 +153,11 @@ def far_plane():
                      f'opacity="0.5" transform="rotate({side * -30} {px + side * 22:.0f} {py:.0f})"/>')
     b += S.g(kelp, filter="wobble")
     b += f'<rect x="-20" y="1500" width="{W + 40}" height="{H - 1500 + 20}" fill="url(#s10haze)"/>'
-    # a far school of tiny fish (hazy silhouettes) in the open water
+    return doc(b, defs)
+
+
+def far_school():
+    """A far school of tiny fish (hazy silhouettes) in the open water — its own small drifting layer."""
     school = ""
     rng = np.random.default_rng(4)
     for i in range(16):
@@ -138,15 +166,20 @@ def far_plane():
         y = 1020 + 60 * math.sin(a) + rng.uniform(-14, 14)
         school += (f'<path d="M{x - 14:.0f},{y:.0f} q14,-9 28,0 q-14,9 -28,0 Z M{x - 13:.0f},{y:.0f} l-9,-6 l0,12 Z" '
                    f'fill="#5aa3bb" opacity="0.6"/>')
-    b += school
-    return doc(b, defs)
+    return doc(school)
+
+
+def surface_glow():
+    """The soft bright glow just below the sea surface (static background)."""
+    defs = S.lin_grad("s10glow", [(0, "#e8f7ee", 0.55), (0.4, "#d0efe8", 0.18), (1, "#d0efe8", 0)])
+    return doc(f'<rect x="-20" y="{WL - 30}" width="{W + 40}" height="360" fill="url(#s10glow)"/>', defs)
 
 
 def surface():
-    """The bright underside of the sea surface (a wavy 'mirror' ceiling) and the glow below it."""
-    defs = (S.lin_grad("s10mir", [(0, "#eef8ec"), (0.55, "#d3efe6"), (1, "#a8dcdc")]) +
-            S.lin_grad("s10glow", [(0, "#e8f7ee", 0.55), (0.4, "#d0efe8", 0.18), (1, "#d0efe8", 0)]))
-    b = f'<rect x="-20" y="{WL}" width="{W + 40}" height="330" fill="url(#s10glow)"/>'
+    """The bright underside of the sea surface (a wavy 'mirror' ceiling). It sits ABOVE the ship layer, so the
+    hull's straight clip edge is always tucked under the wavy, inked waterline (also while the hull bobs)."""
+    defs = S.lin_grad("s10mir", [(0, "#eef8ec"), (0.55, "#d3efe6"), (1, "#a8dcdc")])
+    b = ""
     # mirror: filled above a wavy line
     pts = []
     x = -60
@@ -201,18 +234,87 @@ def shafts(set_):
 SHIP_X, SHIP_S = 640, 0.8
 
 
+def _hull_top(x):      # the same hull curves as props._ship (ship-local, scale 1, facing right)
+    return -165 - 75 * (abs(x) / 480) ** 3.2
+
+
+def _hull_bot(x):
+    return 96 - 250 * (abs(x) / 490) ** 3.5
+
+
+def hull_underside():
+    """Planks of the hull's underside seen from below (ship-local markup, placed like props.ship): wet light
+    near the waterline darkening toward the keel, curved plank seams, a dark keel strip, two weed tufts."""
+    xs = [-480 + i * 20 for i in range(49)]
+    pts = [(x, _hull_top(x)) for x in xs] + [(503, -196), (494, -136), (466, -72), (418, -14), (340, 40), (200, 80),
+                                            (0, 96), (-200, 82), (-350, 42), (-430, -14), (-478, -80),
+                                            (-500, -146), (-505, -204)]
+    hull_d = S.smooth_path(pts, closed=True, tension=0.5)
+    wd = P["wood_dark"]
+    lit = S.mix(P["wood_light"], "#9fd6d6", 0.3)
+    deep = S.mix(S.shade(wd, -0.3), P["sea_deep"], 0.12)
+    defs = ('<linearGradient id="s10hullg" gradientUnits="userSpaceOnUse" x1="0" y1="-60" x2="0" y2="100">'
+            f'<stop offset="0" stop-color="{lit}"/><stop offset="0.35" stop-color="{S.mix(P["wood"], lit, 0.25)}"/>'
+            f'<stop offset="0.75" stop-color="{S.mix(wd, P["wood"], 0.3)}"/><stop offset="1" stop-color="{deep}"/>'
+            '</linearGradient>'
+            f'<clipPath id="s10hullc"><path d="{hull_d}"/></clipPath>')
+    inner = '<rect x="-560" y="-70" width="1120" height="200" fill="url(#s10hullg)"/>'
+    # curved plank seams following the keel line
+    for k in (0.3, 0.52, 0.72):
+        sp = [(x, -40 + (_hull_bot(x) + 40) * k) for x in range(-480, 481, 30)]
+        inner += S.path(S.smooth_path(sp, closed=False), stroke=False,
+                        extra=f'stroke="{S.shade(wd, -0.2)}" stroke-width="4" fill="none" stroke-linecap="round" '
+                              f'opacity="0.75"')
+        hl = [(x, y + 5) for x, y in sp]
+        inner += S.path(S.smooth_path(hl, closed=False), stroke=False,
+                        extra=f'stroke="{S.shade(lit, 0.3)}" stroke-width="3" fill="none" stroke-linecap="round" '
+                              f'opacity="0.35"')
+    # plank butt joints and trenails
+    rng = np.random.default_rng(8)
+    for k0, k1 in ((0.3, 0.52), (0.52, 0.72)):
+        for x in rng.uniform(-330, 330, 4):
+            y0, y1 = -40 + (_hull_bot(x) + 40) * k0, -40 + (_hull_bot(x) + 40) * k1
+            inner += (f'<path d="M{x:.0f},{y0 + 3:.0f} L{x + 3:.0f},{y1 - 3:.0f}" stroke="{S.shade(wd, -0.2)}" '
+                      f'stroke-width="3.5" opacity="0.6"/>')
+    for x in range(-300, 320, 75):
+        y = -40 + (_hull_bot(x) + 40) * 0.62
+        inner += f'<circle cx="{x}" cy="{y:.0f}" r="3.2" fill="{S.shade(wd, -0.3)}" opacity="0.7"/>'
+    # keel strip along the bottom
+    keel = [(x, _hull_bot(x) - 7) for x in range(-380, 381, 20)]
+    inner += S.path(S.smooth_path(keel, closed=False), stroke=False,
+                    extra=f'stroke="{S.shade(wd, -0.3)}" stroke-width="18" fill="none" stroke-linecap="round"')
+    # rippled light caught on the planks just under the waterline
+    inner += ('<path d="M-360,8 Q-180,22 0,14 Q180,6 360,16" stroke="#e9f7ef" stroke-width="10" fill="none" '
+              'stroke-linecap="round" opacity="0.28" filter="url(#soft)"/>')
+    b = f'<g clip-path="url(#s10hullc)">{inner}</g>' + S.path(hull_d, sw=4.5)
+    # two little weed tufts trailing from the keel
+    weed = S.mix(P["leaf_dark"], "#3a7f9c", 0.35)
+    for x0, lens in ((-150, (58, 40, 70)), (210, (44, 30))):
+        y0 = _hull_bot(x0) - 4
+        for k, ln in enumerate(lens):
+            wp = [(x0 + 9 * k - ln * 0.35 * (j / 5) ** 1.5 + 5 * math.sin(j * 1.25 + 2 * k), y0 + ln * j / 5)
+                  for j in range(6)]
+            b += S.path(S.smooth_path(wp, closed=False), stroke=False,
+                        extra=f'stroke="{weed}" stroke-width="{7 - k}" fill="none" stroke-linecap="round" '
+                              f'opacity="0.8"')
+    return defs, f'<g transform="translate({SHIP_X},{WL}) scale({-SHIP_S},{SHIP_S})">{b}</g>'
+
+
 def ship_hull():
-    """The ship's hull seen from below (bow left, sailing on west), veiled by the water; clipped at the surface."""
-    clip = f'<clipPath id="s10below"><rect x="-20" y="{WL - 4}" width="{W + 40}" height="400"/></clipPath>'
+    """The ship's hull seen from below (bow left, sailing on west), veiled by the water. Clipped well above the
+    waterline: the static mirror layer above it hides the cut behind the wavy, inked surface line."""
+    clip = f'<clipPath id="s10below"><rect x="-20" y="{WL - 40}" width="{W + 40}" height="400"/></clipPath>'
     veil = ('<filter id="s10veil"><feColorMatrix type="matrix" values="0 0 0 0 0.42  0 0 0 0 0.72  0 0 0 0 0.78  '
             '0 0 0 1 0"/></filter>')
-    ship = PR.ship(SHIP_X, WL, SHIP_S, -1, sail="torn", part="all")
+    hdefs, under = hull_underside()
+    ship = (PR.ship(SHIP_X, WL, SHIP_S, -1, sail="torn", part="back") + S.g(under, filter="wobble-fine") +
+            PR.ship(SHIP_X, WL, SHIP_S, -1, sail="torn", part="front"))
     b = (f'<g clip-path="url(#s10below)">{ship}'
          f'<g filter="url(#s10veil)" opacity="0.2">{ship}</g></g>')
     # soft light glinting along the wet keel
     b += (f'<path d="M{SHIP_X - 300},{WL + 40} Q{SHIP_X},{WL + 78} {SHIP_X + 330},{WL + 34}" stroke="#d9f2ee" '
           f'stroke-width="6" fill="none" stroke-linecap="round" opacity="0.35" filter="url(#soft)"/>')
-    return doc(b, clip + veil)
+    return doc(b, clip + veil + hdefs)
 
 
 def jelly(x, y, s, col, seed=0):
@@ -290,14 +392,82 @@ def jonah_markup(facing, expr, filt="s6uwt", c=JB, s=1.0, rot=0.0):
 
 def fish_silhouette(e, tl):
     """The fish filled flat with deep-water colour (overlay that fades as it rises out of the deep)."""
-    flt = ('<filter id="s10silh"><feColorMatrix type="matrix" values="0 0 0 0 0.13  0 0 0 0 0.37  0 0 0 0 0.51  '
-           '0 0 0 1 0"/></filter>')
+    # deep-water blue (sRGB #17425f), darker than the surrounding water: a shadow rising from the deep
+    flt = ('<filter id="s10silh" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" '
+           'values="0 0 0 0 0.09  0 0 0 0 0.26  0 0 0 0 0.37  0 0 0 1 0"/></filter>')
     return doc(f'<g filter="url(#s10silh)">{PR.fish(FX0, FY0, FSC, 1, mouth=0.0, eye=e, tail=tl)}</g>', flt)
 
 
 def fish_glow():
     defs = S.rad_grad("s10fglow", [(0, "#fff0c0", 0.55), (0.45, "#ffe8a8", 0.22), (1, "#ffe8a8", 0)])
     return doc(f'<ellipse cx="{FX0 + 60}" cy="{FY0 - 40}" rx="640" ry="440" fill="url(#s10fglow)"/>', defs)
+
+
+BEAM_TOP, BEAM_BOT = (1700.0, WL - 20.0), (470.0, 1600.0)   # God's light: from the surface down to the deep
+
+
+def gold_beam():
+    """God's providence as light (never a figure): one soft warm-gold beam slanting from the surface down past
+    Jonah to where the great fish rises, with a warm pool of light where it lands."""
+    (x0, y0), (x1, y1) = BEAM_TOP, BEAM_BOT
+    ln = math.hypot(x1 - x0, y1 - y0)
+    nx, ny = -(y1 - y0) / ln, (x1 - x0) / ln
+
+    def quad(w0, w1):
+        p = [(x0 + nx * w0, y0 + ny * w0), (x1 + nx * w1, y1 + ny * w1), (x1 - nx * w1, y1 - ny * w1),
+             (x0 - nx * w0, y0 - ny * w0)]
+        return "M" + " L".join(f"{x:.0f},{y:.0f}" for x, y in p) + " Z"
+
+    def grad(gid, col, stops):
+        s_ = "".join(f'<stop offset="{o}" stop-color="{col}" stop-opacity="{a}"/>' for o, a in stops)
+        return (f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="{x0:.0f}" y1="{y0:.0f}" '
+                f'x2="{x1:.0f}" y2="{y1:.0f}">{s_}</linearGradient>')
+
+    defs = (grad("s10bo", "#ffb040", [(0, 0.0), (0.1, 0.34), (0.7, 0.3), (1, 0.0)]) +
+            grad("s10bc", "#ffd880", [(0, 0.0), (0.08, 0.62), (0.65, 0.44), (1, 0.0)]) +
+            S.rad_grad("s10bpool", [(0, "#ffd77a", 0.4), (0.5, "#ffd77a", 0.16), (1, "#ffd77a", 0)]) +
+            '<filter id="s10bblur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="26"/>'
+            '</filter><filter id="s10bblur2" x="-30%" y="-30%" width="160%" height="160%">'
+            '<feGaussianBlur stdDeviation="10"/></filter>')
+    b = (f'<path d="{quad(120, 330)}" fill="url(#s10bo)" filter="url(#s10bblur)"/>'
+         f'<path d="{quad(36, 120)}" fill="url(#s10bc)" filter="url(#s10bblur2)"/>'
+         f'<ellipse cx="{x1 + 120:.0f}" cy="{y1 - 120:.0f}" rx="520" ry="300" fill="url(#s10bpool)"/>')
+    return doc(b, defs)
+
+
+BELLY = ([-292.0, -110.0, 60.0, 178.0], [232.0, 292.0, 306.0, 297.0])   # fish-local belly contour (props._fish)
+LUMP_X0, LUMP_X1 = 120.0, -125.0      # the swallow-lump slides from behind the gill to the middle of the belly
+LUMP_A, LUMP_H = 80.0, 44.0           # its half-width and depth (fish-local px)
+
+
+def belly_y(x):
+    return float(np.interp(x, *BELLY))
+
+
+def lump_pivot():
+    return FX0 + LUMP_X0 * FSC, FY0 + belly_y(LUMP_X0) * FSC
+
+
+def belly_slope(x):
+    """Tilt (deg) of the belly contour under a lump centred at x."""
+    return math.degrees(math.atan2(belly_y(x + LUMP_A) - belly_y(x - LUMP_A), 2 * LUMP_A))
+
+
+def swallow_lump():
+    """A little cartoon swallow-lump bulging out of the fish's belly (fish-local markup at LUMP_X0, placed like
+    the fish). Its top edge sits on the belly contour, so scaling it vertically about lump_pivot() grows it."""
+    xc, a, h = LUMP_X0, LUMP_A, LUMP_H
+    yc = belly_y(xc)
+    pl, pr = (xc - a, belly_y(xc - a)), (xc + a, belly_y(xc + a))
+    arc = [pl, (xc - 0.72 * a, yc + 0.7 * h), (xc - 0.3 * a, yc + 0.97 * h), (xc + 0.3 * a, yc + 0.97 * h),
+           (xc + 0.72 * a, yc + 0.7 * h), pr]
+    inside = [(xc + 0.8 * a, yc - 16), (xc, yc - 22), (xc - 0.8 * a, yc - 16)]
+    belly = P["fish_belly"]
+    body = S.path(S.smooth_path(arc + inside, closed=True), fill=belly, stroke=False)
+    body += (f'<ellipse cx="{xc - 10:.0f}" cy="{yc + 10:.0f}" rx="46" ry="14" fill="{S.shade(belly, 0.55)}" '
+             f'opacity="0.8"/>')
+    body += S.path(S.smooth_path(arc, closed=False), sw=4.5)
+    return doc(S.g(f'<g transform="translate({FX0},{FY0}) scale({FSC})">{body}</g>', filter="wobble-fine"))
 
 
 # ============================================================================ effects
@@ -359,31 +529,36 @@ def build(ctx):
     sc = Scene(ctx, W=W, H=H)
     T = ctx.duration
     L0, L1, L2 = ctx.lines[0], ctx.lines[1], ctx.lines[2]
-    chA, chB = L2.chunks[0], L2.chunks[-1]
 
-    # ---- timing (all from the narration)
-    t_glint = L1.start + 0.1                       # '可是' — warm glints in the deep
-    t_f0 = L1.at("上帝") - 0.3                      # the fish starts rising out of the deep
+    # ---- timing (all from the narration; phrases placed by chunk + character share, order clamped)
+    t_glint = L1.start + 0.1                       # '可是' — God's warm light begins
+    t_god = phrase_time(L1, "上帝")
+    t_f0 = t_god - 0.3                             # the fish rises out of the deep
     t_f1 = L1.end - 0.1                            # ...fully revealed by '一条大鱼'
-    t_haze0, t_haze1 = t_f0 + 1.0, L1.end - 0.4
+    t_haze0, t_haze1 = t_f0 + 0.9, L1.end - 0.5
     t_notice = L1.end - 0.9                        # Jonah notices the fish (expression cut)
-    t_spot = chA.start - 0.05                      # the fish spots Jonah (happy eye -> open eye)
-    t_swim0 = chA.start                            # '大鱼游过来' — swims up to him
-    t_open0 = chA.start + 0.47 * (chA.end - chA.start)   # '张开大嘴'
+    t_swim0 = L2.start                             # '大鱼游过来' — swims up to him
+    t_spot = t_swim0 - 0.05                        # the fish spots Jonah (happy eye -> open eye)
+    t_open0 = max(phrase_time(L2, "张开大嘴") - 0.1, t_swim0 + 0.6)
     t_open1 = t_open0 + 0.85
     t_swim1 = t_open1 - 0.1
-    t_surge0 = chB.start + 0.08                    # '一口就把约拿吞了下去'
+    t_surge0 = max(phrase_time(L2, "一口") + 0.08, t_open1 + 0.3)
     t_surge1 = t_surge0 + 0.28
     t_close0, t_close1 = t_surge1, t_surge1 + 0.18
-    t_gulp = t_close0 + 0.06
+    t_tun = max(phrase_time(L2, "吞了下去"), t_close1 + 0.45)   # the swallow-lump slides down the belly
+    LUMP_DUR = 0.55
 
     def bump(t, ts, w=0.07):
         return max(0.0, 1 - abs(t - ts - 0.03) / w)
 
-    # ---- camera: sinks with Jonah (continuous velocity), then eases in on the fish
-    cam_y = hermite([(0.0, 520, 62), (4.2, 800, 75), (9.0, 1270, 70), (11.4, 1365, 22), (T, 1440, 12)])
-    cam_w = hermite([(0.0, 1720, 0), (4.2, 1780, 30), (9.0, 2040, 0), (12.2, 1960, -14), (T, 1860, -28)])
-    cam_x = hermite([(0.0, 1060, 0), (9.0, 1056, 0), (12.2, 1075, 6), (T, 1090, 0)])
+    # ---- camera: sinks with Jonah (continuous velocity) and a little ahead of him, so the deep below is in
+    # view when the fish rises; pushes in gently while the mouth opens; eases back out with the glide
+    cam_y = hermite([(0.0, 520, 62), (4.2, 805, 95), (6.4, 1040, 100), (9.0, 1285, 56), (t_open0 - 0.4, 1348, 14),
+                     (t_surge0, 1352, 0), (T, 1420, 10)])
+    cam_w = hermite([(0.0, 1720, 0), (4.2, 1785, 45), (6.4, 1930, 50), (9.0, 2040, 0), (t_open0 - 0.4, 2010, -35),
+                     (t_surge0, 1815, 0), (t_close1 + 1.4, 1910, 24), (T, 1890, -12)])
+    cam_x = hermite([(0.0, 1060, 0), (9.0, 1056, 0), (t_open0 - 0.4, 1072, 28), (t_surge0, 1150, 0),
+                     (t_close1 + 1.4, 1115, -10), (T, 1100, 0)])
 
     def camera(t):
         return Cam(cam_x(t), cam_y(t), cam_w(t))
@@ -391,25 +566,40 @@ def build(ctx):
     cy1 = cam_y(T)
 
     # ---------------------------------------------------------------- far / mid planes
-    # far plane, surface and the steady light shafts are static: they flatten into one background item
+    # far plane, surface glow and the steady light shafts are static: they flatten into one background item
     sc.add("far", far_plane(), z=0, wc=0.8)
-    sc.add("surface", surface(), z=1, wc=0.6)
+    sc.add("glow", surface_glow(), z=1, wc=0)
     sc.add("shafts_a", shafts(0), z=1.5, wc=0)
+    sc.add("far_school", far_school(), z=1.7, wc=0.6,
+           motion=M.combine(M.drift(vx=10, vy=-2), M.bob(6, 3.7), M.bob(4, 5.3, 0.3, axis="x")))
     sc.add("ripples", ripple_lights(), z=2, wc=0,
            motion=lambda t: Tf(dx=34 * math.sin(2 * math.pi * t / 3.1), alpha=0.8 + 0.2 * math.sin(t * 1.7)))
     sc.add("ship", ship_hull(), z=3, wc=0.7,
            motion=lambda t: Tf(dx=-16 * t, dy=3 * math.sin(2 * math.pi * t / 2.8), rot=0.6 * math.sin(2 * math.pi * t / 3.6),
                                px=SHIP_X, py=WL))
+    # the bright surface 'mirror' over the hull: its wavy inked edge hides the hull's clip line
+    sc.add("surface", surface(), z=3.5, wc=0.6)
     sc.add("shafts_b", shafts(1), z=5, wc=0,
            motion=lambda t: Tf(dx=-14 * math.sin(2 * math.pi * t / 7.0),
                                alpha=0.6 + 0.4 * math.sin(2 * math.pi * t / 4.6 + 2.0)))
 
-    # jellyfish drifting up gently, pulsing (squash on each push)
+    # God's providence: one warm-gold beam from the surface down past Jonah to where the fish rises
+    def beam_a(t):
+        return (progress(t, L1.start, t_god + 0.8, "sine") * (1 - progress(t, t_open0 - 1.0, t_open0, "sine"))
+                * (0.88 + 0.12 * math.sin(2 * math.pi * t / 2.3)))
+    sc.add("beam", gold_beam(), z=5.5, wc=0,
+           motion=lambda t: Tf(rot=0.5 * math.sin(2 * math.pi * t / 6.5), alpha=beam_a(t), px=BEAM_TOP[0],
+                               py=BEAM_TOP[1]))
+
+    # jellyfish drifting up gently, pulsing (squash on each push). One wrapped counter for the pulse, so the
+    # rise is continuous (no jump when the phase wraps).
     def jelly_m(x, y, period, phase, rise):
         def m(t):
-            u = (t / period + phase) % 1.0
+            v = t / period + phase
+            n = math.floor(v)
+            u = v - n
             push = math.sin(math.pi * min(1.0, u / 0.35)) if u < 0.35 else 0.0
-            return Tf(dx=8 * math.sin(t * 0.7 + phase * 6), dy=-rise * t - 10 * (t // period + min(1.0, u / 0.35)),
+            return Tf(dx=8 * math.sin(t * 0.7 + phase * 6), dy=-rise * t - 10 * (n + min(1.0, u / 0.35)),
                       sx=1 + 0.07 * push, sy=1 - 0.09 * push, px=x, py=y)
         return m
 
@@ -435,7 +625,7 @@ def build(ctx):
                     PR.small_fish(1770, 1100, 0.5, -1, "yellow", tail=-tl) +
                     PR.small_fish(1830, 1030, 0.55, -1, "blue", tail=-tl) +
                     PR.small_fish(1890, 1080, 0.45, -1, "yellow", tail=tl)) for tl in (0.7, -0.7)]
-    t_c = chB.start + 0.9      # little fish come back once all is calm again
+    t_c = t_surge0 + 0.8       # little fish come back once all is calm again
     sc.add("school_c", school_c, z=8.5,
            motion=M.combine(lambda t: Tf(dx=480 - 400 * progress(t, t_c, T, "out"),
                                          dy=-30 * progress(t, t_c, T, "out")),
@@ -460,19 +650,22 @@ def build(ctx):
         k = 2.6 if t < t_close1 + 1.0 else 1.4
         return 18 + WAG[int(t * k * 8) % 8]
 
-    # key poses of the fish anchor (stage px), scale factor and tilt (negative = head up)
-    P_DEEP, S_DEEP, R_DEEP = (400.0, 1800.0), 0.66, -18.0
+    # key poses of the fish anchor (stage px), scale factor and tilt (negative = head up). It comes up
+    # diagonally out of the blue at the lower left (always moving: the rise path is a Hermite curve that starts
+    # brisk and settles, extrapolated off-screen before t_f0, so there is no velocity jump on screen).
+    P_DEEP, S_DEEP, R_DEEP = (60.0, 1500.0), 0.66, -13.0
     P_MID, S_MID, R_MID = (650.0, 1460.0), 0.9, -9.0
     P_WAIT, R_WAIT = (FX0, FY0), -14.0
     SURGE = 190.0
+    rise = hermite([(t_f0, 0.0, 1.5 / (t_f1 - t_f0)), (t_f1, 1.0, 0.0)])
 
     def fish_m(t):
-        u1 = progress(t, t_f0, t_f1, "sine")
+        u1 = max(-0.7, rise(t))
         u2 = progress(t, t_swim0, t_swim1, "inout")
         x = lerp(P_DEEP[0], P_MID[0], u1) + (P_WAIT[0] - P_MID[0]) * u2
         y = lerp(P_DEEP[1], P_MID[1], u1) + (P_WAIT[1] - P_MID[1]) * u2
-        s = lerp(S_DEEP, S_MID, u1) + (1.0 - S_MID) * u2
-        rot = lerp(R_DEEP, R_MID, u1) + (R_WAIT - R_MID) * u2
+        s = lerp(S_DEEP, S_MID, max(0.0, u1)) + (1.0 - S_MID) * u2
+        rot = lerp(R_DEEP, R_MID, max(0.0, u1)) + (R_WAIT - R_MID) * u2
         # lunge along its heading, then glide on and level out after the gulp
         us = progress(t, t_surge0, t_surge1, "out")
         hx, hy = math.cos(math.radians(R_WAIT)), math.sin(math.radians(R_WAIT))
@@ -492,6 +685,10 @@ def build(ctx):
             sy += 0.04 * w * math.sin(2 * math.pi * 2.4 * (t - t_close1) + 1.2)
             sx -= 0.02 * w * math.sin(2 * math.pi * 2.4 * (t - t_close1) + 1.2)
             y += -14 * w * abs(math.sin(2 * math.pi * 1.2 * (t - t_close1)))
+        if t_tun < t < t_tun + LUMP_DUR:   # a tiny squash as the lump goes down
+            q = math.sin(math.pi * (t - t_tun) / LUMP_DUR)
+            sy -= 0.025 * q
+            sx += 0.015 * q
         return Tf(dx=x - FX0, dy=y - FY0, rot=rot, sx=sx, sy=sy, px=FX0, py=FY0)
 
     def fish_pt(t, lx, ly):
@@ -516,10 +713,11 @@ def build(ctx):
     def haze(t):
         return 0.82 * (1 - progress(t, t_haze0, t_haze1, "sine"))
 
+    # warm glow round the fish: only once it has come out of the dark (so the rising shadow stays dark)
     sc.add("fish_glow", fish_glow(), z=29, wc=0, blend="screen",
            motion=lambda t: Tf(dx=fish_m(t).dx, dy=fish_m(t).dy,
                                alpha=progress(t, t_glint, t_f1, "sine") * (1 - progress(t, t_open0, t_surge0, "sine"))
-                               * (0.85 + 0.15 * math.sin(2 * math.pi * t / 1.9))))
+                               * (1 - haze(t) / 0.82) * (0.85 + 0.15 * math.sin(2 * math.pi * t / 1.9))))
     sc.add("fish_back", [fish_back_doc(i, m, e, tl) for i, (m, e, tl) in enumerate(frames)],
            z=30, motion=fish_m, frame_at=fish_idx)
 
@@ -559,7 +757,24 @@ def build(ctx):
            z=31, motion=jonah_m, frame_at=jonah_idx)
     sc.add("fish_front", [doc(PR.fish(FX0, FY0, FSC, 1, mouth=m, eye=e, tail=tl, part="front"))
                           for m, e, tl in frames], z=32, motion=fish_m, frame_at=fish_idx)
-    # rising out of the deep: a flat water-coloured silhouette over the fish that fades away
+
+    # '吞了下去': a little swallow-lump slides from behind the gill to the middle of the belly
+    pv = lump_pivot()
+
+    def lump_m(t):
+        u = (t - t_tun) / LUMP_DUR
+        if not 0.0 < u < 1.0:
+            return Tf(alpha=0.0)
+        g = math.sin(math.pi * u) ** 0.85
+        xl = lerp(LUMP_X0, LUMP_X1, progress(u, 0.0, 1.0, "sine"))
+        tx, ty = fish_pt(t, xl, belly_y(xl))
+        f = fish_m(t)
+        rot = f.rot + belly_slope(xl) - belly_slope(LUMP_X0)     # follows the curve of the belly
+        return Tf(dx=tx - pv[0], dy=ty - pv[1], rot=rot, sx=f.sx, sy=f.sy * max(0.02, g),
+                  alpha=min(1.0, 3 * g), px=pv[0], py=pv[1])
+    sc.add("lump", swallow_lump(), z=32.5, motion=lump_m)
+
+    # rising out of the deep: a flat dark-water silhouette over the fish that fades away
     sc.add("fish_haze", [fish_silhouette("happy", frames[18 + k][2]) for k in range(5)], z=33, wc=0,
            motion=lambda t: replace(fish_m(t), alpha=haze(t)),
            frame_at=lambda t: float(min(4, max(0, fish_idx(t) - 18))))
@@ -588,9 +803,11 @@ def build(ctx):
 
     sc.fx = [
         FX.motes((0, WL + 40, W, H), count=55, color=(214, 242, 236), size=(3, 6), alpha=85, seed=17),
-        # God's providence: warm glints in the deep as the great fish rises
-        FX.sparkles((220, 1250, 1250, 1900), count=20, t0=t_glint, t1=t_open0 + 0.4,
-                    color=(255, 238, 180), size=(9, 19), period=1.5, drift=-14, seed=61),
+        # God's providence: warm golden glints along the beam and round the rising fish
+        FX.sparkles((560, 950, 1250, 1450), count=12, t0=t_glint, t1=t_open0, color=(255, 232, 160),
+                    size=(9, 17), period=1.7, drift=-10, seed=59),
+        FX.sparkles((150, 1250, 1100, 1750), count=26, t0=t_glint + 0.4, t1=t_open0 + 0.4,
+                    color=(255, 236, 170), size=(11, 23), period=1.5, drift=-14, seed=61),
         bubble_fx([
             (jonah_mouth, -2.0, t_surge0, 3.2, 115, (5, 13), 12, 200),
             (lambda t: jonah_path(t)[:2], -1.5, 2.2, 6.0, 140, (5, 15), 70, 190),
@@ -603,9 +820,16 @@ def build(ctx):
     sc.sfx("underwater", 0, dur=T + 0.8, gain_db=-12, fade_in=0.8, fade_out=0.9)
     sc.sfx("bubbles", 0, dur=L0.end + 0.6, gain_db=-16, pan=0.2, fade_in=0.6, fade_out=0.8)
     sc.sfx("chime", t_glint + 0.1, gain_db=-16)
-    sc.sfx("whoosh", t_f0 + 1.4, gain_db=-15, pan=-0.4)
-    sc.sfx("whoosh", t_swim0 + 0.15, gain_db=-11, pan=-0.2)
-    sc.sfx("gulp", t_gulp - 0.04, gain_db=-7)
+    sc.sfx("whoosh", t_f0 + 0.6, gain_db=-15, pan=-0.5)      # the dark shape sweeps up from the lower left
+    sc.sfx("whoosh", t_swim0 + 0.6, gain_db=-11, pan=-0.2)   # swish peaks (~0.26 s in) near the swim's top speed
+    sc.sfx("gulp", t_surge0 + 0.05, gain_db=-7)      # wet onset on the lunge, bloop / pop on the snap shut
     sc.sfx("bubbles", t_close1, dur=1.1, gain_db=-12, fade_out=0.5)
     sc.sfx("bubbles", t_close1 + 1.3, dur=1.6, gain_db=-18, pan=0.3, fade_in=0.4, fade_out=0.8)
+
+    # handles for offline checks (not used by the renderer)
+    sc.debug = dict(fish_m=fish_m, fish_pt=fish_pt, jonah_path=jonah_path, camera=camera, haze=haze,
+                    beam_a=beam_a, times=dict(t_f0=t_f0, t_f1=t_f1, t_haze0=t_haze0, t_haze1=t_haze1,
+                                              t_notice=t_notice, t_swim0=t_swim0, t_open0=t_open0,
+                                              t_open1=t_open1, t_surge0=t_surge0, t_close0=t_close0,
+                                              t_close1=t_close1, t_tun=t_tun))
     return sc

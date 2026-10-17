@@ -97,6 +97,11 @@ class Chord:
             need = list(self.pcs)
         self.need = frozenset(need)
         self.third = self.pcs[1] if ivs[1] in (3, 4) else None
+        # the chord seventh that wants to resolve down by step (dominant / minor / half-diminished /
+        # diminished sevenths; a major seventh is colour and stays free)
+        self.seventh = self.pcs[2] if self.quality in ("7", "m7", "m7b5", "dim7", "7sus4") else None
+        if self.quality in ("m7b5", "dim7"):
+            self.seventh = self.pcs[3]
 
     def tones(self, lo, hi):
         return [p for p in range(lo, hi + 1) if p % 12 in self.pcset]
@@ -113,10 +118,10 @@ class Chord:
 
 
 # ----------------------------------------------------------------------------- voice-leading
-def _candidates(ch, n, lo, hi, bass_pc=None, max_gap=12, top=None):
+def _candidates(ch, n, lo, hi, bass_pc=None, max_gap=12, top=None, avoid=frozenset()):
     pitches = [p for p in range(lo, hi + 1) if p % 12 in ch.upper]
-    root_third = frozenset(x for x in (ch.pcs[0], ch.third) if x is not None)
-    for gap, need in ((max_gap, ch.need), (max_gap + 7, ch.need), (max_gap + 7, root_third)):
+    root_third = frozenset(x for x in (ch.pcs[0], ch.third) if x is not None) - avoid
+    for gap, need in ((max_gap, ch.need - avoid), (max_gap + 7, ch.need - avoid), (max_gap + 7, root_third)):
         out = []
         for combo in itertools.combinations(pitches, n):
             if top is not None and combo[-1] != top:
@@ -134,10 +139,16 @@ def _candidates(ch, n, lo, hi, bass_pc=None, max_gap=12, top=None):
     return []
 
 
-def _static_cost(V, ch, center, bass):
-    """V: (K, n) candidate voicings.  Lower is better."""
+DOUBLED_TENDENCY_COST = 15.0
+
+
+def _static_cost(V, ch, center, bass, avoid=frozenset()):
+    """V: (K, n) candidate voicings.  Lower is better.  avoid: tendency tones (a seventh, a
+    dominant's leading tone) that another line already sounds -- doubling them is penalised."""
     K, n = V.shape
     cost = np.abs(V.mean(axis=1) - center) * 0.12
+    for pc_ in avoid:
+        cost += (V % 12 == pc_).sum(axis=1) * DOUBLED_TENDENCY_COST
     full = np.concatenate([np.full((K, 1), bass), V], axis=1) if bass is not None else V
     m = full.shape[1]
     for i in range(m):
@@ -173,6 +184,29 @@ def _trans_cost(A, B, bass_a, bass_b):
     return cost
 
 
+RESOLVE_COST = 20.0
+
+
+def _resolution_cost(A, B, ch_a, ch_b):
+    """Tendency tones at a change of chord (Ka, Kb):
+    * a voice on the seventh of a seventh chord holds it (when the next chord keeps it) or steps
+      down by a semitone or tone (V7 -> I: G4 -> F#4 over A7 -> D);
+    * at a dominant -> tonic change (V or V7 a fifth above the next root) the top voice on the
+      leading tone rises to the tonic."""
+    cost = np.zeros((len(A), len(B)))
+    if ch_a is None or ch_b is None or ch_a.root == ch_b.root:
+        return cost
+    d = B[None, :, :] - A[:, None, :]
+    if ch_a.seventh is not None:
+        has = (A % 12 == ch_a.seventh)[:, None, :]
+        ok = (d == 0) & (ch_a.seventh in ch_b.pcset) | (d == -1) | (d == -2)
+        cost += (has & ~ok).sum(axis=2) * RESOLVE_COST
+    if ch_a.quality in ("", "7") and (ch_a.root + 5) % 12 == ch_b.root and ch_a.third == (ch_b.root - 1) % 12:
+        top = (A[:, -1] % 12 == ch_a.third)[:, None]
+        cost += np.where(top & (d[:, :, -1] != 1), RESOLVE_COST, 0.0)
+    return cost
+
+
 def _guide_cost(A, B, guides):
     """Parallel P5/P8 (similar motion) between candidate voices and guide lines at one chord change.
 
@@ -191,7 +225,7 @@ def _guide_cost(A, B, guides):
 
 
 def voice_lead(chords, n, lo, hi, basses=None, center=None, prev=None, tops=None, max_gap=12, prev_bass=None,
-               guides=None):
+               guides=None, prev_chord=None, avoid=None):
     """Choose smooth voicings (Viterbi) for a chord sequence.
 
     chords  list of Chord
@@ -199,6 +233,10 @@ def voice_lead(chords, n, lo, hi, basses=None, center=None, prev=None, tops=None
     basses  optional list of bass pitches (part of coverage and parallel checks)
     prev    optional voicing that precedes the sequence (for continuity)
     prev_bass  bass pitch under prev (parallels against the bass are then checked at the join)
+    prev_chord the chord under prev (sevenths and leading tones then resolve across the join too)
+    avoid   optional list (one per chord) of pitch classes another line already sounds there that
+            must not be doubled (a seventh, a dominant's leading tone): they become optional and
+            cost DOUBLED_TENDENCY_COST per voice
     guides  optional list (one per chord) of [(before, at, fifths_only)]: other lines (melody,
             counter-melody, basses, other pads) that move at that chord change; the voicing avoids
             parallel fifths/octaves with them (fifths only for doubling pads)
@@ -207,14 +245,16 @@ def voice_lead(chords, n, lo, hi, basses=None, center=None, prev=None, tops=None
     center = center if center is not None else (lo + hi) / 2
     basses = basses or [None] * len(chords)
     tops = tops or [None] * len(chords)
+    avoid = avoid or [frozenset()] * len(chords)
     cands, costs = [], []
-    for ch, b, tp in zip(chords, basses, tops):
-        c = _candidates(ch, n, lo, hi, None if b is None else b % 12, max_gap, tp)
+    for ch, b, tp, av in zip(chords, basses, tops, avoid):
+        av = frozenset(av) - ({b % 12} if b is not None else set())
+        c = _candidates(ch, n, lo, hi, None if b is None else b % 12, max_gap, tp, av)
         if not c:
             raise ValueError(f"no voicing for {ch.sym} n={n} in {lo}..{hi}")
         V = np.array(c)
         cands.append(V)
-        costs.append(_static_cost(V, ch, center, b))
+        costs.append(_static_cost(V, ch, center, b, av))
     score = costs[0].copy()
     guides = guides or [[] for _ in chords]
     if prev is not None:
@@ -222,9 +262,11 @@ def voice_lead(chords, n, lo, hi, basses=None, center=None, prev=None, tops=None
         pb = prev_bass if (prev_bass is not None and basses[0] is not None) else None
         score += _trans_cost(P, cands[0], pb, basses[0] if pb is not None else None)[0]
         score += _guide_cost(P, cands[0], guides[0])[0]
+        score += _resolution_cost(P, cands[0], prev_chord, chords[0])[0]
     back = []
     for k in range(1, len(chords)):
         tc = _trans_cost(cands[k - 1], cands[k], basses[k - 1], basses[k])
+        tc = tc + _resolution_cost(cands[k - 1], cands[k], chords[k - 1], chords[k])
         if guides[k]:
             tc = tc + _guide_cost(cands[k - 1], cands[k], guides[k])
         tot = score[:, None] + tc

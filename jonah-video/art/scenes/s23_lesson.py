@@ -79,7 +79,8 @@ BPX, BPY, BPS = 2132, 424, 0.46     # memory castor root + scale
 TRAIL = [(2628, 396, 9), (2590, 372, 13), (2545, 346, 18)]
 
 # the dry leaf that falls into Jonah's hand
-TWIG = (2893, 392)       # where it hangs on the withered plant (a bare twig stub left of the stem)
+TWIG = (2902, 395)       # where its stalk hangs from the withered stem (left side, a little above his head)
+HANG_DIR = -58           # direction of the hanging stalk from the leaf centre (deg; up and to the right)
 
 _PUNCT = "，。！？：；、,.!?:;…"
 
@@ -230,7 +231,7 @@ def build(ctx):
         return _when(ctx, phrases if isinstance(phrases, (list, tuple)) else [phrases], default)
 
     # --- key times (all from the narration) ---------------------------------------------------------
-    l_first, l_last = L[0], L[-1]
+    l_first = L[0]
     t_still = 1.0                                             # the dissolve from s22: nothing starts before
     t_name = max(t_still + 0.12, l_first.start + 0.3)         # "约拿，" -> he looks up, listening (hop)
     t_plant = when("这棵蓖麻", l_first.start + 1.0)          # a dry leaf wobbles loose ...
@@ -262,9 +263,9 @@ def build(ctx):
     # camera
     t_pull0 = t_bout + 0.25
     t_pull1 = max(t_city + 1.7, t_pull0 + 3.6)                 # settled on the wide city
-    t_down0 = max(t_pull1 + 1.0, t_kids - 0.7)                 # glide down to the children
-    t_down1 = t_down0 + 2.6
-    t_go = max(t_down1 + 2.0, t_beasts - 1.7)                  # glide over the pasture and up to Jonah
+    t_down0 = max(t_pull1 + 0.9, t_many + 0.1)                 # glide down to the people and the children
+    t_down1 = max(t_down0 + 3.5, t_lr + 0.9)
+    t_go = max(t_down1 + 2.0, t_beasts - 2.0)                  # glide over the pasture and up to Jonah
     t_back = max(t_go + 4.6, t_care - 0.55)
     t_soft = max(t_back + 0.3, t_care - 0.1)                   # his face softens
     t_baa = t_beasts + 0.55
@@ -293,7 +294,7 @@ def build(ctx):
         S.cloud(980, 190, 360, 100, "#fdf0e0", seed=4, sw=3, shade_fill="#f2cdb6") +
         S.cloud(1820, 120, 300, 86, "#fdeedd", seed=6, sw=3, shade_fill="#f2cdb6") +
         S.cloud(150, 120, 260, 80, "#fdf0e0", seed=7, sw=3, shade_fill="#f2cdb6"), filter="wobble"))
-    sc.add("far_clouds", far_clouds, z=2, wc=0.6, motion=M.drift(-3.0))
+    sc.add("far_clouds", far_clouds, z=2, wc=0.6)
     cl_l = doc(S.g(S.cloud(XJ - 250, 230, 420, 116, "#fdf1e2", seed=11, sw=3.5, shade_fill="#f0c9b0") +
                    S.cloud(XJ - 560, 312, 220, 66, "#fdf1e2", seed=14, sw=3, shade_fill="#f0c9b0"), filter="wobble"))
     cl_r = doc(S.g(S.cloud(XJ + 410, 215, 460, 124, "#fdf1e2", seed=12, sw=3.5, shade_fill="#f0c9b0") +
@@ -503,7 +504,7 @@ def build(ctx):
     # two children tossing a ball (as v1)
     PB = 1.25
     BALL_H = 14
-    kidA, kidB = (930, 1200, 0, 1), (1190, 1215, 2, -1)
+    kidA, kidB = (962, 1200, 0, 1), (1222, 1215, 2, -1)
     catch_pts = []
     for i, (x, y, v, fc) in enumerate((kidA, kidB)):
         arrivals = [PB * (2 * k + i) for k in range(int(T / (2 * PB)) + 3)]
@@ -539,14 +540,15 @@ def build(ctx):
         x_, y_ = xa + (xb - xa) * v, ya + (yb - ya) * v - ARC * 4 * v * (1 - v)
         ball_zone.append(("ball", (x_ - 20, y_ - 20, x_ + 20, y_ + 20)))
 
-    # the two little ones who can't tell left from right: they point one way and the other ('?' over each),
-    # swapping sides on little hops; then they hop back, smiling
-    LR = [("lr_a", 690, 1242, 1, 1), ("lr_b", 792, 1234, 2, -1)]
+    # the two little ones who can't tell left from right: side by side they both point "this way!" (left),
+    # then hop and point "that way!" (right), back and forth, a '?' over each head; then they hop back to
+    # face each other, smiling
+    LR = [("lr_a", 690, 1262, 1, 1), ("lr_b", 822, 1254, 2, -1)]
     q_spots = []
     for j, (nm, x, y, v, fc) in enumerate(LR):
         hops = [(th + 0.12 * j, 0.36) for th in lr_hops] + [(t_lr_end + 0.12 * j, 0.42)]
-        # frames: 0 stand (happy, facing the other), 1 point outward, 2 point inward, 3 stand smiling
-        frames = [("stand", "happy", fc), ("point", "worried", -fc), ("point", "worried", fc), ("stand", "happy", fc)]
+        # frames: 0 stand (happy, facing the other), 1 point left, 2 point right, 3 stand smiling
+        frames = [("stand", "happy", fc), ("point", "worried", -1), ("point", "worried", 1), ("stand", "happy", fc)]
         cuts = [h[0] + 0.03 for h in hops]
 
         def lr_frame(t, cuts=cuts):
@@ -559,7 +561,7 @@ def build(ctx):
         s_ = person(nm, x, y, "child", v, frames=frames, frame_at=lr_frame,
                     motion=M.combine(hop_motion(x, y, hops, 15), breathe(x, y, 0.3 * j)), hops=hops, H=15)
         top = CH.body_points(CH.citizen, x, y, s_, fc, kind="child", variant=v, pose="stand")["head_top"]
-        q_spots.append((top[0] - 6 * fc, top[1] - 40, j))
+        q_spots.append((top[0], top[1] - 50, j))
 
     for (qx, qy, j) in q_spots:
         tq = t_q0 + 0.15 * j
@@ -638,7 +640,8 @@ def build(ctx):
     person("shepherd", 1940, 1180, "child", 0, facing=-1, frames=[("stand", "happy"), ("cheer", "happy")],
            frame_at=hop_frame(hops), motion=hop_motion(1940, 1180, hops, 14), s=0.56, hops=hops, H=14)
 
-    sc.add("ground_shadows", shdoc("".join(ground_sh)), z=5.9, wc=0.3)
+    # one static layer with every grounded figure's long shadow, flattened with the land (render cost)
+    sc.add("ground_shadows", shdoc("".join(ground_sh)), z=4.15, wc=0.3)
 
     bx, by = 1640 - 0.62 * 112, 1292 - 0.62 * 100
     sc.add("baa", doc(V._baa(bx, by, 0.9)), z=9, wc=0.3, motion=lambda t: Tf(
@@ -646,8 +649,9 @@ def build(ctx):
         sx=0.7 + 0.3 * M.progress(t, t_baa - 0.05, t_baa + 0.3, "out"),
         sy=0.7 + 0.3 * M.progress(t, t_baa - 0.05, t_baa + 0.3, "out"), px=bx, py=by))
 
+    # (no heart for man0: the woman walking to the gate passes right behind him)
     people = {"elder0", "elder1", "father0", "mother0", "girl0", "mother1", "father1", "child_g", "grandpa",
-              "mother2", "kid2", "kid3", "toddler", "kid0", "kid1", "kid4", "kid5", "man0", "woman0", "man1", "man2",
+              "mother2", "kid2", "kid3", "toddler", "kid0", "kid1", "kid4", "kid5", "woman0", "man1", "man2",
               "woman1"}
     beasts = {n for n, _, _ in FIGS if n.startswith(("sheep", "lamb", "goat", "cow", "donkey"))} | {"shepherd"}
     q_zone = [("q", (qx - 40, qy - 50, qx + 40, qy + 50)) for qx, qy, _ in q_spots]
@@ -698,7 +702,7 @@ def build(ctx):
     def blinks(t, times, a, b, d=0.13):
         return b if any(tb <= t < tb + d for tb in times) else a
 
-    t_look_leaf = t_catch - 0.08
+    t_look_leaf = t_catch - 0.45                     # his eyes follow the leaf into his hand
     leaf_blinks = [t_grow_line + 0.9, t_night1 + 1.25, t_dead + 0.2]
     hear_blinks = [t_name + 1.15]
     soft_blinks = [t_soft + 1.25]
@@ -769,7 +773,7 @@ def build(ctx):
     LCX, LCY = hand[0] - 58, hand[1] - 62
     SE = (hand[0] - 2, hand[1] + 4)                       # stalk end (in the hand)
     leaf = doc(V._dry_leaf(LCX, LCY, 50, rot=-30, stalk=SE))
-    HANG_ROT = -90 - math.degrees(math.atan2(SE[1] - LCY, SE[0] - LCX))   # turns the stalk straight up
+    HANG_ROT = HANG_DIR - math.degrees(math.atan2(SE[1] - LCY, SE[0] - LCX))   # turns the stalk up to the stem
 
     def held_tf(t):
         j = jonah_tf(t)
@@ -854,9 +858,10 @@ def build(ctx):
     clip = f'<clipPath id="bubin"><path d="{inner}"/></clipPath>'
 
     def bub_tf(t):
-        a = M.progress(t, t_bin, t_bin + 0.22, "sine") * (1 - M.progress(t, t_bout, t_bout + 0.45, "sine"))
+        # pops in out of the trail; at the end it shrinks back toward Jonah's head as it fades
+        a = M.progress(t, t_bin, t_bin + 0.22, "sine") * (1 - M.progress(t, t_bout + 0.1, t_bout + 0.5, "sine"))
         k = 0.25 + 0.75 * M.progress(t, t_bin, t_bin + 0.4, "back")
-        k *= 1 + 0.05 * M.progress(t, t_bout, t_bout + 0.45, "out")
+        k *= 1 - 0.6 * M.progress(t, t_bout, t_bout + 0.5, "in")
         bob = 4 * math.sin(2 * math.pi * (t - t_bin) / 2.7)
         return Tf(dy=bob, sx=k, sy=k, alpha=a, px=BUB_PIV[0], py=BUB_PIV[1])
 
@@ -897,7 +902,6 @@ def build(ctx):
     sc.add("bub_night", night, z=12.0, wc=0.5, motion=bub_tf)
     sc.add("bub_day", day, z=12.05, wc=0.5, motion=lambda t: (lambda b: Tf(
         b.dx, b.dy, b.rot, b.sx, b.sy, b.alpha * (1 - night_amt(t)), b.px, b.py))(bub_tf(t)))
-    MOON0 = (BC[0] - 133, BC[1] - 94)
 
     def moon_tf(t):
         b = bub_tf(t)
@@ -931,7 +935,7 @@ def build(ctx):
         sc.add(f"bub_trail{i}", pd, z=12.3, wc=0.3, motion=lambda t, ti=ti, tx=tx, ty=ty, i=i: Tf(
             dy=2.5 * math.sin(2 * math.pi * (t - ti) / 1.9 + i),
             sx=0.3 + 0.7 * M.progress(t, ti, ti + 0.22, "back"), sy=0.3 + 0.7 * M.progress(t, ti, ti + 0.22, "back"),
-            alpha=_env(t, ti, ti + 0.1, t_bout + 0.05 * i, t_bout + 0.35 + 0.05 * i), px=tx, py=ty))
+            alpha=_env(t, ti, ti + 0.1, t_bout + 0.3 + 0.08 * (2 - i), t_bout + 0.5 + 0.08 * (2 - i)), px=tx, py=ty))
 
     # =============================================================== DOVES
     def flock(name, birds, t0, t1, dx, dy, z, fade_in=0.4):
@@ -967,8 +971,8 @@ def build(ctx):
     Cb2 = Cam(2400, 440, 1470)
     Cw = Cam(1620, 850, 2420)           # held wide view: the whole city, the plain, the pasture, Jonah on his knoll
     Cw2 = Cam(1590, 862, 2390)
-    C1 = Cam(850, 1084, 1480)           # the children
-    C1b = Cam(960, 1078, 1470)
+    C1 = Cam(820, 1100, 1440)           # the children
+    C1b = Cam(920, 1092, 1430)
     C2 = Cam(1560, 1060, 1800)          # the animals
     C2b = Cam(1920, 780, 1780)          # rise while panning right, so Jonah enters from the side
     C3 = Cam(XJ - 20, 640, 1720)        # back up the knoll to Jonah
@@ -979,9 +983,9 @@ def build(ctx):
                               (t_bin + 0.3, t_pull0, [Cb, Cb2], 0.5),
                               (t_pull0, t_pull1, [Cb2, Cw], 0.3),
                               (t_pull1, t_down0, [Cw, Cw2], 0.5),
-                              (t_down0, t_down1, [Cw2, C1], 0.38),
+                              (t_down0, t_down1, [Cw2, C1], 0.32),
                               (t_down1, t_go, [C1, C1b], 0.5),
-                              (t_go, t_back, [C1b, C2, C2b, C3], 0.2),
+                              (t_go, t_back, [C1b, C2, C2b, C3], 0.18),
                               (t_back, T - 0.35, [C3, Cf], 0.5)]:
         fn, _, knots = _cam_path(cams)
         moves.append((ta, tb, fn, r, knots))
