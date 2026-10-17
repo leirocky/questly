@@ -9,6 +9,12 @@ import subprocess
 from engine.loader import load_timeline
 from engine.paths import BUILD, FPS, OUTPUT
 
+# Symmetric dip to black for "fadeblack": ffmpeg's built-in one spends only the first 20% of the
+# transition fading out, which reads as a snap. P runs 1 -> 0; 16/128 are limited-range black (Y/UV).
+DIP_BLACK = ("if(gt(P,0.5),"
+             "if(PLANE,128,16)+(A-if(PLANE,128,16))*(2*P-1),"
+             "if(PLANE,128,16)+(B-if(PLANE,128,16))*(1-2*P))")
+
 VIDEO_KBPS = 2200
 AUDIO_KBPS = 160
 
@@ -26,7 +32,8 @@ def master():
     for k in range(1, len(scenes)):
         tr = scenes[k].get("transition", "fade")
         lab = f"[v{k}]"
-        parts.append(f"{prev}[{k}:v]xfade=transition={tr}:duration={X}:offset={scenes[k]['start']:.4f}{lab}")
+        xf = f"xfade=transition=custom:expr='{DIP_BLACK}'" if tr == "fadeblack" else f"xfade=transition={tr}"
+        parts.append(f"{prev}[{k}:v]{xf}:duration={X}:offset={scenes[k]['start']:.4f}{lab}")
         prev = lab
     parts.append(f"{prev}fade=t=in:st=0:d=0.6,fade=t=out:st={total - 1.6:.3f}:d=1.6,format=yuv420p[vout]")
     out = BUILD / "master.mp4"

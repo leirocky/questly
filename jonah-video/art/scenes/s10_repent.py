@@ -5,9 +5,9 @@ The people and the king believe God, wear sackcloth and fast; God sees and has m
 Staging (one 2800 x 1575 stage, no cuts; the wide shot is the whole stage at ~0.69 output px per stage px):
   * line 0 — close on the king in his open palace portico, seated on his purple throne. A messenger (olive robe,
     long dark hair - deliberately NOT Jonah's cream head-cloth) tells him the news (sound arcs), then turns and
-    points out to the city. The king is startled, rises from his throne (squash, near-cut to standing right in
-    front of it, then a few bobbing steps forward) and takes off his tall crown. Through the portico we see the
-    city under a heavy grey cloud.
+    points out to the city. The king is startled, rises from his throne (squash, hard cut to a crouched
+    standing pose right in front of the seat that springs up, then a few bobbing steps forward) and takes off his
+    tall crown. Through the portico we see the city under a heavy grey cloud.
   * line 1 — "都穿上麻衣": the king turns to the throne; in a little cloth-swirl puff his purple robe becomes burlap
     sackcloth and the folded robe with the crown on top arcs out of his hands onto the throne seat (Jonah 3:6
     "laid his robe from him"). A heap of ashes appears and he sits down in it, head bowed. The messenger and the
@@ -48,7 +48,7 @@ DAIS_X1 = 1310
 KS = 1.15                  # king scale
 THRONE_X, THRONE_Y = 430, 1240
 SPOT_X, SPOT_Y = 770, 1258  # where the king stands, sits in ashes and kneels
-RISE_X = 600               # where he first stands up, just in front of the throne's footstool
+RISE_X = 530               # where he first stands up: right in front of the throne seat (rises in place)
 MSG_X, MSG_Y, MSG_S, MSG_V = 1180, 1262, 1.1, 2   # messenger: man variant 2 (olive robe, long dark hair)
 GAP_X = 1965               # where the grey cloud parts and the golden light breaks through
 BUNDLE_X, BUNDLE_Y = THRONE_X - 8, THRONE_Y - 74 * KS   # folded robe + crown resting on the throne cushion
@@ -626,7 +626,8 @@ def build(ctx):
     # ---- timing (all derived from the narration) ----
     t_surprise = l0.start + 0.45
     t_point = l0.start + 0.85
-    t_rise = l0.start + 1.25
+    # the rise is a hard cut: snap it to the middle of a frame interval so no frame shows both king drawings
+    t_rise = (math.floor((l0.start + 1.25) * ctx.fps) + 0.5) / ctx.fps
     t_crown = l0.start + 2.1
     t_sack = l1.start - 0.12          # "都穿上麻衣": robe off, sackcloth on
     t_turn = t_sack - 0.4             # he turns to the throne, crown in his hands
@@ -716,14 +717,15 @@ def build(ctx):
     sc.add("palace", palace_svg(), z=8.2)      # same static group as the city (flattened once)
     sc.add("throne", throne_svg(), z=8.3)
 
-    # king on the throne: leans forward and squashes (anticipation), then near-cuts to standing
+    # king on the throne: leans forward and squashes (anticipation), then hard-cuts (< 1 frame) to a crouched,
+    # forward-leaning standing king right in front of the seat, who springs up (see "king" below)
     pv_seat = (THRONE_X, THRONE_Y)
     seat = [doc(C.king(THRONE_X, THRONE_Y, KS, 1, pose="sit_throne", throne=False)),
             doc(C.king(THRONE_X, THRONE_Y, KS, 1, pose="sit_throne", throne=False, expr="surprised"))]
     sc.add("king_seat", seat, z=23, frame_at=sched([(0, 0), (t_surprise, 1, 0.25)]),
            motion=M.combine(
-               hop(t_rise, [(-0.24, {"sy": 1, "rot": 0, "alpha": 1}), (0, {"sy": 0.95, "rot": 3, "alpha": 1}),
-                            (CUT, {"sy": 0.95, "rot": 3, "alpha": 0})], pv_seat, ["inout", "linear"]),
+               hop(t_rise, [(-0.24, {"sy": 1, "rot": 0, "alpha": 1}), (0, {"sy": 0.94, "rot": 6, "alpha": 1}),
+                            (0.01, {"sy": 0.94, "rot": 6, "alpha": 0})], pv_seat, ["inout", "linear"]),
                M.breathe(0.008, 3.2, pivot=pv_seat)))
 
     # ashes (a heap grows just before he sits down in it)
@@ -751,10 +753,11 @@ def build(ctx):
     sc.add("king", king, z=25,
            frame_at=sched([(0, 0), (t_crown, 1), (t_turn, 2), (t_sack, 3), (t_sit, 4), (t_kjoy, 5)]),
            motion=M.combine(
-               M.keys([(t_rise, {"alpha": 0}), (t_rise + CUT, {"alpha": 1})], "linear", pivot=kp),
+               M.keys([(t_rise, {"alpha": 0}), (t_rise + 0.01, {"alpha": 1})], "linear", pivot=kp),
                M.keys([(t_w0, {"dx": RISE_X - SPOT_X}), (t_w0 + 4 * step, {"dx": 0})], "inout", pivot=kp),
                hop(t_w0, bob_keys, kp),
-               hop(t_rise, [(0, {"sy": 1.05}), (0.14, {"sy": 0.98}), (0.26, {"sy": 1.0})], kp),
+               hop(t_rise, [(0, {"sy": 0.9, "rot": 5}), (0.08, {"sy": 1.04, "rot": 0}), (0.18, {"sy": 0.99}),
+                            (0.28, {"sy": 1.0})], kp),
                hop(t_crown, [(-0.12, {"dy": 0, "sy": 1}), (0, {"dy": 10, "sy": 0.97}), (0.16, {"dy": -4, "sy": 1.01}),
                              (0.3, {"dy": 0, "sy": 1})], kp, ["in", "out", "sine"]),
                hop(t_turn, [(-0.1, {"dy": 0}), (0, {"dy": 6}), (0.2, {"dy": 0})], kp),
@@ -793,7 +796,7 @@ def build(ctx):
     ex, ey = kh[0] + 128, kh[1] + 44
     sc.add("wow", exclaim_svg(ex, ey, 1.2), z=27, wc=0,
            motion=M.keys([(t_surprise - 0.05, {"alpha": 0, "s": 0.4}), (t_surprise + 0.25, {"alpha": 1, "s": 1}),
-                          (t_rise - 0.1, {"alpha": 1}), (t_rise + 0.12, {"alpha": 0})],
+                          (t_rise - 0.12, {"alpha": 1}), (t_rise, {"alpha": 0})],
                          ["back", "linear", "sine"], pivot=(ex, ey)))
 
     # the messenger: tells the king, points to the city, then kneels in sackcloth too

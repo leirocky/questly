@@ -10,6 +10,9 @@ Line 3  The hull opens in cutaway and the camera holds the contrast (crew panick
         through '约拿却躺在船舱底下'; then it dives in: the outside darkens, the hold painting blooms outward from
         the hull opening, and on '呼呼大睡' we are in the warm lantern-lit hold where Jonah sleeps on grain sacks,
         breathing in time with the snore, 'Z z z' drifting up, rain and flickers still visible through the hatch.
+        As the line ends the picture dips to (warm) black, fully dark by the first frames of the cross-dissolve:
+        s05 opens on its own, slightly different drawing of this hold, and dissolving one into the other read as
+        double vision (two lanterns, two ladders, doubled jars). s05 now fades up out of the dark instead.
 
 Stage 2400 x 1350. Everything aboard shares one ship transform ``ship_tf(t)``; the hold is a separate
 full-resolution painting attached to the ship at scale K (its Jonah sits exactly on the cutaway's Jonah, its
@@ -512,6 +515,17 @@ def flash_fx(strikes, color=(236, 240, 255)):
     return fx
 
 
+def dip_fx(t0, t1, color=(20, 12, 8)):
+    """Fade the whole frame to a warm near-black between t0 and t1 and keep it dark until the scene ends."""
+    def fx(frame, t, view):
+        k = M.progress(t, t0, t1, "sine")
+        if k <= 0:
+            return frame
+        dark = Image.new("RGBA", frame.size, (*color, 255))
+        return dark if k >= 1 else Image.blend(frame, dark, k)
+    return fx
+
+
 def motes_fx(region_fn, count, t0, color=(255, 236, 190), seed=13):
     """Warm dust floating in the lantern light; region_fn(t) -> (x0, y0, x1, y1) in stage px."""
     rng = np.random.default_rng(seed)
@@ -773,6 +787,9 @@ def build(ctx):
     T_IN = T_REV[1]
     T_ZZZ = T_REV[0] + 0.3
     T_HATCH = [T_IN + 0.35, T_IN + 1.1]              # lightning still flickering through the hatch
+    # dip to black: dark by the 2nd frame of the 0.8 s cross-dissolve into s05 (s05 is then still < 5 % opaque),
+    # so s05's own drawing of the hold never shows on top of this one; the fade covers the end of '呼呼大睡'
+    T_BLACK = (max(T_DIVE1 + 0.15, T - 1.17), T - 0.77)
 
     # --------------------------------------------------- the ship's motion
     pitch_amp = keyf([(0, 3.0), (0.6, 3.5), (2.4, 7.5), (l1.start - 0.1, 10.5), (l1.end - 0.1, 10.5),
@@ -1311,8 +1328,9 @@ def build(ctx):
         return [view.to_out(*apply(st, x, y)) for x, y in ((ox0, oy0), (ox1, oy0), (ox1, oy1), (ox0, oy1))]
 
     sc.fx = [rain_fx(0.45, T_REV[0] + 0.35, density=0.85, angle=-16, hole=rain_hole), flash_fx(STRIKES),
-             motes_fx(hold_region, 24, T_IN - 0.3)]
+             motes_fx(hold_region, 24, T_IN - 0.3), dip_fx(*T_BLACK)]
     sc.meta = dict(STRIKES=STRIKES, rel=rel, splashes=[s[:3] for s in splashes], T_CUT=T_CUT, T_DIVE0=T_DIVE0,
+                   T_BLACK=T_BLACK,
                    T_DIVE1=T_DIVE1, T_REV=T_REV, T_IN=T_IN, T_HATCH=T_HATCH, T_CRASH=T_CRASH, T_TEAR=T_TEAR,
                    t_cull=t_cull, snore=(snore_at, snore_dur, peaks), H0=H0, ship_tf=ship_tf, place=place,
                    camera=camera, bolts=bolts)

@@ -17,7 +17,7 @@ from math import gcd
 
 import numpy as np
 import soundfile as sf
-from scipy import signal
+from scipy import ndimage, signal
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 import story  # noqa: E402
@@ -32,6 +32,7 @@ VOICES = {
 SCENE_FX = {("s07_belly", "J"): "cave"}
 
 TARGET_LUFS = -20.0  # per-clip loudness before the final mix
+_DC_SOS = signal.butter(2, 40, "highpass", fs=SR, output="sos")
 
 _engines = {}
 
@@ -140,18 +141,44 @@ def _reverb_ir(sr, seconds, decay, lowpass_hz, seed, predelay_s=0.0):
     return (ir / np.sqrt(np.sum(ir**2))).astype(np.float32)
 
 
+def _rbj(kind, sr, f0, gain_db, q=0.7071):
+    """RBJ audio-EQ-cookbook biquad coefficients (b, a) for a low shelf (S=1) or peaking filter."""
+    A = 10 ** (gain_db / 40)
+    w = 2 * np.pi * f0 / sr
+    cw, sw = np.cos(w), np.sin(w)
+    if kind == "lowshelf":
+        alpha = sw / 2 * np.sqrt(2)
+        k = 2 * np.sqrt(A) * alpha
+        b = [A * ((A + 1) - (A - 1) * cw + k), 2 * A * ((A - 1) - (A + 1) * cw), A * ((A + 1) - (A - 1) * cw - k)]
+        a = [(A + 1) + (A - 1) * cw + k, -2 * ((A - 1) + (A + 1) * cw), (A + 1) + (A - 1) * cw - k]
+    elif kind == "peak":
+        alpha = sw / (2 * q)
+        b = [1 + alpha * A, -2 * cw, 1 - alpha * A]
+        a = [1 + alpha / A, -2 * cw, 1 - alpha / A]
+    else:
+        raise ValueError(kind)
+    return np.array(b) / a[0], np.array(a) / a[0]
+
+
+def _biquad(y, ba):
+    return signal.lfilter(ba[0], ba[1], y)
+
+
 def apply_fx(x, sr, fx):
     """Return float32 mono with a gentle effect; tail is appended, so clips get longer."""
     if fx is None:
         return x
     if fx == "divine":
-        # Warm, softly echoing voice from heaven: low-shelf warmth + airy hall reverb.
+        # Softly echoing voice from heaven: airy hall reverb, with EQ that moves the deep
+        # voice's energy out of the bass so it stays clear on phone/tablet speakers.
         ir = _reverb_ir(sr, 1.8, 4.2, 5000, seed=7, predelay_s=0.035)
         wet = signal.fftconvolve(x, ir)[: len(x) + int(1.0 * sr)]
         dry = np.concatenate([x, np.zeros(len(wet) - len(x), np.float32)])
-        b, a = signal.butter(2, 220 / (sr / 2), "low")
-        warm = signal.lfilter(b, a, dry)
-        return (dry + 0.35 * warm + 0.17 * wet).astype(np.float32)
+        y = dry + 0.17 * wet
+        y = signal.sosfilt(signal.butter(2, 90, "highpass", fs=sr, output="sos"), y)
+        y = _biquad(y, _rbj("lowshelf", sr, 200, -6.0))
+        y = _biquad(y, _rbj("peak", sr, 2500, 2.0, q=1.0))
+        return y.astype(np.float32)
     if fx == "cave":
         # Inside the fish: muffled, boomy, short dense reverb.
         b, a = signal.butter(2, 4200 / (sr / 2), "low")
@@ -171,10 +198,13 @@ def loudness_normalize(x, sr, target=TARGET_LUFS):
     if not np.isfinite(lufs):
         return x
     y = x * 10 ** ((target - lufs) / 20)
-    peak = np.abs(y).max()
-    if peak > 0.89:
-        y *= 0.89 / peak
-    return y.astype(np.float32)
+    # 5 ms look-ahead peak limiter (instead of scaling the whole clip down for one peak),
+    # so every clip actually reaches its loudness target.
+    ceiling, look = 0.89, int(0.005 * sr)
+    g = np.minimum(1.0, ceiling / np.maximum(np.abs(y), 1e-9))
+    g = ndimage.minimum_filter1d(g, 2 * look + 1)
+    g = ndimage.uniform_filter1d(g, look)
+    return np.clip(y * g, -ceiling, ceiling).astype(np.float32)
 
 
 def frames(t):
@@ -201,6 +231,10 @@ def build():
             v = VOICES[spk]
             x, sr = synth_raw(text, v)
             x = resample(trim(x, sr), sr)
+            if v["engine"] == "kokoro":
+                # Kokoro output carries a syllable-rate DC offset (infrasonic pulse); remove it
+                # with a zero-phase 40 Hz high-pass that leaves the voice's warmth untouched.
+                x = signal.sosfiltfilt(_DC_SOS, x).astype(np.float32)
             speech_len = len(x) / SR
             fx = SCENE_FX.get((sc["id"], spk), v["fx"])
             x = loudness_normalize(apply_fx(x, SR, fx), SR, TARGET_LUFS + v["gain_db"])

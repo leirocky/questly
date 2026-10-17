@@ -36,7 +36,8 @@ HORIZON = 472
 SUN = (250, 118)
 FX0, FY0, FS = 560, 640, 0.9          # the great fish: anchor (body centre) and scale
 WATER_Y = 786                         # top of the near water band (in front of the fish's belly)
-LAND = (1440, 922)                    # Jonah's seat on the sand (sit anchor)
+LAND = (1284, 955)                    # Jonah's seat on the sand (sit anchor): at the end of the scene the camera
+                                      # frames his head where s09 opens with him standing (matched dissolve)
 JS = 0.98                             # Jonah's scale on the beach
 JS_MOUTH = 0.72                       # ... inside the fish's mouth (0.8 x the fish scale, props recipe)
 GULL0 = (1725, 878)                   # the standing gull's feet
@@ -198,7 +199,7 @@ def landscape():
                             f'opacity="0.4"')
     b += S.g(rip, filter="wobble")
     # shells, starfish, pebbles
-    b += S.g(_starfish(1650, 985, 30, "#f0956f", 12) + _starfish(1200, 960, 20, "#f2b06b", -20) +
+    b += S.g(_starfish(1650, 985, 30, "#f0956f", 12) + _starfish(1446, 992, 20, "#f2b06b", -20) +
              _shell(1880, 870, 18, "#f6d6c8") + _shell(1345, 1010, 14, "#f8e6cf") + _shell(2010, 1070, 20, "#f3cdbd") +
              _pebble(1530, 1040, 16) + _pebble(1556, 1050, 10) + _pebble(1600, 700, 12) + _pebble(1290, 870, 11) +
              _pebble(1700, 600, 7),
@@ -571,8 +572,9 @@ def light_pool():
 
 
 def sand_puff(side):
-    """A soft dusty sand cloudlet beside Jonah's seat (side -1 left / +1 right): no ink, sandy tint, blurred."""
-    x = LAND[0] + side * 105
+    """A soft dusty sand cloudlet beside Jonah's seat (side -1 left / +1 right): no ink, sandy tint, blurred.
+    The left one sits a little closer (the waterline is just beyond his feet)."""
+    x = LAND[0] + side * (105 if side > 0 else 85)
     tint, shade = "#f6e7c4", "#dcbd86"
     b = S.cloud(x, LAND[1] - 22, 112, 46, tint, seed=40 + side, puffs=4, sw=0, shade_fill=shade)
     b += S.cloud(x + side * 66, LAND[1] - 6, 66, 30, tint, seed=42 + side, puffs=3, sw=0, shade_fill=shade)
@@ -983,7 +985,8 @@ def build(ctx):
             e = 1 - (1 - u) ** 3
             s = lerp(0.35, 1.05, e) * big
             a = 0.55 * min(1.0, u * 8) * (1 - progress(u, 0.25, 1.0, "sine"))
-            return Tf(dx=side * 60 * e * big, dy=-24 * e, sx=s, sy=s, alpha=a, px=LAND[0] + side * 40, py=LAND[1])
+            return Tf(dx=side * (60 if side > 0 else 28) * e * big, dy=-24 * e, sx=s, sy=s, alpha=a,
+                      px=LAND[0] + side * 40, py=LAND[1])
         return m
     for i, (tc, big) in enumerate(((t_land, 1.0), (t_hop, 0.6))):
         for side in (-1, 1):
@@ -1032,11 +1035,14 @@ def build(ctx):
     sc.add("gull_stand", g_fr, z=18.5, motion=gull_tf, frame_at=gull_idx)
     sc.add("foreground", foreground(), z=19)
 
-    # ---- camera: wide while the fish acts (its face stays in frame through its turn), then a push toward
-    # Jonah that keeps the sun's glow in the top-left corner; a small bump when Jonah lands
+    # ---- camera: wide while the fish acts, then (once Jonah has landed; the fish's turn and splash stay in
+    # frame) a push toward Jonah that settles before the dissolve into s09 and only drifts during it. The end
+    # framing is a matched dissolve: Jonah's head lands on the output spot (~985, 643) where s09's standing
+    # Jonah's head is (s09: JX, JY = 980, 960 under Cam(960, 600, 1720)), at about his size, so the wet seated
+    # Jonah turns into the standing one instead of two Jonahs side by side. A small bump when Jonah lands.
     cam = M.cam_keys([(0, Cam(990, 606, 1930)), (t_open0, Cam(1050, 594, 2030)),
-                      (t_land + 0.2, Cam(1062, 600, 2010)), (t_turn1 + 0.12, Cam(1080, 604, 1985)),
-                      (T, Cam(1140, 630, 1760))], ["sine", "inout", "sine", "inout"])
+                      (t_land + 0.2, Cam(1062, 600, 2010)), (T - 0.5, Cam(1266, 689, 1688)),
+                      (T, Cam(1271, 693, 1672))], ["sine", "inout", "sine", "linear"])
     sc.camera = M.cam_shake(cam, amp=7, t0=t_land, t1=t_land + 0.35, freq=14, seed=5)
 
     # ---- effects (output space): spray of water drops from the mouth and from the turn
@@ -1144,9 +1150,12 @@ def build(ctx):
     sc.sfx("gull", 0.25, gain_db=-16, pan=-0.4)
     for tg in (t_heave + 0.05, t_heave + 0.32):
         sc.sfx("gulp", tg - 0.04, gain_db=-14, pan=-0.3)
-    sc.sfx("spit", t_spit - 0.06, gain_db=-5, pan=-0.15)
-    sc.sfx("whoosh", t_spit + 0.04, gain_db=-9, pan=0.15)
-    sc.sfx("thud", t_land - 0.01, gain_db=-5, pan=0.3)
+    # spit / whoosh / landing thud kept clear of the narration ("…吐到了陆地上"): the spit's peak (~+0.15 s) falls on
+    # the aspiration of "吐" as Jonah clears the lips, not on its vowel; whoosh and thud are softer so "到" and "陆"
+    # stay on top
+    sc.sfx("spit", t_spit - 0.12, gain_db=-9, pan=-0.15)
+    sc.sfx("whoosh", t_spit + 0.04, gain_db=-13, pan=0.15)
+    sc.sfx("thud", t_land - 0.01, gain_db=-8, pan=0.3)
     sc.sfx("thud", t_hop - 0.01, gain_db=-13, pan=0.3)
     sc.sfx("gull", max(t_g + 0.05, L.end - 0.07), gain_db=-15, pan=0.6)   # after "陆地上", gull still in frame
     sc.sfx("splash_small", t_turn0 + 0.02, gain_db=-13, pan=-0.45)

@@ -14,8 +14,13 @@ Notes for maintainers
   only same-pose expression changes crossfade softly.
 * The canopy shade is physical: a ground shadow ellipse plus a cool multiply tint of Jonah's own silhouette
   (same flipbook / motion as Jonah). Nothing darkens the far sky or dunes.
-* Night is a ~0.8 s hold of a real night (blue land grade, starry sky, moon with a soft halo) spanning
-  "第二天"; dusk starts at the end of line 2.
+* The castor plant grows, is bitten and withers as ONE continuous drawing: every video frame gets its own
+  exact castor_plant() drawing and the flipbook index is always a whole number, so two different plants are
+  never alpha-blended (a crossfade between stages shows two stems / two leaf sets = ghosting and flicker).
+  Each leaf keeps its full-grown spin while it grows (see _castor_svgs).
+* Night: a ~1 s dusk over "喜乐" (Jonah lies down to sleep with a hop + dust poof while it is still light),
+  a ~0.55 s hold of real night (blue land grade, starry sky, crescent moon with a soft halo in clear sky right
+  of the canopy) over "第二天", then a ~0.85 s dawn that is complete just before the bite.
 * Camera: few long sine-eased moves (slow drift, one push-in to the bite, one pull-back for the heat).
 """
 import math
@@ -33,6 +38,7 @@ from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
 from engine import raster
+from engine.paths import FPS
 from engine.scene import BOIL_TOKEN, Scene
 
 # ------------------------------------------------------------------ layout (stage px)
@@ -58,12 +64,28 @@ def _clamp(v, a=0.0, b=1.0):
     return max(a, min(b, v))
 
 
-def _sharp(f, soft=0.45):
-    """Flipbook index with shorter crossfades: holds each drawing, blends only around the switch."""
-    i = math.floor(f)
-    u = f - i
-    lo = 0.5 - soft / 2
-    return i + _clamp((u - lo) / soft)
+def _castor_svgs(states):
+    """SVG docs of PR.castor_plant(XP, GY, SP, side=1, seed=2, **state) for each state dict, with every leaf
+    held at its full-grown spin.
+
+    props._castor draws a leaf's random spin only for the leaves that already exist, so each newly born leaf
+    re-rolls the spin of every later leaf (the top leaf flips by ~21 deg at growth .14 and ~18 deg at .38;
+    leaves 6-9 jump at .58-.76). A coarse crossfaded flipbook hid that; a frame-by-frame growth would show
+    the leaves snapping round. _palmate gets the leaf index in its seed (castor seed*31 + i), so a temporary
+    wrapper looks each leaf's spin up from the growth=1 drawing (drawn first, where every leaf exists). The
+    growth=1 / bite / wither drawings are therefore byte-identical to plain PR.castor_plant() (as in s12)."""
+    spins = {}
+    orig = PR._palmate
+
+    def palmate(cx, cy, r, lobes, spin, tilt, hang, fill, vein, wither=0.0, seed=0, sw=4.0):
+        return orig(cx, cy, r, lobes, spins.setdefault(seed, spin), tilt, hang, fill, vein, wither, seed, sw)
+
+    PR._palmate = palmate
+    try:
+        PR.castor_plant(XP, GY, SP, growth=1.0, side=1, seed=2)          # records every leaf's spin
+        return [S.svg_doc(PR.castor_plant(XP, GY, SP, side=1, seed=2, **st)) for st in states]
+    finally:
+        PR._palmate = orig
 
 
 def _env(t, a, b, c, d):
@@ -290,13 +312,13 @@ def build(ctx):
     t_shade0, t_shade1 = t_grow0 + 1.0, l1.end - 0.1
     t_happy = l1.end - 0.75                       # Jonah relaxes in the shade
     t_gold0, t_gold1 = l2.start + 0.1, l2.end - 0.2
-    # night: dusk from the end of line 2, a ~0.8 s full night over "第二天", dawn as it ends
-    t_n0 = l2.end - 0.5                           # dusk begins
-    t_n1 = l2.end - 0.07                          # full night
-    t_n2 = l3.start + 0.42                        # dawn begins
-    t_n3 = t_n2 + 0.5                             # dawn sky complete
-    t_night = (t_n1 + t_n2) / 2                   # middle of the night (Jonah asleep)
-    t_worm0, t_worm1 = l3.start + 0.5, l3.start + 1.33     # worm inches in ("一条虫子")
+    # night: a ~1 s dusk over "喜乐", a short full night over "第二天", a ~0.85 s dawn done before the bite
+    t_n0 = l2.end - 0.75                          # dusk begins
+    t_sleep = l2.end - 0.35                       # Jonah lies down to sleep while the land is still lit
+    t_n1 = l3.start                               # full night
+    t_n2 = l3.start + 0.55                        # dawn begins
+    t_n3 = t_n2 + 0.85                            # dawn sky complete (just before the bite)
+    t_worm0, t_worm1 = l3.start + 0.6, l3.start + 1.33     # worm inches in at dawn ("一条虫子", Jonah 4:7)
     t_bite0 = l3.start + 1.45                     # "咬了蓖麻"
     t_bite1 = t_bite0 + 0.9
     t_with0 = l3.start + 0.71 * (l3.end - l3.start)  # "蓖麻枯干了"
@@ -332,12 +354,14 @@ def build(ctx):
     for i in range(56):
         x, y = rng.uniform(20, W - 20), rng.uniform(20, 560)
         stars += _star(x, y, rng.uniform(3, 8), "#fbf0c8", sw=0)
-    mx, my = 1780, 170
-    moon = (f'<path d="M{mx},{my - 70} A70,70 0 1 1 {mx},{my + 70} A54,70 0 1 0 {mx},{my - 70} Z" fill="#fbf1cf" '
+    # crescent moon in clear sky right of the canopy, below the (1640, 290) cloud and above the hills: fully
+    # inside the camera view for the whole night (the push-in toward the bite raises the top edge to y~345)
+    mx, my = 1580, 450
+    moon = (f'<path d="M{mx},{my - 55} A55,55 0 1 1 {mx},{my + 55} A42,55 0 1 0 {mx},{my - 55} Z" fill="#fbf1cf" '
             f'stroke="{INK}" stroke-width="3"/>')
     sky_night = S.svg_doc(
         f'<rect x="-20" y="-20" width="{W + 40}" height="{sky_h + 20}" fill="url(#g)"/>' + stars +
-        f'<circle cx="{mx - 20}" cy="{my}" r="230" fill="url(#mh)"/>' + S.g(moon, filter="wobble-fine"),
+        f'<circle cx="{mx - 15}" cy="{my}" r="170" fill="url(#mh)"/>' + S.g(moon, filter="wobble-fine"),
         defs=S.lin_grad("g", [(0, P["night"]), (0.6, P["night_light"]), (1, "#6b6f95")]) +
         S.rad_grad("mh", [(0, "#fbf1cf", 0.42), (0.3, "#f3ead0", 0.2), (0.65, "#c9c9dc", 0.06), (1, "#a9aecb", 0)]))
     sc.add("sky_night", sky_night, wc=0.4, motion=lambda t: Tf(alpha=a_night(t)))
@@ -579,23 +603,31 @@ def build(ctx):
            motion=lambda t: Tf(alpha=_env(t, t_grow0 - 0.4, t_grow0 + 0.3, t_grow1 + 0.1, t_shade1 + 0.3) *
                                (0.85 + 0.15 * math.sin(t * 4))))
 
-    # =============================================================== CASTOR PLANT (flipbook)
-    g_vals = [i / 24 for i in range(25)]
-    plant_frames = [S.svg_doc(PR.castor_plant(XP, GY, SP, growth=g, side=1, seed=2)) for g in g_vals]
-    plant_frames += [S.svg_doc(PR.castor_plant(XP, GY, SP, growth=1, bite=b, side=1, seed=2)) for b in (0.34, 0.67, 1.0)]
-    w_vals = [i / 12 for i in range(1, 13)]
-    plant_frames += [S.svg_doc(PR.castor_plant(XP, GY, SP, growth=1, wither=w, bite=1.0, side=1, seed=2))
-                     for w in w_vals]
-    NG = len(g_vals)
+    # =============================================================== CASTOR PLANT (one exact drawing per video frame)
+    # grow / bite / wither are each one continuous deformation of the same plant, sampled at every output
+    # frame (k / FPS) and shown with a whole-number flipbook index: the compositor never blends two drawings.
+    def per_frame(t0, t1, curve):
+        k0 = math.floor(t0 * FPS)
+        return k0, [M.progress(k / FPS, t0, t1, curve) for k in range(k0, math.ceil(t1 * FPS) + 1)]
+
+    kg, g_vals = per_frame(t_grow0, t_grow1, "inout")      # ends exactly at growth 1
+    kb, b_vals = per_frame(t_bite0, t_bite1, "linear")     # the gnawed stem leans as the notch deepens
+    kw, w_vals = per_frame(t_with0, t_with1, "sine")       # droop + green -> brown on the same leaves
+    states = ([dict(growth=g) for g in g_vals] + [dict(growth=1.0, bite=b) for b in b_vals] +
+              [dict(growth=1.0, bite=1.0, wither=w) for w in w_vals])
+    plant_frames, plant_ids, seen = [], [], {}
+    for svg in _castor_svgs(states):       # identical drawings (held ends, phase joins) share one frame
+        if svg not in seen:
+            seen[svg] = len(plant_frames)
+            plant_frames.append(svg)
+        plant_ids.append(seen[svg])
+    NG, NB = len(g_vals), len(b_vals)
+    plant_full = plant_frames[plant_ids[NG - 1]]           # growth 1 (the night silhouette mask uses it)
+    phases = [(kg, plant_ids[:NG]), (kb, plant_ids[NG:NG + NB]), (kw, plant_ids[NG + NB:])]
 
     def plant_frame(t):
-        if t < t_bite0:
-            f = (NG - 1) * M.progress(t, t_grow0, t_grow1, "inout")
-        elif t < t_with0:
-            f = NG - 1 + 3 * M.progress(t, t_bite0, t_bite1, "linear")
-        else:
-            f = NG + 2 + len(w_vals) * M.progress(t, t_with0, t_with1, "inout")
-        return _sharp(f, 0.5)
+        k0, ids = phases[0 if t < t_bite0 else 1 if t < t_with0 else 2]
+        return float(ids[min(max(round(t * FPS) - k0, 0), len(ids) - 1)])
 
     def plant_motion(t):
         a = M.progress(t, t_grow0 - 0.15, t_grow0 + 0.2, "sine")
@@ -631,7 +663,7 @@ def build(ctx):
     # squash-and-hop; expression-only changes keep a soft crossfade.
     switch = [(t_grow0 + 0.45, "pose", 1.0, True, True),       # sulk -> sit (surprised by the sprout)
               (t_happy, "pose", 1.0, True, True),              # -> sit_happy in the shade
-              (t_night, "pose", 0.45, False, False),           # -> asleep, peaceful (middle of the night)
+              (t_sleep, "pose", 0.8, False, True),             # -> asleep, peaceful (as dusk falls)
               (t_with0 + 0.25, "expr", 0, False, False),       # peaceful -> sad
               (l4.start + 0.3, "pose", 0.7, False, True),      # -> sit_faint (slumps in the heat)
               (t_faint, "expr", 0, False, False)]              # tired -> dizzy
@@ -673,8 +705,8 @@ def build(ctx):
             u = t - th
             if 0 <= u < 0.45:
                 sy *= 1 - 0.035 * math.sin(math.pi * u / 0.45)
-        if t_happy <= t < t_night:   # happy rocking (settles as night falls)
-            k = M.progress(t, t_happy, t_happy + 0.4) * (1 - M.progress(t, t_n0, t_n1))
+        if t_happy <= t < t_sleep:   # happy rocking (settles as dusk falls, before he lies down)
+            k = M.progress(t, t_happy, t_happy + 0.4) * (1 - M.progress(t, t_n0, t_sleep - 0.05))
             rot = k * 1.6 * math.sin(2 * math.pi * (t - t_happy) / 1.1)
             dy = -k * 4 * abs(math.sin(2 * math.pi * (t - t_happy) / 1.1))
         if t >= t_faint:           # dizzy wobble
@@ -947,7 +979,7 @@ def build(ctx):
 
     # =============================================================== FX
     _nm = {}
-    mask_svgs = [far_svg, city_svg, plain_svg, mid_svg, booth_svg, plant_frames[NG - 1]]
+    mask_svgs = [far_svg, city_svg, plain_svg, mid_svg, booth_svg, plant_full]
 
     def night_mask():
         """Stage-space alpha of everything that stands in front of the sky during the night (the same SVGs

@@ -18,7 +18,8 @@ from engine.paths import BUILD, SR
 
 MUSIC_LUFS = -27.0      # music bed loudness before ducking (narration clips sit at -20 LUFS)
 MUSIC_DUCK_DB = -7.0    # extra attenuation while someone is speaking
-SFX_DUCK_DB = -6.0
+SFX_DUCK_DB = -6.0      # ambience loops under speech
+ONESHOT_DUCK_DB = -12.0  # one-shot effects under speech
 SPEECH_MARGIN_DB = 12.0  # narration must stay at least this far above music + sfx on every line
 FINAL_LUFS = -16.0
 CEILING = 0.89          # ~ -1 dBFS
@@ -50,7 +51,8 @@ def collect_cues(tl):
 def render_sfx(tl, cues, n):
     from audio import sfx
 
-    out = np.zeros((n, 2), np.float32)
+    loops = np.zeros((n, 2), np.float32)
+    oneshots = np.zeros((n, 2), np.float32)
     for c in cues:
         seed = zlib.crc32(f"{c['scene']}:{c['name']}:{c['at']}".encode()) & 0xFFFF
         x = sfx.make(c["name"], c["dur"], SR, seed=seed, **c["params"])
@@ -75,8 +77,9 @@ def render_sfx(tl, cues, n):
             x, start = x[-start:], 0
         end = min(n, start + len(x))
         if end > start:
-            out[start:end] += x[: end - start]
-    return out
+            bus = oneshots if sfx.NAMES[c["name"]][0] == "oneshot" else loops
+            bus[start:end] += x[: end - start]
+    return loops, oneshots
 
 
 def speech_envelope(voice, attack=0.08, release=0.7, thresh_db=-42):
@@ -108,14 +111,19 @@ def protect_speech(tl, voice, music, sfx, target_db=SPEECH_MARGIN_DB, ramp=0.25)
     n = len(voice)
     gain_db = np.zeros(n, np.float32)
     rows = []
+    # Measure in the speech band (300-4000 Hz): that is what small speakers reproduce and what
+    # carries intelligibility, so bass-heavy voices or rumbling effects can't pass on full-band RMS.
+    band = signal.butter(4, [300, 4000], "bandpass", fs=SR, output="sos")
+    v_band = signal.sosfiltfilt(band, voice)
+    bg_band = signal.sosfiltfilt(band, (music + sfx).mean(axis=1))
     for s in tl["scenes"]:
         for i, ln in enumerate(s["lines"]):
             a = int((s["start"] + ln["start"]) * SR)
             b = min(n, int((s["start"] + ln["end"]) * SR))
             if b <= a:
                 continue
-            v = _rms_db(voice[a:b])
-            bg = _rms_db(music[a:b] + sfx[a:b])
+            v = _rms_db(v_band[a:b])
+            bg = _rms_db(bg_band[a:b])
             need = min(0.0, (v - bg) - target_db)          # negative dB if background too loud
             if need < 0:
                 gain_db[a:b] = np.minimum(gain_db[a:b], need)
@@ -125,16 +133,17 @@ def protect_speech(tl, voice, music, sfx, target_db=SPEECH_MARGIN_DB, ramp=0.25)
     g = ndimage.minimum_filter1d(gain_db, k)
     g = ndimage.uniform_filter1d(g, 2 * k)
     gl = (10 ** (g / 20)).astype(np.float32)[:, None]
-    lines = [f"speech-to-background target {target_db:.0f} dB"]
+    lines = [f"speech-to-background target {target_db:.0f} dB (300-4000 Hz band)"]
     for sid, i, m, need in rows:
         lines.append(f"{sid:12s} line {i}: {m:5.1f} dB" + (f"  -> background cut {need:.1f} dB" if need < 0 else ""))
     music, sfx = music * gl, sfx * gl
+    bg_band = bg_band * gl[:, 0]
     after = []
     for s in tl["scenes"]:
         for ln in s["lines"]:
             a, b = int((s["start"] + ln["start"]) * SR), min(n, int((s["start"] + ln["end"]) * SR))
             if b > a:
-                after.append(_rms_db(voice[a:b]) - _rms_db(music[a:b] + sfx[a:b]))
+                after.append(_rms_db(v_band[a:b]) - _rms_db(bg_band[a:b]))
     worst = min(r[2] for r in rows)
     lines.append(f"worst before protection {worst:.1f} dB; lines adjusted {sum(1 for r in rows if r[3] < 0)}; "
                  f"worst after {min(after):.1f} dB")
@@ -177,10 +186,11 @@ def mix():
         print("  (no music.wav — mixing without music)")
         music = np.zeros((n, 2), np.float32)
 
-    sfx = render_sfx(tl, collect_cues(tl), n)
+    loops, oneshots = render_sfx(tl, collect_cues(tl), n)
     env = speech_envelope(voice)[:, None]
     music_d = music * 10 ** (MUSIC_DUCK_DB * env / 20)
-    sfx_d = sfx * 10 ** (SFX_DUCK_DB * env / 20)
+    # One-shots that illustrate a word sit right on that word, so they duck deeper than ambiences.
+    sfx_d = loops * 10 ** (SFX_DUCK_DB * env / 20) + oneshots * 10 ** (ONESHOT_DUCK_DB * env / 20)
     music_d, sfx_d, report = protect_speech(tl, voice, music_d, sfx_d)
     (BUILD / "audio" / "speech_report.txt").write_text(report)
 
@@ -189,6 +199,7 @@ def mix():
     fi, fo = int(0.5 * SR), int(2.0 * SR)
     out[:fi] *= np.linspace(0, 1, fi)[:, None]
     out[-fo:] *= np.linspace(1, 0, fo)[:, None] ** 1.5
+    out = signal.sosfiltfilt(signal.butter(2, 20, "highpass", fs=SR, output="sos"), out, axis=0)  # DC/infrasound
     lo = loudness(out)
     out *= 10 ** ((FINAL_LUFS - lo) / 20)
     out = limit(out).astype(np.float32)

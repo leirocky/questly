@@ -4,21 +4,24 @@ Staging (one wide panorama; west = left, east = right; no cuts):
   * line 0 '可是约拿不想去。' — a sunny crossroads on the coastal road. The signpost shows 他施 pointing left (west)
     and 尼尼微 pointing right (east). Jonah looks at the Nineveh arrow, puts his palm out and shakes his head
     (pose 'refuse', scared), then spins round (whoosh).
-  * line 1 '他跑到海边的约帕，坐上一条开往他施的船，' — he runs west (run_a / run_b flipbook) along the road into
-    the harbour of Joppa; the camera pans with him (smoothed, always leftward) over the hill town with its stone
-    walls, the harbour wall and the wooden pier. A pier sailor swings a jar up to the sailor on deck, who
-    catches it and stows it behind the rail; Jonah dashes past the sailors and leaps aboard over the rail
-    (whoosh, thud).
+  * line 1 '他跑到海边的约帕，坐上一条开往他施的船，' — he runs west along the road into the harbour of Joppa
+    (an 8-drawing run cycle driven by the distance run, so the planted foot stays on the road, with footfalls
+    on the footsteps_run beats); the camera pans with him (smoothed, always leftward) over the hill town with
+    its stone walls, the harbour wall and the wooden pier. A dockhand (a Joppa porter in a plain tunic, not
+    one of the crew) swings a jar up to the sailor on deck, who catches it and stows it behind the rail; Jonah
+    dashes past the dockhands and leaps aboard over the rail (whoosh, thud).
   * line 2 '想要躲开上帝。' — the deck sailor hauls the halyard and the sail unrolls down from the yard, the
     captain points west and the ship sails away from the pier toward the open sea (bow wave, foam streaming
     back along the hull); Jonah ducks behind the stern rail beside the cargo and peeks back nervously at the
-    shore, where the pier sailors set their cargo down and point after the ship. The camera settles before
-    the closing dissolve.
+    shore, where the dockhands set their cargo down and point after the ship. The camera settles before
+    the closing dissolve. (The crew of s04-s06 is the captain and sailor variants 0-3; only the deck sailor,
+    variant 0, is shown here. The men left on the pier wear no crew costume, so nobody is seen staying ashore
+    and then turning up at sea.)
 
 Depth order (back -> front): sky, sun, clouds | far sea, hills (parallax 0.25), Joppa town (parallax 0.1) |
 harbour wall + moored boat | harbour water, glints | harbour corner block | ship group (hull, halyard, sail,
 crew, Jonah, hull cover, rail) | water in front of the hull, glints, hull shadow, bow wave, foam | quay, road,
-crossroads, pier | water in front of the pier posts | pier sailors and their cargo, Jonah running |
+crossroads, pier | water in front of the pier posts | dockhands and their cargo, Jonah running |
 foreground | gulls.
 """
 import math
@@ -42,7 +45,7 @@ PAINT_R = 3900             # right edge of the painted ground / foreground: the 
 K = 0.8                    # person / ship scale
 GY = 910                   # walking line: road, quay and pier planks (feet of Jonah)
 BACK_Y = 896               # feet of cargo standing on the quay
-PIER_Y = GY + 4            # feet of the pier sailors (soles overlap the plank band)
+PIER_Y = GY + 4            # feet of the dockhands (soles overlap the plank band)
 SHIP_X, SHIP_WL = 1520, 968            # docked ship: hull centre on the waterline
 DECK = SHIP_WL + PR.SHIP_DECK_Y * K    # 836: feet of people on deck
 RAIL = SHIP_WL - 220 * K               # ~792: top of the rail
@@ -55,7 +58,7 @@ LEAP_X = BOARD_X + 120     # where he takes off from the pier
 SEA_RIGHT = 2260           # sea layers end under the quay / behind the harbour corner block
 SEA_FAR_R = 2950           # the far sea ends behind the eastern hills (no sea on the Nineveh side)
 
-P1X, P2X = 2120, 1950      # pier sailors: P1 carries a crate, P2 swings a jar up to the ship
+P1X, P2X = 2120, 1950      # dockhands: P1 carries a crate, P2 swings a jar up to the ship
 DECK_SAILOR_LX = 72        # deck sailor (local ship x): by the mast, catches the jar, then hauls the halyard
 CAPTAIN_LX = 262           # captain near the bow
 
@@ -114,6 +117,66 @@ def apply_tf(tf, x, y, pivot):
 
 def mid(pts):
     return (pts[0][0] + pts[1][0]) / 2, (pts[0][1] + pts[1][1]) / 2
+
+
+# ============================================================================ scene-local people
+# Both are built on the library rig (art.characters internals) so they match the library figures exactly;
+# they could move into art/characters.py if another scene ever needs them.
+
+# Joppa dockhands (port porters, NOT the ship's crew). The crew of s04-s06 is sailor variants 0-3 + the
+# captain, so the two men who stay behind on the pier must not wear a crew costume (striped tunic, knitted
+# cap / headband): plain undyed tunics instead. Same rig and poses as C.sailor, so their bboxes and hand
+# centres are identical to the sailor's (C.hand_positions(dockhand, ...) works).
+_DOCKHANDS = (
+    # 0: plain tan tunic, bare head, greying short hair, grey stubble
+    dict(robe="#b8996e", skin="#c68a62", hair="#7d7770", hair_style="short", hat=None, beard=("stubble", "#6d6862")),
+    # 1: plain off-white linen tunic, plum head-wrap, black curly hair, short black beard, dark skin
+    dict(robe="#e6dcc4", skin="#9a6544", hair="#2a201b", hair_style="curly", hat=("wrap", "#7d5a78", None),
+         beard=("short", "#2a201b")),
+)
+
+
+def dockhand(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, marks=True):
+    v = _DOCKHANDS[variant % len(_DOCKHANDS)]
+    edge = S.shade(v["robe"], -0.22)
+    design = dict(robe=v["robe"], sleeve=v["robe"], hem_col=edge, cuff=edge, skin=v["skin"], leg=v["skin"],
+                  hem=0.50, sleeve_len=0.45, rope_belt="#8b6a45", hair=v["hair"], hair_style=v["hair_style"],
+                  hat=v["hat"], beard=v["beard"], flare_k=0.6, hem_w=9)        # deliberately no 'stripes'
+    ps = C._resolve_pose(pose, C.SAILOR_POSES, "dockhand")
+    C._check_expr(expr, "dockhand")
+    inner, _ = C._figure(design, C._SAILOR_M, ps, expr or ps["expr"], C._fsign(facing), marks)
+    return C._wrap_out(inner, x, y, scale, facing, f"dockhand{variant}-{pose}")
+
+
+# Jonah's run cycle: 8 drawings per stride pair (contact, down, push, flight for each leg). In the three stance
+# drawings the planted ankle sits at +48, +7, -34 figure px (forward = +), i.e. it steps back 41 px per
+# drawing; advance the anchor by 41 * scale stage px per drawing and the planted sole stays put on the ground.
+# The flight drawings are the library's run_a / run_b (lift them off the ground when used).
+_RUN_KW = dict(t=14, hem=0.66, tail=-102, flare=-4)                          # as the library's run_a / run_b
+_ARMS_FAR_FWD = (("fk", 62, 128), ("fk", -60, -20))                           # run_b's arms
+_ARMS_NEAR_FWD = (("fk", -82, -42), ("fk", 62, 128))                          # run_a's arms
+RUN_POSES = {
+    "run_contact_n": C._P(legs=((-30, -110), ("ik", 48, 1)), arms=_ARMS_FAR_FWD, drop=24, **_RUN_KW),
+    "run_down_n": C._P(legs=((25, -85), ("ik", 7, 1)), arms=(("fk", 30, 85), ("fk", -30, 10)), drop=30, **_RUN_KW),
+    "run_push_n": C._P(legs=((90, 10), ("ik", -34, 0)), arms=_ARMS_NEAR_FWD, drop=20, **_RUN_KW),
+    "run_contact_f": C._P(legs=(("ik", 48, 1), (-30, -110)), arms=_ARMS_NEAR_FWD, drop=24, **_RUN_KW),
+    "run_down_f": C._P(legs=(("ik", 7, 1), (25, -85)), arms=(("fk", -30, 10), ("fk", 30, 85)), drop=30, **_RUN_KW),
+    "run_push_f": C._P(legs=(("ik", -34, 0), (90, 10)), arms=_ARMS_FAR_FWD, drop=20, **_RUN_KW),
+}
+RUN_SEQ = ("run_contact_n", "run_down_n", "run_push_n", "run_a",
+           "run_contact_f", "run_down_f", "run_push_f", "run_b")
+RUN_ANKLE_STEP = 41.0      # figure px the planted ankle moves back per stance drawing
+RUN_FLIGHT = (3, 7)        # indices in RUN_SEQ of the airborne drawings
+
+
+def jonah_fig(x, y, scale=1.0, facing=1, pose="stand", expr=None):
+    """C.jonah, plus the scene-local run-cycle poses."""
+    if pose not in RUN_POSES:
+        return C.jonah(x, y, scale, facing, pose=pose, expr=expr)
+    ps = dict(RUN_POSES[pose])
+    C._check_expr(expr, "jonah")
+    inner, _ = C._figure(C._jonah_design(), C._ADULT, ps, expr or ps["expr"], C._fsign(facing), True)
+    return C._wrap_out(inner, x, y, scale, facing, f"jonah-{pose}")
 
 
 # ============================================================================ background pieces
@@ -821,6 +884,41 @@ def build(ctx):
             tt += 0.01
         return tt
 
+    # ---------------------------------------------------------------- Jonah's run cycle (RUN_SEQ)
+    # The drawing follows the distance run, not the clock: drawing k is exact (planted sole on the same spot
+    # of the road as in the drawings before it) when the pelvis has run D_FOOT + k * RUN_DD, and it is shown
+    # while the pelvis is within half a drawing of that, so the sole never slips more than RUN_DD / 2.
+    RUN_DD = RUN_ANKLE_STEP * K          # 32.8 px per drawing; one step (4 drawings) = 131 px
+    RUN_STEP = 4 * RUN_DD                # = 0.241 s per step at v_run (544 px/s): the footsteps_run beat
+    # The footsteps_run cue below (at T_RUN) beats every ~0.242 s, one beat at T_RUN + 0.50 s (measured from
+    # the rendered cue): put a footfall (contact drawing) there, so the steps land on the sound (within ~8 ms).
+    FOOT_BEAT = 0.50
+
+    def jdist(t):
+        return JX0 - jpos(min(t, T_LEAP))[0]
+
+    D_FOOT = jdist(T_RUN + FOOT_BEAT)
+
+    def run_k(d):
+        return int(math.floor((d - D_FOOT) / RUN_DD + 0.5))
+
+    # leg parity: take off from a far-foot drawing (contact_f .. run_b), so the leap continues in run_b
+    RUN_OFF = 0 if run_k(JX0 - LEAP_X) % 8 >= 4 else 4
+
+    def run_idx(t):
+        return (run_k(jdist(t)) + RUN_OFF) % 8
+
+    # flight drawings are lifted off the road; both peak at the same pelvis height (12 px above 'push')
+    pelvis_h = {p: -C.body_points(jonah_fig, 0, 0, K, 1, pose=p)["pelvis"][1] for p in RUN_SEQ}
+    peak_h = pelvis_h["run_push_n"] + 12 * K
+    RUN_LIFT = {i: -(peak_h - pelvis_h[RUN_SEQ[i]]) for i in RUN_FLIGHT}
+
+    I_RUN_B = RUN_SEQ.index("run_b")
+
+    def leap_lift(t):
+        """The flight lift of run_b carried through the leap, settling to 0 on landing."""
+        return RUN_LIFT[I_RUN_B] * (1 - M.progress(t, T_LEAP, T_LAND, "inout"))
+
     # ---------------------------------------------------------------- ship motion (shared by the ship group)
     DIST = 760
     t_sail_end = T_DEPART + 3.4
@@ -1008,7 +1106,7 @@ def build(ctx):
             return Tf(alpha=0.0)
         if t < T_LAND:
             x, y = jpos(t)
-            ox, oy = x - BOARD_X, y - DECK
+            ox, oy = x - BOARD_X, y - DECK + leap_lift(t)
         else:
             ox = 0.0
             oy = 5 * math.sin(math.pi * min(1.0, (t - T_LAND) / 0.18))            # landing dip
@@ -1077,7 +1175,7 @@ def build(ctx):
                                     foam_x=((-100, 800, 0), (1200, 2000, 0)), x1=QUAY_X - 25),
            motion=M.combine(M.bob(5, 2.5, 0.6), M.bob(22, 3.9, axis="x")))
 
-    # ---------------------------------------------------------------- pier sailors (loading)
+    # ---------------------------------------------------------------- dockhands (loading; port porters, not crew)
     p1 = (P1X, PIER_Y)
     p2 = (P2X, PIER_Y)
     sc.add("pier_shadows", doc(C.ground_shadow(p1[0] + 4, p1[1], K, 120, 0.24) +
@@ -1090,8 +1188,8 @@ def build(ctx):
                   rot=0.8 * math.sin(math.pi * t * 1.4) * k, px=p1[0], py=p1[1])
 
     CRATE_S = 0.62
-    c_lift = mid(C.hand_positions(C.sailor, *p1, K, -1, variant=1, pose="lift"))
-    c_carry = mid(C.hand_positions(C.sailor, *p1, K, -1, variant=1, pose="carry"))
+    c_lift = mid(C.hand_positions(dockhand, *p1, K, -1, variant=0, pose="lift"))
+    c_carry = mid(C.hand_positions(dockhand, *p1, K, -1, variant=0, pose="carry"))
     crate_up = (c_lift[0], c_lift[1] - 34)
     crate_hip = (c_carry[0] - 4, c_carry[1] - 6)
     crate_down = (p1[0] - 108, PIER_Y - 49 * CRATE_S + 2)
@@ -1118,10 +1216,10 @@ def build(ctx):
         return 1.0 if tp1 <= t < tp1 + 1.4 else 0.0
 
     sc.add("crate1", doc(PR.crate(*crate_up, CRATE_S)), motion=crate_tf)
-    sc.add("pier_sailor1", [doc(C.sailor(*p1, K, -1, variant=1, pose="lift")),
-                            doc(C.sailor(*p1, K, -1, variant=1, pose="lift", expr="surprised")),
-                            doc(C.sailor(*p1, K, -1, variant=1, pose="carry")),
-                            doc(C.sailor(*p1, K, -1, variant=1, pose="stand", expr="neutral"))],
+    sc.add("dockhand1", [doc(dockhand(*p1, K, -1, variant=0, pose="lift")),
+                         doc(dockhand(*p1, K, -1, variant=0, pose="lift", expr="surprised")),
+                         doc(dockhand(*p1, K, -1, variant=0, pose="carry")),
+                         doc(dockhand(*p1, K, -1, variant=0, pose="stand", expr="neutral"))],
            frame_at=p1_frame, motion=p1_bob)
 
     # P2 swings his jar up to the deck sailor, watches Jonah dash past, then points after the ship
@@ -1132,9 +1230,9 @@ def build(ctx):
                   dy=-3 * abs(math.sin(math.pi * t * 1.7 + 0.6)) * k - 1.5 * math.sin(2 * math.pi * t / 2.3) ** 2 * k2,
                   rot=0.9 * math.sin(math.pi * t * 1.7 + 0.6) * k, px=p2[0], py=p2[1])
 
-    j_carry = mid(C.hand_positions(C.sailor, *p2, K, -1, variant=3, pose="carry"))
+    j_carry = mid(C.hand_positions(dockhand, *p2, K, -1, variant=1, pose="carry"))
     j_carry = (j_carry[0], j_carry[1] - 22)
-    j_throw = mid(C.hand_positions(C.sailor, *p2, K, -1, variant=3, pose="throw"))
+    j_throw = mid(C.hand_positions(dockhand, *p2, K, -1, variant=1, pose="throw"))
     j_throw = (j_throw[0] - 4, j_throw[1] - 28)
     tp2 = t_pass(p2[0] + 40)
 
@@ -1147,11 +1245,11 @@ def build(ctx):
             return 4.0
         return 3.0 if tp2 <= t < tp2 + 1.4 else 2.0
 
-    sc.add("pier_sailor2", [doc(C.sailor(*p2, K, -1, variant=3, pose="carry", expr="neutral")),
-                            doc(C.sailor(*p2, K, -1, variant=3, pose="throw", expr="happy")),
-                            doc(C.sailor(*p2, K, -1, variant=3, pose="stand", expr="neutral")),
-                            doc(C.sailor(*p2, K, -1, variant=3, pose="stand", expr="surprised")),
-                            doc(C.sailor(*p2, K, -1, variant=3, pose="point", expr="neutral"))],
+    sc.add("dockhand2", [doc(dockhand(*p2, K, -1, variant=1, pose="carry", expr="neutral")),
+                         doc(dockhand(*p2, K, -1, variant=1, pose="throw", expr="happy")),
+                         doc(dockhand(*p2, K, -1, variant=1, pose="stand", expr="neutral")),
+                         doc(dockhand(*p2, K, -1, variant=1, pose="stand", expr="surprised")),
+                         doc(dockhand(*p2, K, -1, variant=1, pose="point", expr="neutral"))],
            frame_at=p2_frame, motion=p2_bob)
 
     catch_at = apply_tf(compose(ship_tf(T_CATCH), jd), *jd, jd)
@@ -1187,13 +1285,12 @@ def build(ctx):
         if t < T_TURN + 0.1:
             return 1.0
         if t < T_LEAP:
-            return 2.0 + float(int((t - T_TURN - 0.1) * 6.5) % 2)
-        return 3.0
+            return 2.0 + run_idx(t)          # distance-driven run cycle (see "Jonah's run cycle")
+        return 2.0 + I_RUN_B                 # the leap: run_b
 
-    jland = [doc(C.jonah(JX0, GY, K, 1, pose="stand", expr="worried")),
-             doc(C.jonah(JX0, GY, K, 1, pose="refuse", expr="scared")),
-             doc(C.jonah(JX0, GY, K, -1, pose="run_a", expr="worried")),
-             doc(C.jonah(JX0, GY, K, -1, pose="run_b", expr="worried"))]
+    jland = ([doc(C.jonah(JX0, GY, K, 1, pose="stand", expr="worried")),
+              doc(C.jonah(JX0, GY, K, 1, pose="refuse", expr="scared"))] +
+             [doc(jonah_fig(JX0, GY, K, -1, pose=p, expr="worried")) for p in RUN_SEQ])
 
     def jland_tf(t):
         if t >= T_SWAP:
@@ -1211,14 +1308,23 @@ def build(ctx):
             u = (t - T_TURN) / 0.2
             sx = 1 - 0.78 * math.sin(math.pi * u)
             dy = -16 * math.sin(math.pi * u)
-        if T_RUN <= t < T_LEAP:
-            dy = -7 * abs(math.sin(math.pi * 6.5 * (t - T_TURN - 0.1)))
+        if T_TURN + 0.1 <= t < T_LEAP:           # running: the stance drawings carry their own bob; the flight
+            dy += RUN_LIFT.get(run_idx(t), 0.0)  # drawings are lifted off the road
+        elif t >= T_LEAP:
+            dy = leap_lift(t)
         return Tf(dx=x - JX0, dy=y - GY + dy, rot=rot, sx=sx, sy=sy, px=JX0, py=GY)
 
-    # dust puffs kicked up behind his heels while he runs on the road (none on the planks)
-    STRIDE = 1 / 6.5
-    t_steps = [T_RUN + 0.05 + k * STRIDE for k in range(int((T_LEAP - T_RUN) / STRIDE) + 1)]
-    puffs = [(ts_, jpos(ts_)[0] + 46 * K) for ts_ in t_steps if jpos(ts_)[0] > PIER_X1 + 40]
+    # dust puffs kicked up where a foot pushes off the road (none on the planks): at the planted sole of each
+    # footfall (48 figure px ahead of the pelvis at contact), when that foot pushes off two drawings later
+    puffs = []
+    for j in range(int((JX0 - LEAP_X - D_FOOT) / RUN_STEP) + 2):
+        d_fall = D_FOOT + (j - 1) * RUN_STEP
+        if d_fall < 0:
+            continue
+        x_sole = JX0 - d_fall - 48 * K
+        t_push = t_pass(JX0 - d_fall - 2 * RUN_DD)
+        if t_push < T_LEAP and x_sole > PIER_X1 + 40:
+            puffs.append((t_push, x_sole))
     PUFF_LIFE = 0.5
 
     def dust(t):

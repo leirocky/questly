@@ -1,21 +1,23 @@
 """Scene 5 — the lots (Jonah 1:6-12).
 
 A tall dollhouse cut-away of the ship. The scene opens below deck exactly where scene 4 left Jonah: asleep on a
-bed of grain sacks (head on the right) under the swinging lantern, the ladder to the hatch on the right. After the
-cross-dissolve the captain hurries in from the ladder side, crouches and shakes Jonah awake, then stands and points
-up the ladder. Jonah gets to his feet and the camera rises gently through the deck to the rainy deck above.
+bed of grain sacks (head on the right) under the swinging lantern, the ladder to the hatch on the right. As the
+cross-dissolve ends the captain hurries in across the floor from the ladder side, steps up onto the sacks, kneels and
+shakes Jonah awake; Jonah sits up rubbing his eye while the captain stands, turns and points up the ladder (each pose
+held long enough to read). Jonah gets to his feet and the camera rises gently through the deck to the rainy deck.
 
 On deck a sailor holds out the clay lots pot; the sailors draw (one lifts his plain stick, the others hold theirs).
-Jonah climbs up through the open hatch, walks to the pot and draws the last lot himself: it glows in his hand,
-warm light breaks through the clouds onto him (God's presence is only light), and he steps back. The two nearest
+Jonah climbs up through the open hatch, walks to the pot and draws the last lot himself: he holds it up and it glows
+in his hand, warm light breaks through the clouds onto him (God's presence is only light), and he steps back. The two nearest
 sailors point at him, the others start back in surprise. Jonah, sorry and brave, confesses (hand on chest, the
-lot against it) and points to the raging sea; the sailors exchange worried looks; the camera slowly pushes in.
+lot against it) and turns round (a paper cut-out turn) to point to the raging sea; the sailors exchange worried looks; the camera slowly pushes in.
 The storm goes on (a bit lighter): rain, a tilting horizon with big waves beyond the rail, one soft thunder.
 
 Stage 2112 x 2440: deck world y 0..1190, cut section 1190..1262, hold 1262..2440.
 """
 import math
 import random
+from dataclasses import replace
 
 from art import characters as C
 from art import props as PR
@@ -663,6 +665,34 @@ def alive(x, y, switches=(), phase=0.0, amp=0.011, period=3.1, extra=None):
     return m
 
 
+def bump(t, ts, w=0.06):
+    """0..1..0 triangle centred just after ts (a 3-4 frame hop that sells a pose swap; as in s06)."""
+    return max(0.0, 1 - abs(t - ts - 0.03) / w)
+
+
+def turned(m, ts, w=0.1, depth=0.7, px=None):
+    """Paper cut-out turn: squeeze the layer horizontally about its pivot (or px) around each facing flip in ts,
+    so the mirrored pose swaps in on the thinnest frame instead of popping."""
+    def f(t):
+        tf = m(t)
+        k = 1.0
+        for s in ts:
+            u = abs(t - s) / w
+            if u < 1:
+                k *= 1 - depth * (1 - u)
+        if px is not None:
+            tf = replace(tf, px=px(t) if callable(px) else px)
+        return replace(tf, sx=tf.sx * k) if k != 1.0 else tf
+    return f
+
+
+def captain_walk(x, y, scale=1.0, facing=1, pose="walk_a", expr="worried"):
+    """The captain in the library's shared walk_a / walk_b poses (same design and rig as C.captain, whose pose
+    list does not include them), for his entrance in the hold."""
+    inner, _ = C._figure(C._captain_design(), C._CAPTAIN_M, dict(C.POSES[pose]), expr, 1 if facing >= 0 else -1)
+    return C._wrap_out(inner, x, y, scale, facing, f"captain-{pose}")
+
+
 def stick(fn, x, y, s, facing, how, **kw):
     """A plain lot stick in a figure's hand: 'up' (held up in the far hand), 'near' (hanging from the near hand)
     or 'carry' (held in both hands in front, being looked at)."""
@@ -730,15 +760,18 @@ def build(ctx):
     sc = Scene(ctx, W=W, H=SH)
 
     # ---------------------------------------------------------------- key times (all from the narration)
-    # hold: the captain comes in after the cross-dissolve and wakes Jonah ("船长叫醒了他")
-    t_cap_in0 = max(0.8, L[0].start + 0.2)          # enters from beyond the right edge after the dissolve
-    t_crouch = t_cap_in0 + 0.5
-    t_shake0, t_shake1 = t_crouch + 0.04, t_crouch + 0.32
-    t_situp = t_shake1                               # Jonah sits up rubbing his eye; the captain stands back
-    t_cpoint = t_situp + 0.1                         # captain points up the ladder
-    t_standup = t_cpoint + 0.12                      # Jonah gets to his feet
-    t_walk = t_standup + 0.2                         # ...and heads for the ladder
-    t_pan0 = t_standup - 0.08                        # gentle rise to the deck (sine, ~1.4 s)
+    # hold: the captain hurries in on the floor as the narrator names him (he crosses the frame edge under the tail
+    # of the cross-dissolve), steps up onto the sacks and wakes Jonah ("船长叫醒了他"). Every pose of the wake beat
+    # is held 0.3-0.5 s so a child can read it; the rise to the deck starts once Jonah is on his feet.
+    t_cap_in0 = L[0].start - 0.28                    # starts walking beyond the right edge of the frame
+    t_crouch = t_cap_in0 + 0.55                      # kneels by Jonah's head ...
+    t_shake0, t_shake1 = t_crouch + 0.06, t_crouch + 0.42   # ... and shakes him
+    t_situp = t_crouch + 0.47                        # Jonah sits up rubbing his eye; the captain stands back (same
+    #                                                  frame: the sitting Jonah's head would cover the kneeler's face)
+    t_cpoint = t_situp + 0.30                        # captain turns and points up the ladder
+    t_standup = t_situp + 0.50                       # Jonah gets to his feet
+    t_walk = t_standup + 0.36                        # ...and heads for the ladder
+    t_pan0 = t_standup + 0.05                        # gentle rise to the deck (sine, ~1.4 s)
     t_pan1 = t_pan0 + 1.4
     # deck ("水手们抽签，签落在了约拿身上")
     t_glow = L[1].start + 0.45                       # the lot glows in Jonah's hand
@@ -748,11 +781,11 @@ def build(ctx):
     t_jwalk1 = t_reach - 0.02
     t_out = t_jwalk1 - 0.5                           # steps out of the hatch and walks to the pot
     t_climb0 = t_out - 0.38                          # head and shoulders rise through the hatch
-    t_s1_reach = t_pan1 - 0.42                       # S1 draws as soon as the deck is in view
+    t_s1_reach = t_out - 0.36                        # S1 draws as the deck comes into view (before the pot turns)
     t_s1_lift = t_s1_reach + 0.24
     t_s1_stand = t_s1_lift + 0.28
     t_turn = t_out + 0.02                            # the pot-holder turns to offer the pot to Jonah
-    t_jback0, t_jback1 = t_glow + 0.24, t_glow + 0.56
+    t_jback0, t_jback1 = t_glow + 0.62, t_glow + 0.94   # holds the glowing lot up ~0.7 s, then steps back
     t_pot0, t_pot1 = t_glow + 0.2, t_glow + 0.4     # the pot-holder pulls the pot back to his side
     t_pt3, t_pt2 = t_glow + 0.4, t_glow + 0.46       # the two nearest sailors point
     t_react = [t_glow + 0.48, t_glow + 0.54, t_glow + 0.6]   # S1, S0, captain start back
@@ -848,24 +881,40 @@ def build(ctx):
     kx = jx + 234 * js                     # the captain crouches on Jonah's other side (beyond his head)
     cap_back = 50                          # ...then stands and steps back
     shaking = lambda t: t_shake0 <= t <= t_shake1                            # noqa: E731
+    CAP_DX = 600                           # entrance start: beyond the frame's right edge
+    CAP_STEP = 0.11                        # walk_a / walk_b period of his hurried steps
+    bed_r = hp(1290, 0)[0] + 30            # right end of the sack bed (bx1 in hold_layer)
+    g_floor = FLOOR + 20 - jy              # feet on the hold floor, in front of the jars and the ladder foot
 
     def cap_extra(t):
-        if t < t_crouch:                    # hurries in from the ladder side (off-frame until t_cap_in0)
-            u = min(1.0, max(0.0, (t - t_cap_in0) / (t_crouch - t_cap_in0)))
-            dx = 500 * (1 - u) ** 1.3
-            return Tf(dx=dx, dy=-14 * abs(math.sin(4 * math.pi * u)))
+        if t < t_crouch:                    # hurries in on the floor, steps up onto the sacks, kneels
+            u = M.progress(t, t_cap_in0, t_crouch, "linear")
+            dx = CAP_DX * (1 - u) ** 1.4
+            up = min(1.0, max(0.0, (bed_r + 60 - (kx + dx)) / 80.0))   # leading foot over the bed edge -> up
+            up = up * up * (3 - 2 * up)
+            bob = -6 * abs(math.sin(math.pi * max(0.0, t - t_cap_in0) / CAP_STEP))
+            return Tf(dx=dx, dy=g_floor * (1 - up) + bob)
+        hop = -8 * (bump(t, t_situp) + bump(t, t_cpoint))
         if shaking(t):
             return Tf(dx=7 * math.sin(2 * math.pi * 4.6 * t))
         if t >= t_situp:
-            return Tf(dx=cap_back * M.progress(t, t_situp, t_situp + 0.16, "out"),
+            return Tf(dx=cap_back * M.progress(t, t_situp, t_situp + 0.16, "out"), dy=hop,
                       alpha=0.0 if t > t_pan1 + 0.2 else 1.0)
-        return Tf()
+        return Tf(dy=hop)
+
+    def cap_at(t):
+        if t < t_crouch:
+            return float(int(max(0.0, t - t_cap_in0) / CAP_STEP) % 2)
+        return 2.0 + sum(t >= tk for tk in (t_situp, t_cpoint))
+    cap_sh = C.ground_shadow(kx, jy + 2, js)
     flip(sc, "hold_captain", [
-        (0, C.captain(kx, jy, js, -1, pose="worried")),
+        (0, cap_sh + captain_walk(kx, jy, js, -1, pose="walk_a")),
+        (0, cap_sh + captain_walk(kx, jy, js, -1, pose="walk_b")),
         (t_crouch, C.captain(kx, jy, js, -1, pose="wake")),
-        (t_situp, C.ground_shadow(kx, jy + 2, js) + C.captain(kx, jy, js, -1, pose="stand", expr="worried")),
-        (t_cpoint, C.ground_shadow(kx, jy + 2, js) + C.captain(kx, jy, js, 1, pose="point", expr="worried")),
-    ], z=14, motion=alive(kx, jy, [t_crouch, t_situp, t_cpoint], 0.3, extra=cap_extra))
+        (t_situp, cap_sh + C.captain(kx, jy, js, -1, pose="stand", expr="worried")),
+        (t_cpoint, cap_sh + C.captain(kx, jy, js, 1, pose="point", expr="worried")),
+    ], z=14, frame_at=cap_at,
+        motion=turned(alive(kx, jy, [t_crouch, t_situp, t_cpoint], 0.3, extra=cap_extra), [t_cpoint], w=0.08))
 
     jsx = jx + 155                         # where he sits up / stands (head stays near the pillow)
     hold_j = [
@@ -882,17 +931,20 @@ def build(ctx):
         return float(max(i for i, (tk, _) in enumerate(hold_j[:3]) if t >= tk))
 
     def hold_j_extra(t):
-        if t > t_pan1 + 0.2:
+        # hidden once the climbing Jonah rises through the hatch (the tilt can still show this one's head)
+        if t > t_pan1 + 0.2 or t >= t_climb0:
             return Tf(alpha=0.0)
         if shaking(t):
             return Tf(dx=6 * math.sin(2 * math.pi * 4.6 * t - 0.5), rot=1.2 * math.sin(2 * math.pi * 4.6 * t - 0.5))
         if t >= t_walk:
             return Tf(dx=330 * (t - t_walk), dy=-6 * abs(math.sin(math.pi * (t - t_walk) / 0.2)))
-        return Tf()
+        return Tf(dy=-8 * (bump(t, t_situp) + bump(t, t_standup)))
+    # pivot on the sleeper, then on the sitting / standing Jonah (jsx), who turns round as he gets up
     flip(sc, "hold_jonah", hold_j, z=15, frame_at=hold_j_at,
-         motion=alive(jx, jy, [t_situp, t_standup], 0.0, amp=0.008, extra=hold_j_extra))
+         motion=turned(alive(jx, jy, [t_situp, t_standup], 0.0, amp=0.008, extra=hold_j_extra), [t_standup],
+                       w=0.08, px=lambda t: jx if t < t_situp else jsx))
 
-    # Z z z still drifting up from the sleeper (continues s04) until the captain arrives
+    # Z z z still drifting up from the sleeper (continues s04), fading as the captain hurries in
     head = (jx + 157 * js / 1.15, jy - 92)
     for i, delay in enumerate((0.0, 0.9)):
         zsvg = doc(S.text(head[0] + 40, head[1] - 40, "Z", size=54, fill="#fff3d6",
@@ -902,7 +954,7 @@ def build(ctx):
             per = 1.8
             u = ((t + delay) % per) / per
             a = min(1.0, u / 0.15) * (1 - M.progress(u, 0.6, 1.0, "sine"))
-            a *= 1 - M.progress(t, t_cap_in0 + 0.1, t_shake0, "sine")
+            a *= 1 - M.progress(t, t_cap_in0 + 0.1, t_cap_in0 + 0.4, "sine")
             s = 0.5 + 0.7 * u
             return Tf(50 + 120 * u + 18 * math.sin(u * 6.0), -20 - 210 * u, -12 + 22 * u, s, s, a,
                       head[0] + 40, head[1] - 55)
@@ -1022,10 +1074,12 @@ def build(ctx):
             u = (t - t_out) / (t_jwalk1 - t_out)
             return Tf(dx=jwalk_dx(t), dy=(y_hi - JY) * (1 - u) - 5 * abs(math.sin(math.pi * (t - t_out) / 0.14)))
         u = M.progress(t, t_jback0, t_jback1, "sine")
-        return Tf(dx=jstep(t), dy=-10 * math.sin(math.pi * u))
+        lift = 8 * math.sin(math.pi * M.progress(t, t_raise, t_raise + 0.2, "linear"))   # yanks the lot up
+        return Tf(dx=jstep(t), dy=-10 * math.sin(math.pi * u) - lift)
     jswitch = [t_reach, t_raise, t_jback0, t_confess, t_sea, t_calm, t_open]
+    # he turns round like a paper cut-out to point at the sea and back (no bare mirror pop of the figure + lot)
     sc.add("jonah", [doc(f) for f in jfr], z=23, frame_at=j_at,
-           motion=alive(JX0, JY, jswitch, 0.1, extra=j_extra))
+           motion=turned(alive(JX0, JY, jswitch, 0.1, extra=j_extra), (t_sea, t_calm)))
 
     # warm light on Jonah: a gold wash in the beam (normal blend keeps it gold over the blue) + small highlights
     wdefs = (S.lin_grad("beamw", [(0, "#ffbf55", 0.5), (0.35, "#ffcb6a", 0.32), (0.8, "#ffd98a", 0.12),
@@ -1088,7 +1142,9 @@ def build(ctx):
 
     # ---------------------------------------------------------------- camera
     hold_mid = Cam(CAM_HOLD0.x - 6, CAM_HOLD0.y, CAM_HOLD0.w + 10)
-    cam_keys = [(0.0, CAM_HOLD0), (t_cap_in0 - 0.1, hold_mid), (t_crouch + 0.15, CAM_HOLD1),
+    # the widening starts only at the tail of the s04 dissolve (no double image of the hold) and follows the
+    # captain's arrival
+    cam_keys = [(0.0, CAM_HOLD0), (0.55, hold_mid), (t_crouch + 0.35, CAM_HOLD1),
                 (t_pan0, Cam(CAM_HOLD1.x - 4, CAM_HOLD1.y + 2, CAM_HOLD1.w + 8)), (t_pan1, CAM_DECK),
                 (t_glow + 0.25, Cam(CAM_DECK.x - 5, CAM_DECK.y - 4, CAM_DECK.w + 10)),
                 (t_glow + 1.3, CAM_WIDE), (t_confess, CAM_WIDE), (L[3].start - 0.1, CAM_PUSH), (T, CAM_END)]
@@ -1122,6 +1178,8 @@ def build(ctx):
     sc.sfx("footsteps", t_out, dur=t_jwalk1 - t_out + 0.1, gain_db=-17, pan=0.45, fade_out=0.15)
     sc.sfx("lots", t_reach - 0.04, gain_db=-9, pan=0.3)
     sc.sfx("sparkle", t_glow - 0.04, gain_db=-7, pan=0.35)
+    for tt in (t_sea, t_calm):             # soft robe swish on his two turns (under his own voice)
+        sc.sfx("cloth", tt - 0.05, gain_db=-14, pan=0.35)
     sc.sfx("thunder", t_thunder, dur=2.4, gain_db=-14, pan=0.4, fade_out=1.2)
     return sc
 

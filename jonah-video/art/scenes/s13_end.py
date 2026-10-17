@@ -10,8 +10,10 @@ One wide sunset double-page spread on a 2800 x 1620 stage (no cuts):
   * ABOVE: a huge, high dusk sky — sunset gradient, layered evening clouds, the evening star and the first stars.
 
 Timing (all keyed to the narration, phrase times derived from ctx.lines):
+  * opening (the 0.8 s cross-dissolve from s12): Jonah on the left third looking east at Nineveh, so he does
+    not stack on s12's close-up of his face at the frame centre.
   * line 0 "上帝的爱，比海更宽，比天更高。": two-stage camera. "比海更宽": the frame widens (top kept low,
-    drifting west) so the sea opens up and the great fish leaps across the sun's glitter path; "比天更高": the
+    sweeping west) so the sea opens up and the great fish leaps across the sun's glitter path; "比天更高": the
     frame tilts up and grows to the full spread, the sky deepens and the evening star and first stars come out.
   * line 1 "他愿意给每一个人，重新开始的机会。": the camera pushes in on Jonah; warm golden light blooms from the
     sun over everything (rays, glow, motes, a warm rim on Jonah's sun side), Nineveh's lamps light up and the
@@ -1033,16 +1035,26 @@ def build(ctx):
     # through the intermediate keys. "比海更宽": widen with the top kept low (mostly horizontal growth, drifting
     # west over the sea); "比天更高": tilt up and finish the zoom so the sky grows upward; line 1: push in on
     # Jonah (eyes closing, doves landing); then ease back out so the end card has room.
+    # Opening (held through the 0.8 s cross-dissolve from s12): Jonah on the left third, looking east at
+    # Nineveh. s12 ends on a large close-up of his face at the centre of the frame, so opening on him there too
+    # stacked two Jonahs (two hoods, two beards) mid-dissolve. Framed this way his whole figure fades in at
+    # screen x ~575..705 over s12's quiet far hills and sand, clear of s12's seated Jonah and leaf
+    # (x ~745..1110), and s12's face fades out over open s13 sky, above the palms and the city. On
+    # "上帝的爱，比海更宽" the camera sweeps west past him and reaches the sea before the great fish breaks the
+    # surface (the extra x-only key at t_sea keeps the leap where it was).
     t_a = t_sky - 0.07
     t_b = L0.end + 0.1
     t_c = L1.start + 0.05
     t_push = L1.start + 0.55 * d1
     t_out0 = max(t_push + 0.1, t_new + 0.3)
     t_out1 = t_card + 0.5
-    ck = [(0.0, 1400, 1500, 1430), (0.5, 1400, 1500, 1430), (t_a, 1250, 2080, 1600), (t_b, 1400, 2720, 1556),
-          (t_c, 1400, 2720, 1556), (t_push, 1335, 2300, 1562), (t_out0, 1335, 2300, 1562),
+    x_open, b_open = 1650, 1360         # Jonah (stage x 1400) at screen x ~640, his feet at y ~747
+    ck = [(0.0, x_open, 1500, b_open), (0.5, x_open, 1500, b_open), (t_a, 1250, 2080, 1600),
+          (t_b, 1400, 2720, 1556), (t_c, 1400, 2720, 1556), (t_push, 1335, 2300, 1562), (t_out0, 1335, 2300, 1562),
           (t_out1, 1400, 2640, 1558), (max(T, t_out1 + 0.5), 1400, 2600, 1555)]
-    cx_f = smooth_keys([(k[0], k[1]) for k in ck])
+    cx_k = [(k[0], k[1]) for k in ck]
+    cx_k.insert(2, (t_sea, 1325))       # x only: front-load the westward sweep so the leap stays in frame
+    cx_f = smooth_keys(cx_k)
     cw_f = smooth_keys([(k[0], k[2]) for k in ck])
     cb_f = smooth_keys([(k[0], k[3]) for k in ck])
 

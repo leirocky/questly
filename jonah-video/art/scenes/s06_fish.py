@@ -547,7 +547,9 @@ def build(ctx):
     t_calm0 = L0.end - 1.5              # "海立刻平静了"
     t_calm1 = L0.end - 0.45
     t_awe = t_calm0 + 0.3               # crew: pray / point in awe
-    t_tilt0, t_tilt1 = L0.end + 0.0, L1.start + 1.05
+    # a slow ~2.25 s tilt (sine ease, <~30 output px/frame): starts once the calm has set in, settles on the
+    # seabed before the mouth opens
+    t_tilt0, t_tilt1 = L0.end - 0.35, L1.end - 0.1
     t_fish0, t_fish1 = L1.start + 0.0, L1.end + 0.25
     t_see = t_fish1 - 0.55              # Jonah turns to look at the fish
     t_open0, t_open1 = L2.start - 0.15, L2.start + 0.5
@@ -793,7 +795,7 @@ def build(ctx):
 
     # ---- camera: storm sway at the surface, then tilt below the waterline
     cam = M.cam_keys([(0, Cam(1000, 590, 1700)), (t_tilt0, Cam(1000, 590, 1700)),
-                      (t_tilt1, Cam(1070, 1772, 2050)), (T, Cam(1100, 1760, 1990))], ["linear", "inout", "sine"])
+                      (t_tilt1, Cam(1070, 1772, 2050)), (T, Cam(1100, 1760, 1990))], ["linear", "sine", "sine"])
 
     def camera(t):
         c = cam(t)
@@ -834,7 +836,7 @@ def build(ctx):
     sc.sfx("thunder", t_lightning - 0.02, gain_db=-16, pan=-0.3)
     sc.sfx("cloth", t_launch - 0.1, gain_db=-12, pan=0.1)
     sc.sfx("whoosh", t_launch + 0.05, gain_db=-11, pan=0.3)
-    sc.sfx("splash", t_impact - 0.02, gain_db=-6, pan=0.35)
+    sc.sfx("splash", t_impact - 0.02, gain_db=-9, pan=0.35)
     sc.sfx("bubbles", t_impact + 0.05, dur=1.2, gain_db=-14, pan=0.3, fade_out=0.5)
     sc.sfx("waves_calm", t_calm0 - 0.2, dur=t_tilt1 - t_calm0 + 0.6, gain_db=-12, fade_in=0.9, fade_out=1.0)
     sc.sfx("chime", t_calm0 + 0.35, gain_db=-15)

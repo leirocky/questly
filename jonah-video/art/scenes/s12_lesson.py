@@ -18,10 +18,10 @@ Timing (all keyed to ctx.lines; the first 0.8 s is a still frame for the dissolv
   line 1  "你尚且这样爱惜它。"  Jonah looks down at the leaf, thoughtful ('sorry', eyes downcast). Late in the line
           the camera starts a slow pull-back while he leans toward the city below (still downcast, no smile).
   line 2  "尼尼微有十二万多…人"  the pull-back settles on a held wide view of the whole city with Jonah on his
-          knoll (doves fly ahead of the camera and leave the frame); then one continuous slow glide descends
-          to the people (hearts rise over them, one each, above their heads).
-  line 3  "还有许多牲畜，我怎能不爱惜呢？"  the glide drifts on over the pasture (a sheep bleats, hearts over the
-          animals) and rises back up the knoll to Jonah; the camera settles, then pushes in slowly while his
+          knoll (doves fly ahead of the camera and leave the frame); then a slow glide descends to the people
+          and settles on them (hearts rise over them, one each, above their heads).
+  line 3  "还有许多牲畜，我怎能不爱惜呢？"  a second glide drifts on over the pasture (a sheep bleats, hearts over
+          the animals) and rises back up the knoll to Jonah; the camera settles, then pushes in slowly while his
           face softens (peaceful, the only smile); a chime at the end. The last frames put Jonah's face at the
           centre, where s13 opens on him.
 Camera: every move is re-parametrised by output-space arc length (zoom included) with soft ramps, so the
@@ -508,8 +508,10 @@ def build(ctx):
     t_thought = l1.start + 0.2                # "你尚且这样爱惜它" -> Jonah looks at the leaf, thoughtful
     t_look = l1.end - 0.15                    # he leans toward the city below (eyes downcast, not smiling)
     t_sw0, t_sw1 = l1.end - 1.8, l2.start + 1.2      # slow pull-back to the held wide view of the city
-    t_hold1 = l2.start + 1.9                  # end of the wide hold -> one continuous glide
-    t_back1 = l3.end - 0.55                   # the glide lands back on Jonah ...
+    t_hold1 = l2.start + 1.7                  # end of the wide hold -> glide down to the people
+    t_people = l2.start + 3.35                # ... the glide eases to rest on the people (end of line 2) ...
+    t_go = l2.start + 3.45                    # ... then glides on over the pasture and up the knoll
+    t_back1 = l3.end - 0.45                   # the glide lands back on Jonah ...
     t_peace = l3.end - 0.35                   # ... and then his face softens (peaceful)
     t_city0 = l2.start - 0.2                  # golden sparkles begin to twinkle over the plain
     t_hearts_p0, t_hearts_p1 = l2.start + 0.7, l2.end + 0.3
@@ -1060,13 +1062,15 @@ def build(ctx):
     Cw = Cam(1620, 850, 2420)         # held wide view: the whole city, the plain, the pasture, Jonah on his knoll
     Cw2 = Cam(1590, 860, 2390)
     C1 = Cam(1100, 1010, 1850)        # the people
-    C2 = Cam(1620, 1110, 1800)        # the animals
-    C2b = Cam(1700, 880, 1800)        # tilt up first, so Jonah enters from the side, head and all
+    C2 = Cam(1560, 1060, 1800)        # the animals (passed around t_baa, so the bleating sheep is in view)
+    C2b = Cam(1920, 780, 1780)        # rise while panning right, so Jonah enters from the side, head and all
     C3 = Cam(XJ - 20, 640, 1720)      # back up the knoll to Jonah
     Cf = Cam(hx, 600, 1450)           # slow push-in: Jonah's face at the centre (s13 opens on him there)
     moves = []
     for (ta, tb, cams, r) in [(t_still, t_sw0, [C0, C0b], 0.45), (t_sw0, t_sw1, [C0b, Cw], 0.27),
-                              (t_sw1, t_hold1, [Cw, Cw2], 0.5), (t_hold1, t_back1, [Cw2, C1, C2, C2b, C3], 0.15),
+                              (t_sw1, t_hold1, [Cw, Cw2], 0.5),
+                              (t_hold1, t_people, [Cw2, C1], 0.35),          # ease out to rest on the people
+                              (t_go, t_back1, [C1, C2, C2b, C3], 0.2),       # x only increases: no hairpin
                               (t_back1, T, [C3, Cf], 0.5)]:
         fn, _, knots = _cam_path(cams)
         moves.append((ta, tb, fn, r, knots))
@@ -1080,9 +1084,9 @@ def build(ctx):
         return moves[-1][2](1.0)
 
     sc.camera = camera
-    gl = moves[3]
-    sc.cam_marks = {"people": gl[0] + (gl[1] - gl[0]) * _glide_inv(gl[4][1], gl[3]),
-                    "pasture": gl[0] + (gl[1] - gl[0]) * _glide_inv(gl[4][2], gl[3])}
+    gl = moves[4]
+    sc.cam_marks = {"people": t_people,
+                    "pasture": gl[0] + (gl[1] - gl[0]) * _glide_inv(gl[4][1], gl[3])}
 
     # =============================================================== FX
     sc.fx = [
