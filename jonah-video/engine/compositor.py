@@ -195,7 +195,8 @@ def composite_pm(frame, src, x0, y0, blend="normal"):
     elif blend == "add":
         dst[:] = cv2.add(dst, rgb)
     elif blend == "screen":
-        dst[:] = cv2.subtract(cv2.add(dst, rgb), cv2.multiply(dst, rgb, scale=1 / 255.0))
+        # 255 - (255 - d)(255 - s)/255; computed via complements so nothing saturates early.
+        dst[:] = cv2.subtract(255, cv2.multiply(cv2.subtract(255, dst), cv2.subtract(255, rgb), scale=1 / 255.0))
     elif blend == "multiply":
         k = cv2.add(cv2.merge([255 - a] * 3), rgb)
         dst[:] = cv2.multiply(dst, k, scale=1 / 255.0)

@@ -3,10 +3,14 @@
 Jonah 1:15-17. Tall stage (2112 x 2376): the top half is the sea surface with the ship (storm -> calm),
 the bottom half is the underwater world. The camera tilts from the ship down below the waterline.
 
-  line 0  sailors heave Jonah over the bow, he flies in an arc and splashes into the sea; at once the rain
-          stops, the clouds part, the sky turns blue, the waves flatten and a golden sunbeam falls on the sea.
+  line 0  three sailors hold Jonah up overhead ('carried') and heave him over the stern rail; he flies in an
+          arc and splashes into the sea; at once the rain stops, the storm banks slide away, the sky turns
+          blue, the waves flatten and a golden sunbeam falls on the sea. The crew pray / point in awe.
   line 1  camera tilts underwater: Jonah sinks with bubbles; the great fish glides in from the left.
   line 2  the fish opens its mouth wide, lunges and gulps Jonah; it wiggles happily, a burst of bubbles.
+
+Continuity with s03/s04/s05: the ship sails west (bow to the LEFT, facing -1) with the torn striped sail,
+four sailors (variants 0-3) and the captain.
 """
 import math
 
@@ -28,19 +32,33 @@ WL = 880               # near waterline (cross-section cut)
 FLOOR = 2215           # top of the sandy sea floor
 
 SX, SS = 770, 0.8      # ship anchor x (on WL) and scale
+SF = -1                # bow to the LEFT (sailing west toward Tarshish, as in s03/s04); stern on the right
 DECK = WL + PR.SHIP_DECK_Y * SS
-CREW_X = [SX + 20 * SS, SX + 130 * SS, SX + 240 * SS]
-CAPT_X = SX - 235 * SS
+CREW_X = [SX + 30 * SS, SX + 150 * SS, SX + 270 * SS]   # the three lifters (stern side, 120*SS apart)
+CAPT_X = SX - 150 * SS                                  # captain between the mast and the bow
+S3_X = SX - 276 * SS                                    # sailor 3 (ginger beard) in the bow
 
 JS = 0.8               # Jonah scale (above and below water)
-JAIR_ROT = 10                                  # the 'fall' pose tipped a little toward the bow
-JAIR_C = (CREW_X[1] + 4, DECK - 317 * SS - 126)  # centre of the lifted Jonah (robe resting on the hands)
-JAIR = (JAIR_C[0] - 1 * JS, JAIR_C[1] + 164 * JS)  # 'fall' anchor (bottom-centre) before the turn
+# lifted overhead: 'carried' (facing -1 = head toward the stern / the sea) on the lifters' hand line
+JCAR = (CREW_X[1] - 20 * JS, DECK - 316.5 * SS + 6 * SS)
+JCAR_C = (JCAR[0] + 20 * JS, JCAR[1] - 39.5 * JS)        # its bbox centre
+# airborne: 'fall' (facing 1, head toward the sea) launched from the carried centre
+JAIR_ROT = 22                                            # baked tilt: body nearly level, like 'carried'
+JAIR_C = JCAR_C
+JAIR = (JAIR_C[0] + 1 * JS, JAIR_C[1] + 135.5 * JS)      # 'fall' anchor (bbox bottom-centre)
 SPLASH = (1592, WL)
 
 FX0, FY0, FSC = 760, 1660, 0.9                 # the great fish: anchor and scale (before motion)
+FPAD = 400                                     # fish drawn this far right inside its layers (tail never cut)
+FXL = FX0 + FPAD
+SWALLOW_L = (405.0, 62.0)                      # fish-local point Jonah ends at (inside the opening, mouth .7)
+SWALLOW_S, SWALLOW_ROT = 0.5, -16.0            # ...his scale factor and on-screen rotation there
 JB = (1470, 1690)                              # underwater Jonah: base bbox centre
-JB_ANCHOR = (JB[0] - 1 * JS, JB[1] + 165 * JS)
+
+
+def jb_anchor(c, facing, s=1.0):
+    """'float' anchor (bbox bottom-centre) that puts the bbox centre on c (scale JS*s)."""
+    return c[0] - facing * 1.5 * JS * s, c[1] + 165 * JS * s
 
 
 def doc(body, defs=""):
@@ -306,12 +324,53 @@ def near_waves(storm):
             for j in range(3):
                 caps += f'<circle cx="{x + 40 + j * 22:.0f}" cy="{y - 42 - j * 12:.0f}" r="{7 - j * 1.5:.1f}" ' \
                         f'fill="{P["foam"]}" stroke="{P["ink"]}" stroke-width="2.5"/>'
-        b += caps
+        b += caps + _storm_band_detail()
     else:
         b += S.path(S.wave_line(top + 16, amp * 0.8, lam, ph + 0.4, x0=-60, x1=W + 60), stroke=False,
                     extra=f'stroke="{P["foam"]}" stroke-width="5" fill="none" opacity="0.55" '
                           f'stroke-dasharray="160 90"')
     return doc(S.g(b, filter="wobble"), defs)
+
+
+def _storm_band_detail():
+    """Swell lines and foam streaks in the murky storm water + a foreground crest framing the ship (lower left)."""
+    dark = S.shade(P["storm_sea"], -0.25)
+    b = ""
+    for i, (y, a, lam, ph, dash) in enumerate([(WL + 98, 9, 430, 0.7, "340 150"), (WL + 172, 11, 520, 2.1, "420 170"),
+                                               (WL + 252, 13, 610, 1.2, "520 190")]):
+        b += S.path(S.wave_line(y, a, lam, ph, x0=-60, x1=W + 60), stroke=False,
+                    extra=f'stroke="{dark}" stroke-width="{6 + 1.5 * i:.1f}" fill="none" opacity="0.55" '
+                          f'stroke-linecap="round" stroke-dasharray="{dash}" stroke-dashoffset="{90 * i}"')
+    for i, (x, y, w) in enumerate([(640, WL + 62, 220), (1240, WL + 70, 260), (1820, WL + 58, 200),
+                                   (900, WL + 132, 300), (1500, WL + 140, 240), (300, WL + 215, 0),
+                                   (1150, WL + 218, 330), (1750, WL + 226, 280)]):
+        if w <= 0:
+            continue
+        b += S.path(S.wave_line(y, 5, w / 1.6, i * 0.9, x0=x, x1=x + w), stroke=False,
+                    extra=f'stroke="#dfe8ea" stroke-width="{4 + i % 3}" fill="none" opacity="0.42" '
+                          f'stroke-linecap="round" stroke-dasharray="{w * 0.45:.0f} {w * 0.12:.0f}"')
+    # foreground crest at the lower left: a dark swell with a curling foam cap (frames the ship)
+    body = S.lin_grad("s6crest", [(0, S.mix(P["storm_sea_light"], P["storm_sea"], 0.3)), (0.45, P["storm_sea"]),
+                                  (1, S.shade(P["storm_sea"], -0.2))])
+    y0 = WL + 58
+    d = (f"M-90,{WL + 440} L-90,{y0 + 84} C0,{y0 + 44} 150,{y0} 270,{y0} C370,{y0} 450,{y0 + 40} 520,{y0 + 96} "
+         f"C580,{y0 + 142} 640,{y0 + 204} 700,{y0 + 284} L700,{WL + 440} Z")
+    crest = S.path(d, fill="url(#s6crest)", sw=4.5)
+    crest += S.path(f"M-40,{y0 + 120} C80,{y0 + 70} 220,{y0 + 52} 340,{y0 + 66} C420,{y0 + 78} 470,{y0 + 108} 520,{y0 + 150}",
+                    stroke=False, extra=f'stroke="{dark}" stroke-width="7" fill="none" opacity="0.5" '
+                                        f'stroke-linecap="round" stroke-dasharray="190 70"')
+    crest += S.path(f"M-60,{y0 + 98} C40,{y0 + 60} 120,{y0 + 40} 200,{y0 + 34}", stroke=False,
+                    extra='stroke="#dfe8ea" stroke-width="5" fill="none" opacity="0.5" stroke-linecap="round" '
+                          'stroke-dasharray="70 30"')
+
+    def cap(x, y, k):
+        q = lambda a, b: f"{x + a * k:.0f},{y + b * k:.0f}"  # noqa: E731
+        return S.path(f"M{q(-95, 22)} Q{q(-40, -30)} {q(30, -22)} Q{q(70, -12)} {q(58, 12)} Q{q(30, -4)} {q(10, 14)} "
+                      f"Q{q(-30, 2)} {q(-95, 22)} Z", fill=P["foam"], sw=3.5)
+    crest += cap(300, y0 + 6, 2.3) + cap(560, y0 + 128, 1.2) + cap(80, y0 + 52, 1.1)
+    for cx, cy, r in ((470, y0 - 58, 9), (500, y0 - 84, 7), (522, y0 - 108, 5), (640, y0 + 90, 6), (664, y0 + 70, 4)):
+        crest += f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{P["foam"]}" stroke="{P["ink"]}" stroke-width="2.5"/>'
+    return f'<defs>{body}</defs>' + b + crest
 
 
 def splash_crown():
@@ -362,14 +421,49 @@ def ripples():
 # ============================================================================ animated characters
 
 
-def crew(after):
-    """Captain at the stern + three sailors on deck (lifting Jonah, or praying in awe once the sea is calm)."""
-    b = C.captain(CAPT_X, DECK, SS, 1, pose="stand" if after else "worried", expr="surprised" if after else None)
-    poses = [("pray", "surprised"), ("pray", "surprised"), ("point", "surprised")] if after else \
-        [("lift", None)] * 3
-    for i, (x, (pose, ex)) in enumerate(zip(CREW_X, poses)):
-        b += C.sailor(x, DECK, SS, 1, variant=[0, 1, 2][i], pose=pose, expr=ex)
+def crew(stage):
+    """Sailor 3 in the bow, the captain by the mast and the three lifters on the stern side, all facing the
+    stern (where Jonah goes). stage 0: lifting Jonah; 1: watching the splash; 2: awe once the sea is calm."""
+    s3 = [("scared", None), ("scared", None), ("pray", "surprised")][stage]
+    capt = [("stand", "worried"), ("worried", None), ("stand", "surprised")][stage]
+    lifters = [[("lift", None)] * 3,
+               [("scared", None), ("stand", "worried"), ("point", "worried")],
+               [("pray", "surprised"), ("pray", "surprised"), ("point", "surprised")]][stage]
+    b = C.sailor(S3_X, DECK, SS, 1, variant=3, pose=s3[0], expr=s3[1])
+    b += C.captain(CAPT_X, DECK, SS, 1, pose=capt[0], expr=capt[1])
+    for i, (x, (pose, ex)) in enumerate(zip(CREW_X, lifters)):
+        b += C.sailor(x, DECK, SS, 1, variant=i, pose=pose, expr=ex)
     return doc(b)
+
+
+UW_DEFS = ('<filter id="s6uwt"><feColorMatrix type="matrix" values="0.86 0.04 0.04 0 0  0.02 0.92 0.06 0 0.02  '
+           '0.02 0.06 0.9 0 0.05  0 0 0 1 0"/></filter>'
+           # inside the fish's mouth: darker, warmer (the red throat)
+           '<filter id="s6uwd"><feColorMatrix type="matrix" values="0.6 0.04 0.03 0 0.03  0.02 0.46 0.04 0 0  '
+           '0.02 0.04 0.5 0 0.02  0 0 0 1 0"/></filter>'
+           '<filter id="s6halo" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="70"/>'
+           '</filter>')
+
+
+def jonah_uw_markup(facing, expr=None, filt="s6uwt", c=JB, s=1.0, rot=0.0):
+    ax, ay = jb_anchor(c, facing, s)
+    tr = f' transform="rotate({rot:.2f} {c[0]:.1f} {c[1]:.1f})"' if rot else ""
+    return f'<g filter="url(#{filt})"{tr}>{C.jonah(ax, ay, JS * s, facing, pose="float", expr=expr)}</g>'
+
+
+def fish_rim():
+    """Figure / ground separation for the blue fish in blue water (fish-local coords, scale 1):
+    (back) a soft deeper-water shadow just behind the fish; (front) a warm rim light along its back and
+    dorsal fin from the light shafts. Kept well inside the outlines, so no clip edge can show."""
+    halo = ('<ellipse cx="-90" cy="-20" rx="640" ry="330" fill="#174a66" opacity="0.42" filter="url(#s6halo)"/>'
+            '<ellipse cx="-560" cy="0" rx="260" ry="300" fill="#174a66" opacity="0.3" filter="url(#s6halo)"/>')
+    rim = "M236,-264 C120,-282 0,-282 -120,-264 C-230,-243 -318,-192 -398,-118 C-426,-92 -446,-72 -462,-56"
+    fin = 'M-178,-352 C-150,-396 -100,-424 -46,-428 C10,-432 70,-416 116,-372'
+    light = (f'<path d="{rim}" fill="none" stroke="#fff1c4" stroke-width="22" stroke-linecap="round" '
+             f'opacity="0.5" filter="url(#soft)"/>'
+             f'<path d="{fin}" fill="none" stroke="#fff1c4" stroke-width="18" stroke-linecap="round" '
+             f'opacity="0.38" filter="url(#soft)"/>')
+    return halo, light
 
 
 def fish_frames():
@@ -447,12 +541,14 @@ def build(ctx):
 
     # ---- timing (all from the narration)
     t_heave0 = L0.start + 0.25          # sailors dip...
-    t_launch = L0.start + 0.95          # ...and heave Jonah over the bow
+    t_launch = L0.start + 0.95          # ...and heave Jonah over the stern rail
+    t_watch = t_launch + 0.42           # lifters drop their arms and watch
     t_impact = L0.start + 1.7           # "...抛进海里" -> splash
     t_calm0 = L0.end - 1.5              # "海立刻平静了"
     t_calm1 = L0.end - 0.45
+    t_awe = t_calm0 + 0.3               # crew: pray / point in awe
     t_tilt0, t_tilt1 = L0.end + 0.0, L1.start + 1.05
-    t_fish0, t_fish1 = L1.start + 0.3, L1.end + 0.2
+    t_fish0, t_fish1 = L1.start + 0.0, L1.end + 0.25
     t_see = t_fish1 - 0.55              # Jonah turns to look at the fish
     t_open0, t_open1 = L2.start - 0.15, L2.start + 0.5
     t_surge0, t_surge1 = L2.start + 0.8, L2.start + 1.08
@@ -461,6 +557,13 @@ def build(ctx):
 
     def storm(t):          # 1 = full storm, 0 = calm
         return 1 - progress(t, t_calm0, t_calm1, "inout")
+
+    def storm_fast(t):     # storm crests / banks: gone before the blue sky dominates
+        return 1 - progress(t, t_calm0, t_calm0 + 0.55, "sine")
+
+    def bump(t, ts, w=0.06):
+        """0..1..0 triangle centred just after ts (a 3-4 frame hop that sells a pose swap)."""
+        return max(0.0, 1 - abs(t - ts - 0.03) / w)
 
     # ---- ship rocking: amplitude decays when the sea calms
     def ship_tf(t):
@@ -471,11 +574,23 @@ def build(ctx):
     heave = M.keys([(t_heave0, {"dy": 0}), (t_heave0 + 0.3, {"dy": 14}), (t_launch, {"dy": -34}),
                     (t_launch + 0.35, {"dy": 0})], ["inout", "out", "inout"])
 
+    def crew_m(t):
+        s = ship_tf(t)
+        return Tf(dx=s.dx, dy=s.dy + 0.45 * heave(t).dy - 7 * (bump(t, t_watch) + bump(t, t_awe)), rot=s.rot,
+                  px=SX, py=WL)
+
+    def carried_m(t):      # rides on the lifters' hands; the arms' push throws him a little higher at the top
+        c = crew_m(t)
+        return Tf(dx=c.dx, dy=c.dy + 0.55 * min(0.0, heave(t).dy), rot=c.rot, alpha=float(t < t_launch),
+                  px=SX, py=WL)
+
     # ---------------------------------------------------------------- layers (back to front)
     sc.add("background", background(), z=0, wc=0.8)
-    # light shafts and fair-weather clouds are static: they flatten into the background (hidden by the storm)
+    # light shafts are static: they flatten into the background (hidden by the storm overlay)
     sc.add("shafts", light_shafts(), z=1, wc=0)
-    sc.add("clouds", clouds_clear(), z=2)
+    # fair-weather clouds appear only after the storm banks have gone (no double exposure)
+    sc.add("clouds", clouds_clear(), z=2,
+           motion=M.combine(M.visible(t_calm0 + 0.55, fade=0.45), M.drift(vx=6, t0=t_calm0)))
     sc.add("sunbeams", sunbeams(), z=3, wc=0,
            motion=lambda t: Tf(alpha=progress(t, t_calm0 + 0.2, t_calm1 + 0.3, "sine") *
                                (0.8 + 0.2 * math.sin(2 * math.pi * t / 2.7))))
@@ -488,9 +603,9 @@ def build(ctx):
     sc.add("storm", storm_overlay(), z=5, motion=lambda t: Tf(alpha=storm(t)))
     for side in (-1, 1):
         sc.add(f"storm_bank{side}", storm_bank(side), z=6,
-               motion=lambda t, s=side: Tf(dx=s * 1250 * progress(t, t_calm0 - 0.1, t_calm1, "sine") +
+               motion=lambda t, s=side: Tf(dx=s * 1250 * progress(t, t_calm0 - 0.1, t_calm0 + 0.6, "sine") +
                                            s * 8 * math.sin(t * 1.3),
-                                           alpha=1 - progress(t, t_calm0 + 0.15, t_calm1 - 0.15, "sine")))
+                                           alpha=storm_fast(t)))
 
     # little fish in the lower right: they dart away when the great fish arrives
     school_a = [doc(PR.small_fish(1330, 1850, 0.7, 1, "yellow", tail=tl) +
@@ -503,29 +618,30 @@ def build(ctx):
                             M.bob(10, 1.7)),
            frame_at=lambda t: float(int(t * (6 if t < t_fish1 - 0.9 else 12)) % 2))
 
-    # ship + crew + lifted Jonah
-    sc.add("ship_back", doc(PR.ship(SX, WL, SS, 1, sail="furled", part="back")), z=10, motion=ship_tf)
-    sc.add("crew", [crew(False), crew(True)], z=11,
-           motion=M.combine(ship_tf, lambda t: Tf(dy=0.45 * heave(t).dy)),
-           frame_at=lambda t: progress(t, t_calm0 + 0.15, t_calm0 + 0.4, "sine"))
-    sc.add("ship_front", doc(PR.ship(SX, WL, SS, 1, sail="furled", part="front")), z=12, motion=ship_tf)
+    # ship (bow left, torn sail as in s04) + Jonah held overhead + crew
+    sc.add("ship_back", doc(PR.ship(SX, WL, SS, SF, sail="torn", part="back")), z=10, motion=ship_tf)
+    # Jonah lying on the lifters' hands: BEHIND the crew so their hands hold him (Jonah 1:15)
+    sc.add("jonah_carried", doc(C.jonah(JCAR[0], JCAR[1], JS, -1, pose="carried")), z=10.5, motion=carried_m)
+    # pose changes are hard cuts (never crossfade different poses), sold by a tiny hop
+    sc.add("crew", [crew(0), crew(1), crew(2)], z=11, motion=crew_m,
+           frame_at=lambda t: float(t >= t_watch) + float(t >= t_awe))
+    sc.add("ship_front", doc(PR.ship(SX, WL, SS, SF, sail="torn", part="front")), z=12, motion=ship_tf)
 
-    # Jonah's flight: rides the ship until launch, then a ballistic arc with a tumble into the sea
-    st_l = ship_tf(t_launch)
-    th = math.radians(st_l.rot)
+    # Jonah's flight: launched from the carried centre at the top of the heave, a ballistic arc with a tumble
+    c_l = carried_m(t_launch)
+    th = math.radians(c_l.rot)
     rx, ry = JAIR_C[0] - SX, JAIR_C[1] - WL
-    p0 = (SX + rx * math.cos(th) - ry * math.sin(th) + st_l.dx,
-          WL + rx * math.sin(th) + ry * math.cos(th) + st_l.dy + heave(t_launch).dy)
+    p0 = (SX + rx * math.cos(th) - ry * math.sin(th) + c_l.dx,
+          WL + rx * math.sin(th) + ry * math.cos(th) + c_l.dy)
     p1 = (SPLASH[0], SPLASH[1] - 6)
 
     def jonah_air(t):
         if t < t_launch:
-            s = ship_tf(t)
-            return Tf(dx=s.dx, dy=s.dy + heave(t).dy, rot=s.rot, px=SX, py=WL)
+            return Tf(alpha=0.0)
         u = min(1.0, (t - t_launch) / (t_impact - t_launch))
         x = lerp(p0[0], p1[0], u)
-        y = lerp(p0[1], p1[1], u) - 4 * 250 * u * (1 - u)
-        rot = st_l.rot + 62 * progress(u, 0.15, 1.0, "inout")
+        y = lerp(p0[1], p1[1], u) - 4 * 230 * u * (1 - u)
+        rot = c_l.rot + 60 * progress(u, 0.1, 1.0, "inout")
         a = 1 - progress(t, t_impact - 0.04, t_impact + 0.06, "linear")
         return Tf(dx=x - JAIR_C[0], dy=y - JAIR_C[1], rot=rot, alpha=a, px=JAIR_C[0], py=JAIR_C[1])
 
@@ -533,14 +649,16 @@ def build(ctx):
                                 transform=f"rotate({JAIR_ROT} {JAIR_C[0]:.1f} {JAIR_C[1]:.1f})")),
            z=13, motion=jonah_air)
 
-    # waves at the waterline: storm crests flatten into a gentle swell
+    # waves at the waterline: storm crests sink and fade fast, the calm swell keeps easing down
     def wave_m(storm_layer):
         def m(t):
             a = storm(t)
+            f = storm_fast(t)
             amp = a if storm_layer else (0.35 + 0.65 * a)
             return Tf(dx=(46 if storm_layer else 30) * amp * math.sin(2 * math.pi * t / 2.9),
-                      dy=(16 if storm_layer else 5) * amp * math.sin(2 * math.pi * t / 1.7 + 0.8),
-                      alpha=a if storm_layer else 1 - 0.85 * a)
+                      dy=(16 if storm_layer else 5) * amp * math.sin(2 * math.pi * t / 1.7 + 0.8) +
+                      (40 * (1 - f) if storm_layer else 0),
+                      alpha=f if storm_layer else 1 - 0.85 * f)
         return m
 
     sc.add("waves_calm", near_waves(False), z=20, motion=wave_m(False))
@@ -576,8 +694,9 @@ def build(ctx):
         return 18 + WAG[int(t * k * 8) % 8]
 
     def fish_m(t):
-        u = progress(t, t_fish0, t_fish1, "out")
-        x = lerp(-1750, 0, u) + 40 * progress(t, t_fish1, t_surge0, "sine")
+        """The fish is drawn at FXL = FX0 + FPAD inside its layers; dx brings its anchor to FX0 + x."""
+        u = progress(t, t_fish0, t_fish1, "sine")           # a gentle glide (< ~1100 px/s on screen)
+        x = lerp(-1350, 0, u) + 40 * progress(t, t_fish1, t_surge0, "sine")
         x += 200 * progress(t, t_surge0, t_surge1, "out") + 80 * progress(t, t_close1, T, "sine")
         y = 70 * (1 - u) + 10 * math.sin(2 * math.pi * t / 2.3)
         rot = 2.0 * math.sin(2 * math.pi * t / 1.6) * (0.4 + 0.6 * (1 - progress(t, t_fish1, t_fish1 + 0.4)))
@@ -589,14 +708,36 @@ def build(ctx):
             sy += 0.04 * w * math.sin(2 * math.pi * 2.4 * (t - t_close1) + 1.2)
             sx -= 0.02 * w * math.sin(2 * math.pi * 2.4 * (t - t_close1) + 1.2)
             y += -14 * w * abs(math.sin(2 * math.pi * 1.2 * (t - t_close1)))
-        return Tf(dx=x, dy=y, rot=rot, sx=sx, sy=sy, px=FX0, py=FY0)
+        return Tf(dx=x - FPAD, dy=y, rot=rot, sx=sx, sy=sy, px=FXL, py=FY0)
 
-    sc.add("fish_back", [doc(PR.fish(FX0, FY0, FSC, 1, mouth=m, eye=e, tail=tl, part="back"))
-                         for m, e, tl in frames], z=30, motion=fish_m, frame_at=fish_idx)
+    def fish_pt(t, lx, ly):
+        """Fish-local point (scale 1, facing right) -> stage px under the fish's motion at time t."""
+        f = fish_m(t)
+        ux, uy = lx * FSC * f.sx, ly * FSC * f.sy
+        r = math.radians(f.rot)
+        return (FXL + f.dx + ux * math.cos(r) - uy * math.sin(r), FY0 + f.dy + ux * math.sin(r) + uy * math.cos(r))
+
+    # the swallowed Jonah inside the closing mouth (frames 15-17): clipped to the opening, darkened, at the very
+    # spot / scale / rotation the moving Jonah reaches at t_close0 -> a seamless hand-off
+    in_c = (FXL + SWALLOW_L[0] * FSC, FY0 + SWALLOW_L[1] * FSC)
+    in_rot = SWALLOW_ROT - fish_m(t_close0).rot
+
+    def fish_back_doc(i, m, e, tl):
+        halo, light = fish_rim()
+        loc = f'transform="translate({FXL},{FY0}) scale({FSC})"'
+        body = f'<g {loc}>{halo}</g>' + PR.fish(FXL, FY0, FSC, 1, mouth=m, eye=e, tail=tl, part="back")
+        body += f'<g {loc}>{light}</g>'
+        if 15 <= i <= 17:
+            body += PR.in_fish_mouth(jonah_uw_markup(-1, "surprised", "s6uwd", in_c, SWALLOW_S, in_rot),
+                                     FXL, FY0, FSC, 1, mouth=m)
+        return doc(body, UW_DEFS)
+
+    sc.add("fish_back", [fish_back_doc(i, m, e, tl) for i, (m, e, tl) in enumerate(frames)],
+           z=30, motion=fish_m, frame_at=fish_idx)
 
     # Jonah underwater
     def jonah_path(t):
-        # plunges out of the surface shot (so his face never hides behind the subtitles)...
+        # plunges deep below the surface shot (hidden until the camera tilts: the splash and bubbles carry the dive)
         if t < t_impact + 0.9:
             u = progress(t, t_impact + 0.05, t_impact + 0.9, "out")
             cx, cy = lerp(SPLASH[0], 1575, u), lerp(WL + 150, WL + 460, u)
@@ -608,28 +749,30 @@ def build(ctx):
         cx += 16 * math.sin(2 * math.pi * t / 2.6) * progress(t, t_impact + 0.4, t_impact + 1.2)
         rot += 5 * math.sin(2 * math.pi * t / 2.1 + 0.5)
         s = 1.0
-        if t > t_surge0:     # sucked into the mouth
-            f = fish_m(t_surge1)
-            tx, ty = FX0 + f.dx + 300 * FSC, FY0 + f.dy + 70 * FSC
-            v = progress(t, t_surge0, t_surge1 + 0.05, "in")
+        if t > t_surge0:     # sucked into the mouth, right to the spot of the in-mouth copy
+            v = progress(t, t_surge0, t_close0, "in")
+            tx, ty = fish_pt(min(t, t_close0), *SWALLOW_L)
             cx, cy = lerp(cx, tx, v), lerp(cy, ty, v)
-            rot -= 25 * v
-            s = 1 - 0.32 * v
-        a = progress(t, t_impact + 0.05, t_impact + 0.2, "linear") * \
-            (1 - progress(t, t_close0 - 0.12, t_close0, "linear"))
+            rot = lerp(rot, SWALLOW_ROT, v)
+            s = lerp(1.0, SWALLOW_S, v)
+        a = progress(t, t_tilt0 + 0.15, t_tilt0 + 0.35, "linear") * float(t < t_close0)
         return cx, cy, rot, s, a
 
     def jonah_uw(t):
         cx, cy, rot, s, a = jonah_path(t)
-        return Tf(dx=cx - JB[0], dy=cy - JB[1], rot=rot, sx=s, sy=s, alpha=a, px=JB[0], py=JB[1])
+        sq = 1 - 0.22 * bump(t, t_see - 0.03)          # quick squash hides the facing flip
+        return Tf(dx=cx - JB[0], dy=cy - JB[1], rot=rot, sx=s * sq, sy=s, alpha=a, px=JB[0], py=JB[1])
 
-    uw_defs = ('<filter id="s6uwt"><feColorMatrix type="matrix" values="0.86 0.04 0.04 0 0  0.02 0.92 0.06 0 0.02  '
-               '0.02 0.06 0.9 0 0.05  0 0 0 1 0"/></filter>')
-    sc.add("jonah_uw", [doc(f'<g filter="url(#s6uwt)">{C.jonah(*JB_ANCHOR, JS, 1, pose="float")}</g>', uw_defs),
-                        doc(f'<g filter="url(#s6uwt)">{C.jonah(*JB_ANCHOR, JS, -1, pose="float", expr="surprised")}'
-                            f'</g>', uw_defs)],
-           z=31, motion=jonah_uw, frame_at=lambda t: progress(t, t_see, t_see + 0.15, "linear"))
-    sc.add("fish_front", [doc(PR.fish(FX0, FY0, FSC, 1, mouth=m, eye=e, tail=tl, part="front"))
+    def jonah_uw_idx(t):
+        if t < t_see:
+            return 0.0
+        # same pose / geometry, only the tint darkens as he slips into the mouth (no ghosting)
+        return 1.0 + progress(t, t_surge0 + 0.08, t_close0, "linear")
+
+    sc.add("jonah_uw", [doc(jonah_uw_markup(1), UW_DEFS), doc(jonah_uw_markup(-1, "surprised"), UW_DEFS),
+                        doc(jonah_uw_markup(-1, "surprised", "s6uwd"), UW_DEFS)],
+           z=31, motion=jonah_uw, frame_at=jonah_uw_idx)
+    sc.add("fish_front", [doc(PR.fish(FXL, FY0, FSC, 1, mouth=m, eye=e, tail=tl, part="front"))
                           for m, e, tl in frames], z=32, motion=fish_m, frame_at=fish_idx)
 
     # little fish near the floor + swaying foreground weeds
@@ -638,16 +781,18 @@ def build(ctx):
                     PR.small_fish(1430, 2060, 0.45, 1, "purple", tail=tl)) for tl in (0.7, -0.7)]
     sc.add("school_b", school_b, z=33, motion=M.combine(M.drift(vx=55), M.bob(8, 2.1, 0.3)),
            frame_at=lambda t: float(int(t * 5) % 2))
-    # (two narrow layers instead of one full-width one: much cheaper to composite)
+    # (two narrow layers instead of one full-width one: much cheaper to composite); quantised 9-step sway,
+    # never a crossfade between two sway frames
+    sways = [k / 4 - 1 for k in range(9)]
     weeds_l = [doc(PR.seaweed(70, H + 10, 1.5, 0, sway=s) + PR.seaweed(200, H + 10, 1.1, 2, sway=-s) +
-                   PR.seaweed(330, H + 6, 0.9, 3, sway=s * 0.5)) for s in (-1.0, -0.5, 0.0, 0.5, 1.0)]
+                   PR.seaweed(330, H + 6, 0.9, 3, sway=s * 0.5)) for s in sways]
     weeds_r = [doc(PR.seaweed(1890, H + 10, 1.0, 1, sway=-s) + PR.seaweed(2020, H + 10, 1.45, 0, sway=s) +
-                   PR.seaweed(1750, H + 10, 0.85, 3, sway=-s * 0.5)) for s in (-1.0, -0.5, 0.0, 0.5, 1.0)]
-    sc.add("weeds_l", weeds_l, z=34, frame_at=lambda t: 2 + 2 * math.sin(2 * math.pi * t / 3.4))
-    sc.add("weeds_r", weeds_r, z=35, frame_at=lambda t: 2 + 2 * math.sin(2 * math.pi * t / 3.1 + 1.0))
+                   PR.seaweed(1750, H + 10, 0.85, 3, sway=-s * 0.5)) for s in sways]
+    sc.add("weeds_l", weeds_l, z=34, frame_at=lambda t: float(round(4 + 4 * math.sin(2 * math.pi * t / 3.4))))
+    sc.add("weeds_r", weeds_r, z=35, frame_at=lambda t: float(round(4 + 4 * math.sin(2 * math.pi * t / 3.1 + 1.0))))
 
     # ---- camera: storm sway at the surface, then tilt below the waterline
-    cam = M.cam_keys([(0, Cam(1056, 612, 1980)), (t_tilt0, Cam(1056, 612, 1980)),
+    cam = M.cam_keys([(0, Cam(1000, 590, 1700)), (t_tilt0, Cam(1000, 590, 1700)),
                       (t_tilt1, Cam(1070, 1772, 2050)), (T, Cam(1100, 1760, 1990))], ["linear", "inout", "sine"])
 
     def camera(t):
@@ -660,17 +805,18 @@ def build(ctx):
     # ---- effects
     def jonah_mouth(t):
         cx, cy, rot, s, a = jonah_path(t)
-        return cx + 40 * JS, cy - 120 * JS * s
+        return cx + (40 if t < t_see else -40) * JS * s, cy - 120 * JS * s
 
     def fish_snout(t):
-        f = fish_m(t)
-        return FX0 + f.dx + 640 * FSC, FY0 + f.dy + 10 * FSC
+        return fish_pt(t, 600, 18)
 
+    t_lightning = 0.32
     sc.fx = [
+        FX.lightning([t_lightning], strength=0.35),
         FX.rain(t0=-1, t1=t_calm0 + 0.45, density=0.85, angle=16, alpha=105),
         FX.motes((0, WL + 60, W, H), count=40, t0=t_calm1, color=(214, 242, 236), size=(3, 6), alpha=80),
         # God's providence: a few warm glints in the light as the great fish arrives
-        FX.sparkles((640, 1250, 1560, 1520), count=12, t0=t_fish0 + 0.3, t1=t_open0 + 0.3,
+        FX.sparkles((640, 1250, 1560, 1520), count=12, t0=t_fish0 + 0.5, t1=t_open0 + 0.3,
                     color=(255, 238, 180), size=(7, 14), period=1.4, drift=-8, seed=61),
         bubble_fx([
             (lambda t: (SPLASH[0], WL + 110), t_impact + 0.03, t_impact + 0.4, 70, 170, (6, 20), 80, 220),
@@ -685,9 +831,9 @@ def build(ctx):
     sc.sfx("rain", 0, dur=t_calm0 + 0.8, gain_db=-16, fade_in=0.8, fade_out=0.9)
     sc.sfx("waves_storm", 0, dur=t_calm1 + 0.3, gain_db=-12, fade_in=0.8, fade_out=1.5)
     sc.sfx("ship_creak", 0, dur=t_calm1, gain_db=-18, fade_in=0.8, fade_out=1.0)
-    sc.sfx("thunder", 0.15, gain_db=-16, pan=-0.3)
-    sc.sfx("cloth", t_launch - 0.1, gain_db=-12, pan=-0.2)
-    sc.sfx("whoosh", t_launch + 0.05, gain_db=-11, pan=0.2)
+    sc.sfx("thunder", t_lightning - 0.02, gain_db=-16, pan=-0.3)
+    sc.sfx("cloth", t_launch - 0.1, gain_db=-12, pan=0.1)
+    sc.sfx("whoosh", t_launch + 0.05, gain_db=-11, pan=0.3)
     sc.sfx("splash", t_impact - 0.02, gain_db=-6, pan=0.35)
     sc.sfx("bubbles", t_impact + 0.05, dur=1.2, gain_db=-14, pan=0.3, fade_out=0.5)
     sc.sfx("waves_calm", t_calm0 - 0.2, dur=t_tilt1 - t_calm0 + 0.6, gain_db=-12, fade_in=0.9, fade_out=1.0)
@@ -695,7 +841,7 @@ def build(ctx):
     sc.sfx("gull", t_calm1 + 0.1, gain_db=-17, pan=0.5)
     sc.sfx("underwater", t_tilt0, dur=T - t_tilt0 + 0.8, gain_db=-12, fade_in=1.0, fade_out=0.8)
     sc.sfx("bubbles", t_tilt0 + 0.4, dur=t_surge0 - t_tilt0 - 0.2, gain_db=-17, pan=0.25, fade_in=0.4, fade_out=0.4)
-    sc.sfx("whoosh", t_fish0 + 0.15, gain_db=-10, pan=-0.5)
+    sc.sfx("whoosh", t_fish0 + 0.3, gain_db=-10, pan=-0.5)
     sc.sfx("gulp", t_gulp - 0.04, gain_db=-7)
     sc.sfx("bubbles", t_close1, dur=1.0, gain_db=-12, fade_out=0.5)
     return sc
