@@ -24,7 +24,9 @@
 
 ## 重新生成
 
-依赖（Ubuntu 24.04）：
+一键安装依赖和语音模型：`./setup.sh`（Ubuntu 24.04）。多代理制作流程脚本在 [`workflows/`](workflows/)。
+
+手动安装时的依赖：
 
     apt-get install fluidsynth musescore-general-soundfont fonts-lxgw-wenkai fonts-noto-cjk ffmpeg
     pip install sherpa-onnx playwright==1.56.0 opencv-python-headless numpy scipy soundfile pyloudnorm pillow mido

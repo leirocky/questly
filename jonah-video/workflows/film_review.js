@@ -1,0 +1,75 @@
+export const meta = {
+  name: 'jonah-final-review',
+  description: 'Review the assembled Jonah video segment by segment and its audio, verify each finding independently, then fix confirmed scene issues',
+  phases: [
+    { title: 'Review', detail: 'four visual segment reviewers + one audio reviewer on the final MP4' },
+    { title: 'Verify', detail: 'an independent skeptic re-checks each high/medium finding' },
+    { title: 'Fix', detail: 'one agent per scene with confirmed issues' },
+  ],
+}
+
+const ROOT = '/home/user/questly/jonah-video'
+const VIDEO = `${ROOT}/build/review/jonah_review.mp4`
+const COMMON = `
+Project: ${ROOT} — a 2:19 Chinese picture-book video of the Bible story of Jonah for children aged 3-8, built by a Python pipeline (story.py script, voice/tts.py narration, art/scenes/*.py scene animations using engine/ + art/characters.py + art/props.py, audio/music.py score, audio/sfx.py effects, audio/mix.py, engine/assemble.py). The assembled film is ${VIDEO} (1920x1080, 30 fps, AAC). Scene start times/durations and narration line timings (relative to scene start) are in ${ROOT}/build/timeline.json; consecutive scenes overlap in a 0.8 s cross-dissolve (s07 fades through black, s08 opens with an iris). Per-scene clips are in ${ROOT}/build/video/<id>.mp4; audio stems in ${ROOT}/build/audio/ (voice.wav, stem_music.wav, stem_sfx.wav, mix.wav, speech_report.txt). Read ${ROOT}/ART_GUIDE.md for the intended look and the Bible-accuracy notes.
+Tools: ffmpeg/ffprobe, python3 (numpy, pillow, opencv, soundfile, scipy, pyloudnorm). Extract frames with e.g. ffmpeg -v error -ss <t> -i ${VIDEO} -frames:v 1 out.png, or many at once with -vf fps=N; build contact sheets with PIL and LOOK at them with the Read tool (keep each image <= 2000 px wide). Work in a scratch dir under /tmp/claude-0/final_review/ (create it). Do not edit project files in the Review and Verify phases.`
+
+const SEGMENTS = [
+  { key: 'seg1', scenes: 's01_title, s02_call, s03_flee, s04_storm' },
+  { key: 'seg2', scenes: 's05_lots, s06_fish, s07_belly' },
+  { key: 'seg3', scenes: 's08_shore, s09_nineveh, s10_repent' },
+  { key: 'seg4', scenes: 's11_vine, s12_lesson, s13_end' },
+]
+
+const ISSUES = { type: 'object', properties: { issues: { type: 'array', items: { type: 'object', properties: {
+  scene: { type: 'string' }, time_s: { type: 'number', description: 'global time in the film' },
+  severity: { type: 'string', enum: ['high', 'medium', 'low'] }, category: { type: 'string' },
+  description: { type: 'string' }, evidence: { type: 'string' }, fix_hint: { type: 'string' },
+  owner: { type: 'string', enum: ['scene', 'shared'], description: 'scene = fixable inside art/scenes/<scene>.py; shared = engine/mix/music/sfx/story' } },
+  required: ['scene', 'time_s', 'severity', 'category', 'description', 'evidence', 'fix_hint', 'owner'] } },
+  overall: { type: 'string' } }, required: ['issues', 'overall'] }
+const VERDICT = { type: 'object', properties: { confirmed: { type: 'boolean' }, reasoning: { type: 'string' }, refined_fix: { type: 'string' } }, required: ['confirmed', 'reasoning'] }
+const FIXED = { type: 'object', properties: { scene: { type: 'string' }, changed: { type: 'string' }, not_fixed: { type: 'string' }, bench_ms: { type: 'number' } }, required: ['scene', 'changed'] }
+
+const reviewers = [
+  ...SEGMENTS.map(s => ({ key: s.key, prompt: `${COMMON}
+
+YOUR TASK: watch scenes ${s.scenes} in the FINAL film as a demanding animation director and children's-book editor. Use timeline.json to find their global time ranges (include the dissolves into and out of them). Sample densely: a contact sheet at 4 fps over the whole range, frame-by-frame strips (30 fps) across every scene transition and around every visible action (pose changes, objects appearing, camera moves), and full-size frames where something looks off.
+Look for: popping/flicker (layers appearing or disappearing abruptly, flipbook stutter, double-exposed crossfades of two poses, ghosting), layers misaligned or sliding apart, unpainted stage edges or hard layer borders, camera jerks, characters in the subtitle band, subtitles that don't match what is shown, actions happening at the wrong time vs the narration (compare the subtitle on screen with the picture), transition glitches, off-model characters (Jonah must look the same everywhere), scary or inappropriate imagery, Bible inaccuracies, text errors, anything that would look amateurish next to a professionally made children's picture-book video.
+Report only real, visible problems with exact global times and evidence (what you saw, which frame files). Rank by severity: high = obvious to a casual viewer; medium = noticeable on a second look; low = nitpick. Set owner='scene' if it can be fixed in that scene's file.` })),
+  { key: 'audio', prompt: `${COMMON}
+
+YOUR TASK: audit the FINAL film's sound as an audio post-production supervisor. Analyse the AAC track of ${VIDEO} and the stems: integrated loudness and true peak (target about -16 LUFS, peak <= -1 dBFS), clicks/pops/discontinuities (sample-to-sample jumps, especially at scene boundaries and sfx cue starts/ends), narration intelligibility (read speech_report.txt; check every line is >= ~12 dB above music+sfx), music continuity across scene boundaries (no abrupt cuts or level jumps; spectrogram with boundaries marked), sfx timing vs picture: read each art/scenes/<id>.py for its sc.sfx cues and the visual event it should match, then check the onset in stem_sfx.wav lines up with the frame where it happens (e.g. splash on water impact, gulp on swallow, thunder on lightning, spit/thud on the shore) — extract the relevant frames to confirm. Also listen-by-numbers for anything harsh (excess 2-6 kHz energy, sub rumble) and for silences. Report real problems with global times, evidence and fix hints; owner='shared' for mix/music/sfx library problems, 'scene' for cue timing inside a scene file.` },
+]
+
+phase('Review')
+const reviews = await parallel(reviewers.map(r => () => agent(r.prompt, { label: `review:${r.key}`, phase: 'Review', schema: ISSUES })))
+const all = reviews.filter(Boolean).flatMap((r, i) => (r.issues || []).map(x => ({ ...x, reviewer: reviewers[i].key })))
+const serious = all.filter(x => x.severity !== 'low')
+log(`${all.length} findings, ${serious.length} high/medium to verify; ${all.length - serious.length} low noted but not verified`)
+
+phase('Verify')
+const verdicts = await parallel(serious.map((x, i) => () => agent(`${COMMON}
+
+YOUR TASK: independently verify ONE reported problem in the final film. Be a skeptic: reproduce it yourself from ${VIDEO} (extract the frames around the time, at 30 fps where motion matters) or from the stems for audio. Confirm only if you can see/measure it and it would bother a viewer; otherwise refute. If confirmed, refine the fix so a scene author can apply it precisely (which layer/motion/cue in which file, what values).
+Reported problem: ${JSON.stringify(x)}`, { label: `verify:${x.scene}:${i}`, phase: 'Verify', schema: VERDICT }).then(v => ({ ...x, verdict: v }))))
+const confirmed = verdicts.filter(Boolean).filter(x => x.verdict && x.verdict.confirmed)
+log(`${confirmed.length} of ${serious.length} findings confirmed`)
+
+const byScene = {}
+for (const x of confirmed.filter(c => c.owner === 'scene')) (byScene[x.scene] = byScene[x.scene] || []).push(x)
+const shared = confirmed.filter(c => c.owner !== 'scene')
+
+phase('Fix')
+const fixes = await parallel(Object.entries(byScene).map(([scene, items]) => () => agent(`${COMMON}
+
+YOUR TASK: fix the confirmed problems below in ${ROOT}/art/scenes/${scene}.py — edit ONLY that file (read ART_GUIDE.md, the engine/scene API docstrings and the scene code first). Times below are GLOBAL film times; the scene's global start is in build/timeline.json (subtract it to get scene time). After each fix, verify with python3 tools/preview.py ${scene} --times ... (scene-relative times; look at the PNGs) and finally run --bench (< 450 ms/frame). Don't introduce new problems; keep everything else as is.
+Confirmed problems: ${JSON.stringify(items)}`, { label: `fix:${scene}`, phase: 'Fix', schema: FIXED })))
+
+return {
+  confirmed_scene_issues: Object.fromEntries(Object.entries(byScene).map(([k, v]) => [k, v.map(x => ({ t: x.time_s, sev: x.severity, d: x.description }))])),
+  shared_issues: shared,
+  fixes: fixes.filter(Boolean),
+  low_notes: all.filter(x => x.severity === 'low').map(x => ({ scene: x.scene, t: x.time_s, d: x.description })),
+  overall: reviews.filter(Boolean).map((r, i) => ({ reviewer: reviewers[i].key, overall: r.overall })),
+}
