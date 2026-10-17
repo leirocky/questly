@@ -494,8 +494,8 @@ def puff_svg(cx, cy, rx, ry, seed=0, k=1.0):
         a = math.radians(deg + rng.uniform(-6, 6))
         px, py = cx + rx * 0.92 * math.cos(a), cy + ry * 0.95 * math.sin(a)
         w = k * rng.uniform(62, 84)
-        dust += S.cloud(px, py, w, w * 0.62, "#f1e6cc", seed=seed * 17 + i, puffs=3, sw=2.4 * min(1, k + 0.2),
-                        shade_fill="#dfcda8")
+        dust += S.cloud(px, py, w, w * 0.62, "#ecdcb8", seed=seed * 17 + i, puffs=3, sw=2.4 * min(1, k + 0.2),
+                        shade_fill="#d2bb8f")
     lines = ""
     for a0, span, rr in ((-48, 40, 1.22), (-8, 34, 1.32), (188, -40, 1.22), (148, -34, 1.32)):
         pts = [(cx + rx * rr * math.cos(math.radians(a0 + span * j / 6)),
@@ -503,6 +503,24 @@ def puff_svg(cx, cy, rx, ry, seed=0, k=1.0):
         lines += (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="{P["ink_soft"]}" '
                   f'stroke-width="{4.5 * k:.1f}" stroke-linecap="round" opacity="0.75"/>')
     return S.g(lines, filter="wobble-fine") + S.g(dust, filter="wobble-fine", opacity=0.92)
+
+
+def small_puff(x, y, h, seed=0):
+    """A light cloth-poof for a small figure in the crowd: a few dust clouds at the feet and hips and two
+    whoosh arcs at the sides, sized to the figure height h (never over the face)."""
+    rng = random.Random(seed)
+    dust = ""
+    for i, (dx, dy, w) in enumerate(((-0.30, -0.02, 0.36), (0.30, -0.03, 0.34), (0.0, 0.03, 0.40),
+                                     (-0.36, -0.36, 0.24), (0.36, -0.40, 0.24))):
+        ww = h * w * rng.uniform(0.85, 1.15)
+        dust += S.cloud(x + dx * h, y + dy * h, ww, ww * 0.6, "#ecdcb8", seed=seed * 13 + i, puffs=3,
+                        sw=max(1.6, h / 120), shade_fill="#d2bb8f")
+    lines = ""
+    for side in (-1, 1):
+        pts = [(x + side * h * (0.34 + 0.04 * math.sin(j / 2)), y - h * (0.30 + 0.08 * j)) for j in range(5)]
+        lines += (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="{P["ink_soft"]}" '
+                  f'stroke-width="{max(2.2, h / 70):.1f}" stroke-linecap="round" opacity="0.7"/>')
+    return S.g(lines, filter="wobble-fine") + S.g(dust, filter="wobble-fine", opacity=0.85)
 
 
 def puff_motion(t0, pivot):
@@ -544,13 +562,14 @@ def smoke_svg(cx, cy, r, seed):
 
 
 def glaze_svg(kind):
-    if kind == "dusk":
-        stops = [(0, "#b89cc0", 0.42), (0.45, "#d7b2b8", 0.26), (1, "#e8c0a8", 0.18)]
+    if kind == "dusk":      # solemn evening: rosy-lilac sky, slightly dimmer square (multiply)
+        stops = [(0, "#bfa0c4", 0.42), (0.4, "#dcb4b4", 0.26), (0.62, "#e9bfa8", 0.16), (1, "#efc6a2", 0.1)]
         defs = S.lin_grad("s16dusk", stops)
         return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SH + 40}" fill="url(#s16dusk)"/>', defs)
-    defs = S.rad_grad("s16hope", [(0, "#fff0c4", 0.85), (0.35, "#ffe3a6", 0.42), (0.7, "#ffd894", 0.12),
-                                  (1, "#ffd894", 0)], cx=0.5, cy=0.0, r=0.75)
-    return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SH + 40}" fill="url(#s16hope)"/>', defs)
+    # hope: a warm golden glow opening in the sky above the kneeling people (screen)
+    defs = S.rad_grad("s16hope", [(0, "#ffe9b0", 0.95), (0.3, "#ffd98e", 0.6), (0.62, "#ffcf80", 0.22),
+                                  (1, "#ffcf80", 0)])
+    return doc(f'<ellipse cx="1220" cy="120" rx="1500" ry="980" fill="url(#s16hope)"/>', defs)
 
 
 DOVE_REF = (300, 300)
@@ -599,7 +618,7 @@ def build(ctx):
     t_back = snap(t_cover + 0.42)            # she pulls her hand back
     t_okay = snap(t_back + 0.7)              # and nods
     t_change = c1b.start + 0.1               # "大人小孩都换上…": sackcloth wave (grown-ups first)
-    t_kid = within(c1b, 0.2)                 # "小孩": the children
+    t_kid = within(c1b, 0.22)                # "小孩": the children
     t_rough = within(c1b, 0.55)              # "粗粗的麻布衣服": scratchy!
     t_kneel = c1c.start + 0.12               # "向上帝认错": kneel in a wave
     t_hope = within(c1c, 0.54)               # "表示愿意改": peaceful faces, hopeful light
@@ -669,11 +688,11 @@ def build(ctx):
         return out
 
     gtimes = {   # (turn to the neighbour or None, listen, sorry, sackcloth, kneel, peaceful)
-        "back_l": (c0a.start + 0.45, t_heard + 0.25, t_believe + 0.15, t_change + 0.05, t_kneel + 0.42,
+        "back_l": (c0a.start + 0.45, t_heard + 0.25, t_believe + 0.15, t_change + 0.66, t_kneel + 0.42,
                    t_hope + 0.2),
-        "back_r": (c0a.start + 0.75, t_heard + 0.4, t_believe + 0.3, t_change + 0.3, t_kneel + 0.62, t_hope + 0.3),
-        "mid_l": (None, t_heard + 0.1, t_believe + 0.05, t_change + 0.15, t_kneel + 0.3, t_hope + 0.1),
-        "mid_r": (c0a.start + 0.6, t_heard + 0.5, t_believe + 0.35, t_change + 0.45, t_kneel + 0.78, t_hope + 0.4),
+        "back_r": (c0a.start + 0.75, t_heard + 0.4, t_believe + 0.3, t_change + 1.1, t_kneel + 0.62, t_hope + 0.3),
+        "mid_l": (None, t_heard + 0.1, t_believe + 0.05, t_change + 0.46, t_kneel + 0.3, t_hope + 0.1),
+        "mid_r": (c0a.start + 0.6, t_heard + 0.5, t_believe + 0.35, t_change + 1.3, t_kneel + 0.78, t_hope + 0.4),
     }
     zrow = {"back_l": 10, "back_r": 10.1, "mid_l": 12, "mid_r": 12.1}
     puffs_at = []
@@ -692,8 +711,8 @@ def build(ctx):
         sc.add(f"crowd_{name}", frames, z=zrow[name], frame_at=cuts(sched), motion=M.combine(*parts))
         body = ""
         for j, (kind, v, x, y, s_, f0, _) in enumerate(members):
-            hh = {"child": 200, "elder": 300}.get(kind, 310) * s_
-            body += puff_svg(x, y - hh * 0.5, 0.45 * hh, 0.6 * hh, seed=40 + j + 7 * len(name), k=max(0.55, s_))
+            hh = {"child": 215, "elder": 320}.get(kind, 330) * s_
+            body += small_puff(x, y, hh, seed=40 + j + 7 * len(name))
         group_puffs.append((name, c, body, (gx, gy - 150 * s)))
 
     # ---- Jonah on his step: watches; surprised at "竟然" ----
@@ -724,7 +743,7 @@ def build(ctx):
            herald(1, "listen", expr="neutral", extra=horn), herald(1, "point", expr="call"),
            herald(1, "sad", "sackcloth"), herald(1, "kneel_pray", "sackcloth", "sorry"),
            herald(1, "kneel_pray", "sackcloth", "peaceful")]
-    th = [snap(t_heard + 0.3), snap(t_believe + 0.2), t_horn, t_call, snap(t_change + 0.2), snap(t_kneel + 0.52),
+    th = [snap(t_heard + 0.3), snap(t_believe + 0.2), t_horn, t_call, snap(t_change + 0.36), snap(t_kneel + 0.52),
           snap(t_hope + 0.25)]
     sc.add("herald", hfr, z=11, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(th)]),
            motion=M.combine(dip(th[0], H_S, hp, 4), nod(th[1] + 0.05, hp, 1.5, 2), dip(t_horn, H_S, hp),
@@ -749,8 +768,8 @@ def build(ctx):
            merchant("stand", expr="sorry"), merchant("point", expr="neutral"), merchant("stand", expr="sorry"),
            merchant("sad", "sackcloth"), merchant("kneel_pray", "sackcloth", "sorry"),
            merchant("kneel_pray", "sackcloth", "peaceful")]
-    tr = [snap(t_heard + 0.05), snap(t_wow + 0.05), snap(t_believe), snap(t_cover - 0.12), snap(t_cover + 0.7),
-          snap(t_change + 0.55), snap(t_kneel + 0.36), snap(t_hope + 0.15)]
+    tr = [snap(t_heard + 0.05), snap(t_wow + 0.05), snap(t_believe), snap(t_cover - 0.12), snap(t_cover + 0.55),
+          snap(t_change + 0.9), snap(t_kneel + 0.36), snap(t_hope + 0.15)]
     sc.add("merchant", rfr, z=14, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(tr)]),
            motion=M.combine(dip(tr[0], R_S, rp, 4), nod(tr[2] + 0.05, rp, 2.0, 2), dip(tr[3], R_S, rp),
                             dip(tr[4], R_S, rp, 4), dip(tr[6], R_S, rp), M.breathe(0.008, 3.3, pivot=rp, phase=0.7)))
@@ -791,7 +810,7 @@ def build(ctx):
     wfr = [mother("stand", expr="worried"), mother("listen"), mother("listen", expr="surprised"),
            mother("stand", expr="sorry"), mother("sad", "sackcloth"), mother("kneel_pray", "sackcloth", "sorry"),
            mother("kneel_pray", "sackcloth", "peaceful")]
-    tw = [snap(t_heard + 0.15), snap(t_wow + 0.08), snap(t_believe + 0.1), snap(t_change + 0.3),
+    tw = [snap(t_heard + 0.15), snap(t_wow + 0.08), snap(t_believe + 0.1), snap(t_change + 0.23),
           snap(t_kneel + 0.2), snap(t_hope + 0.05)]
     sc.add("mother", wfr, z=20.5, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(tw)]),
            motion=M.combine(dip(tw[0], W_S, wp, 5), hop(tw[1], [(0, {"dy": 0}), (0.1, {"dy": -7}), (0.22, {"dy": 0})],
@@ -843,7 +862,7 @@ def build(ctx):
     # ---- light: solemn dusk glaze while they change and kneel, then a soft hopeful glow ----
     sc.add("dusk", glaze_svg("dusk"), z=40, wc=0, blend="multiply",
            motion=M.keys([(t_change - 0.4, {"alpha": 0}), (t_kneel + 0.5, {"alpha": 1}),
-                          (t_hope + 0.2, {"alpha": 1}), (T, {"alpha": 0.6})], "sine"))
+                          (t_hope, {"alpha": 1}), (t_hope + 1.6, {"alpha": 0.55})], "sine"))
     sc.add("hope", glaze_svg("hope"), z=41, wc=0, blend="screen",
            motion=M.combine(M.keys([(t_hope - 0.2, {"alpha": 0}), (t_hope + 1.4, {"alpha": 1})], "sine"),
                             M.pulse(0.85, 1.0, 3.0)))
@@ -855,8 +874,8 @@ def build(ctx):
     D = Cam(1060, 880, 1560)
     E = Cam(1180, 750, 2120)
     sc.camera = M.cam_keys([
-        (0, A), (c0a.start, A), (t_believe + 0.6, B), (t_horn - 0.2, B), (t_cover + 0.9, Cw), (t_change + 0.8, Cw),
-        (t_rough + 0.9, D), (t_kneel - 0.1, D), (t_hope + 0.6, E), (T, Cam(1186, 748, 2100)),
+        (0, A), (c0a.start, A), (t_believe + 0.6, B), (t_horn - 0.2, B), (t_cover + 0.9, Cw), (t_change + 1.2, Cw),
+        (t_rough + 0.75, D), (t_kneel + 0.3, D), (t_hope + 0.6, E), (T, Cam(1186, 748, 2100)),
     ], ["sine", "sine", "sine", "inout", "sine", "inout", "sine", "inout", "sine"])
 
     # ---- effects ----
@@ -865,8 +884,8 @@ def build(ctx):
                  seed=31),
         FX.sparkles((600, 560, 2000, 900), count=14, t0=t_believe - 0.2, t1=t_believe + 1.6, color=(255, 236, 170),
                     size=(8, 16), drift=-14, seed=33),
-        FX.sparkles((300, 120, 2100, 640), count=18, t0=t_hope + 0.3, t1=T + 1, color=(255, 238, 176),
-                    size=(8, 18), drift=-8, seed=37),
+        FX.sparkles((700, 240, 1800, 760), count=12, t0=t_hope + 0.3, t1=T + 1, color=(255, 232, 160),
+                    size=(7, 14), drift=-10, period=2.2, seed=37),
     ]
 
     # ---- sound ----

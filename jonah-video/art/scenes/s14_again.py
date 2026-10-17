@@ -348,22 +348,23 @@ def far_svg():
     """Hazy hills on the eastern horizon, the far plain and the great city of Nineveh far away."""
     haze = S.mix(P["stone"], P["sky_day"], 0.55)
     haze2 = S.mix(P["stone"], P["sky_day"], 0.42)
-    defs = S.lin_grad("s14plain", [(0, S.mix(P["sand_light"], P["sky_warm"], 0.55)), (1, P["sand_light"])])
-    hills = (S.path(S.hill(880, 1500, 616, 46, seed=3, bumps=2, bottom=800), fill=haze, sw=2.4)
-             + S.path(S.hill(2150, 3300, 616, 78, seed=8, bumps=3, bottom=800), fill=haze, sw=2.4)
-             + S.path(S.hill(1250, 1900, 618, 34, seed=5, bumps=2, bottom=800), fill=haze2, sw=2.4))
-    plain = (f'<path d="M560,606 C900,604 1400,608 1800,610 S2600,612 3320,610 L3320,840 L560,840 Z" '
+    defs = S.lin_grad("s14plain", [(0, S.mix(P["sand_light"], P["sky_warm"], 0.5)), (1, P["sand_light"])])
+    hills = (S.path(S.hill(820, 1420, HORIZON + 8, 40, seed=3, bumps=2, bottom=800), fill=haze, sw=2.4)
+             + S.path(S.hill(1900, 2900, HORIZON + 8, 70, seed=8, bumps=3, bottom=800), fill=haze, sw=2.4)
+             + S.path(S.hill(1250, 2050, HORIZON + 10, 30, seed=5, bumps=2, bottom=800), fill=haze2, sw=2.4))
+    plain = (f'<path d="M600,{HORIZON + 4} C900,{HORIZON + 2} 1400,{HORIZON + 6} 1800,{HORIZON + 8} '
+             f'S2600,{HORIZON + 8} 2950,{HORIZON + 6} L2950,860 L600,860 Z" '
              f'fill="url(#s14plain)" stroke="{P["ink"]}" stroke-width="2.2"/>')
     x0, x1, y, sc_ = CITY
-    city = PR.nineveh_skyline(x0, x1, y, scale=sc_, seed=21, haze=0.42)
+    city = PR.nineveh_skyline(x0, x1, y, scale=sc_, seed=21, haze=0.3)
     palms = ""
-    for x, yy, s_, ln in ((1290, 640, 0.17, 0.2), (1340, 646, 0.15, -0.2), (2150, 640, 0.18, -0.1),
-                          (2230, 648, 0.15, 0.25), (2600, 650, 0.16, 0.1), (920, 632, 0.14, 0.0)):
+    for x, yy, s_, ln in ((1330, 616, 0.17, 0.2), (1372, 622, 0.14, -0.2), (1930, 618, 0.18, -0.1),
+                          (1985, 626, 0.15, 0.25), (2350, 630, 0.16, 0.1), (1100, 612, 0.13, 0.0)):
         palms += PR.palm_tree(x, yy, s_, lean=ln, dates=False)
     fields = ""
-    for x, yy, w_, h_ in ((1500, 650, 260, 26), (2300, 660, 300, 30), (2700, 646, 220, 22)):
+    for x, yy, w_, h_ in ((1240, 640, 220, 20), (2100, 650, 300, 26), (2500, 640, 220, 20), (1700, 660, 260, 22)):
         fields += (f'<ellipse cx="{x}" cy="{yy}" rx="{w_ / 2}" ry="{h_ / 2}" '
-                   f'fill="{S.mix(P["grass"], P["sand_light"], 0.55)}" opacity="0.8"/>')
+                   f'fill="{S.mix(P["grass"], P["sand_light"], 0.5)}" opacity="0.8"/>')
     body = S.g(hills, filter="wobble") + S.g(plain + fields, filter="wobble") + city + \
         f'<g opacity="0.85">{palms}</g>'
     return doc(body, defs)
@@ -379,113 +380,120 @@ def _pts_path(pts):
     return "M" + " L".join(f"{f1(x)},{f1(y)}" for x, y in pts)
 
 
+def _road_d():
+    top = list(zip(ROAD_X, ROAD_TOP))
+    bot = list(zip(ROAD_X, ROAD_BOT))
+    return (S.smooth_path(top, closed=False, tension=0.8) + " L" +
+            S.smooth_path(list(reversed(bot)), closed=False, tension=0.8)[1:] + " Z")
+
+
 def land_svg():
     """Sea, beach, the golden meadow and the coast road (one static painting)."""
     ink = P["ink"]
-    defs = (S.lin_grad("s14sea", [(0, S.mix(P["sea_pale"], P["sky_warm"], 0.25)), (0.25, P["sea_light"]),
+    defs = (S.lin_grad("s14sea", [(0, S.mix(P["sea_pale"], P["sky_warm"], 0.2)), (0.22, P["sea_light"]),
                                   (1, P["sea"])])
-            + S.lin_grad("s14mead", [(0, S.mix(P["grass"], P["sand_light"], 0.5)), (0.35, S.mix(P["grass"], P["sand"], 0.38)),
-                                     (1, S.mix(P["grass"], P["sand"], 0.22))])
-            + S.lin_grad("s14road", [(0, S.mix(P["sand_light"], "#fffaf0", 0.25)), (1, P["sand_light"])])
-            + S.lin_grad("s14beach", [(0, S.mix(P["sand_light"], P["sky_warm"], 0.3)), (1, P["sand"])]))
-    sea = f'<rect x="-40" y="{HORIZON}" width="1400" height="{SH - HORIZON + 40}" fill="url(#s14sea)"/>' + \
-        f'<path d="M-40,{HORIZON} L1300,{HORIZON}" stroke="{ink}" stroke-width="2.6"/>'
-    # wave dashes on the sea, smaller and closer together toward the horizon
+            + S.lin_grad("s14mead", [(0, S.mix(P["grass"], P["sand_light"], 0.45)),
+                                     (0.3, S.mix(P["grass"], P["sand"], 0.3)), (1, S.mix(P["grass"], P["sand"], 0.16))],
+                         y1=0.0, y2=1.0)
+            + S.lin_grad("s14road", [(0, "#f8ecd2"), (1, S.mix(P["sand_light"], "#fffaf0", 0.35))])
+            + S.lin_grad("s14beach", [(0, S.mix(P["sand"], P["sky_warm"], 0.3)), (1, P["sand"])]))
+    sea = (f'<rect x="-40" y="{HORIZON}" width="1120" height="{SH - HORIZON + 40}" fill="url(#s14sea)"/>'
+           f'<path d="M-40,{HORIZON} L1060,{HORIZON}" stroke="{ink}" stroke-width="2.6"/>')
     rng = random.Random(7)
     dashes = ""
-    for _ in range(60):
-        y = HORIZON + 12 + (rng.random() ** 1.6) * 520
-        k = (y - HORIZON) / 520
-        x = rng.uniform(-40, 1200)
-        if y > _shore_y_at(x) - 18:
+    for _ in range(70):
+        y = HORIZON + 10 + (rng.random() ** 1.5) * 420
+        k = (y - HORIZON) / 420
+        x = rng.uniform(-40, 1000)
+        if y > _shore_y_at(x) - 22:
             continue
-        ln = 22 + 70 * k
-        dashes += (f'<path d="M{f1(x)},{f1(y)} q{f1(ln / 2)},{f1(-4 - 4 * k)} {f1(ln)},0" stroke="{P["foam"]}" '
-                   f'stroke-width="{f1(2.2 + 2.6 * k)}" fill="none" stroke-linecap="round" opacity="0.8"/>')
-    # land: shoreline, then the crest to the east, down the right side, along the bottom
+        ln = 18 + 64 * k
+        dashes += (f'<path d="M{f1(x)},{f1(y)} q{f1(ln / 2)},{f1(-3 - 4 * k)} {f1(ln)},0" stroke="{P["foam"]}" '
+                   f'stroke-width="{f1(2.0 + 2.6 * k)}" fill="none" stroke-linecap="round" opacity="0.8"/>')
     land = S.smooth_path(SHORE + CREST[1:], closed=False, tension=0.85) + \
         f" L{SW + 60},{SH + 60} L-60,{SH + 60} Z"
     land_p = f'<path d="{land}" fill="url(#s14mead)" stroke="{ink}" stroke-width="3"/>'
-    # beach band along the shore (sand), with a darker wet strip at the water's edge
-    inner = INNER
     beach = S.smooth_path(SHORE, closed=False, tension=0.85)
-    beach += " L" + " L".join(f"{f1(x)},{f1(y)}" for x, y in reversed(inner)).replace(" L", " L", 1) + " Z"
+    beach += " L" + " L".join(f"{f1(x)},{f1(y)}" for x, y in reversed(INNER)) + " Z"
     beach_p = f'<path d="{beach}" fill="url(#s14beach)" stroke="none"/>'
-    wet = S.smooth_path([(x + 8, y + 10) for x, y in SHORE], closed=False, tension=0.85)
-    wet_p = f'<path d="{wet}" stroke="{S.mix(P["sand_dark"], P["sea_light"], 0.3)}" stroke-width="16" ' \
-            f'fill="none" opacity="0.55"/>'
-    inner_line = S.smooth_path(inner, closed=False, tension=0.85)
-    beach_edge = f'<path d="{inner_line}" stroke="{S.mix(P["grass"], P["sand"], 0.5)}" stroke-width="10" ' \
-                 f'fill="none" opacity="0.5"/>'
-    # meadow texture: soft grass strokes
+    wet = S.smooth_path([(x + 6, y + 9) for x, y in SHORE[:-1]], closed=False, tension=0.85)
+    wet_p = f'<path d="{wet}" stroke="{S.mix(P["sand_dark"], P["sea_light"], 0.35)}" stroke-width="14" ' \
+            f'fill="none" opacity="0.6"/>'
+    inner_line = S.smooth_path(INNER, closed=False, tension=0.85)
+    beach_edge = f'<path d="{inner_line}" stroke="{P["ink"]}" stroke-width="2.2" fill="none" opacity="0.55"/>'
     grass = ""
-    for _ in range(170):
+    for _ in range(190):
         x = rng.uniform(0, SW)
-        y = rng.uniform(640, SH)
-        if y < _land_top(x) + 12 or _near_road(x, y, 14) or y < _beach_inner_y(x):
+        y = rng.uniform(620, SH)
+        if y < _land_top(x) + 12 or _near_road(x, y, 14) or y < _beach_inner_y(x) + 8:
             continue
         k = (y - 600) / 600
-        h_ = 8 + 18 * k
+        h_ = 7 + 18 * k
         col = S.mix(P["grass_dark"], P["olive"], rng.random())
-        grass += (f'<path d="M{f1(x)},{f1(y)} l{f1(-3 * k)},{f1(-h_)} M{f1(x + 5)},{f1(y)} l{f1(3 * k)},{f1(-h_ * 0.8)}" '
-                  f'stroke="{col}" stroke-width="{f1(1.6 + 1.6 * k)}" stroke-linecap="round" opacity="0.6"/>')
-    # the road
-    top = list(zip(ROAD_X, ROAD_TOP))
-    bot = list(zip(ROAD_X, ROAD_BOT))
-    rd = S.smooth_path(top, closed=False, tension=0.8) + " L" + \
-        S.smooth_path(list(reversed(bot)), closed=False, tension=0.8)[1:] + " Z"
-    road_p = f'<path d="{rd}" fill="url(#s14road)" stroke="{ink}" stroke-width="3"/>'
+        grass += (f'<path d="M{f1(x)},{f1(y)} l{f1(-3 * k)},{f1(-h_)} M{f1(x + 5)},{f1(y)} l{f1(3 * k)},'
+                  f'{f1(-h_ * 0.8)}" stroke="{col}" stroke-width="{f1(1.5 + 1.6 * k)}" stroke-linecap="round" '
+                  f'opacity="0.6"/>')
+    road_p = f'<path d="{_road_d()}" fill="url(#s14road)" stroke="{ink}" stroke-width="3"/>'
     peb = ""
-    for _ in range(70):
-        x = rng.uniform(-40, 2060)
+    for _ in range(80):
+        x = rng.uniform(-40, 1700)
         t0, b0 = _interp(ROAD_X, ROAD_TOP, x), _interp(ROAD_X, ROAD_BOT, x)
-        y = rng.uniform(t0 + 10, b0 - 8)
-        k = (y - 690) / 500
-        r = rng.uniform(2.5, 6.5) * (0.4 + k)
+        y = rng.uniform(t0 + 8, b0 - 8)
+        k = max(0.1, (y - 760) / 450)
+        r = rng.uniform(2.5, 6.0) * (0.4 + k)
         peb += f'<ellipse cx="{f1(x)}" cy="{f1(y)}" rx="{f1(r * 1.5)}" ry="{f1(r)}" fill="{P["sand_dark"]}" ' \
-               f'opacity="0.5"/>'
+               f'opacity="0.45"/>'
     ruts = ""
-    for off in (-0.22, 0.22):
+    for off in (-0.24, 0.24):
         pts = []
-        for x in range(-40, 2060, 40):
+        for x in range(-40, 1760, 40):
             t0, b0 = _interp(ROAD_X, ROAD_TOP, x), _interp(ROAD_X, ROAD_BOT, x)
             pts.append((x, (t0 + b0) / 2 + off * (b0 - t0)))
-        ruts += f'<path d="{S.smooth_path(pts, closed=False)}" stroke="{P["sand"]}" stroke-width="5" fill="none" ' \
-                f'opacity="0.55" stroke-linecap="round"/>'
+        ruts += f'<path d="{S.smooth_path(pts, closed=False)}" stroke="{S.mix(P["sand"], P["sand_light"], 0.4)}" ' \
+                f'stroke-width="5" fill="none" opacity="0.6" stroke-linecap="round"/>'
+    # a row of rounded edge stones along the near side of the road (as on the coastal road of s03)
+    stones = ""
+    x = -40.0
+    while x < 1640:
+        b0 = _interp(ROAD_X, ROAD_BOT, x)
+        k = max(0.25, (b0 - 700) / 520)
+        rx, ry = 20 * k + 6, 10 * k + 3
+        stones += S.path(S.blob(x, b0 + ry * 0.5, rx, ry, 0.12, 8, int(x)), fill=S.mix(P["stone"], P["sand_light"], 0.3),
+                         sw=2 + 1.2 * k)
+        x += 2 * rx + 4
     body = (S.g(sea + dashes, filter="wobble") + S.g(land_p + beach_p + wet_p + beach_edge + grass, filter="wobble")
-            + S.g(road_p + ruts + peb, filter="wobble"))
-    # deco: reeds by the shore, bushes, rocks, tufts, flowers, shells on the beach
+            + S.g(road_p + ruts + peb, filter="wobble") + S.g(stones, filter="wobble-fine"))
     deco = ""
-    for x, y, s_, v in ((640, 840, 0.42, 0), (1010, 690, 0.32, 1), (180, 1060, 0.55, 2)):
+    for x, y, s_, v in ((470, 860, 0.42, 0), (860, 700, 0.3, 1), (90, 1000, 0.5, 2)):
         deco += PR.reeds(x, y, s_, v)
-    for x, y, s_, v in ((1150, 822, 0.5, 1), (1480, 790, 0.42, 3), (1960, 712, 0.3, 0), (2300, 720, 0.34, 2),
-                        (2720, 712, 0.36, 1), (2550, 790, 0.5, 3), (1950, 900, 0.62, 1)):
+    for x, y, s_, v in ((1060, 892, 0.42, 1), (1520, 808, 0.36, 3), (1850, 730, 0.3, 0), (2250, 720, 0.34, 2),
+                        (2500, 790, 0.48, 3), (1980, 960, 0.62, 1), (2420, 1040, 0.7, 0)):
         deco += PR.bush(x, y, s_, v)
-    for x, y, s_, v in ((980, 846, 0.5, 2), (1380, 812, 0.42, 1), (1700, 780, 0.4, 2), (2150, 780, 0.45, 0),
-                        (2420, 860, 0.6, 2), (2820, 820, 0.55, 1), (1700, 990, 0.7, 2), (2200, 1000, 0.75, 0),
-                        (2700, 960, 0.7, 2), (880, 1090, 0.75, 1), (1250, 1060, 0.7, 2)):
+    for x, y, s_, v in ((900, 900, 0.5, 2), (1200, 880, 0.42, 1), (1640, 800, 0.38, 2), (2080, 770, 0.42, 0),
+                        (2300, 880, 0.6, 2), (1600, 1010, 0.7, 2), (2150, 1060, 0.75, 0), (420, 1180, 0.8, 1),
+                        (1100, 1110, 0.75, 1), (1350, 1050, 0.7, 2), (2560, 960, 0.7, 2), (1820, 900, 0.55, 1)):
         deco += PR.grass_tuft(x, y, s_, v)
     rocks = ""
-    for x, y, rx, ry, seed in ((560, 900, 40, 22, 1), (606, 910, 22, 13, 2), (1530, 960, 46, 24, 3),
-                               (2080, 860, 30, 16, 4), (2600, 900, 52, 26, 5)):
+    for x, y, rx, ry, seed in ((420, 922, 34, 18, 1), (458, 930, 18, 11, 2), (1250, 1090, 46, 24, 3),
+                               (1880, 840, 28, 15, 4), (2300, 950, 50, 26, 5)):
         rocks += S.path(S.blob(x, y, rx, ry, 0.15, 8, seed), fill=P["stone_dark"], sw=3)
         rocks += f'<ellipse cx="{x - rx * 0.3}" cy="{y - ry * 0.35}" rx="{rx * 0.35}" ry="{ry * 0.22}" ' \
                  f'fill="{P["stone_light"]}" opacity="0.7"/>'
     shells = ""
-    for x, y, c in ((300, 980, P["cheek"]), (470, 900, "#f4e3c8"), (120, 1120, "#f4e3c8")):
+    for x, y, c in ((260, 905, P["cheek"]), (520, 790, "#f4e3c8"), (80, 1040, "#f4e3c8"), (700, 724, P["cheek"])):
         shells += (f'<path d="M{x - 10},{y} Q{x},{y - 18} {x + 10},{y} Z" fill="{c}" stroke="{ink}" '
                    f'stroke-width="2.2"/><path d="M{x},{y} L{x},{y - 11} M{x - 5},{y} L{x - 3},{y - 9} '
                    f'M{x + 5},{y} L{x + 3},{y - 9}" stroke="{ink}" stroke-width="1.4"/>')
     flowers = ""
     cols = ("#e8706a", "#f2c14e", "#f4e3c8", "#c98ac0")
-    for i in range(60):
-        x = rng.uniform(900, 2950)
-        y = rng.uniform(700, 1150)
-        if _near_road(x, y, 20) or y < _land_top(x) + 20:
+    for i in range(80):
+        x = rng.uniform(700, SW)
+        y = rng.uniform(690, 1150)
+        if _near_road(x, y, 22) or y < _land_top(x) + 20 or y < _beach_inner_y(x) + 20:
             continue
-        r = 3 + 4 * (y - 700) / 450
+        r = 2.5 + 4.5 * (y - 690) / 460
         flowers += f'<circle cx="{f1(x)}" cy="{f1(y)}" r="{f1(r)}" fill="{cols[i % 4]}" stroke="{ink}" ' \
-                   f'stroke-width="1.4"/>'
+                   f'stroke-width="1.3"/>'
     sign = PR.signpost(SIGN[0], SIGN[1], SIGN[2])
     body += deco + S.g(rocks + shells + flowers, filter="wobble-fine") + sign
     return doc(body, defs)
@@ -510,7 +518,7 @@ def _beach_inner_y(x):
 
 
 def _near_road(x, y, m=0):
-    if x > 2100:
+    if x > ROAD_X[-1]:
         return False
     return _interp(ROAD_X, ROAD_TOP, x) - m <= y <= _interp(ROAD_X, ROAD_BOT, x) + m
 
@@ -519,7 +527,7 @@ def sea_glints_svg(phase):
     rng = random.Random(40 + phase)
     body = ""
     for _ in range(16):
-        x = rng.uniform(0, 1150)
+        x = rng.uniform(0, 960)
         y = rng.uniform(HORIZON + 8, 980)
         if y > _shore_y_at(x) - 24:
             continue
@@ -577,7 +585,7 @@ def _bez(p0, p1, p2, u):
             (1 - u) ** 2 * p0[1] + 2 * (1 - u) * u * p1[1] + u * u * p2[1])
 
 
-TRAIL = ((JX + 70, JY - 250), (1240, 290), (CITY_C[0] - 40, CITY_C[1] - 40))
+TRAIL = ((JX + 60, JY - 245), (1150, 230), (CITY_C[0] - 30, CITY_C[1] - 30))
 
 
 def trail_svg():
@@ -620,17 +628,17 @@ def build(ctx):
     t_end = T
 
     # ---------------------------------------------------------------- camera
-    CAM0 = Cam(1000, 606, 2000)
-    CAM_L1 = Cam(1060, 600, 1880)
-    CAM_W = Cam(1000, 604, 1780)
+    CAM0 = Cam(1000, 600, 2000)
+    CAM_L1 = Cam(1010, 598, 1900)
+    CAM_W = Cam(940, 604, 1780)
     cam = M.cam_keys([
         (0.0, CAM0),
-        (t_call - 0.2, Cam(990, 602, 1920)),
+        (t_call - 0.2, Cam(990, 600, 1940)),
         (t_word, CAM_L1),
-        (t_quiet + 0.4, Cam(1050, 600, 1840)),
+        (t_quiet + 0.4, Cam(1000, 600, 1860)),
         (t_rise - 0.2, CAM_W),
-        (t_walk + 0.3, Cam(1050, 604, 1800)),
-        (T, Cam(1640, 606, 1900)),
+        (t_walk + 0.3, Cam(960, 604, 1780)),
+        (T, Cam(1330, 604, 1860)),
     ], ["sine", "sine", "sine", "sine", "sine", "inout"])
     sc.camera = cam
     cam_x0 = CAM_L1.x
@@ -640,12 +648,12 @@ def build(ctx):
 
     # ---------------------------------------------------------------- sky, clouds, God's light
     sc.add("sky", sky_svg(), z=0, wc=0.5)
-    sc.add("clouds", clouds_svg([(1620, 105, 380, 105, 3), (2350, 70, 330, 95, 5), (2840, 150, 360, 100, 7),
-                                 (200, 80, 320, 92, 9), (2050, 250, 220, 66, 11)]), z=1.0,
+    sc.add("clouds", clouds_svg([(1450, 105, 380, 105, 3), (2150, 75, 330, 95, 5), (2500, 170, 300, 90, 7),
+                                 (110, 70, 300, 88, 9), (1850, 255, 220, 66, 11)]), z=1.0,
            motion=M.combine(M.drift(vx=6), par(0.35)))
     part = M.progress
-    CL = (610, 165, 470, 140, 21)
-    CR = (1090, 132, 420, 128, 22)
+    CL = (450, 185, 460, 138, 21)
+    CR = (940, 150, 420, 126, 22)
     cl_m = lambda t: Tf(dx=-140 * part(t, t_light - 0.2, t_light + 1.5, "inout") + 3 * t)   # noqa: E731
     cr_m = lambda t: Tf(dx=150 * part(t, t_light - 0.2, t_light + 1.5, "inout") + 3 * t)    # noqa: E731
     sc.add("cloud_l", clouds_svg([CL]), z=1.1, motion=cl_m)
@@ -660,8 +668,8 @@ def build(ctx):
         return f
     ray_alpha = light_a(0.35)
     ray_a = lambda t: Tf(alpha=ray_alpha(t))   # noqa: E731
-    sc.add("rim_l", cloud_rim_svg(CL, 830, 165, 150, 110, "l"), z=1.15, wc=0, motion=M.combine(cl_m, ray_a))
-    sc.add("rim_r", cloud_rim_svg(CR, 870, 140, 140, 100, "r"), z=1.25, wc=0, motion=M.combine(cr_m, ray_a))
+    sc.add("rim_l", cloud_rim_svg(CL, GAP[0] - 10, 185, 150, 110, "l"), z=1.15, wc=0, motion=M.combine(cl_m, ray_a))
+    sc.add("rim_r", cloud_rim_svg(CR, GAP[0] + 30, 160, 140, 100, "r"), z=1.25, wc=0, motion=M.combine(cr_m, ray_a))
 
     # ---------------------------------------------------------------- the far east: hills and Nineveh
     sc.add("far", far_svg(), z=2, wc=0.8, motion=par(0.3))
@@ -680,8 +688,8 @@ def build(ctx):
            frame_at=lambda t: 0.5 - 0.5 * math.cos(2 * math.pi * t / 3.4))
 
     # gulls over the sea
-    for i, (x, y, s_, f, vx, ph) in enumerate(((260, 360, 0.42, 1, 22, 0.0), (420, 300, 0.34, 1, 18, 0.4),
-                                                (1250, 430, 0.26, -1, -12, 0.2))):
+    for i, (x, y, s_, f, vx, ph) in enumerate(((160, 330, 0.42, 1, 18, 0.0), (300, 280, 0.34, 1, 14, 0.4),
+                                                (820, 420, 0.24, -1, -10, 0.2))):
         flap = (2, 1, 0, 1, 2, 3, 4, 3)
         sc.add(f"gull{i}", gull_frames(x, y, s_, f), z=3.3 + i * 0.01, wc=0.5,
                frame_at=(lambda ph_: lambda t: float(flap[int(t * 8 + ph_ * 8) % 8]) if (t + ph_ * 3) % 4.0 < 1.6
@@ -689,15 +697,15 @@ def build(ctx):
                motion=M.combine(M.drift(vx=vx), M.bob(10, 2.2, ph)))
 
     # palms along the coast road
-    palms = [(400, 880, 0.95, -0.35, 4.6), (1080, 845, 0.8, 0.2, 5.0), (1660, 815, 0.6, 0.1, 4.2),
-             (1790, 806, 0.52, -0.15, 4.8), (2380, 712, 0.4, 0.15, 5.2), (2500, 708, 0.34, -0.1, 4.4)]
+    palms = [(250, 905, 1.0, -0.3, 4.6), (930, 878, 0.6, 0.15, 5.0), (1010, 872, 0.5, -0.12, 4.2),
+             (2080, 760, 0.52, 0.1, 4.8), (2180, 752, 0.45, -0.2, 5.2), (2440, 742, 0.48, 0.15, 4.4)]
     for i, (x, y, s_, ln, per) in enumerate(palms):
         sc.add(f"palm{i}", palm_svg(x, y, s_, ln), z=3.5 + i * 0.01,
                motion=M.sway(0.8, per, (x, y), phase=i * 0.21))
 
     # ---------------------------------------------------------------- golden rays (behind Jonah)
     src = (GAP[0] + 10, -220)
-    tgt = (JX + 20, JY - 120)
+    tgt = (JX + 20, JY - 140)
     ray_m = M.combine(M.sway(0.8, 5.0, src), ray_a)
     sc.add("rays_mul", rays_svg(src, tgt, kind="mul"), z=4.0, wc=0, blend="multiply", motion=ray_m)
     sc.add("rays", rays_svg(src, tgt, kind="add"), z=4.1, wc=0, blend="add", motion=ray_m,
@@ -777,7 +785,7 @@ def build(ctx):
 
     # God's word: the little light that comes down to him, then the golden path to the city
     orb0 = (GAP[0] - 10, 300)
-    orb1 = (JX + 22, JY - 215)
+    orb1 = (JX + 30, JY - 222)
     t_orb0 = t_word + 0.05
 
     def orb_m(t):
@@ -799,10 +807,8 @@ def build(ctx):
            reveal=lambda t: {"mode": "left", "frac": part(t, t_tell, t_trail1, "inout"), "soft": 60})
 
     # ---------------------------------------------------------------- foreground
-    sc.add("fg_palm", palm_svg(-30, 1230, 1.4, 0.35), z=8,
-           motion=M.combine(M.sway(0.6, 5.4, (-30, 1230)), par(-0.12)))
-    for i, (x, y, s_, v) in enumerate(((240, 1180, 1.0, 0), (1180, 1192, 0.95, 2), (1720, 1186, 1.0, 0),
-                                       (2250, 1190, 1.05, 2), (2700, 1180, 1.0, 1))):
+    for i, (x, y, s_, v) in enumerate(((200, 1180, 1.0, 0), (980, 1192, 0.95, 2), (1500, 1186, 1.0, 0),
+                                       (1950, 1190, 1.05, 2), (2400, 1180, 1.0, 1))):
         sc.add(f"tuft{i}", tuft_svg(x, y, s_, v), z=8.1 + i * 0.01,
                motion=M.sway(2.2, 3.2 + 0.3 * i, (x, y), phase=0.19 * i))
 
@@ -812,7 +818,7 @@ def build(ctx):
     # ---------------------------------------------------------------- effects
     sc.fx = [
         FX.motes((0, 200, SW, 1150), count=24, color=(255, 246, 214), size=(3, 6), alpha=100),
-        FX.sparkles((JX - 260, 240, JX + 330, JY - 30), count=24, t0=t_light + 0.4, t1=t_quiet + 1.0,
+        FX.sparkles((JX - 260, 260, JX + 330, JY - 40), count=24, t0=t_light + 0.4, t1=t_quiet + 1.0,
                     color=(255, 238, 170), size=(8, 18), period=1.7, drift=-8, seed=19),
         FX.sparkles((CITY[0] - 40, CITY_C[1] - 150, CITY[1] + 40, CITY[2] + 10), count=16, t0=t_city + 0.3,
                     t1=L2.start + 0.8, color=(255, 240, 180), size=(8, 16), period=1.3, drift=0, seed=31),
