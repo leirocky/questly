@@ -7,6 +7,7 @@ from audio.scorelib import (
     drum,
     fill,
     gliss,
+    span_end,
     timp_roll,
     tops,
 )
@@ -205,6 +206,6 @@ def mercy(c):
     if p1 - p0 >= 0.4:                                   # a glockenspiel ping in the pause
         q_g = m.q_of(c.t0 + p0 + 0.05)
         top = max(m.chord_at(q_g).tones(86, 95))
-        m.add("glock", q_g, min(1.0, m.q_of(c.t0 + p1) - q_g), top, 40, "arp")
+        m.add("glock", q_g, min(1.0, m.q_of(c.t0 + p1) - q_g, span_end(m, q_g) - q_g), top, 40, "arp")
     m.expr(["choir", "vla", "vln2", "vc", "cb"], [(0, -12.5), (1, -11.5), (14, -12.5), (16, -16)])
     m.expr(["vln_mel", "harp", "celesta"], [(0, -10.5), (14, -11.5), (16, -15)])

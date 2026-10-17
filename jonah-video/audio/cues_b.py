@@ -143,7 +143,7 @@ def lots(c):
     timp_roll(f, 0, 12, midi("D2"), 26, 40)
     timp_roll(f, 12, 19.75, midi("D2"), 38, 54)
     q_afraid = f.q_of(c.t0 + c.at("更加害怕"))
-    f.expr(["trem_va", "trem_hi", "vc_fast", "cb"], [(0, -14), (max(1, q_afraid - 2), -12), (19.2, -10), (20, -13)])
+    f.expr(["trem_va", "trem_hi", "vc_fast", "cb"], [(0, -14), (max(1, q_afraid - 2), -12), (19.2, -11), (20, -13)])
     # "How could you do such a thing?": a diminished seventh in the pause, then the half cadence
     s = c.seg(t_sting, c.dur, 1, "4/4", "D minor", nominal=92, label="lots-sting")
     s.duck(2.0)
@@ -160,7 +160,7 @@ def lots(c):
     s.add("pz_hi", 0, 1, "Bb5", 70, "arp", "h")
     s.add("okit", 0, 1, 36, 64, "perc", "h")
     q_l = s.q_of(c.t0 + c.ls(i_q))
-    s.expr(["trem_va", "trem_hi", "cb_fast"], [(0, -5), (0.4, -13), (max(0.5, q_l), -16), (4, -16)])
+    s.expr(["trem_va", "trem_hi", "cb_fast"], [(0, -6), (0.4, -13), (max(0.5, q_l), -16), (4, -16)])
 
 
 def confess(c):

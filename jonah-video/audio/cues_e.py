@@ -100,13 +100,14 @@ def booth(c):
     s.prog("Em:2 | C:2 | G:2 | Am7:1 D7:1 | G:2")
     # 'Jonah did not answer.': God's last chord just hangs; then a light plucked building motif
     b.pad(["vla", "vln2"], 2, 57, 69, q0=0, q1=4, vel=40, bass_ref=(38, 50))
+    b.pad("choir", 3, 55, 74, q0=0, q1=4, vel=50, bass_ref=(38, 50))      # God's chord, still hanging
     b.add("cb", 0, 4, "D2", 40, "bass")
     b.mel("pz_hi", "D5:1/2 B4:1/4 B4:1/4 G4:1/2 B4:1/2 | C5:1/2 E5:1/4 E5:1/4 G5:1/2 E5:1/2 | "
                    "D5:1/2 B4:1/4 B4:1/4 G4:1/2 D5:1/2 | C5:1/2 A4:1/4 A4:1/4 F#4:1/2 D4:1/2 | G4:1 r:1", q=4,
           vel=60, role="arp")
     b.mel("guitar", "G3:1/2 r:1/2 [B3,D4]:1/2 r:1/2 | C3:1/2 r:1/2 [C4,E4]:1/2 r:1/2 | "
-                    "G3:1/2 r:1/2 [B3,D4]:1/2 r:1/2 | D3:1/2 r:1/2 [C4,F#4]:1/2 r:1/2 | G3:1/2 r:1/2 [B3,D4]:1/2 r:1/2",
-          q=4, vel=52, role="arp")
+                    "G3:1/2 r:1/2 [B3,D4]:1/2 r:1/2 | D3:1/2 r:1/2 [C4,F#4]:1/2 r:1/2 | G3:1/2 r:1/2 [G3,B3]:1/2:r r:1/2",
+          q=4, vel=52, role="arp")                  # the last chord (G-B, also in Em) rings into the shade
     b.mel("pz_cb", "G1:1/2 r:3/2 | C2:1/2 r:3/2 | G1:1/2 r:3/2 | D2:1/2 r:3/2 | G1:1/2 r:3/2", q=4, vel=58,
           role="bass")
     b.pad(["vla", "vln2"], 2, 57, 69, q0=12, vel=46, bass_ref=(38, 50))       # into the shade
@@ -114,7 +115,8 @@ def booth(c):
         if k % 4 != 3:
             drum(b, 4 + 0.5 + k, 76 if k % 2 else 77, 40)
     b.expr(["pz_hi", "guitar", "pz_cb", "hand"], [(0, -2), (14, -2)])
-    b.expr(["vla", "vln2", "cb"], [(0, -10), (4, -18), (12, -14), (14, -11)])
+    b.expr(["vla", "vln2", "cb"], [(0, -10), (4, -18), (12, -13), (14, -10)])
+    b.expr("choir", [(0, -12), (2, -16), (4, -26)])
     # sitting in the shade, waiting: lazy flute, slow plucks
     s.mel("flute", "B4:2 | C5:2 | D5:2 | C5:1 A4:1 | B4:2", vel=48)
     s.mel("pz_lo", "E2:1/2 r:1/2 B2:1/2 r:1/2 | C3:1/2 r:1/2 G2:1/2 r:1/2 | G2:1/2 r:1/2 D3:1/2 r:1/2 | "
@@ -257,14 +259,15 @@ def worm(c):
     for k, ph in enumerate(("对！", "我就是生气！", "我气极了！")):
         t_st = c.at(ph, end=True) + 0.03
         q_st = r.q_of(c.t0 + t_st)
-        if not 0 <= q_st < r.n_q - 0.25:
+        if not 0 <= q_st < r.n_q - 0.05:
             continue
+        dq = min(0.5, r.n_q - q_st)                    # the last stomp may sit right at the scene end
         ch = r.chord_at(q_st)
         root = ch.bass_note(43, 54)
-        r.add("bsn", q_st, 0.5, root, 74 + 3 * k, "melody", "s")
-        r.add("pz_cb", q_st, 0.5, ch.bass_note(28, 40), 72 + 2 * k, "bass", "h")
-        r.add("pz_lo", q_st, 0.5, root, 54, "harmony", "h")
-        r.add("pz_lo", q_st, 0.5, root + 7 if (root + 7) % 12 in ch.pcset else root + 12, 50, "harmony", "h")
+        r.add("bsn", q_st, dq, root, 74 + 3 * k, "melody", "s")
+        r.add("pz_cb", q_st, dq, ch.bass_note(28, 40), 72 + 2 * k, "bass", "h")
+        r.add("pz_lo", q_st, dq, root, 54, "harmony", "h")
+        r.add("pz_lo", q_st, dq, root + 7 if (root + 7) % 12 in ch.pcset else root + 12, 50, "harmony", "h")
         drum(r, q_st, 41, 58 + 4 * k)
         r.sync(f"stubborn stomp {k + 1}", q_st, t_st)
     r.expr(["bsn", "pz_cb", "pz_lo", "hand"], [(0, -7), (4, -6)])
