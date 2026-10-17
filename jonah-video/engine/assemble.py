@@ -1,11 +1,19 @@
-"""Join the rendered scenes with cross-dissolves and mux the final audio mix."""
+"""Join the rendered scenes with cross-dissolves and mux the final audio mix.
+
+Two steps: a high-quality master (build/master.mp4, cross-dissolves applied once),
+then a two-pass H.264 encode at a target bitrate for a phone-friendly file
+(~40 MB for 2:19) that spends more bits on busy scenes (storm, rain) and fewer on calm ones.
+"""
 import subprocess
 
 from engine.loader import load_timeline
 from engine.paths import BUILD, FPS, OUTPUT
 
+VIDEO_KBPS = 2200
+AUDIO_KBPS = 160
 
-def assemble(out_name="jonah_story.mp4", crf=20):
+
+def master():
     tl = load_timeline()
     scenes = tl["scenes"]
     X = tl["xfade"]
@@ -13,8 +21,6 @@ def assemble(out_name="jonah_story.mp4", crf=20):
     args = ["ffmpeg", "-y", "-loglevel", "error"]
     for s in scenes:
         args += ["-i", str(BUILD / "video" / f"{s['id']}.mp4")]
-    args += ["-i", str(BUILD / "audio" / "mix.wav")]
-
     parts = []
     prev = "[0:v]"
     for k in range(1, len(scenes)):
@@ -23,12 +29,27 @@ def assemble(out_name="jonah_story.mp4", crf=20):
         parts.append(f"{prev}[{k}:v]xfade=transition={tr}:duration={X}:offset={scenes[k]['start']:.4f}{lab}")
         prev = lab
     parts.append(f"{prev}fade=t=in:st=0:d=0.6,fade=t=out:st={total - 1.6:.3f}:d=1.6,format=yuv420p[vout]")
-    out = OUTPUT / out_name
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    args += ["-filter_complex", ";".join(parts), "-map", "[vout]", "-map", f"{len(scenes)}:a",
-             "-t", f"{total:.3f}", "-r", str(FPS),
-             "-c:v", "libx264", "-preset", "slow", "-crf", str(crf), "-tune", "animation", "-profile:v", "high",
-             "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(out)]
+    out = BUILD / "master.mp4"
+    args += ["-filter_complex", ";".join(parts), "-map", "[vout]", "-t", f"{total:.3f}", "-r", str(FPS),
+             "-c:v", "libx264", "-preset", "veryfast", "-crf", "12", str(out)]
     subprocess.run(args, check=True)
+    return out
+
+
+def assemble(out_name="jonah_story.mp4", video_kbps=VIDEO_KBPS):
+    tl = load_timeline()
+    total = tl["duration"]
+    src = master()
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    out = OUTPUT / out_name
+    log = BUILD / "x264_2pass"
+    common = ["-c:v", "libx264", "-preset", "slow", "-tune", "animation", "-profile:v", "high",
+              "-b:v", f"{video_kbps}k", "-maxrate", f"{video_kbps * 3}k", "-bufsize", f"{video_kbps * 4}k",
+              "-pix_fmt", "yuv420p", "-r", str(FPS), "-passlogfile", str(log)]
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), *common, "-pass", "1", "-an",
+                    "-f", "mp4", "/dev/null"], check=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-i", str(BUILD / "audio" / "mix.wav"),
+                    "-map", "0:v", "-map", "1:a", *common, "-pass", "2", "-t", f"{total:.3f}",
+                    "-c:a", "aac", "-b:a", f"{AUDIO_KBPS}k", "-movflags", "+faststart", str(out)], check=True)
     print(f"  wrote {out}")
     return out
