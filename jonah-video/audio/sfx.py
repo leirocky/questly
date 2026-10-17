@@ -27,9 +27,9 @@ Deterministic for (name, dur, sr, seed, params); different seeds give different 
 ValueError. Unknown params are ignored with a warning; supported params are listed in PARAMS (every effect also
 accepts ``width``: stereo width multiplier, 1 = as designed, 0 = mono) and clamped to PARAM_RANGE.
 
-Character: a soft, warm children's picture book (cartoony for gulp, spit, snore and pop), never harsh. Everything
-is high-passed at 35 Hz and gently low-passed where the material allows; low thumps (heartbeat, thud) carry
-saturated harmonics and a 250-600 Hz knock so they survive phone-sized speakers.
+Character: a soft, warm children's picture book (cartoony for gulp, spit, snore, pop and the oars' plunks), never
+harsh. Everything is high-passed at 35 Hz and gently low-passed where the material allows; low thumps (heartbeat,
+thud) carry saturated harmonics and a 250-600 Hz knock so they survive phone-sized speakers.
 
 Verify with ``python3 tools/sfx_audition.py`` (WAVs, spectrogram grid, level / seam report).
 """
@@ -1569,12 +1569,12 @@ def _k_oar(rng, sr, sc):
     env = _ar(t - 0.04 * sc, 0.1 * sc, 0.2 * sc, 2.0)
     env /= env.max() + 1e-12
     gurgle = np.clip(1 + 0.6 * _nrms(_filt(rng.standard_normal(m), "lp", 14, sr)), 0.2, None)
-    y += 0.3 * _nrms(_filt(rng.standard_normal(m), "bp", (150, 1100), sr)) * env * gurgle
+    y += 0.22 * _nrms(_filt(rng.standard_normal(m), "bp", (150, 1100), sr)) * env * gurgle
     for _ in range(rng.integers(2, 5)):
         b = _k_bubble(sr, rng.uniform(260, 520), rng.uniform(0.02, 0.035), 1.8)
         _add(y, b * rng.uniform(0.12, 0.25), rng.uniform(0.08, 0.45) * sc, sr)
     # the oarlock creaks under the load of the pull
-    _add(y, 0.42 * _k_oarlock(rng, sr, rng.uniform(0.25, 0.36) * sc), rng.uniform(0.07, 0.12) * sc, sr)
+    _add(y, 1.0 * _k_oarlock(rng, sr, rng.uniform(0.25, 0.36) * sc), rng.uniform(0.07, 0.12) * sc, sr)
     # lift-out: a small splash, then a trickle of drips from the blade
     tl = rng.uniform(0.6, 0.66) * sc
     y += 0.22 * _nrms(_filt(rng.standard_normal(m), "bp", (500, 3000), sr)) * _ar(t - tl, 0.004, 0.03)
@@ -1623,8 +1623,8 @@ def _fire(rng, n, sr, p):
 
     def mask(f, t, ch):
         g = C.at(G[ch], t)
-        m = g * C.at(flick[ch], t) * _unit(_pinkm(f, slope=0.7) * _bpm(f, 60, 350 + 500 * g))
-        m = m + 0.3 * g ** 2 * _unit(_pinkm(f) * _bpm(f, 300, 1500 + 1000 * g))
+        m = g * C.at(flick[ch], t) * _unit(_pinkm(f, slope=0.6) * _bpm(f, 110, 400 + 600 * g))
+        m = m + 0.4 * g ** 2 * _unit(_pinkm(f) * _bpm(f, 300, 1500 + 1000 * g))
         return m + 0.04 * _unit(_bpm(f, 2500, 5500))
 
     x = 0.3 * _bed(rng, n, sr, mask, corr=0.4)
@@ -1641,7 +1641,7 @@ def _fire(rng, n, sr, p):
             tt += 0.006 + rng.exponential(0.025)
     for t0 in _ptimes(rng, T, 5.0 / dens, 0.6):                           # sap pops
         _place(cr, _k_sap(rng, sr) * rng.uniform(0.9, 1.4), int(t0 * sr), rng.uniform(-0.4, 0.4))
-    cr = _verb(cr, _ir(rng, sr, 0.3, 0.004, 5000), 0.25, circular=True)
+    cr = 1.5 * _verb(cr, _ir(rng, sr, 0.3, 0.004, 5000), 0.25, circular=True)
     _dbg("crackles", cr)
     _dbg_vs("crackles vs flame", cr, x, 1000, 4000, sr)
     return x + cr
@@ -1691,13 +1691,13 @@ def _night(rng, n, sr, p):
                 _place(cr, chirp * dist * gv * rng.uniform(0.85, 1.0), int(t0 * sr), pans[i])
     _dbg("crickets", cr)
     ch = np.zeros((n, 2))                                    # distant chorus: soft continuous trills
-    for j, pan in enumerate(_spread(rng, 2, 0.6, 0.1)):
+    for pan in _spread(rng, 2, 0.6, 0.1):
         fc = rng.uniform(2700, 3200)
         car = _cnoise(rng, n, sr, lambda f: _gauss(f, fc, 35))
         fam = max(1, round(rng.uniform(25, 40) * T)) / T
         am = (0.5 + 0.5 * np.cos(TAU * fam * ts + rng.uniform(0, TAU))) ** 2
         sw = np.clip(0.6 + 0.4 * _pnoise(rng, T, 0.15)(ts), 0.15, None)
-        _place(ch, car * am * sw * 0.1, 0, pan)
+        _place(ch, car * am * sw * 0.07, 0, pan)
     _dbg("chorus", ch)
     x = _verb(cr + ch, _ir(rng, sr, 1.0, 0.02, 5000), 0.45, circular=True)
     gust = np.zeros((2, C.K))                                # the breeze: slow soft breaths every ~7 s
@@ -1713,7 +1713,7 @@ def _night(rng, n, sr, p):
         m = g * _unit(_pinkm(f) * _bpm(f, 90, 800 * (0.8 + 0.4 * g)))
         return m + 0.08 * g ** 2 * _unit(_bpm(f, 1500, 4000))
 
-    breeze = 0.06 * _bed(rng, n, sr, mask, corr=0.3)
+    breeze = 0.12 * _bed(rng, n, sr, mask, corr=0.3)
     _dbg("breeze", breeze)
     _dbg_vs("crickets vs breeze", x, breeze, 2500, 4500, sr)
     return x + breeze
@@ -1771,21 +1771,23 @@ def _cheer(rng, n, sr, p):
             cur += len(ph) / vsr + rng.uniform(0.5, 2.2)
     shouts = [(t0 + rng.uniform(-1.3, 0.3), 1.0) for t0 in peaks for _ in range(rng.integers(3, 7))]
     shouts += [(t0, 0.7) for t0 in _ptimes(rng, T, 2.5, 0.6)]
+    shv = np.zeros_like(vox)
     for t0, g in shouts:
         f0, fs, dist, cut, pan = voices[rng.integers(nvoices)]
         sh = _shout(rng, vsr, f0 * rng.uniform(1.15, 1.35), fs)
-        _place(vox, _filt(sh, "lp", cut, vsr, 2) * dist * g, int(t0 * vsr), pan + rng.uniform(-0.1, 0.1))
-    vox = signal.resample(vox, n, axis=0)                   # FFT resampling keeps the loop circular
-    actn = C.at(act, np.arange(n) / sr)
-    vox *= actn[:, None]
+        _place(shv, _filt(sh, "lp", cut, vsr, 2) * dist * g * 1.5, int(t0 * vsr), pan + rng.uniform(-0.1, 0.1))
+    v4 = signal.resample(np.concatenate([vox, shv], 1), n, axis=0)     # FFT resampling keeps the loop circular
+    actn = C.at(act, np.arange(n) / sr)[:, None]
+    _dbg_vs("shouts vs babble", v4[:, 2:] * actn, v4[:, :2] * actn, 200, 3000, sr)
+    vox = (v4[:, :2] + v4[:, 2:]) * actn
     _dbg("voices", vox)
     cl = np.zeros((n, 2))                                    # a few people clapping
-    for t0 in _ptimes(rng, T, 2.2 / p["density"], 0.6, min_one=True):
+    for t0 in _ptimes(rng, T, 3.5 / p["density"], 0.6, min_one=True):
         pan, rate, dist = rng.uniform(-0.7, 0.7), rng.uniform(3.5, 5.0), rng.uniform(0.4, 1.0)
         hand = rng.uniform(900, 1500)
-        for j in range(rng.integers(3, 10)):
+        for j in range(rng.integers(3, 8)):
             tc = t0 + j / rate + rng.uniform(-0.012, 0.012)
-            _place(cl, _k_clap(rng, sr, hand) * dist * rng.uniform(0.7, 1.0) * 3.5, int(tc * sr), pan)
+            _place(cl, _k_clap(rng, sr, hand) * dist * rng.uniform(0.7, 1.0) * 4.5, int(tc * sr), pan)
     _dbg("claps", cl)
     _dbg_vs("claps vs voices", cl, vox, 1000, 3000, sr)
     x = _verb(vox + cl, _ir(rng, sr, 0.9, 0.015, 3000), 1.0, circular=True) * 0.5
@@ -2431,7 +2433,7 @@ def _pop(rng, sr, p):
 
 def _coins(rng, sr, p):
     """A few small coins dropped into a cupped hand: a soft palm pat as the first lands, short bright coin-on-coin
-    clinks (inharmonic disc modes kept below 7 kHz, quickly damped by the hand) and a little settling jingle; all
+    clinks (inharmonic disc modes kept below 6.5 kHz, quickly damped by the hand) and a little settling jingle; all
     done by ~0.4 s."""
     L = 0.8
     m = int(L * sr)
@@ -2446,26 +2448,27 @@ def _coins(rng, sr, p):
     nc = rng.integers(4, 7)
     while i < nc and tc < 0.3:
         a = (1.0 if i == 0 else rng.uniform(0.55, 0.9)) * (1 - 0.06 * i)
-        k = _k_clink(rng, sr, rng.uniform(1500, 2600), rng.uniform(0.025, 0.045) * (1 - 0.06 * i))
+        k = _k_clink(rng, sr, rng.uniform(1400, 2400), rng.uniform(0.025, 0.045) * (1 - 0.06 * i))
         _place(x, k * a, int(tc * sr), alt(), wrap=False)
         i += 1
         tc += rng.uniform(0.035, 0.075)
     for _ in range(rng.integers(2, 4)):                       # settling jingle
         tc += rng.uniform(0.012, 0.025)
-        k = _k_clink(rng, sr, rng.uniform(1800, 2800), rng.uniform(0.015, 0.025))
+        k = _k_clink(rng, sr, rng.uniform(1700, 2600), rng.uniform(0.015, 0.025))
         _place(x, k * rng.uniform(0.2, 0.35), int(tc * sr), alt(), wrap=False)
     _dbg("coins", x)
     return _verb(x, _ir(rng, sr, 0.25, 0.004, 6000), 0.15)
 
 
 def _k_clink(rng, sr, f0, tau):
-    """One coin clink: a few inharmonic disc modes (below 7 kHz, upper ones dying faster) and a tiny contact tick."""
+    """One coin clink: a few inharmonic disc modes (below 6.5 kHz, upper ones softer and dying faster) and a tiny
+    contact tick."""
     m = int(tau * 8 * sr)
     t = np.arange(m) / sr
     y = np.zeros(m)
-    for r, a, td in ((1.0, 1.0, 1.0), (1.47, 0.7, 0.8), (2.09, 0.5, 0.6), (2.56, 0.35, 0.5), (3.42, 0.2, 0.4)):
+    for r, a, td in ((1.0, 1.0, 1.0), (1.47, 0.7, 0.8), (2.09, 0.45, 0.6), (2.56, 0.25, 0.5), (3.42, 0.12, 0.4)):
         f = f0 * r * rng.uniform(0.98, 1.02)
-        if f < 7000:
+        if f < 6500:
             y += a * np.sin(TAU * f * t + rng.uniform(0, TAU)) * _ar(t, 0.0003, tau * td)
     tick = _filt(rng.standard_normal(m), "bp", (2000, 6000), sr) * _ar(t, 0.0001, 0.0006)
     return _norm(y + 0.3 * _norm(tick))
@@ -2508,7 +2511,7 @@ def _horn(rng, sr, p):
         y += a * np.cos(k * ph) * (fk < 4500)
     y = _norm(y * env * rough)
     blat = np.zeros(m)
-    for s, d, *_ in notes:
+    for s, *_ in notes:
         blat += _ar(t - s, 0.003, 0.03)
     y += 0.12 * _nrms(_filt(rng.standard_normal(m), "bp", (300, 2000), sr)) * blat
     y += 0.025 * _nrms(_filt(rng.standard_normal(m), "bp", (800, 3000), sr)) * env
@@ -2578,7 +2581,15 @@ def _rooster(rng, sr, p):
         env += g * _bump(t, s, d, att, rel)
     f0 = ndimage.gaussian_filter1d(f0, 0.008 * sr) * (1 + 0.012 * _pnoise(rng, L, 25)(t))
     F1, F2 = (ndimage.gaussian_filter1d(F, 0.01 * sr) for F in (F1, F2))
-    v = _additive_voice(t, f0, [(F1, 220, 1.0), (F2, 320, 0.6), (2700 + 0 * t, 450, 0.15)], sr, kmax=12, tilt=1.1)
+    # Formant-shaped harmonics as in _additive_voice, but in cosine phase: a pulse-like (syrinx) waveform whose crest
+    # factor lets the crow reach the common one-shot loudness inside the peak range (sine phase is too 'round').
+    ph = _osc(f0, sr)
+    v = np.zeros(m)
+    for k in range(1, 13):
+        fk = k * f0
+        a = sum(g / np.sqrt(((F ** 2 - fk ** 2) / (fk * B)) ** 2 + 1) for F, B, g in ((F1, 220, 1.0), (F2, 320, 0.6),
+                                                                                    (2700.0, 450, 0.15)))
+        v += a * k ** -1.1 * np.cos(k * ph) * (fk < 0.45 * sr)
     rasp = np.clip(1 + 0.18 * _nrms(_filt(rng.standard_normal(m), "bp", (60, 160), sr)), 0.3, None)
     y = _norm(v * rasp) * env
     y += 0.03 * _nrms(_filt(rng.standard_normal(m), "bp", (1000, 3500), sr)) * env

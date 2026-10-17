@@ -194,13 +194,22 @@ def _cache_path(text, voice, extra=""):
     return CACHE / "tts" / f"{key}.wav"
 
 
+def _relevant_entries(text, lines):
+    """Hash of the lexicon entries that can apply to this text, so editing one line of the script
+    only re-synthesises the lines whose pronunciation could change."""
+    rel = sorted(ln for ln in lines if ln.split(" ", 1)[0] in text)
+    return hashlib.sha1("\n".join(rel).encode()).hexdigest()[:12]
+
+
 def synth_raw(text, voice):
     """Synthesize (cached) and return float32 mono at the engine's sample rate."""
     extra = ""
     if voice["engine"] == "zipvoice":
-        extra = hashlib.sha1(_zipvoice_content().encode()).hexdigest()[:12]
+        extra = _relevant_entries(text, _zipvoice_content().splitlines())
     elif voice["engine"] == "matcha":
-        extra = _narrator_lexicon()[1]
+        from voice import lexicons as LX
+        extra = _relevant_entries(text, [f"{w} {' '.join(s)}" for w, s in
+                                         LX.narrator_additions(_engine_texts()[0]).items()])
     path = _cache_path(text, voice, extra)
     if path.exists():
         x, sr = sf.read(path, dtype="float32")

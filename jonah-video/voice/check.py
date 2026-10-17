@@ -16,7 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.loader import load_timeline  # noqa: E402
 from engine.paths import BUILD, MODELS  # noqa: E402
 
-HOMOPHONES = {"威": "微", "师": "施", "实": "施", "哪": "拿", "纳": "拿", "地": "帝"}
+HOMOPHONES = {"威": "微", "维": "微", "师": "施", "实": "施", "哪": "拿", "纳": "拿", "地": "帝", "他": "它",
+              "颗": "棵", "哭": "枯", "坐": "座", "莱": "来", "进": "禁", "亡": "王"}
 
 
 def norm(s):
@@ -51,6 +52,8 @@ def main():
     for s in tl["scenes"]:
         for ln in s["lines"]:
             x, sr = sf.read(BUILD / ln["wav"], dtype="float32")
+            pad = np.zeros(int(0.3 * sr), np.float32)   # the recogniser is unreliable on a word at sample 0
+            x = np.concatenate([pad, x, pad])
             st = rec.create_stream()
             st.accept_waveform(sr, x)
             rec.decode_stream(st)
