@@ -45,7 +45,7 @@ BACK_Y = 770                # back edge of the square (house fronts)
 STEP_X0, STEP_X1 = 220, 660  # Jonah's stone step (two tiers)
 STEP_TOP = 1000
 J_X, J_Y, J_S = 440, STEP_TOP - 3, 1.0
-PLINTH_X, PLINTH_TOP, PLINTH_BASE = 1250, 790, 846   # herald's plinth at the back of the square
+PLINTH_X, PLINTH_TOP, PLINTH_BASE = 1250, 778, 846   # herald's plinth at the back of the square
 H_X, H_S = 1250, 0.66
 # the market stall is drawn in local coordinates (designed around x 1420.., table front edge y 1110) and placed
 # with TABLE_K / TABLE_ORG
@@ -79,7 +79,7 @@ CROWD = {   # (kind, variant, x, y, scale, facing in line 0, facing when kneelin
                ("elder", 1, 2136, 850, 0.56, -1, -1), ("woman", 3, 2210, 856, 0.56, -1, 1),
                ("man", 1, 2290, 852, 0.56, -1, -1)],
     "mid_l": [("woman", 2, 712, 978, 0.74, -1, -1), ("man", 1, 842, 984, 0.74, -1, -1),
-              ("child", 3, 950, 990, 0.74, -1, -1), ("man", 0, 1272, 976, 0.74, -1, -1)],
+              ("child", 3, 950, 990, 0.74, -1, -1), ("man", 3, 1376, 980, 0.74, -1, -1)],
     "mid_r": [("woman", 1, 2040, 982, 0.74, -1, -1), ("man", 3, 2168, 976, 0.74, -1, -1),
               ("elder", 2, 2296, 986, 0.74, -1, -1)],
 }
@@ -217,19 +217,20 @@ def square_svg():
            f'{STEP_TOP + 4} Z" fill="url(#s16stone)" stroke="{INK}" stroke-width="4" stroke-linejoin="round"/>'
            f'<rect x="{u0}" y="{STEP_TOP + 4}" width="{u1 - u0}" height="28" fill="url(#s16stonef)" '
            f'stroke="{INK}" stroke-width="4"/>')
-    # herald's plinth: a stepped stone block with a glazed rosette band
+    # herald's plinth: a two-tier stone block with a glazed rosette band
     px, pt, pb = PLINTH_X, PLINTH_TOP, PLINTH_BASE
-    pl = (f'<path d="M{px - 120},{pb} L{px - 120},{pt + 30} L{px + 120},{pt + 30} L{px + 120},{pb} Z" '
-          f'fill="url(#s16stonef)" stroke="{INK}" stroke-width="3.5"/>'
-          f'<path d="M{px - 120},{pt + 30} L{px - 104},{pt + 18} L{px + 136},{pt + 18} L{px + 120},{pt + 30} Z" '
-          f'fill="url(#s16stone)" stroke="{INK}" stroke-width="3"/>'
-          f'<path d="M{px - 86},{pt + 18} L{px - 86},{pt + 6} L{px + 86},{pt + 6} L{px + 86},{pt + 18} Z" '
-          f'fill="url(#s16stonef)" stroke="{INK}" stroke-width="3"/>'
-          f'<path d="M{px - 86},{pt + 6} L{px - 74},{pt - 4} L{px + 98},{pt - 4} L{px + 86},{pt + 6} Z" '
-          f'fill="url(#s16stone)" stroke="{INK}" stroke-width="3"/>'
-          f'<rect x="{px - 120}" y="{pt + 44}" width="240" height="16" fill="#3f79a8" stroke="{INK}" '
+    l0, l1, u0, u1 = px - 130, px + 130, px - 92, px + 92
+    pl = (f'<path d="M{l0},{pb} L{l0},{pb - 42} L{l1},{pb - 42} L{l1},{pb} Z" fill="url(#s16stonef)" '
+          f'stroke="{INK}" stroke-width="3.5"/>'
+          f'<path d="M{l0},{pb - 42} L{l0 + 16},{pb - 54} L{l1 + 16},{pb - 54} L{l1},{pb - 42} Z" '
+          f'fill="url(#s16stone)" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+          f'<path d="M{u0},{pb - 48} L{u0},{pt + 6} L{u1},{pt + 6} L{u1},{pb - 48} Z" fill="url(#s16stonef)" '
+          f'stroke="{INK}" stroke-width="3"/>'
+          f'<path d="M{u0},{pt + 6} L{u0 + 12},{pt - 6} L{u1 + 12},{pt - 6} L{u1},{pt + 6} Z" '
+          f'fill="url(#s16stone)" stroke="{INK}" stroke-width="3" stroke-linejoin="round"/>'
+          f'<rect x="{l0}" y="{pb - 30}" width="{l1 - l0}" height="16" fill="#3f79a8" stroke="{INK}" '
           f'stroke-width="2.5"/>')
-    pl += "".join(f'<circle cx="{xx}" cy="{pt + 52}" r="4" fill="#f3e3b8"/>' for xx in range(px - 104, px + 120, 26))
+    pl += "".join(f'<circle cx="{xx}" cy="{pb - 22}" r="4" fill="#f3e3b8"/>' for xx in range(l0 + 14, l1, 26))
     body += houses + S.g(oven, filter="wobble-fine") + S.g(plaza, filter="wobble")
     body += S.g(st, filter="wobble-fine") + S.g(pl, filter="wobble-fine")
     # ground shadows of the plinth and the step
@@ -237,6 +238,46 @@ def square_svg():
              f'<ellipse cx="{(x0 + x1) / 2}" cy="{STEP_TOP + 78}" rx="{(x1 - x0) / 2 + 30}" ry="14" fill="{INK}" '
              f'opacity="0.12" filter="url(#soft)"/>')
     return doc(body, defs)
+
+
+def well_svg(cx, by):
+    """A round stone well in the front-left corner of the square, with a bucket on its rim."""
+    rx, ry, h = 138, 34, 92
+    ry0 = by - h
+    stone, light, dark = "#d9bb8b", "#ead2a8", "#b89466"
+    body = (f'<ellipse cx="{cx}" cy="{by + 6}" rx="{rx + 30}" ry="20" fill="{INK}" opacity="0.15" '
+            f'filter="url(#soft)"/>')
+    wall = (f'M{cx - rx},{ry0} L{cx - rx},{by} A{rx},{ry} 0 0 0 {cx + rx},{by} L{cx + rx},{ry0} '
+            f'A{rx},{ry} 0 0 1 {cx - rx},{ry0} Z')
+    cid = "s16well"
+    courses = ""
+    r = random.Random(4)
+    for k in range(1, 4):
+        yy = ry0 + h * k / 4
+        courses += f'<path d="M{cx - rx},{f1(yy)} A{rx},{ry} 0 0 0 {cx + rx},{f1(yy)}"/>'
+        for j in range(7):
+            u = (j + (0.5 if k % 2 else 0)) / 7
+            xx = cx - rx + 2 * rx * u
+            yb = yy + ry * math.sqrt(max(0, 1 - ((xx - cx) / rx) ** 2))
+            courses += f'<path d="M{f1(xx)},{f1(yb)} l0,{f1(-h / 4)}"/>'
+    body += (f'<clipPath id="{cid}"><path d="{wall}"/></clipPath><path d="{wall}" fill="{stone}"/>'
+             f'<g clip-path="url(#{cid})"><path d="M{cx + 30},{ry0} L{cx + rx + 10},{ry0} L{cx + rx + 10},'
+             f'{by + ry} L{cx + 50},{by + ry} Z" fill="{dark}" opacity="0.35"/>'
+             f'<g stroke="{S.shade(stone, -0.3)}" stroke-width="2.5" fill="none" opacity="0.55">{courses}</g></g>'
+             f'<path d="{wall}" fill="none" stroke="{INK}" stroke-width="4" stroke-linejoin="round"/>')
+    body += (f'<ellipse cx="{cx}" cy="{ry0}" rx="{rx}" ry="{ry}" fill="{light}" stroke="{INK}" stroke-width="4"/>'
+             f'<ellipse cx="{cx}" cy="{ry0 + 3}" rx="{rx - 24}" ry="{ry - 10}" fill="#3e6170" stroke="{INK}" '
+             f'stroke-width="3"/><ellipse cx="{cx - 30}" cy="{ry0 + 1}" rx="40" ry="6" fill="#8fbcc4" opacity="0.6"/>')
+    # wooden bucket and a coil of rope on the rim
+    bx, bt = cx + 70, ry0 - 50
+    body += (f'<path d="M{bx - 26},{bt} L{bx + 26},{bt} L{bx + 20},{bt + 50} L{bx - 20},{bt + 50} Z" '
+             f'fill="{P["wood_light"]}" stroke="{INK}" stroke-width="3.5" stroke-linejoin="round"/>'
+             f'<path d="M{bx - 24},{bt + 12} L{bx + 24},{bt + 12} M{bx - 21},{bt + 38} L{bx + 21},{bt + 38}" '
+             f'stroke="{P["wood_dark"]}" stroke-width="5"/>'
+             f'<path d="M{bx - 22},{bt + 2} Q{bx},{bt - 34} {bx + 22},{bt + 2}" stroke="{INK}" stroke-width="3.5" '
+             f'fill="none"/>')
+    body += PR.rope_coil(cx - 70, ry0 + 8, 0.55)
+    return S.g(body, filter="wobble-fine")
 
 
 def palm_svg(x, y, s, lean):
@@ -305,7 +346,7 @@ def table_svg():
         goods += bread(1505 + dx, 1102 + dy, 30)
     # pomegranates in a bowl
     goods += (f'<path d="M1585,1062 Q1640,1112 1700,1062 Z" fill="#3f79a8" stroke="{INK}" stroke-width="3.5"/>')
-    for cx, cy in ((1606, 1050), (1640, 1046), (1676, 1052), (1622, 1024), (1660, 1026)):
+    for cx, cy in ((1606, 1050), (1642, 1044), (1678, 1052)):
         goods += fruit(cx, cy, 20, "#c2413f", crown=True)
     # dates (heap) and a bunch of grapes
     goods += basket(1770, 1100, 100, 34, fill="#b7874b")
@@ -337,25 +378,35 @@ def table_svg():
 
 
 def cover_svg():
-    """A plain linen cloth thrown over all the food on the table (the fast)."""
-    x0, x1 = TABLE_X0 + 6, TABLE_X1 - 4
-    pts = [(x0 - 8, TABLE_TOP + 62), (x0 - 2, TABLE_TOP - 6), (1450, 1040), (1500, 1028), (1548, 1040),
-           (1590, 1026), (1640, 1010), (1690, 1024), (1730, 1046), (1772, 1040), (1820, 1034), (1862, 1030),
-           (x1 + 10, 1060), (x1 + 8, TABLE_TOP + 56)]
+    """A striped woven cloth thrown over all the food on the table (the fast): lumps of the bread stack, the
+    pomegranates, the dates and the grapes show through it."""
+    x0, x1 = TABLE_X0, TABLE_X1
+    top = [(x0 - 8, 1142), (x0 - 4, 1100), (1444, 1062), (1470, 1040), (1500, 1028), (1534, 1036), (1566, 1060),
+           (1604, 1040), (1642, 1032), (1682, 1042), (1714, 1062), (1748, 1050), (1786, 1048), (1818, 1062),
+           (1846, 1046), (1874, 1056), (x1 + 6, 1094), (x1 + 10, 1140)]
     hem = []
-    n = 12
-    for i in range(n + 1):
-        xx = x1 + 8 - (x1 + 8 - (x0 - 8)) * i / n
-        hem.append((xx, TABLE_TOP + 58 + (10 if i % 2 else 0)))
-    d = S.smooth_path(pts + hem[1:-1], closed=True, tension=0.8)
-    body = f'<path d="{d}" fill="#efe1c0" stroke="{INK}" stroke-width="4" stroke-linejoin="round"/>'
-    folds = ""
-    for xx in (1470, 1560, 1650, 1745, 1830):
-        folds += f'<path d="M{xx},{TABLE_TOP - 2} Q{xx + 8},{TABLE_TOP + 26} {xx - 4},{TABLE_TOP + 56}"/>'
-    folds += '<path d="M1460,1060 Q1560,1050 1640,1030"/><path d="M1700,1040 Q1780,1058 1860,1048"/>'
-    body += f'<g stroke="#c9b48a" stroke-width="3" fill="none" stroke-linecap="round">{folds}</g>'
-    body += (f'<path d="M{x0 - 4},{TABLE_TOP + 40} L{x1 + 6},{TABLE_TOP + 40}" stroke="{P["sail_stripe"]}" '
-             f'stroke-width="7" opacity="0.8"/>')
+    n = 14
+    for i in range(1, n):
+        xx = x1 + 10 - (x1 + 18 - x0) * i / n
+        hem.append((xx, 1140 + (7 if i % 2 else 0)))
+    d = S.smooth_path(top + hem, closed=True, tension=0.8)
+    cid = "s16cover"
+    inner = (f'<path d="M{x0 - 20},1112 L{x1 + 20},1112 L{x1 + 20},1122 L{x0 - 20},1122 Z" '
+             f'fill="{P["terracotta"]}"/>'
+             f'<path d="M{x0 - 20},1128 L{x1 + 20},1128 L{x1 + 20},1133 L{x0 - 20},1133 Z" fill="#3f79a8"/>')
+    for cx, cy, rx, ry in ((1505, 1040, 60, 18), (1642, 1036, 52, 14), (1772, 1052, 50, 10)):
+        inner += f'<ellipse cx="{cx - 10}" cy="{cy - 4}" rx="{rx * 0.7}" ry="{ry * 0.6}" fill="#fff6e2" opacity="0.7"/>'
+    for xx in (1570, 1716, 1820):
+        inner += f'<path d="M{xx},1050 Q{xx + 4},1080 {xx - 2},1110" stroke="#cdb88e" stroke-width="10" ' \
+                 f'fill="none" opacity="0.5" stroke-linecap="round"/>'
+    body = (f'<clipPath id="{cid}"><path d="{d}"/></clipPath><path d="{d}" fill="#eee0bf"/>'
+            f'<g clip-path="url(#{cid})">{inner}</g>'
+            f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="4" stroke-linejoin="round"/>')
+    fringe = "".join(f'<path d="M{f1(xx)},{1143 + (4 if k % 2 else 0)} l{(k % 3) - 1},12" stroke="#c9a978" '
+                     f'stroke-width="3.5" stroke-linecap="round"/>'
+                     for k, xx in enumerate(range(x0 + 2, x1 + 6, 14)))
+    folds = "".join(f'<path d="M{xx},1100 Q{xx + 6},1120 {xx - 2},1138"/>' for xx in (1462, 1590, 1700, 1836))
+    body += fringe + f'<g stroke="#bda67c" stroke-width="3" fill="none" stroke-linecap="round">{folds}</g>'
     return doc(S.g(tplace(body), filter="wobble-fine"))
 
 
@@ -595,47 +646,55 @@ def build(ctx):
         sc.add(f"smoke{i}", smoke_svg(OVEN_X, OVEN_Y - 96, 22, 50 + i), z=2.9, wc=0.4, motion=smot)
 
     # ---- crowd groups: stand worried -> listen -> sorry (believe) -> sackcloth (sad) -> kneel sorry -> peaceful
-    def group_frames(members):
+    def group_frames(members, turn):
         out = []
-        for st in range(6):
+        for st in range(7):
             body = ""
-            for kind, v, x, y, s, f0, f1_ in members:
+            for j, (kind, v, x, y, s, f0, f1_) in enumerate(members):
                 if st == 0:
                     body += person(kind, v, x, y, s, f0, "stand", expr="worried")
-                elif st == 1:
-                    body += person(kind, v, x, y, s, f0, "listen")
+                elif st == 1:       # "你猜怎么样？": some turn to their neighbour
+                    body += person(kind, v, x, y, s, -f0 if j % 2 == turn else f0, "stand", expr="worried")
                 elif st == 2:
-                    body += person(kind, v, x, y, s, f0, "stand", expr="sorry")
+                    body += person(kind, v, x, y, s, f0, "listen")
                 elif st == 3:
-                    body += person(kind, v, x, y, s, f0, "sad", "sackcloth")
+                    body += person(kind, v, x, y, s, f0, "stand", expr="sorry")
                 elif st == 4:
+                    body += person(kind, v, x, y, s, f0, "sad", "sackcloth")
+                elif st == 5:
                     body += person(kind, v, x, y, s, f1_, "kneel_pray", "sackcloth", "sorry")
                 else:
                     body += person(kind, v, x, y, s, f1_, "kneel_pray", "sackcloth", "peaceful")
             out.append(doc(body))
         return out
 
-    gtimes = {   # (listen, sorry, sackcloth, kneel, peaceful)
-        "back_l": (t_heard + 0.25, t_believe + 0.15, t_change + 0.05, t_kneel + 0.42, t_hope + 0.2),
-        "back_r": (t_heard + 0.4, t_believe + 0.3, t_change + 0.3, t_kneel + 0.62, t_hope + 0.3),
-        "mid_l": (t_heard + 0.1, t_believe + 0.05, t_change + 0.15, t_kneel + 0.3, t_hope + 0.1),
-        "mid_r": (t_heard + 0.5, t_believe + 0.35, t_change + 0.45, t_kneel + 0.78, t_hope + 0.4),
+    gtimes = {   # (turn to the neighbour or None, listen, sorry, sackcloth, kneel, peaceful)
+        "back_l": (c0a.start + 0.45, t_heard + 0.25, t_believe + 0.15, t_change + 0.05, t_kneel + 0.42,
+                   t_hope + 0.2),
+        "back_r": (c0a.start + 0.75, t_heard + 0.4, t_believe + 0.3, t_change + 0.3, t_kneel + 0.62, t_hope + 0.3),
+        "mid_l": (None, t_heard + 0.1, t_believe + 0.05, t_change + 0.15, t_kneel + 0.3, t_hope + 0.1),
+        "mid_r": (c0a.start + 0.6, t_heard + 0.5, t_believe + 0.35, t_change + 0.45, t_kneel + 0.78, t_hope + 0.4),
     }
     zrow = {"back_l": 10, "back_r": 10.1, "mid_l": 12, "mid_r": 12.1}
     puffs_at = []
+    group_puffs = []
     for name, members in CROWD.items():
-        frames = group_frames(members)
+        frames = group_frames(members, 1 if name != "mid_r" else 0)
         gx = sum(m[2] for m in members) / len(members)
         gy = max(m[3] for m in members)
         s = members[0][4]
-        a, b, c, d, e = (snap(x) for x in gtimes[name])
-        sc.add(f"crowd_{name}", frames, z=zrow[name],
-               frame_at=cuts([(0, 0), (a, 1), (b, 2), (c, 3), (d, 4), (e, 5)]),
-               motion=M.combine(dip(a, s, (gx, gy), 4), nod(b + 0.05, (gx, gy), 1.2, 2), dip(d, s, (gx, gy)),
-                                M.breathe(0.007, 3.4, pivot=(gx, gy), phase=len(name) * 0.13)))
-        for kind, v, x, y, s_, f0, _ in members:
+        tt, a, b, c, d, e = (snap(x) if x is not None else None for x in gtimes[name])
+        sched = [(0, 0)] + ([(tt, 1)] if tt is not None else []) + [(a, 2), (b, 3), (c, 4), (d, 5), (e, 6)]
+        parts = [dip(a, s, (gx, gy), 4), nod(b + 0.05, (gx, gy), 1.2, 2), dip(d, s, (gx, gy)),
+                 M.breathe(0.007, 3.4, pivot=(gx, gy), phase=len(name) * 0.13)]
+        if tt is not None:
+            parts.append(dip(tt, s, (gx, gy), 3))
+        sc.add(f"crowd_{name}", frames, z=zrow[name], frame_at=cuts(sched), motion=M.combine(*parts))
+        body = ""
+        for j, (kind, v, x, y, s_, f0, _) in enumerate(members):
             hh = {"child": 200, "elder": 300}.get(kind, 310) * s_
-            puffs_at.append((c, x, y - hh * 0.5, 0.45 * hh, 0.6 * hh, s_))
+            body += puff_svg(x, y - hh * 0.5, 0.45 * hh, 0.6 * hh, seed=40 + j + 7 * len(name), k=max(0.55, s_))
+        group_puffs.append((name, c, body, (gx, gy - 150 * s)))
 
     # ---- Jonah on his step: watches; surprised at "竟然" ----
     jp = (J_X, J_Y)
@@ -769,8 +828,15 @@ def build(ctx):
         sc.add(f"puff{i}", doc(puff_svg(x, y, rx, ry, seed=i + 3, k=max(0.6, s))), z=25 + 0.01 * i, wc=0.5,
                motion=puff_motion(tp, (x, y)))
 
+    for name, tp, body, pv in group_puffs:
+        sc.add(f"puffs_{name}", doc(body), z=25.5, wc=0.5, motion=hop(tp, [
+            (-0.06, {"alpha": 0, "s": 0.97, "dy": 0}), (0.02, {"alpha": 1, "s": 0.99, "dy": -3}),
+            (0.16, {"alpha": 0.85, "s": 1.015, "dy": -9}), (0.38, {"alpha": 0, "s": 1.03, "dy": -18})], pv,
+            ["out", "sine", "in"]))
+
     # ---- foreground framing ----
-    fg = (PR.grass_tuft(40, SH + 4, 1.1, variant=2) + PR.jar(180, SH - 40, 0.9) + PR.jar(262, SH - 20, 0.62)
+    fg = (well_svg(450, 1312) + PR.grass_tuft(40, SH + 4, 1.1, variant=2) + PR.jar(150, SH - 40, 0.9)
+          + PR.jar(232, SH - 20, 0.62)
           + PR.grass_tuft(2330, SH + 6, 1.0, variant=0) + PR.bush(2410, SH + 10, 0.9, variant=1))
     sc.add("fg", doc(fg), z=29)
 

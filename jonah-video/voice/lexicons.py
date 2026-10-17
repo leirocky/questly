@@ -34,6 +34,13 @@ ZV_FIX = {
     "枯死": "ku1 si3", "心疼": "xin1 teng2", "分不清": "fen1 bu5 qing1", "左右手": "zuo3 you4 shou3",
     "说不定": "shuo1 bu5 ding4", "一认错": "yi2 ren4 cuo4", "惹来": "re3 lai2", "抽中": "chou1 zhong4",
     "气极了": "qi4 ji2 le5", "不忍心": "bu4 ren3 xin1", "当初": "dang1 chu1", "不轻易": "bu4 qing1 yi4",
+    # narrator words (the narrator also speaks through ZipVoice)
+    "肚子": "du4 zi5", "得救": "de2 jiu4", "湿漉漉": "shi1 lu4 lu4", "禁食": "jin4 shi2", "枯死": "ku1 si3",
+    "热极了": "re4 ji2 le5", "发昏": "fa1 hun1", "划桨": "hua2 jiang3", "用力划桨": "yong4 li4 hua2 jiang3",
+    "火辣辣": "huo3 la4 la4", "宽宽": "kuan1 kuan1", "粗粗": "cu1 cu1", "那条": "na4 tiao2",
+    "喜欢": "xi3 huan5", "不喜欢": "bu4 xi3 huan5", "愿意": "yuan4 yi4", "不愿意": "bu2 yuan4 yi4",
+    "过了": "guo4 le5", "睡着": "shui4 zhao2", "长大": "zhang3 da4",
+    "做错了事": "zuo4 cuo4 le5 shi4", "又热又干": "you4 re4 you4 gan1",
 }
 NARRATOR_FIX = {
     "肚子": "du4 zi", "水手": "shui2 shou3", "海里": "hai2 li3", "很久": "hen2 jiu3", "很远": "hen2 yuan3",

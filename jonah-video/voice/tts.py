@@ -33,26 +33,33 @@ from engine.paths import BUILD, CACHE, FPS, MODELS, SR, ensure_dirs  # noqa: E40
 
 MALE_ENGINE = "zipvoice"   # "zipvoice" or "kokoro" for the male speakers
 
+# Every voice is ZipVoice: the timbre comes from a short prompt clip ("prompt" engine/sid/speed/text),
+# while ZipVoice supplies natural phrasing, stress and pauses. The narrator imitates the matcha
+# zh-baker voice (a professional female reader); the male voices imitate Kokoro v1.1-zh speakers.
+# "sid" for a zipvoice voice is only a cache-key label (= prompt sid).
 VOICES = {
-    "N": {"engine": "matcha", "sid": 0, "speed": 0.85, "fx": None, "gain_db": 0.0},
-    "G": {"engine": MALE_ENGINE, "sid": 101, "speed": 0.9, "fx": "divine", "gain_db": 0.0},
-    "J": {"engine": MALE_ENGINE, "sid": 91, "speed": 0.95, "fx": None, "gain_db": 0.0},
-    "C": {"engine": MALE_ENGINE, "sid": 88, "speed": 0.95, "fx": None, "gain_db": 0.0},
-    "S": {"engine": MALE_ENGINE, "sid": 95, "speed": 1.0, "fx": None, "gain_db": 0.0},
-    "K": {"engine": MALE_ENGINE, "sid": 100, "speed": 0.9, "fx": None, "gain_db": 0.0},
+    "N": {"engine": "zipvoice", "sid": 0, "speed": 0.85, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "matcha", "sid": 0, "speed": 1.0,
+                     "text": "很久以前，有一位先知，名叫约拿。有一天，上帝对他说，起来，到尼尼微大城去。"}},
+    "G": {"engine": MALE_ENGINE, "sid": 101, "speed": 0.9, "fx": "divine", "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 101, "speed": 0.9,
+                     "text": "我是创造天地的上帝，我爱这世上所有的人，也爱一切的生命。"}},
+    "J": {"engine": MALE_ENGINE, "sid": 91, "speed": 0.95, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 91, "speed": 0.9,
+                     "text": "我是约拿，我是一个先知，我的家在以色列的一个小村庄里。"}},
+    "C": {"engine": MALE_ENGINE, "sid": 88, "speed": 0.95, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 88, "speed": 0.9, "text": "我是这条船的船长，我在海上航行了很多很多年。"}},
+    "S": {"engine": MALE_ENGINE, "sid": 95, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 95, "speed": 0.9,
+                     "text": "我们是船上的水手，每天都在海上拉绳子，划船，搬货物。"}},
+    "K": {"engine": MALE_ENGINE, "sid": 100, "speed": 0.9, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 100, "speed": 0.9, "text": "我是尼尼微的国王，我住在一座很大很大的城里。"}},
 }
-# Kokoro prompt sentences that give each ZipVoice male voice its timbre.
-PROMPTS = {
-    101: "我是创造天地的上帝，我爱这世上所有的人，也爱一切的生命。",
-    91: "我是约拿，我是一个先知，我的家在以色列的一个小村庄里。",
-    88: "我是这条船的船长，我在海上航行了很多很多年。",
-    95: "我们是船上的水手，每天都在海上拉绳子，划船，搬货物。",
-    100: "我是尼尼微的国王，我住在一座很大很大的城里。",
-}
+PROMPTS = {k: v["prompt"]["text"] for k, v in VOICES.items() if "prompt" in v}
 # Per-scene overrides of a speaker's effect (Jonah praying inside the fish).
 SCENE_FX = {("s11_belly", "J"): "cave", ("s12_deep", "J"): "cave"}
-CER_RETRY = 0.10   # re-synthesise a ZipVoice utterance when ASR disagrees more than this
-NARRATOR_CER_OK = 0.06
+CER_OK = 0.06      # re-synthesise an utterance until ASR agrees at least this well (best take kept)
+NARRATOR_CER_OK = CER_OK
 
 TARGET_LUFS = -20.0  # per-clip loudness before the final mix
 _DC_SOS = signal.butter(2, 40, "highpass", fs=SR, output="sos")
@@ -181,16 +188,19 @@ def tts_text(text, engine):
     return t
 
 
-def _prompt(sid):
-    """Kokoro clip that gives a ZipVoice male voice its timbre (DC-free, cached)."""
-    text = PROMPTS[sid]
-    x, sr = synth_raw(text, {"engine": "kokoro", "sid": sid, "speed": 0.9})
+def _prompt(voice):
+    """Clip that gives a ZipVoice voice its timbre (trimmed, DC-free, cached)."""
+    p = voice["prompt"]
+    x, sr = synth_raw(p["text"], {"engine": p["engine"], "sid": p["sid"], "speed": p["speed"]})
+    x = trim(np.asarray(x, np.float32), sr)
     x = signal.sosfiltfilt(signal.butter(2, 40, "highpass", fs=sr, output="sos"), soften_onsets(x, sr))
-    return np.asarray(x, np.float32), sr, text
+    return np.asarray(x, np.float32), sr, p["text"]
 
 
 def _cache_path(text, voice, extra=""):
-    key = hashlib.sha1(json.dumps([text, voice["engine"], voice["sid"], voice["speed"], extra]).encode()).hexdigest()[:16]
+    prompt = voice.get("prompt") if voice["engine"] == "zipvoice" else None
+    key = hashlib.sha1(json.dumps([text, voice["engine"], voice["sid"], voice["speed"], extra, prompt],
+                                  sort_keys=True).encode()).hexdigest()[:16]
     return CACHE / "tts" / f"{key}.wav"
 
 
@@ -217,20 +227,20 @@ def synth_raw(text, voice):
     path.parent.mkdir(parents=True, exist_ok=True)
     tts = _engine(voice["engine"])
     if voice["engine"] == "zipvoice":
-        px, psr, ptext = _prompt(voice["sid"])
+        px, psr, ptext = _prompt(voice)
         best = None
         # Flow matching can occasionally slur a word: verify with ASR and try other settings.
-        for spd, steps in ((voice["speed"], 8), (voice["speed"], 12), (voice["speed"] - 0.04, 8),
-                           (voice["speed"] + 0.04, 12)):
+        for spd, steps in ((voice["speed"], 8), (voice["speed"], 12), (voice["speed"] - 0.03, 8),
+                           (voice["speed"] + 0.03, 12), (voice["speed"], 16)):
             a = tts.generate(tts_text(text, "zipvoice"), ptext, px.tolist(), psr, spd, steps)
             x = np.asarray(a.samples, dtype=np.float32)
             err = _cer(text, asr(x, a.sample_rate)[0])
             if best is None or err < best[0]:
                 best = (err, x, a.sample_rate)
-            if err <= CER_RETRY:
+            if err <= CER_OK:
                 break
         err, x, sr = best
-        if err > CER_RETRY:
+        if err > CER_OK:
             print(f"  WARNING ASR mismatch {err:.2f} for: {text}")
         sf.write(path, x, sr)
         return x, sr
