@@ -15,7 +15,8 @@ _SHARED = ["engine/compositor.py", "engine/motion.py", "engine/fx.py", "engine/s
 
 def _scene_hash(sid, tl):
     h = hashlib.sha1()
-    for rel in _SHARED + [f"art/scenes/{sid}.py"]:
+    v1 = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "art" / "scenes_v1").glob("*.py"))
+    for rel in _SHARED + ["art/props.py", "art/characters.py"] + v1 + [f"art/scenes/{sid}.py"]:
         p = ROOT / rel
         if p.exists():
             h.update(p.read_bytes())
