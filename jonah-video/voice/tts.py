@@ -52,6 +52,7 @@ PROMPTS = {
 # Per-scene overrides of a speaker's effect (Jonah praying inside the fish).
 SCENE_FX = {("s11_belly", "J"): "cave", ("s12_deep", "J"): "cave"}
 CER_RETRY = 0.10   # re-synthesise a ZipVoice utterance when ASR disagrees more than this
+NARRATOR_CER_OK = 0.06
 
 TARGET_LUFS = -20.0  # per-clip loudness before the final mix
 _DC_SOS = signal.butter(2, 40, "highpass", fs=SR, output="sos")
@@ -221,6 +222,22 @@ def synth_raw(text, voice):
                 break
         err, x, sr = best
         if err > CER_RETRY:
+            print(f"  WARNING ASR mismatch {err:.2f} for: {text}")
+        sf.write(path, x, sr)
+        return x, sr
+    if voice["engine"] == "matcha":
+        # Matcha samples noise, so takes differ: keep the first take ASR agrees with (or the best of 5).
+        best = None
+        for _ in range(5):
+            a = tts.generate(tts_text(text, "matcha"), sid=voice["sid"], speed=voice["speed"])
+            x = np.asarray(a.samples, dtype=np.float32)
+            err = _cer(text, asr(x, a.sample_rate)[0])
+            if best is None or err < best[0]:
+                best = (err, x, a.sample_rate)
+            if err <= NARRATOR_CER_OK:
+                break
+        err, x, sr = best
+        if err > NARRATOR_CER_OK:
             print(f"  WARNING ASR mismatch {err:.2f} for: {text}")
         sf.write(path, x, sr)
         return x, sr

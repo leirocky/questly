@@ -53,9 +53,11 @@ OUT = BUILD / "preview" / "sfx"
 EXPECTED = {
     **{k: "loop" for k in ("waves_calm", "waves_storm", "storm_wind", "rain", "wind_soft", "wind_hot", "ship_creak",
                            "underwater", "bubbles", "heartbeat", "drip", "footsteps", "footsteps_run", "crowd",
-                           "birds", "snore", "heat")},
+                           "birds", "snore", "heat",
+                           "oars", "fire", "night", "cheer")},                 # added for the ~9-10 min version
     **{k: "oneshot" for k in ("thunder", "splash", "splash_small", "whoosh", "gulp", "spit", "thud", "chime",
-                              "sparkle", "grow", "wither", "crunch", "gull", "lots", "cloth", "sheep", "pop")},
+                              "sparkle", "grow", "wither", "crunch", "gull", "lots", "cloth", "sheep", "pop",
+                              "coins", "horn", "hammer", "rooster")},           # added for the ~9-10 min version
 }
 LOOP_RANGE = (-25.0, -20.0)          # brief: "about -24..-20"; heat sits at -25 on purpose (sensitive 3 kHz band)
 SWEEP_DURS = (2.0, 4.0, 6.0, 9.0, 13.0)
@@ -500,7 +502,11 @@ def api_checks(names, log):
                    ("drip", dict(density=0)), ("rain", dict(density=0)), ("bubbles", dict(density=0)),
                    ("ship_creak", dict(density=0)), ("crowd", dict(density=0)), ("waves_storm", dict(density=0)),
                    ("snore", dict(cycle=0)), ("chime", dict(root=0)), ("sheep", dict(pitch=0)),
-                   ("gull", dict(pitch=-1)), ("whoosh", dict(width=-5))):
+                   ("gull", dict(pitch=-1)), ("whoosh", dict(width=-5)),
+                   ("oars", dict(cycle=0)), ("oars", dict(cycle=1e6)), ("fire", dict(density=0)),
+                   ("fire", dict(density=1e6)), ("night", dict(density=0)), ("cheer", dict(density=0)),
+                   ("horn", dict(pitch=0)), ("horn", dict(pitch=1e6)), ("rooster", dict(pitch=-1)),
+                   ("rooster", dict(pitch=1e6))):
         kind = sfx.NAMES[nm][0]
         try:
             x = sfx.make(nm, 3.0 if kind == "loop" else None, SR, seed=1, **kw)

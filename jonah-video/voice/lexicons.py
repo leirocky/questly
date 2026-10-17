@@ -27,7 +27,7 @@ from engine.paths import CACHE, MODELS
 
 # word -> pinyin syllables (tone digits; 5 or none = neutral)
 ZV_FIX = {
-    "长大": "zhang3 da4", "长起来": "zhang3 qi3 lai5", "还活着": "hai2 huo2 zhe5",
+    "长大": "zhang3 da4", "还活着": "hai2 huo2 zhe5",
     "一定会做到": "yi2 ding4 hui4 zuo4 dao4", "睡得着": "shui4 de5 zhao2", "人哪": "ren2 na5",
     "也不可以": "ye3 bu4 ke3 yi3", "都不可以": "dou1 bu4 ke3 yi3", "降下": "jiang4 xia4",
     "降下来": "jiang4 xia4 lai5", "得罪": "de2 zui4", "行为": "xing2 wei2", "坏行为": "huai4 xing2 wei2",
@@ -39,7 +39,7 @@ NARRATOR_FIX = {
     "肚子": "du4 zi", "水手": "shui2 shou3", "海里": "hai2 li3", "很久": "hen2 jiu3", "很远": "hen2 yuan3",
     "彼此": "bi2 ci3", "早已": "zao2 yi3", "整整": "zheng2 zheng3", "悔改": "hui2 gai3",
     "过了": "guo4 le", "得救": "de2 jiu4", "湿漉漉": "shi1 lu4 lu4", "禁食": "jin4 shi2",
-    "长起来": "zhang3 qi3 lai", "枯死": "ku1 si3", "热极了": "re4 ji2 le", "发昏": "fa1 hun1",
+    "枯死": "ku1 si3", "热极了": "re4 ji2 le", "发昏": "fa1 hun1",
     "划桨": "hua2 jiang3", "用力划桨": "yong4 li4 hua2 jiang3", "抽中": "chou1 zhong4",
     "好像": "hao3 xiang4", "当初": "dang1 chu1", "火辣辣": "huo3 la4 la4", "宽宽": "kuan1 kuan1",
     "粗粗": "cu1 cu1", "吃饭": "chi1 fan4", "一点儿": "yi4 dian3 er", "那条": "na4 tiao2",
