@@ -46,6 +46,7 @@ from art.style import P
 from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf, lerp, progress
+from engine.paths import OUT_H, OUT_W
 from engine.scene import Scene
 
 W, H = 2112, 2376
@@ -1145,6 +1146,7 @@ def build(ctx):
     ucx, ucy = (up_probe[0] + up_probe[2]) / 2 * JSD, (up_probe[1] + up_probe[3]) / 2 * JSD
     UC = (JXD - 10, FLOOR - 150)                         # bbox centre at the start of the lift
     up_mk, up_chain, up_info = jfig(UC[0] - ucx, UC[1] - ucy, JSD, "float", expr="happy", **FLOAT_UP)
+    up_head = up_info["head"]
     RISE = 1000.0
 
     def rise_y(t):
@@ -1202,14 +1204,19 @@ def build(ctx):
         (L3.start, Cam(1066, 1770, 1880)),
         (t_wf0, Cam(1070, 1770, 1960)),
     ], ["sine", "sine", "sine", "linear", "sine", "inout"])
-    CAM_FOLLOW = 0.7      # the camera rises with 70% of his lift (eased in), so he climbs steadily in frame
+    # during the lift the camera is driven by his rise: his head climbs in frame on a sine curve from where it
+    # is at the lift (~y 594 of 1080) to the upper third (YD1) at the white-out, so the camera starts from rest
+    # and never outruns him (the squash-and-hop is left out of the follow, so it still reads)
+    _c0 = deep_keys(t_lift)
+    YD0 = (up_head[1] - _c0.y) * OUT_W / _c0.w + OUT_H / 2
+    YD1 = 345.0
 
     def deep_cam(t):
         c = deep_keys(t)
         if t <= t_lift:
             return c
-        k = CAM_FOLLOW * progress(t, t_lift, t_lift + 1.5, "in")
-        return Cam(c.x, c.y + k * rise_y(t), c.w, c.rot)
+        yd = lerp(YD0, YD1, math.sin(0.5 * math.pi * progress(t, t_lift, t_wf0, "linear")))
+        return Cam(c.x, up_head[1] + rise_y(t) - (yd - OUT_H / 2) * c.w / OUT_W, c.w, c.rot)
     belly_cam = M.cam_keys([(T_SW, Cam(955, 600, W * 0.86)), (T, Cam(930, 592, W * 0.8))], "sine")
     sc.camera = lambda t: deep_cam(t) if t < T_SW else belly_cam(t)
 
@@ -1227,8 +1234,6 @@ def build(ctx):
         if t < t_kneel:
             return faint_head[0] + 66, faint_head[1] + 12
         return kneel_head[0] + 64, kneel_head[1] + 24
-
-    up_head = up_info["head"]
 
     def up_mouth(t):
         b = up_m(t)
