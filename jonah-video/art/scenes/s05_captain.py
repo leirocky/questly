@@ -13,13 +13,16 @@ As the narrator names the captain the hatch grating is flung open (cold storm li
 appear in the opening and he scrambles down the ladder two rungs at a time (two alternating climb drawings, the
 body dropping a rung pair per drawing), hops off with a landing squash at its foot and
 hurries to Jonah with a planted-foot walk (the drawing follows the distance walked, the planted sole never slides).
-He bends over the bed through an in-between and shakes Jonah by the shoulder ('把他摇醒'). Jonah sits up rubbing his
-eye while the captain straightens and hops back (same frame, so the two heads never overlap).
+He steps up onto the end of the bed through a reaching in-between, kneels behind Jonah's head (C.captain 'wake'
+recipe, drawn behind Jonah so Jonah's face stays clear) and shakes him by the shoulder ('把他摇醒', little shake marks).
+Jonah sits up rubbing his eye while the captain hops down to his standing spot (same frame, so the heads never
+overlap).
 Line 1: the captain urges him ('快醒醒！'), clutches his cap as thunder cracks through the hatch and the ship lurches
 ('风浪这么大' — Jonah turns round with a start), then spreads his palms ('你怎么还在睡觉？').
 Line 2: he points up through the hatch to the deck ('快起来' — Jonah jumps to his feet), looks up ('求你的神'), raises
-both hands to heaven ('救救我们吧' — a second flash), then clasps his hands and pleads; Jonah lowers his eyes, sorry
-(he knows the storm is his doing). The camera eases out once the captain is down, then pushes slowly in on the two.
+both hands to heaven ('救救我们吧' — a second flash), then clasps his hands and pleads (a nod on '可怜', a lean-in on
+'让我们活下来'); Jonah lowers his eyes, sorry (he knows the storm is his doing), then looks up toward the hatch and the
+storm above — the calm final frame. The camera eases out once the captain is down, then pushes slowly in on the two.
 Every pose change is a hard cut sold by a small squash-and-hop (no crossfades between poses); every main pose is
 held for at least half a second; all key times come from the narration (sub-phrases are timed from the punctuation
 pauses in the voice files, with a proportional fallback).

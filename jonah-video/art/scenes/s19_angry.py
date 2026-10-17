@@ -173,7 +173,7 @@ def bank_svg(rel, gold, uid):
 
 def heaven_glow_svg():
     gx, gy = GAP
-    defs = S.rad_grad("hg", [(0, "#fffbec", 0.75), (0.25, "#fff0c0", 0.55), (0.6, "#ffd98a", 0.22), (1, "#ffd27a", 0)])
+    defs = S.rad_grad("hg", [(0, "#fffbec", 0.95), (0.25, "#fff0c0", 0.7), (0.6, "#ffd98a", 0.28), (1, "#ffd27a", 0)])
     body = f'<ellipse cx="{gx}" cy="{gy + 30}" rx="560" ry="330" fill="url(#hg)"/>'
     body += f'<ellipse cx="{gx}" cy="{gy + 30}" rx="200" ry="110" fill="#fffaf0" opacity="0.55" filter="url(#blur-md)"/>'
     return doc(body, defs)
@@ -330,8 +330,8 @@ def plain_svg():
     # fields (furrowed patches) on the plain
     body += V2._field([(40, 1060), (230, 1046), (360, 1056), (330, 1084), (70, 1090)], S.mix("#e4cf7e", g1, 0.3),
                       S.mix(P["earth"], g1, 0.4))
-    body += V2._field([(1660, 1000), (1880, 976), (2050, 984), (2010, 1012), (1700, 1022)],
-                      S.mix("#e4cf7e", g1, 0.25), S.mix(P["earth"], g1, 0.4))
+    body += V2._field([(1700, 952), (1850, 940), (1990, 944), (1960, 962), (1730, 966)],
+                      S.mix("#e4cf7e", g1, 0.35), S.mix(P["earth"], g1, 0.4))
     body += V2._field([(2150, 958), (2400, 944), (2620, 950), (2580, 972), (2190, 978)],
                       S.mix(P["grass_dark"], g1, 0.45), S.mix(P["grass_dark"], g1, 0.15))
     road = S.mix(P["sand_light"], P["sand"], 0.35)
