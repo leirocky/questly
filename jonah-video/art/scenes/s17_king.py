@@ -14,9 +14,10 @@ travels right with the heralds and the decree.
           "换上粗麻布衣服，"        ...and he stands in scratchy burlap sackcloth; he turns back, shivers.
           "坐在灰堆里，"            a heap of ashes puffs up in front of the throne and he sits down in it.
           "表示真心认错。"          he bows his head, sorry; the messenger and the scribe bow their heads too.
-  line 1  "国王又派人在全城宣告："  the king lifts his head and speaks; the messenger and the scribe nod, walk out
-                                    onto the terrace (the camera goes with them); the messenger blows his long
-                                    bronze horn and the scribe unrolls the decree; far heralds answer from the roofs.
+  line 1  "国王又派人在全城宣告："  the king lifts his head and speaks; the messenger and the scribe nod and walk out
+                                    onto the terrace one after the other (the camera goes with them); the scribe
+                                    unrolls the decree by the column while the messenger blows his long bronze horn
+                                    (s16's horn) at the open end; far heralds answer from the roofs, then kneel.
   line 2  "所有的人和牛羊，都不可以吃，"  (the king's words, read from the scroll) the camera glides on to the yard:
                                     a cow and a goat munch at the manger — the farmer lays a plank lid over it,
                                     they lift their heads ("?").
@@ -26,12 +27,16 @@ travels right with the heralds and the decree.
           "诚心向上帝呼求。"        the farmer, his daughter and the neighbours kneel and pray; the animals bow;
                                     the camera drifts on along the street.
   line 4  "每个人都要改掉坏行为，"  two neighbours who were shouting and pointing at each other stop and hang their
-                                    heads;
+                                    heads; a young man lays a kind hand on an old neighbour's shoulder;
           "不再欺负别人。"          a big boy who had snatched a little girl's toy lamb gives it back; the two men
                                     step together and shake hands.
           "说不定上帝会可怜我们，"  everyone kneels and looks up hopefully;
-          "我们就能活下来！"        faces brighten and a soft warm light begins to seep through the clouds
-                                    (God's full mercy comes in s18). Calm hold for the dissolve.
+          "我们就能活下来！"        peaceful, hopeful faces (the children smile); the camera tilts up with their gaze
+                                    as a soft warm light begins to seep through the clouds (God's full mercy and the
+                                    joy come in s18). Calm hold for the dissolve.
+
+Camera: every pan stays under ~20 output px per frame (long pans widen the view a little in the middle, and the
+viewport is clamped to the painted stage). Doves drift across the street sky; a crier on a roof keeps reading.
 
 Pose changes are hard cuts (no crossfades between different drawings) hidden at the bottom of a small squash /
 dip, or under a cloth puff. All times are derived from the narration chunks.

@@ -124,6 +124,7 @@ def believe(c):
 
 
 def king(c):
+    c.gain(-0.5)
     i_h = c.find("全城宣告")
     t_h = c.gap(i_h)
     t_d = c.gap(i_h + 1)
@@ -177,7 +178,8 @@ def king(c):
     p.mel("vln_mel", "F4:2 F4:2 | G4:2 F#4:2", vel=58)
     p.pad(["vla", "vln2"], 2, 53, 70, vel=46, bass_part="vc", bass_lo=40, bass_hi=51)
     bassline(p, "cb", 28, 39, 46)
-    broken(p, "harp", 0, 8, (0, 2, 4, 5, 6, 7), 43, 55, vel=38, step=0.5)
+    p.duck(2.5, parts=["vln_mel", "harp"])
+    broken(p, "harp", 0, 8, (0, 2, 4, 5, 6, 7), 43, 55, vel=38, step=0.5, thin=True)
     p.expr(["vla", "vln2", "vc", "cb"], [(0, -11), (8, -9)])
     p.expr(["vln_mel", "harp"], [(0, -9), (8, -8)])
 

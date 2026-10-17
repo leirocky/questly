@@ -9,7 +9,7 @@ THEME = ["F#5:1 E5:1/2 D5:1 A4:1/2", "B4:1 D5:1/2 G5:1 F#5:1/2", "E5:3/2 C#5:1 D
 
 def title(c):
     """Jonah theme b1-b2: music box over harp and soft strings (D major, 6/8)."""
-    c.gain(-0.6)                    # the film's dynamic arc: every cue but the storm sits below it
+    c.gain(-1.0)                    # the film's dynamic arc: every cue but the storm sits below it
     s = c.seg(0, c.dur, 2, "6/8", "D major", nominal=80, label="title")
     s.duck(1.0)
     s.prog("D:3 | G:3")
@@ -68,7 +68,7 @@ def god_voice(c, t0, t1, bars, label, second=False):
 def call(c):
     """Theme b3-b7 under the opening lines, shimmer for 'God said to Jonah:', God's voice, and a
     first, distant glimpse of Nineveh (D hijaz) for 'far to the east... Israel's enemy'."""
-    c.gain(-0.7)
+    c.gain(-1.0)
     tS = c.gap(c.find("上帝对约拿说"))
     i_g = c.find("你起来")
     tG = c.gap(i_g)
@@ -125,7 +125,7 @@ def _pizz_bars(seg, syms, q0=0, vel_lo=64, vel_cb=70, vel_hi=46):
 
 
 def flee(c):
-    c.gain(-1.2)
+    c.gain(-1.6)
     tW = c.gap(c.find("为什么不想去"))
     tJ = c.gap(c.find("约帕城"))
     tS = c.gap(c.find("付了船钱"))
@@ -214,6 +214,7 @@ def storm(c):
     s4.hush = True
     for seg in (s1, s2, s3):
         seg.duck(3.0)               # well below the words; the storm roars in the pauses
+        seg.gain(0.3)
     s1.prog("Dm:4 | Dm:4 | Bb:4 | Bb:4 | Gm:4 | Gm/Bb:2 A:2@D-harmonic")
     s2.prog("Dm:4 | Bb:4 | Gm:2 A:2@D-harmonic | Dm:2 A7:2@D-harmonic | Dm:2 A/C#:2@D-harmonic")
     s3.prog("Dm:4 | Bb:4 | Gm:2 A:2@D-harmonic | Dm:4 | Bb:2 C:2 | Dm:2 Gm:2 | A:4@D-harmonic")
@@ -257,13 +258,13 @@ def storm(c):
     timp_roll(s1, 8, 16, midi("D2"), 40, 50)
     timp_roll(s1, 16, 22, midi("D2"), 46, 60)
     timp_roll(s1, 22, 23.75, midi("A2"), 60, 78)
-    s2.add("timp", 0, 1, "D2", 80, "timp", "h")
+    s2.add("timp", 0, 1, "D2", 74, "timp", "h")
     timp_roll(s2, 1, 8, midi("D2"), 40, 50)
     s2.mel("timp", "G2:1 r:1 A2:1 r:1 | D2:1 r:1 A2:1 r:1 | D2:1 r:1 A2:1 A2:1", q=8, vel=56, role="timp")
     s3.add("timp", 0, 1, "D2", 68, "timp", "h")
     timp_roll(s3, 24, 27.75, midi("A2"), 48, 70)
     timp_roll(s4, 0, 10, midi("D2"), 40, 20)
-    s2.add("okit", 0, 1, 36, 74, "perc", "h")           # concert bass drum on the peak
+    s2.add("okit", 0, 1, 36, 68, "perc", "h")           # concert bass drum on the peak
     s2.add("okit", 0, 2, 57, 62, "perc", "h")           # soft cymbal crash
     roll(s1, q_roll, 23.8, 59, 16, 42, rate=12)          # suspended-cymbal swell into the peak
     # Jonah sleeps: the theme head in D minor on clarinet, a low bassoon sigh-snore
@@ -277,8 +278,8 @@ def storm(c):
         brass = p in ("tbn", "tuba", "horn", "brass")
         s1.expr(p, [(0, -8), (max(0.5, q_ls0 - 0.9), -8), (q_ls0, -14), (max(q_ls0 + 1, q_le0 - 0.3), -10),
                     (24, -3)])
-        s2.expr(p, [(0, -1), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -6)])
-        s3.expr(p, [(0, -6), (max(0.5, q_ls2 - 0.2), -7), (q_ls2 + 0.8, -14 if brass else -12),
+        s2.expr(p, [(0, -2.5), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -7)])
+        s3.expr(p, [(0, -7), (max(0.5, q_ls2 - 0.2), -7.5), (q_ls2 + 0.8, -14 if brass else -12),
                     (max(q_ls2 + 1, q_le2 - 0.3), -14 if brass else -12), (min(27.9, q_le2 + 1.2), -4), (28, -4)])
     # Jonah asleep in the hold: a real hush after the cargo swell
     s4.expr(["trem_lo", "trem_va", "cb", "clar", "bsn", "timp"], [(0, -9), (16, -11)])

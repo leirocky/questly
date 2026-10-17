@@ -172,7 +172,7 @@ def confess(c):
     w.duck(1.5)
     w.prog("Dm:3 | Eb/D:3@D-phrygian | Dm:3 | Edim7/D:3@D-harmonic | Gm/D:3 | A7:3@D-harmonic")
     for bar, (a, b, ch) in enumerate(w.chord_spans()):
-        bass = ch.bass_note(33, 44)
+        bass = ch.bass_note(36, 47)                    # D2 for the pedal bars, A2 for the dominant
         ups = [p for p in range(bass + 5, bass + 30) if p % 12 in ch.upper]
         for k, p in enumerate([bass, ups[0], ups[1], ups[2], ups[1], ups[0]]):
             w.add("piano", a + 0.5 * k, 3.0 if k == 0 else 0.5, p, 44 + 3 * bar + (8 if k == 0 else 0), "arp")
@@ -227,8 +227,8 @@ def row(c):
     r3.hush = True
     r1.duck(3.0)
     r2.duck(3.0)
-    r1.gain(1.5)
-    r2.gain(0.3)
+    r1.gain(1.8)
+    r2.gain(1.8)
     r1.prog("Dm:4 | Gm/D:4 | Dm:4 | Bb/D:2 A/C#:2@D-harmonic")
     r2.prog("Dm:4 | Eb:4@D-phrygian | Gm/Bb:4 | A:4@D-harmonic")
     r3.prog("Dm:4 | Bb:2 F/A:2 | Gm:2 Dm/F:2 | Gm/Bb:2 Asus4:1 A:1@D-harmonic | Dm:2 Asus4:1 A:1@D-harmonic")
@@ -252,9 +252,12 @@ def row(c):
     r2.sync("the waves win (crash)", q_crash, t_crash)
     r2.sync("the waves rise higher (stroke in the pause)", 0, t_waves)
     q_hard = r1.q_of(c.t0 + q0_hard)
+    q_le0 = r1.q_of(c.t0 + c.le(i_waves - 1))          # end of the first line: the pause surges
+    q_ls1 = r2.q_of(c.t0 + c.ls(i_waves))
     for p in ("vc_fast", "cb_fast", "horn", "timp", "hand", "trem_va", "trem_hi"):
-        r1.expr(p, [(0, -13), (max(0.5, q_hard - 1), -11), (q_hard + 1, -7), (16, -6)])
-        r2.expr(p, [(0, -12), (12, -11), (q_crash - 0.4, -11), (q_crash, -3), (16, -8)])
+        r1.expr(p, [(0, -13), (max(0.5, q_hard - 1), -12), (max(q_hard, q_le0 - 0.5), -9), (16, -5)])
+        r2.expr(p, [(0, -5), (max(0.3, q_ls1 + 0.6), -12), (12, -11), (q_crash - 0.4, -11), (q_crash, -3),
+                    (16, -8)])
     r2.expr(["tbn", "brass"], [(12, -18), (q_crash - 0.3, -13), (q_crash, -4), (16, -8)])
     # the hushed prayer: humming choir, soft low strings, the storm still rumbling far off
     r3.pad("ooh", 3, 55, 72, vel=56, bass_ref=(36, 50))

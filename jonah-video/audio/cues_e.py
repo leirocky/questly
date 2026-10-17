@@ -11,7 +11,7 @@ from audio.scorelib import (
 
 
 def angry(c):
-    c.gain(-0.4)
+    c.gain(-0.7)
     t_sour = c.at("只有约拿")
     t_tender = c.gap(c.find("又慈爱"))
     t_expl = c.gap(c.find("原来"))
@@ -282,19 +282,20 @@ def lesson(c):
                    "A5:5/2 D5:1/2 | B5:1 A5:1/2 G5:1 D5:1/2 | E5:1 G5:1/2 C6:1 E6:1/2", vel=64)
     b.mel("piano", "D6:1 B5:1/2 A5:1 F#5:1/2 | G5:3 | B5:1 A5:1/2 G5:1 E5:1/2 | E5:1 G5:1/2 C6:1 B5:1/2 | "
                    "A5:3/2 C6:1 B5:1/2 | B5:1 A5:1/2 G5:3/2", vel=62)
-    for s in (a, b):
-        s.duck(3.0, parts=["piano"])               # the theme sings in the pauses, steps back under God's words
+    for s, d in ((a, 3.0), (b, 4.0)):
+        s.duck(d, parts=["piano"])                 # the theme sings in the pauses, steps back under God's words
         broken(s, "piano", 0, s.n_q, (0, 2, 4, 5, 4, 2), 43, 54, vel=32, accent=6, role="arp", thin=True)
         s.pad(["vla", "vln2", "vln2"], 3, 52, 71, vel=46, bass_part="vc", bass_lo=40, bass_hi=51)
         bassline(s, "cb", 28, 39, 44)
     a.expr(["vla", "vln2", "vc", "cb"], [(0, -14), (3, -9), (18, -8)])
     b.expr(["vla", "vln2", "vc", "cb"], [(0, -8), (12, -8), (18, -9)])
     a.expr("piano", [(0, -7), (3, -4), (18, -4)])
-    b.expr("piano", [(0, -4), (15, -4), (18, -6)])
+    b.expr("piano", [(0, -4), (12, -5), (18, -8)])
 
 
 def end(c):
     """A gentle reflective pause under the open question, the theme warm and full, the final chord."""
+    c.gain(-0.8)
     i_q = c.find("如果你是约拿")
     i_love = c.find("上帝的爱")
     # about 2 s of the long pause stay reflective (A7sus4, the celesta's question); the theme then

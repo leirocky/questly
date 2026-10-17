@@ -1026,8 +1026,8 @@ def build(ctx):
     beam_doc = doc(S.g(beam_d, filter="blur-lg"),
                    defs=f'<linearGradient id="dbeam" gradientUnits="userSpaceOnUse" x1="0" y1="300" x2="0" '
                         f'y2="{FLOOR + 60}"><stop offset="0" stop-color="#8a4c12" stop-opacity="0.3"/>'
-                        f'<stop offset="0.25" stop-color="#8a4c12"/><stop offset="0.9" stop-color="#74380a"/>'
-                        f'<stop offset="1" stop-color="#74380a" stop-opacity="0.3"/></linearGradient>')
+                        f'<stop offset="0.25" stop-color="#8a4c12"/><stop offset="0.9" stop-color="#744210"/>'
+                        f'<stop offset="1" stop-color="#744210" stop-opacity="0.3"/></linearGradient>')
 
     # it reaches down from above: stretched from its top (cheap; no per-frame mask)
     sc.add("deep_beam", beam_doc, z=104.2, wc=0, blend="add", motion=deep_gate(M.combine(

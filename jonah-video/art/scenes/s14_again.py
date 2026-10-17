@@ -6,24 +6,29 @@ city of Nineveh far away on the eastern horizon. Echoes the first call (s02): kn
 God is never drawn: only light, sparkles and his voice. Jonah is 'still a bit wet' (robe a little darker, soaked
 hem patches, a few drops, no seaweed) and leaves damp sandal prints on the road.
 
-  start      calm page: Jonah kneels in prayer on the road (eyes closed), his staff planted beside him; waves run
-             up the beach, gulls glide, palms sway, two sheep graze, a butterfly flutters.
+  start      calm page: Jonah kneels in prayer on the road (eyes closed), empty-handed as he came out of the fish
+             in s13 (and as he walks up to the gate in s15: no staff, no bag); waves run up the beach, gulls
+             glide, palms sway, two sheep graze, a butterfly flutters.
   L0 '上帝第二次对约拿说：' — the clouds above him part, golden rays pour down (chime), the page warms;
              on '对约拿说' he opens his eyes and looks up.
   L1 (God) '约拿，' — he cups his ear and listens (sound arcs; the light swells); '到尼尼微那座大城去，' — on
              '尼尼微' the far city lights up gold with sparkles and he turns his gaze to it.
-             '把我告诉你的话，' — a little golden light (God's word) drifts down from the gap into his heart (hand
-             on chest, eyes close); '说给城里的人听。' — a dotted golden path draws itself from him to the city.
-  L2 '这一次，约拿听话了。' — the light softens; on '听话' he nods twice.
-             '他起来，' — he rises, gripping his staff (rise in-between, hop) and stands ready; '照着上帝的吩咐，
-             往尼尼微去。' — he walks east along the road toward the signpost and the city (planted-foot walk:
-             the drawing follows the distance walked; the staff tip is planted with the far foot so it never
-             slides), the camera following. Calm, slowly settling last second for the dissolve into s15.
+             '把我告诉你的话，' — a little golden light (God's word) comes down from the gap in front of him and
+             floats into his heart from the front, below the beard (hand on chest, eyes close); '说给城里的人听。'
+             — a dotted golden path draws itself from him to the city. While God speaks Jonah's mouth stays
+             closed (soft smile), so only God's voice is 'speaking'.
+  L2 '这一次，约拿听话了。' — the light softens; on '听话' he nods twice (now with a happy grin).
+             '他起来，' — he rises (half-kneel in-between, hand pushing on the knee, hop) and stands ready;
+             '照着上帝的吩咐，往尼尼微去。' — he walks east along the road toward the signpost and the city
+             (planted-foot walk with free arm swing as in s02 / s15: the drawing follows the distance walked; the
+             planted sole stays fixed on the rising road, the swing foot lands on the higher road ahead), the
+             camera following. He ends in open meadow with the sign and the far city ahead of him; calm, slowly
+             settling last second for the dissolve into s15.
 
 Pose changes are hard cuts sold by small hops / squashes, blinks are expression cuts; no crossfades between
 poses. Every beat comes from ctx.lines / chunks (phrase position inside a chunk), nothing is hard-coded to the
-voice take. Sky, far east and coast are one flattened static painting (clouds never overlap the land) to stay
-inside the render budget.
+voice take. Sky and coast are flattened static paintings (clouds never overlap the land); the far east (hills,
+plain, Nineveh, its glow) is one layer with a little parallax behind the land's crest.
 """
 import hashlib
 import math
@@ -43,15 +48,7 @@ from engine.scene import Scene
 
 SW, SH = 2600, 1188
 
-# ------------------------------------------------------------------ Jonah rig (damp robe, walking staff)
-STAFF_DX = 84.0          # figure px in front of the anchor where the staff stands while he kneels / stands
-STAFF_LEN = 384.0        # figure px, tip to knob
-STAFF_W = 11.0
-WOOD = "#9a6236"
-WOOD_DARK = "#74462a"
-WRAP = P["jonah_sash"]
-
-
+# ------------------------------------------------------------------ Jonah rig (damp robe)
 def _damp_marks(st):
     """A few drops (two from the hem, one from the beard) - he is only 'still a bit wet'."""
     hemp, um, Hm = st["hemp"], st["um"], st["Hm"]
@@ -85,85 +82,29 @@ def _damp_patches(st):
             f'<g clip-path="url(#{cid})">{inner}</g>')
 
 
-def _damp_design(front=None):
+def _damp_design(patches=True):
     """Jonah's design 'still a bit wet': the robe ~8 % darker with soaked patches at the hem and a few drops, the
-    head-cloth already dry, and no seaweed any more."""
+    head-cloth already dry, and no seaweed any more. patches=False leaves out the soaked hem patches (in the
+    half-kneel the hem band rides up over the sash tails and the patches would smear them)."""
     D = C._jonah_design(wet=False)
     D["robe"] = D["sleeve"] = S.shade(P["jonah_robe"], -0.08)
     D["hem_col"] = S.shade(P["jonah_robe_dark"], -0.06)
-    D["mid"] = _damp_patches
-    D["front"] = (lambda st: front(st) + _damp_marks(st)) if front else _damp_marks
+    if patches:
+        D["mid"] = _damp_patches
+    D["front"] = _damp_marks
     return D
 
 
-def _fist_centre(st, i=1):
-    """Centre of hand i's fist (body coords), as characters._hand draws it."""
-    Sx, E, W = st["arms"][i]
-    d = C._nrm(C._sub(W, E))
-    return C._add(W, C._mul(d, 0.45 * st["m"]["hr"]))
-
-
-def _staff_markup(tip, through, length=STAFF_LEN, w=STAFF_W):
-    """A wooden walking staff from ``tip`` along the line through ``through`` (body coords), knob at the top."""
-    d = C._nrm(C._sub(through, tip))
-    top = C._add(tip, C._mul(d, length))
-    n = (-d[1], d[0])
-    w0, w1 = w * 0.42, w * 0.55
-    pts = [C._add(tip, C._mul(n, w0)), C._add(top, C._mul(n, w1)), C._sub(top, C._mul(n, w1)),
-           C._sub(tip, C._mul(n, w0))]
-    body = (f'<path d="M{C._pt(pts[0])} L{C._pt(pts[1])} L{C._pt(pts[2])} L{C._pt(pts[3])} Z" fill="{WOOD}" '
-            f'stroke="{P["ink"]}" stroke-width="3.4" stroke-linejoin="round"/>')
-    # grain line, a knot and the round knob at the top
-    g0, g1 = C._add(tip, C._mul(d, 40)), C._add(tip, C._mul(d, length - 30))
-    body += C._line(f"M{C._pt(C._add(g0, C._mul(n, 1.5)))} L{C._pt(C._add(g1, C._mul(n, 1.5)))}", w=1.6,
-                    col=WOOD_DARK, extra='opacity="0.7"')
-    kn = C._add(tip, C._mul(d, length * 0.62))
-    body += f'<ellipse cx="{kn[0]:.1f}" cy="{kn[1]:.1f}" rx="3.2" ry="2.2" fill="{WOOD_DARK}"/>'
-    kb = C._add(top, C._mul(d, 4))
-    body += (f'<circle cx="{kb[0]:.1f}" cy="{kb[1]:.1f}" r="{w * 0.95:.1f}" fill="{S.shade(WOOD, 0.1)}" '
-             f'stroke="{P["ink"]}" stroke-width="3.4"/>'
-             f'<circle cx="{kb[0] - 3:.1f}" cy="{kb[1] - 3:.1f}" r="2.6" fill="#f0d2a8" opacity="0.8"/>')
-    # a teal cloth wrap just under the knob (ties it to Jonah's sash colour)
-    a, b = C._add(top, C._mul(d, -22)), C._add(top, C._mul(d, -40))
-    body += (f'<path d="M{C._pt(a)} L{C._pt(b)}" stroke="{P["ink"]}" stroke-width="{w + 6.8:.1f}" '
-             f'stroke-linecap="butt"/>'
-             f'<path d="M{C._pt(a)} L{C._pt(b)}" stroke="{WRAP}" stroke-width="{w + 1.6:.1f}" stroke-linecap="butt"/>')
-    return body
-
-
-def _grip(st, tip):
-    """Front hook: the staff through the near fist, then the fist again on top so the fingers close round it."""
-    c = _fist_centre(st)
-    hr = st["m"]["hr"]
-    return (_staff_markup(tip, c) +
-            f'<circle cx="{c[0]:.1f}" cy="{c[1]:.1f}" r="{hr:.1f}" fill="{P["skin"]}" stroke="{P["ink"]}" '
-            f'stroke-width="3.2"/>'
-            + C._line(f"M{c[0] - 0.55 * hr:.1f},{c[1] - 0.15 * hr:.1f} q{0.5 * hr:.1f},{0.35 * hr:.1f} "
-                      f"{1.05 * hr:.1f},0", w=1.8))
-
-
-def jonah_fig(x, y, s, ps, expr=None, facing=1, marks=True, staff=None, label="j"):
-    """Damp Jonah in pose dict ``ps``. staff=(tip_x, lift) in figure px (x forward of the anchor, lift above the
-    ground) draws the walking staff held in the near hand."""
+def jonah_fig(x, y, s, ps, expr=None, facing=1, marks=True, patches=True, label="j"):
+    """Damp Jonah in pose dict ``ps`` (or a POSES name), empty-handed as in s13 and s15."""
     ps = dict(C.POSES[ps]) if isinstance(ps, str) else dict(ps)
     e = expr or ps["expr"]
-    front = None
-    if staff is not None:
-        tx, lift = staff
-        front = lambda st: _grip(st, (tx, st["ground"] - lift))   # noqa: E731
-    inner, _ = C._figure(_damp_design(front), C._ADULT, ps, e, C._fsign(facing), marks)
+    inner, _ = C._figure(_damp_design(patches), C._ADULT, ps, e, C._fsign(facing), marks)
     return C._wrap_out(inner, x, y, s, facing, label)
 
 
-def _jfn(x, y, scale=1.0, facing=1, ps=None, expr=None, marks=True, staff=None):
-    return jonah_fig(x, y, scale, ps, expr, facing, marks, staff)
-
-
-def staff_alone(x, y, s):
-    """The staff standing planted in the ground at stage (x, y) (while Jonah kneels beside it)."""
-    body = _staff_markup((0.0, 0.0), (0.0, -10.0)) + \
-        f'<ellipse cx="0" cy="2" rx="20" ry="4" fill="{P["ink"]}" opacity="0.18"/>'
-    return f'<g transform="translate({x:.1f},{y:.1f}) scale({s:.4f})"><g filter="url(#wobble-fine)">{body}</g></g>'
+def _jfn(x, y, scale=1.0, facing=1, ps=None, expr=None, marks=True):
+    return jonah_fig(x, y, scale, ps, expr, facing, marks)
 
 
 # poses ------------------------------------------------------------------------------------------
@@ -178,39 +119,39 @@ KNEEL_CHEST = dict(_KNEEL, h=-8, look=(0.02, -0.05),
 KNEEL_NOD = dict(KNEEL_CHEST, h=14, look=(0.0, 0.04))
 KNEEL_CITY = dict(KNEEL_CHEST, h=-2, look=(0.08, -0.01))           # hand on chest, looking far east (right)
 KNEEL_LOOK = dict(_KNEEL, h=-3, look=(0.08, -0.01))                 # praying hands, gazing far east (right)
-RISE = C._P(t=4, h=-8, drop=70, legs=(("ik", 60, 1), (0, -92)),
-            arms=(("fk", 30, 40), ("ik", "abs", STAFF_DX - 6, -205, 1)),
-            hands=("open", "fist"), feet=(None, 100))
-STAND_STAFF = C._P(arms=(("fk", 14, 8), ("ik", "abs", STAFF_DX - 6, -168, 1)), hands=("fist", "fist"))
+# getting up: half-kneel, the front (far) foot planted, the near hand pushing on that knee, far arm back
+RISE = C._P(t=8, h=-6, drop=70, legs=(("ik", 60, 1), (0, -92)),
+            arms=(("fk", -24, -10), ("ik", "knee", 0, 0.22, 1)),
+            hands=("fist", "open"), feet=(None, 100))
+STAND = C._P(t=2, h=-3, arms=(("fk", 12, 6), ("fk", -10, -4)))     # standing ready, looking east
 
 
-def walk_staff_pose(k, A=40.0, N=5, swing=34, lift=20, drop=10):
-    """Planted-foot walk drawing k (N drawings per step, two steps per cycle, the s02 rig) holding the staff in the
-    near hand. The staff tip is planted together with the FAR foot (step 0) and moves back with it, so it never
-    slides on the road; during step 1 it swings forward through the air. Returns (pose, (tip_x, tip_lift))."""
+def walk_pose(k, A=None, N=None, lift=20.0, rise=None):
+    """Planted-foot walk drawing k (N drawings per step, two steps per cycle; the s02 / s15 rig with both arms
+    swinging freely): the planted ankle goes from +A to -A figure px while the other foot swings through, so
+    advancing the anchor 2*A/N figure px per drawing keeps the planted sole on one spot. The road climbs toward
+    the east, so the swing foot lands ``rise`` figure px above the planted one (the body is then raised by that
+    much at the next contact instead of creeping up while a foot is planted)."""
+    A = A_W if A is None else A
+    N = N_W if N is None else N
+    rise = RISE_W if rise is None else rise
     ph = (k % (2 * N)) / N
     step, u = divmod(ph, 1.0)
     plant = ("ik", A * (1 - 2 * u), 1)
-    swing_leg = ("ik", -A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u)), 1, lift * math.sin(math.pi * u))
-    sw = swing * math.cos(math.pi * ph)
-    c = STAFF_DX - A
-    if step == 0:
-        tip = (c + A * (1 - 2 * u), 0.0)
-    else:
-        tip = (c - A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u)), 16 * math.sin(math.pi * u))
-    hx = STAFF_DX - 26 + 22 * math.cos(math.pi * ph)
-    ps = C._P(t=4, h=-3, legs=(plant, swing_leg) if step == 0 else (swing_leg, plant),
-              arms=(("fk", -sw, -sw + 16), ("ik", "abs", hx, -166 + 4 * math.sin(math.pi * ph), 1)),
-              hands=("fist", "fist"), drop=drop + 0.4 * drop * math.cos(2 * math.pi * u))
-    return ps, tip
+    swing = ("ik", -A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u)), 1,
+             lift * math.sin(math.pi * u) + rise * (0.5 - 0.5 * math.cos(math.pi * u)))
+    sw = 34 * math.cos(math.pi * ph)
+    return C._P(t=4, h=-3, legs=(plant, swing) if step == 0 else (swing, plant),
+                arms=(("fk", -sw, -sw + 14), ("fk", sw, sw + 14)), hands=("fist", "fist"),
+                drop=12 + 4 * math.cos(2 * math.pi * u))
 
 
 # ====================================================================== layout (stage px)
 HORIZON = 590
 JX, JS = 640.0, 1.15                      # Jonah's kneeling spot on the coast road (y = road centre)
 GAP = (690, 170)                          # where the clouds part (God's light comes from here)
-CITY = (1380, 1880, 598, 0.36)            # the distant Nineveh skyline: x0, x1, ground y, scale
-CITY_C = (1630, 505)                      # its middle (glow / trail target)
+CITY = (1440, 1880, 598, 0.26)            # the distant Nineveh skyline (far away: Jonah 3:3): x0, x1, ground y, scale
+CITY_C = (1660, 540)                      # its middle (glow / trail target)
 SIGN = (1572, 812, 0.7)                   # the signpost of s03 (他施 west, 尼尼微 east) on the far verge
 ROAD_X = [-60, 300, 640, 1000, 1300, 1550, 1700, 1800]
 ROAD_TOP = [990, 955, 932, 905, 872, 828, 770, 708]
@@ -219,7 +160,9 @@ SHORE = [(-60, 1010), (150, 900), (380, 790), (600, 700), (780, 640), (930, 600)
 INNER = [(-60, 1120), (200, 990), (430, 870), (640, 782), (820, 708), (960, 646), (1060, 612), (1120, 600)]
 CREST = [(980, 592), (1100, 622), (1400, 658), (1800, 700), (2200, 690), (2680, 680)]
 
-A_W, N_W, HOLD_W = 40.0, 5, 0.12         # walk rig: stride half-length, drawings per step, s per drawing
+# walk rig: ankle travel (figure px) per half step, drawings per step, s per drawing (exactly 3 frames at 30 fps,
+# 0.6 s per step)
+A_W, N_W, HOLD_W = 40.0, 6, 0.1
 
 PUNCT = "，、。：；！？,.!?:;"
 
@@ -248,6 +191,8 @@ def road_y(x):
 
 
 JY = road_y(JX)
+# how much higher (figure px) the road is one step (2 * A_W) further east, along the stretch he walks
+RISE_W = (road_y(JX) - road_y(JX + 640)) / 640 * 2 * A_W
 
 
 def walk_scale(x):
@@ -388,7 +333,13 @@ def far_svg():
              f'S2600,{HORIZON + 8} 2950,{HORIZON + 6} L2950,860 L600,860 Z" '
              f'fill="url(#s14plain)" stroke="{P["ink"]}" stroke-width="2.2"/>')
     x0, x1, y, sc_ = CITY
-    city = PR.nineveh_skyline(x0, x1, y, scale=sc_, seed=21, haze=0.3)
+    city = PR.nineveh_skyline(x0, x1, y, scale=sc_, seed=21, haze=0.5)
+    # a band of pale hazy hills in front of the city's base: it lies far beyond the plain (a long journey)
+    # (both ends dip below the meadow's crest, so no end edge ever shows, parallax included)
+    haze3 = S.mix(P["stone"], P["sky_warm"], 0.68)
+    city += S.g(_haze_band(x0 - 170, x1 + 150, HORIZON + 12, 22, 12, haze3)
+                + _haze_band(x0 + 110, x1 + 280, HORIZON + 17, 14, 14, S.mix(haze3, P["sand_light"], 0.3)),
+                filter="wobble")
     palms = ""
     for x, yy, s_, ln in ((1330, 616, 0.17, 0.2), (1372, 622, 0.14, -0.2), (1930, 618, 0.18, -0.1),
                           (1985, 626, 0.15, 0.25), (2350, 630, 0.16, 0.1), (1100, 612, 0.13, 0.0)):
@@ -400,6 +351,19 @@ def far_svg():
     body = S.g(hills, filter="wobble") + S.g(plain + fields, filter="wobble") + city + \
         f'<g opacity="0.85">{palms}</g>'
     return doc(body, defs)
+
+
+def _haze_band(x0, x1, y, peak, seed, fill):
+    """A long low hazy ridge on the horizon whose two ends sink below the land's crest (path markup)."""
+    rng = random.Random(seed)
+    n = 8
+    pts = [(x0, _land_top(x0) + 46)]
+    for i in range(1, n):
+        u = i / n
+        pts.append((x0 + (x1 - x0) * u, y - peak * math.sin(math.pi * u) ** 0.5 * rng.uniform(0.7, 1.1)))
+    pts.append((x1, _land_top(x1) + 46))
+    d = S.smooth_path(pts, closed=False) + f" L{x1},{_land_top(x1) + 120} L{x0},{_land_top(x0) + 120} Z"
+    return S.path(d, fill=fill, sw=1.8, extra='stroke-opacity="0.55"')
 
 
 def city_glow_svg():
@@ -625,7 +589,7 @@ def gull_frames(x, y, s_, facing):
     return [doc(PR.gull(x, y, s_, facing, wing=w)) for w in (1.0, 0.5, 0.0, -0.5, -1.0)]
 
 
-BFLY = (1180, 800)
+BFLY = (1540, 880)                        # over the flowers by the road, ahead of where he stops
 
 
 def butterfly_svg(open_k):
@@ -651,7 +615,7 @@ def orb_svg(x, y):
     defs = S.rad_grad("s14orb", [(0, "#fffbe8", 1), (0.28, "#ffe48a", 0.9), (0.6, "#ffcf5a", 0.35),
                                  (1, "#ffc850", 0)])
     star = _star(x, y, 30, "#fff6d6")
-    return doc(f'<circle cx="{x}" cy="{y}" r="100" fill="url(#s14orb)"/>' + star, defs)
+    return doc(f'<circle cx="{x}" cy="{y}" r="80" fill="url(#s14orb)"/>' + star, defs)
 
 
 def _star(cx, cy, r, fill, inner=0.26):
@@ -731,7 +695,7 @@ def build(ctx):
     t_tell = max(t_tell, t_orb1 + 0.5)
     t_trail1 = t_tell + 1.5
     t_quiet = L1.end + 0.2                                     # God has finished speaking: the light softens
-    # "他起来": he gets up, staff in hand; "约拿听话了": he nods twice just before
+    # "他起来": he gets up; "约拿听话了": he nods twice just before
     t_rise = w("他起来", 0.0, d=L2.start + 0.36 * (L2.end - L2.start), after=L2.start - 0.01) + 0.05
     t_obey = min(w("听话", 0.0, d=L2.start + 1.3, after=L2.start - 0.01) - 0.12, t_rise - 0.95)
     t_stand = t_rise + 0.3
@@ -740,14 +704,14 @@ def build(ctx):
     # ---------------------------------------------------------------- camera
     CAM0 = Cam(1000, 600, 2000)
     CAM_L1 = Cam(1010, 608, 1900)
-    CAM_W = Cam(940, 626, 1780)
+    CAM_W = Cam(940, 640, 1780)            # low enough that his feet stay above the subtitle band
     cam = M.cam_keys([
         (0.0, CAM0),
         (t_call - 0.2, Cam(990, 604, 1940)),
         (t_word, CAM_L1),
         (t_quiet + 0.4, Cam(1000, 612, 1860)),
         (t_rise - 0.2, CAM_W),
-        (t_walk + 0.3, Cam(960, 622, 1780)),
+        (t_walk + 0.3, Cam(960, 636, 1780)),
         (T, Cam(1250, 604, 1860)),
     ], ["sine", "sine", "sine", "sine", "sine", "inout"])
     sc.camera = cam
@@ -757,10 +721,12 @@ def build(ctx):
         return lambda t: Tf(dx=k * (cam(t).x - cam_x0))
 
     # ---------------------------------------------------------------- sky, clouds, God's light
-    # sky, the far east and the coast are one flattened static painting (clouds never overlap the land, so they
-    # are drawn after it; the city glow is clipped to above the meadow's crest)
+    # sky and coast are static paintings (clouds never overlap the land, so they are drawn after it); the far east
+    # (hills, plain, Nineveh) lies behind the land's crest with a little parallax, and so does the city glow
+    # (clipped to above the crest)
+    far_par = par(0.25)
     sc.add("sky", sky_svg(), z=0, wc=0.5)
-    sc.add("far", far_svg(), z=0.5, wc=0.8)
+    sc.add("far", far_svg(), z=0.5, wc=0.8, motion=far_par)
     sc.add("land", land_svg(), z=0.6)
     sc.add("clouds", clouds_svg([(1450, 105, 380, 105, 3), (2150, 75, 330, 95, 5), (2500, 170, 300, 90, 7),
                                  (110, 70, 300, 88, 9), (1850, 255, 220, 66, 11)]), z=0.8,
@@ -794,7 +760,7 @@ def build(ctx):
                         + 0.35 * math.sin(math.pi * _clamp((t - t_trail1 + 0.2) / 1.2))) * \
         (1 - 0.6 * part(t, L2.start, L2.start + 2.0, "sine"))   # noqa: E731
     sc.add("city_glow", city_glow_svg(), z=0.7, wc=0, blend="add",
-           motion=lambda t: Tf(alpha=min(0.85, 0.85 * city_a(t))))
+           motion=M.combine(far_par, lambda t: Tf(alpha=min(0.85, 0.85 * city_a(t)))))
     sc.add("sign", sign_svg(), z=0.75)
 
     # ---------------------------------------------------------------- the coast (static) + living water
@@ -814,8 +780,9 @@ def build(ctx):
                          else 2.0)(ph),
                motion=M.combine(M.drift(vx=vx), M.bob(10, 2.2, ph)))
 
-    # palms along the coast road
-    palms = [(250, 905, 1.0, -0.3, 4.6), (930, 878, 0.6, 0.15, 5.0), (1010, 872, 0.5, -0.12, 4.2),
+    # palms along the coast road (the near pair stands on the verge west of where he finishes walking, so in the
+    # closing seconds he is seen against open meadow and sky with the sign and the city ahead of him)
+    palms = [(250, 905, 1.0, -0.3, 4.6), (915, 810, 0.46, 0.18, 5.0), (978, 804, 0.4, -0.3, 4.2),
              (2080, 760, 0.52, 0.1, 4.8), (2180, 752, 0.45, -0.2, 5.2), (2440, 742, 0.48, 0.15, 4.4)]
     for i, (x, y, s_, ln, per) in enumerate(palms):
         sc.add(f"palm{i}", palm_svg(x, y, s_, ln), z=3.5 + i * 0.01,
@@ -859,43 +826,52 @@ def build(ctx):
     def jd(body, sw=120):
         return doc(C.ground_shadow(JX, JY, JS, sw) + body)
     kneel = lambda ps, e, **kw: jd(jonah_fig(JX, JY, JS, ps, e, **kw), 200)   # noqa: E731
+    # while God speaks (line 1) Jonah listens with his mouth closed (soft smile, 'neutral'): the open 'happy' grin
+    # would read as Jonah saying God's words himself. He grins from '听话' (line 2) on, when he obeys.
     addf("pray", kneel(_KNEEL, "peaceful"))
     addf("up", kneel(KNEEL_UP, "neutral"))
-    addf("listen", kneel(KNEEL_LISTEN, "happy"))
+    addf("listen", kneel(KNEEL_LISTEN, "neutral"))
     addf("listen_b", kneel(KNEEL_LISTEN, "peaceful"))
-    addf("look", kneel(KNEEL_LOOK, "happy"))
+    addf("look", kneel(KNEEL_LOOK, "neutral"))
     addf("look_b", kneel(KNEEL_LOOK, "peaceful"))
-    addf("chest", kneel(KNEEL_CHEST, "happy"))
+    addf("chest_n", kneel(KNEEL_CHEST, "neutral"))
     addf("chest_p", kneel(KNEEL_CHEST, "peaceful"))
-    addf("city", kneel(KNEEL_CITY, "happy"))
+    addf("city", kneel(KNEEL_CITY, "neutral"))
     addf("city_b", kneel(KNEEL_CITY, "peaceful"))
+    addf("chest", kneel(KNEEL_CHEST, "happy"))
     addf("nod", kneel(KNEEL_NOD, "happy"))
-    addf("rise", jd(jonah_fig(JX, JY, JS, RISE, "happy", staff=(STAFF_DX, 0)), 170))
-    addf("stand", jd(jonah_fig(JX, JY, JS, STAND_STAFF, "happy", staff=(STAFF_DX, 0))))
-    addf("stand_b", jd(jonah_fig(JX, JY, JS, STAND_STAFF, "peaceful", staff=(STAFF_DX, 0))))
+    addf("rise", jd(jonah_fig(JX, JY, JS, RISE, "happy", patches=False), 170))
+    addf("stand", jd(jonah_fig(JX, JY, JS, STAND, "happy")))
+    addf("stand_b", jd(jonah_fig(JX, JY, JS, STAND, "peaceful")))
     w0 = len(jdocs)
     for k in range(2 * N_W):
-        ps, tip = walk_staff_pose(k, A_W, N_W)
-        addf(f"w{k}", jd(jonah_fig(JX, JY, JS, ps, "happy", staff=tip)))
+        addf(f"w{k}", jd(jonah_fig(JX, JY, JS, walk_pose(k), "happy")))
 
     blink = 0.13
     ev = [(0.0, J["pray"]), (t_open, J["up"]), (t_call, J["listen"]),
           (t_call + 1.3, J["listen_b"]), (t_call + 1.3 + blink, J["listen"]),
           (t_look, J["look"]), (t_look + 1.0, J["look_b"]), (t_look + 1.0 + blink, J["look"]),
-          (t_word, J["chest"]), (t_orb1 - 0.05, J["chest_p"]), (t_tell, J["city"]),
+          (t_word, J["chest_n"]), (t_orb1 - 0.05, J["chest_p"]), (t_tell, J["city"]),
           (t_tell + 1.6, J["city_b"]), (t_tell + 1.6 + blink, J["city"]),
-          (L2.start + 0.2, J["chest"]),
+          (L2.start + 0.2, J["chest_n"]),
           (t_obey, J["nod"]), (t_obey + 0.26, J["chest"]), (t_obey + 0.52, J["nod"]),
           (min(t_obey + 0.82, t_rise - 0.12), J["chest"]),
           (t_rise, J["rise"]), (t_stand, J["stand"]), (t_stand + 0.35, J["stand_b"]),
           (t_stand + 0.35 + blink, J["stand"])]
-    hops = [(t_call, 8), (t_rise, 10), (t_stand, 14)]
-    squashes = [(t_open, 0.02), (t_look, 0.02), (t_word, 0.025), (t_tell, 0.02), (t_stand + 0.28, 0.04)]
+    hops = [(t_call, 8), (t_rise, 10), (t_stand, 14), (t_walk, 7)]
+    squashes = [(t_open, 0.02), (t_look, 0.02), (t_word, 0.025), (t_tell, 0.02), (t_stand + 0.28, 0.04),
+                (t_walk, 0.03)]
     nods = [t_obey, t_obey + 0.52]
     n_draw = int(math.ceil((T + 0.2 - t_walk) / HOLD_W))
     xs = [JX]
     for i in range(n_draw + 1):
         xs.append(xs[-1] + 2 * A_W * walk_scale(xs[-1]) / N_W)
+    # the planted sole of step j stays on the road at its contact point for all N_W drawings of the step
+    contact = []                                  # (x, road y) of the planted foot of each step
+    for j in range(len(xs) // N_W + 1):
+        x0 = xs[min(j * N_W, len(xs) - 1)]
+        xc = x0 + A_W * walk_scale(x0)
+        contact.append((xc, road_y(xc)))
     stand_fa = _sched(ev)
 
     # "still a bit wet": damp sandal prints where his planted feet stood, and a damp patch where he knelt
@@ -905,8 +881,8 @@ def build(ctx):
         if i0 >= len(xs):
             break
         s_ = walk_scale(xs[i0])
-        xf = xs[i0] + (A_W + 8) * s_
-        prints.append((xf, road_y(xs[i0]) + (-3 if j % 2 == 0 else 3) * s_, s_,
+        xf, yf = contact[j]
+        prints.append((xf + 8 * s_, yf + (-3 if j % 2 == 0 else 3) * s_, s_,
                        t_walk + i0 * HOLD_W, t_walk + (i0 + N_W) * HOLD_W))
     pb = (int(JX - 120), int(min(p_[1] for p_ in prints) - 40), int(xs[-1] + 120), int(JY + 40))
 
@@ -942,26 +918,32 @@ def build(ctx):
             sx, sy = sx * a, sy * b
         dy = sum(_hop(t, th, h) for th, h in hops)
         if t >= t_walk:
+            # the first walk drawing is a hard cut from the stand, sold by a squash and a small hop like the
+            # other pose cuts; the body is raised one road step at each new contact (see walk_pose)
             i = min(int((t - t_walk) / HOLD_W), len(xs) - 1)
             x = xs[i]
             s_ = walk_scale(x) / JS
-            return Tf(dx=x - JX, dy=road_y(x) - JY, sx=s_, sy=s_, px=JX, py=JY)
+            yc = contact[min(i // N_W, len(contact) - 1)][1]
+            return Tf(dx=x - JX, dy=yc - JY + dy, sx=s_ * sx, sy=s_ * sy, px=JX, py=JY)
         br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)
         nod = sum(5 * math.sin(math.pi * _clamp((t - tn) / 0.3)) for tn in nods if tn <= t <= tn + 0.3)
         return Tf(dy=dy + nod, sx=sx, sy=sy * br, px=JX, py=JY)
-    sc.add("staff", doc(staff_alone(JX + STAFF_DX * JS, JY, JS)), z=4.9,
-           motion=lambda t: Tf(alpha=1.0 if t < t_rise else 0.0))
     sc.add("jonah", jdocs, z=5, frame_at=j_fa, motion=j_m, seed=141)
 
-    # God's word: the little light that comes down to him, then the golden path to the city
-    orb0 = (GAP[0] - 10, 300)
-    orb1 = (JX + 30, JY - 222)
+    # God's word: the little light that comes down to him, then the golden path to the city. It comes down in
+    # front of him (well clear of his face) and only swings in at the end, entering the hand on his chest from
+    # the front, below the beard.
+    hand = C.body_points(_jfn, JX, JY, JS, 1, ps=KNEEL_CHEST, expr="neutral")["hands"][1]
+    orb0 = (GAP[0] + 130, 300)
+    orb1 = (hand[0] + 4, hand[1])
     t_orb0 = t_word + 0.05
 
+    y_app = orb1[1] + 12                   # approach height: just below his beard
+
     def orb_pos(t):
-        u = M.ease("inout")(_clamp((t - t_orb0) / (t_orb1 - t_orb0)))
-        return (orb0[0] + (orb1[0] - orb0[0]) * u + 60 * math.sin(math.pi * u),
-                orb0[1] + (orb1[1] - orb0[1]) * u)
+        u = _clamp((t - t_orb0) / (t_orb1 - t_orb0))
+        y = orb0[1] + (y_app - orb0[1]) * part(u, 0.0, 0.8, "sine") + (orb1[1] - y_app) * part(u, 0.8, 1.0, "sine")
+        return orb0[0] + (orb1[0] - orb0[0]) * u ** 2.5, y
 
     def orb_m(t):
         if t < t_orb0 or t > t_orb1 + 0.5:
@@ -998,10 +980,10 @@ def build(ctx):
                     color=(255, 238, 170), size=(7, 15), period=1.5, drift=-6, seed=23),
         FX.sparkles((JX + 75, JY - 400, JX + 300, JY - 50), count=7, t0=t_light + 0.6, t1=t_quiet + 1.0,
                     color=(255, 238, 170), size=(7, 15), period=1.9, drift=-6, seed=29),
-        FX.sparkles((CITY[0] - 40, CITY_C[1] - 150, CITY[1] + 40, CITY[2] + 10), count=16, t0=t_city + 0.3,
+        FX.sparkles((CITY[0] - 40, CITY_C[1] - 110, CITY[1] + 40, CITY[2] + 10), count=16, t0=t_city + 0.3,
                     t1=L2.start + 0.8, color=(255, 240, 180), size=(8, 16), period=1.3, drift=0, seed=31),
         orb_trail(orb_pos, t_orb0, t_orb1),
-        FX.sparkles((orb1[0] - 90, orb1[1] - 80, orb1[0] + 90, orb1[1] + 60), count=10, t0=t_orb1 - 0.1,
+        FX.sparkles((orb1[0] - 10, orb1[1] - 20, orb1[0] + 120, orb1[1] + 80), count=10, t0=t_orb1 - 0.1,
                     t1=t_orb1 + 1.0, color=(255, 238, 170), size=(7, 14), period=0.9, drift=-10, seed=17),
     ]
 
@@ -1014,6 +996,11 @@ def build(ctx):
     sc.sfx("sparkle", t_orb1 - 0.1, gain_db=-12)
     sc.sfx("sparkle", t_trail1 - 0.3, gain_db=-14, pan=0.5)
     sc.sfx("cloth", t_rise, gain_db=-13)
-    sc.sfx("footsteps", t_walk, dur=T - t_walk + 0.6, gain_db=-14, fade_in=0.1, fade_out=0.8,
-           rate=1.0 / (N_W * HOLD_W))
+    # one footstep per planted-foot contact (the 'footsteps' loop picks a random phase within its period, so a
+    # long loop would not land on the drawings; a 0.3 s loop holds a single step ~0.04 s after the cue start)
+    k = 0
+    while t_walk + k * N_W * HOLD_W < T - 0.2:
+        sc.sfx("footsteps", t_walk + k * N_W * HOLD_W - 0.04, dur=0.3, gain_db=-13, fade_in=0.01, fade_out=0.06,
+               pan=0.08 if k % 2 else -0.04, rate=0.5)
+        k += 1
     return sc

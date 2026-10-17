@@ -14,7 +14,7 @@ from audio.theory import midi
 
 
 def overboard(c):
-    c.gain(-1.2)
+    c.gain(-1.5)
     i_calm = c.find("海就平静了")
     t_calm = c.ls(i_calm)                         # the calm arrives exactly as this line starts
     t_splash = (c.le(i_calm - 1) + t_calm) / 2 if i_calm > 0 else t_calm - 0.3
@@ -233,7 +233,7 @@ def shore(c):
     a.prog("G:2 | C/G:1 G:1 | G:2 | C/G:1 G:1 | Em:2 | Am:1 D7:1")
     b.prog("G:2 | G:2 | C:2 | G/D:1 D7:1 | G:2 | C:1 D7:1 | G:2")
     b.sync("Jonah spat out onto the land (pop)", 0, t_spit)
-    b.duck(3.0, parts=["flute", "glock"])          # the sunny tune steps back under '约拿浑身湿漉漉的...'
+    b.duck(3.0, parts=["flute", "glock", "pz_hi"])          # the sunny tune steps back under '约拿浑身湿漉漉的...'
     # the fish swims to the shore: its motif in G, light (pizzicato, harp, glockenspiel)
     motif = "G1:1/2:s B1:1/2:s D2:1/2:s E2:1 D2:1/2:s B1:1/2:s r:1/2"
     a.mel("tuba", motif, vel=56)
