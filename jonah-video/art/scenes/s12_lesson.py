@@ -270,13 +270,21 @@ def _field(x0, x1, y0, y1, col, seed):
     return out
 
 
+LSH = '<filter id="lsh" x="-20%" y="-80%" width="140%" height="260%"><feGaussianBlur stdDeviation="3.2"/></filter>'
+
+
 def long_shadow(x, y, s, width, height, k=1.0):
-    """Contact shadow + a long, soft late-afternoon shadow pointing east (right, slightly toward the viewer)."""
+    """Contact shadow + a long, soft late-afternoon shadow pointing east (right, slightly toward the viewer).
+    Uses the #lsh filter: put it in a document made with ``shdoc``."""
     L = 0.9 * height * s * k
-    ry = max(3.0, width * s * 0.075)
-    return (f'<ellipse cx="{f1(x + L * 0.5)}" cy="{f1(y + 2 * s)}" rx="{f1(L * 0.5)}" ry="{f1(ry)}" fill="#6a4e3a" '
-            f'opacity="0.17" transform="rotate(7 {f1(x)} {f1(y)})" filter="url(#soft)"/>' +
-            CH.ground_shadow(x, y, s, width=width, opacity=0.2))
+    ry = max(4.0, width * s * 0.1)
+    return (f'<ellipse cx="{f1(x + L * 0.5 - width * s * 0.08)}" cy="{f1(y + 2 * s)}" rx="{f1(L * 0.5)}" ry="{f1(ry)}" '
+            f'fill="#5f4532" opacity="0.24" transform="rotate(7 {f1(x)} {f1(y)})" filter="url(#lsh)"/>' +
+            CH.ground_shadow(x, y, s, width=width, opacity=0.22))
+
+
+def shdoc(body):
+    return doc(body, LSH)
 
 
 # ------------------------------------------------------------------ hops (with rests)
@@ -462,7 +470,7 @@ def hearts_fx(spots, t0, t1, rise=72, life=2.6, period=3.5, size=42, seed=3):
     return fx
 
 
-def _place_hearts(names, rise=72, half=30, extra_obstacles=()):
+def _place_hearts(names, rise=72, half=27, extra_obstacles=()):
     """Heart spot above each named figure; nudged sideways (or dropped) if its rising column would cross
     another figure (hearts are drawn over everything)."""
     boxes = {n: b for n, b, _ in FIGS}
@@ -499,8 +507,8 @@ def build(ctx):
     t_leaf_fall = l0.start + 0.8              # a dead leaf wobbles loose and flutters down ("这棵蓖麻")
     t_thought = l1.start + 0.2                # "你尚且这样爱惜它" -> Jonah looks at the leaf, thoughtful
     t_look = l1.end - 0.15                    # he leans and looks toward the city (worried, not smiling)
-    t_sw0, t_sw1 = l1.end - 1.5, l2.start + 1.2      # slow pull-back to the held wide view of the city
-    t_hold1 = l2.start + 2.1                  # end of the wide hold -> one continuous glide
+    t_sw0, t_sw1 = l1.end - 1.8, l2.start + 1.2      # slow pull-back to the held wide view of the city
+    t_hold1 = l2.start + 1.9                  # end of the wide hold -> one continuous glide
     t_back1 = l3.end - 0.55                   # the glide lands back on Jonah ...
     t_peace = l3.end - 0.35                   # ... and then his face softens (peaceful)
     t_city0 = l2.start - 0.2                  # golden sparkles begin to twinkle over the plain
@@ -707,7 +715,7 @@ def build(ctx):
         width, height = (90, 224) if kind == "child" else (120, 330)
         sh = long_shadow(x, y, s, width, height)
         if hops:
-            sc.add(name + "_sh", doc(sh), z=5.95 + y / 100000, wc=0, motion=shadow_motion(x, y, hops))
+            sc.add(name + "_sh", shdoc(sh), z=5.95 + y / 100000, wc=0, motion=shadow_motion(x, y, hops))
         else:
             ground_sh.append(sh)
         bbs = [CH.body_points(CH.citizen, x, y, s, facing, kind=kind, variant=variant, pose=p) for p in poses]
@@ -743,7 +751,7 @@ def build(ctx):
                                                                                    breathe(430, 1322, 0.2)))
 
     # children playing (hops with rests: stand <-> cheer)
-    for (nm, x, y, v, fc, seed, H, s_) in [("kid2", 1065, 1300, 3, 1, 5, 22, None), ("kid3", 560, 1185, 1, 1, 6, 18, None),
+    for (nm, x, y, v, fc, seed, H, s_) in [("kid2", 1005, 1295, 3, 1, 5, 22, None), ("kid3", 560, 1185, 1, 1, 6, 18, None),
                                            ("toddler", 470, 1338, 0, -1, 7, 13, 0.56)]:
         hops = hop_sched(seed, T + 1)
         person(nm, x, y, "child", v, facing=fc, frames=[("stand", "happy"), ("cheer", "happy")],
@@ -782,7 +790,11 @@ def build(ctx):
         y = y0 + (y1 - y0) * v - ARC * 4 * v * (1 - v)
         return Tf(dx=x - 1060, dy=y - 900, rot=360 * v, px=1060, py=900)
     sc.add("ball", ball_svg, z=7.5, wc=0.4, motion=ball)
-    ball_zone = ("ball", (min(xa, xb) - 18, min(ya, yb) - ARC - 18, max(xa, xb) + 18, max(ya, yb) + 18))
+    ball_zone = []                             # the ball's arc, as small boxes (hearts must not cross it)
+    for k in range(11):
+        v = k / 10
+        x_, y_ = xa + (xb - xa) * v, ya + (yb - ya) * v - ARC * 4 * v * (1 - v)
+        ball_zone.append(("ball", (x_ - 20, y_ - 20, x_ + 20, y_ + 20)))
 
     # men and women near the gate and along the wall (far, small)
     person("man0", GATE_X - 140, 838, "man", 0, "stand", 1, "happy", motion=breathe(GATE_X - 140, 838, 0.2))
@@ -797,7 +809,7 @@ def build(ctx):
     def walker(name, kind, variant, p0, p1, facing, step=0.36, phase=0.0):
         (x0, y0), (x1, y1) = p0, p1
         s0 = plain_scale(y0)
-        frames = [doc(long_shadow(x0, y0, s0, 120, 330) +
+        frames = [shdoc(long_shadow(x0, y0, s0, 120, 330) +
                       CH.citizen(x0, y0, s0, facing, kind=kind, variant=variant, pose=p, expr="happy"))
                   for p in ("walk_a", "walk_b")]
         ta, tb = -1.0, T + 1.0
@@ -822,7 +834,7 @@ def build(ctx):
         width = (r - l) * 0.85
         sh = long_shadow(x, y, s, width, (b - t_) * 0.75)
         if hops:
-            sc.add(name + "_sh", doc(sh), z=5.95 + y / 100000, wc=0, motion=shadow_motion(x, y, hops))
+            sc.add(name + "_sh", shdoc(sh), z=5.95 + y / 100000, wc=0, motion=shadow_motion(x, y, hops))
         else:
             ground_sh.append(sh)
         if facing < 0:
@@ -830,8 +842,8 @@ def build(ctx):
         register(name, (x + l * s, y + t_ * s - H, x + r * s, y + b * s),
                  (x + HEAD_DX[kind] * s * facing, y + t_ * s - 25 - H))
 
-    sheep = [(1375, 1240, 1, 0.6), (1580, 1300, -1, 0.62), (1720, 1235, -1, 0.58), (1470, 1390, 1, 0.66),
-             (1790, 1350, -1, 0.64)]
+    sheep = [(1380, 1245, 1, 0.6), (1640, 1292, -1, 0.62), (1760, 1225, -1, 0.58), (1480, 1395, 1, 0.66),
+             (1840, 1390, 1, 0.64)]
     for i, (x, y, fc, s) in enumerate(sheep):
         mot = M.combine(M.bob(2.5, 2.2 + 0.3 * i, i * 0.27), nod(x, y, i * 0.31, 1.2, 2.9))
         hops = None
@@ -840,25 +852,25 @@ def build(ctx):
             mot = M.combine(mot, hop_motion(x, y, hops, 16))
         beast(f"sheep{i}", x, y, "sheep", fc, s, mot, hops=hops, H=16 if hops else 0)
     # lambs frolic (hops with rests)
-    for i, (x, y, fc) in enumerate([(1650, 1410, -1), (1905, 1425, 1)]):
+    for i, (x, y, fc) in enumerate([(1300, 1445, 1), (1740, 1465, -1)]):
         hops = hop_sched(20 + i, T + 1, dur=(0.34, 0.44), rest=(0.7, 1.3))
         beast(f"lamb{i}", x, y, "sheep", fc, 0.4, hop_motion(x, y, hops, 18), hops=hops, H=18)
-    beast("goat0", 1950, 1180, "goat", -1, 0.55, M.combine(nod(1950, 1180, 0.2, 1.8, 2.3), M.bob(2, 2.0, 0.1)))
-    beast("goat1", 1990, 1285, "goat", -1, 0.6, M.combine(nod(1990, 1285, 0.7, 1.5, 2.6), M.bob(2, 2.4, 0.4)))
-    beast("cow0", 1560, 1090, "cow", 1, 0.52, M.combine(nod(1560, 1090, 0.5, 0.8, 3.6), breathe(1560, 1090, 0.2)))
+    beast("goat0", 1840, 1110, "goat", -1, 0.55, M.combine(nod(1840, 1110, 0.2, 1.8, 2.3), M.bob(2, 2.0, 0.1)))
+    beast("goat1", 2000, 1285, "goat", -1, 0.6, M.combine(nod(2000, 1285, 0.7, 1.5, 2.6), M.bob(2, 2.4, 0.4)))
+    beast("cow0", 1590, 1062, "cow", 1, 0.5, M.combine(nod(1590, 1062, 0.5, 0.8, 3.6), breathe(1590, 1062, 0.2)))
     beast("cow1", 1150, 1385, "cow", 1, 0.66, M.combine(nod(1150, 1385, 0.1, 0.8, 3.9), breathe(1150, 1385, 0.6)))
     beast("donkey0", 2060, 1100, "donkey", -1, 0.5, M.combine(nod(2060, 1100, 0.4, 1.4, 3.0), breathe(2060, 1100, 0.3)))
-    beast("donkey1", 1330, 1120, "donkey", 1, 0.5, M.combine(nod(1330, 1120, 0.8, 1.2, 3.3), breathe(1330, 1120, 0.5)))
-    # a shepherd boy cheering among the flock
+    beast("donkey1", 1290, 1110, "donkey", 1, 0.5, M.combine(nod(1290, 1110, 0.8, 1.2, 3.3), breathe(1290, 1110, 0.5)))
+    # a shepherd boy cheering among the flock (between the goat and the donkey at the back)
     hops = hop_sched(9, T + 1, n=(2,), dur=(0.5, 0.6), rest=(1.0, 1.6))
-    person("shepherd", 1850, 1450, "child", 0, facing=-1, frames=[("stand", "happy"), ("cheer", "happy")],
-           frame_at=hop_frame(hops), motion=hop_motion(1850, 1450, hops, 14), s=0.6, hops=hops, H=14)
+    person("shepherd", 1940, 1180, "child", 0, facing=-1, frames=[("stand", "happy"), ("cheer", "happy")],
+           frame_at=hop_frame(hops), motion=hop_motion(1940, 1180, hops, 14), s=0.56, hops=hops, H=14)
 
     # one static layer with every grounded figure's long shadow (under all figures)
-    sc.add("ground_shadows", doc("".join(ground_sh)), z=5.9, wc=0.3)
+    sc.add("ground_shadows", shdoc("".join(ground_sh)), z=5.9, wc=0.3)
 
     # baa arcs
-    bx, by = 1580 - 0.62 * 112, 1300 - 0.62 * 100
+    bx, by = 1640 - 0.62 * 112, 1292 - 0.62 * 100
     sc.add("baa", doc(_baa(bx, by, 0.9)), z=9, wc=0.3, motion=lambda t: Tf(
         alpha=_env(t, t_baa - 0.05, t_baa + 0.1, t_baa + 0.7, t_baa + 1.0),
         sx=0.7 + 0.3 * M.progress(t, t_baa - 0.05, t_baa + 0.3, "out"),
@@ -869,7 +881,7 @@ def build(ctx):
               "toddler", "kid0", "kid1", "man0", "woman0", "man1", "man2", "woman1"}
     beasts = {n for n, _, _ in FIGS if n.startswith(("sheep", "lamb", "goat", "cow", "donkey"))} | {"shepherd"}
     FIGS[:] = [f for f in FIGS if f[1] is not None]
-    HEARTS["people"] = _place_hearts(people, extra_obstacles=[ball_zone])
+    HEARTS["people"] = _place_hearts(people, extra_obstacles=ball_zone)
     HEARTS["animals"] = _place_hearts(beasts)
 
     # =============================================================== WITHERED PLANT + JONAH
@@ -1044,8 +1056,8 @@ def build(ctx):
     # Slow, gentle moves only: each move is re-parametrised by output-space arc length with soft ramps.
     C0 = Cam(XJ - 40, 455, 1600)      # Jonah + plant (Jonah near where s11 leaves him), the city end on the left
     C0b = Cam(XJ + 60, 500, 1400)     # slow push-in while God speaks
-    Cw = Cam(1620, 850, 2500)         # held wide view: the whole city, the plain, the pasture, Jonah on his knoll
-    Cw2 = Cam(1590, 860, 2470)
+    Cw = Cam(1620, 850, 2420)         # held wide view: the whole city, the plain, the pasture, Jonah on his knoll
+    Cw2 = Cam(1590, 860, 2390)
     C1 = Cam(1100, 1010, 1850)        # the people
     C2 = Cam(1620, 1120, 1800)        # the animals
     C3 = Cam(XJ - 20, 640, 1720)      # back up the knoll to Jonah
