@@ -119,6 +119,12 @@ def calm_horizon_svg():
           f'stroke-width="6" opacity="0.6"/>')
     r = random.Random(9)
     gl = ""
+    for k in range(7):
+        y = 716 + 7 * k
+        for _ in range(2):
+            x = 1980 + r.uniform(-14 - 7 * k, 14 + 7 * k)
+            gl += (f'<path d="M{fm(x - 9 - 2 * k)},{fm(y)} L{fm(x + 9 + 2 * k)},{fm(y)}" stroke="#fff6d8" stroke-width="3" '
+                   f'opacity="0.85" stroke-linecap="round"/>')
     for _ in range(26):
         x, y = r.uniform(-400, W + 400), r.uniform(730, 820)
         gl += (f'<path d="M{fm(x)},{fm(y)} q{fm(14)},-5 {fm(28)},0" fill="none" stroke="#f6faf2" stroke-width="3" '
@@ -134,7 +140,7 @@ def calm_bg_svg():
     return doc(sky + calm_clouds_svg() + hor, d1 + d2)
 
 
-def calm_sea_svg(f, fill, light, dark, wl, amp, seed, x0=-160, x1=W + 160, glints=14, sw=4.0):
+def calm_sea_svg(f, fill, light, dark, wl, amp, seed, x0=-160, x1=W + 160, glints=14, sw=4.0, glitter=None):
     """Gentle sunny sea band: light rim, little cream wave curls on the crests, soft glints."""
     d, pts = V.band_path(f, x0, x1)
     body = S.path(d, fill=fill, sw=sw)
@@ -144,10 +150,11 @@ def calm_sea_svg(f, fill, light, dark, wl, amp, seed, x0=-160, x1=W + 160, glint
     r = random.Random(seed)
     curls = ""
     for xc, yc in V.crests(f, x0, x1):
-        xa, xb = xc - wl * 0.13, xc + wl * 0.1
-        cd = f"M{fm(xa)},{fm(f(xa) + 3)} Q{fm(xc)},{fm(yc - 7)} {fm(xb)},{fm(f(xb) + 2)}"
-        curls += f'<path d="{cd}" fill="none" stroke="{INK}" stroke-width="9" stroke-linecap="round"/>'
-        curls += f'<path d="{cd}" fill="none" stroke="{P["foam"]}" stroke-width="5" stroke-linecap="round"/>'
+        xa, xb = xc - wl * 0.16, xc + wl * 0.12
+        cd = (f"M{fm(xa)},{fm(f(xa) + 4)} Q{fm(xc - wl * 0.02)},{fm(yc - 9)} {fm(xb)},{fm(f(xb) + 2)} "
+              f"q{fm(-6)},{fm(-9)} {fm(-16)},{fm(-6)}")
+        curls += f'<path d="{cd}" fill="none" stroke="{INK}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>'
+        curls += f'<path d="{cd}" fill="none" stroke="{P["foam"]}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>'
         y = yc + amp * 1.8 + r.uniform(18, 36)
         xa, xb = xc - wl * r.uniform(0.18, 0.28), xc + wl * r.uniform(0.12, 0.25)
         body += (f'<path d="M{fm(xa)},{fm(y)} Q{fm((xa + xb) / 2)},{fm(y - 9)} {fm(xb)},{fm(y + 4)}" fill="none" '
@@ -159,6 +166,17 @@ def calm_sea_svg(f, fill, light, dark, wl, amp, seed, x0=-160, x1=W + 160, glint
         if y < ymax + 400:
             body += (f'<path d="M{fm(x)},{fm(y)} q14,-5 30,0" fill="none" stroke="#f6faf2" stroke-width="3.5" '
                      f'opacity="0.65" stroke-linecap="round"/>')
+    if glitter:   # sunlight sparkling on the water below the sun: a widening column of short bright dashes
+        gx_, gy0, gy1 = glitter
+        for k in range(16):
+            v = k / 15
+            y = gy0 + (gy1 - gy0) * v
+            half = 40 + 150 * v
+            for _ in range(2):
+                x = gx_ + r.uniform(-half, half)
+                L = r.uniform(18, 46) * (0.6 + 0.6 * v)
+                body += (f'<path d="M{fm(x - L / 2)},{fm(y)} L{fm(x + L / 2)},{fm(y)}" stroke="#fff6d8" '
+                         f'stroke-width="{3 + 2 * v:.1f}" opacity="0.85" stroke-linecap="round"/>')
     return S.g(body, filter="wobble") + S.g(curls, filter="wobble-fine")
 
 
@@ -247,15 +265,15 @@ def creak_svg(seed):
     """Comic stress strokes radiating from the straining hull (bow, stern, under the keel)."""
     r = random.Random(seed)
     ink, cream = "", ""
-    for lx, ly, ang in ((540, -190, 200), (-570, -160, -25), (250, 85, 115), (-260, 90, 65)):
+    for lx, ly, ang in ((525, -215, 205), (470, -70, 160), (-555, -175, -25), (-495, -65, 20)):
         x, y = ship_pt(lx, ly)
         for k in (-1, 0, 1):
-            a = math.radians(ang + 30 * k + r.uniform(-6, 6))
-            r0, r1 = 14 + r.uniform(0, 6), 52 + r.uniform(-6, 10) - 10 * abs(k)
+            a = math.radians(ang + 28 * k + r.uniform(-5, 5))
+            r0, r1 = 16 + r.uniform(0, 6), 88 + r.uniform(-8, 10) - 22 * abs(k)
             seg = (f"M{fm(x + r0 * math.cos(a))},{fm(y + r0 * math.sin(a))} "
                    f"L{fm(x + r1 * math.cos(a))},{fm(y + r1 * math.sin(a))}")
-            ink += f'<path d="{seg}" fill="none" stroke="{INK}" stroke-width="15" stroke-linecap="round"/>'
-            cream += f'<path d="{seg}" fill="none" stroke="#f3efe2" stroke-width="8" stroke-linecap="round"/>'
+            ink += f'<path d="{seg}" fill="none" stroke="{INK}" stroke-width="17" stroke-linecap="round"/>'
+            cream += f'<path d="{seg}" fill="none" stroke="#f3efe2" stroke-width="9" stroke-linecap="round"/>'
     return doc(S.g(ink + cream, filter="wobble-fine"))
 
 
@@ -567,7 +585,7 @@ def build(ctx):
     # --------------------------------------------------- sea behind the ship: calm, then the storm sweeps in
     f_cmid = V.wave_fn(852, 10, 420, 0.8, p=1.6, lean=0.2)
     sc.add("calm_mid", doc(calm_sea_svg(f_cmid, S.mix(P["sea"], P["sea_light"], 0.35), P["sea_pale"], P["sea_deep"],
-                                        420, 10, 21)),
+                                        420, 10, 21, glitter=(2010, 880, 975))),
            wc=0.9, motion=calm_motion(4, 10, 3.9, 0.1), reveal=calm_reveal)
     f_mid = V.wave_fn(850, 52, 580, 1.3, p=2.2)
     sc.add("sea_mid", doc(V.sea_layer(f_mid, S.mix(P["storm_sea_light"], P["storm_sea"], 0.3), P["sea_light"],
@@ -640,6 +658,23 @@ def build(ctx):
            motion=on_ship(lambda t: Tf(0, 0, 0, 1 + 0.006 * breath(t), 1 + 0.024 * breath(t),
                                        cutf(t) * (1 - M.progress(t, T_REV[0] + 0.02, T_REV[0] + 0.18, "sine")),
                                        jx_c, jy_c)))
+
+    hcx, hcy = jx_c + 136 * SS, jy_c - 79 * SS          # cutaway Jonah's head (facing -1)
+    for i in range(3):
+        zc = doc(S.text(hcx + 34, hcy - 34, "Z", size=40, fill="#fff3d6",
+                        extra=f'stroke="{INK}" stroke-width="6" paint-order="stroke"'))
+
+        def zcm(t, i=i):
+            per_ = 1.5
+            t0 = T_CUT[1] + 0.1 + 0.5 * i
+            if t < t0:
+                return Tf(alpha=0.0, px=hcx + 34, py=hcy - 44)
+            u = ((t - t0) % per_) / per_
+            a = (min(1.0, u / 0.15) * (1 - M.progress(u, 0.55, 1.0, "sine"))
+                 * (1 - M.progress(t, T_REV[0] - 0.2, T_REV[0] + 0.1, "sine")))
+            s_ = 0.55 + 0.6 * u
+            return Tf(10 + 34 * u, -8 - 46 * u, -10 + 18 * u, s_, s_, a, hcx + 34, hcy - 44)
+        sc.add(f"zc{i}", zc, wc=0, motion=on_ship(zcm))
 
     # ---- crew choreography: (time, pose, expr, facing, storm-graded, hop?) per sailor
     def throws_ev(names, facing, after):

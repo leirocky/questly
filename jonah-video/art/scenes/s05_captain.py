@@ -484,13 +484,14 @@ def build(ctx):
     ph = Phrases(ctx)
     l0 = L[0]
     lc = L[1:] if len(L) > 1 else L          # the captain's lines
-    c_start, c_end = lc[0].start, lc[-1].end
+    c_start = lc[0].start
 
     # ---------------------------------------------------------------- key times (all from the narration)
     t_n = l0.start                                              # "船长找到了约拿，"
     t_shake_say = ph.start("摇醒", l0.start + 0.52 * (l0.end - l0.start))
     t_say = ph.start("说", l0.end - 0.5)
-    t_open = t_n + 0.02                                         # the grating is flung open as the captain is named
+    t_open = max(t_n + 0.02, 1.0)                               # the grating is flung open as the captain is named
+    #                                                             (not before the 1 s cross-dissolve has finished)
     t_slide0 = t_open + 0.2                                     # his sandals appear in the opening
     t_land = t_slide0 + 0.92                                    # hops off the ladder at its foot
     t_walk0 = t_land + 0.16                                     # first walk drawing
@@ -687,6 +688,22 @@ def build(ctx):
         dx, rot = shaken(t)
         return Tf(dx, 0, rot, 1 + 0.006 * b, 1 + 0.024 * b, 1.0, JX, JY)
     sc.add("jonah_sleep", doc(C.jonah(JX, JY, JS, -1, pose="sleep", marks=False)), z=3, motion=jsleep_m)
+
+    # little shake marks beside the sleeper while he is shaken (two variants flicking at 8 fps)
+    def shake_marks(off):
+        st = f'fill="none" stroke="{P["ink_soft"]}" stroke-width="6" stroke-linecap="round"'
+        out = ""
+        for x, y, ln in ((1036, 820, 50), (1112, 806, 64)):          # over his back
+            y -= off
+            out += f'<path d="M{x - ln / 2},{y} Q{x},{y - 14} {x + ln / 2},{y}" {st}/>'
+        for x, y, ln in ((904, 862, 50), (880, 898, 62)):            # beside his knees
+            x -= off
+            out += f'<path d="M{x},{y - ln / 2} Q{x - 14},{y} {x},{y + ln / 2}" {st}/>'
+        return doc(S.g(out, filter="wobble-fine"))
+    sc.add("shake_marks", [shake_marks(0), shake_marks(10)], z=3.05, wc=0,
+           motion=lambda t: Tf(alpha=M.progress(t, t_shake0 + 0.05, t_shake0 + 0.15) *
+                               (1 - M.progress(t, t_shake1 - 0.12, t_shake1))),
+           frame_at=lambda t: float(int(t * 8) % 2))
 
     JP = jonah_poses()
     seated = [

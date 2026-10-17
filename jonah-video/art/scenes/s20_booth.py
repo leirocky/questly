@@ -439,7 +439,7 @@ def build(ctx):
     t_tired = t_throw + 0.62                      # phew, hot! (sweat)
     t_sit = L1.start + 0.12                       # "他坐在棚子下面的阴凉里"
     t_chin = L1.at("要看看") + 0.22               # chin on fist, eyes on the city
-    blinks = [t_chin + 1.4, t_chin + 2.75]
+    blinks = [t_chin + 1.4, t_chin + 2.6]
     t_full = t_sit                                # the booth parts are swapped for one booth layer here
 
     # ------------------------------------------------------------ camera (built first: parallax uses it)
@@ -697,11 +697,14 @@ def build(ctx):
                           "soft": 50}
 
     def cloth_motion(t):
-        if t < t_cloth0 or not live(t):
+        if t < t_cloth0:
             return Tf(alpha=0.0)
         u = t - t_cloth0
         sy = 1 + 0.06 * math.exp(-u / 0.25) * math.cos(u * 14)
-        return Tf(sy=sy, px=apex[0], py=apex[1])
+        # then it just breathes a little in the warm air
+        k = M.progress(u, 0.6, 1.4, "sine")
+        sy += k * (0.011 * math.sin(2 * math.pi * t / 2.1) + 0.004 * math.sin(2 * math.pi * t / 0.83))
+        return Tf(sy=sy, rot=k * 0.25 * math.sin(2 * math.pi * t / 2.9), px=apex[0], py=apex[1])
 
     def branch_motion(t):
         if t < t_branch or not live(t):
@@ -717,12 +720,14 @@ def build(ctx):
     sc.add("post_fl", bdoc(["post_fl"]), motion=post_motion("post_fl"), wc=0.8)
     sc.add("post_fr", bdoc(["post_fr"]), motion=post_motion("post_fr"), wc=0.8)
     sc.add("tiebar", bdoc(["tiebar"]), motion=frame_motion, wc=0.8)
+    full = lambda t: Tf(alpha=0.0 if live(t) else 1.0)
+    sc.add("booth_back", bdoc(["post_bl", "post_br", "under", "post_fl", "post_fr", "tiebar"]), motion=full, wc=0.8)
     sc.add("cloth", bdoc(["cloth"]), motion=cloth_motion, reveal=cloth_reveal(), wc=0.8)
     sc.add("frame", bdoc(["frame"]), motion=frame_motion, wc=0.8)
     sc.add("lash", bdoc(["lash"]), motion=lash_motion, wc=0.6)
     sc.add("branches", bdoc(["branches"]), motion=branch_motion, wc=0.7)
-    order = ["post_bl", "post_br", "under", "post_fl", "post_fr", "tiebar", "cloth", "frame", "lash", "branches"]
-    sc.add("booth", bdoc(order), motion=lambda t: Tf(alpha=0.0 if live(t) else 1.0), wc=0.8)
+    sc.add("booth_front", bdoc(["frame", "lash", "branches"]), motion=full, wc=0.8)
+
 
     # dust where each post goes in and where the frame lands
     for name in ("post_fl", "post_fr", "post_bl", "post_br"):

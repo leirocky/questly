@@ -61,10 +61,9 @@ QUAY_X = 2190 + DX1
 SEA_RIGHT = 2260 + DX1
 HZ = 560                  # horizon
 
-DECK_SAILOR_LX = 72       # sailor 0 by the mast: catches the jar, later hauls the halyard
-BOW_SAILOR_LX = 236       # sailor 1 at the bow
+MAST_SAILOR_LX = 72       # sailor 1 by the mast: hauls the halyard when they sail
+CATCH_LX = -200           # sailor 0 at the stern: catches the porter's jar and carries it below
 CAP_LX = -60              # the captain, just aft of the mast
-BOARD_LX = -230           # where Jonah lands on deck (stern side)
 CARGO_LX = -320           # crates at the stern
 
 
@@ -73,7 +72,6 @@ def lx2x(lx):
 
 
 CAP_X = lx2x(CAP_LX)
-BOARD_X = lx2x(BOARD_LX)
 P1X, P2X = 2640, 2480     # porters: P1 holds a crate, P2 swings a jar up to the ship
 
 # --- the road (Jonah runs right -> left)
@@ -780,7 +778,6 @@ def build(ctx):
     T_SAIL_DONE = T_SAIL + 0.64
     T_CAP_FWD = T_SAIL - 0.35                            # the captain turns to face the open sea
     T_DEPART = T_SAIL + 0.3                              # the ship leaves the pier
-    T_BOWPOINT = T_DEPART + 0.2                          # the bow sailor points the way
     T_LOOK = (L3.chunks[1].start if len(L3.chunks) > 1 else at(L3, "躲开")) - 0.35   # Jonah looks back
     T_DUCK = T_LOOK + 0.38                               # ... and ducks behind the stern rail
     # the jar hand-off while the camera arrives at the harbour
@@ -795,6 +792,7 @@ def build(ctx):
     # Jonah stands so that his raised hand is just above and to the right of the captain's palm
     jpay = cap_palm[0] + 10 - give0[0]
     give = (jpay + give0[0], give0[1])
+    BOARD_X = round(jpay)                # he hops straight up over the rail from where he paid
 
     # ---------------------------------------------------------------- Jonah's path
     D1 = JX0 - JSTOP
@@ -982,9 +980,10 @@ def build(ctx):
     sc.add("ship_back", [ship_svg("back", "furled"), ship_svg("back", "full")], motion=ship_tf,
            frame_at=lambda t: 1.0 if t >= T_SAIL_DONE else 0.0, seed=SHIP_SEED)
 
-    d1 = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, DECK_SAILOR_LX, PR.SHIP_DECK_Y)
-    catch_hands = V.mid(C.hand_positions(C.sailor, *d1, K, 1, variant=0, pose="carry"))
-    pull_hands = C.hand_positions(C.sailor, *d1, K, 1, variant=0, pose="pull")
+    d1 = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, MAST_SAILOR_LX, PR.SHIP_DECK_Y)
+    d0 = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, CATCH_LX, PR.SHIP_DECK_Y)
+    catch_hands = V.mid(C.hand_positions(C.sailor, *d0, K, 1, variant=0, pose="carry"))
+    pull_hands = C.hand_positions(C.sailor, *d1, K, 1, variant=1, pose="pull")
     sc.add("halyard", [halyard_svg(False, pull_hands), halyard_svg(True, pull_hands)], motion=ship_tf,
            frame_at=lambda t: 1.0 if t >= T_SAIL else 0.0, wc=0.4)
 
@@ -1019,13 +1018,19 @@ def build(ctx):
     sc.add("sail_roll", sail_roll_svg(), motion=roll_tf, wc=0.6)
     sc.add("deck_cargo", deck_cargo_svg(), motion=ship_tf)
 
-    # bow sailor (variant 1): watches the pier, then points the way out to sea
-    b1 = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, BOW_SAILOR_LX, PR.SHIP_DECK_Y)
-    sc.add("bow_sailor", [doc(C.sailor(*b1, K, 1, variant=1, pose="stand", expr="neutral")),
-                          doc(C.sailor(*b1, K, -1, variant=1, pose="point", expr="happy"))],
-           motion=lambda t: V.compose(ship_tf(t), b1, dy=-6 * bump(t, T_BOWPOINT - 0.06, 0.2)
-                                      + 1.5 * math.sin(2 * math.pi * t / 2.6)),
-           frame_at=lambda t: 1.0 if t >= T_BOWPOINT else 0.0)
+    # mast sailor (variant 1): waits by the mast, smiles at the new passenger, hauls the halyard to set sail
+    def mast_sailor_tf(t):
+        sy = 1.0
+        if T_SAIL <= t < T_SAIL + 0.16:
+            sy = 0.93 + 0.07 * M.progress(t, T_SAIL, T_SAIL + 0.16, "out")      # springs into the haul
+        dy = -6 * bump(t, T_ARR + 0.3, 0.2) + 1.3 * math.sin(2 * math.pi * t / 2.4 + 1)
+        return V.compose(ship_tf(t), d1, dy=dy, sy=sy)
+
+    sc.add("mast_sailor", [doc(C.sailor(*d1, K, 1, variant=1, pose="stand", expr="neutral")),
+                           doc(C.sailor(*d1, K, 1, variant=1, pose="stand", expr="happy")),
+                           doc(C.sailor(*d1, K, 1, variant=1, pose="pull", expr="neutral"))],
+           motion=mast_sailor_tf,
+           frame_at=lambda t: 2.0 if t >= T_SAIL else (1.0 if t >= T_ARR + 0.3 else 0.0))
 
     # the captain: watches the loading, turns to Jonah and nods, points west, takes the fare, faces the sea
     def cap_frame(t):
@@ -1041,7 +1046,7 @@ def build(ctx):
             return 4.0
         return 5.0
 
-    cap_frames = [doc(captain_fig(*cap_xy, K, -1, pose="stand", expr="neutral")),
+    cap_frames = [doc(captain_fig(*cap_xy, K, 1, pose="stand", expr="neutral")),
                   doc(captain_fig(*cap_xy, K, 1, pose="stand", expr="happy")),
                   doc(captain_fig(*cap_xy, K, -1, pose="point", expr="happy")),
                   doc(captain_fig(*cap_xy, K, 1, pose="receive")),
@@ -1059,29 +1064,20 @@ def build(ctx):
 
     sc.add("captain", cap_frames, motion=cap_tf, frame_at=cap_frame)
 
-    # deck sailor (variant 0): catches the jar, stows it, stands, hauls the halyard
+    # stern sailor (variant 0): catches the porter's jar, lowers it and carries it down into the hold
     def deck_dip(t):
         d = 9 * bump(t, T_CATCH, 0.25) + 16 * bump(t, T_STOW, 0.34)
-        return d
+        # down the ladder into the hold (behind the hull, in little steps)
+        u = M.progress(t, T_STOW + 0.45, T_STOW + 1.25, "in")
+        return d + 330 * u + 5 * math.sin(2 * math.pi * 3.0 * (t - T_STOW)) * (0 < u < 1)
 
-    def deck_sailor_frame(t):
-        if t >= T_SAIL:
-            return 2.0
-        if t >= T_STOW + 0.45:
-            return 1.0
-        return 0.0
+    def catch_sailor_tf(t):
+        if t >= T_STOW + 1.3:
+            return Tf(alpha=0.0)
+        return V.compose(ship_tf(t), d0, dy=deck_dip(t) + 1.2 * math.sin(2 * math.pi * t / 2.2))
 
-    def deck_sailor_tf(t):
-        sy = 1.0
-        if T_SAIL <= t < T_SAIL + 0.16:
-            sy = 0.93 + 0.07 * M.progress(t, T_SAIL, T_SAIL + 0.16, "out")
-        dy = deck_dip(t) - 6 * bump(t, T_STOW + 0.4, 0.2) + 1.2 * math.sin(2 * math.pi * t / 2.4 + 1)
-        return V.compose(ship_tf(t), d1, dy=dy, sy=sy)
-
-    sc.add("deck_sailor", [doc(C.sailor(*d1, K, 1, variant=0, pose="carry", expr="neutral")),
-                           doc(C.sailor(*d1, K, 1, variant=0, pose="stand", expr="happy")),
-                           doc(C.sailor(*d1, K, 1, variant=0, pose="pull", expr="neutral"))],
-           motion=deck_sailor_tf, frame_at=deck_sailor_frame)
+    sc.add("catch_sailor", doc(C.sailor(*d0, K, 1, variant=0, pose="carry", expr="neutral")),
+           motion=catch_sailor_tf)
 
     JAR_S = 0.45
     jd = (catch_hands[0], catch_hands[1] - 22)
@@ -1298,7 +1294,7 @@ def build(ctx):
             b = p2_bob(T_REL)
             sx0, sy0 = j_throw[0] + b.dx, j_throw[1] + b.dy
             x = M.lerp(sx0, catch_at[0], u)
-            y = M.lerp(sy0, catch_at[1], u) - 150 * 4 * u * (1 - u)
+            y = M.lerp(sy0, catch_at[1], u) - 120 * 4 * u * (1 - u)
             rot = 28 * math.sin(math.pi * u)
         return Tf(dx=x - j_carry[0], dy=y - j_carry[1], rot=rot, px=j_carry[0], py=j_carry[1])
 

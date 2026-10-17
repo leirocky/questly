@@ -45,6 +45,8 @@ BX, BY, RX, RY = V.BX, V.BY, V.RX, V.RY   # the vision window
 MOM = dict(kind="woman", var=3, x=1296, y=1040, s=1.0, h=321)
 GIRL = dict(kind="child", var=1, x=1220, y=1082, s=1.08, h=224)
 CREST = (1322, 1018)                # where the path goes over the near ridge
+NEAR_SEED = 57                      # watercolour seed of the near-ground layer (shared with its cut-out)
+CUT_BOX = (1180, 960, 1420, 1260)   # the part of the near ground that hides the neighbours behind the crest
 
 PUNCT = "，、。：；！？,.!?:;"
 
@@ -164,6 +166,24 @@ def _neighbour(n, pose_kw, expr, facing, x=None, y=None, label=""):
 
 def _shadow(x, y, s, w=120, op=0.24):
     return C.ground_shadow(x, y, s, width=w, opacity=op)
+
+
+class _GroundCut:
+    """A rectangle of the near-ground layer's OWN pixels (rasterised and watercoloured exactly as the compositor
+    does it: same svg, seed and strength), drawn over a figure that has walked over the crest so the ground hides
+    it from the feet up. Transparent above the ridge line, so the figure's upper part still shows there."""
+
+    def __init__(self, svg, seed, box):
+        self.svg, self.seed, self.box = svg.replace(S.BOIL_TOKEN, "1"), seed, box
+        self.res = None
+
+    def image(self):
+        if self.res is None:
+            from engine import raster
+            from engine import watercolor as WC
+            im = WC.watercolor(raster.rasterize(self.svg, SW, SH), seed=self.seed, strength=1.0, edge=1.0)
+            self.res = (im.crop(self.box), self.box[:2])
+        return self.res
 
 
 # ------------------------------------------------------------------ static art
@@ -370,7 +390,7 @@ def _soldiers_svg(rises):
 
 
 # ------------------------------------------------------------------ a butterfly over the meadow
-BFLY = (1430, 990)
+BFLY = (1560, 985)
 
 
 def _butterfly_svg(open_k):
@@ -393,7 +413,7 @@ def _butterfly_svg(open_k):
 
 
 def _butterfly_motion(t):
-    x = 210 * math.sin(2 * math.pi * t / 13.0) + 60 * math.sin(2 * math.pi * t / 4.1 + 1.0)
+    x = 140 * math.sin(2 * math.pi * t / 13.0) + 45 * math.sin(2 * math.pi * t / 4.1 + 1.0)
     y = 46 * math.sin(2 * math.pi * t / 7.3 + 0.6) + 12 * math.sin(2 * math.pi * t * 1.6)
     return Tf(dx=x, dy=y, rot=8 * math.sin(2 * math.pi * t / 2.2))
 
@@ -505,7 +525,8 @@ def build(ctx):
 
     def walker(n, A, hold, n_std, base_events, t_go, delay=0.0):
         """Frame index + motion of a neighbour: hard-switched standing poses, then a planted-foot walk up the
-        path to the crest and down behind the ridge. Returns (frame_at, motion_front, motion_back)."""
+        path to the crest and down the far side, where the near ground's own pixels (a cut-out drawn right after
+        the figure) hide them from the feet up. Returns (frame_at, motion, behind(t))."""
         sx0, sy0, s0 = n["x"], n["y"], n["s"]
         seg0 = math.hypot(CREST[0] - sx0, CREST[1] - sy0)
         stride = 2 * A * s0 * 0.94 / N_W               # px per drawing (scale shrinks a little on the way)
@@ -513,14 +534,14 @@ def build(ctx):
         tg = t_go + delay
         std = _sched(base_events)
         s_c = s0 * 0.88
-        n_draw = n_a + int(math.ceil((n["h"] * s_c + 16) / (stride * 1.7))) + 1
+        n_draw = n_a + int(math.ceil((n["h"] * s_c + 40) / (stride * 1.7))) + 3   # fully hidden by then
 
         def pos(i):
             if i <= n_a:                                 # up the path to the crest (in front of the ridge)
                 u = i / n_a
-                return sx0 + (CREST[0] - sx0) * u, sy0 + (CREST[1] - sy0) * u, s0 + (s_c - s0) * u, False
+                return sx0 + (CREST[0] - sx0) * u, sy0 + (CREST[1] - sy0) * u, s0 + (s_c - s0) * u
             j = i - n_a                                  # down the far side, sinking behind the ridge
-            return CREST[0] + j * stride * 0.45, CREST[1] + j * stride * 1.7, s_c * (1 - 0.025 * j), True
+            return CREST[0] + j * stride * 0.2, CREST[1] + j * stride * 1.7, s_c * (1 - 0.025 * j)
 
         def idx(t):
             return int(math.floor((t - tg) / hold)) if t >= tg else -1
@@ -531,37 +552,34 @@ def build(ctx):
                 return std(t)
             return float(n_std + (i % (2 * N_W)))
 
-        def mot(t, back):
+        def mot(t):
             i = idx(t)
             br = 1 + 0.011 * math.sin(2 * math.pi * (t / 2.7 + 0.3 * n_std))
             if i < 0:
-                if back:
-                    return Tf(alpha=0.0)
                 nod = 0.0
                 if t_listen <= t <= t_l1_end + 0.1:
                     nod = 1.6 * max(0.0, math.sin(2 * math.pi * (t - t_listen) / 1.1))
                 return Tf(dy=_hop(t, t_turn_girl if n is GIRL else -9, 7, 0.26) + _hop(t, t_listen, 5, 0.26),
-                          sy=br, rot=nod * (-1), px=sx0, py=sy0)
+                          sy=br, rot=-nod, px=sx0, py=sy0)
             if i > n_draw:
                 return Tf(alpha=0.0)
-            x, y, s, behind = pos(i)
-            if behind != back and not (i == n_a and back):
-                return Tf(alpha=0.0)
+            x, y, s = pos(i)
             r = s / s0
             return Tf(dx=x - sx0, dy=y - sy0, sx=r, sy=r * br, px=sx0, py=sy0)
 
-        return fa, (lambda t: mot(t, False)), (lambda t: mot(t, True))
+        def behind(t):
+            i = idx(t)
+            return n_a < i <= n_draw
 
-    mom_fa, mom_front, mom_back = walker(MOM, mom_A, 0.08, nmom, [(0, 0), (t_listen, 1)],
-                                         t_leave)
-    girl_fa, girl_front, girl_back = walker(GIRL, girl_A, 0.06, ngirl,
-                                            [(0, 0), (t_turn_girl, 1), (t_listen + 0.12, 2)],
-                                            t_leave, delay=0.1)
-    # behind the near ridge (between the mid hills and the near ground): only once they are over the crest
-    sc.add("mom_back", mom_frames, frame_at=mom_fa, motion=mom_back, seed=303)
-    sc.add("girl_back", girl_frames, frame_at=girl_fa, motion=girl_back, seed=301)
+        return fa, mot, behind
 
-    sc.add("near_ground", V._near_ground_svg())
+    mom_fa, mom_m, mom_behind = walker(MOM, mom_A, 0.08, nmom, [(0, 0), (t_listen, 1)], t_leave)
+    girl_fa, girl_m, girl_behind = walker(GIRL, girl_A, 0.06, ngirl, [(0, 0), (t_turn_girl, 1), (t_listen + 0.12, 2)],
+                                          t_leave, delay=0.1)
+
+    near_svg = V._near_ground_svg()
+    sc.add("near_ground", near_svg, seed=NEAR_SEED)
+    crest_cut = _GroundCut(near_svg, NEAR_SEED, CUT_BOX)
 
     # the dashed road east draws itself from Jonah's feet outward, over the ridge and the hills to the vision
     if t_east0 is not None:
@@ -642,6 +660,13 @@ def build(ctx):
         M.sway(3.0, 4.2, pivot=(1252, 812)), M.pulse(0.6, 1.0, 3.1),
         M.keys([(0, {"sy": 0.96}), (T, {"sy": 1.06})], "linear", pivot=(1252, 812))))
 
+    # ---------------------------------------------------------------- the neighbours (each followed by the
+    # near-ground cut-out that hides them once they are over the crest)
+    sc.add("mom", mom_frames, frame_at=mom_fa, motion=mom_m, seed=303)
+    sc.add_dynamic("mom_cut", lambda t: crest_cut.image() if mom_behind(t) else None)
+    sc.add("girl", girl_frames, frame_at=girl_fa, motion=girl_m, seed=301)
+    sc.add_dynamic("girl_cut", lambda t: crest_cut.image() if girl_behind(t) else None)
+
     # ---------------------------------------------------------------- sheep (v1): planted hooves, turning heads
     t_bleat = t_walk0 + 0.6
     def head_angle(i):
@@ -672,8 +697,6 @@ def build(ctx):
            reveal=lambda t: {"mode": "down", "frac": M.progress(t, t_light + 0.05, t_light + 0.85, "out"), "soft": 160})
 
     # ---------------------------------------------------------------- neighbours in front of the ridge
-    sc.add("mom", mom_frames, frame_at=mom_fa, motion=mom_front, seed=303)
-    sc.add("girl", girl_frames, frame_at=girl_fa, motion=girl_front, seed=301)
 
     # ---------------------------------------------------------------- Jonah walking out of his door
     A_J, N_J = 40.0, 5

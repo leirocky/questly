@@ -277,6 +277,11 @@ def _cer(ref, hyp):
     return dp[-1] / max(1, len(ref))
 
 
+def sentences(text):
+    """Split an utterance after 。！？ (keeping the punctuation)."""
+    return [t for t in re.findall(r"[^。！？]+[。！？]*", text) if t.strip()]
+
+
 SUB_MAX = 16   # max Chinese characters per subtitle chunk
 
 
@@ -481,8 +486,20 @@ def build():
             nxt = sc["lines"][j + 1][0] if j + 1 < len(sc["lines"]) else spk
             pause = ln[2] if len(ln) > 2 else (story.SPEAKER_GAP if nxt != spk else story.LINE_GAP)
             v = VOICES[spk]
-            x, sr = synth_raw(text, v)
-            x = resample(trim(x, sr), sr)
+            if v.get("sentence_gap"):
+                # Synthesise sentence by sentence at the voice's natural speed and slow the overall
+                # pace with real pauses between sentences (stretching every syllable sounds dragged).
+                parts = []
+                sents = sentences(text)
+                for k, sent in enumerate(sents):
+                    xs, sr = synth_raw(sent, v)
+                    parts.append(resample(trim(xs, sr), sr))
+                    if k + 1 < len(sents):
+                        parts.append(np.zeros(int(v["sentence_gap"] * SR), np.float32))
+                x, sr = np.concatenate(parts), SR
+            else:
+                x, sr = synth_raw(text, v)
+                x = resample(trim(x, sr), sr)
             if v["engine"] in ("kokoro", "zipvoice"):
                 # Remove any DC offset / infrasonic pulse and onset ticks, zero-phase.
                 x = signal.sosfiltfilt(_DC_SOS, soften_onsets(x, SR)).astype(np.float32)
