@@ -103,6 +103,27 @@ def synth_raw(text, voice):
     return x, a.sample_rate
 
 
+def soften_onsets(x, sr, ramp_s=0.005, silent=0.0015, jump=0.003):
+    """Fade in over ``ramp_s`` wherever the signal jumps straight out of silence.
+
+    Kokoro starts each phrase with a one-sample step to a DC offset; even after the high-pass
+    that step leaves a sub-millisecond broadband tick just before the voice.
+    """
+    y = x.copy()
+    r, w = int(ramp_s * sr), int(0.005 * sr)
+    last = -10 ** 9
+    for c in np.where(np.abs(np.diff(x)) > jump)[0]:
+        if c - last < 2 * r:
+            continue
+        pre = x[max(0, c - w):c]
+        if len(pre) == 0 or np.sqrt(np.mean(pre ** 2)) >= silent:
+            continue
+        a, b = c + 1, min(len(y), c + 1 + r)
+        y[a:b] *= 0.5 - 0.5 * np.cos(np.pi * np.arange(1, b - a + 1) / r)
+        last = c
+    return y.astype(np.float32)
+
+
 def resample(x, sr_in, sr_out=SR):
     if sr_in == sr_out:
         return x
@@ -234,7 +255,7 @@ def build():
             if v["engine"] == "kokoro":
                 # Kokoro output carries a syllable-rate DC offset (infrasonic pulse); remove it
                 # with a zero-phase 40 Hz high-pass that leaves the voice's warmth untouched.
-                x = signal.sosfiltfilt(_DC_SOS, x).astype(np.float32)
+                x = signal.sosfiltfilt(_DC_SOS, soften_onsets(x, SR)).astype(np.float32)
             speech_len = len(x) / SR
             fx = SCENE_FX.get((sc["id"], spk), v["fx"])
             x = loudness_normalize(apply_fx(x, SR, fx), SR, TARGET_LUFS + v["gain_db"])

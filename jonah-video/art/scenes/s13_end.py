@@ -10,8 +10,10 @@ One wide sunset double-page spread on a 2800 x 1620 stage (no cuts):
   * ABOVE: a huge, high dusk sky — sunset gradient, layered evening clouds, the evening star and the first stars.
 
 Timing (all keyed to the narration, phrase times derived from ctx.lines):
-  * opening (the 0.8 s cross-dissolve from s12): Jonah on the left third looking east at Nineveh, so he does
-    not stack on s12's close-up of his face at the frame centre.
+  * opening: a dip through the blank warm page. The scene starts as plain paper colour, so the 0.8 s
+    cross-dissolve from s12 fades s12 out to the page, and the page then fades back up to this picture
+    (PAPER_DIP). The two Jonahs (s12's large seated one and this small standing one) are never on screen
+    together. The opening framing is kept: Jonah on the left third, looking east at Nineveh.
   * line 0 "上帝的爱，比海更宽，比天更高。": two-stage camera. "比海更宽": the frame widens (top kept low,
     sweeping west) so the sea opens up and the great fish leaps across the sun's glitter path; "比天更高": the
     frame tilts up and grows to the full spread, the sky deepens and the evening star and first stars come out.
@@ -55,6 +57,13 @@ CARD_X, CARD_Y = 1400, 412   # end-card text baseline centre
 SHIP_X, SHIP_S = 1000, 0.19
 FISH_S = 0.32            # leaps from the MID band (same depth as the ship): ~2x the ship's length
 SPLASH_K = 0.8           # splash / ripple size at the mid-band depth
+
+# Dip through the warm paper colour at the s12 -> s13 cross-dissolve. The xfade mixes s12 * (1 - t/0.8) with this
+# scene * t/0.8. The page fully covers this scene until PAPER_DIP[0], when s12 is down to ~5 %, and then lifts
+# (eased) by PAPER_DIP[1], before the fish's first leap. The result is s12 -> blank page (~99 % page at t = 0.8)
+# -> s13, so the two Jonahs never share a frame (overlap < 0.1 %).
+PAPER_RGB = (243, 233, 210)   # the compositor's blank-page base colour (paper grain is multiplied on top)
+PAPER_DIP = (0.76, 1.4)
 
 
 def doc(body, defs=""):
@@ -1035,11 +1044,9 @@ def build(ctx):
     # through the intermediate keys. "比海更宽": widen with the top kept low (mostly horizontal growth, drifting
     # west over the sea); "比天更高": tilt up and finish the zoom so the sky grows upward; line 1: push in on
     # Jonah (eyes closing, doves landing); then ease back out so the end card has room.
-    # Opening (held through the 0.8 s cross-dissolve from s12): Jonah on the left third, looking east at
-    # Nineveh. s12 ends on a large close-up of his face at the centre of the frame, so opening on him there too
-    # stacked two Jonahs (two hoods, two beards) mid-dissolve. Framed this way his whole figure fades in at
-    # screen x ~575..705 over s12's quiet far hills and sand, clear of s12's seated Jonah and leaf
-    # (x ~745..1110), and s12's face fades out over open s13 sky, above the palms and the city. On
+    # Opening: Jonah on the left third, looking east at Nineveh. The picture comes up from the blank page
+    # (PAPER_DIP fx below) rather than dissolving over s12. A plain cross-dissolve put s12's large seated Jonah
+    # next to (or, with a centred framing, on top of) this small standing one: two Jonahs at once. On
     # "上帝的爱，比海更宽" the camera sweeps west past him and reaches the sea before the great fish breaks the
     # surface (the extra x-only key at t_sea keeps the leap where it was).
     t_a = t_sky - 0.07
@@ -1071,6 +1078,8 @@ def build(ctx):
                  alpha=120, seed=17),
         FX.sparkles((HEART[0] - 110, HEART[1] - 70, HEART[0] + 110, HEART[1] + 40), count=7, t0=th + 0.2,
                     color=(255, 240, 200), size=(7, 14), period=1.4, drift=0, seed=5),
+        # last, so the blank page covers everything (subtitles are drawn after fx, so line 0's appears on it)
+        FX.tint(PAPER_RGB, lambda t: 1.0 - M.progress(t, PAPER_DIP[0], PAPER_DIP[1], "sine")),
     ]
 
     # ------------------------------------------------------------------ sound

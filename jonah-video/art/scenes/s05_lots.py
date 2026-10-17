@@ -1,10 +1,11 @@
 """Scene 5 — the lots (Jonah 1:6-12).
 
 A tall dollhouse cut-away of the ship. The scene opens below deck exactly where scene 4 left Jonah: asleep on a
-bed of grain sacks (head on the right) under the swinging lantern, the ladder to the hatch on the right. As the
-cross-dissolve ends the captain hurries in across the floor from the ladder side, steps up onto the sacks, kneels and
-shakes Jonah awake; Jonah sits up rubbing his eye while the captain stands, turns and points up the ladder (each pose
-held long enough to read). Jonah gets to his feet and the camera rises gently through the deck to the rainy deck.
+bed of grain sacks (head on the right) under the swinging lantern, the ladder to the hatch on the right. While the
+dark s04 frame dissolves in, the captain is already walking in from the right at the level of the sacks, behind the
+ladder and the tied amphorae (a planted-foot walk cycle); he bends down over two in-betweens, kneels by Jonah's head
+and shakes him awake; Jonah sits up rubbing his eye while the captain rises, hops back to stand, turns and points up
+the ladder (each main pose held long enough to read; the camera widens only once he has knelt). Jonah gets to his feet and the camera rises gently through the deck to the rainy deck.
 
 On deck a sailor holds out the clay lots pot; the sailors draw (one lifts his plain stick, the others hold theirs).
 Jonah climbs up through the open hatch, walks to the pot and draws the last lot himself: he holds it up and it glows
@@ -536,6 +537,23 @@ def sack_bed(x0, x1, top, bottom, jx):
     return S.g(bed, filter="wobble-fine")
 
 
+def hold_front_props():
+    """Hold props the captain walks in behind (also drawn into the hold layer, in this order around the bed):
+    (tied amphorae + the crates at the right edge, the ladder, the little sack at the bed's right end)."""
+    j1, j2 = hp(1420, 922), hp(1556, 930)
+    jars = PR.jar(j1[0], j1[1], 0.96, rot=-4) + PR.jar(j2[0], j2[1], 0.94, rot=5, color=S.mix(P["terracotta"], P["sand"], 0.35))
+    rope = S.mix(P["sackcloth"], P["sand"], 0.35)
+    ra, rb = hp(1350, 885), hp(1625, 892)
+    jars += (f'<path d="M{ra[0]:.0f},{ra[1]:.0f} Q{(ra[0] + rb[0]) / 2:.0f},{ra[1] + 12:.0f} {rb[0]:.0f},{rb[1]:.0f}" fill="none" '
+             f'stroke="{S.INK}" stroke-width="9" stroke-linecap="round"/>'
+             f'<path d="M{ra[0]:.0f},{ra[1]:.0f} Q{(ra[0] + rb[0]) / 2:.0f},{ra[1] + 12:.0f} {rb[0]:.0f},{rb[1]:.0f}" fill="none" '
+             f'stroke="{rope}" stroke-width="4.5" stroke-linecap="round"/>')
+    jars += PR.crate(2030, FLOOR - 48 * 1.25 + 6, 1.25) + PR.crate(2040, FLOOR - 48 * 1.25 - 128, 1.1, rot=3)
+    ladder = thick_ladder(LAD_TOP, HOLD_TOP - 6, LAD_BOT, FLOOR + 12, rungs=8)
+    s1 = hp(1355, 1044)
+    return jars, ladder, PR.sack(s1[0], s1[1], 0.62, seed=2)
+
+
 def hold_layer():
     """The hold below deck, laid out like the end of s04 (see hp()), widened with more cargo for the wider shot."""
     wood, wd = P["wood"], P["wood_dark"]
@@ -604,21 +622,11 @@ def hold_layer():
     cargo += PR.crate(c2[0], c2[1], 0.86, rot=-2)
     cargo += PR.crate(660, FLOOR - 48 * 1.3 + 6, 1.3) + PR.sack(745, FLOOR + 8, 1.0, seed=6)
     cargo += PR.jar(600, FLOOR - 120, 0.9, rot=-5)
-    j1, j2 = hp(1420, 922), hp(1556, 930)
-    cargo += PR.jar(j1[0], j1[1], 0.96, rot=-4) + PR.jar(j2[0], j2[1], 0.94, rot=5, color=S.mix(P["terracotta"], P["sand"], 0.35))
-    rope = S.mix(P["sackcloth"], P["sand"], 0.35)
-    ra, rb = hp(1350, 885), hp(1625, 892)
-    cargo += (f'<path d="M{ra[0]:.0f},{ra[1]:.0f} Q{(ra[0] + rb[0]) / 2:.0f},{ra[1] + 12:.0f} {rb[0]:.0f},{rb[1]:.0f}" fill="none" '
-              f'stroke="{S.INK}" stroke-width="9" stroke-linecap="round"/>'
-              f'<path d="M{ra[0]:.0f},{ra[1]:.0f} Q{(ra[0] + rb[0]) / 2:.0f},{ra[1] + 12:.0f} {rb[0]:.0f},{rb[1]:.0f}" fill="none" '
-              f'stroke="{rope}" stroke-width="4.5" stroke-linecap="round"/>')
-    cargo += PR.crate(2030, FLOOR - 48 * 1.25 + 6, 1.25) + PR.crate(2040, FLOOR - 48 * 1.25 - 128, 1.1, rot=3)
-    b += cargo
-    b += thick_ladder(LAD_TOP, HOLD_TOP - 6, LAD_BOT, FLOOR + 12, rungs=8)
+    jars, ladder, end_sack = hold_front_props()
+    b += cargo + jars + ladder
     bx0, bx1 = hp(540, 0)[0], hp(1290, 0)[0] + 30
     b += sack_bed(round(bx0), round(bx1), HJ[1], FLOOR + 6, HJ[0])
-    s1 = hp(1355, 1044)
-    b += PR.sack(s1[0], s1[1], 0.62, seed=2)
+    b += end_sack
     b += f'<path d="M{HOLD_LAMP[0]},{HOLD_TOP + 44} L{HOLD_LAMP[0]},{HOLD_LAMP[1] + 4}" stroke="{S.INK}" stroke-width="4"/>'
     b += (f'<rect x="{HOLD_LAMP[0] - 12}" y="{HOLD_TOP + 40}" width="24" height="14" rx="4" fill="{wd}" '
           f'{S.STROKE_THIN}/>')
@@ -686,11 +694,60 @@ def turned(m, ts, w=0.1, depth=0.7, px=None):
     return f
 
 
-def captain_walk(x, y, scale=1.0, facing=1, pose="walk_a", expr="worried"):
-    """The captain in the library's shared walk_a / walk_b poses (same design and rig as C.captain, whose pose
-    list does not include them), for his entrance in the hold."""
-    inner, _ = C._figure(C._captain_design(), C._CAPTAIN_M, dict(C.POSES[pose]), expr, 1 if facing >= 0 else -1)
-    return C._wrap_out(inner, x, y, scale, facing, f"captain-{pose}")
+def captain_fig(x, y, scale=1.0, facing=1, ps=None, expr="worried", label="pose"):
+    """The captain (same design and rig as C.captain) in a scene-local pose record ps (C._P(...)), for his
+    entrance in the hold: the walk cycle and the in-betweens into and out of his crouch."""
+    inner, _ = C._figure(C._captain_design(), C._CAPTAIN_M, dict(ps), expr, C._fsign(facing))
+    return C._wrap_out(inner, x, y, scale, facing, f"captain-{label}")
+
+
+# The captain's walk: CAP_N drawings per step, two steps per cycle. Drawing k (phase k / CAP_N, 0..2): the planted
+# ankle (far leg in the first step, near leg in the second) goes from +CAP_A to -CAP_A figure px (forward = +) while
+# the other foot swings from -CAP_A to +CAP_A, lifted mid-swing; drawing 0 is the contact with the far foot forward.
+# So the planted sole stays on one spot of the floor when the anchor advances CAP_A * 2 / CAP_N * scale per drawing.
+CAP_A = 56
+CAP_N = 5
+
+
+def cap_walk_pose(k):
+    ph = (k % (2 * CAP_N)) / CAP_N
+    step, u = divmod(ph, 1.0)
+    plant = ("ik", CAP_A * (1 - 2 * u), 1)
+    swing = ("ik", -CAP_A + 2 * CAP_A * (0.5 - 0.5 * math.cos(math.pi * u)), 1, 24 * math.sin(math.pi * u))
+    sw = 38 * math.cos(math.pi * ph)            # arms swing against the legs
+    return C._P(t=7, h=-5, legs=(plant, swing) if step == 0 else (swing, plant),
+                arms=(("fk", -sw, -sw + 16), ("fk", sw, sw + 16)), drop=14 + 4 * math.cos(2 * math.pi * u))
+
+
+class FrontCutout:
+    """Hold props the walking captain passes behind (the ladder, the tied amphorae, the crates at the right edge,
+    the little sack at the bed's end), as the hold's OWN pixels: the hold layer rasterised and watercoloured exactly
+    as the compositor does it (same svg, seed and strength), cut out by the props' alpha and with the lantern glow
+    (additive, at rest) added. Drawn over the walking captain it is invisible wherever he is not behind a prop."""
+
+    def __init__(self, hold_layer, glow_layer, props_svg):
+        self.hold, self.glow, self.props_svg = hold_layer, glow_layer, props_svg
+        self.res = None
+
+    def image(self):
+        if self.res is None:
+            import numpy as np
+            from PIL import Image
+            from engine import raster
+            from engine import watercolor as WC
+            hl = self.hold
+            hold = raster.rasterize(hl.frames[0], W, SH)
+            if hl.wc > 0:
+                hold = WC.watercolor(hold, seed=hl.seed, strength=hl.wc, edge=hl.wc_edge)
+            mask = raster.rasterize(self.props_svg.replace(S.BOIL_TOKEN, "1"), W, SH).getchannel("A")
+            box = mask.getbbox()
+            h = np.asarray(hold.crop(box), np.float32)
+            g = np.asarray(raster.rasterize(self.glow.frames[0], W, SH).crop(box), np.float32)
+            rgb = h[..., :3] + g[..., :3] * (g[..., 3:4] / 255.0)        # the glow layer blends additively
+            a = np.asarray(mask.crop(box), np.float32)[..., None] * (h[..., 3:4] / 255.0)
+            out = np.dstack([np.clip(rgb, 0, 255), a]).astype(np.uint8)
+            self.res = (Image.fromarray(out, "RGBA"), box[:2])
+        return self.res
 
 
 def stick(fn, x, y, s, facing, how, **kw):
@@ -760,14 +817,20 @@ def build(ctx):
     sc = Scene(ctx, W=W, H=SH)
 
     # ---------------------------------------------------------------- key times (all from the narration)
-    # hold: the captain hurries in on the floor as the narrator names him (he crosses the frame edge under the tail
-    # of the cross-dissolve), steps up onto the sacks and wakes Jonah ("船长叫醒了他"). Every pose of the wake beat
-    # is held 0.3-0.5 s so a child can read it; the rise to the deck starts once Jonah is on his feet.
-    t_cap_in0 = L[0].start - 0.28                    # starts walking beyond the right edge of the frame
-    t_crouch = t_cap_in0 + 0.55                      # kneels by Jonah's head ...
-    t_shake0, t_shake1 = t_crouch + 0.06, t_crouch + 0.42   # ... and shakes him
-    t_situp = t_crouch + 0.47                        # Jonah sits up rubbing his eye; the captain stands back (same
+    # hold: the captain is already walking in from the right as the dark s04 frame dissolves into this one: on the
+    # sack-bed level behind the ladder and the amphorae (feet clear of the subtitle band), at a steady pace, the
+    # planted foot fixed on the floor (the drawing follows the distance walked). He arrives as the narrator names
+    # him, bends down over two in-between drawings, kneels with a squash and wakes Jonah ("船长叫醒了他"); he rises
+    # through an in-between and hops back to stand. Every main pose is held 0.3-0.5 s so a child can read it; the
+    # camera widens only once he has knelt; the rise to the deck starts once Jonah is on his feet.
+    FR = 1 / 30
+    t_arr = round((L[0].start + 0.1) / FR) * FR      # first frame of the bend (the walk's last contact just before)
+    t_ib2 = t_arr + 1.5 * FR                         # 2 frames per in-between
+    t_crouch = t_arr + 3.5 * FR                      # kneels by Jonah's head (the boundaries sit between frames) ...
+    t_situp = L[0].start + 0.74                      # Jonah sits up rubbing his eye; the captain stands back (same
     #                                                  frame: the sitting Jonah's head would cover the kneeler's face)
+    t_rise = t_situp - 0.1                           # ... the captain starts to rise (3 frames) ...
+    t_shake0, t_shake1 = t_crouch + 0.06, t_rise     # ... after shaking him
     t_cpoint = t_situp + 0.30                        # captain turns and points up the ladder
     t_standup = t_situp + 0.50                       # Jonah gets to his feet
     t_walk = t_standup + 0.36                        # ...and heads for the ladder
@@ -879,42 +942,70 @@ def build(ctx):
     jx, jy = HJ
     js = HS
     kx = jx + 234 * js                     # the captain crouches on Jonah's other side (beyond his head)
-    cap_back = 50                          # ...then stands and steps back
+    cap_back = 50                          # ...then stands and hops back
     shaking = lambda t: t_shake0 <= t <= t_shake1                            # noqa: E731
-    CAP_DX = 600                           # entrance start: beyond the frame's right edge
-    CAP_STEP = 0.11                        # walk_a / walk_b period of his hurried steps
-    bed_r = hp(1290, 0)[0] + 30            # right end of the sack bed (bx1 in hold_layer)
-    g_floor = FLOOR + 20 - jy              # feet on the hold floor, in front of the jars and the ladder foot
 
-    def cap_extra(t):
-        if t < t_crouch:                    # hurries in on the floor, steps up onto the sacks, kneels
-            u = M.progress(t, t_cap_in0, t_crouch, "linear")
-            dx = CAP_DX * (1 - u) ** 1.4
-            up = min(1.0, max(0.0, (bed_r + 60 - (kx + dx)) / 80.0))   # leading foot over the bed edge -> up
-            up = up * up * (3 - 2 * up)
-            bob = -6 * abs(math.sin(math.pi * max(0.0, t - t_cap_in0) / CAP_STEP))
-            return Tf(dx=dx, dy=g_floor * (1 - up) + bob)
-        hop = -8 * (bump(t, t_situp) + bump(t, t_cpoint))
-        if shaking(t):
-            return Tf(dx=7 * math.sin(2 * math.pi * 4.6 * t))
-        if t >= t_situp:
-            return Tf(dx=cap_back * M.progress(t, t_situp, t_situp + 0.16, "out"), dy=hop,
-                      alpha=0.0 if t > t_pan1 + 0.2 else 1.0)
-        return Tf(dy=hop)
+    # His walk (cap_walk_pose) on the bed level jy, right to left, ends with the far foot landing right of Jonah's
+    # head (X_ARR); the anchor moves in CAP_DD steps, one per drawing, so the planted sole never slides.
+    CAP_DD = 2 * CAP_A * js / CAP_N        # stage px per drawing
+    CAP_P = 2 * FR                         # each drawing held 2 frames: 3 steps/s, ~620 output px/s
+    X_ARR = 1604                           # anchor at the last contact (far foot at X_ARR - CAP_A * js)
+    foot = X_ARR - CAP_A * js              # ...which stays planted through both in-betweens
+    X_IB1, X_IB2 = 1588, 1572              # anchors of the in-betweens (the trailing foot steps in)
 
-    def cap_at(t):
-        if t < t_crouch:
-            return float(int(max(0.0, t - t_cap_in0) / CAP_STEP) % 2)
-        return 2.0 + sum(t >= tk for tk in (t_situp, t_cpoint))
+    def walk_k(t):
+        """Index of the walk drawing on screen (0 = the last contact, negative = earlier drawings)."""
+        return math.floor((t - t_arr) / CAP_P + 1.25)
+
+    ib1 = C._P(t=16, h=-6, drop=24, legs=(("ik", (X_IB1 - foot) / js, 1), ("ik", (X_IB1 - 1622) / js, 1, 12)),
+               arms=(("fk", 24, 52), ("fk", 30, 64)), hands=("open", "open"))
+    ib2 = C._P(t=28, h=-10, drop=32, legs=(("ik", (X_IB2 - foot) / js, 1), ("ik", (X_IB2 - 1600) / js, 1)),
+               arms=(("fk", 30, 52), ("ik", "abs", 96, -118, 1)), hands=("fist", "open"))
+    rise = C._P(t=18, h=-6, drop=20, legs=(("ik", 46, 1), ("ik", -26, 1)),
+                arms=(("fk", 10, 30), ("fk", 14, 36)), hands=("open", "open"))
     cap_sh = C.ground_shadow(kx, jy + 2, js)
+    # walking + bending in: on its own layer BEHIND the ladder / amphorae cut-out (z 14.5, added at the end)
+    walk_frames = [doc(captain_fig(kx, jy, js, -1, cap_walk_pose(k), label=f"walk{k}")) for k in range(2 * CAP_N)]
+    walk_frames += [doc(cap_sh + captain_fig(kx, jy, js, -1, ib1, label="bend")),
+                    doc(cap_sh + captain_fig(kx, jy, js, -1, ib2, label="reach"))]
+
+    def cap_walk_at(t):
+        if t < t_arr - 0.5 * FR:
+            return float(walk_k(t) % (2 * CAP_N))
+        return float(2 * CAP_N + (t >= t_ib2))
+
+    def cap_walk_m(t):
+        if t >= t_crouch:
+            return Tf(alpha=0.0)
+        if t < t_arr - 0.5 * FR:
+            x = X_ARR - walk_k(t) * CAP_DD
+        else:
+            x = X_IB2 if t >= t_ib2 else X_IB1
+        return Tf(dx=x - kx)
+
+    def cap_m(t):
+        """Kneel, rise, stand and point (in front of the props): breathing, a landing squash on the kneel, the
+        shake, and a little hop back to his standing spot."""
+        if t < t_crouch or t > t_pan1 + 0.2:
+            return Tf(alpha=0.0)
+        sy = 1 + 0.011 * math.sin(2 * math.pi * (t / 3.1 + 0.3))
+        q = 1.0 if t < t_crouch + 0.085 else 1 - M.progress(t, t_crouch + 0.085, t_crouch + 0.21, "sine")
+        sy *= 1 - 0.075 * q
+        sx = 1 + 0.035 * q
+        if shaking(t):
+            return Tf(dx=7 * math.sin(2 * math.pi * 4.6 * t), sx=sx, sy=sy, px=kx, py=jy)
+        if t >= t_situp:
+            u = M.progress(t, t_situp, t_situp + 0.15, "linear")
+            return Tf(dx=cap_back * M.ease("sine")(u), dy=-16 * math.sin(math.pi * u) - 8 * bump(t, t_cpoint),
+                      sx=sx, sy=sy, px=kx, py=jy)
+        return Tf(sx=sx, sy=sy, px=kx, py=jy)
+
     flip(sc, "hold_captain", [
-        (0, cap_sh + captain_walk(kx, jy, js, -1, pose="walk_a")),
-        (0, cap_sh + captain_walk(kx, jy, js, -1, pose="walk_b")),
         (t_crouch, C.captain(kx, jy, js, -1, pose="wake")),
+        (t_rise, captain_fig(kx, jy, js, -1, rise, label="rise")),
         (t_situp, cap_sh + C.captain(kx, jy, js, -1, pose="stand", expr="worried")),
         (t_cpoint, cap_sh + C.captain(kx, jy, js, 1, pose="point", expr="worried")),
-    ], z=14, frame_at=cap_at,
-        motion=turned(alive(kx, jy, [t_crouch, t_situp, t_cpoint], 0.3, extra=cap_extra), [t_cpoint], w=0.08))
+    ], z=14.6, motion=turned(cap_m, [t_cpoint], w=0.08))
 
     jsx = jx + 155                         # where he sits up / stands (head stays near the pillow)
     hold_j = [
@@ -944,7 +1035,7 @@ def build(ctx):
          motion=turned(alive(jx, jy, [t_situp, t_standup], 0.0, amp=0.008, extra=hold_j_extra), [t_standup],
                        w=0.08, px=lambda t: jx if t < t_situp else jsx))
 
-    # Z z z still drifting up from the sleeper (continues s04), fading as the captain hurries in
+    # Z z z still drifting up from the sleeper (continues s04), fading as the captain arrives
     head = (jx + 157 * js / 1.15, jy - 92)
     for i, delay in enumerate((0.0, 0.9)):
         zsvg = doc(S.text(head[0] + 40, head[1] - 40, "Z", size=54, fill="#fff3d6",
@@ -954,11 +1045,11 @@ def build(ctx):
             per = 1.8
             u = ((t + delay) % per) / per
             a = min(1.0, u / 0.15) * (1 - M.progress(u, 0.6, 1.0, "sine"))
-            a *= 1 - M.progress(t, t_cap_in0 + 0.1, t_cap_in0 + 0.4, "sine")
+            a *= 1 - M.progress(t, L[0].start - 0.18, L[0].start + 0.12, "sine")
             s = 0.5 + 0.7 * u
             return Tf(50 + 120 * u + 18 * math.sin(u * 6.0), -20 - 210 * u, -12 + 22 * u, s, s, a,
                       head[0] + 40, head[1] - 55)
-        sc.add(f"zz{i}", zsvg, wc=0, z=15.5, motion=zm)
+        sc.add(f"zz{i}", zsvg, wc=0, z=14.15, motion=zm)   # behind the captain walking past them
 
     # ---------------------------------------------------------------- deck characters
     mlx, mly = MAST_X + 29 + 47, 610
@@ -1142,9 +1233,8 @@ def build(ctx):
 
     # ---------------------------------------------------------------- camera
     hold_mid = Cam(CAM_HOLD0.x - 6, CAM_HOLD0.y, CAM_HOLD0.w + 10)
-    # the widening starts only at the tail of the s04 dissolve (no double image of the hold) and follows the
-    # captain's arrival
-    cam_keys = [(0.0, CAM_HOLD0), (0.55, hold_mid), (t_crouch + 0.35, CAM_HOLD1),
+    # the widening waits until the captain has knelt (after the s04 dissolve, apart from his walk and bend-in)
+    cam_keys = [(0.0, CAM_HOLD0), (t_crouch, hold_mid), (t_crouch + 0.65, CAM_HOLD1),
                 (t_pan0, Cam(CAM_HOLD1.x - 4, CAM_HOLD1.y + 2, CAM_HOLD1.w + 8)), (t_pan1, CAM_DECK),
                 (t_glow + 0.25, Cam(CAM_DECK.x - 5, CAM_DECK.y - 4, CAM_DECK.w + 10)),
                 (t_glow + 1.3, CAM_WIDE), (t_confess, CAM_WIDE), (L[3].start - 0.1, CAM_PUSH), (T, CAM_END)]
@@ -1171,7 +1261,8 @@ def build(ctx):
     sc.sfx("storm_wind", 0, dur=T + 0.8, gain_db=-17, fade_in=0.8, fade_out=1.0, pan=-0.2)
     sc.sfx("rain", 0, dur=T + 0.8, gain_db=-16, fade_in=0.8, fade_out=1.0)
     sc.sfx("ship_creak", 0, dur=t_pan1 + 0.5, gain_db=-15, fade_in=0.6, fade_out=0.8)
-    sc.sfx("footsteps_run", t_cap_in0, dur=t_crouch - t_cap_in0 + 0.1, gain_db=-16, pan=0.35, fade_out=0.15)
+    sc.sfx("footsteps_run", 0.0, dur=t_arr + 0.1, gain_db=-16, pan=0.35, fade_in=0.3, fade_out=0.15,
+           rate=1 / (CAP_N * CAP_P))      # his steps (one per CAP_N drawings)
     sc.sfx("cloth", t_standup - 0.05, gain_db=-8)
     sc.sfx("footsteps_run", t_walk, dur=0.7, gain_db=-17, pan=0.3, fade_out=0.4)
     sc.sfx("lots", t_s1_reach, gain_db=-8, pan=0.05)
@@ -1181,6 +1272,16 @@ def build(ctx):
     for tt in (t_sea, t_calm):             # soft robe swish on his two turns (under his own voice)
         sc.sfx("cloth", tt - 0.05, gain_db=-14, pan=0.35)
     sc.sfx("thunder", t_thunder, dur=2.4, gain_db=-14, pan=0.4, fade_out=1.2)
+
+    # ---------------------------------------------------------------- the captain's walk-in (added last: the
+    # watercolour seeds of the layers above stay as they were)
+    sc.add("hold_captain_walk", walk_frames, z=14.2, frame_at=cap_walk_at, motion=cap_walk_m, seed=171)
+    hold_l = next(l for l in sc.layers if l.name == "hold")
+    glow_l = next(l for l in sc.layers if l.name == "hold_glow")
+    jars, ladder, end_sack = hold_front_props()
+    front = FrontCutout(hold_l, glow_l, doc(jars + ladder + end_sack))
+    front.image()                      # rasterise now (disk-cached) so render workers never need Chromium
+    sc.add_dynamic("hold_front", lambda t: front.image() if t < t_crouch else None, z=14.5)
     return sc
 
 
