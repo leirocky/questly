@@ -265,15 +265,15 @@ def creak_svg(seed):
     """Comic stress strokes radiating from the straining hull (bow, stern, under the keel)."""
     r = random.Random(seed)
     ink, cream = "", ""
-    for lx, ly, ang in ((525, -215, 205), (470, -70, 160), (-555, -175, -25), (-495, -65, 20)):
+    for lx, ly, ang in ((470, -330, 215), (-560, -190, -30), (-480, -50, 22)):
         x, y = ship_pt(lx, ly)
         for k in (-1, 0, 1):
-            a = math.radians(ang + 28 * k + r.uniform(-5, 5))
-            r0, r1 = 16 + r.uniform(0, 6), 88 + r.uniform(-8, 10) - 22 * abs(k)
+            a = math.radians(ang + 36 * k + r.uniform(-4, 4))
+            r0, r1 = 34 + r.uniform(0, 6), 92 + r.uniform(-6, 8) - 16 * abs(k)
             seg = (f"M{fm(x + r0 * math.cos(a))},{fm(y + r0 * math.sin(a))} "
                    f"L{fm(x + r1 * math.cos(a))},{fm(y + r1 * math.sin(a))}")
-            ink += f'<path d="{seg}" fill="none" stroke="{INK}" stroke-width="17" stroke-linecap="round"/>'
-            cream += f'<path d="{seg}" fill="none" stroke="#f3efe2" stroke-width="9" stroke-linecap="round"/>'
+            ink += f'<path d="{seg}" fill="none" stroke="{INK}" stroke-width="20" stroke-linecap="round"/>'
+            cream += f'<path d="{seg}" fill="none" stroke="#f6f1e2" stroke-width="11" stroke-linecap="round"/>'
     return doc(S.g(ink + cream, filter="wobble-fine"))
 
 
@@ -395,6 +395,7 @@ def build(ctx):
     l0, l1, l2, l3 = ctx.lines[:4]
 
     # --------------------------------------------------- timing (all from the narration chunks)
+    c_ask = span(l0, ["躲开上帝", "怎么能"], 0.0, 0.38)
     c_sail = span(l0, ["开出去", "不久"], 0.38, 0.58)
     c_wind = span(l0, ["狂风", "刮起"], 0.58, 1.0)
     c_waves = span(l1, ["一个接着一个", "大浪"], 0.0, 0.67)
@@ -458,11 +459,13 @@ def build(ctx):
             v -= 3.0 * math.exp(-(t - T_CRASH) / 0.4) * math.sin(8 * (t - T_CRASH))
         return v
 
+    sail_dx = lambda t: 120 * (1 - M.progress(t, 0, T_WIND + 1.2, "sine"))       # noqa: E731  sailing west
+
     def ship_tf(t):
         ph = 2 * math.pi * phase(t)
         rot = pitch_amp(t) * math.sin(ph) + jolts(t)
         dy = bob_amp(t) * math.sin(ph - 1.3) + lift(t)
-        dx = 0.35 * bob_amp(t) * math.sin(0.5 * ph + 0.4)
+        dx = 0.35 * bob_amp(t) * math.sin(0.5 * ph + 0.4) + sail_dx(t)
         return Tf(dx, dy, rot, 1, 1, 1, PIV[0], PIV[1])
 
     def on_ship(local):
@@ -677,13 +680,13 @@ def build(ctx):
         sc.add(f"zc{i}", zc, wc=0, motion=on_ship(zcm))
 
     # ---- crew choreography: (time, pose, expr, facing, storm-graded, hop?) per sailor
-    def throws_ev(names, facing, after):
+    def throws_ev(names, facing):
         ev = []
         for k, nm in enumerate(names):
             tr = REL[nm]
             ev += [(tr - GRAB, "carry", None, facing, True, k == 0), (tr - LIFT, "throw", None, facing, True, False),
                    (tr + FT, "carry", None, facing, True, False)]
-        ev.append((REL[names[-1]] + 0.62, "stand", "tired", facing, True, True))
+        ev.append((REL[names[-1]] + 0.75, "stand", "tired", facing, True, True))
         return ev
 
     h1 = HITS[0][0]
@@ -691,17 +694,19 @@ def build(ctx):
         "A": [(0, "point", "happy", -1, False, False), (T_REACT, "point", "surprised", -1, True, True),
               (S1 + 0.05, "scared", None, -1, True, True), (h1 - 0.12, "carry", "worried", -1, True, True),
               (S2 + 0.05, "scared", None, -1, True, True), (T_PRAY["A"], "pray", None, -1, True, True)]
-             + throws_ev(["A1", "A2"], -1, None) + [(T_L3, "scared", None, -1, True, True)],
-        "D": [(0, "stand", "happy", 1, False, False), (T_REACT + 0.12, "stand", "worried", -1, True, True),
+             + throws_ev(["A1", "A2"], -1) + [(T_L3, "scared", None, -1, True, True)],
+        "D": [(0, "stand", "happy", 1, False, False), (0.5 * (c_ask[0] + c_ask[1]), "stand", "happy", -1, False, True),
+              (T_REACT + 0.12, "stand", "worried", -1, True, True),
               (S1 + 0.1, "scared", None, -1, True, True), (T_PRAY["D"], "pray", None, -1, True, True)]
-             + throws_ev(["D1"], -1, None) + [(T_L3 + 0.1, "pray", None, -1, True, True)],
+             + throws_ev(["D1"], -1) + [(T_L3 + 0.1, "pray", None, -1, True, True)],
         "C": [(0, "stand", "neutral", -1, False, False), (T_REACT + 0.06, "stand", "worried", 1, True, True),
               (S1 + 0.12, "scared", None, 1, True, True), (T_PRAY["C"], "pray", None, 1, True, True)]
-             + throws_ev(["C1"], 1, None) + [(T_L3 + 0.05, "pray", None, 1, True, True)],
-        "B": [(0, "stand", "happy", -1, False, False), (T_REACT + 0.18, "stand", "worried", 1, True, True),
+             + throws_ev(["C1"], 1) + [(T_L3 + 0.05, "pray", None, 1, True, True)],
+        "B": [(0, "stand", "happy", -1, False, False), (c_sail[0] + 0.35, "stand", "neutral", 1, False, True),
+              (T_REACT + 0.18, "stand", "worried", 1, True, True),
               (S1 + 0.08, "scared", None, 1, True, True), (h1 - 0.08, "carry", "worried", 1, True, True),
               (S2 + 0.08, "scared", None, 1, True, True), (T_PRAY["B"], "pray", None, 1, True, True)]
-             + throws_ev(["B1", "B2"], 1, None) + [(T_L3 - 0.05, "scared", None, 1, True, True)],
+             + throws_ev(["B1", "B2"], 1) + [(T_L3 - 0.05, "scared", None, 1, True, True)],
     }
     CREW = {"A": (AX, 0, -1, ["A1", "A2"]), "D": (DX, 2, -1, ["D1"]), "C": (CX, 3, 1, ["C1"]),
             "B": (BX, 1, 1, ["B1", "B2"])}
@@ -742,7 +747,7 @@ def build(ctx):
             v += 4.0 * math.exp(-(t - T_CRASH) / 0.35) * math.sin(10 * (t - T_CRASH) + 0.2 * seed)
         return v
 
-    actors, layers_z = {}, {}
+    actors = {}
 
     def make_actor(key):
         x, var, tf_face, names = CREW[key]
@@ -754,7 +759,7 @@ def build(ctx):
         seed = ord(key)
         tamp = keyc([(S1, 0.0), (S1 + 0.25, 2.0), (c_scare[0], 2.0), (c_scare[0] + 0.25, 3.2),
                      (T_PRAY[key], 3.2), (T_PRAY[key] + 0.35, 1.1), (grab0 - 0.1, 1.1), (grab0, 0.0),
-                     (last + 0.62, 0.0), (last + 0.9, 0.6), (T_L3, 0.6), (T_L3 + 0.3, 2.0)], "linear")
+                     (last + 0.75, 0.0), (last + 1.0, 0.6), (T_L3, 0.6), (T_L3 + 0.3, 2.0)], "linear")
         pray_iv = []
         for i, e in enumerate(ev):
             if e[1] == "pray":
@@ -894,8 +899,7 @@ def build(ctx):
     t_cr = (T_CRASH + 0.1, c_break[1] - 0.1)
     sc.add("creak", [creak_svg(1), creak_svg(2)], wc=0, frame_at=lambda t: float(int(t * 9) % 2),
            motion=lambda t: replace(ship_tf(t), alpha=M.progress(t, t_cr[0], t_cr[0] + 0.15)
-                                    * (1 - M.progress(t, t_cr[1] - 0.3, t_cr[1], "sine"))
-                                    * (0.75 + 0.25 * math.sin(t * 23))))
+                                    * (1 - M.progress(t, t_cr[1] - 0.3, t_cr[1], "sine"))))
 
     # prayer bubbles: each sailor's own god's sign (sun, little idol, moon, star)
     BUB = {"A": ("sun", -70, -175, 72), "D": ("idol", -30, -215, 70), "C": ("moon", 40, -205, 70),
@@ -923,7 +927,7 @@ def build(ctx):
                                          P["sea_deep"], 470, 8, 22)),
            wc=0.9, motion=calm_motion(4, 14, 3.6, 0.35), reveal=calm_reveal)
     sc.add("wake", wake_svg(), wc=0.5, boil=4,
-           motion=lambda t: Tf(dx=0.3 * ship_tf(t).dx, dy=0.7 * ship_tf(t).dy,
+           motion=lambda t: Tf(dx=ship_tf(t).dx, dy=0.7 * ship_tf(t).dy,
                                alpha=1 - M.progress(t, WIPE[0] + 0.4, WIPE[0] + 1.2, "sine")))
 
     # breakers: '大浪一个接着一个打过来' — they rise beside the stern / bow, curl in and crash
@@ -941,12 +945,12 @@ def build(ctx):
             if t < th - 0.85 or t > th + 0.7:
                 return Tf(alpha=0.0, px=bx_, py=by_ + 60)
             rise = M.progress(t, th - 0.85, th - 0.1, "out")
-            c = M.progress(t, th, th + 0.55, "in")
-            sy = (0.12 + 0.88 * rise) * (1 - 0.62 * c)
-            sx = 0.75 + 0.25 * rise
-            dx = face * (surge * M.progress(t, th - 0.85, th, "inout") + 90 * c)
-            a = M.progress(t, th - 0.85, th - 0.68) * (1 - M.progress(t, th + 0.12, th + 0.6, "sine"))
-            return Tf(dx, 8 * math.sin(4 * t), face * 7 * c, sx, sy, a, bx_, by_ + 60)
+            c = M.progress(t, th - 0.02, th + 0.42, "inout")       # crash: the wave sinks back into the sea
+            sy = (0.12 + 0.88 * rise) * (1 - 0.86 * c)
+            sx = (0.75 + 0.25 * rise) * (1 + 0.12 * c)
+            dx = face * (surge * M.progress(t, th - 0.85, th, "inout") + 35 * c)
+            a = M.progress(t, th - 0.85, th - 0.68) * (1 - M.progress(t, th + 0.3, th + 0.55, "sine"))
+            return Tf(dx, 8 * math.sin(4 * t), face * 5 * c, sx, sy, a, bx_, by_ + 60)
         sc.add(f"breaker{i}", breaker_svg(bx_, by_, sz, face, 70 + i), wc=0.8, motion=brm)
 
     sc.add("sea_near", doc(V.sea_layer(f_near, P["storm_sea"], P["storm_sea_light"], S.shade(P["storm_sea"], -0.3),
@@ -965,9 +969,10 @@ def build(ctx):
     # breaker crashes: spray bursting over the stern / bow, fanning away from the crew
     for i, (th, side, sz) in enumerate(HITS):
         st_h = ship_tf(th)
-        px_, py_ = apply(st_h, *ship_pt(-500, -185)) if side == "stern" else apply(st_h, *ship_pt(505, -190))
-        lean = 40 if side == "stern" else -40
-        sc.add(f"hitspray{i}", doc(V.burst(px_, py_, 1.05 * sz, seed=40 + i, n=6, spread=46, height=150, lean=lean)),
+        px_, py_ = apply(st_h, *ship_pt(-545, -165)) if side == "stern" else apply(st_h, *ship_pt(520, -180))
+        lean = 46 if side == "stern" else -44
+        sc.add(f"hitspray{i}", doc(V.burst(px_, py_, min(1.1, 1.05 * sz), seed=40 + i, n=6, spread=44, height=150,
+                                           lean=lean)),
                wc=0.5,
                motion=(lambda th_, x_, y_: M.keys([(th_ - 0.01, {"sy": 0.15, "sx": 0.6, "alpha": 0}), (th_, {"alpha": 1}),
                                                    (th_ + 0.25, {"sy": 1.0, "sx": 1.0}),
@@ -1102,7 +1107,7 @@ def build(ctx):
     # --------------------------------------------------- camera
     CAM_CONTRAST = Cam(1225, 795, 1350)   # crew panicking on deck above, Jonah asleep in the open hold below
     cam_ext = M.cam_keys([
-        (0, Cam(1215, 690, 2170)), (T_WIND, Cam(1212, 686, 2140)), (l0.end + 0.3, Cam(1208, 680, 2120)),
+        (0, Cam(1268, 690, 2170)), (T_WIND, Cam(1220, 686, 2140)), (l0.end + 0.3, Cam(1208, 680, 2120)),
         (l1.end, Cam(1210, 678, 2110)), (c_scare[0] - 0.1, Cam(1212, 676, 2100)),
         (c_scare[0] + 1.4, Cam(1232, 632, 1480)),           # '水手们都吓坏了': close on the crew
         (c_pray[0] + 1.6, Cam(1238, 604, 1450)),            # a little higher for the prayer bubbles
@@ -1191,7 +1196,7 @@ def build(ctx):
                    T_CUT=T_CUT, T_DIVE0=T_DIVE0, T_DIVE1=T_DIVE1, T_REV=T_REV, T_IN=T_IN, T_HATCH=T_HATCH,
                    T_CRASH=T_CRASH, T_TEAR=T_TEAR, T_LIGHT=T_LIGHT, T_REACT=T_REACT, WIPE=WIPE, T_BLACK=T_BLACK,
                    t_cull=t_cull, snore=(snore_at, snore_dur, peaks), ship_tf=ship_tf, camera=camera, bolts=bolts,
-                   t_z0=t_z0)
+                   t_z0=t_z0, place=place, H0=H0)
 
     # --------------------------------------------------- sound
     sc.sfx("waves_calm", 0, dur=T_WIND + 2.2, gain_db=-12, fade_in=0.8, fade_out=1.6)

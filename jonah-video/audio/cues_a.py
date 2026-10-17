@@ -10,13 +10,14 @@ THEME = ["F#5:1 E5:1/2 D5:1 A4:1/2", "B4:1 D5:1/2 G5:1 F#5:1/2", "E5:3/2 C#5:1 D
 def title(c):
     """Jonah theme b1-b2: music box over harp and soft strings (D major, 6/8)."""
     s = c.seg(0, c.dur, 2, "6/8", "D major", nominal=80, label="title")
+    s.duck(1.0)
     s.prog("D:3 | G:3")
     s.mel("mbox", "F#6:1 E6:1/2 D6:1 A5:1/2 | B5:1 D6:1/2 G6:1 F#6:1/2", vel=80)
     s.mel("celesta", "F#5:1 E5:1/2 D5:1 A4:1/2 | B4:1 D5:1/2 G5:1 F#5:1/2", vel=56)
     broken(s, "harp", 0, 6, (0, 2, 4, 6, 4, 2), 38, 49, vel=46)
     s.pad(["vla", "vln2", "vln2"], 3, 54, 69, bass_part="vc", bass_lo=38, bass_hi=50, vel=50)
-    s.expr(["vla", "vln2", "vc"], [(0, -16), (1.5, -7), (6, -6)])
-    s.expr(["mbox", "celesta", "harp"], [(0, -3), (6, -4)])
+    s.expr(["vla", "vln2", "vc"], [(0, -16), (1.5, -9), (6, -8)])
+    s.expr(["mbox", "celesta", "harp"], [(0, -6), (6, -7)])
 
 
 def shimmer(c, t0, t1, label):
@@ -41,6 +42,7 @@ def god_voice(c, t0, t1, bars, label, second=False):
     bars 4: the plain progression (the second call, s14); bars 6: the first call adds a second
     bVI - bVII - I before the half cadence."""
     g = c.seg(t0, t1, bars, "6/8", "D major", nominal=80, rit=0.1, label=label)
+    g.duck(1.5)
     spec = GOD_PROG if bars == 4 else GOD_PROG[:3] + ["Bb/D:3@D-minor", "C/D:3/2@D-mixolydian D:3/2",
                                                       GOD_PROG[3]]
     g.prog(" | ".join(spec))
@@ -56,7 +58,7 @@ def god_voice(c, t0, t1, bars, label, second=False):
         g.add("vc", q0, q1 - q0, "A2" if low else "D3", 46, "bass")
     broken(g, "harp", 0, g.n_q, (0, 1, 2, 3, 4, 5), 50, 61, vel=44, accent=6, thin=True)
     n = g.n_q
-    g.expr("choir", [(0, -16), (1.5, -7), (n / 2, -6), (n - 3, -7), (n, -9)])
+    g.expr("choir", [(0, -16), (1.5, -8), (n / 2, -8), (n - 3, -8), (n, -10)])
     g.expr(["vla", "vln2", "vc", "cb"], [(0, -6), (n / 2, -6), (n, -8)])
     g.expr("harp", [(0, -5), (n, -6)])
     return g
@@ -70,23 +72,24 @@ def call(c):
     tG = c.gap(i_g)
     tE = c.gap(c.find("在很远的东方"))
     a = c.seg(0, tS, 5, "6/8", "D major", nominal=84, label="call-theme")
+    a.duck(1.5)
     a.prog("Em7:3/2 A7:3/2 | Asus4:3/2 A:3/2 | D:3 | G:3 | D/A:3/2 A7:3/2")
     a.mel("celesta", " | ".join(THEME[2:7]), vel=80)
     broken(a, "harp", 0, a.n_q, (0, 2, 4, 5, 4, 2), 38, 49, vel=44, thin=True)
-    a.pad(["vla", "vln2", "vln2"], 3, 52, 69, bass_part="vc", bass_lo=38, bass_hi=50, vel=48)
+    a.pad(["vla", "vln2", "vln2"], 3, 52, 69, bass_part="vc", bass_lo=40, bass_hi=51, vel=48)
     a.mel("cb", "r:3 | r:3 | D2:3 | G1:3 | A1:3", vel=44, role="bass")
-    a.expr(["vla", "vln2", "vc", "cb", "celesta", "harp"], [(0, -6), (a.n_q, -7)])
+    a.expr(["vla", "vln2", "vc", "cb", "celesta", "harp"], [(0, -7), (a.n_q, -9)])
     b = shimmer(c, tS, tG, "call-shimmer")
     b.mel("celesta", "D5:3", vel=72)                           # theme b8: the resolution
     god_voice(c, tG, tE, 6, "call-God")
     fill(c, "celesta", c.pause_or_gap(i_g + 1), n=3, lo=74, hi=91, vel=48)   # between God's sentences
     # far to the east: Nineveh's own colour (D hijaz), oboe over a D pedal and a distant drum
     e = c.seg(tE, c.dur, 2, "4/4", "D hijaz", nominal=72, rit=0.1, label="call-east")
-    e.prog("D:2 Eb/D:2 | Gm/D:2 D:2")
-    e.mel("oboe", "A4:1 Bb4:1/2 A4:1/2 G4:1 F#4:1 | G4:1/2 A4:1/2 Bb4:1 A4:2", vel=60)
+    e.prog("D:2 Gm/D:2 | Eb:2 D:2")                         # bII - I: the hijaz cadence
+    e.mel("oboe", "A4:1 Bb4:1/2 A4:1/2 G4:1 F#4:1 | G4:1 Bb4:1/2 G4:1/2 F#4:2", vel=60)
     e.pad(["vla", "vln2"], 2, 50, 66, vel=44, bass_ref=(38, 50))
-    e.add("cb", 0, 8, "D2", 48, "bass")
-    e.add("vc", 0, 8, "D3", 44, "bass")
+    e.mel("cb", "D2:4 | Eb2:2 D2:2", vel=48, role="bass")
+    e.mel("vc", "D3:4 | Eb3:2 D3:2", vel=44, role="bass")
     for q, v in ((0, 58), (2, 46), (4, 56), (6, 44)):
         drum(e, q, 45, v)
     e.add("bsn", 7.5, 0.5, "A2", 58, "melody", "s")           # anacrusis into the flight
@@ -124,6 +127,7 @@ def flee(c):
     tS = c.gap(c.find("付了船钱"))
     # Jonah turns and runs (the v1 flight: bassoon, answered by the clarinet)
     f = c.seg(0, tW, 4, "4/4", "D dorian", nominal=136, label="flee-run")
+    f.duck(1.0)
     f.prog("Dm:4 | G:4 | Dm:4 | C:4")
     _run_figure(f, 0, "Dm", "bsn", 3, 72)
     _run_figure(f, 1, "G", "bsn", 3, 72)
@@ -203,8 +207,10 @@ def storm(c):
     s2 = c.seg(t_hit, t_cargo, 5, "4/4", "D minor", nominal=168, label="storm-peak")
     s3 = c.seg(t_cargo, t_sleep, 7, "4/4", "D minor", nominal=166, label="storm-cargo")
     s4 = c.seg(t_sleep, c.dur, 4, "4/4", "D minor", nominal=112, rit=0.2, label="storm-sleep")
+    for seg in (s1, s2, s3):
+        seg.duck(2.0)
     s1.prog("Dm:4 | Dm:4 | Bb:4 | Bb:4 | Gm:4 | Gm/Bb:2 A:2@D-harmonic")
-    s2.prog("Dm:4 | Bb:4 | Gm:2 A:2@D-harmonic | Dm:2 A7:2@D-harmonic | Dm:2 A:2@D-harmonic")
+    s2.prog("Dm:4 | Bb:4 | Gm:2 A:2@D-harmonic | Dm:2 A7:2@D-harmonic | Dm:2 A/C#:2@D-harmonic")
     s3.prog("Dm:4 | Bb:4 | Gm:2 A:2@D-harmonic | Dm:4 | Bb:2 C:2 | Dm:2 Gm:2 | A:4@D-harmonic")
     s4.prog("Dm:4 | Gm/D:2 Dm:2 | Dm:4 | Gm/D:2 Dm:2")
     s2.sync("storm peak (orchestra hit, in the pause)", 0, t_hit)
@@ -214,7 +220,7 @@ def storm(c):
     q_le2, q_ls3 = s3.q_of(c.t0 + c.le(i_cargo)), s3.q_of(c.t0 + c.ls(i_sleep))
     q_ls2 = s3.q_of(c.t0 + c.ls(i_cargo))
     q_call = s2.q_of(c.t0 + c.le(i_peak)) - 0.25          # horn pickup: at the end of the line
-    q_roll = max(20.5, q_le0 - 0.3)
+    q_roll = min(22.0, max(20.5, q_le0 - 0.3))
 
     # tremolo strings (bass by cb_fast; bass_ref keeps the voicing clear of it)
     s1.pad(["trem_va", "trem_hi", "trem_hi", "trem_hi"], 4, 50, 81, vel=72, center=65, bass_ref=(28, 40))
@@ -225,15 +231,15 @@ def storm(c):
         _rolling(seg, v)
     s4.add("cb", 0, 16, "D2", 46, "bass")
     # low brass: the rising line under the first line (soft), swells only in the pauses
-    s1.mel("tbn", "A2:4 | A2:4 | Bb2:4 | D3:4 | D3:4 | D3:2 C#3:2", vel=66)
+    s1.mel("tbn", "A2:4 | A2:4 | F3:4 | D3:4 | D3:4 | D3:2 C#3:2", vel=66)
     s1.mel("tuba", "D2:4 | D2:4 | Bb1:4 | Bb1:4 | G1:4 | Bb1:2 A1:2", vel=70, role="bass")
-    s2.pad(["tbn", "tbn", "brass"], 3, 50, 70, q0=0, q1=1, vel=80, center=60, bass_ref=(28, 40))
-    s2.mel("tuba", "D2:1 r:3 | r:4 | r:4 | r:4 | r:2 A1:2", vel=78, role="bass")
-    s3.pad(["tbn", "tbn", "brass"], 3, 50, 70, q0=0, q1=8, vel=76, center=60, bass_ref=(28, 40))
+    s2.pad(["tbn", "tbn", "brass"], 3, 50, 70, q0=0, q1=1, vel=70, center=60, bass_ref=(28, 40))
+    s2.mel("tuba", "D2:1 r:3 | r:4 | r:4 | r:4 | r:2 C#2:2", vel=78, role="bass")
+    s3.pad(["tbn", "tbn", "brass"], 3, 50, 70, q0=0, q1=8, vel=68, center=60, bass_ref=(28, 40))
     s3.mel("tuba", "D2:4 | Bb1:4 | G1:2 A1:2 | D2:4 | Bb1:2 C2:2 | D2:2 G1:2 | A1:4", vel=74, role="bass")
     # horn call: pickup at the end of the line, the leap and motif x in D minor in the pause
     s2.add("horn", q_call, 20 - q_call, "A4", 76, "melody")
-    s3.mel("horn", "D5:1 F5:1/2 E5:1/2 D5:1 A4:1 | Bb4:2 A4:1 G4:1 | G4:2 A4:2 | A4:4", vel=76)
+    s3.mel("horn", "D5:1 F5:1/2 E5:1/2 D5:1 C5:1 | Bb4:2 D5:2 | Bb4:2 A4:2 | A4:4", vel=66)
     # cargo overboard: heavy, dull thumps on the downbeats while it is narrated
     q_c = s3.q_of(c.t0 + c.at("货物扔进海里"))
     for q in (12, 16, 20):
@@ -241,20 +247,20 @@ def storm(c):
             s3.add("okit", q, 1, 36, 70, "perc")
             s3.add("timp", q, 1, "D2" if q != 16 else "Bb2", 70, "timp")
     # timpani: hit on the storm downbeat, rolls that crescendo into the pauses
-    s1.add("timp", 0, 1, "D2", 92, "timp", "h")             # answers the flight's run
+    s1.add("timp", 0, 1, "D2", 80, "timp", "h")             # answers the flight's run
     timp_roll(s1, 1, 8, midi("D2"), 34, 46)
     timp_roll(s1, 8, 16, midi("D2"), 40, 50)
-    timp_roll(s1, 16, q_roll, midi("D2"), 46, 58)
-    timp_roll(s1, q_roll, 23.75, midi("A2"), 66, 86)
-    s2.add("timp", 0, 1, "D2", 100, "timp", "h")
+    timp_roll(s1, 16, 22, midi("D2"), 46, 60)
+    timp_roll(s1, 22, 23.75, midi("A2"), 60, 78)
+    s2.add("timp", 0, 1, "D2", 88, "timp", "h")
     timp_roll(s2, 1, 8, midi("D2"), 40, 50)
     s2.mel("timp", "G2:1 r:1 A2:1 r:1 | D2:1 r:1 A2:1 r:1 | D2:1 r:1 A2:1 A2:1", q=8, vel=56, role="timp")
     s3.add("timp", 0, 1, "D2", 84, "timp", "h")
     timp_roll(s3, 24, 27.75, midi("A2"), 48, 70)
     timp_roll(s4, 0, 10, midi("D2"), 40, 20)
-    s2.add("okit", 0, 1, 36, 88, "perc", "h")           # concert bass drum on the peak
+    s2.add("okit", 0, 1, 36, 74, "perc", "h")           # concert bass drum on the peak
     s2.add("okit", 0, 2, 57, 62, "perc", "h")           # soft cymbal crash
-    roll(s1, q_roll, 23.8, 59, 16, 50, rate=12)          # suspended-cymbal swell into the peak
+    roll(s1, q_roll, 23.8, 59, 16, 42, rate=12)          # suspended-cymbal swell into the peak
     # Jonah sleeps: the theme head in D minor on clarinet, a low bassoon sigh-snore
     s4.mel("clar", "F4:3/2 E4:1/2 D4:3/2 A3:1/2 | D4:4 | r:4 | r:4", vel=56)
     s4.mel("bsn", "r:4 | r:4 | r:2 D3:2 | Bb2:2 A2:2", vel=50)
@@ -263,9 +269,9 @@ def storm(c):
     loud = ("trem_hi", "trem_va", "vc_fast", "cb_fast", "tbn", "tuba", "horn", "brass", "timp")
     for p in loud:
         brass = p in ("tbn", "tuba", "horn", "brass")
-        s1.expr(p, [(0, -4), (max(0.5, q_ls0 - 0.9), -5), (q_ls0, -14), (max(q_ls0 + 1, q_le0 - 0.3), -10),
-                    (24, -1)])
-        s2.expr(p, [(0, 0), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -3)])
-        s3.expr(p, [(0, -2), (max(0.5, q_ls2 - 0.2), -4), (q_ls2 + 0.8, -13 if brass else -11),
-                    (max(q_ls2 + 1, q_le2 - 0.3), -13 if brass else -11), (min(27.9, q_le2 + 1.2), -6), (28, -6)])
+        s1.expr(p, [(0, -7), (max(0.5, q_ls0 - 0.9), -7), (q_ls0, -14), (max(q_ls0 + 1, q_le0 - 0.3), -10),
+                    (24, -4)])
+        s2.expr(p, [(0, 0), (0.4, -12), (max(0.5, q_le1 - 0.5), -12), (20, -7)])
+        s3.expr(p, [(0, -7), (max(0.5, q_ls2 - 0.2), -7), (q_ls2 + 0.8, -14 if brass else -12),
+                    (max(q_ls2 + 1, q_le2 - 0.3), -14 if brass else -12), (min(27.9, q_le2 + 1.2), -6), (28, -6)])
     s4.expr(["trem_lo", "trem_va", "cb", "clar", "bsn", "timp"], [(0, -5), (16, -7)])

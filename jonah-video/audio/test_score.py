@@ -45,7 +45,11 @@ def retime(tl, gap=None, speech=1.0):
         cur = lines[0]["start"]
         for ln, g in zip(lines, gaps):
             length = (ln["end"] - ln["start"]) * speech
+            old = ln["start"]
             ln["start"], ln["end"] = round(cur, 3), round(cur + length, 3)
+            for ch in ln.get("chunks") or []:          # word timings move with their line
+                ch["start"] = round(cur + (ch["start"] - old) * speech, 3)
+                ch["end"] = round(cur + (ch["end"] - old) * speech, 3)
             cur = ln["end"] + (gap if gap is not None else g)
         sc["duration"] = round(lines[-1]["end"] + tail, 3)
         sc["start"] = round(t_scene, 3)

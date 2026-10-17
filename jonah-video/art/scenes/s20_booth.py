@@ -1,6 +1,36 @@
 """Scene 20 — the booth (Jonah 4:5).
 
-Draft: helpers only (Jonah's custom poses with his bundle, the booth in building stages).
+One wide 3100 x 1300 stage on a hot, cloudless-ish afternoon. Left: Nineveh's east wall with its open gate
+(mid-distance, hazy, little townspeople in sackcloth on the wall and in the gateway, sheep in sackcloth by the
+watered fields), a road running from the gate across the plain onto a dry ochre ridge. Right: the bare knoll on
+the ridge where Jonah builds his booth (the same props.booth drawing as s11 / s12 v1, split into its stages).
+A high hot sun hangs over the booth the whole time.
+
+Line 0 "约拿没有回答。" — Jonah stands outside the gate, arms crossed, his bundle of sticks and rolled cloth on his
+        back, still bathed in the soft golden light of God's question (light only, never a figure). He turns
+        his back on it with a squash-hop and a grumpy "hmph" (eyes shut, chin up, steam puffs); the light fades.
+        "他出了城，坐在城的东边，" — he marches east along the road (a planted-foot walk cycle: the drawing follows
+        the distance walked), the camera tracking him, stops on the knoll and tosses the bundle down (thud).
+        "为自己搭了一座小棚子。" — with a stone he knocks the four posts in, one per knock of the 'hammer' sound
+        (the cue time is chosen so the sound has 4 knocks and the knock onsets are read from it); lifts the
+        frame (tie bar, rafters, ridge) which drops into place; throws the striped cloth over the ridge (it
+        unrolls downward and settles); leafy branches pop on top. The bundle on the ground shrinks as he uses it.
+        He stands under the roof, hot and panting (sweat).
+Line 1 "他坐在棚子下面的阴凉里，" — he sits down in the booth's thin shade (hop + dust), a cool tint settles on him,
+        eyes closed with relief and a big sigh; the camera pushes in a little; two doves fly toward the city.
+        "要看看这座城到底会怎么样。" — chin on fist, a sulky eye on the city; the camera pulls back to reveal the
+        city he is watching and settles on a calm wide view (blinks, breathing, the cloth stirring).
+
+Notes for maintainers
+* Every time comes from ctx.lines[i].at(phrase) / .start (never fixed numbers).
+* Pose changes are hard cuts hidden by a squash-and-hop (v1 technique); expression-only changes are cuts too
+  (blinks). Jonah's custom poses use characters' rig (C._P / C._figure) with the standard Jonah design; two
+  extra expressions are added to characters.EXPRS only while a drawing is built (removed again right after).
+* The bundle is ONE local drawing (bundle_local) used both on his back (via the design's 'behind' hook) and on
+  the ground, so the toss starts exactly where it was on his back.
+* Booth parts are separate layers while it goes up; once Jonah sits, three layers (back / cloth / front) take
+  over, and the cloth alone breathes gently.
+* Sky, sun, clouds and far dunes have a little parallax against the camera (zero at the final view).
 """
 import math
 import random
@@ -426,7 +456,7 @@ def build(ctx):
     t_turn = L0.at("没有回答") + 0.5              # turns his back on the question: "hmph!"
     t_walk0 = L0.at("出了城") - 0.1               # marches out along the road east of the city
     t_arr = L0.at("搭了") - 0.5                   # arrives on the ridge, tosses the bundle down
-    t_toss = t_arr + 0.06
+    t_toss = t_arr
     t_land = t_toss + 0.36
     t_ham = L0.at("搭了")                         # "为自己搭了一座小棚子": posts knocked in...
     hammer_at, knocks = _hammer_knocks(t_ham + 0.13, ctx.id)
@@ -936,7 +966,7 @@ def build(ctx):
 
     for i, (t0, dy, ph) in enumerate([(t_sit + 0.3, 0, 0), (t_sit + 0.75, 70, 2)]):
         dur = 4.6
-        sc.add(f"dove{i}", dove_frames, frame_at=flap(10, ph), wc=0.4, z=6.5 + 0.01 * i, motion=M.combine(
+        sc.add(f"dove{i}", dove_frames, frame_at=flap(10, ph), wc=0.4, z=5.5 + 0.01 * i, motion=M.combine(
             M.keys([(t0, {"dx": 0, "dy": dy - 30}), (t0 + dur, {"dx": -1800, "dy": dy + 40})], "linear"),
             M.bob(9, 0.7, ph * 0.1),
             lambda t, t0=t0: Tf(alpha=M.progress(t, t0, t0 + 0.3) * (1 - M.progress(t, t0 + dur - 0.4, t0 + dur)))))
@@ -961,18 +991,34 @@ def build(ctx):
         sc.add(f"grass{gi}", gframes, frame_at=grass_fn(gi * 0.23), wc=0.7)
 
     # =========================================================== FX
-    def shimmer(frame, t, view):
-        """Heat shimmer rising off the hot ground."""
+    import cv2
+    import numpy as np
+
+    rng = np.random.default_rng(13)
+    NM = 30                                   # drifting warm dust motes (as FX.motes)
+    m_x, m_y = rng.uniform(100, 3000, NM), rng.uniform(150, 1100, NM)
+    m_vx, m_vy = rng.uniform(-12, 12, NM), rng.uniform(-14, 6, NM)
+    m_r, m_ph = rng.uniform(3, 7, NM), rng.uniform(0, 6.28, NM)
+    HEAT = [(1450, 960), (2250, 950), (2750, 960), (1000, 980), (600, 960), (2500, 1110), (1600, 1120)]
+
+    def atmos(frame, t, view):
+        """Dust motes and heat shimmer rising off the hot ground, drawn on one overlay."""
         ov = Image.new("RGBA", frame.size, (0, 0, 0, 0))
         d = ImageDraw.Draw(ov)
-        for i, (bx, by) in enumerate([(1450, 960), (2250, 950), (2750, 960), (1000, 980), (600, 960), (2500, 1110),
-                                      (1600, 1120)]):
+        sc_ = view.scale
+        for i in range(NM):
+            xx = 100 + (m_x[i] - 100 + m_vx[i] * t + 8 * math.sin(t * 0.7 + m_ph[i])) % 2900
+            yy = 150 + (m_y[i] - 150 + m_vy[i] * t) % 950
+            ox, oy = view.to_out(xx, yy)
+            r = m_r[i] * sc_
+            a = int(100 * (0.6 + 0.4 * math.sin(t * 1.3 + m_ph[i])))
+            d.ellipse([ox - r, oy - r, ox + r, oy + r], fill=(255, 246, 214, a))
+        for i, (bx, by) in enumerate(HEAT):
             u = (t * 0.55 + i * 0.37) % 1.0
             ox, oy = view.to_out(bx, by - 80 * u)
             if not (-60 < ox < frame.size[0] + 60):
                 continue
             a = int(95 * math.sin(math.pi * u))
-            sc_ = view.scale
             for j in range(3):
                 x0 = ox + (j - 1) * 22 * sc_
                 pts = [(x0 + 7 * sc_ * math.sin(q * 1.1 + t * 7 + i), oy - q * 9 * sc_) for q in range(9)]
@@ -980,12 +1026,26 @@ def build(ctx):
         frame.alpha_composite(ov)
         return frame
 
+    # warm heat vignette (constant; as FX.vignette(0.16) but precomputed)
+    _vg = {}
+
+    def vignette(frame, t, view):
+        if "k" not in _vg:
+            Hh, Ww = frame.size[1], frame.size[0]
+            yy, xx = np.mgrid[0:Hh, 0:Ww].astype(np.float32)
+            rr = np.sqrt(((xx - Ww / 2) / (Ww / 2)) ** 2 + ((yy - Hh / 2) / (Hh / 2)) ** 2)
+            a = np.clip(np.clip((rr - 0.35) / 0.95, 0, 1) ** 1.6 * 0.16, 0, 1)
+            _vg["k"] = cv2.merge([np.round((1 - a) * 255).astype(np.uint8)] * 3)
+            _vg["c"] = cv2.merge([np.round(a * c).astype(np.uint8) for c in (150, 82, 30)])
+        arr = np.array(frame)
+        arr[..., :3] = cv2.add(cv2.multiply(arr[..., :3], _vg["k"], scale=1 / 255.0), _vg["c"])
+        return Image.fromarray(arr, "RGBA")
+
     sc.fx = [
         FX.sparkles((520, 240, 1400, 880), count=16, t0=0.0, t1=t_turn + 0.9, color=(255, 240, 180), size=(8, 18),
                     period=1.4, drift=-8, seed=5),
-        FX.motes((100, 150, 3000, 1100), count=30, color=(255, 246, 214), alpha=100),
-        shimmer,
-        FX.vignette(lambda t: 0.16, color=(150, 82, 30)),
+        atmos,
+        vignette,
     ]
 
     # =========================================================== SOUND

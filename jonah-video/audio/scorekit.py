@@ -233,6 +233,11 @@ class Seg:
             for q, db in points:
                 self.score.expr[p].append((self.t(q), float(db)))
 
+    def duck(self, db):
+        """Extra attenuation (dB, all parts) while narration is spoken inside this segment: for
+        passages whose texture is full, so the words stay clear while the pauses keep their weight."""
+        self.score.ducks.append((self.t0, self.t1, float(db)))
+
     def sync(self, label, q, target_rel, kind="hit"):
         """Record a hit point: musical position q should land at cue-relative time target_rel.
 
@@ -308,6 +313,10 @@ def _family(plist):
     return plist[0]
 
 
+class PhraseNotFound(KeyError):
+    """A cue listens for a phrase that is not in its scene's narration."""
+
+
 class Cue:
     def __init__(self, score, scene, t1):
         self.score = score
@@ -340,7 +349,7 @@ class Cue:
         for i, ln in enumerate(self.scene["lines"]):
             if phrase in ln["text"]:
                 return i
-        raise KeyError(f"{self.id}: no line contains {phrase!r}")
+        raise PhraseNotFound(f"{self.id}: no line contains {phrase!r}")
 
     def at(self, phrase, end=False):
         """Cue-relative time where phrase starts (end=True: where it ends) in the narration.
@@ -402,6 +411,7 @@ class Score:
         self.voicings = []         # (label, chord symbols, voicings, bass pitches) from Seg.pad
         self.last_voicing = {}     # family -> (end time s, last voicing, last bass) for pad continuity
         self.guide_notes = None    # voice -> [(t0, t1, pitch, role)] from a previous build pass
+        self.ducks = []            # (t0, t1, dB): extra speech ducking per segment (Seg.duck)
         self.speech_iv = []
         for s in timeline["scenes"]:
             for ln in s["lines"]:
@@ -529,7 +539,11 @@ class Score:
             db = np.interp(t, ts, dbs)
         else:
             db = np.full_like(t, -3.0)
-        db = db - PARTS[part].duck_db * self.speech(t)
+        extra = np.zeros_like(t, dtype=float)
+        for a, b, d in self.ducks:                      # 0.3 s ramps at the window edges
+            w = np.clip(np.minimum(t - (a - 0.3), (b + 0.3) - t) / 0.3, 0, 1)
+            extra = np.maximum(extra, d * w)
+        db = db - (PARTS[part].duck_db + extra) * self.speech(t)
         return np.minimum(db, 0.0)
 
     # --------------------------------------------------------------- MIDI

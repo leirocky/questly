@@ -69,13 +69,24 @@ def gliss(seg, part, q0, dur_s, lo, hi, up=True, v0=40, v1=70, scale=None):
         seg.add(part, seg.q_of(tk), 0.1, p, v, "gliss", "h")
 
 
+def timp_pitch(ch, pitch, lo=38, hi=57):
+    """pitch if it belongs to the chord, else the chord's bass (or nearest chord tone) in the drum range."""
+    if pitch % 12 in ch.pcset:
+        return pitch
+    bass = [p for p in range(lo, hi + 1) if p % 12 == ch.bass]
+    pool = bass or [p for p in range(lo, hi + 1) if p % 12 in ch.pcset]
+    return min(pool, key=lambda p: abs(p - pitch))
+
+
 def timp_roll(seg, q0, q1, pitch, v0, v1, rate=13.0):
+    """Timpani roll; across a chord change it re-tunes to a tone of the new chord (its bass if possible)."""
     t0, t1 = seg.t(q0), seg.t(q1)
     n = max(2, int((t1 - t0) * rate))
     for k in range(n):
         tk = t0 + k * (t1 - t0) / n
         v = v0 + (v1 - v0) * k / (n - 1) + (3 if k % 2 else -3)
-        seg.add("timp", seg.q_of(tk), (q1 - q0) / n, pitch, v, "timp")
+        qk = seg.q_of(tk)
+        seg.add("timp", qk, (q1 - q0) / n, timp_pitch(seg.chord_at(qk + 1e-3), pitch), v, "timp")
 
 
 def roll(seg, q0, q1, key, v0, v1, part="okit", rate=14.0, accel=1.0):

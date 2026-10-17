@@ -25,8 +25,10 @@ Story beats (keyed to the narration chunks; Jonah speaks the whole scene):
 The last second is a calm hold in the glowing belly.
 
 God is never drawn: only warm light, a beam and sparkles.
-Engine notes: blend="screen" saturates, so glows use "add"/"normal" (as in v1). Belly layers sit below the
-opaque deep-sea background (which is switched off at the white-out), so the static belly flattens into one image.
+Engine notes: blend="screen" saturates, so glows use "add"/"normal" (as in v1). Deep layers are switched off and
+belly layers on at T_SW (inside the fully golden frame of the white-out), where the camera also cuts from the deep
+to the belly region. Cost is kept down by merging the water with the parallax far peaks, stretching the beam
+instead of a per-frame reveal mask, and precomputing the vignette + mist overlay.
 """
 import math
 import random
@@ -155,8 +157,8 @@ for _i in range(1, len(WEED_PTS)):
     WEED_S.append(WEED_S[-1] + math.dist(WEED_PTS[_i - 1], WEED_PTS[_i]))
 S_ON0 = WEED_S[4 * _STEPS]      # where the ribbon first touches the head-cloth (front top)
 S_ON1 = WEED_S[10 * _STEPS]     # where it leaves the head (behind the neck, at the shoulder)
-LEN_A = (S_ON1 - S_ON0) + 1.8   # the main ribbon: the wrapped part + a tail that streams up in front
-LEN_B = 3.2
+LEN_A = (S_ON1 - S_ON0) + 0.35  # the main ribbon: the wrapped part + a short tip curling over the brow
+LEN_B = 3.0
 
 
 def _weed_at(s):
@@ -186,7 +188,7 @@ def _weed_at(s):
     return (x0 + (x1 - x0) * u, y0 + (y1 - y0) * u), (-ty, tx)
 
 
-def _ribbon(R, s_lead, length, width, col, phase, shift=(0.0, 0.0), amp=0.3):
+def _ribbon(R, s_lead, length, width, col, phase, shift=(0.0, 0.0), amp=0.18):
     """One seaweed blade whose leading end is at arc length s_lead (head coords, px = units * R)."""
     n = 30
     cl = []
@@ -199,7 +201,7 @@ def _ribbon(R, s_lead, length, width, col, phase, shift=(0.0, 0.0), amp=0.3):
             f = min(1.0, (s - S_ON1) / 1.0)
         else:
             f = 0.0
-        off = amp * f * math.sin(2 * math.pi * s / 2.3 - phase)
+        off = amp * f * math.sin(2 * math.pi * s / 3.4 - phase)
         cl.append(((x + shift[0] + nx * off) * R, (y + shift[1] + ny * off) * R))
     left, right = [], []
     for i, p in enumerate(cl):
@@ -228,13 +230,13 @@ def weed_head(R, p, phase):
         sb = (S_ON0 - 0.5) + (S_ON1 - 0.25 - S_ON0 + 0.5) * pb
     else:
         sb = S_ON1 - 0.25 + (pb - 1) * (LEN_B + 3.4)
-    return (_ribbon(R, sb, LEN_B, 0.13, "#5e8a4a", phase + 1.1, shift=(0.12, 0.18), amp=0.26) +
+    return (_ribbon(R, sb, LEN_B, 0.13, "#5e8a4a", phase + 1.1, shift=(0.1, 0.16), amp=0.16) +
             _ribbon(R, sa, LEN_A, 0.2, P["olive"], phase))
 
 
 # ================================================================== deep-sea painting
-WATER = [(0, "#7cbcc8"), (0.16, "#59a3b9"), (0.36, "#4287a8"), (0.58, "#356f97"), (0.8, "#2d5585"),
-         (1, "#2a4675")]
+WATER = [(0, "#7cbcc8"), (0.16, "#59a3b9"), (0.36, "#4287a8"), (0.55, "#33688f"), (0.75, "#294a7a"),
+         (1, "#21365f")]
 MT = dict(top="#56679b", bottom="#323f6e", edge="#283460", rim="#93a7d2", ledge="#2a355f")
 FAR = dict(a="#5b86ac", b="#4d779f", ink="#3d5d84")
 
@@ -281,7 +283,7 @@ def deep_bg():
                                   (1, "#d8f3ec", 0)])
     defs += S.rad_grad("dtopglow", [(0, "#e8f6ee", 0.55), (0.5, "#cdeee8", 0.18), (1, "#cdeee8", 0)])
     b = f'<rect x="-20" y="-20" width="{W + 40}" height="{H + 40}" fill="url(#dw)"/>'
-    b += f'<ellipse cx="900" cy="-80" rx="1300" ry="620" fill="url(#dtopglow)"/>'
+    b += '<ellipse cx="900" cy="-80" rx="1300" ry="620" fill="url(#dtopglow)"/>'
     sh = ""
     for x, w, lean, ln in [(560, 110, 260, 1500), (820, 70, 300, 1300), (1040, 150, 330, 1700),
                            (1330, 80, 360, 1400), (1560, 120, 390, 1550), (300, 60, 210, 1100),
@@ -297,42 +299,84 @@ def deep_bg():
         sp += (f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{r.uniform(1.5, 3.5):.1f}" fill="#d6f0ee" '
                f'opacity="{r.uniform(0.12, 0.3) * (1.1 - y / H * 0.5):.2f}"/>')
     b += sp
-    return doc(b, defs)
+    return b, defs
 
 
 def far_mountains():
-    """Hazy far peaks (they move a little with the camera: parallax)."""
+    """Hazy far pinnacles of the undersea mountains with kelp silhouettes (they move a little with the camera:
+    parallax). Lighter than the near flanks but close to the water colour, so the deep stays deep."""
+    defs = ""
     b = ""
-    defs = S.lin_grad("fma", [(0, S.mix(FAR["a"], "#9cc6d6", 0.25)), (0.5, FAR["a"]), (1, S.mix(FAR["a"], "#2d5585", 0.4))])
-    defs += S.lin_grad("fmb", [(0, S.mix(FAR["b"], "#9cc6d6", 0.2)), (0.5, FAR["b"]), (1, S.mix(FAR["b"], "#2a4675", 0.45))])
-    peaks = [
-        ("fmb", [(-200, 2600), (-120, 1500), (40, 1130), (210, 940), (330, 880), (470, 960), (600, 1150),
-                 (700, 1400), (820, 1700), (960, 2050), (1080, 2600)]),
-        ("fma", [(380, 2600), (520, 2000), (700, 1500), (860, 1220), (980, 1100), (1100, 1140), (1230, 1330),
-                 (1380, 1650), (1520, 2000), (1640, 2600)]),
-        ("fmb", [(1150, 2600), (1300, 1900), (1460, 1450), (1620, 1150), (1760, 1010), (1880, 1040),
-                 (2000, 1180), (2120, 1400), (2300, 1800), (2300, 2600)]),
+    peaks = [  # (ridge from left foot over the top to the right foot, colour top, colour bottom, seed)
+        ([(-260, 2700), (-160, 1700), (-40, 1260), (90, 1010), (190, 905), (280, 930), (360, 1060), (430, 1170),
+          (520, 1230), (610, 1420), (720, 1760), (860, 2200), (960, 2700)], "#47709c", "#2c4a78", 2),
+        ([(1180, 2700), (1300, 2150), (1420, 1700), (1520, 1380), (1610, 1180), (1690, 1060), (1770, 1030),
+          (1850, 1110), (1930, 1300), (2040, 1560), (2200, 1900), (2320, 2700)], "#47709c", "#2c4a78", 5),
+        ([(420, 2700), (560, 2160), (690, 1760), (790, 1520), (880, 1400), (960, 1350), (1040, 1380),
+          (1130, 1470), (1240, 1660), (1360, 1960), (1480, 2700)], "#3f6894", "#2a4573", 8),
     ]
-    for gid, pts in peaks:
-        b += S.path(S.smooth_path(pts, tension=0.8), fill=f"url(#{gid})", sw=0, stroke=False)
-        b += S.path(S.smooth_path(pts[1:-1], closed=False, tension=0.8), stroke=False,
-                    extra=f'stroke="{FAR["ink"]}" stroke-width="3" fill="none" opacity="0.55"')
-    # soft ledges on the far peaks
-    for (x, y, w) in ((260, 1050, 160), (900, 1300, 200), (1720, 1150, 180), (520, 1500, 220), (1350, 1700, 220),
-                      (1850, 1550, 200)):
-        b += (f'<path d="M{x - w / 2},{y} q{w / 2},{-w * 0.12} {w},0" stroke="#86aecb" stroke-width="7" '
-              f'fill="none" stroke-linecap="round" opacity="0.35"/>')
+    for k, (ridge, c0, c1, seed) in enumerate(peaks):
+        gid = f"fm{k}"
+        defs += (f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="0" y1="{min(y for _, y in ridge)}" '
+                 f'x2="0" y2="2300"><stop offset="0" stop-color="{c0}"/><stop offset="1" stop-color="{c1}"/>'
+                 f'</linearGradient>')
+        lump = _lumpy(ridge, 1, seed)
+        b += S.path(S.smooth_path(lump, tension=0.8), fill=f"url(#{gid})", stroke=False)
+        b += S.path(S.smooth_path(lump[1:-1], closed=False, tension=0.8), stroke=False,
+                    extra='stroke="#2c4670" stroke-width="3.5" fill="none" opacity="0.7"')
+        # rim light along the upper ridge and a few soft ledges
+        top = [(x, y + 9) for x, y in lump if y < min(yy for _, yy in ridge) + 380]
+        if len(top) > 2:
+            b += S.path(S.smooth_path(top, closed=False), stroke=False,
+                        extra='stroke="#7fa3c6" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.4" '
+                              'filter="url(#soft)"')
+        r = random.Random(seed)
+        for _ in range(5):
+            i = r.randint(3, len(lump) - 4)
+            x, y = lump[i]
+            if y > 2250:
+                continue
+            w = r.uniform(80, 160)
+            cx = (ridge[0][0] + ridge[-1][0]) / 2
+            x2 = x + (cx - x) * r.uniform(0.15, 0.35)
+            b += (f'<path d="M{x2 - w / 2:.0f},{y + 40:.0f} q{w / 2:.0f},{-w * 0.14:.0f} {w:.0f},0" stroke="#6f93b8" '
+                  f'stroke-width="6" fill="none" stroke-linecap="round" opacity="0.32"/>')
+    # far kelp forests on the slopes (soft silhouettes)
+    kelp = ""
+    for i, (x, y0, h, lean) in enumerate([(120, 1500, 320, 25), (200, 1420, 260, -18), (640, 1700, 360, 20),
+                                          (1300, 1820, 300, -22), (1720, 1450, 340, 18), (1830, 1500, 260, -15),
+                                          (980, 1900, 280, 14), (380, 1900, 300, -20)]):
+        pts = [(x + lean * math.sin(k / 5 * math.pi * 1.3) * (k / 5), y0 - h * k / 5) for k in range(6)]
+        kelp += S.path(S.smooth_path(pts, closed=False), stroke=False,
+                       extra=f'stroke="#355d88" stroke-width="{16 - i % 3 * 3}" fill="none" stroke-linecap="round" '
+                             f'opacity="0.7"')
+        for k in range(1, 5):
+            px, py = pts[k]
+            sd = 1 if k % 2 else -1
+            kelp += (f'<ellipse cx="{px + sd * 18:.0f}" cy="{py:.0f}" rx="22" ry="8" fill="#355d88" opacity="0.7" '
+                     f'transform="rotate({sd * -30} {px + sd * 18:.0f} {py:.0f})"/>')
+    b += kelp
+    defs += S.lin_grad("fhaze", [(0, "#4287a8", 0), (0.45, "#33688f", 0.2), (1, "#21365f", 0.5)])
     b += f'<rect x="-20" y="900" width="{W + 40}" height="{H}" fill="url(#fhaze)"/>'
-    defs += S.lin_grad("fhaze", [(0, "#4287a8", 0), (0.5, "#356f97", 0.25), (1, "#2a4675", 0.55)])
-    return doc(S.g(b, filter="wobble"), defs)
+    return S.g(b, filter="wobble"), defs
+
+
+def deep_far():
+    """Water + light shafts + the far peaks in one layer (it moves a little with the camera: parallax).
+    The water is painted 300 px past the stage top so the shift never shows an edge."""
+    b0, d0 = deep_bg()
+    b1, d1 = far_mountains()
+    return doc(f'<g transform="translate(0,-300)"><rect x="-20" y="0" width="{W + 40}" height="320" '
+               f'fill="#7cbcc8"/></g>' + b0 + b1, d0 + d1)
 
 
 def _mass(ridge, side, gid, seed):
     """One mountain flank: lumpy ridge, gradient body, ledges, rim light; side +1 = left mass."""
     lump = _lumpy(ridge, side, seed)
-    end_x = lump[-1][0]
+    end_x, end_y = lump[-1]
     edge_x = -200 if side > 0 else W + 200
-    body_pts = lump + [(end_x, H + 200), (edge_x, H + 200), (edge_x, lump[0][1])]
+    mid_x = (end_x + edge_x) / 2
+    body_pts = lump + [(end_x - side * 70, end_y + 8), (mid_x, 2080), (edge_x, 2120), (edge_x, lump[0][1])]
     d = S.smooth_path(body_pts, tension=0.7)
     out = S.path(d, fill=f"url(#{gid})", sw=5)
     # inner shading toward the stage edge
@@ -361,7 +405,8 @@ def _mass(ridge, side, gid, seed):
 
 
 def near_mountains():
-    """Both mountain flanks, the sandy floor at their foot and the stone roots — one static layer."""
+    """Both mountain flanks, the sandy floor at their foot and the stone roots — one static layer.
+    Order: floor -> roots -> flanks (their feet hide the roots' bases) -> plants."""
     defs = ""
     for gid, x0, x1 in (("mtl", -100, 900), ("mtr", W + 100, 1250)):
         defs += (f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="0" y1="400" x2="0" y2="{H}">'
@@ -371,22 +416,13 @@ def near_mountains():
                  f'<stop offset="0" stop-color="{MT["edge"]}" stop-opacity="0.6"/>'
                  f'<stop offset="0.6" stop-color="{MT["edge"]}" stop-opacity="0.12"/>'
                  f'<stop offset="1" stop-color="{MT["edge"]}" stop-opacity="0"/></linearGradient>')
-    b = _mass(L_RIDGE, 1, "mtl", 3) + _mass(R_RIDGE, -1, "mtr", 7)
-
-    # sea plants and anemones on the ledges of the flanks (mid-depth: lighter, friendly)
-    plants = ""
-    for (x, y, s_, v) in ((150, 640, 0.45, 2), (238, 905, 0.5, 0), (300, 1160, 0.55, 3), (420, 1530, 0.6, 2),
-                          (1985, 590, 0.45, 0), (1915, 880, 0.5, 2), (1840, 1160, 0.55, 3), (1700, 1580, 0.6, 1)):
-        plants += PR.seaweed(x, y, s_, variant=v)
-    plants += V6._anemone(205, 790, 0.7, "#e9877f") + V6._anemone(1950, 770, 0.6, "#f0a65a")
-    plants += V6._anemone(360, 1370, 0.75, "#d98bc0") + V6._anemone(1765, 1400, 0.7, "#e9877f")
-    b += S.g(plants, opacity=0.8)
-
+    b = ""
     # the sandy floor at the foot of the mountains (a soft hollow in the middle — the 'pit')
     defs += S.lin_grad("dfl", [(0, "#7a86ab"), (0.35, "#5d6a95"), (1, "#3f4a78")])
     fl = [(-200, 2150), (200, 2120), (560, 2100), (860, 2092), (1060, 2086), (1260, 2094), (1560, 2104),
           (1900, 2125), (2300, 2150), (2300, H + 200), (-200, H + 200)]
     b += S.g(S.path(S.smooth_path(fl, tension=0.6), fill="url(#dfl)", sw=5), filter="wobble")
+    b += f'<ellipse cx="{JXD + 10}" cy="2130" rx="330" ry="46" fill="#3f4a78" opacity="0.35" filter="url(#blur-md)"/>'
     det = ""
     for i, (x, y, w) in enumerate(((300, 2190, 220), (620, 2160, 180), (1500, 2170, 200), (1840, 2200, 240),
                                    (950, 2230, 260), (1300, 2260, 220), (520, 2290, 240))):
@@ -396,36 +432,59 @@ def near_mountains():
                        (1980, 2290, 20)):
         det += (f'<ellipse cx="{x}" cy="{y}" rx="{rr * 1.4}" ry="{rr}" fill="{S.mix(MT["top"], "#9aa6c8", 0.4)}" '
                 f'stroke="{P["ink"]}" stroke-width="3"/>')
-    det += V6._starfish(1380, 2205, 26, "#e7926f", rot=15) + V6._starfish(700, 2250, 20, "#f0b45c", rot=-10)
-    det += V6._shell(880, 2180, 17) + V6._shell(1560, 2290, 20)
+    det += V6._starfish(1180, 2215, 26, "#e7926f", rot=15) + V6._starfish(760, 2262, 20, "#f0b45c", rot=-10)
+    det += V6._shell(905, 2178, 17) + V6._shell(1400, 2300, 20)
     b += S.g(det, filter="wobble-fine")
 
-    # the stone roots of the mountains, curling out across the floor toward the hollow
-    defs += S.lin_grad("root", [(0, "#5b6c9f"), (1, "#36437a")])
-    roots = [
-        ([(380, 1940), (520, 2050), (680, 2120), (820, 2150), (900, 2172)], 70, 14),
-        ([(560, 1880), (660, 1990), (760, 2060), (860, 2090)], 56, 12),
-        ([(200, 2050), (330, 2160), (500, 2230), (640, 2262)], 80, 16),
-        ([(1780, 1930), (1640, 2040), (1480, 2110), (1340, 2140), (1250, 2158)], 70, 14),
-        ([(1600, 1860), (1490, 1980), (1380, 2050), (1300, 2080)], 54, 12),
-        ([(1960, 2040), (1820, 2150), (1650, 2220), (1500, 2250)], 82, 16),
+    # the stone roots of the mountains: knobbly fingers of rock coming out from under each mountain's foot,
+    # arching over the sand and dipping into it toward the hollow
+    defs += S.lin_grad("root", [(0, "#62739f"), (0.55, "#47558c"), (1, "#343f72")])
+    roots = [  # centre line (from inside the mountain), width there, width at the tip
+        ([(300, 2030), (460, 2050), (580, 2032), (680, 2040), (770, 2075), (830, 2125), (848, 2165)], 74, 11),
+        ([(80, 2150), (260, 2175), (420, 2172), (540, 2196), (630, 2240), (668, 2300)], 86, 13),
+        ([(1830, 2030), (1660, 2052), (1540, 2036), (1440, 2046), (1360, 2080), (1305, 2128), (1290, 2168)], 74, 11),
+        ([(2040, 2150), (1860, 2178), (1700, 2176), (1580, 2200), (1500, 2244), (1468, 2302)], 86, 13),
     ]
     rt = ""
     for cl, w0, w1 in roots:
         dense = V._catmull(cl, 8)
         rt += S.path(_tube(dense, w0, w1), fill="url(#root)", sw=4.5)
-        hi = [(x, y - (w0 * 0.55 * (1 - i / len(dense)) + w1 * 0.5 * i / len(dense))) for i, (x, y) in enumerate(dense)]
-        rt += S.path(S.smooth_path(hi[2:-3], closed=False), stroke=False,
-                     extra=f'stroke="{MT["rim"]}" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.45"')
-        # knobbly bumps
-        for j in (len(dense) // 3, 2 * len(dense) // 3):
+        n = len(dense)
+        hi = []
+        for i, (x, y) in enumerate(dense[1:-5], start=1):
+            u = i / (n - 1)
+            hi.append((x, y - lerp(w0, w1, u ** 0.8) * 0.58))
+        rt += S.path(S.smooth_path(hi, closed=False), stroke=False,
+                     extra=f'stroke="{MT["rim"]}" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.5"')
+        # knuckles: little creases across the root
+        for j in (int(n * 0.38), int(n * 0.55), int(n * 0.72)):
             x, y = dense[j]
-            rt += (f'<path d="M{x - 18},{y - 6} q18,-16 36,0" stroke="{MT["ledge"]}" stroke-width="5" fill="none" '
-                   f'stroke-linecap="round" opacity="0.6"/>')
+            ww = lerp(w0, w1, (j / (n - 1)) ** 0.8) * 0.75
+            rt += (f'<path d="M{x - 4:.0f},{y - ww:.0f} q-9,{ww:.0f} 0,{ww * 1.7:.0f}" stroke="{MT["ledge"]}" '
+                   f'stroke-width="4.5" fill="none" stroke-linecap="round" opacity="0.65"/>')
+        # a soft shadow on the sand under the arch
+        x, y = dense[int(n * 0.55)]
+        rt += f'<ellipse cx="{x:.0f}" cy="{y + w0 * 0.55:.0f}" rx="{w0 * 1.6:.0f}" ry="{w0 * 0.2:.0f}" fill="#2a3360" opacity="0.4" filter="url(#soft)"/>'
     b += S.g(rt, filter="wobble")
-    plants2 = (PR.seaweed(330, 2075, 0.6, 1) + PR.seaweed(1850, 2080, 0.65, 2) + PR.seaweed(1720, 2200, 0.5, 3) +
-               PR.seaweed(560, 2245, 0.5, 2) + V6._anemone(470, 2060, 0.8, "#f0a65a") +
-               V6._anemone(1640, 2068, 0.75, "#d98bc0"))
+    # sand banked up against the tips (they dip into the floor)
+    for (x, y, rx) in ((848, 2172, 46), (668, 2306, 60), (1290, 2175, 46), (1468, 2308, 60)):
+        b += S.g(f'<path d="M{x - rx},{y + 8} Q{x},{y - 22} {x + rx},{y + 8} Z" fill="#7782a8" stroke="{P["ink"]}" '
+                 f'stroke-width="3"/>', filter="wobble-fine")
+
+    # the two mountain flanks (their feet sit on the sand and cover the roots' bases)
+    b += _mass(L_RIDGE, 1, "mtl", 3) + _mass(R_RIDGE, -1, "mtr", 7)
+
+    # sea plants and anemones on the ledges of the flanks (mid-depth: lighter, friendly)
+    plants = ""
+    for (x, y, s_, v) in ((150, 640, 0.45, 2), (238, 905, 0.5, 0), (300, 1160, 0.55, 3), (420, 1530, 0.6, 2),
+                          (1985, 590, 0.45, 0), (1915, 880, 0.5, 2), (1840, 1160, 0.55, 3), (1700, 1580, 0.6, 1)):
+        plants += PR.seaweed(x, y, s_, variant=v)
+    plants += V6._anemone(205, 790, 0.7, "#e9877f") + V6._anemone(1950, 770, 0.6, "#f0a65a")
+    plants += V6._anemone(360, 1370, 0.75, "#d98bc0") + V6._anemone(1765, 1400, 0.7, "#e9877f")
+    b += S.g(plants, opacity=0.8)
+    plants2 = (PR.seaweed(560, 1990, 0.55, 1) + PR.seaweed(1580, 1985, 0.6, 2) + PR.seaweed(1640, 2215, 0.5, 3) +
+               PR.seaweed(470, 2262, 0.5, 2) + V6._anemone(650, 1995, 0.75, "#f0a65a") +
+               V6._anemone(1470, 2000, 0.7, "#d98bc0"))
     b += plants2
     return doc(b, defs)
 
@@ -437,9 +496,9 @@ def foreground():
                fill=rock, sw=5)
     b += S.path(S.smooth_path([(1820, H + 100), (1880, 2270), (2000, 2190), (2150, 2170), (2260, 2200),
                                (2260, H + 100)]), fill=rock, sw=5)
-    b += (f'<path d="M30,2195 q90,-20 170,10" stroke="#5b6c9f" stroke-width="8" fill="none" stroke-linecap="round" '
-          f'opacity="0.5"/><path d="M1990,2205 q90,-26 180,-6" stroke="#5b6c9f" stroke-width="8" fill="none" '
-          f'stroke-linecap="round" opacity="0.5"/>')
+    b += ('<path d="M30,2195 q90,-20 170,10" stroke="#5b6c9f" stroke-width="8" fill="none" stroke-linecap="round" '
+          'opacity="0.5"/><path d="M1990,2205 q90,-26 180,-6" stroke="#5b6c9f" stroke-width="8" fill="none" '
+          'stroke-linecap="round" opacity="0.5"/>')
     return doc(S.g(b, filter="wobble"))
 
 
@@ -579,13 +638,13 @@ def bubble_fx(sources, seed=3, t_end=1e9):
     return fx
 
 
-def prayer_stream(src, y_top, level, count=34, seed=31, color=(255, 230, 150)):
+def prayer_stream(src, y_top, level, count=46, seed=31, color=(255, 230, 150)):
     """Golden sparkles rising quickly from Jonah's folded hands up out of the picture (his prayer).
     level(t) 0..1 sets how many are lit; src = (x, y) stage px."""
     rng = np.random.default_rng(seed)
     ph = rng.uniform(0, 1, count)
     sp = rng.uniform(230, 360, count)
-    sz = rng.uniform(7, 15, count)
+    sz = rng.uniform(10, 21, count)
     wob = rng.uniform(0, 6.3, count)
     order = rng.permutation(count) / count
     span = src[1] - y_top
@@ -611,6 +670,36 @@ def prayer_stream(src, y_top, level, count=34, seed=31, color=(255, 230, 150)):
             V._star(d, ox, oy, sz[i] * view.scale * (0.6 + 0.4 * tw), color, a)
         frame.alpha_composite(ov)
         return frame
+    return fx
+
+
+def dream_overlay(level, mist=0.42, vign_col=(22, 26, 62), mist_col=(214, 236, 236), reach=0.16, step=0.03):
+    """The remembered-picture look in one precomputed overlay (output space): a soft indigo vignette (strength
+    level(t), quantised to ``step``; same falloff as engine.fx.vignette) under a soft misty border.
+    level(t) <= 0 draws nothing."""
+    from engine.paths import OUT_H, OUT_W
+    yy, xx = np.mgrid[0:OUT_H, 0:OUT_W].astype(np.float32)
+    r = np.sqrt(((xx - OUT_W / 2) / (OUT_W / 2)) ** 2 + ((yy - OUT_H / 2) / (OUT_H / 2)) ** 2)
+    vbase = np.clip((r - 0.35) / 0.95, 0, 1) ** 1.6
+    dx = np.minimum(xx, OUT_W - 1 - xx) / (OUT_W * 0.5)
+    dy = np.minimum(yy, OUT_H - 1 - yy) / (OUT_H * 0.5)
+    mbase = np.clip(1 - np.minimum(dx, dy) / reach, 0, 1) ** 2.2
+    mist_im = Image.new("RGBA", (OUT_W, OUT_H), mist_col)
+    mist_im.putalpha(Image.fromarray((mbase * 255 * mist).astype(np.uint8), "L"))
+    cache = {}
+
+    def overlay(q):
+        if q not in cache:
+            v = Image.new("RGBA", (OUT_W, OUT_H), vign_col)
+            v.putalpha(Image.fromarray((np.clip(vbase * q * step, 0, 1) * 255).astype(np.uint8), "L"))
+            cache[q] = Image.alpha_composite(v, mist_im)
+        return cache[q]
+
+    def fx(frame, t, view):
+        s = float(level(t))
+        if s <= 0.003:
+            return frame
+        return Image.alpha_composite(frame, overlay(int(round(s / step))))
     return fx
 
 
@@ -663,12 +752,11 @@ def build(ctx):
     t_pr = chunk_t(L2, "祷告", 0.58)                     # '我的祷告，一直达到了你的面前' — prayer rises
     t_beam0, t_beam1 = t_pr + 1.0, L3.start + 0.1       # the beam reaches down
     t_lift = L3.start + 0.12                            # '你把我从深坑里，救了上来' — lifted up
-    t_up = phrase_t(L3, "救了上来", fallback=0.6)
     t_wf0 = L3.end + 0.08                               # the page is fully golden-white ...
-    t_wf1 = L3.end + 0.30                               # ... until here
+    t_wf1 = L3.end + 0.20                               # ... until here
     T_SW = (t_wf0 + t_wf1) / 2                          # switch deep -> belly under the white-out
     t_wo0 = t_wf0 - 0.85                                # white-out starts
-    t_wo1 = max(t_wf1 + 0.6, L4.start + 0.3)            # ... and has cleared
+    t_wo1 = max(t_wf1 + 0.6, L4.start + 0.2)            # ... and has cleared
     t_vow = chunk_t(L4, "答应", 0.3) + 0.05              # '我答应你的事，一定会做到' — hands folded, a vow
     t_nod = phrase_t(L4, "一定会做到", fallback=0.55)
     t_sal = chunk_t(L4, "救恩", 0.7)                     # '救恩属于耶和华！' — praise, glow fullest
@@ -685,46 +773,24 @@ def build(ctx):
         return M.combine(m, g) if m is not None else g
 
     # ================================================================ BELLY (z 0..50, under the deep background)
-    sc.add("belly_cool", V.belly_svg(V.COOL, "c", "#1a1430", 1.0), z=0, seed=11)
     stuff = PR.seaweed(1425, 868, 0.42, variant=2)
     stuff += PR.jar(1500, 862, 0.5, rot=78)
     stuff += V.shell(1580, 882, 0.8)
     stuff += V.starfish(705, 975, 30, rot=12)
     stuff += V.shell(1180, 1010, 0.9, "#e7c2d8")
     pool = f'<ellipse cx="{PX}" cy="{PY}" rx="{PRX}" ry="{PRY}" fill="url(#pool)" {S.STROKE_THIN}/>'
-    # (static: flattened together with the cool belly)
-    sc.add("belly_props", S.svg_doc(V.dimmed(stuff, 0.9) + V.dimmed(S.g(pool, filter="wobble"), 0.8),
-                                    defs=S.rad_grad("pool", [(0, "#3f8c96"), (0.7, "#2a5f70"), (1, "#22465a")])), z=0.5)
-
+    # the belly as s11 ends: the cool belly with the warm-lit belly over it (radial mask around Jonah) at 85%,
+    # swelling to its fullest on '救恩属于耶和华' (both switched on at the white-out)
+    sc.add("belly_cool", V.belly_svg(V.COOL, "c", "#1a1430", 1.0), z=0, seed=11, motion=belly_gate())
     warm = masked_doc(V.belly_svg(V.WARM, "w", "#2a1420", 0.65), GX + 40, GY + 40, 900,
                       [(0, 1), (0.35, 0.85), (0.7, 0.3), (1, 0)], "w")
     sc.add("belly_warm", warm, z=1, seed=11, wc_edge=0.0, motion=belly_gate(M.keys(
         [(T_SW, {"alpha": 0.85}), (t_sal - 0.2, {"alpha": 0.88}), (t_sal + 1.2, {"alpha": 1.0})], "sine")))
+    # the swallowed things and the pool (in front of the glow, as in s11)
+    sc.add("belly_props", S.svg_doc(V.dimmed(stuff, 0.9) + V.dimmed(S.g(pool, filter="wobble"), 0.8),
+                                    defs=S.rad_grad("pool", [(0, "#3f8c96"), (0.7, "#2a5f70"), (1, "#22465a")])),
+           z=9.9, motion=belly_gate())
 
-    # wet glints on the walls (as s11, faded by the warm light)
-    for gset in range(3):
-        rr = random.Random(900 + gset)
-        body = ""
-        for _ in range(7):
-            gi = rr.choice((NEAR_I - 3, NEAR_I - 2, NEAR_I - 1, NEAR_I - 1, NEAR_I - 1))
-            u = rr.uniform(0.25, 0.75)
-            ang = rr.choice((rr.uniform(188, 352), rr.uniform(188, 352), rr.uniform(-25, 25), rr.uniform(155, 200)))
-            a0 = math.radians(ang)
-            p0 = V._wall_pt(gi, u, a0)
-            p1 = V._wall_pt(gi, u, a0 + math.radians(rr.uniform(3, 6)))
-            kk = V.KS[gi] + (V.KS[gi + 1] - V.KS[gi]) * u
-            body += (f'<path d="M{p0[0]:.1f},{p0[1]:.1f} L{p1[0]:.1f},{p1[1]:.1f}" stroke="#bfe4e4" '
-                     f'stroke-width="{9 * kk:.1f}" stroke-linecap="round" opacity="0.35" filter="url(#soft)"/>'
-                     f'<path d="M{p0[0]:.1f},{p0[1]:.1f} L{p1[0]:.1f},{p1[1]:.1f}" stroke="#eafcfa" '
-                     f'stroke-width="{3 * kk:.1f}" stroke-linecap="round" opacity="0.8"/>'
-                     f'<circle cx="{(p0[0] + p1[0]) / 2:.1f}" cy="{(p0[1] + p1[1]) / 2:.1f}" r="{4.5 * kk:.1f}" '
-                     f'fill="#f4fffc"/>')
-        per = (2.3, 2.9, 3.4)[gset]
-
-        def gl(t, per=per, ph=gset / 3.0):
-            v = 0.5 + 0.5 * math.sin(2 * math.pi * (t / per + ph))
-            return Tf(alpha=0.45 * (0.12 + 0.88 * v ** 3))
-        sc.add(f"glints{gset}", S.svg_doc(body), z=2 + gset * 0.1, wc=0, motion=belly_gate(gl))
 
     clusters = [[(NEAR_I - 1, 0.2, 195, 0.95)], [(NEAR_I, 0.45, 236, 1.2)], [(NEAR_I - 1, 0.5, 318, 0.9)],
                 [(NEAR_I - 1, 0.55, 12, 0.8)], [(NEAR_I - 2, 0.45, 300, 0.7)]]
@@ -734,22 +800,18 @@ def build(ctx):
                motion=belly_gate(M.combine(lambda t: Tf(alpha=0.55), M.pulse(0.65, 1.0, 2.6 + 0.35 * j, 0.21 * j))))
 
     # God's light behind Jonah: s11's end state, growing to its fullest on '救恩属于耶和华'
+    # (the warm 'ember' core of s11 is folded into the halo here, as a soft normal-blend glow: one layer)
     halo = S.svg_doc(
-        f'<circle cx="{GX}" cy="{GY}" r="640" fill="url(#halo)"/>',
+        f'<circle cx="{GX}" cy="{GY}" r="640" fill="url(#halo)"/>'
+        f'<circle cx="{GX}" cy="{GY + 20}" r="430" fill="url(#emb)"/>',
         defs=S.rad_grad("halo", [(0, "#ffe6a6", 0.55), (0.22, "#fbd38a", 0.4), (0.52, "#f2ad5c", 0.2),
-                                 (1, "#e8913f", 0)]))
+                                 (1, "#e8913f", 0)]) +
+        S.rad_grad("emb", [(0, "#ffd890", 0.3), (0.35, "#f6b860", 0.2), (0.7, "#e89040", 0.07), (1, "#e89040", 0)]))
     sc.add("halo", halo, z=4, wc=0, motion=belly_gate(M.combine(
         M.keys([(T_SW, {"alpha": 0.8, "s": 1.0}), (t_vow, {"alpha": 0.82, "s": 1.02}),
                 (t_sal - 0.2, {"alpha": 0.85, "s": 1.04}), (t_sal + 1.1, {"alpha": 1.0, "s": 1.22})],
                ["linear", "linear", "out"], pivot=(GX, GY)),
         M.breathe(0.03, 2.8, pivot=(GX, GY)))))
-    ember = S.svg_doc(f'<circle cx="{GX:.0f}" cy="{GY + 20:.0f}" r="460" fill="url(#emb)"/>',
-                      defs=S.rad_grad("emb", [(0, "#6a4818", 1), (0.3, "#56360f", 0.85), (0.65, "#2e1a08", 0.4),
-                                              (1, "#000000", 0)]))
-    sc.add("ember", ember, z=4.5, wc=0, blend="add", motion=belly_gate(M.combine(
-        M.keys([(T_SW, {"alpha": 0.5, "s": 1.15}), (t_sal - 0.2, {"alpha": 0.5}), (t_sal + 1.0, {"alpha": 0.8})],
-               "sine", pivot=(GX, GY + 20)),
-        M.breathe(0.035, 2.8, pivot=(GX, GY + 20), phase=0.2))))
     rays = S.svg_doc(S.path(S.rays(GX, GY, 200, 760, n=14, width_deg=4.5), fill="url(#rayg)", stroke=False,
                             extra='filter="url(#blur-md)"'),
                      defs=f'<radialGradient id="rayg" gradientUnits="userSpaceOnUse" cx="{GX}" cy="{GY}" r="760">'
@@ -767,18 +829,15 @@ def build(ctx):
         bx0, bx1 = TOP[0] - 10, GX - 15
         beam_body += (f'<path d="M{bx0 - 80 * wk:.0f},{TOP[1] - 160} L{bx0 + 80 * wk:.0f},{TOP[1] - 160} '
                       f'L{bx1 + 260 * wk:.0f},{JY + 10} L{bx1 - 260 * wk:.0f},{JY + 10} Z" fill="url(#beam)"/>')
-    beam = S.svg_doc(S.g(beam_body, filter="blur-lg"),
+    gold_top = (f'<ellipse cx="{TOP[0]}" cy="{TOP[1] - 30}" rx="420" ry="190" fill="url(#gt)"/>')
+    beam = S.svg_doc(S.g(beam_body, filter="blur-lg") + gold_top,
                      defs=S.lin_grad("beam", [(0, "#4a3a20", 0.0), (0.15, "#4a3a20", 1), (0.75, "#3e2a14", 0.8),
-                                              (1, "#3e2a14", 0.0)]))
+                                              (1, "#3e2a14", 0.0)]) +
+                     S.rad_grad("gt", [(0, "#9a7a40", 1), (0.45, "#7a5a28", 0.6), (1, "#6a4a20", 0)]))
+    # the beam from above and the golden opening at the top (s11's end state), one additive layer
     sc.add("beam", beam, z=6, wc=0, blend="add", motion=belly_gate(M.combine(
-        M.keys([(T_SW, {"alpha": 0.8}), (t_sal - 0.2, {"alpha": 0.8}), (t_sal + 1.0, {"alpha": 1.0})], "sine"),
-        M.pulse(0.85, 1.0, 3.1))))
-    gold_top = S.svg_doc(
-        f'<ellipse cx="{TOP[0]}" cy="{TOP[1] - 30}" rx="420" ry="190" fill="url(#gt)"/>',
-        defs=S.rad_grad("gt", [(0, "#9a7a40", 1), (0.45, "#7a5a28", 0.6), (1, "#6a4a20", 0)]))
-    sc.add("gold_top", gold_top, z=6.5, wc=0, blend="add", motion=belly_gate(M.combine(
-        M.keys([(T_SW, {"alpha": 0.85}), (t_sal - 0.2, {"alpha": 0.85}), (t_sal + 1.0, {"alpha": 1.0})], "sine"),
-        M.breathe(0.04, 2.6, pivot=TOP))))
+        M.keys([(T_SW, {"alpha": 0.82}), (t_sal - 0.2, {"alpha": 0.82}), (t_sal + 1.0, {"alpha": 1.0})], "sine"),
+        M.pulse(0.88, 1.0, 3.1))))
 
     # Jonah in the belly: thanks (hands raised) -> the vow (hands folded, a nod) -> praise (arms high)
     shadow = C.ground_shadow(JX + 10, JY, 1.0, width=320, opacity=0.4)
@@ -795,7 +854,7 @@ def build(ctx):
     sc.add("jonah_vow", S.svg_doc(shadow + vow), z=10.1, motion=M.combine(
         swap(t_vow, t_sal),
         M.keys([(t_vow, {"sy": 0.93, "sx": 1.03, "dy": 7}), (t_vow + 0.3, {"sy": 1.0, "sx": 1.0, "dy": 0}),
-                (t_nod - 0.1, {"rot": 0}), (t_nod + 0.22, {"rot": 3.2, "dy": 3}), (t_nod + 0.6, {"rot": 0, "dy": 0}),
+                (t_nod - 0.1, {"rot": 0}), (t_nod + 0.24, {"rot": 5.0, "dy": 5}), (t_nod + 0.7, {"rot": 0, "dy": 0}),
                 (t_sal - 0.18, {"sy": 1.0, "dy": 0}), (t_sal, {"sy": 0.94, "dy": 5})],
                ["back", "linear", "inout", "inout", "linear", "inout"], pivot=(JX, JY)),
         M.breathe(0.01, 3.0, pivot=(JX, JY), phase=0.3)))
@@ -889,14 +948,12 @@ def build(ctx):
     sc.add("ripple_b", ring, z=16.2, wc=0, motion=belly_gate(ripple_motion(0.28)))
 
     # ================================================================ THE DEEP (z 100+)
-    sc.add("deep_bg", deep_bg(), z=100, wc=0.7, wc_edge=0.0, motion=deep_gate())
-
     def cam_deep(t):
         return deep_cam(t)
 
-    # far peaks: parallax (they move down with 22% of the camera's descent)
+    # water + far peaks: parallax (they move down with 22% of the camera's descent)
     CAM_Y0 = 660.0
-    sc.add("far_mtn", far_mountains(), z=101, wc=0.8,
+    sc.add("deep_far", deep_far(), z=100, wc=0.75, wc_edge=0.0,
            motion=deep_gate(lambda t: Tf(dy=0.22 * (cam_deep(t).y - CAM_Y0))))
 
     # little fish crossing the upper water; jellyfish drifting
@@ -929,13 +986,13 @@ def build(ctx):
                motion=deep_gate(M.pulse(0.6, 1.0, 2.7 + 0.6 * j, 0.3 * j)))
 
     # ---------------------------------------------------------- light from above (prayer heard) + beam
-    top_light = doc(f'<rect x="-20" y="-20" width="{W + 40}" height="1700" fill="url(#tl)"/>',
-                    defs=S.lin_grad("tl", [(0, "#6a5428", 1), (0.55, "#5a4520", 0.75), (0.8, "#3a2a12", 0.3),
+    top_light = doc(f'<ellipse cx="{JXD - 20}" cy="700" rx="1000" ry="820" fill="url(#tl)"/>',
+                    defs=S.rad_grad("tl", [(0, "#7a5418", 1), (0.4, "#64400f", 0.7), (0.75, "#3a2408", 0.25),
                                            (1, "#000000", 0)]))
 
     def top_light_m(t):
         a = 0.85 * progress(t, t_pr + 0.5, t_beam1, "sine") + 0.15 * progress(t, t_lift, t_wf0, "sine")
-        return Tf(dy=cam_deep(t).y - 700, alpha=a)
+        return Tf(dy=cam_deep(t).y - 1300, alpha=a)
     sc.add("top_light", top_light, z=104, wc=0, blend="add", motion=deep_gate(top_light_m))
 
     BX = JXD - 20
@@ -945,15 +1002,14 @@ def build(ctx):
                    f'L{BX - 380 * wk:.0f},{FLOOR + 60} Z" fill="url(#dbeam)"/>')
     beam_doc = doc(S.g(beam_d, filter="blur-lg"),
                    defs=f'<linearGradient id="dbeam" gradientUnits="userSpaceOnUse" x1="0" y1="300" x2="0" '
-                        f'y2="{FLOOR + 60}"><stop offset="0" stop-color="#5a4622" stop-opacity="0.2"/>'
-                        f'<stop offset="0.25" stop-color="#5a4622"/><stop offset="0.9" stop-color="#4a3618"/>'
-                        f'<stop offset="1" stop-color="#4a3618" stop-opacity="0.3"/></linearGradient>')
+                        f'y2="{FLOOR + 60}"><stop offset="0" stop-color="#6e4a16" stop-opacity="0.3"/>'
+                        f'<stop offset="0.25" stop-color="#6e4a16"/><stop offset="0.9" stop-color="#5a3a10"/>'
+                        f'<stop offset="1" stop-color="#5a3a10" stop-opacity="0.3"/></linearGradient>')
 
-    def beam_reveal(t):
-        return {"mode": "down", "frac": max(0.001, progress(t, t_beam0, t_beam1, "inout")), "soft": 260}
-    sc.add("deep_beam", beam_doc, z=104.2, wc=0, blend="add", reveal=beam_reveal, motion=deep_gate(M.combine(
-        M.keys([(t_beam0, {"alpha": 0.0}), (t_beam0 + 0.5, {"alpha": 0.8}), (t_beam1, {"alpha": 0.9}),
-                (t_lift + 0.8, {"alpha": 1.0})], "sine"),
+    # it reaches down from above: stretched from its top (cheap; no per-frame mask)
+    sc.add("deep_beam", beam_doc, z=104.2, wc=0, blend="add", motion=deep_gate(M.combine(
+        M.keys([(t_beam0, {"alpha": 0.0, "sy": 0.12}), (t_beam0 + 0.5, {"alpha": 0.8}), (t_beam1, {"alpha": 0.9, "sy": 1.0}),
+                (t_lift + 0.8, {"alpha": 1.0})], ["sine", "inout", "sine"], pivot=(BX, 300)),
         M.pulse(0.88, 1.0, 2.9))))
 
     # warm glow around Jonah: a tiny light at his hands on '就想起了耶和华', fullest when he is lifted
@@ -978,7 +1034,7 @@ def build(ctx):
 
     def float_pos(t):
         """(dx, dy, rot) of the drifting / sinking Jonah relative to JB0."""
-        u = progress(t, t_sink0, t_land, "inout")
+        u = progress(t, t_sink0, t_land, "sine")
         drift_y = 46 * min(1.0, t / max(0.1, t_sink0))
         x = lerp(JB0[0], LAND_C[0], u) + 22 * math.sin(2 * math.pi * t / 6.0) * (1 - u)
         y = lerp(JB0[1], LAND_C[1] - 46, u) + drift_y + 9 * math.sin(2 * math.pi * t / 3.2) * (1 - u)
@@ -1115,8 +1171,8 @@ def build(ctx):
     # ================================================================ camera
     deep_cam = M.cam_keys([
         (0, Cam(1080, CAM_Y0, 1880)),
-        (t_sink0, Cam(1076, CAM_Y0 + 30, 1820)),
-        (t_land + 0.45, Cam(1066, 1790, 1880)),
+        (t_sink0 - 0.1, Cam(1076, CAM_Y0 + 30, 1820)),
+        (t_land + 0.1, Cam(1066, 1790, 1880)),
         (t_kneel, Cam(1062, 1832, 1740)),
         (t_pr + 0.2, Cam(1062, 1832, 1720)),
         (L3.start, Cam(1066, 1770, 1880)),
@@ -1128,10 +1184,14 @@ def build(ctx):
     # ================================================================ effects
     float_head = fl_info["head"]
 
+    faint_head, kneel_head = sf_info["head"], kn_info["head"]
+
     def jonah_mouth(t):
         if t < t_land:
             return apply_tf((float_head[0] + 40, float_head[1] + 30), float_m(t), JB0)
-        return (JXD + 60, FLOOR - 200)
+        if t < t_kneel:
+            return faint_head[0] + 22, faint_head[1] + 22
+        return kneel_head[0] + 30, kneel_head[1] + 18
 
     up_head = up_info["head"]
 
@@ -1142,8 +1202,6 @@ def build(ctx):
     def light_level(t):          # prayer stream: rises on '我的祷告，一直达到了你的面前'
         return progress(t, t_pr - 0.1, t_pr + 1.6, "sine") * (1 - 0.5 * progress(t, t_lift, t_lift + 1.0))
 
-    head_k = kn_info["head"]
-    face_k = (head_k[0] - 4, head_k[1], 70, 76)
 
     def dream(t):                 # the soft memory vignette (a touch deeper while he is about to give up)
         if t >= T_SW:
@@ -1151,7 +1209,7 @@ def build(ctx):
         return 0.5 + 0.18 * progress(t, t_land, t_faint + 0.8, "sine") * (1 - progress(t, t_kneel, t_pr + 1.0))
 
     def warm_wash(t):
-        return 0.22 * progress(t, t_lift - 0.2, t_wo0 + 0.4, "sine") if t < T_SW else 0.0
+        return 0.14 * progress(t, t_lift - 0.2, t_wo0 + 0.4, "sine") if t < T_SW else 0.0
 
     def whiteout(t):
         return progress(t, t_wo0, t_wf0, "sine") * (1 - progress(t, t_wf1, t_wo1, "sine"))
@@ -1176,14 +1234,14 @@ def build(ctx):
         prayer_stream((hands_k[0], hands_k[1] - 20), hands_k[1] - 1250, light_level),
         V.twinkles((JXD - 360, 1250, JXD + 320, 2050), count=22, t0=t_beam1 - 0.4, color=(255, 236, 170),
                    size=(8, 18), drift=0, seed=23, face=None),
-        FX.tint((255, 214, 150), warm_wash, mode="screen"),
-        FX.vignette(dream, color=(22, 26, 62)),
+        FX.tint((255, 226, 168), warm_wash),
+        dream_overlay(dream),
         # belly
         FX.motes((0, 100, W, 950), count=18, t0=T_SW, color=(160, 205, 200), size=(3, 6), alpha=55, seed=5),
         V.rising_sparkles(GX + 10, JY - 20, 150, 230, 40, belly_level, face=face_b),
         V.twinkles((GX - 330, GY - 360, GX + 330, GY + 180), count=22, t0=t_sal - 0.1, color=(255, 240, 190),
                    size=(8, 20), drift=-3, seed=17, face=face_b),
-        FX.tint((255, 241, 206), whiteout),
+        FX.tint((255, 236, 186), whiteout),
     ]
 
     # ================================================================ sound
@@ -1191,7 +1249,7 @@ def build(ctx):
     sc.sfx("bubbles", 0.3, dur=t_land - 0.3, gain_db=-20, fade_in=0.8, fade_out=0.8)
     sc.sfx("cloth", t_weed + 0.15, gain_db=-19)
     sc.sfx("whoosh", t_sink0 + 0.2, gain_db=-20, pan=0.0)
-    sc.sfx("thud", t_land, gain_db=-17)
+    sc.sfx("thud", t_land, gain_db=-19)
     sc.sfx("bubbles", t_land, dur=1.0, gain_db=-17, fade_out=0.5)
     sc.sfx("cloth", t_kneel - 0.05, gain_db=-17)
     sc.sfx("chime", t_pr, gain_db=-11)

@@ -11,20 +11,25 @@ are imported from art.scenes_v1.s03_flee):
   * line 1 '约拿为什么不想去呢？故事的后面，我们就会知道。' — the narrator's aside. Jonah stops under an olive tree
     to catch his breath, looks back east over the road, and a thought bubble with a big '？' pops up over him
     (on '为什么'). On '我们就会知道' the bubble pops and he turns and runs on.
-  * line 2 '他一路跑到海边的约帕城，' — he runs down the road past the hill town of Joppa onto the quay and the
-    wooden pier (a porter swings a jar up to a sailor on the docked ship as he arrives). '找到一条要开往他施的船。'
-    — he stops by the ship (whose berth board on the pier reads 他施 with a west arrow), points at it; the captain
-    turns to him and nods. '他施在很远很远的西边。' — the captain points west, Jonah looks, and the camera drifts
-    out over the open sea toward the far horizon.
+  * line 2 '他一路跑到海边的约帕城，' — he runs on past the hill town of Joppa onto the quay and the wooden pier;
+    the camera reveals the harbour, where a porter tosses a jar up to the sailor by the mast while the captain
+    watches from the bow (the toss is timed from Jonah's run, so it is over before he reaches the porters).
+    '找到一条要开往他施的船。' — he stops on the pier by the ship (its berth board on the pier's front beam reads
+    他施 with a west arrow), looks up, points at it; the captain walks aft along the deck to meet him and nods.
+    '他施在很远很远的西边。' — the bow sailor points far out to sea, the captain and Jonah look west, a gull flies
+    off that way and the camera drifts out over the open sea to the far horizon (a distant sail).
   * line 3 '约拿付了船钱，' — the camera comes back in close: Jonah takes coins from his sash and holds them up;
-    the captain leans over the rail with his palm out; three coins drop into it with a little glint (coins), the
-    captain closes his hand and nods. '上了船，' — Jonah hops up over the rail onto the deck (whoosh, thud).
-    '想要逃到远方，' — the deck sailor hauls the halyard, the sail unrolls, the bow sailor points the way and the
-    ship leaves the pier for the open sea (west). '躲开上帝。' — Jonah glances back at the shore and ducks behind
-    the stern rail, peeking. The camera settles before the closing dissolve on the ship heading out to sea.
+    the captain turns back, leans over the rail with his palm out; three coins hop into it with a gold glint
+    (coins sfx), he closes his hand and nods. '上了船，' — Jonah crouches and hops up over the rail onto the deck
+    (whoosh, thud). '想要逃到远方，' — the mast sailor hauls the halyard, the sail unrolls from the yard, the
+    captain faces the sea, the bow sailor points the way and the ship leaves the pier westward (bow wave, foam).
+    '躲开上帝。' — Jonah glances back at the shore and ducks behind the stern rail by the cargo, peeking. The
+    camera follows the ship (open sea ahead of it) and is nearly still for the closing dissolve.
 
-The crew is the s04-s09 crew: the captain, sailor variant 0 (by the mast) and variant 1 (at the bow); the men on
-the pier are Joppa porters in plain tunics (v1 'dockhand'), so nobody in crew costume stays ashore.
+Pose changes are hard cuts hidden by a small hop / squash or a spin (no crossfades between poses). The crew is
+the s04-s09 crew: the captain, sailor variant 1 (by the mast) and variant 0 (at the bow), same props.ship
+(furled -> full striped sail); the men on the pier are Joppa porters in plain tunics (v1 'dockhand'), so nobody
+in crew costume stays ashore.
 All times come from the narration chunks (``at()``), nothing is hard-coded to the voice take.
 """
 import math
@@ -38,7 +43,6 @@ from art import props as PR
 from art import style as S
 from art.scenes_v1 import s03_flee as V
 from art.style import P
-from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
@@ -62,8 +66,9 @@ SEA_RIGHT = 2260 + DX1
 HZ = 560                  # horizon
 
 MAST_SAILOR_LX = 72       # sailor 1 by the mast: hauls the halyard when they sail
-CATCH_LX = -200           # sailor 0 at the stern: catches the porter's jar and carries it below
-CAP_LX = -60              # the captain, just aft of the mast
+BOW_SAILOR_LX = 270       # sailor 0 at the bow: points the way out to sea
+CAP_LX0 = 150             # the captain watches the loading from here, then walks aft ...
+CAP_LX = -60              # ... to meet Jonah, just aft of the mast
 CARGO_LX = -320           # crates at the stern
 
 
@@ -72,6 +77,7 @@ def lx2x(lx):
 
 
 CAP_X = lx2x(CAP_LX)
+CAP_X0 = lx2x(CAP_LX0)
 P1X, P2X = 2640, 2480     # porters: P1 holds a crate, P2 swings a jar up to the ship
 
 # --- the road (Jonah runs right -> left)
@@ -81,11 +87,9 @@ SIGN_X = JX0 + 220
 STOP_OLIVE = (3858, 874)
 
 # parallax: far layers are drawn where they belong when the camera is on the harbour (X_REF); they slide
-# k * (cam.x - X_REF) with the camera. CAM0 / CAM_STOP are the (approximate) camera x at the crossroads and at
-# the aside, used only to place far things that should be seen there.
+# k * (cam.x - X_REF) with the camera (so things meant for the crossroads view sit ~0.25 * 3100 px further west
+# in the far layer than where they are seen).
 X_REF = 2150
-CAM0 = JX0 + 110
-CAM_STOP = JSTOP - 200
 K_FAR, K_TOWN, K_CLOUD, K_SUN = 0.25, 0.1, 0.55, 0.85
 
 SHIP_SEED = 211
@@ -146,12 +150,14 @@ J_POSES = {
     "pay_give": C._P(t=-8, h=-14, legs=((10, 3), (-12, -6)), arms=(("fk", 12, 6), ("fk", 128, 134)),
                      hands=("fist", "open"), expr="neutral"),
     # vaulting up over the rail (near hand reaching for it, knees tucked)
-    "hop": C._P(t=6, h=-4, legs=((76, -10), (30, -64)), arms=(("fk", -30, 20), ("fk", 110, 150)),
-                hands=("fist", "open"), hem=0.7, tail=-80, expr="worried"),
+    "hop": C._P(t=8, h=-6, legs=((80, -6), (44, -50)), arms=(("fk", -46, -20), ("fk", -34, -8)),
+                hands=("open", "open"), hem=0.7, tail=-80, expr="worried"),
 }
 CAP_POSES = {
     # leaning over the rail, near arm out and down, open palm
     "receive": C._P(t=16, h=18, arms=(("fk", 10, 4), ("fk", 56, 68)), hands=("fist", "open"), expr="happy"),
+    # pointing up and away to the far horizon ('very, very far to the west'), clear of the mast sailor's head
+    "point_far": C._P(t=-4, h=-14, arms=(("fk", 10, 4), ("fk", 124, 132)), hands=("fist", "point"), expr="happy"),
     # coins taken: fist at the chest
     "take": C._P(t=4, h=6, arms=(("fk", 10, 4), ("fk", 24, 128)), hands=("fist", "fist"), expr="happy"),
 }
@@ -190,12 +196,6 @@ def coin_svg(x, y, r=7.5, tilt=0.0):
 # ============================================================================ background
 
 
-def sky_svg():
-    defs = ugrad("s3sky", 0, 0, 0, 760, [(0, "#7fc0dc"), (0.45, P["sky_day"]),
-                                          (0.85, S.mix(P["sky_day"], "#fff6dc", 0.55)), (1, "#fbf1d6")])
-    return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SH + 40}" fill="url(#s3sky)"/>', defs)
-
-
 SUN = (2560, 285)
 
 
@@ -232,8 +232,12 @@ def far_svg():
                                                (1, S.mix(P["olive"], P["sky_day"], 0.45))]) +
             ugrad("s3hill2", 0, 560, 0, 900, [(0, S.mix(P["grass"], P["sky_day"], 0.32)),
                                                (1, S.mix(P["grass"], P["sand"], 0.35))]))
+    # the sky is a purely vertical gradient, so it rides on this parallax layer (saves a full-frame layer)
+    defs += ugrad("s3sky", 0, 0, 0, 760, [(0, "#7fc0dc"), (0.45, P["sky_day"]),
+                                          (0.85, S.mix(P["sky_day"], "#fff6dc", 0.55)), (1, "#fbf1d6")])
     sea_w = SEA_FAR_R + 20
-    body = f'<rect x="-20" y="{hz}" width="{sea_w}" height="{SH - hz + 40}" fill="url(#s3farsea)"/>'
+    body = f'<rect x="-1200" y="-20" width="{SW + 2400}" height="{SH + 40}" fill="url(#s3sky)"/>'
+    body += f'<rect x="-20" y="{hz}" width="{sea_w}" height="{SH - hz + 40}" fill="url(#s3farsea)"/>'
     body += (f'<path d="M-20,{hz} L{SEA_FAR_R},{hz}" stroke="{P["ink"]}" stroke-width="2.2" opacity="0.5"/>'
              f'<rect x="-20" y="{hz - 30}" width="{sea_w}" height="40" fill="#fbf4dc" opacity="0.35" '
              f'filter="url(#soft)"/>')
@@ -290,8 +294,34 @@ def far_svg():
     for (x0, x1, y, pk, sd, bm) in (hA, hB):
         near += S.path(S.hill(x0, x1, y, pk, seed=sd, bottom=1000, bumps=bm), fill="url(#s3hill2)", sw=3)
     rA, rB = _ridge_fn(_hill_pts(*hA)), _ridge_fn(_hill_pts(*hB))
+    # terraces / field edges following the slopes of the near hills
+    rterr = random.Random(9)
+    terr = ""
+    for (x0, x1, r) in ((3420, 4480, rA), (4520, SW, rB)):
+        for off in (46, 92, 140):
+            xa = x0 + rterr.uniform(20, 120)
+            while xa < x1 - 200:
+                xb = min(x1 - 60, xa + rterr.uniform(260, 520))
+                pts = [(x, r(x) + off + 6 * math.sin(x / 90.0)) for x in np.linspace(xa, xb, 9)]
+                if all(y < 868 for _, y in pts):
+                    terr += (f'<path d="{S.smooth_path(pts, closed=False)}" stroke="{S.shade(P["grass"], -0.25)}" '
+                             f'stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.5"/>')
+                xa = xb + rterr.uniform(80, 220)
+    near += terr
+    # a little hill village far off to the east (the way Jonah came)
+    village = ""
+    for i, (x, dy, v, sc_, f) in enumerate(((4985, 92, 0, 0.055, 1), (5030, 86, 2, 0.06, -1), (5078, 96, 0, 0.052, 1),
+                                           (5122, 90, 3, 0.055, -1), (5008, 116, 3, 0.06, 1), (5062, 120, 0, 0.062, -1),
+                                           (5105, 118, 2, 0.058, 1))):
+        village += PR.house(x, ridge(x) + dy, sc_, v, f)
+    village += V.tree(5160, ridge(5160) + 112, 0.18, seed=31, haze=0.3) + V.tree(4960, ridge(4960) + 124, 0.17, seed=32, haze=0.3)
+    defs += (f'<filter id="s3farhaze" x="-2%" y="-2%" width="104%" height="104%">'
+             f'<feFlood flood-color="{S.mix(P["sky_day"], P["olive"], 0.25)}" flood-opacity="0.45" result="f"/>'
+             f'<feComposite in="f" in2="SourceGraphic" operator="in" result="h"/>'
+             f'<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="h"/></feMerge></filter>')
+    body += f'<g filter="url(#s3farhaze)">{village}</g>'
     for i, (x, dy, sc) in enumerate(((3520, 46, 0.56), (3580, 52, 0.46), (3800, 30, 0.55), (4160, 60, 0.5),
-                                     (4700, 50, 0.58), (4760, 58, 0.46), (4990, 36, 0.6), (5230, 30, 0.52),
+                                     (4430, 50, 0.58), (4492, 58, 0.46), (4990, 36, 0.6), (5230, 30, 0.52),
                                      (5600, 40, 0.6), (5670, 50, 0.48), (5960, 56, 0.58), (6140, 46, 0.5))):
         r = rA if x < 4480 else rB
         grove += V.tree(x, r(x) + dy, sc, seed=i + 10, haze=0.12)
@@ -760,12 +790,14 @@ def build(ctx):
     T_ARR = L2.chunks[1].start - 0.12 if len(L2.chunks) > 1 else at(L2, "找到")   # on the pier
     T_ASK = at(L2, "要开往") - 0.2                           # points at the ship
     T_ASK_END = T_ASK + 1.6
-    T_CAP_TURN = T_ARR + 0.55                            # the captain turns to Jonah
+    T_CAP_WALK = T_ARR - 0.1                             # the captain walks aft to meet him ...
+    T_CAP_TURN = T_ARR + 0.85                            # ... and greets him
     T_NOD = T_ASK + 0.75                                 # ... and nods
     T_WEST = at(L2, "他施在") + 0.05                         # the captain points west
     T_FETCH = L3.start - 0.25                            # Jonah takes coins from his sash
-    T_RECV = L3.start - 0.1                              # the captain turns back and holds out his palm
+    T_CAP_BACK = T_FETCH - 0.1                           # the captain turns back to Jonah
     T_GIVE = T_FETCH + 0.55                              # Jonah holds the coins up
+    T_RECV = T_GIVE - 0.05                               # ... and the captain holds out his palm
     T_DROP = T_GIVE + 0.35                               # the coins drop, one after another
     T_COIN_LAND = T_DROP + 0.26
     T_TAKE = T_DROP + 0.8                                # the captain closes his hand and nods
@@ -776,10 +808,13 @@ def build(ctx):
     T_SAIL = at(L3, "想要逃到") - 0.05                       # deck sailor hauls, the sail unrolls
     T_SAIL_END = T_SAIL + 0.5
     T_SAIL_DONE = T_SAIL + 0.64
+    T_BELAY = T_SAIL_DONE + 0.9                          # the mast sailor makes the halyard fast
     T_CAP_FWD = T_SAIL - 0.35                            # the captain turns to face the open sea
+    T_BOWPOINT = T_SAIL + 0.5                            # the bow sailor points the way
     T_DEPART = T_SAIL + 0.3                              # the ship leaves the pier
-    T_LOOK = (L3.chunks[1].start if len(L3.chunks) > 1 else at(L3, "躲开")) - 0.35   # Jonah looks back
-    T_DUCK = T_LOOK + 0.38                               # ... and ducks behind the stern rail
+    T_HIDE = L3.chunks[1].start if len(L3.chunks) > 1 else at(L3, "躲开")
+    T_LOOK = T_HIDE - 0.6                                # Jonah looks back at the shore ...
+    T_DUCK = T_HIDE + 0.03                               # ... and ducks behind the stern rail on '躲开'
     # the jar hand-off while the camera arrives at the harbour
     T_SWING = None                                       # set below from Jonah's run (before he reaches P2)
     T_CRATE = T_ARR + 0.9                                # porter 1 sets his crate down
@@ -792,7 +827,7 @@ def build(ctx):
     # Jonah stands so that his raised hand is just above and to the right of the captain's palm
     jpay = cap_palm[0] + 10 - give0[0]
     give = (jpay + give0[0], give0[1])
-    BOARD_X = round(jpay)                # he hops straight up over the rail from where he paid
+    BOARD_X = round(jpay) + 28           # he hops up over the rail from where he paid (a little aft)
 
     # ---------------------------------------------------------------- Jonah's path
     D1 = JX0 - JSTOP
@@ -807,7 +842,7 @@ def build(ctx):
 
     V1 = trapezoid(T_RUN1, T_RUN1, T_STOP1, D1, TA, TD1)[1]
     V2 = trapezoid(T_RUN2, T_RUN2, T_ARR, D2, TA, TD2)[1]
-    H_LEAP = 150
+    H_LEAP = 125
 
     def jpos(t):
         if t < T_LEAP:
@@ -826,7 +861,7 @@ def build(ctx):
             tt += 0.01
         return tt
 
-    T_SWING = max(L2.start + 0.3, t_pass(P2X + 560))
+    T_SWING = max(L2.start + 0.2, t_pass(P2X + 680))     # the toss is done before Jonah reaches the porters
     T_THROWF = T_SWING + 0.07
     T_REL = T_SWING + 0.16
     T_CATCH = T_REL + 0.5
@@ -872,7 +907,6 @@ def build(ctx):
     pelvis_h = {p: -C.body_points(V.jonah_fig, 0, 0, K, 1, pose=p)["pelvis"][1] for p in V.RUN_SEQ}
     peak_h = pelvis_h["run_push_n"] + 12 * K
     RUN_LIFT = {i: -(peak_h - pelvis_h[V.RUN_SEQ[i]]) for i in V.RUN_FLIGHT}
-    I_RUN_B = V.RUN_SEQ.index("run_b")
 
     def leap_lift(t):
         return 0.0
@@ -898,7 +932,7 @@ def build(ctx):
     X_WEST, W_WEST, Y_WEST = 1820, 2060, 594
     X_PAY = (cap_palm[0] + give[0]) / 2 + 20
     W_PAY, Y_PAY = 1440, 700
-    X_BOARD = 2120
+    X_BOARD = 1920                       # after boarding: the ship sits right of centre, open sea ahead
     T_WEST_END = min(T_WEST + 2.2, L2.end)
     T_PAY0 = L2.end - 0.15
     T_PAY1 = L3.start + 0.75
@@ -906,7 +940,7 @@ def build(ctx):
 
     cam_w_f = M.keys([(0, {"dx": W_CROSS}), (T_TURN, {"dx": 1560}), (T_RUN1 + 1.2, {"dx": 1760}),
                       (T_STOP1, {"dx": 1700}), (T_BUB + 0.4, {"dx": 1560}), (T_RUN2, {"dx": 1580}),
-                      (T_RUN2 + 1.8, {"dx": 1900}), (T_ARR + 0.6, {"dx": 1860}), (T_WEST, {"dx": 1860}),
+                      (T_RUN2 + 1.8, {"dx": 1900}), (T_ARR + 0.6, {"dx": 1840}), (T_WEST, {"dx": 1720}),
                       (T_WEST_END, {"dx": W_WEST}), (T_PAY0, {"dx": W_WEST}), (T_PAY1, {"dx": W_PAY}),
                       (T_LEAP, {"dx": W_PAY}), (T_LAND + 1.0, {"dx": 1880}), (T, {"dx": 1880})], "inout")
     cam_y_f = M.keys([(0, {"dy": Y_CROSS}), (T_TURN, {"dy": 648}), (T_RUN1 + 1.2, {"dy": 612}),
@@ -925,7 +959,7 @@ def build(ctx):
             return max(min(X_CROSS, jx - LEAD * w), X_PIER)
         x = cam_x_after(t).dx
         if t > T_DEPART:
-            x += 0.86 * (ship_tf(t).dx) * M.progress(t, T_DEPART, T_DEPART + 0.6, "sine")
+            x += ship_tf(t).dx * M.progress(t, T_DEPART, T_DEPART + 0.8, "sine")
         return x
 
     DT = 1 / 120
@@ -954,10 +988,9 @@ def build(ctx):
         return lambda t: Tf(dx=k * (cam(t).x - X_REF) + vx * t)
 
     # ---------------------------------------------------------------- sky / far / town
-    sc.add("sky", sky_svg(), wc=0.5)
+    sc.add("far", far_svg(), motion=parallax(K_FAR), wc=0.8)
     sc.add("sun", sun_svg(), motion=parallax(K_SUN), wc=0.4)
     sc.add("clouds", clouds_svg(), motion=parallax(K_CLOUD, 7.0), wc=0.6)
-    sc.add("far", far_svg(), motion=parallax(K_FAR), wc=0.8)
     sc.add("town", town_svg(), motion=parallax(K_TOWN))
     sc.add("harbour_back", harbour_back_svg())
 
@@ -981,11 +1014,10 @@ def build(ctx):
            frame_at=lambda t: 1.0 if t >= T_SAIL_DONE else 0.0, seed=SHIP_SEED)
 
     d1 = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, MAST_SAILOR_LX, PR.SHIP_DECK_Y)
-    d0 = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, CATCH_LX, PR.SHIP_DECK_Y)
-    catch_hands = V.mid(C.hand_positions(C.sailor, *d0, K, 1, variant=0, pose="carry"))
+    catch_hands = V.mid(C.hand_positions(C.sailor, *d1, K, 1, variant=1, pose="carry"))
     pull_hands = C.hand_positions(C.sailor, *d1, K, 1, variant=1, pose="pull")
     sc.add("halyard", [halyard_svg(False, pull_hands), halyard_svg(True, pull_hands)], motion=ship_tf,
-           frame_at=lambda t: 1.0 if t >= T_SAIL else 0.0, wc=0.4)
+           frame_at=lambda t: 1.0 if T_SAIL <= t < T_BELAY else 0.0, wc=0.4)
 
     BB_TOP = SHIP_WL - 948 * K
     BB_BOT = SHIP_WL - 200 * K
@@ -1018,66 +1050,53 @@ def build(ctx):
     sc.add("sail_roll", sail_roll_svg(), motion=roll_tf, wc=0.6)
     sc.add("deck_cargo", deck_cargo_svg(), motion=ship_tf)
 
-    # mast sailor (variant 1): waits by the mast, smiles at the new passenger, hauls the halyard to set sail
+    # bow sailor (variant 0): watches the pier; on '他施在很远很远的西边' he points far out to sea (west), then
+    # looks ahead, and points the way again as they sail
+    b0 = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, BOW_SAILOR_LX, PR.SHIP_DECK_Y)
+    T_BOW_DOWN = L2.end + 0.1
+
+    def bow_frame(t):
+        if t >= T_BOWPOINT:
+            return 1.0
+        if t >= T_BOW_DOWN:
+            return 2.0
+        return 1.0 if t >= T_WEST else 0.0
+
+    sc.add("bow_sailor", [doc(C.sailor(*b0, K, 1, variant=0, pose="stand", expr="neutral")),
+                          doc(C.sailor(*b0, K, -1, variant=0, pose="point", expr="happy")),
+                          doc(C.sailor(*b0, K, -1, variant=0, pose="stand", expr="happy"))],
+           motion=lambda t: V.compose(ship_tf(t), b0, dy=sum(-6 * bump(t, c - 0.05, 0.2)
+                                                              for c in (T_WEST, T_BOW_DOWN, T_BOWPOINT))
+                                      + 1.4 * math.sin(2 * math.pi * t / 2.6 + 2)),
+           frame_at=bow_frame)
+
+    # mast sailor (variant 1): catches the porter's jar and stows it, smiles at the new passenger, hauls the
+    # halyard to set sail, then makes it fast
+    def deck_dip(t):
+        return 9 * bump(t, T_CATCH, 0.25) + 16 * bump(t, T_STOW, 0.34)
+
     def mast_sailor_tf(t):
         sy = 1.0
         if T_SAIL <= t < T_SAIL + 0.16:
             sy = 0.93 + 0.07 * M.progress(t, T_SAIL, T_SAIL + 0.16, "out")      # springs into the haul
-        dy = -6 * bump(t, T_ARR + 0.3, 0.2) + 1.3 * math.sin(2 * math.pi * t / 2.4 + 1)
+        dy = (deck_dip(t) - 6 * bump(t, T_STOW + 0.4, 0.2) - 6 * bump(t, T_ARR + 0.25, 0.2)
+              - 6 * bump(t, T_BELAY - 0.05, 0.2) + 1.3 * math.sin(2 * math.pi * t / 2.4 + 1))
         return V.compose(ship_tf(t), d1, dy=dy, sy=sy)
 
-    sc.add("mast_sailor", [doc(C.sailor(*d1, K, 1, variant=1, pose="stand", expr="neutral")),
+    def mast_sailor_frame(t):
+        if t >= T_BELAY:
+            return 2.0
+        if t >= T_SAIL:
+            return 3.0
+        if t >= T_ARR + 0.3:
+            return 2.0
+        return 1.0 if t >= T_STOW + 0.45 else 0.0
+
+    sc.add("mast_sailor", [doc(C.sailor(*d1, K, 1, variant=1, pose="carry", expr="neutral")),
+                           doc(C.sailor(*d1, K, 1, variant=1, pose="stand", expr="neutral")),
                            doc(C.sailor(*d1, K, 1, variant=1, pose="stand", expr="happy")),
                            doc(C.sailor(*d1, K, 1, variant=1, pose="pull", expr="neutral"))],
-           motion=mast_sailor_tf,
-           frame_at=lambda t: 2.0 if t >= T_SAIL else (1.0 if t >= T_ARR + 0.3 else 0.0))
-
-    # the captain: watches the loading, turns to Jonah and nods, points west, takes the fare, faces the sea
-    def cap_frame(t):
-        if t < T_CAP_TURN:
-            return 0.0
-        if t < T_WEST:
-            return 1.0
-        if t < T_RECV:
-            return 2.0
-        if t < T_TAKE:
-            return 3.0
-        if t < T_CAP_FWD:
-            return 4.0
-        return 5.0
-
-    cap_frames = [doc(captain_fig(*cap_xy, K, 1, pose="stand", expr="neutral")),
-                  doc(captain_fig(*cap_xy, K, 1, pose="stand", expr="happy")),
-                  doc(captain_fig(*cap_xy, K, -1, pose="point", expr="happy")),
-                  doc(captain_fig(*cap_xy, K, 1, pose="receive")),
-                  doc(captain_fig(*cap_xy, K, 1, pose="take")),
-                  doc(captain_fig(*cap_xy, K, -1, pose="stand", expr="neutral"))]
-    CAP_CUTS = (T_CAP_TURN, T_WEST, T_RECV, T_TAKE, T_CAP_FWD)
-
-    def cap_dy(t):
-        dy = sum(-7 * bump(t, c - 0.05, 0.2) for c in CAP_CUTS)              # little hop hides each pose cut
-        dy += 6 * bump(t, T_NOD, 0.3) + 6 * bump(t, T_TAKE + 0.25, 0.3)      # nods
-        return dy + 1.2 * math.sin(2 * math.pi * t / 2.9)
-
-    def cap_tf(t):
-        return V.compose(ship_tf(t), cap_xy, dy=cap_dy(t))
-
-    sc.add("captain", cap_frames, motion=cap_tf, frame_at=cap_frame)
-
-    # stern sailor (variant 0): catches the porter's jar, lowers it and carries it down into the hold
-    def deck_dip(t):
-        d = 9 * bump(t, T_CATCH, 0.25) + 16 * bump(t, T_STOW, 0.34)
-        # down the ladder into the hold (behind the hull, in little steps)
-        u = M.progress(t, T_STOW + 0.45, T_STOW + 1.25, "in")
-        return d + 330 * u + 5 * math.sin(2 * math.pi * 3.0 * (t - T_STOW)) * (0 < u < 1)
-
-    def catch_sailor_tf(t):
-        if t >= T_STOW + 1.3:
-            return Tf(alpha=0.0)
-        return V.compose(ship_tf(t), d0, dy=deck_dip(t) + 1.2 * math.sin(2 * math.pi * t / 2.2))
-
-    sc.add("catch_sailor", doc(C.sailor(*d0, K, 1, variant=0, pose="carry", expr="neutral")),
-           motion=catch_sailor_tf)
+           motion=mast_sailor_tf, frame_at=mast_sailor_frame)
 
     JAR_S = 0.45
     jd = (catch_hands[0], catch_hands[1] - 22)
@@ -1089,6 +1108,47 @@ def build(ctx):
         return V.compose(ship_tf(t), jd, dy=deck_dip(t) + low)
 
     sc.add("jar_deck", doc(PR.jar(*jd, JAR_S)), motion=jar_deck_tf)
+
+    # the captain: watches the loading from the bow, walks aft to meet Jonah, nods, points west, takes the
+    # fare, then faces the open sea
+    def cap_frame(t):
+        if t < T_CAP_TURN:
+            return 0.0
+        if t < T_WEST:
+            return 1.0
+        if t < T_CAP_BACK:
+            return 2.0
+        if t < T_RECV:
+            return 1.0
+        if t < T_TAKE:
+            return 3.0
+        if t < T_CAP_FWD:
+            return 4.0
+        return 5.0
+
+    cap_frames = [doc(captain_fig(*cap_xy, K, 1, pose="stand", expr="neutral")),
+                  doc(captain_fig(*cap_xy, K, 1, pose="stand", expr="happy")),
+                  doc(captain_fig(*cap_xy, K, -1, pose="stand", expr="happy")),
+                  doc(captain_fig(*cap_xy, K, 1, pose="receive")),
+                  doc(captain_fig(*cap_xy, K, 1, pose="take")),
+                  doc(captain_fig(*cap_xy, K, -1, pose="stand", expr="neutral"))]
+    CAP_CUTS = (T_CAP_TURN, T_WEST, T_CAP_BACK, T_RECV, T_TAKE, T_CAP_FWD)
+    CAP_WALK = CAP_X0 - CAP_X                       # (negative) offset of his starting spot near the bow
+
+    def cap_dx(t):
+        return CAP_WALK * (1 - M.progress(t, T_CAP_WALK, T_CAP_TURN - 0.05, "sine"))
+
+    def cap_dy(t):
+        dy = sum(-7 * bump(t, c - 0.05, 0.2) for c in CAP_CUTS)              # little hop hides each pose cut
+        dy += 6 * bump(t, T_NOD, 0.3) + 6 * bump(t, T_TAKE + 0.25, 0.3)      # nods
+        if T_CAP_WALK <= t < T_CAP_TURN:                                       # steps (legs are behind the rail)
+            dy -= 5 * abs(math.sin(math.pi * (t - T_CAP_WALK) / 0.3))
+        return dy + 1.2 * math.sin(2 * math.pi * t / 2.9)
+
+    def cap_tf(t):
+        return V.compose(ship_tf(t), cap_xy, dx=cap_dx(t), dy=cap_dy(t))
+
+    sc.add("captain", cap_frames, motion=cap_tf, frame_at=cap_frame)
 
     # coins in the captain's palm (after they land) until he closes his hand
     palm = (cap_palm[0] + 6, cap_palm[1] - 9)
@@ -1494,9 +1554,10 @@ def build(ctx):
                motion=lambda t: Tf(dx=vx * (t - t0), dy=vy * (t - t0) + 10 * math.sin(t * 1.7 + phase),
                                    alpha=1.0 if t >= t_vis else 0.0), wc=0.6)
 
-    gull_layer("gull1", 5200, 360, 0.6, -1, -95, 3, 9, 0)
-    gull_layer("gull2", 3300, 300, 0.55, -1, -80, -2, 8, 3, t0=8.0)
-    gull_layer("gull3", 2350, 420, 0.62, -1, -150, -14, 9, 5, t0=T_WEST, t_vis=T_WEST - 1.5)     # flies off west as the captain points
+    gull_layer("gull1", 5700, 300, 0.6, -1, -100, 2, 9, 0)
+    gull_layer("gull2", 3300, 350, 0.55, -1, -140, 3, 8, 3, t0=8.0)
+    # flies off west, high above the masthead, as the captain points (enters from beyond the right edge)
+    gull_layer("gull3", 3080, 150, 0.55, -1, -230, 0, 9, 5, t0=T_WEST - 2.0)
 
     # sparkles: the coins glint as they land in the captain's palm
     sc.fx.append(_glint_fx(lambda t: V.apply_tf(cap_tf(t), *palm, cap_xy), T_COIN_LAND, T_TAKE + 0.15))

@@ -150,6 +150,7 @@ def _walk_pose(k, A, N, t=4, swing=36, lift=20, drop=10):
 
 WAVE_A = C._P(h=-6, arms=(("fk", 14, 8), ("fk", -150, -160)), hands=("fist", "open"), expr="happy")
 WAVE_B = C._P(h=-6, arms=(("fk", 14, 8), ("fk", -146, -184)), hands=("fist", "open"), expr="happy")
+EXPLAIN = C._P(h=-4, arms=(("fk", 60, 120), ("fk", -8, -3)), hands=("open", "fist"))   # telling, palm up
 CLUTCH = C._P(t=-3, h=-4, arms=(("ik", "torso", 0.55, 0.74, 1), ("ik", "torso", 0.62, 0.70, 1)),
               hands=("fist", "open"))
 RISE = C._P(t=4, h=-8, drop=70, legs=(("ik", 60, 1), (0, -92)), arms=(("fk", 30, 40), ("fk", 20, 50)),
@@ -234,9 +235,9 @@ def _orb_pos(u):
     return x, y
 
 
-SB = (1118, 628)          # speech bubble centre
+SB = (1136, 606)          # speech bubble centre
 SB_R = (122, 84)
-SB_TIP = (1006, 790)      # tail tip, by Jonah's mouth
+SB_TIP = (1034, 778)      # tail tip, just off Jonah's face
 
 
 def _speech_svg():
@@ -619,9 +620,10 @@ def build(ctx):
     g_lines = [ln for ln in L if ln.speaker == "G"]
     t_god_end = g_lines[-1].end if g_lines and g_lines[-1] is not L[-1] else T + 5   # God has finished speaking
     after = lambda t: 1 - 0.3 * M.progress(t, t_god_end + 0.3, t_god_end + 2.3, "sine")  # noqa
-    swell = lambda t: 0.22 * math.sin(math.pi * _clamp((t - t_seen) / 1.6)) if t_seen <= t <= t_seen + 1.6 else 0.0  # noqa
-    glow_alpha = lambda t: min(1.0, M.progress(t, t_light, t_light + 0.7, "sine") * pulse(t, 0.82) * after(t) + swell(t))  # noqa
-    sc.add("glow", V._glow_svg(), wc=0, motion=lambda t: Tf(alpha=glow_alpha(t)))
+    swell = lambda t: math.sin(math.pi * _clamp((t - t_seen) / 1.8)) ** 2 if t_seen <= t <= t_seen + 1.8 else 0.0  # noqa
+    glow_alpha = lambda t: min(1.0, M.progress(t, t_light, t_light + 0.7, "sine") * pulse(t, 0.82) * after(t) + 0.2 * swell(t))  # noqa
+    sc.add("glow", V._glow_svg(), wc=0, motion=lambda t: Tf(alpha=glow_alpha(t), sx=1 + 0.14 * swell(t),
+                                                          sy=1 + 0.14 * swell(t), px=GAP[0], py=GAP[1]))
     for name, circles, d0, d1 in [("cloudL", V.LEFT_CL, 70, -200), ("cloudR", V.RIGHT_CL, -70, 150)]:
         frames = [_doc(V._cloud_bank(circles, g, name)) for g in (0.0, 1.0)]
         mv = M.combine(M.keys([(0, {"dx": d0}), (t_light, {"dx": d0}), (t_light + 1.3, {"dx": d1})], "inout"),
@@ -692,7 +694,7 @@ def build(ctx):
            frame_at=lambda t: float((0, 1, 2, 1)[int(t * 14) % 4]))
 
     # ---------------------------------------------------------------- golden rays behind Jonah (v1)
-    rays_alpha = lambda t: min(1.0, M.progress(t, t_light + 0.05, t_light + 0.65, "sine") * pulse(t, 0.75) * after(t) + swell(t))  # noqa
+    rays_alpha = lambda t: min(1.0, M.progress(t, t_light + 0.05, t_light + 0.65, "sine") * pulse(t, 0.75) * after(t) + 0.2 * swell(t))  # noqa
     sc.add("rays", V._rays_svg(), wc=0, motion=lambda t: Tf(alpha=rays_alpha(t)),
            reveal=lambda t: {"mode": "down", "frac": M.progress(t, t_light + 0.05, t_light + 0.85, "out"), "soft": 160})
 
@@ -744,7 +746,7 @@ def build(ctx):
     addf("wave_a", jdoc(_jfig(JX, JY, JS, WAVE_A, "happy", "wa")))
     addf("wave_b", jdoc(_jfig(JX, JY, JS, WAVE_B, "happy", "wb")))
     addf("listen_h", jdoc(C.jonah(JX, JY, JS, 1, pose="listen", expr="happy")))
-    addf("preach", jdoc(C.jonah(JX, JY, JS, 1, pose="preach")))
+    addf("preach", jdoc(_jfig(JX, JY, JS, EXPLAIN, "call", "explain")))
     addf("kneel", jdoc(C.jonah(JX, JY, JS, 1, pose="kneel_pray"), 200))
     addf("kneel_s", jdoc(C.jonah(JX, JY, JS, 1, pose="kneel_pray", expr="surprised"), 200))
     addf("rise", jdoc(_jfig(JX, JY, JS, RISE, "surprised", "rise"), 170))
@@ -851,7 +853,7 @@ def build(ctx):
            motion=M.keys(hop_keys, "sine"))
 
     # warm golden light over everything once the light comes (additive)
-    warm_alpha = lambda t: min(0.75, 0.5 * M.progress(t, t_light + 0.15, t_light + 1.1, "sine") * pulse(t, 0.7) * after(t) + swell(t))  # noqa
+    warm_alpha = lambda t: min(0.75, 0.5 * M.progress(t, t_light + 0.15, t_light + 1.1, "sine") * pulse(t, 0.7) * after(t) + 0.3 * swell(t))  # noqa
     sc.add("warm", V._warm_svg(), wc=0, blend="add", motion=lambda t: Tf(alpha=warm_alpha(t)))
 
     # ---------------------------------------------------------------- camera
@@ -895,6 +897,7 @@ def build(ctx):
     sc.sfx("chime", t_light, gain_db=-6)
     sc.sfx("cloth", t_rise, gain_db=-15)
     sc.sfx("sparkle", t_vis + 0.1, gain_db=-10, pan=0.5)
+    sc.sfx("chime", t_seen, gain_db=-15)
     if t_soldiers is not None:
         sc.sfx("thud", t_soldiers + 0.25, gain_db=-14, pan=0.5)
     return sc

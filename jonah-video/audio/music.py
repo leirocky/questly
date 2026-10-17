@@ -125,9 +125,9 @@ def render(timeline, out_path):
         wavs = fluidsynth_render(mids, work)
         stems = {}
         for bus, wp in wavs.items():
-            x, sr = sf.read(wp, dtype="float64", always_2d=True)
-            assert sr == SR, sr
-            x = x[:n] if len(x) >= n else np.concatenate([x, np.zeros((n - len(x), 2))])
+            x, sr = sf.read(wp, dtype="float32", always_2d=True)      # float32: a 10-min score has
+            assert sr == SR, sr                                          # 8 stems of 29 M frames
+            x = x[:n] if len(x) >= n else np.concatenate([x, np.zeros((n - len(x), 2), np.float32)])
             stems[bus] = x
         midi_dir = out_path.parent / "music_midi"
         midi_dir.mkdir(exist_ok=True)
@@ -138,8 +138,9 @@ def render(timeline, out_path):
 
     hall = make_ir(2.1, seed=11)
     cave = make_ir(3.6, seed=23, pre=0.05, dark=1.8)
-    belly = next((c for c in sc.cues if c.mood == "belly"), None)
-    cave_env = window_env(n, belly.t0, belly.t1)[:, None] if belly else np.zeros((n, 1))
+    bellies = [c for c in sc.cues if c.mood == "belly"]      # s11 + s12: one dark cave
+    cave_env = (window_env(n, min(c.t0 for c in bellies), max(c.t1 for c in bellies))[:, None]
+                if bellies else np.zeros((n, 1)))
 
     dry = np.zeros((n, 2))
     hall_in = np.zeros((n, 2))
@@ -150,8 +151,14 @@ def render(timeline, out_path):
             x = echo(x, delay=0.5)
         dry += x
         hall_in += x * send
-    wet = convolve(hall_in, hall) + convolve(dry * cave_env * 0.45, cave)
-    mix = highpass(dry + wet, 32, order=2)
+        del x
+    wet = convolve(hall_in, hall)
+    del hall_in
+    wet += convolve(dry * cave_env * 0.45, cave)
+    dry += wet
+    del wet
+    mix = highpass(dry, 32, order=2)
+    del dry
 
     # tiny de-click fade at the very start; the last chord rings to the end and closes with a
     # raised-cosine fade to silence over the final 0.7 s

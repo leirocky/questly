@@ -85,6 +85,8 @@ def check_harmony(sc):
             continue
         if n.role in ROLE_STRICT:
             bad = [c.sym for _, ov, c in chords if n.pitch % 12 not in c.pcset and ov > 0.12]
+            if n.role == "timp" and not is_ct and ch0.sym not in bad:      # roll strokes are short:
+                bad.append(ch0.sym)                                         # judge them at the onset
             if bad:
                 viol.append((n, desc + f" harmonic-role note not in chord(s) {bad}"))
             else:
@@ -178,9 +180,9 @@ BASS_PARTS = {"vc", "cb", "vc_fast", "cb_fast", "contrab", "tuba", "pz_lo", "pz_
 STRING_PARTS = {"vla", "vln1", "vln2", "vc", "cb", "pad", "ooh", "trem_hi", "trem_va", "trem_lo"}
 # intended octave doublings (octave/unison parallels between these are orchestration, not voice-leading)
 DOUBLING_PAIRS = [(BASS_PARTS, BASS_PARTS), ({"choir"}, STRING_PARTS), ({"glock"}, {"tuba", "contrab"}),
-                  ({"mbox"}, {"celesta"}), ({"celesta"}, {"vln_mel", "glock", "piano"})]
+                  ({"mbox"}, {"celesta"}), ({"celesta"}, {"vln_mel", "glock", "piano"}), ({"glock"}, {"flute"})]
 # intended parallel fifths (stylistic planing): (segment label, part set A, part set B)
-PLANING_OK = [("call-God", {"choir"}, STRING_PARTS)]
+PLANING_OK = [("call-God", {"choir"}, STRING_PARTS), ("angry-question", {"choir"}, STRING_PARTS)]   # label prefix
 
 
 def _sounding(lst, onsets, t):
@@ -254,7 +256,8 @@ def check_parallels_global(sc):
                 if kind == "octaves" and (_pair_ok(pa, pb, DOUBLING_PAIRS) or both_pads
                                           or (d[1] >= 3 and d[0] / d[1] >= 0.6)):
                     ok.append(item + ("doubling",))
-                elif kind == "fifths" and any(lbl == a1[3].seg.label == b1[3].seg.label and _pair_ok(pa, pb, [(X, Y)])
+                elif kind == "fifths" and a1[3].seg.label == b1[3].seg.label and any(
+                        a1[3].seg.label.startswith(lbl) and _pair_ok(pa, pb, [(X, Y)])
                                               for lbl, X, Y in PLANING_OK):
                     ok.append(item + ("planing",))
                 else:
@@ -435,6 +438,78 @@ STORM_PEAK_OVER_MEDIAN = 5.0   # dB, the storm-peak segment (hit + horn call) vs
 PEAK_WINDOW_OVER_MEDIAN = 10.0  # dB, loudest 400 ms of the score vs its median 400 ms level
 
 
+HANDOFF_DB = 10.0      # dB, largest level step across a scene start (1 s windows)
+
+# Hit points the v2 score must place, defined by the narration text: (scene, phrase, mode, kind)
+#   mode 'line'   = start of the utterance containing the phrase
+#        'gap'    = middle of the pause before that utterance
+#        'phrase' = where the phrase itself is spoken (subtitle-chunk timing, interpolated by characters)
+#        'end'    = end of that utterance
+REQUIRED_HITS = [
+    ("s02_call", "你起来", "gap", "change"),                  # God speaks: the choir enters
+    ("s04_storm", "大浪一个接着一个", "gap", "hit"),           # storm peak
+    ("s06_lots", "抽中的正是约拿", "phrase", "hit"),           # the lot falls on Jonah
+    ("s09_overboard", "海就平静了", "line", "change"),         # sudden calm
+    ("s10_swallow", "安排好了一条大鱼", "gap", "hit"),         # the great-fish motif
+    ("s10_swallow", "一口就把约拿吞了下去", "phrase", "hit"),   # gulp
+    ("s12_deep", "想起了耶和华", "phrase", "change"),          # the turning point
+    ("s12_deep", "救恩属于耶和华", "phrase", "change"),        # radiant major
+    ("s14_again", "你起来", "gap", "change"),                 # the second call echoes the first
+    ("s15_city", "再过四十天", "gap", "hit"),                  # forty days
+    ("s16_believe", "竟然都相信了上帝", "phrase", "change"),    # surprise belief
+    ("s17_king", "国王又派人在全城宣告", "gap", "hit"),         # herald horn
+    ("s19_angry", "只有约拿", "phrase", "hit"),                # grumpy bassoon
+    ("s19_angry", "又慈爱", "gap", "change"),                  # tender under God's kindness
+    ("s21_vine", "一夜之间", "phrase", "hit"),                 # the plant grows
+    ("s21_vine", "非常非常高兴", "gap", "hit"),                # happy waltz
+    ("s22_worm", "小虫子", "phrase", "hit"),                   # the little worm
+    ("s24_end", "连我们不喜欢的人", "end", "hit"),              # final cadence
+]
+
+
+def phrase_time(scene, phrase, mode):
+    """Scene-relative time of a phrase in the narration (see REQUIRED_HITS)."""
+    lines = scene["lines"]
+    i = next(k for k, ln in enumerate(lines) if phrase in ln["text"])
+    ln = lines[i]
+    if mode == "line":
+        return ln["start"]
+    if mode == "end":
+        return ln["end"]
+    if mode == "gap":
+        return (lines[i - 1]["end"] + ln["start"]) / 2 if i > 0 else ln["start"] / 2
+    k0 = ln["text"].index(phrase)
+    wgt = lambda t: sum(0.5 if ch in "，。！？：；、" else 1.0 for ch in t)
+    pos = 0
+    for ch in ln.get("chunks") or [{"text": ln["text"], "start": ln["start"], "end": ln["end"]}]:
+        j = ln["text"].find(ch["text"], pos)
+        j = pos if j < 0 else j
+        if j <= k0 <= j + len(ch["text"]):
+            return ch["start"] + wgt(ch["text"][:k0 - j]) / max(1e-9, wgt(ch["text"])) * (ch["end"] - ch["start"])
+        pos = j + len(ch["text"])
+    return ln["start"]
+
+
+def required_hits(sc, timeline, tol=0.05):
+    """[(scene, phrase, mode, kind, target abs s, (sync abs s, label) or None)]"""
+    out = []
+    by_id = {s_["id"]: s_ for s_ in timeline["scenes"]}
+    for sid, ph, mode, kind in REQUIRED_HITS:
+        s_ = by_id.get(sid)
+        if s_ is None or not any(ph in ln["text"] for ln in s_["lines"]):
+            out.append((sid, ph, mode, kind, float("nan"), None))
+            continue
+        target = s_["start"] + phrase_time(s_, ph, mode)
+        cands = [(actual, label) for cid, label, tg, actual, k in sc.syncs
+                 if cid == sid and k == kind and abs(actual - target) <= tol]
+        out.append((sid, ph, mode, kind, target, min(cands, key=lambda x: abs(x[0] - target)) if cands else None))
+    return out
+
+
+def rows_db(rows):
+    return [(c.id, r) for c, r in rows]
+
+
 def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     out_dir = Path(out_dir or Path(wav_path).parent.parent / "preview")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -466,9 +541,36 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
       f"last 50 ms RMS {_rms_db(x[-int(0.05 * sr):]):.1f} dB, last sample {np.abs(x[-1]).max():.2e}")
     w("")
 
+    # ---------------------------------------------------------------- cue structure (v2 timeline)
+    probs = []
+    scenes = timeline["scenes"]
+    if [c.id for c in sc.cues] != [s_["id"] for s_ in scenes]:
+        probs.append("cue list differs from the scene list")
+    for i, (c, s_) in enumerate(zip(sc.cues, scenes)):
+        t1 = scenes[i + 1]["start"] if i + 1 < len(scenes) else float(timeline["duration"])
+        if abs(c.t0 - s_["start"]) > 1e-6 or abs(c.t1 - t1) > 1e-6:
+            probs.append(f"{c.id}: cue window {c.t0:.3f}-{c.t1:.3f} != scene {s_['start']:.3f}-{t1:.3f}")
+        if not c.segs or abs(c.segs[0].t0 - c.t0) > 1e-6 or abs(c.segs[-1].t1 - c.t1) > 1e-6:
+            probs.append(f"{c.id}: segments do not fill the cue")
+        for a_, b_ in zip(c.segs, c.segs[1:]):
+            if abs(a_.t1 - b_.t0) > 1e-6:
+                probs.append(f"{c.id}: gap/overlap between {a_.label} and {b_.label}")
+    checks.append((f"all {len(scenes)} scenes have a cue starting at the scene's global start; segments tile it",
+                   not probs, "; ".join(probs[:4]) or f"{len(sc.cues)} cues, {sum(len(c.segs) for c in sc.cues)} segments"))
+    hits = required_hits(sc, timeline)
+    miss = [f"{sid} '{ph}'" for sid, ph, mode, kind, target, got in hits if got is None]
+    w("REQUIRED HIT POINTS (target computed here from the timeline text and subtitle-chunk timings, independently of")
+    w("the score code; the score must place a sync of that kind within 50 ms of it)")
+    for sid, ph, mode, kind, target, got in hits:
+        w(f"  {sid:14s} {kind:6s} {mode:10s} '{ph}'  target {target:8.3f}s  "
+          + (f"score {got[1]!r} at {got[0]:8.3f}s ({1000 * (got[0] - target):+.0f} ms)" if got else "MISSING"))
+    checks.append(("required hit points placed from the narration text (calm, gulp, turn, salvation, herald, waltz...)",
+                   not miss, ", ".join(miss) or f"all {len(hits)}"))
+    w("")
+
     # ---------------------------------------------------------------- per-scene levels
     w("PER-SCENE LEVELS (cue window = scene start -> next scene start; 'speech' = while a line is spoken)")
-    w(f"{'scene':12s} {'mood':8s} {'start':>7s} {'len':>6s} {'RMS dB':>7s} {'peak dB':>8s} "
+    w(f"{'scene':14s} {'mood':8s} {'start':>7s} {'len':>6s} {'RMS dB':>7s} {'peak dB':>8s} "
       f"{'speech RMS':>10s} {'gap RMS':>8s} {'L-R dB':>7s} {'onsets/s speech':>16s} {'gaps':>6s}")
     speech = sc.speaking(np.arange(len(x)) / sr)
     rows = []
@@ -482,19 +584,34 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
         lr = _rms_db(x[a:b, 0]) - _rms_db(x[a:b, 1])
         ds, dg = onset_density(sc, c)
         rows.append((c, r))
-        w(f"{c.id:12s} {c.mood:8s} {c.t0:7.2f} {c.dur:6.2f} {r:7.1f} {20 * np.log10(np.abs(x[a:b]).max()):8.1f} "
+        w(f"{c.id:14s} {c.mood:8s} {c.t0:7.2f} {c.dur:6.2f} {r:7.1f} {20 * np.log10(np.abs(x[a:b]).max()):8.1f} "
           f"{rs:10.1f} {rg:8.1f} {lr:7.1f} {ds:16.1f} {dg:6.1f}")
     w("")
-    loud = max(rows, key=lambda r: r[1])[0].mood
-    quiet = min(rows, key=lambda r: r[1])[0].mood
+    loud_c = max(rows, key=lambda r: r[1])[0]
+    quiet_c = min(rows, key=lambda r: r[1])[0]
     med = float(np.median([r for _, r in rows]))
-    storm_r = next((r for c, r in rows if c.mood == "storm"), float("nan"))
-    w(f"loudest cue: {loud}, quietest cue: {quiet}; median cue RMS {med:.1f} dB, "
-      f"storm {storm_r:.1f} dB = median {storm_r - med:+.1f} dB")
-    checks.append(("storm is the loudest cue", loud == "storm", loud))
-    checks.append(("belly is the quietest cue", quiet == "belly", quiet))
+    storm_r = max((r for c, r in rows if c.mood == "storm"), default=float("nan"))
+    seg_rms = {sg_.label: _rms_db(mono[int(sg_.t0 * sr):int(sg_.t1 * sr)]) for c in sc.cues for sg_ in c.segs}
+    quiet_seg = min(seg_rms, key=seg_rms.get)
+    w(f"loudest cue: {loud_c.id} ({loud_c.mood}), quietest cue: {quiet_c.id} ({quiet_c.mood}), quietest segment: "
+      f"{quiet_seg} ({seg_rms[quiet_seg]:.1f} dB); median cue RMS {med:.1f} dB, loudest storm cue {storm_r:.1f} dB = "
+      f"median {storm_r - med:+.1f} dB; end-question segment {seg_rms.get('end-question', float('nan')):.1f} dB")
+    checks.append(("a storm cue (s04 storm or s08 rowing) is the loudest cue", loud_c.mood == "storm",
+                   f"{loud_c.id} {dict(rows_db(rows))[loud_c.id]:.1f} dB"))
+    checks.append(("belly (or the end's open question) is the quietest", quiet_c.mood == "belly"
+                   or quiet_seg == "end-question", f"quietest cue {quiet_c.id}, quietest segment {quiet_seg}"))
     checks.append((f"storm no more than {STORM_OVER_MEDIAN:.0f} dB above the median cue",
                    storm_r - med <= STORM_OVER_MEDIAN, f"{storm_r - med:+.1f} dB"))
+    # hand-offs: level 1 s before vs 1 s after every scene start (inside the cross-dissolve)
+    jumps = []
+    for c in sc.cues[1:]:
+        a = int(c.t0 * sr)
+        jumps.append((c.id, _rms_db(mono[a:a + sr]) - _rms_db(mono[max(0, a - sr):a])))
+    big = [f"{cid} {d:+.1f}" for cid, d in jumps if abs(d) > HANDOFF_DB]
+    w("HAND-OFFS (RMS of the 1 s after each scene start minus the 1 s before, dB): "
+      + ", ".join(f"{cid[:3]} {d:+.1f}" for cid, d in jumps))
+    checks.append((f"smooth hand-offs (level step at every scene start within +-{HANDOFF_DB:.0f} dB)", not big,
+                   ", ".join(big) or f"max {max(abs(d) for _, d in jumps):.1f} dB"))
     gaps = []
     hop = int(0.05 * sr)
     env = np.sqrt(np.convolve(mono ** 2, np.ones(hop) / hop, "same"))[::hop]
@@ -520,12 +637,12 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
         gi = mono[int(g0 * sr):int(g1 * sr)]
         si = np.concatenate([mono[int(max(a0, g0 - 0.6) * sr):int(g0 * sr)], mono[int(g1 * sr):int(min(b1, g1 + 0.6) * sr)]])
         cue = next(c for c in sc.cues if c.t0 <= (g0 + g1) / 2 < c.t1)
-        lifts[cue.mood].append(_rms_db(gi) - _rms_db(si))
+        lifts[cue.id].append(_rms_db(gi) - _rms_db(si))
     allv = [v for vs in lifts.values() for v in vs]
     for c in sc.cues:
-        vs = lifts.get(c.mood, [])
+        vs = lifts.get(c.id, [])
         if vs:
-            w(f"  {c.mood:8s} pauses {len(vs):2d}  median lift {np.median(vs):+5.1f} dB  (min {min(vs):+5.1f}, max {max(vs):+5.1f})")
+            w(f"  {c.id:14s} pauses {len(vs):2d}  median lift {np.median(vs):+5.1f} dB  (min {min(vs):+5.1f}, max {max(vs):+5.1f})")
     if allv:
         w(f"  all pauses: {len(allv)}, median lift {np.median(allv):+.1f} dB, 75th pct {np.percentile(allv, 75):+.1f} dB, "
           f"max {max(allv):+.1f} dB")
@@ -562,10 +679,10 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
         tot = F.sum() + 1e-20
         return [10 * np.log10(F[(fr >= a) & (fr < b)].sum() / tot + 1e-12) for a, b in bands], (F * fr).sum() / tot
 
-    w(f"  {'cue':8s} " + " ".join(f"{f'{a}-{b}':>10s}" for a, b in bands) + "   centroid")
+    w(f"  {'cue':14s} " + " ".join(f"{f'{a}-{b}':>10s}" for a, b in bands) + "   centroid")
     for c in sc.cues:
         vals, cen = spec_row(mono[int(c.t0 * sr):int(c.t1 * sr)])
-        w(f"  {c.mood:8s} " + " ".join(f"{v:10.1f}" for v in vals) + f"   {cen:7.0f} Hz")
+        w(f"  {c.id:14s} " + " ".join(f"{v:10.1f}" for v in vals) + f"   {cen:7.0f} Hz")
     w("")
     w("SEGMENT LEVELS (RMS dB and 2.5-6 kHz share of each musical segment)")
     for c in sc.cues:
@@ -574,8 +691,8 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
             vals, cen = spec_row(seg)
             w(f"  {sg_.label:24s} {sg_.t0:8.2f}-{sg_.t1:8.2f}  RMS {_rms_db(seg):6.1f} dB  2.5-6k {vals[3]:6.1f} dB  "
               f"centroid {cen:6.0f} Hz")
-            if sg_.label == "vine-heat":
-                checks.append(("vine-heat audible (RMS >= -33 dB) and not shrill (2.5-6k share < -10 dB)",
+            if sg_.label == "worm-heat":
+                checks.append(("worm-heat audible (RMS >= -33 dB) and not shrill (2.5-6k share < -10 dB)",
                                _rms_db(seg) >= -33 and vals[3] < -10, f"RMS {_rms_db(seg):.1f} dB, 2.5-6k {vals[3]:.1f} dB"))
             if sg_.label == "storm-peak":
                 checks.append((f"storm-peak segment no more than {STORM_PEAK_OVER_MEDIAN:.0f} dB above the median cue",
@@ -689,8 +806,8 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     mel = defaultdict(list)
     for n in sc.notes:
         if n.role == "melody" and not PARTS[n.part].drum:
-            mel[(n.seg.cue.mood, n.part)].append(n)
-    order = {c.mood: k for k, c in enumerate(sc.cues)}
+            mel[(n.seg.cue.id, n.part)].append(n)
+    order = {c.id: k for k, c in enumerate(sc.cues)}
     for (mood, part), lst in sorted(mel.items(), key=lambda kv: order[kv[0][0]]):
         lst.sort(key=lambda n: n.seg.t(n.q))
         ps = [n.pitch for n in lst]
@@ -698,7 +815,7 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
         if not ivs:
             continue
         steps = sum(1 for v in ivs if v <= 2) / len(ivs)
-        w(f"  {mood:8s} {part:9s} notes {len(ps):3d}  range {name(min(ps))}-{name(max(ps))} ({max(ps) - min(ps):2d} st)"
+        w(f"  {mood:14s} {part:9s} notes {len(ps):3d}  range {name(min(ps))}-{name(max(ps))} ({max(ps) - min(ps):2d} st)"
           f"  largest leap {max(ivs):2d} st  stepwise {100 * steps:3.0f}%")
     w("")
 
@@ -706,30 +823,32 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     w("ORCHESTRATION (notes per part per cue)")
     per = defaultdict(Counter)
     for n in sc.notes:
-        per[n.seg.cue.mood][n.part] += 1
+        per[n.seg.cue.id][n.part] += 1
     for c in sc.cues:
-        w(f"  {c.mood:8s} " + ", ".join(f"{p} {k}" for p, k in sorted(per[c.mood].items(), key=lambda kv: -kv[1])))
+        w(f"  {c.id:14s} " + ", ".join(f"{p} {k}" for p, k in sorted(per[c.id].items(), key=lambda kv: -kv[1])))
     w("")
     w("BUS LEVELS (dry stems, RMS dB per cue)")
     w("  " + " ".join(f"{b:>7s}" for b in stems) + "   cue")
     for c in sc.cues:
         a, b = int(c.t0 * sr), int(c.t1 * sr)
-        w("  " + " ".join(f"{_rms_db(st[a:b]):7.1f}" for st in stems.values()) + f"   {c.mood}")
+        w("  " + " ".join(f"{_rms_db(st[a:b]):7.1f}" for st in stems.values()) + f"   {c.id}")
 
-    head = ["MUSIC REPORT — 约拿的故事 background score", "", "SUMMARY"]
+    head = [f"MUSIC REPORT — 约拿的故事 background score ({len(sc.cues)} cues, {sc.duration:.1f} s)", "", "SUMMARY"]
     for nm, ok_, det in checks:
         head.append(f"  [{'PASS' if ok_ else ('SKIP' if ok_ is None else 'FAIL')}] {nm}: {det}")
     head.append("")
     text = "\n".join(head + L) + "\n"
     (out_dir / "music_report.txt").write_text(text)
-    n_fail = sum(1 for _, ok_, _ in checks if ok_ is False)
+    n_fail = sum(1 for _, ok_, _ in checks if ok_ is not None and not ok_)
     print(f"  report: {out_dir / 'music_report.txt'} ({n_fail} failed checks; {len(viol)} harmony violations, "
           f"{len(gbad)} global parallels)")
     _spectrogram(mono, sr, sc, out_dir / "music_spectrogram.png")
     return text
 
 
-def _spectrogram(mono, sr, sc, path):
+def _spectrogram(mono, sr, sc, path, rows=4):
+    """Spectrogram + level curve in `rows` stacked strips (cyan = scene starts with id and mood,
+    dotted = segment boundaries, blue = narration, red markers = hit points)."""
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -738,34 +857,52 @@ def _spectrogram(mono, sr, sc, path):
         print("  (matplotlib missing: no spectrogram)")
         return
     from scipy import signal as sg
-    f, t, S = sg.stft(mono, fs=sr, nperseg=4096, noverlap=4096 - 1024)
+    f, t, S = sg.stft(mono, fs=sr, nperseg=4096, noverlap=4096 - 2048)
     db = 20 * np.log10(np.abs(S) + 1e-9)
     db -= db.max()
-    fig, (ax, ax2) = plt.subplots(2, 1, figsize=(22, 9), sharex=True, gridspec_kw={"height_ratios": [3, 1]})
     keep = (f >= 30) & (f <= 12000)
-    ax.pcolormesh(t, f[keep], db[keep], vmin=-90, vmax=0, cmap="magma", shading="auto")
-    ax.set_yscale("log")
-    ax.set_ylim(30, 12000)
-    ax.set_ylabel("Hz")
     hop = int(0.05 * sr)
     env = np.sqrt(np.convolve(mono ** 2, np.ones(hop) / hop, "same"))[::hop]
     te = np.arange(len(env)) * 0.05
-    ax2.plot(te, 20 * np.log10(env + 1e-9), lw=0.7, color="#333")
-    for a, b in sc.speech_iv:
-        ax2.axvspan(a, b, color="#9ecae1", alpha=0.35, lw=0)
-    ax2.set_ylim(-70, 0)
-    ax2.set_ylabel("RMS dB (blue = narration)")
-    ax2.set_xlabel("seconds")
-    for c in sc.cues:
-        for a_ in (ax, ax2):
-            a_.axvline(c.t0, color="cyan", lw=1.0)
-        ax.text(c.t0 + 0.2, 9000, c.mood, color="white", fontsize=10, va="top")
-        for s in c.segs[1:]:
-            ax.axvline(s.t0, color="white", lw=0.5, ls=":")
-    for cid, label, target, actual, kind in sc.syncs:
-        ax2.plot([actual], [-5], "v" if kind == "hit" else "D", color="crimson", ms=5)
-    ax.set_title("Background score — spectrogram (cyan = scene starts, dotted = hit-point segments)")
+    total = len(mono) / sr
+    span = total / rows
+    fig, axes = plt.subplots(2 * rows, 1, figsize=(26, 5.2 * rows),
+                             gridspec_kw={"height_ratios": [3, 1] * rows})
+    for r in range(rows):
+        ax, ax2 = axes[2 * r], axes[2 * r + 1]
+        lo, hi = r * span, (r + 1) * span
+        m = (t >= lo - 1) & (t <= hi + 1)
+        ax.pcolormesh(t[m], f[keep], db[keep][:, m], vmin=-90, vmax=0, cmap="magma", shading="auto")
+        ax.set_yscale("log")
+        ax.set_ylim(30, 12000)
+        ax.set_xlim(lo, hi)
+        ax.set_ylabel("Hz")
+        me = (te >= lo) & (te <= hi)
+        ax2.plot(te[me], 20 * np.log10(env[me] + 1e-9), lw=0.7, color="#333")
+        for a_, b_ in sc.speech_iv:
+            if b_ > lo and a_ < hi:
+                ax2.axvspan(a_, b_, color="#9ecae1", alpha=0.35, lw=0)
+        ax2.set_ylim(-70, 0)
+        ax2.set_xlim(lo, hi)
+        ax2.set_ylabel("RMS dB")
+        for c in sc.cues:
+            if lo - 1 <= c.t0 <= hi:
+                for a_ in (ax, ax2):
+                    a_.axvline(c.t0, color="cyan", lw=1.2)
+                ax.text(c.t0 + 0.3, 9000, f"{c.id[:3]} {c.mood}", color="white", fontsize=11, va="top",
+                        fontweight="bold")
+            for sg_ in c.segs[1:]:
+                if lo <= sg_.t0 <= hi:
+                    ax.axvline(sg_.t0, color="white", lw=0.6, ls=":")
+                    ax.text(sg_.t0 + 0.2, 40, sg_.label.split("-", 1)[-1], color="white", fontsize=7, rotation=90,
+                            va="bottom")
+        for cid, label, target, actual, kind in sc.syncs:
+            if lo <= actual <= hi:
+                ax2.plot([actual], [-5], "v" if kind == "hit" else "D", color="crimson", ms=6)
+    axes[0].set_title("Background score - spectrogram (cyan = scene starts, dotted = segments, "
+                      "blue = narration, red = hit points)")
+    axes[-1].set_xlabel("seconds")
     fig.tight_layout()
-    fig.savefig(path, dpi=80)
+    fig.savefig(path, dpi=55)
     plt.close(fig)
     print(f"  spectrogram: {path}")

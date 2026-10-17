@@ -10,6 +10,7 @@ def overboard(c):
     t_splash = (c.le(i_calm - 1) + t_calm) / 2 if i_calm > 0 else t_calm - 0.3
     t_w = c.ls(c.find("又敬又怕"))
     a = c.seg(0, t_calm, 3, "4/4", "D minor", nominal=128, label="fish-throw")
+    a.duck(1.5)
     b = c.seg(t_calm, t_w, 2, "4/4", "D major", nominal=88, label="fish-calm")
     h = c.seg(t_w, c.dur, 3, "4/4", "D major", nominal=76, rit=0.3, label="fish-worship")
     a.prog("Dm:4 | Bb:4 | Gm/Bb:2 A7:2@D-harmonic")
@@ -27,7 +28,8 @@ def overboard(c):
             a.add("vc_fast", q0 + k * 0.5, 0.5, [r, fifth, r + 12, fifth][k % 4], 66, "bass", "s")
         a.add("cb", q0, q1 - q0, ch.bass_note(28, 40), 56, "bass")
     timp_roll(a, 0, 8, midi("D2"), 40, 56)
-    timp_roll(a, 8, q_sp - 0.1, midi("A2"), 56, 74)
+    timp_roll(a, 8, 10, midi("D2"), 56, 64)
+    timp_roll(a, 10, q_sp - 0.1, midi("A2"), 64, 76)
     a.mel("horn", "D4:4 | D4:4 | D4:2 C#4:2", vel=64)
     a.add("timp", q_sp, 0.5, "A2", 96, "timp", "h")
     a.add("okit", q_sp, 1, 36, 92, "perc", "h")
@@ -36,7 +38,7 @@ def overboard(c):
     a.add("pz_lo", q_sp, 0.5, "A2", 84, "bass", "h")
     q_l0 = a.q_of(c.t0 + c.ls(0))
     a.expr(["trem_va", "trem_hi", "vc_fast", "cb", "horn", "timp"],
-           [(0, -6), (max(0.5, q_l0), -11), (8, -10), (max(8.5, q_sp - 1), -6), (q_sp, -3), (12, -12)])
+           [(0, -6), (max(0.5, q_l0), -12), (8, -11), (max(8.5, q_sp - 1), -7), (q_sp, -3), (12, -12)])
     # calm: D major strings + a quick rising harp glissando exactly on the line; a flute in the pause
     gliss(b, "harp", 0, 0.45, midi("D3"), midi("D6"), v0=36, v1=62)
     b.pad(["vla", "vln2", "vln1"], 3, 57, 78, vel=50, bass_part="vc", bass_lo=38, bass_hi=50)
@@ -48,9 +50,9 @@ def overboard(c):
     b.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (1, -11), (8, -10)])
     b.expr(["harp", "flute"], [(0, -5), (8, -6)])
     # the sailors worship: a quiet hymn (horns and strings), a plagal 'amen'
-    h.pad(["vla", "vln2", "vln1"], 3, 55, 76, vel=46, bass_part="vc", bass_lo=37, bass_hi=50)
+    h.pad(["vla", "vln2", "vln1"], 3, 55, 76, vel=46, bass_part="vc", bass_lo=40, bass_hi=51)
     h.pad("horn", 2, 50, 66, vel=48, bass_ref=(37, 50))
-    bassline(h, "cb", 28, 42, 44)
+    bassline(h, "cb", 28, 39, 44)
     h.pad("ooh", 2, 57, 72, q0=8, vel=48, bass_ref=(37, 50))
     h.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -12), (8, -10), (10, -9), (12, -12)])
     h.expr("horn", [(0, -11), (8, -10), (12, -13)])
@@ -73,12 +75,15 @@ def swallow(c):
     s.mel("cb", "D2:3 | B1:3", vel=46, role="bass")
     for q, nm in [(0.25, "A6"), (1.0, "F#6"), (1.75, "C#6"), (2.5, "A5"), (3.5, "F#6"), (4.25, "D6"), (5.0, "B5")]:
         s.add("echo_cel", q, 0.5, nm, 58, "arp", "r")
-    broken(s, "harp", 0, 6, (7, 6, 5, 4, 3, 2), 38, 50, vel=36, step=0.5, accent=2)
+    broken(s, "harp", 0, 6, (7, 6, 5, 4, 3, 2), 38, 50, vel=36, step=0.5, accent=2, ring=False)
     s.expr(["pad", "ooh", "cb"], [(0, -12), (6, -11)])
     s.expr(["echo_cel", "harp"], [(0, -6), (6, -7)])
     # the great fish God prepared: tuba + contrabass, doubled four octaves up by glockenspiel
     motif = "D2:1/2:s F#2:1/2:s A2:1/2:s B2:1 A2:1/2:s F#2:1/2:s r:1/2"
     f.mel("tuba", motif, vel=60)
+    f.add("pz_cb", 0, 0.5, "D2", 74, "bass", "h")              # the fish arrives: a plucked low D
+    f.add("harp", 0, 2, "D3", 60, "arp", "h")
+    f.add("timp", 0, 0.5, "D2", 60, "timp", "h")
     f.mel("contrab", motif, vel=50)
     f.mel("tuba", motif, q=4, vel=66)
     f.mel("contrab", motif, q=4, vel=56)
@@ -91,20 +96,20 @@ def swallow(c):
     timp_roll(f, 8, 11.75, midi("A2"), 34, 64)
     f.pad("pad", 3, 52, 71, vel=52, bass_ref=(35, 50))
     f.pad(["vla", "vln2"], 2, 57, 74, vel=40, bass_ref=(35, 50))
-    f.expr(["tuba", "contrab", "glock"], [(0, -7), (4, -5), (8, -6), (12, -3)])
-    f.expr(["pad", "vla", "vln2"], [(0, -12), (8, -11), (12, -8)])
-    f.expr("tbn", [(8, -18), (12, -8)])
+    f.expr(["tuba", "contrab", "glock"], [(0, -7), (4, -6), (8, -8), (12, -6)])
+    f.expr(["pad", "vla", "vln2"], [(0, -12), (8, -12), (12, -10)])
+    f.expr("tbn", [(8, -18), (12, -11)])
     # gulp: an accent, then the bass sinks D-C#-B into the dark belly
     g.sync("gulp accent", 0, t_gulp)
-    g.mel("tuba", "D2:1:a C#2:1 B1:1", vel=90, role="bass")
+    g.mel("tuba", "D2:1:a C#2:1 B1:1", vel=80, role="bass")
     g.mel("contrab", "D2:1:a C#2:1 B1:1", vel=72, role="bass")
-    g.add("timp", 0, 0.5, "D2", 92, "timp", "h")
-    g.add("pz_lo", 0, 0.5, "D3", 86, "bass", "h")
-    g.add("pz_cb", 0, 0.5, "D2", 92, "bass", "h")
-    g.add("okit", 0, 1, 36, 70, "perc", "h")
+    g.add("timp", 0, 0.5, "D2", 84, "timp", "h")
+    g.add("pz_lo", 0, 0.5, "D3", 80, "bass", "h")
+    g.add("pz_cb", 0, 0.5, "D2", 84, "bass", "h")
+    g.add("okit", 0, 1, 36, 60, "perc", "h")
     g.mel("glock", "A6:1/2 D6:1/2", vel=66)
     g.pad(["vla", "vln2", "vln1"], 3, 54, 74, vel=44, bass_ref=(35, 47))
-    g.expr(["vla", "vln2", "vln1", "tuba", "contrab"], [(0, -6), (3, -16)])
+    g.expr(["vla", "vln2", "vln1", "tuba", "contrab"], [(0, -8), (3, -17)])
 
 
 def belly(c):
@@ -141,7 +146,7 @@ def belly(c):
     # Jonah prays: the humming choir enters, the cellos sing low
     p.pad("pad", 3, 50, 69, vel=54, bass_ref=(35, 47))
     p.pad("ooh", 3, 54, 72, vel=50, bass_ref=(35, 47))
-    p.mel("cb", "B1:3 | E1:3 | F#1:3", vel=46, role="bass")
+    p.mel("cb", "B1:3 | E2:3 | F#2:3", vel=46, role="bass")
     p.mel("vc", "D3:3 | E3:3/2 G3:3/2 | F#3:3", vel=40, role="counter")
     fill(c, "echo_cel", c.pause_or_gap(c.find("很深很深的地方")), n=2, lo=79, hi=93, vel=52, up=False)
     for seg in (a, b, d, p):
@@ -159,6 +164,8 @@ def deep(c):
     b = c.seg(t_turn, t_up, 2, "4/4", "G major", nominal=88, label="deep-turn")
     r = c.seg(t_up, t_salv, 3, "4/4", "D major", nominal=92, label="deep-rise")
     s = c.seg(t_salv, c.dur, 1, "4/4", "D major", nominal=92, label="deep-salvation")
+    r.duck(2.0)
+    s.duck(1.5)
     a.prog("Bm:2 Bm/A:2 | G:2 F#:2@B-harmonic | Em:2 Bm/D:2 | C#m7b5:2 F#:2@B-harmonic")
     b.prog("G:2 Em:2 | C:2 D:2")
     r.prog("Bm:2 G:2 | Em7:2 A:2 | G:2 Asus4:1 A:1")
@@ -167,7 +174,7 @@ def deep(c):
     s.sync("radiant D major: '救恩属于耶和华'", 0, t_salv, kind="change")
     # sinking images: a descending bass to the roots of the mountains, swirling harp waters
     a.pad("pad", 3, 50, 69, vel=56, bass_ref=(36, 50))
-    a.pad(["vla", "vln2"], 2, 54, 69, vel=38, bass_ref=(36, 50))
+    a.pad(["vla", "vln2", "vln1"], 3, 54, 72, vel=36, bass_ref=(36, 50))
     a.mel("vc", "B2:2 A2:2 | G2:2 F#2:2 | E2:2 D2:2 | C#2:2 F#2:2", vel=46, role="bass")
     a.mel("cb", "B1:2 A1:2 | G1:2 F#1:2 | E1:2 r:2 | r:2 F#1:2", vel=44, role="bass")
     broken(a, "harp", 0, 16, (6, 5, 4, 3, 4, 5), 47, 59, vel=34, step=0.5, accent=2, thin=True)
@@ -177,32 +184,33 @@ def deep(c):
     a.expr(["harp", "echo_cel"], [(0, -8), (16, -9)])
     # he remembered the LORD: G major (deceptive V -> VI), the choir and strings turn warm
     b.pad("choir", 3, 57, 76, vel=54, bass_ref=(40, 52))
-    b.pad(["vla", "vln2", "vln1"], 3, 55, 74, vel=46, bass_part="vc", bass_lo=40, bass_hi=52)
-    bassline(b, "cb", 28, 40, 46)
+    b.pad(["vla", "vln2", "vln1"], 3, 55, 74, vel=46, bass_part="vc", bass_lo=40, bass_hi=51)
+    bassline(b, "cb", 28, 39, 46)
     b.pad("pad", 3, 50, 69, vel=50, bass_ref=(40, 52))
     broken(b, "harp", 0, 8, (0, 2, 4, 5, 4, 2), 43, 55, vel=38, thin=True)
     b.expr(["choir", "vla", "vln2", "vln1", "vc", "cb", "pad"], [(0, -12), (1, -10), (8, -9)])
     # brought up from the pit: rising harp arpeggios, the strings climb
-    r.pad("choir", 3, 57, 77, vel=56, bass_ref=(38, 50))
-    r.pad(["vla", "vln2", "vln1"], 3, 55, 77, vel=48, bass_part="vc", bass_lo=38, bass_hi=50)
-    bassline(r, "cb", 28, 40, 46)
-    broken(r, "harp", 0, 12, (0, 1, 2, 3, 4, 5, 6, 7), 43, 55, vel=38, step=0.25, accent=4, thin=True)
-    r.expr(["choir", "vla", "vln2", "vln1", "vc", "cb"], [(0, -10), (12, -8)])
+    r.pad("choir", 3, 57, 77, vel=50, bass_ref=(38, 50))
+    r.pad(["vla", "vln2", "vln1"], 3, 55, 77, vel=48, bass_part="vc", bass_lo=40, bass_hi=51)
+    bassline(r, "cb", 28, 39, 46)
+    broken(r, "harp", 0, 12, (0, 1, 2, 3, 4, 5, 6, 7), 43, 55, vel=34, step=0.25, accent=4, thin=True)
+    r.expr(["choir", "vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (12, -12)])
     # salvation belongs to the LORD: radiant D major (V of the shore's G)
     s.pad("choir", 3, 57, 77, vel=62, tops=tops("D5"), bass_ref=(38, 50))
-    s.pad(["vla", "vln2", "vln1"], 3, 57, 79, vel=54, bass_part="vc", bass_lo=38, bass_hi=50)
+    s.pad(["vla", "vln2", "vln1"], 3, 57, 79, vel=54, bass_part="vc", bass_lo=40, bass_hi=51)
     s.add("cb", 0, 4, "D2", 52, "bass")
     gliss(s, "harp", 0, 0.5, midi("D3"), midi("A6"), v0=36, v1=60)
     s.add("glock", 0.5, 2, "F#6", 40, "arp", "r")
     s.add("celesta", 1.0, 3, "A6", 40, "arp", "r")
     timp_roll(s, 0, 3.5, midi("D2"), 30, 44)
-    s.expr(["choir", "vla", "vln2", "vln1", "vc", "cb"], [(0, -9), (1, -6), (3, -6), (4, -8)])
+    s.expr(["choir", "vla", "vln2", "vln1", "vc", "cb"], [(0, -10), (1, -8), (3, -8), (4, -9)])
 
 
 def shore(c):
     t_spit = c.at("吐到了陆地上")
     a = c.seg(0, t_spit, 6, "2/4", "G major", nominal=100, label="shore-swim")
     b = c.seg(t_spit, c.dur, 7, "2/4", "G major", nominal=100, label="shore-sun")
+    b.duck(1.5)
     a.prog("G:2 | C/G:1 G:1 | G:2 | C/G:1 G:1 | Em:2 | Am:1 D7:1")
     b.prog("G:2 | G:2 | C:2 | G/D:1 D7:1 | G:2 | C:1 D7:1 | G:2")
     b.sync("Jonah spat out onto the land (pop)", 0, t_spit)
@@ -217,7 +225,7 @@ def shore(c):
     broken(a, "harp", 0, 12, (0, 2, 4, 2), 43, 55, vel=38, thin=True)
     a.pad(["vla", "vln2"], 2, 59, 74, vel=40, bass_ref=(31, 45))
     a.expr(["tuba", "contrab", "glock", "pz_lo"], [(0, -8), (12, -7)])
-    a.expr(["harp", "vla", "vln2"], [(0, -10), (12, -9)])
+    a.expr(["harp", "vla", "vln2"], [(0, -10), (9, -10), (12, -6)])
     # pop! -- then sunshine: the Jonah motif (3-2-1-5) bouncy on the flute, glockenspiel, pizzicato
     b.add("pz_hi", 0, 0.5, "B4", 72, "arp", "h")
     b.add("pz_hi", 0, 0.5, "G5", 72, "arp", "h")
@@ -227,12 +235,12 @@ def shore(c):
     b.mel("flute", "r:2 | B5:1/2:s A5:1/4:s G5:1/4:s D5:1/2:s G5:1/2:s | C6:1/2:s B5:1/4:s C6:1/4:s G5:1/2:s E5:1/2:s | "
                    "B5:1/2:s G5:1/2:s A5:1/2:s F#5:1/2:s | B5:1/2:s A5:1/4:s G5:1/4:s D5:1/2:s G5:1/2:s | "
                    "E5:1/2 C6:1/2 A5:1/2 F#5:1/2 | G5:2", vel=66)
-    b.mel("glock", "r:2 | B6:1 r:1 | C7:1 r:1 | B6:1 A6:1 | B6:1 r:1 | C7:1 A6:1 | G6:2", vel=52)
+    b.mel("glock", "r:2 | B6:1 r:1 | C7:1 r:1 | B6:1 A6:1 | B6:1 r:1 | C7:1 F#6:1 | G6:2", vel=52)
     b.mel("pz_lo", "r:2 | G2:1/2 r:1/2 D3:1/2 r:1/2 | C3:1/2 r:1/2 G2:1/2 r:1/2 | D3:1/2 r:1/2 D2:1/2 r:1/2 | "
                    "G2:1/2 r:1/2 D3:1/2 r:1/2 | C3:1/2 r:1/2 D3:1/2 r:1/2 | G2:1 r:1", vel=66, role="bass")
     b.mel("pz_hi", "r:2 | r:1/2 [G4,B4,D5]:1/2 r:1/2 [G4,B4,D5]:1/2 | r:1/2 [G4,C5,E5]:1/2 r:1/2 [G4,C5,E5]:1/2 | "
                    "r:1/2 [G4,B4,D5]:1/2 r:1/2 [F#4,A4,C5]:1/2 | r:1/2 [G4,B4,D5]:1/2 r:1/2 [G4,B4,D5]:1/2 | "
-                   "r:1/2 [G4,C5,E5]:1/2 r:1/2 [F#4,A4,C5]:1/2 | [G4,B4,D5]:1 r:1", vel=50, role="harmony")
+                   "r:1/2 [G4,C5,E5]:1/2 r:1/2 [A4,C5,F#5]:1/2 | [G4,B4,D5]:1 r:1", vel=50, role="harmony")
     b.pad(["vla", "vln2", "vln1"], 3, 59, 79, q0=2, vel=46, bass_ref=(31, 50))
-    b.expr(["flute", "glock", "pz_lo", "pz_hi"], [(0, -5), (14, -5)])
+    b.expr(["flute", "glock", "pz_lo", "pz_hi"], [(0, -6), (14, -6)])
     b.expr(["vla", "vln2", "vln1"], [(2, -16), (6, -10), (14, -10)])

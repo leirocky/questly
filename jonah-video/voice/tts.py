@@ -277,6 +277,80 @@ def _cer(ref, hyp):
     return dp[-1] / max(1, len(ref))
 
 
+PAUSE_AFTER = {"，": 0.30, "、": 0.22, "：": 0.36, "；": 0.36, "。": 0.50, "！": 0.50, "？": 0.50}
+
+
+def stretch_pauses(x, sr, text, targets=PAUSE_AFTER):
+    """Lengthen the short pause the voice makes at each punctuation mark inside an utterance.
+
+    The model marks commas with phrase-final lengthening and a ~0.1 s gap; we keep its intonation
+    and only widen the gap to ``targets[mark]`` seconds. Punctuation positions are located with ASR
+    per-character timestamps and snapped to the quietest stretch nearby, so no syllable is cut.
+    """
+    import difflib
+
+    ref = []          # (char, punctuation that follows it or "")
+    for ch in text:
+        if re.match(r"[\u4e00-\u9fff]", ch):
+            ref.append([ch, ""])
+        elif ch in targets and ref:
+            ref[-1][1] = ch
+    marks = [(i, p) for i, (_, p) in enumerate(ref[:-1]) if p]
+    if not marks:
+        return x
+    _, toks, ts = asr(x, sr)
+    hyp = "".join(toks)
+    sm = difflib.SequenceMatcher(None, "".join(c for c, _ in ref), hyp, autojunk=False)
+    pos, t_of = 0, {}
+    starts = []
+    for t, tm in zip(toks, ts):
+        starts.append((pos, tm))
+        pos += len(t)
+    hyp_t = dict(starts)
+    for a, b, size in sm.get_matching_blocks():
+        for k in range(size):
+            if b + k in hyp_t:
+                t_of[a + k] = hyp_t[b + k]
+    hop = int(0.01 * sr)
+    n = len(x) // hop
+    env = 20 * np.log10(np.sqrt(np.mean(x[: n * hop].reshape(n, hop) ** 2, axis=1)) + 1e-9)
+    quiet = env < env.max() - 35
+    # the voice's own pauses: quiet runs of at least 50 ms (never insert anywhere else)
+    runs, f = [], 0
+    while f < n:
+        if quiet[f]:
+            g = f
+            while g < n and quiet[g]:
+                g += 1
+            if f > 0 and g < n and g - f >= 5:
+                runs.append((f, g))
+            f = g
+        else:
+            f += 1
+    used, inserts = set(), []
+    for i, p in marks:
+        t_next = t_of.get(i + 1)
+        if t_next is None:
+            continue
+        # ASR start times run a little late; the pause ends just before the next character
+        cands = [(abs((g * 0.01) - (t_next - 0.05)), k) for k, (f0, g) in enumerate(runs) if k not in used]
+        cands = [c for c in cands if c[0] <= 0.35]
+        if not cands:
+            continue
+        _, k = min(cands)
+        used.add(k)
+        f0, g = runs[k]
+        extra = targets[p] - (g - f0) * 0.01
+        if extra > 0.02:
+            inserts.append((((f0 + g) // 2) * hop, extra))
+    out, last = [], 0
+    for at, extra in sorted(inserts):
+        out += [x[last:at], np.zeros(int(extra * sr), np.float32)]
+        last = at
+    out.append(x[last:])
+    return np.concatenate(out).astype(np.float32)
+
+
 def sentences(text):
     """Split an utterance after 。！？ (keeping the punctuation)."""
     return [t for t in re.findall(r"[^。！？]+[。！？]*", text) if t.strip()]
@@ -503,6 +577,8 @@ def build():
             if v["engine"] in ("kokoro", "zipvoice"):
                 # Remove any DC offset / infrasonic pulse and onset ticks, zero-phase.
                 x = signal.sosfiltfilt(_DC_SOS, soften_onsets(x, SR)).astype(np.float32)
+            if v.get("stretch_pauses"):
+                x = stretch_pauses(x, SR, text)
             speech_len = len(x) / SR
             chunks = chunk_times(text, subtitle_chunks(text), x, SR, speech_len)
             fx = SCENE_FX.get((sc["id"], spk), v["fx"])

@@ -23,10 +23,14 @@ doves. East (right): a dry rocky knoll where Jonah stands with his back to the c
   line 5  "约拿，你这样生气，对吗？" the light glows softly with the words; Jonah looks up into it, surprised —
           then turns his back to the light (a hop-turn) and sulks toward the city without answering. Calm hold.
 
-Pose changes are hard cuts hidden by a squash-and-hop (dust poof, pop lines) as in v1 s11; blinks are short
-hard cuts; nothing crossfades between two different drawings of Jonah. Bubble contents move inside the
-bubble's own pop transform. All timings come from ctx.lines / chunks (phrase positions inside a chunk are
-estimated from the character index, so they follow a re-generated voice).
+Pose changes are hard cuts hidden by a squash-and-hop (dust poof, pop lines) as in v1 s11, and the sit-down
+is a "plop" (squash, cut, short drop, landing squash); nothing crossfades between two different drawings of
+Jonah. While his arms are crossed he fidgets with a slow grumpy sway. Bubble contents move inside the bubble's
+own pop transform, and the puffy ring is drawn ON TOP of the contents (window cut out), so the flashback ship
+can sail off behind it. God's light: the cloud bank drifts in from the east during line 3 (the thought
+bubbles use that sky before), then parts in line 4. All timings come from ctx.lines / chunks (phrase
+positions inside a chunk are estimated from the character index, so they follow a re-generated voice).
+Camera: few long sine moves, peak ~11 output px / frame.
 """
 import math
 import random
@@ -339,8 +343,9 @@ def plain_svg():
                                   (GX - 360, 1500), (GX - 440, 1640)],
                           [150, 170, 200, 250, 300, 360, 420], 1640, WY, road, ink_w=3.2, fade=(0.97, 0.95, 0.92),
                           pebbles=[(GX - 60, 1180, 6), (GX - 250, 1330, 8), (GX + 30, 1100, 5)], seed=4)
-    body += V2._dirt_path("rd2", [(GX + 30, 1110), (GX + 160, 1130), (GX + 330, 1150), (GX + 470, 1180)],
-                          [70, 60, 52, 46], 1190, 1100, road, ink_w=2.4, fade=(0.9, 0.85, 0.6), ruts=False, seed=5)
+    body += V2._dirt_path("rd2", [(GX + 30, 1110), (GX + 160, 1134), (GX + 330, 1164), (GX + 470, 1200),
+                                   (GX + 580, 1250)],
+                          [70, 62, 56, 50, 46], 1250, 1100, road, ink_w=2.4, fade=(0.9, 0.85, 0.7), ruts=False, seed=5)
     for x, y, s in [(520, WY + 6, 0.6), (1468, WY + 10, 0.62), (30, WY + 12, 0.56)]:
         body += PR.palm_tree(x, y, s)
     # the open plain east of the city (behind Jonah): a hamlet of palms, a shepherd's hut, bushes
@@ -376,6 +381,13 @@ def knoll_svg():
                  f'opacity="0.45" stroke-linecap="round"/>')
     for (x, y, s_, sd) in [(1640, 1290, 60, 1), (2240, 1250, 70, 2), (2560, 1320, 55, 3), (1980, 1400, 64, 4)]:
         body += V11._cracks(x, y, s_, seed=sd)
+    # a worn footpath from the road up onto the knoll (the way Jonah came out of the city)
+    fp = [(1400, 1290), (1520, 1262), (1640, 1236), (1740, 1220), (1800, 1212)]
+    body += V2._dirt_path("fp", fp, [44, 40, 34, 28, 22], 1290, 1212, "#f0d5a2", ink_w=2.2,
+                          fade=(0.85, 0.75, 0.3), ruts=False, pebbles=[(1530, 1262, 4), (1660, 1234, 3.5)], seed=7)
+    # warm soft shading at the knoll's front edge and a few sandy ripples
+    body += (f'<ellipse cx="2050" cy="{SH + 20}" rx="900" ry="140" fill="#b8844c" opacity="0.25" '
+             f'filter="url(#blur-md)"/>')
     land = S.g(body, filter="wobble")
     # stones, pebbles, dry shrubs and tufts on and behind the crest
     st = ""
@@ -388,6 +400,14 @@ def knoll_svg():
     for x, s in [(1450, 0.7), (1760, 0.55), (2380, 0.6), (2540, 0.7)]:
         st += PR.grass_tuft(x, knoll_y(x) + 8, s, variant=1)
     st += no_olive_dots(PR.olive_tree(2690, knoll_y(2690) + 6, 0.9, seed=3))
+    # the knoll's front: a dry shrub, pebbles, small desert flowers
+    st += PR.bush(2440, 1420, 0.7, variant=2) + PR.bush(1520, 1470, 0.6, variant=2)
+    st += V11._pebbles(1760, 1360, 1.2, seed=8) + V11._pebbles(2240, 1400, 1.3, seed=9, n=4)
+    st += V11._pebbles(2620, 1450, 1.1, seed=10)
+    for x, y, s in [(1660, 1400, 0.8), (2120, 1340, 0.75), (2330, 1470, 0.85), (1940, 1470, 0.7)]:
+        st += PR.grass_tuft(x, y, s, variant=1)
+    st += V2._flowers(2000, 1300, 6, 90, 11, colors=("#f6d36b", "#f3a0a8", "#fffaf0"))
+    st += V2._flowers(2560, 1330, 5, 70, 12, colors=("#f6d36b", "#fffaf0"))
     return doc(land + S.g(st, filter="wobble-fine"), defs)
 
 
@@ -416,12 +436,20 @@ def ring_body(cream, under, rim_glow=None, seed=11):
     return S.g(ring, filter="wobble")
 
 
-def rim_svg(glow_col="#f3c860"):
-    body = (f'<ellipse cx="{BX}" cy="{BY}" rx="{RX}" ry="{RY}" fill="none" stroke="{glow_col}" stroke-width="10" '
-            f'opacity="0.55" filter="url(#soft)"/>')
+def ring_front_svg(cream, under, glow_col, seed):
+    """The bubble's puffy cloud ring, drawn ON TOP of the bubble contents with the window cut out (even-odd
+    clip), plus the window's ink rim: anything moving inside the bubble that strays past the window edge
+    (the ship sailing off, the pop scale) is simply covered by the ring."""
+    ell = f"M{BX - RX + 2},{BY} a{RX - 2},{RY - 2} 0 1 0 {2 * (RX - 2)},0 a{RX - 2},{RY - 2} 0 1 0 {-2 * (RX - 2)},0 Z"
+    cid = f"ringout{seed}"
+    defs = (f'<clipPath id="{cid}"><path clip-rule="evenodd" d="M-10,-10 H{SW + 10} V{SH + 10} H-10 Z {ell}"/>'
+            f'</clipPath>')
+    body = f'<g clip-path="url(#{cid})">{ring_body(cream, under, seed=seed)}</g>'
+    body += (f'<ellipse cx="{BX}" cy="{BY}" rx="{RX}" ry="{RY}" fill="none" stroke="{glow_col}" stroke-width="10" '
+             f'opacity="0.55" filter="url(#soft)"/>')
     body += S.g(f'<ellipse cx="{BX}" cy="{BY}" rx="{RX}" ry="{RY}" fill="none" stroke="{INK}" stroke-width="4.5"/>',
                 filter="wobble")
-    return doc(body)
+    return doc(body, defs)
 
 
 def win_clip(cid, inset=0):
@@ -460,7 +488,8 @@ def flash_back_svg():
              f'fill="{P["wood"]}" stroke="{INK}" stroke-width="3"/>')
     pier += PR.jar(BX + 240, PIER_Y - 22, 0.24) + PR.crate(BX + 196, PIER_Y - 16, 0.26)
     inner += pier
-    body = ring_body("#fff8ea", "#f4e2c3") + f'<g clip-path="url(#w1)">{S.g(inner, filter="wobble-fine")}</g>'
+    body = f'<ellipse cx="{BX}" cy="{BY}" rx="{RX + 30}" ry="{RY + 26}" fill="#fff8ea"/>'
+    body += f'<g clip-path="url(#w1)">{S.g(inner, filter="wobble-fine")}</g>'
     halo = S.rad_grad("fh", [(0, "#fff7dc", 0.8), (0.6, "#fff0c8", 0.35), (1, "#ffe9b0", 0)])
     return doc(f'<ellipse cx="{BX}" cy="{BY}" rx="{RX + 150}" ry="{RY + 120}" fill="url(#fh)"/>' + body, defs + halo)
 
@@ -468,7 +497,7 @@ def flash_back_svg():
 def flash_ship_svg(part):
     x, y, s = SHIP
     body = PR.ship(x, y, s, -1, sail="full", part=part, lantern=False)
-    return doc(f'<g clip-path="url(#w1b)">{body}</g>', win_clip("w1b", 7))
+    return doc(f'<g clip-path="url(#w1b)">{body}</g>', win_clip("w1b", -24))
 
 
 def flash_sea_front_svg():
@@ -477,7 +506,7 @@ def flash_sea_front_svg():
     body = f'<path d="{d}" fill="{S.mix(P["sea_light"], P["sea"], 0.45)}" stroke="{INK}" stroke-width="2.5"/>'
     body += (f'<path d="{S.wave_line(y + 4, 4, 70, 0.6, BX - 260, BX + 260)}" fill="none" stroke="{P["foam"]}" '
              f'stroke-width="4" opacity="0.8"/>')
-    return doc(f'<g clip-path="url(#w1c)">{S.g(body, filter="wobble-fine")}</g>', win_clip("w1c", 7))
+    return doc(f'<g clip-path="url(#w1c)">{S.g(body, filter="wobble-fine")}</g>', win_clip("w1c", -24))
 
 
 # memory (bubble 2): God's kindness — a glowing heart; a grey cloud over a tiny Nineveh melts away
@@ -507,7 +536,8 @@ def memory_back_svg():
     inner += PR.nineveh_skyline(BX - RX + 10, BX + RX - 10, gy, 0.18, seed=2, haze=0.12, tint="#f6dcae")
     inner += V2._ridge([(BX - RX - 40, gy + 2), (BX, gy - 2), (BX + RX + 40, gy + 4)],
                        S.mix(P["grass"], P["sand"], 0.4), 2.5)
-    body = ring_body("#fff6e0", "#f6e0b4", seed=12) + f'<g clip-path="url(#w2)">{S.g(inner, filter="wobble-fine")}</g>'
+    body = f'<ellipse cx="{BX}" cy="{BY}" rx="{RX + 30}" ry="{RY + 26}" fill="#fff0c8"/>'
+    body += f'<g clip-path="url(#w2)">{S.g(inner, filter="wobble-fine")}</g>'
     return doc(f'<ellipse cx="{BX}" cy="{BY}" rx="{RX + 190}" ry="{RY + 160}" fill="url(#mh)"/>' + body, defs)
 
 
@@ -529,6 +559,20 @@ def heart_svg():
              f'ry="{f1(HEART_W * 0.06)}" fill="#fff3e6" opacity="0.9" transform="rotate(-30 {f1(cx - HEART_W * 0.22)} '
              f'{f1(cy - HEART_W * 0.12)})"/>')
     return doc(S.g(body, filter="wobble-fine"))
+
+
+def heart_beam_svg():
+    """Warm light shining from the heart onto the grey cloud and the little city below it."""
+    hx, hy = HEART
+    cx, cy = MCLOUD
+    ang = math.degrees(math.atan2(cy + 20 - hy, cx - hx))
+    hx += HEART_W * 0.42 * math.cos(math.radians(ang))
+    hy += HEART_W * 0.42 * math.sin(math.radians(ang))
+    d = V2._fan(hx, hy, math.hypot(cx - hx, cy - hy) + 90, [ang - 7, ang + 3, ang + 12], [7, 9, 6])
+    defs = (f'<radialGradient id="hbm" gradientUnits="userSpaceOnUse" cx="{hx}" cy="{hy}" r="300">'
+            f'<stop offset="0.15" stop-color="#fff2b8" stop-opacity="0.95"/>'
+            f'<stop offset="1" stop-color="#ffe08a" stop-opacity="0.15"/></radialGradient>')
+    return doc(f'<path d="{d}" fill="url(#hbm)" filter="url(#soft)"/>', defs)
 
 
 def storm_svg():
@@ -782,31 +826,29 @@ def build(ctx):
             alpha=light_in(t) * (0.6 + 0.4 * (0.5 + 0.5 * math.sin(2 * math.pi * (t - t_light) / 2.2 + k * math.pi)))))
 
     # ---------------------------------------------------------------- JONAH
-    # frames: 0 cross, 1 cross blink, 2 cross_up, 3 complain, 4 complain2, 5 shrug,
-    #         6 sit_sulk, 7 sit_sulk blink, 8 sulk side-eye, 9 sulk looking up, 10 sit_sulk facing the city,
-    #         11 its blink
-    jdefs = [("cross", None, 1), ("cross", "sleepy", 1), ("cross_up", None, 1), ("complain", None, 1),
-             ("complain2", None, 1), ("shrug", None, 1), ("sit_sulk", None, 1), ("sit_sulk", "sleepy", 1),
-             ("sulk_eye", None, 1), ("sulk_up", None, 1), ("sit_sulk", None, -1), ("sit_sulk", "sleepy", -1)]
+    # frames: 0 cross, 1 cross_up, 2 complain, 3 complain2, 4 shrug, 5 sit_sulk, 6 sulk side-eye,
+    #         7 sulk looking up, 8 sit_sulk facing the city. (No blinks: the library's closed-eye faces
+    #         'sleepy' / 'peaceful' have a yawning / smiling mouth, which would flash a wrong mood.)
+    jdefs = [("cross", None, 1), ("cross_up", None, 1), ("complain", None, 1), ("complain2", None, 1),
+             ("shrug", None, 1), ("sit_sulk", None, 1), ("sulk_eye", None, 1), ("sulk_up", None, 1),
+             ("sit_sulk", None, -1)]
     jframes = [doc(jfig(JX, JY, JS, f, pose=p, expr=e)) for p, e, f in jdefs]
-    SIT0 = 6
+    SIT0 = 5
     # (time, frame, hop amplitude, dust, pop lines)
     sched = [(0.0, 0, 0, False, False),
-             (t_lookup, 2, 0.6, False, False),
-             (t_arms, 3, 1.0, False, True),
-             (t_wide, 4, 0.8, False, False),
-             (t_watch, 2, 0.6, False, False),
-             (t_shrug, 5, 0.8, False, True),
-             (t_wide2, 4, 0.8, False, False),
-             (t_shrug2, 5, 0.7, False, False),
+             (t_lookup, 1, 0.6, False, False),
+             (t_arms, 2, 1.0, False, True),
+             (t_wide, 3, 0.8, False, False),
+             (t_watch, 1, 0.6, False, False),
+             (t_shrug, 4, 0.8, False, True),
+             (t_wide2, 3, 0.8, False, False),
+             (t_shrug2, 4, 0.7, False, False),
              (t_cross, 0, 0.8, False, False),
-             (t_sit, 6, 1.4, True, False),
-             (t_eye, 8, 0.4, False, False),
-             (t_front, 6, 0.6, False, False),
-             (t_glance, 9, 0.6, False, True),
-             (t_turn, 10, 1.0, True, False)]
-    blinks = [1.55, L0.chunks[1].start + 0.5, t_sit + 1.9, t_sit + 3.6, t_front + 1.2, L4.start + 0.5]
-    BLINK = {0: 1, 6: 7, 10: 11}
+             (t_sit, 5, 1.4, True, False),
+             (t_eye, 6, 0.4, False, False),
+             (t_front, 5, 0.6, False, False),
+             (t_glance, 7, 0.6, False, True),
+             (t_turn, 8, 1.0, True, False)]
 
     def base_frame(t):
         f = 0
@@ -816,18 +858,25 @@ def build(ctx):
         return f
 
     def jonah_frame(t):
-        f = base_frame(t)
-        for tb in blinks:
-            if tb <= t < tb + 0.13 and f in BLINK and base_frame(tb - 0.2) == f and base_frame(tb + 0.3) == f:
-                return float(BLINK[f])
-        return float(f)
+        return float(base_frame(t))
 
     def hop(t):
         sy, dy = 1.0, 0.0
-        for ts, _fr, amp, *_r in sched:
+        for ts, fr, amp, *_r in sched:
             if amp <= 0:
                 continue
             u = t - ts
+            if ts == t_sit and -0.12 <= u <= 0.3:
+                # plop: squash while still standing, cut, the seated figure drops the last bit onto the
+                # ground and squashes on landing
+                if u < 0:
+                    sy = 1 - 0.07 * M.progress(u, -0.12, -0.01, "sine")
+                elif u < 0.1:
+                    dy = -26 * (1 - M.ease("in")(u / 0.1))
+                    sy = 1.04
+                else:
+                    sy = 1 - 0.08 * math.sin(math.pi * _clamp((u - 0.1) / 0.2))
+                continue
             if -0.09 <= u <= 0.2:
                 if u < -0.01:
                     sy = 1 - 0.06 * amp * M.progress(u, -0.09, -0.01, "sine")
@@ -858,6 +907,10 @@ def build(ctx):
             u = t - ts
             if 0.15 <= u < 1.1:
                 rot += 1.3 * math.sin(2 * math.pi * u * 3.2) * (1 - M.progress(u, 0.6, 1.1, "sine"))
+        # side-eye at the cheering city: he leans back toward it a little
+        rot -= 2.6 * M.progress(t, t_eye - 0.05, t_eye + 0.3, "sine") * (1 - M.progress(t, t_front - 0.1, t_front, "sine"))
+        if base_frame(t) in (0, 1, 5, 6, 8):   # grumpy fidget while his arms are crossed
+            rot += 0.7 * math.sin(2 * math.pi * t / 2.7) + 0.3 * math.sin(2 * math.pi * t / 1.3)
         hsy, hdy = hop(t)
         sy *= hsy
         sx = s * (1 + 0.5 * (1 - hsy))
@@ -988,9 +1041,11 @@ def build(ctx):
                       alpha=1 - M.progress(t, to + 0.1, to + 0.25, "sine"))
         return m
 
-    # bubble 1: the flashback to Joppa
+    # the little trail of thought puffs stays from the first bubble to the end of the second
     for i in range(3):
-        sc.add(f"trail1_{i}", trail_svg(i), motion=trail_motion(i, t_b1, t_b1_out), wc=0.3)
+        sc.add(f"trail_{i}", trail_svg(i), motion=trail_motion(i, t_b1, t_b2_out), wc=0.3)
+
+    # bubble 1: the flashback to Joppa
     sc.add("b1_back", flash_back_svg(), motion=in_bubble(t_b1, t_b1_out), wc=0.5)
     sx_, sy_, ss_ = SHIP
     ship_bob = lambda t: M.progress(t, t_land + 0.05, t_sail1, "inout") * -70
@@ -1019,14 +1074,13 @@ def build(ctx):
     sc.add("b1_ship_front", flash_ship_svg("front"), motion=in_bubble(t_b1, t_b1_out, ship_local), wc=0.4)
     sc.add("b1_sea", flash_sea_front_svg(), wc=0.4,
            motion=in_bubble(t_b1, t_b1_out, lambda t: Tf(dx=6 * math.sin(2 * math.pi * t / 2.5))))
-    sc.add("b1_rim", rim_svg("#bfe0ea"), motion=in_bubble(t_b1, t_b1_out), wc=0.3)
+    sc.add("b1_ring", ring_front_svg("#fff8ea", "#f4e2c3", "#bfe0ea", 11), motion=in_bubble(t_b1, t_b1_out), wc=0.5)
 
     # bubble 2: God's kindness
-    for i in range(3):
-        sc.add(f"trail2_{i}", trail_svg(i, "#fff6e0"), motion=trail_motion(i, t_b2, t_b2_out), wc=0.3)
     sc.add("b2_back", memory_back_svg(), motion=in_bubble(t_b2, t_b2_out), wc=0.5)
     sc.add("b2_cityglow", city_glow_svg(), wc=0, motion=in_bubble(
-        t_b2, t_b2_out, lambda t: Tf(alpha=M.progress(t, t_melt + 0.2, t_melt + 1.0, "sine"))))
+        t_b2, t_b2_out, lambda t: Tf(alpha=M.progress(t, t_melt + 0.7, t_melt + 1.5, "sine"))))
+
     hx_, hy_ = HEART
     beats = [t_beat1, t_beat2, t_melt]
 
@@ -1049,22 +1103,25 @@ def build(ctx):
 
     def storm_local(t):
         a = M.progress(t, t_grey, t_grey + 0.6, "sine")
-        k = 1 - 0.75 * M.progress(t, t_melt + 0.05, t_melt + 0.7, "in")
-        a *= 1 - M.progress(t, t_melt + 0.35, t_melt + 0.75, "sine")
+        k = 1 - 0.75 * M.progress(t, t_melt + 0.3, t_melt + 1.2, "in")
+        a *= 1 - M.progress(t, t_melt + 0.8, t_melt + 1.25, "sine")
         dx = 40 * (1 - M.progress(t, t_grey, t_grey + 0.9, "out")) + 3 * math.sin(t * 2.2)
         return Tf(dx=dx, sx=k, sy=k, alpha=a, px=mx_, py=my_)
 
     sc.add("b2_storm", storm_svg(), wc=0.4, motion=in_bubble(t_b2, t_b2_out, storm_local))
+    sc.add("b2_beam", heart_beam_svg(), wc=0, motion=in_bubble(t_b2, t_b2_out, lambda t: Tf(
+        alpha=M.progress(t, t_melt - 0.1, t_melt + 0.4, "sine") * (1 - M.progress(t, t_melt + 1.3, t_melt + 2.0, "sine"))
+        * (0.85 + 0.15 * math.sin(t * 7)))))
 
     def melt_local(t):
-        u = t - (t_melt + 0.35)
+        u = t - (t_melt + 0.85)
         if u < 0 or u > 1.1:
             return Tf(alpha=0.0)
         return Tf(dy=-40 * M.ease("out")(u / 1.1), sx=0.6 + 0.6 * u, sy=0.6 + 0.6 * u,
                   alpha=min(1.0, u / 0.1) * (1 - M.progress(u, 0.5, 1.1, "sine")), px=mx_, py=my_)
 
     sc.add("b2_melt", melt_puffs_svg(), wc=0.3, motion=in_bubble(t_b2, t_b2_out, melt_local))
-    sc.add("b2_rim", rim_svg("#f3c860"), motion=in_bubble(t_b2, t_b2_out), wc=0.3)
+    sc.add("b2_ring", ring_front_svg("#fff0c8", "#f6d9a0", "#f3c860", 12), motion=in_bubble(t_b2, t_b2_out), wc=0.5)
 
     # ---------------------------------------------------------------- FOREGROUND
     sc.add("warm", warm_svg(), wc=0, blend="add",
@@ -1105,7 +1162,7 @@ def build(ctx):
     sc.sfx("cheer", 0, dur=t_pan1 + 0.5, gain_db=-13, fade_in=0.8, fade_out=1.5, pan=-0.3)
     sc.sfx("cheer", L3.chunks[1].start + 0.5, dur=t_front - L3.chunks[1].start, gain_db=-19, fade_in=1.2,
            fade_out=1.2, pan=-0.4)
-    sc.sfx("thud", t_stamp + 0.05, gain_db=-12, pan=0.2)
+    sc.sfx("thud", t_stamp + 0.28, gain_db=-12, pan=0.2)
     sc.sfx("cloth", t_arms, gain_db=-14, pan=0.2)
     sc.sfx("cloth", t_shrug, gain_db=-15, pan=0.2)
     sc.sfx("pop", t_b1, gain_db=-11, pan=0.4)
@@ -1116,7 +1173,7 @@ def build(ctx):
     sc.sfx("sparkle", t_b2 + 0.1, gain_db=-12, pan=0.4)
     sc.sfx("sparkle", t_melt + 0.2, gain_db=-11, pan=0.4)
     sc.sfx("pop", t_b2_out + 0.1, gain_db=-14, pan=0.4)
-    sc.sfx("thud", t_sit, gain_db=-8, pan=0.2)
+    sc.sfx("thud", t_sit + 0.08, gain_db=-8, pan=0.2)
     sc.sfx("chime", L4.start, gain_db=-6, pan=0.2)
     sc.sfx("sparkle", L5.start + 0.2, gain_db=-13, pan=0.2)
     sc.sfx("cloth", t_turn, gain_db=-14, pan=0.2)
