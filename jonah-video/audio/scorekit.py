@@ -233,9 +233,13 @@ class Seg:
             for q, db in points:
                 self.score.expr[p].append((self.t(q), float(db)))
 
-    def sync(self, label, q, target_rel):
-        """Record a hit point: musical position q should land at cue-relative time target_rel."""
-        self.score.syncs.append((self.cue.id, label, self.cue.t0 + target_rel, self.t(q)))
+    def sync(self, label, q, target_rel, kind="hit"):
+        """Record a hit point: musical position q should land at cue-relative time target_rel.
+
+        kind 'hit': an attack (drum, pluck, accent) that must be audible as an onset there;
+        kind 'change': a harmonic arrival (a swell into a new chord) that must be audible as a change
+        of harmony there.  music_check verifies both on the rendered audio."""
+        self.score.syncs.append((self.cue.id, label, self.cue.t0 + target_rel, self.t(q), kind))
 
     # --------------------------------------------------------------- generators
     def pad(self, parts, n, lo, hi, q0=0.0, q1=None, vel=60, role="pad", bass_part=None, bass_lo=28,

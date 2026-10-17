@@ -73,7 +73,9 @@ def render_sheet(name, title, items, cols, cell_w, cell_h, scale, ground_pad=26,
     ground = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     if not clip_cells:            # anchors of clipped close-ups lie outside their cells: no overlays
         gd = ImageDraw.Draw(ground)
-        for cx, cy, _ in anchors:
+        for cx, cy, lab in anchors:
+            if not lab:           # blank padding cell
+                continue
             gd.line([(cx - cell_w * 0.42, cy), (cx + cell_w * 0.42, cy)], fill=(214, 196, 160, 255), width=2)
     sheet, d = _finish(fig, W, H, title, under=ground)
     font = ImageFont.truetype(str(FONT_REGULAR), 22)
@@ -83,7 +85,7 @@ def render_sheet(name, title, items, cols, cell_w, cell_h, scale, ground_pad=26,
         x0 = int((i % cols) * cell_w)
         y0 = int(top + (i // cols) * cell_h)
         d.text((x0 + 10, y0 + cell_h - LABEL_H + 4), label, fill=INK_RGB, font=font)
-        if not clip_cells:
+        if not clip_cells and label:
             d.line([(cx - 7, cy), (cx + 7, cy)], fill=(200, 40, 40), width=2)
             d.line([(cx, cy - 7), (cx, cy + 7)], fill=(200, 40, 40), width=2)
         d.rectangle([x0, y0, x0 + cell_w - 1, y0 + cell_h - 1], outline=(222, 206, 176))
@@ -106,7 +108,7 @@ def sheets():
     out = []
     jp = list(C.JONAH_POSES)
     out.append(("jonah_poses", "Jonah — poses (scale 1, facing=1; red cross = anchor)",
-                [(p, _j(p)) for p in jp], 6, 380, 450, 1.0, {}))
+                [(p, _j(p)) for p in jp], 6, 380, 470, 1.0, {"ground_pad": 52}))
     items = [(e, _j("stand", e)) for e in C.EXPRESSIONS]
     items += [("wet=True stand", _j("stand", "sad", wet=True)), ("wet float", _j("float", wet=True)),
               ("wet kneel_pray", _j("kneel_pray", wet=True)), ("facing=-1 happy", _j("stand", "happy", -1)),
@@ -114,10 +116,14 @@ def sheets():
               ("sit_faint (tired)", _j("sit_faint"))]
     out.append(("jonah_expr", "Jonah — expressions and wet=True (scale 1.5, upper body)", items, 8, 290, 360, 1.5,
                 {"clip_cells": True, "ground_pad": -185}))
-    items = [(p, _j(p)) for p in jp] + [(p + " -1", _j(p, facing=-1)) for p in jp]
-    items += [(e, _j("stand", e)) for e in C.EXPRESSIONS] + [("wet", _j("stand", wet=True))]
+    cols = 11
+
+    def pad(group):               # keep every group on whole rows so the title's row numbers stay true
+        return group + [("", lambda x, y, s: "")] * (-len(group) % cols)
+    items = pad([(p, _j(p)) for p in jp]) + pad([(p + " -1", _j(p, facing=-1)) for p in jp])
+    items += pad([(e, _j("stand", e)) for e in C.EXPRESSIONS] + [("wet", _j("stand", wet=True))])
     out.append(("jonah_small", ("Jonah — readability at scale 0.45 (rows 1-2 facing=1, rows 3-4 facing=-1, "
-                                "rows 5-6 expressions)"), items, 10, 190, 230, 0.45, {"ground_pad": 14}))
+                                "rows 5-6 expressions)"), items, cols, 190, 230, 0.45, {"ground_pad": 14}))
     items = []
     for v in range(4):
         for p in C.SAILOR_POSES:
@@ -176,19 +182,20 @@ def compositions():
     fg += C.ground_shadow(cx, gy, sc, 150) + C.captain(cx, gy, sc, 1, pose="wake")
     fg += C.ground_shadow(jx, gy, sc, 330) + C.jonah(jx, gy, sc, 1, pose="sleep", marks=False)
     labels.append((x0, y0, f"captain(pose='wake') at x = jonah_x {cx - jx:+.0f} (= {(cx - jx) / sc:+.0f}*scale)"))
-    # (2) sailors heave Jonah up to throw him overboard
+    # (2) sailors lift Jonah up to throw him overboard (Jonah 1:15), then he tumbles toward the sea
     x0, y0 = pw, top
     gy = y0 + 470
     bg += _panel_bg(x0, y0, pw, ph, P["storm_sky"], P["wood"], gy)
     sc = 0.8
-    xs = [x0 + 380, x0 + 560, x0 + 740]
+    xs = [x0 + 300, x0 + 420, x0 + 540]
     hands = [C.hand_positions(C.sailor, x, gy, sc, 1, variant=i, pose="lift") for i, x in enumerate(xs)]
     top_y = min(min(h[0][1], h[1][1]) for h in hands)
-    jb = C.body_points(C.jonah, 0, 0, sc, 1, pose="fall")["bbox"]
+    jx = xs[1] + 20 * sc                       # the carried body spans -181..+141 around its anchor
+    fg += C.jonah(jx, top_y + 6 * sc, sc, 1, pose="carried")   # behind the sailors: their hands hold him
     for i, x in enumerate(xs):
         fg += C.sailor(x, gy, sc, 1, variant=i, pose="lift")
-    fg += C.jonah(xs[1] + 10, top_y + 22 * sc, sc, 1, pose="fall")
-    labels.append((x0, y0, f"3 x sailor(pose='lift') + jonah(pose='fall') (bbox {tuple(round(v) for v in jb)})"))
+    fg += C.jonah(x0 + 900, y0 + 330, 0.7, 1, pose="fall")
+    labels.append((x0, y0, "3 x sailor(pose='lift') under jonah(pose='carried') at the hand line; jonah(pose='fall')"))
     # (3) Jonah preaches to a crowd in Nineveh at scale 0.5: Jonah must stand out
     x0, y0 = 0, top + ph
     gy = y0 + 480

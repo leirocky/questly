@@ -16,7 +16,8 @@ fn(x, y, scale=1.0, facing=1, pose=..., expr=None, ..., marks=True)
           - sitting on the ground (sit*, wake, sit_ashes): the seat touches the ground right at the anchor and
             the heels rest on the same line;
           - kneeling: under the hips (knees and toes on the ground line);
-          - 'sleep': under the hip; the flat underside of the body lies on the ground line;
+          - 'sleep' and 'carried': under the hip; the flat underside of the body lies on the anchor line
+            (for 'carried' that line is the lifting hands, see sailor 'lift');
           - airborne 'fall' and 'float': bottom-centre of the figure's bounding box.
 * scale   1.0 = adult about 330 px tall on the 2112x1188 stage. Outlines (4 px) scale with the figure.
 * facing  1 faces / moves right, -1 mirrors to face left. A bbox (l, t, r, b) mirrors to (-r, t, -l, b).
@@ -47,17 +48,19 @@ with a brown band (P['headcloth_stripe']) and a striped flap hanging behind the 
 fall / float / run), short brown beard (P['beard']), skin P['skin'], brown sandals.
 wet=True: robe and cloth ~22% darker with soaked patches at the hem, three seaweed strands draped over the
 head-cloth (one down onto the shoulder), outlined drops (with highlight) falling from beard, hem, flap and
-fingertips. Adds up to ~13 px to the bbox; drops never go below the ground line except in fall / float.
+fingertips. Adds up to ~13 px to the bbox; drops never go below the ground line except in fall / float /
+carried.
   pose          bbox (l, t, r, b)        natural expr  notes
   stand         (-69, -333,  58, 0)      neutral
   walk_a        (-88, -332,  83, 1)      neutral       stride frame 1 ('walk' is an alias)
   walk_b        (-66, -335, 104, 0)      neutral       stride frame 2
   run_a         (-118, -303, 122, 0)     neutral       run frame 1 (leaning, back foot kicked up)
   run_b         (-92, -297, 141, 0)      neutral       run frame 2
-  sleep         (-206, -182, 119, 5)     sleepy        lying on his side, knees bent, cheek resting on both
-                (marks=False: top -120)                palms; HEAD ON THE LEFT for facing=1 (right for -1);
-                                                       z's rise above the head. Points at scale 1: head
-                                                       (-139, -69), upper shoulder (-83, -69), hands (-130, -13)
+  sleep         (-205, -191,  96, 0)     sleepy        curled on his side, knees drawn up under the robe,
+                (marks=False: top -130)                cheek resting on both palms; HEAD ON THE LEFT for
+                                                       facing=1 (right for -1); z's rise above the head.
+                                                       Points at scale 1: head (-136, -79), upper shoulder
+                                                       (-80, -75), hands (-123, -13), pelvis (0, -35)
   kneel_pray    (-90, -290,  49, 5)      peaceful      kneeling, palms together, head tilted up
   sit           (-74, -229, 119, 3)      neutral       on the ground, knees up, hands resting on the knees
   sit_sulk      (-72, -228, 117, 2)      angry         sitting, knees up, arms crossed, chin down
@@ -67,19 +70,30 @@ fingertips. Adds up to ~13 px to the bbox; drops never go below the ground line 
   preach        (-73, -337,  68, 0)      call          one arm raised high, open hand, earnest open mouth
   point         (-69, -334, 150, 0)      neutral       arm straight out toward ``facing``
   arms_up       (-76, -334,  74, 0)      happy         both arms up
-  fall          (-165, -332, 167, 4)     scared        tumbling (body tilted 42 deg), knees bent, robe and
-                                                       head-cloth flap flying up, arms out
-  float         (-129, -332, 131, 2)     scared        underwater: tilted 14 deg, arms spread slightly up,
-                                                       knees bent, wavy hem flaring up, flap and sash tails
-                                                       drifting upward
+  fall          (-152, -277, 150, 6)     scared        tumbling through the air: body tilted 58 deg forward
+                                                       (head toward ``facing``), arms flung up, both knees
+                                                       bent with the near foot kicked up behind, robe blown up
+                                                       to the shins, head-cloth flap and sash streaming up
+  float         (-135, -333, 138, 3)     scared        underwater: tilted 18 deg, arms spread slightly up,
+                                                       knees bent, wavy hem flaring up, flap drifting up and
+                                                       sash tails drifting out in front
   refuse        (-71, -338, 139, 0)      angry         body and head turned AWAY from ``facing``, near arm out
                                                        at chest height toward ``facing`` with palm out ('no'),
                                                        head-shake marks on the face side
   confess       (-56, -330,  82, 0)      sorry         hand on chest, head bowed
-  listen        (-67, -352,  86, 0)      neutral       head tilted up, eyes up, hand cupped beside the face
-                (marks=False: top -334)                (palm toward ``facing``), sound arcs from above-front
+  listen        (-86, -352,  64, 0)      neutral       head tilted up, eyes up, near hand cupped at the ear
+                (marks=False: (-85, -334, 58, 0))      (cheek height, over the head-cloth edge, cup opening
+                                                       toward ``facing``), sound arcs from above-front
   wake          (-65, -229, 140, 5)      sleepy        sitting up, legs out, rubbing an eye, other arm
                                                        stretched up
+  carried       (-181, -131, 141, 52)    worried       lying on his back, held up overhead by the sailors
+                                                       (Jonah 1:15): head lifted toward the viewer, near hand
+                                                       on the chest, far arm dangling below the line (that is
+                                                       the bottom 52), knees slightly bent, flap hanging down.
+                                                       HEAD ON THE LEFT for facing=1. Points at scale 1: head
+                                                       (-128, -79), pelvis (0, -36), feet (110..120, -16).
+                                                       Body spans x -181..+141, so centre it with
+                                                       x = middle_hand_x + 20*scale (see compositions sheet)
 
 sailor(x, y, scale=1.0, facing=1, variant=0, pose='stand', expr=None, marks=True)
 ---------------------------------------------------------------------------------
@@ -93,9 +107,9 @@ same for every variant (use hand_positions for other scales / facings).
   pose     bbox (union of variants)  natural expr  notes
   stand    (-61, -344,  56, 0)       neutral
   scared   (-94, -345,  81, 0)       scared        hands up beside the face (marks=False: top -335)
-  throw    (-87, -350,  71, 0)       worried       body arched back, stepping forward, both hands together
-                                                   just above the forehead, heaving something overboard:
-                                                   hands (26, -331), (-3, -319)
+  throw    (-98, -340,  66, 0)       worried       body arched back, stepping forward, both hands raised
+                                                   together up and in front of the head, heaving something
+                                                   overboard: hands (54, -322), (17, -303)
   carry    (-47, -308, 108, 0)       worried       crouched, both knees bent, arms forward at hip height:
                                                    hands (97, -109), (63, -118)
   pray     (-96, -341,  55, 0)       scared        both hands raised to the sky, looking up
@@ -104,7 +118,10 @@ same for every variant (use hand_positions for other scales / facings).
                                                    straight arms angled down along one rope line through the
                                                    fists (81, -166) and (37, -151) (rope rises toward the front)
   lift     (-70, -340,  65, 0)       worried       both hands up beside the head (52, -317), (-55, -316),
-                                                   lifting a person together with others (see compositions)
+                                                   lifting a person together with others: e.g. 3 sailors
+                                                   120*scale apart, then jonah(pose='carried') at x = middle
+                                                   sailor x + 20*scale, y = hand-centre y + 6*scale, drawn
+                                                   BEHIND the sailors so their hands hold him
 
 captain(x, y, scale=1.0, facing=1, pose='stand', expr=None, marks=True)
 -----------------------------------------------------------------------
@@ -115,10 +132,10 @@ that ends just above the coat hem, rope belt on the tunic, sandals.
   wake     (-46, -293, 166, 1)   worried   crouching and leaning far forward; hands at (154, -74) (far) and
                                            (100, -109) (near). To wake the sleeping Jonah, use the SAME facing
                                            as Jonah and the same ground line: captain_x = jonah_x -
-                                           facing*237*scale puts the far hand on Jonah's upper shoulder and the
-                                           near hand at his head; draw the captain on the layer behind Jonah and
-                                           pass marks=False to Jonah (or compute it with body_points: Jonah's
-                                           shoulders[0] minus the captain's hands[0]).
+                                           facing*234*scale puts the far hand on Jonah's upper shoulder and the
+                                           near hand just above his head; draw the captain on the layer behind
+                                           Jonah and pass marks=False to Jonah (or compute it with body_points:
+                                           Jonah's shoulders[0] minus the captain's hands[0]).
   point    (-61, -365, 167, 0)   neutral
   worried  (-68, -368,  62, 0)   worried   both hands on his head
 
@@ -177,7 +194,8 @@ attire='sackcloth': burlap robe, rope belt, ash speckles, barefoot, no shawl or 
 ground_shadow(x, y, scale=1.0, width=120, opacity=0.22, color=None)
 --------------------------------------------------------------------
 Soft blurred oval contact shadow centred on an anchor point (uses the #soft filter). Put it on a layer
-under the figure. Suggested width: standing 120, sitting/kneeling 200, sleep 330, child 90.
+under the figure. Suggested width: standing 120, sitting/kneeling 200, sleep 300, child 90 (none for
+'carried', 'fall' or 'float').
 bbox about (-width/2, -12, width/2, 20) * scale.
 
 hand_positions(fn, x, y, scale=1.0, facing=1, **kw) -> [(x, y) far hand, (x, y) near hand]
@@ -878,12 +896,13 @@ def _P(**kw):
     ground    'feet' (soles on the ground), 'seat' (sitting on the ground), 'body' (lying), 'air'
     lap       seated robe built from a thigh hull and a shin hull
     drop      pelvis lowered by this many px (crouch) for 'ik' legs
+    held      lying on raised hands, not on the floor (water drops may fall below the anchor line)
     """
     base = dict(t=0, h=0, legs=((3, 1), (-3, -1)), arms=(("fk", 8, 3), ("fk", -8, -3)),
                 hands=("fist", "fist"), ground="feet", lap=False, drop=0, hem=None, flare=0,
                 far_front=False, near_back=False, tail=None, flip=False, spin=0, marks=(),
                 expr="neutral", look=(0, 0), feet=(None, None), far_over_head=False, fan_arm=0,
-                billow=0, sash_dir=None, flat_back=False, near_hidden=False, reach=1.0)
+                billow=0, sash_dir=None, flat_back=False, near_hidden=False, reach=1.0, held=False)
     base.update(kw)
     return base
 
@@ -898,7 +917,7 @@ POSES = {
                 hem=0.66, tail=-102, flare=-4),
     "run_b": _P(t=14, legs=((-24, -118), (58, 22)), arms=(("fk", 62, 128), ("fk", -60, -20)),
                 hem=0.66, tail=-102, flare=-4),
-    "sleep": _P(t=-84, h=22, ground="body", flat_back=True, legs=(("ik", 70, 1), ("ik", 84, 1)),
+    "sleep": _P(t=-80, h=22, ground="body", flat_back=True, legs=(("ik", 40, 1), ("ik", 58, 1)),
                 arms=(("ik", "pillow", 0.30, 0, 1), ("ik", "pillow", 0.10, 0, 1)),
                 hands=("pillow", "none"), far_front=True, near_hidden=True, tail=(-40, -92),
                 expr="sleepy", marks=("zzz",), hem=0.97, flare=-6),
@@ -919,17 +938,23 @@ POSES = {
                  arms=(("fk", 152, 168), ("fk", 30, 74)), hands=("open", "open"), expr="call"),
     "point": _P(legs=((5, 2), (-5, -2)), arms=(("fk", 84, 88), ("fk", -8, -3)), hands=("point", "fist")),
     "arms_up": _P(h=-6, arms=(("fk", 150, 168), ("fk", -150, -168)), hands=("open", "open"), expr="happy"),
-    "fall": _P(spin=42, ground="air", legs=((52, -12), (-28, -96)), arms=(("fk", 132, 156), ("fk", -136, -162)),
-               hands=("open", "open"), tail=(-110, -165), expr="scared", billow=26, sash_dir=-150, hem=0.86),
-    "float": _P(spin=14, ground="air", h=-4, legs=((30, -24), (2, -46)), arms=(("fk", 108, 126), ("fk", -102, -120)),
-                hands=("open", "open"), tail=(-100, -140), expr="scared", billow=22, sash_dir=-145, hem=0.86),
+    # fall: tumbling (body tilted 58 deg forward), arms flung up, knees bent with the near foot kicked up,
+    # robe blown up to the shins, flap and sash streaming upward (limb angles are body-frame, before the spin)
+    "fall": _P(spin=58, ground="air", legs=((85, -30), (0, -95)), arms=(("fk", -150, -122), ("fk", -90, -112)),
+               hands=("open", "open"), tail=(-105, -140), expr="scared", billow=30, sash_dir=-115, hem=0.70),
+    "float": _P(spin=18, ground="air", h=-4, legs=((22, -22), (-6, -40)), arms=(("fk", 108, 126), ("fk", -102, -120)),
+                hands=("open", "open"), tail=(-100, -140), expr="scared", billow=22, sash_dir=150, hem=0.86),
     "refuse": _P(flip=True, t=-4, h=8, legs=((14, 4), (-10, -14)),
                  arms=(("fk", 8, 3), ("fk", -74, -92)), hands=("fist", "palm"), marks=("shake",),
                  expr="angry", tail=-30),
     "confess": _P(t=6, h=18, arms=(("fk", 10, 5), ("ik", "torso", 0.55, 0.74, 1)), hands=("fist", "open"),
                   expr="sorry"),
-    "listen": _P(h=-14, arms=(("ik", "head", 1.10, 0.42, 1), ("fk", -8, -3)), hands=("cup", "fist"),
-                 look=(0.03, -0.08), marks=("sound",), far_over_head=True),
+    "listen": _P(h=-14, arms=(("fk", 14, 8), ("ik", "head", -0.66, 0.16, -1)), hands=("fist", "cup"),
+                 look=(0.03, -0.08), marks=("sound",)),
+    # carried: lying on his back, held up by the sailors (Jonah 1:15); underside flat on the anchor line
+    "carried": _P(t=-86, h=46, ground="body", flat_back=True, legs=(("ik", 110, 1), ("ik", 124, 1)),
+                  arms=(("fk", 6, 2), ("ik", "torso", 0.5, 0.62, 1)), hands=("open", "open"), tail=(-10, 5),
+                  expr="worried", hem=0.90, flare=-4, held=True),
     "wake": _P(t=2, h=-4, legs=(("ik", 108, 1), ("ik", 116, 1)),
                arms=(("fk", 148, 172), ("ik", "head", -0.14, 0.10, -1)), hands=("open", "fist"),
                expr="sleepy", **_SEATED),
@@ -937,8 +962,8 @@ POSES = {
     "scared": _P(t=-4, legs=((10, 2), (-8, -4)),
                  arms=(("ik", "headw", 1.15, 0.45, 1), ("ik", "headw", -1.15, 0.45, -1)),
                  hands=("open", "open"), expr="scared"),
-    "throw": _P(t=-10, h=-12, drop=4, legs=(("ik", 40, 1), ("ik", -34, 1)), reach=1.12,
-                arms=(("ik", "abs", 26, -326, 1), ("ik", "abs", 2, -336, -1)), hands=("open", "open"),
+    "throw": _P(t=-14, h=-16, drop=4, legs=(("ik", 40, 1), ("ik", -34, 1)), reach=1.12,
+                arms=(("ik", "abs", 58, -330, 1), ("ik", "abs", 40, -338, -1)), hands=("open", "open"),
                 near_back=True, expr="worried"),
     "carry": _P(t=16, drop=28, legs=(("ik", 40, 1), ("ik", -28, 1)),
                 arms=(("ik", "abs", 92, -112, 1), ("ik", "abs", 74, -104, 1)), expr="worried"),
@@ -1458,6 +1483,7 @@ def _robe(D, st, ps):
         a, b, c = tp(-11, m["T"] + 1), tp(12, m["T"] + 1), tp(1, m["T"] - 20)
         inner += _poly([a, c, b], D["neck_v"], sw=2.6)
     # belt / sash: always waist-wide, whatever the legs do
+    knot = ""                   # sash knot and tails: drawn after the clipped robe so drifting tails show
     if D.get("sash"):
         lo, hi = (3, 18) if ps["lap"] else (-6, 11)     # seated: the waist sits higher above the seat
         for poly in polys:
@@ -1473,8 +1499,8 @@ def _robe(D, st, ps):
             else:
                 k1 = _add(tp(0.55 * m["ww"], -26), _mul(f, 2))
                 k2 = tp(0.35 * m["ww"], -34)
-            inner += _tube([k0, k1], 7, D["sash"], ow=2.6) + _tube([k0, k2], 7, D["sash"], ow=2.6)
-            inner += f'<circle cx="{fmt(k0[0])}" cy="{fmt(k0[1])}" r="6.5" fill="{D["sash"]}" {_st(2.6)}/>'
+            knot += _tube([k0, k1], 7, D["sash"], ow=2.6) + _tube([k0, k2], 7, D["sash"], ow=2.6)
+            knot += f'<circle cx="{fmt(k0[0])}" cy="{fmt(k0[1])}" r="6.5" fill="{D["sash"]}" {_st(2.6)}/>'
     if D.get("rope_belt"):
         rc = D["rope_belt"]
         blo = 6 if ps["lap"] else -3
@@ -1504,7 +1530,7 @@ def _robe(D, st, ps):
             c = _add(_sub(st["Hm"], _mul(st["um"], 10 + 6 * (k % 2))), _mul((-st["um"][1], st["um"][0]),
                                                                              fx * m["ww"]))
             inner += _ell(c[0], c[1], r * 1.3, r, shade(col, -0.22), extra='opacity="0.55"')
-    s += clip + f'<g clip-path="url(#{cid})">{inner}</g>'
+    s += clip + f'<g clip-path="url(#{cid})">{inner}</g>' + knot
     return s
 
 
@@ -1725,7 +1751,7 @@ def _wet_marks(D, st, ps):
     if not D.get("wet"):
         return ""
     R = st["m"]["R"]
-    floor = st["ground"] - 2 if st["mode"] != "air" else None
+    floor = st["ground"] - 2 if st["mode"] != "air" and not ps["held"] else None
 
     def drop(p, k):              # drops never sink below the ground line
         y = p[1] if floor is None else min(p[1], floor - 1.15 * k)
@@ -1809,7 +1835,7 @@ def _fsign(facing):
 
 JONAH_POSES = ("stand", "walk_a", "walk_b", "run_a", "run_b", "sleep", "kneel_pray", "sit", "sit_sulk",
                "sit_faint", "sit_happy", "preach", "point", "arms_up", "fall", "float", "refuse", "confess",
-               "listen", "wake")
+               "listen", "wake", "carried")
 
 
 def _jonah_design(wet=False):

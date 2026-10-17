@@ -220,44 +220,49 @@ def sheet_items():
         o = (lambda ox, oy: person_ref(ox + ref[0], oy + ref[1], 1.0)) if ref else (ov or "")
         return Cell(label, lambda ox, oy: fn(ox + ax, oy + ay), w, [(ax, ay)], o)
     dx = PR.KING_ASH_DX
+
+    def ashes(x, y, s=1.0, f=1):
+        """ash_pile(part='back') -> king(sit_ashes, ashes=False) -> ash_pile(part='front')."""
+        hx = x + dx * s * f
+        return (PR.ash_pile(hx, y, s, smoke=True, facing=f, part="back") +
+                CH.king(x, y, s, f, pose="sit_ashes", ashes=False) + PR.ash_pile(hx, y, s, facing=f, part="front"))
     rows = [
-        (340, [c("crate (centre)", lambda x, y: PR.crate(x, y, 1.4)),
-               c("jar / amphora (centre)", lambda x, y: PR.jar(x - 20, y, 1.4) + PR.jar(x + 120, y + 40, 0.8, rot=12,
-                                                                                         color=P["sand_dark"])),
-               c("sack (bottom)", lambda x, y: PR.sack(x, y + 50, 1.4) + PR.sack(x + 120, y + 50, 0.9, seed=3)),
-               c("lots_jar (bottom)", lambda x, y: PR.lots_jar(x, y + 50, 1.4)),
-               c("lot / lot(marked=True)", lambda x, y: PR.lot(x - 70, y, 1.4, rot=-10) +
-                 PR.lot(x + 80, y - 10, 1.4, rot=8, marked=True), ax=200, ay=200),
-               c("lantern lit / unlit (top hook)", lambda x, y: PR.lantern(x - 70, y, 1.4) +
-                 PR.lantern(x + 90, y, 1.4, lit=False), ax=200, ay=60)]),
+        (340, [c("crate (centre)", lambda x, y: PR.crate(x, y, 1.4), w=340, ax=170),
+               c("jar / amphora (centre)", lambda x, y: PR.jar(x - 30, y, 1.4) + PR.jar(x + 100, y + 40, 0.8, rot=12,
+                                                                                         color=P["sand_dark"]),
+                 w=340, ax=170),
+               c("sack (bottom)", lambda x, y: PR.sack(x, y + 50, 1.4) + PR.sack(x + 110, y + 50, 0.9, seed=3), w=340,
+                 ax=150),
+               c("lots_jar (bottom)", lambda x, y: PR.lots_jar(x, y + 50, 1.4), w=340, ax=170),
+               c("lot / lot(marked=True)", lambda x, y: PR.lot(x - 70, y, 1.3, rot=-10) +
+                 PR.lot(x + 70, y - 10, 1.3, rot=8, marked=True), w=340, ax=170, ay=200),
+               c("lantern lit (top hook)", lambda x, y: PR.lantern(x, y, 1.4), w=340, ax=170, ay=60),
+               c("lantern(lit=False)", lambda x, y: PR.lantern(x, y, 1.4, lit=False), w=340, ax=170, ay=60)]),
         (300, [c("rope_coil (bottom)", lambda x, y: PR.rope_coil(x, y, 1.5)),
                c("scroll (centre)", lambda x, y: PR.scroll(x, y, 1.5), ay=160),
                c("scroll(opened=True)", lambda x, y: PR.scroll(x, y, 1.4, opened=True), ay=160),
-               c("ash_pile (bottom centre), scale 1.4", lambda x, y: PR.ash_pile(x, y, 1.4)),
-               c("ash_pile(smoke=True)", lambda x, y: PR.ash_pile(x, y, 1.2, smoke=True)),
+               c("ash_pile (bottom centre)", lambda x, y: PR.ash_pile(x, y, 1.3)),
+               c("ash_pile(smoke=True)", lambda x, y: PR.ash_pile(x, y, 1.0, smoke=True)),
                c("lot rot=40, scale 2", lambda x, y: PR.lot(x, y, 2.0, rot=40, marked=True), ay=160)]),
-        (460, [c("throne (anchor = seated king's anchor)", lambda x, y: PR.throne(x, y), w=480, ax=240, ay=420,
+        (460, [c("throne (anchor = seated king's anchor)", lambda x, y: PR.throne(x, y), w=480, ax=180, ay=420,
                  ref=(400, 420)),
                c("throne + king(sit_throne, throne=False)", lambda x, y: PR.throne(x, y) +
-                 CH.king(x, y, 1.0, 1, pose="sit_throne", throne=False), w=480, ax=200, ay=420),
-               c("throne facing=-1 + king stands up", lambda x, y: PR.throne(x + 60, y, 1.0, -1) +
+                 CH.king(x, y, 1.0, 1, pose="sit_throne", throne=False), w=480, ax=180, ay=420),
+               c("throne facing=-1, king stands up", lambda x, y: PR.throne(x + 80, y, 1.0, -1) +
                  CH.king(x - 110, y, 1.0, 1, pose="remove_crown"), w=480, ax=220, ay=420),
-               c("ash_pile(x+KING_ASH_DX) + king(sit_ashes, ashes=False)", lambda x, y: PR.ash_pile(x + dx, y) +
-                 CH.king(x, y, 1.0, 1, pose="sit_ashes", ashes=False), w=480, ax=200, ay=420),
-               c("same, facing=-1, scale 0.8", lambda x, y: PR.ash_pile(x - dx * 0.8, y, 0.8, facing=-1) +
-                 CH.king(x, y, 0.8, -1, pose="sit_ashes", ashes=False), w=480, ax=260, ay=420)]),
-        (520, [c("booth (bottom) + 330px adult; blue = BOOTH_SEAT", lambda x, y: PR.booth(x, y), w=600, ax=300, ay=480,
-                 ov=lambda ox, oy: person_ref(ox + 300, oy + 480) + box(ox + 300 + PR.BOOTH_SEAT[0],
+               c("ash back + king(sit_ashes) + ash front", lambda x, y: ashes(x, y), w=480, ax=200, ay=420),
+               c("same, facing=-1, scale 0.8", lambda x, y: ashes(x, y, 0.8, -1), w=480, ax=280, ay=420)]),
+        (520, [c("booth (bottom) + 330px adult; blue = BOOTH_SEAT", lambda x, y: PR.booth(x, y), w=600, ax=280, ay=480,
+                 ov=lambda ox, oy: person_ref(ox + 280, oy + 480) + box(ox + 280 + PR.BOOTH_SEAT[0],
                                                                         oy + 480 + PR.BOOTH_SEAT[1],
-                                                                        ox + 300 + PR.BOOTH_SEAT[2],
+                                                                        ox + 280 + PR.BOOTH_SEAT[2],
                                                                         oy + 480 + PR.BOOTH_SEAT[3])),
-               c("booth + jonah(pose='sit_sulk')", lambda x, y: PR.booth(x, y) + CH.jonah(x - 10, y, 1.0, 1,
-                                                                                          pose="sit_sulk"),
-                 w=600, ax=300, ay=480),
-               c("booth facing=-1, scale 0.7 + jonah sit", lambda x, y: PR.booth(x, y, 0.7, facing=-1) +
-                 CH.jonah(x + 10, y, 0.7, -1, pose="sit"), w=600, ax=300, ay=480),
+               c("booth(shade=True) + jonah(pose='sit_sulk')", lambda x, y: PR.booth(x, y, shade=True) +
+                 CH.jonah(x - 10, y, 1.0, 1, pose="sit_sulk"), w=600, ax=280, ay=480),
+               c("booth facing=-1, scale 0.7, shade + jonah sit", lambda x, y: PR.booth(x, y, 0.7, facing=-1, shade=True) +
+                 CH.jonah(x + 10, y, 0.7, -1, pose="sit"), w=600, ax=320, ay=480),
                c("booth + standing jonah (head above the eaves)", lambda x, y: PR.booth(x, y) +
-                 CH.jonah(x + 40, y, 1.0, -1), w=600, ax=300, ay=480)]),
+                 CH.jonah(x + 40, y, 1.0, -1), w=600, ax=280, ay=480)]),
     ]
     return render_sheet("items", "props — small props (scaled up for viewing unless noted)", rows)
 
@@ -290,6 +295,17 @@ def sheet_castor():
                     lambda ox, oy, b=b: PR.castor_plant(ox + 260, oy + 480, 2.2, growth=1.0, bite=b) +
                     PR.worm(ox + 260 - PR.WORM_BITE_DX * 2.2, oy + 480, 2.2, chomp=b), 480, [(260, 480)])
                for b in (0.0, 0.25, 0.5, 0.75, 1.0)]),
+        (420, [Cell(f"wither={w} beside Jonah (scale 0.45)",
+                    lambda ox, oy, w=w: PR.castor_plant(ox + 170, oy + 400, 0.45, wither=w) +
+                    CH.jonah(ox + 100, oy + 400, 0.45, 1), 480, [(170, 400)]) for w in (0.0, 0.25, 0.5, 0.75, 1.0)]),
+        (420, [Cell("bite=1 at film scale 0.62 + worm (chomp=1)",
+                    lambda ox, oy: PR.castor_plant(ox + 300, oy + 400, s, bite=1.0) +
+                    PR.worm(ox + 300 - PR.WORM_BITE_DX * s, oy + 400, s, chomp=1.0), 800, [(300, 400)]),
+               Cell("bite=0.5 at scale 1 + worm", lambda ox, oy: PR.castor_plant(ox + 300, oy + 400, 1.0, bite=0.5) +
+                    PR.worm(ox + 300 - PR.WORM_BITE_DX, oy + 400, 1.0, chomp=0.5), 800, [(300, 400)]),
+               Cell("bite=1 wither=1 side=-1 scale 0.62", lambda ox, oy: PR.castor_plant(ox + 500, oy + 400, s, bite=1.0,
+                                                                                        wither=1.0, side=-1),
+                    800, [(500, 400)])]),
         (640, [Cell("booth at x+CASTOR_BOOTH_DX*s (270) + jonah sit_sulk", booth_combo, 800, [(280, 600)]),
                Cell("same, wither=1, jonah sit_faint", lambda ox, oy: booth_combo(ox, oy, 1.0, "sit_faint"), 800,
                     [(280, 600)]),
@@ -304,13 +320,14 @@ def sheet_plants():
     def c(label, fn, w=400, ax=200, ay=460, anchors=None):
         return Cell(label, lambda ox, oy: fn(ox + ax, oy + ay), w, anchors or [(ax, ay)])
     rows = [
-        (720, [c("palm_tree", lambda x, y: PR.palm_tree(x, y, 1.0), w=480, ax=240, ay=700),
-               c("palm_tree lean=0.6 sway=1", lambda x, y: PR.palm_tree(x, y, 1.0, lean=0.6, sway=1), w=480, ax=200, ay=700),
-               c("olive_tree", lambda x, y: PR.olive_tree(x, y, 1.2), w=480, ax=240, ay=700),
-               c("reeds variant 0 / sway=1", lambda x, y: PR.reeds(x - 80, y, 1.4) + PR.reeds(x + 90, y, 1.4, 1, sway=1),
-                 w=480, ax=240, ay=700, anchors=[(160, 700), (330, 700)]),
-               c("bush variant=0 / 1", lambda x, y: PR.bush(x - 110, y, 1.0) + PR.bush(x + 110, y, 1.0, 1),
-                 w=480, ax=240, ay=700, anchors=[(130, 700), (350, 700)])]),
+        (720, [c("palm_tree", lambda x, y: PR.palm_tree(x, y, 1.0), w=460, ax=230, ay=700),
+               c("palm_tree lean=0.6 sway=1", lambda x, y: PR.palm_tree(x, y, 1.0, lean=0.6, sway=1), w=560, ax=220,
+                 ay=700),
+               c("olive_tree", lambda x, y: PR.olive_tree(x, y, 1.1), w=440, ax=220, ay=700),
+               c("reeds variant 0 / variant 1 sway=1", lambda x, y: PR.reeds(x - 110, y, 1.4) +
+                 PR.reeds(x + 70, y, 1.4, 1, sway=1), w=560, ax=240, ay=700, anchors=[(130, 700), (310, 700)]),
+               c("bush variant=0 / 1", lambda x, y: PR.bush(x - 90, y, 0.85) + PR.bush(x + 90, y, 0.85, 1),
+                 w=380, ax=190, ay=700, anchors=[(100, 700), (280, 700)])]),
         (300, [c("bush variant=2 (dry shrub)", lambda x, y: PR.bush(x, y, 1.2, 2), ay=260),
                c("bush variant=3", lambda x, y: PR.bush(x, y, 1.2, 3), ay=260),
                c("grass_tuft variant 0/1/2", lambda x, y: PR.grass_tuft(x - 110, y, 1.4) + PR.grass_tuft(x, y, 1.4, 1)
@@ -369,8 +386,10 @@ def sheet_buildings():
     def sky(fn):
         return lambda x, y: f'<rect x="{x - 1300}" y="{y - 560}" width="2600" height="620" fill="{P["sky_warm"]}"/>' + fn(x, y)
     rows = [
-        (560, [c(f"house variant={v}, scale 0.45 (+0.45 adult)", lambda x, y, v=v: PR.house(x, y, 0.45, v),
-                 ref=(530, 520, 0.45)) for v in range(4)]),
+        (560, [c(f"house variant={v}, scale 0.45", lambda x, y, v=v: PR.house(x, y, 0.45, v), w=480, ax=230,
+                 ref=(450, 520, 0.45)) for v in range(4)] +
+              [c("house 1 facing=-1 (+0.45 adult)", lambda x, y: PR.house(x, y, 0.45, 1, facing=-1), w=480, ax=250,
+                 ref=(40, 520, 0.45))]),
         (700, [c("city_wall gate=(gx, 220) height=300", lambda x, y: PR.city_wall(x - 580, x + 580, y, 300,
                                                                                     gate=(x, 220)),
                  w=1200, ax=600, ay=660, ref=(160, 660, 1.0)),

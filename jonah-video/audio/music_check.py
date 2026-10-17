@@ -336,14 +336,16 @@ def line_smr(timeline, music, sr, voice_path):
 
 
 def sync_onsets(sc, stems, sr, search=0.15):
-    """Audible onset at every hit point: spectral flux of the summed dry stems around the target.
+    """Audible onset at every 'hit' sync: spectral flux of the summed dry stems around the target.
     Returns rows (cue, label, target, structural time, onset offset s, prominence)."""
     from scipy import signal as sg
 
     tot = sum(stems.values()).mean(axis=1)
     hop, win = int(0.005 * sr), 2048
     rows = []
-    for cid, label, target, actual in sc.syncs:
+    for cid, label, target, actual, kind in sc.syncs:
+        if kind != "hit":
+            continue
         a, b = int((target - 1.2) * sr), int((target + 1.2) * sr)
         a0, b0 = max(0, a - win), min(len(tot), b + win)
         _, ts, S = sg.stft(tot[a0:b0], fs=sr, nperseg=win, noverlap=win - hop, boundary=None, padded=False)
@@ -356,6 +358,57 @@ def sync_onsets(sc, stems, sr, search=0.15):
         k = np.argmax(np.where(near, flux, -1))
         prom = flux[k] / (np.median(flux) + 1e-9)
         rows.append((cid, label, target, actual, tf[k] - target, prom))
+    return rows
+
+
+def _chord_at_time(sc, t):
+    for c in sc.cues:
+        for s in c.segs:
+            if s.t0 - 1e-6 <= t < s.t1:
+                return s.chord_at(s.q_of(t))
+    return None
+
+
+def sync_changes(sc, mono, sr, pre=(-0.7, -0.2), post=(0.2, 0.7)):
+    """Audible harmonic arrival at every 'change' sync, measured on the final (reverberant) mix.
+
+    Chroma (magnitude spectrum 65-2100 Hz folded onto pitch classes, normalised per frame) gives
+    d(t) = share of the pitch classes only in the new chord - share of those only in the old chord.
+    Change = mean d after (+0.2..+0.7 s) - mean d before (-0.7..-0.2 s); arrival = first time
+    from -0.4 s on where the smoothed d passes the midpoint and stays there for 150 ms.
+    Returns rows (cue, label, target, old chord, new chord, change, arrival offset s)."""
+    from scipy import signal as sg
+
+    win, hop = 8192, int(0.01 * sr)
+    rows = []
+    for cid, label, target, actual, kind in sc.syncs:
+        if kind != "change":
+            continue
+        old, new = _chord_at_time(sc, target - 0.05), _chord_at_time(sc, target + 0.05)
+        a, b = int((target - 1.3) * sr), int((target + 1.3) * sr)
+        f, ts, S = sg.stft(mono[max(0, a):b], fs=sr, nperseg=win, noverlap=win - hop, boundary=None, padded=False)
+        ts = ts + max(0, a) / sr - target
+        keep = (f >= 65) & (f <= 2100)
+        pcs = np.round(12 * np.log2(f[keep] / 440.0) + 69).astype(int) % 12
+        mag = np.abs(S[keep])
+        chroma = np.zeros((12, mag.shape[1]))
+        for p in range(12):
+            chroma[p] = mag[pcs == p].sum(axis=0)
+        chroma /= chroma.sum(axis=0, keepdims=True) + 1e-12
+        new_only = sorted(new.pcset - old.pcset)
+        old_only = sorted(old.pcset - new.pcset)
+        d = chroma[new_only].sum(axis=0) - chroma[old_only].sum(axis=0)
+        d = np.convolve(d, np.ones(5) / 5, "same")
+        before = d[(ts >= pre[0]) & (ts <= pre[1])].mean()
+        after = d[(ts >= post[0]) & (ts <= post[1])].mean()
+        mid = (before + after) / 2
+        arr = float("nan")
+        hold = int(0.15 / 0.01)
+        for i in np.nonzero(ts >= -0.4)[0]:
+            if i + hold < len(d) and (d[i:i + hold] >= mid).all():
+                arr = float(ts[i])
+                break
+        rows.append((cid, label, target, old.sym, new.sym, after - before, arr))
     return rows
 
 
@@ -378,9 +431,11 @@ def _rms_db(x):
 
 SMR_MIN = 15.0          # dB, broadband speech-to-music ratio per line in the simulated mix
 STORM_OVER_MEDIAN = 6.0  # dB, the storm may be at most this much louder (RMS) than the median cue
+STORM_PEAK_OVER_MEDIAN = 5.0   # dB, the storm-peak segment (hit + horn call) vs the median cue
+PEAK_WINDOW_OVER_MEDIAN = 10.0  # dB, loudest 400 ms of the score vs its median 400 ms level
 
 
-def report(sc, wav_path, stems, timeline, out_dir=None):
+def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     out_dir = Path(out_dir or Path(wav_path).parent.parent / "preview")
     out_dir.mkdir(parents=True, exist_ok=True)
     x, sr = sf.read(wav_path, dtype="float64", always_2d=True)
@@ -404,6 +459,8 @@ def report(sc, wav_path, stems, timeline, out_dir=None):
     except Exception:
         pass
     w(f"DC offset L/R: {x[:, 0].mean():.2e} / {x[:, 1].mean():.2e}")
+    for nt in notes:
+        w(nt)
     hd = int(0.3 * sr)
     w(f"first 0.3 s RMS {_rms_db(x[:hd]):.1f} dB (start of the title downbeat), "
       f"last 50 ms RMS {_rms_db(x[-int(0.05 * sr):]):.1f} dB, last sample {np.abs(x[-1]).max():.2e}")
@@ -520,6 +577,22 @@ def report(sc, wav_path, stems, timeline, out_dir=None):
             if sg_.label == "vine-heat":
                 checks.append(("vine-heat audible (RMS >= -33 dB) and not shrill (2.5-6k share < -10 dB)",
                                _rms_db(seg) >= -33 and vals[3] < -10, f"RMS {_rms_db(seg):.1f} dB, 2.5-6k {vals[3]:.1f} dB"))
+            if sg_.label == "storm-peak":
+                checks.append((f"storm-peak segment no more than {STORM_PEAK_OVER_MEDIAN:.0f} dB above the median cue",
+                               _rms_db(seg) - med <= STORM_PEAK_OVER_MEDIAN, f"{_rms_db(seg) - med:+.1f} dB"))
+    # the biggest short-term jump: loudest 400 ms window vs the film's median 400 ms level
+    win, hop_ = int(0.4 * sr), int(0.05 * sr)
+    cs = np.concatenate([[0.0], np.cumsum(mono ** 2)])
+    starts = np.arange(0, len(mono) - win, hop_)
+    pw = (cs[starts + win] - cs[starts]) / win
+    pdb = 10 * np.log10(pw + 1e-12)
+    k_max = int(np.argmax(pdb))
+    w(f"  loudest 400 ms window at {k_max * 0.05:.2f} s: {pdb[k_max] - np.median(pdb):+.1f} dB above the film's median "
+      f"400 ms level ({pdb[k_max]:.1f} vs {np.median(pdb):.1f} dB); 99th percentile "
+      f"{np.percentile(pdb, 99) - np.median(pdb):+.1f} dB")
+    checks.append((f"loudest 400 ms window no more than {PEAK_WINDOW_OVER_MEDIAN:.0f} dB above the median",
+                   pdb[k_max] - np.median(pdb) <= PEAK_WINDOW_OVER_MEDIAN,
+                   f"{pdb[k_max] - np.median(pdb):+.1f} dB at {k_max * 0.05:.2f} s"))
     w("")
 
     # ---------------------------------------------------------------- tempo map
@@ -532,17 +605,29 @@ def report(sc, wav_path, stems, timeline, out_dir=None):
               + ("   <-- tempo far from nominal: revisit bar count" if abs(dev) > 15 else ""))
     w("")
     w("HIT POINTS. 'structural' = where the score places the event (segment boundaries, so 0 ms by")
-    w("construction -- not evidence); 'audible' = strongest spectral-flux onset in the rendered dry stems")
-    w("within +-150 ms of the target, with its prominence (peak / median flux over +-1.2 s).")
-    ons = sync_onsets(sc, stems, sr)
+    w("construction -- not evidence).  Audible evidence from the rendered audio:")
+    w("  attacks ('hit'): strongest spectral-flux onset in the dry stems within +-150 ms of the target, with")
+    w("    its prominence (peak / median flux over +-1.2 s); FAIL if off by > 80 ms or prominence < 2.")
+    w("  harmonic arrivals ('change', swells whose strings/choir are pre-rolled, so an onset test does not")
+    w("    apply): chroma share of the new chord's own pitch classes minus the old chord's, after vs before")
+    w("    (final mix); FAIL if the change is < 0.08 or it arrives outside -150..+350 ms.")
+    structural = {(cid, label): actual for cid, label, target, actual, kind in sc.syncs}
     weak = []
-    for cid, label, target, actual, off, prom in ons:
+    for cid, label, target, actual, off, prom in sync_onsets(sc, stems, sr):
         bad_ = abs(off) > 0.08 or prom < 2.0
         if bad_:
             weak.append(f"{cid}:{label}")
-        w(f"  {cid:12s} {label:46s} target {target:8.3f}s  structural {1000 * (actual - target):+6.1f} ms  "
-          f"audible {1000 * off:+6.1f} ms  prominence {prom:5.1f}{'  CHECK' if bad_ else ''}")
-    checks.append(("hit points audible within 80 ms (prominence >= 2)", not weak, ", ".join(weak) or "all"))
+        w(f"  hit    {cid:12s} {label:44s} {target:8.3f}s  structural {1000 * (actual - target):+6.1f} ms  "
+          f"onset {1000 * off:+6.1f} ms  prominence {prom:5.1f}{'  FAIL' if bad_ else ''}")
+    for cid, label, target, old, new, chg, arr in sync_changes(sc, mono, sr):
+        bad_ = not (chg >= 0.08 and -0.15 <= arr <= 0.35)
+        if bad_:
+            weak.append(f"{cid}:{label}")
+        w(f"  change {cid:12s} {label:44s} {target:8.3f}s  structural "
+          f"{1000 * (structural[(cid, label)] - target):+6.1f} ms  {old}->{new}: chroma change {chg:+.2f}, "
+          f"arrives {1000 * arr:+6.0f} ms{'  FAIL' if bad_ else ''}")
+    checks.append(("hit points audible (attacks: onset within 80 ms; arrivals: harmony changes on time)",
+                   not weak, ", ".join(weak) or f"all {len(sc.syncs)}"))
     w("")
 
     # ---------------------------------------------------------------- harmony
@@ -677,8 +762,8 @@ def _spectrogram(mono, sr, sc, path):
         ax.text(c.t0 + 0.2, 9000, c.mood, color="white", fontsize=10, va="top")
         for s in c.segs[1:]:
             ax.axvline(s.t0, color="white", lw=0.5, ls=":")
-    for cid, label, target, actual in sc.syncs:
-        ax2.plot([actual], [-5], "v", color="crimson", ms=5)
+    for cid, label, target, actual, kind in sc.syncs:
+        ax2.plot([actual], [-5], "v" if kind == "hit" else "D", color="crimson", ms=5)
     ax.set_title("Background score — spectrogram (cyan = scene starts, dotted = hit-point segments)")
     fig.tight_layout()
     fig.savefig(path, dpi=80)

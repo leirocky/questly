@@ -89,7 +89,9 @@ def window_env(n, t0, t1, ramp=0.6):
     return np.minimum(up, dn)
 
 
-def limit(x, ceiling=CEILING, release=0.12):
+def limit(x, ceiling=CEILING, release=0.12, stats=None):
+    """Look-ahead peak limiter.  stats (dict, optional) receives the pre-limit peak and how much /
+    how long it reduced the gain."""
     peak = np.max(np.abs(x), axis=1)
     gain = np.minimum(1.0, ceiling / np.maximum(peak, 1e-9))
     look = int(0.006 * SR)
@@ -98,6 +100,12 @@ def limit(x, ceiling=CEILING, release=0.12):
     zi = signal.lfilter_zi([1 - a], [1, -a]) * gain[0]      # start settled (no fade-in at t=0)
     smooth, _ = signal.lfilter([1 - a], [1, -a], gain, zi=zi)
     gain = np.minimum(gain, smooth)
+    if stats is not None:
+        gr = -20 * np.log10(np.maximum(gain, 1e-9))
+        busy = np.nonzero(gr > 1.0)[0]
+        stats.update(pre_peak=float(peak.max()), max_gr_db=float(gr.max()),
+                     s_over_1db=len(busy) / SR, s_over_0_1db=float((gr > 0.1).sum()) / SR,
+                     where=(round(busy[0] / SR, 2), round(busy[-1] / SR, 2)) if len(busy) else None)
     return x * gain[:, None]
 
 
@@ -154,15 +162,20 @@ def render(timeline, out_path):
     meter = pyln.Meter(SR)
     lufs = meter.integrated_loudness(mix)
     mix *= 10 ** ((TARGET_LUFS - lufs) / 20)
-    mix = limit(mix)
+    lim = {}
+    mix = limit(mix, stats=lim)
     mix = np.nan_to_num(mix).astype(np.float32)
     assert len(mix) == n
     sf.write(out_path, mix, SR, subtype="PCM_24")
     print(f"  music: {n / SR:.3f}s, {meter.integrated_loudness(mix.astype(np.float64)):.1f} LUFS, "
           f"peak {np.abs(mix).max():.3f}, notes {len(sc.notes)}")
+    lim_note = (f"limiter: pre-limit peak {lim['pre_peak']:.3f} (ceiling {CEILING}), max gain reduction "
+                f"{lim['max_gr_db']:.1f} dB, {lim['s_over_1db']:.2f} s above 1 dB / {lim['s_over_0_1db']:.2f} s above "
+                f"0.1 dB of reduction" + (f" (between {lim['where'][0]} and {lim['where'][1]} s)" if lim["where"] else ""))
+    print(f"  {lim_note}")
 
     from audio import music_check
-    music_check.report(sc, out_path, stems, timeline)
+    music_check.report(sc, out_path, stems, timeline, notes=[lim_note])
     return out_path
 
 

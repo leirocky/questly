@@ -128,12 +128,12 @@ def title(c):
     """Jonah theme, b1-b2: music box over harp and soft strings (D major, 6/8)."""
     s = c.seg(0, c.dur, 2, "6/8", "D major", nominal=84, label="title")
     s.prog("D:3 | G:3")
-    s.mel("mbox", "F#6:1 E6:1/2 D6:1 A5:1/2 | B5:1 D6:1/2 G6:1 F#6:1/2", vel=92)
+    s.mel("mbox", "F#6:1 E6:1/2 D6:1 A5:1/2 | B5:1 D6:1/2 G6:1 F#6:1/2", vel=80)
     s.mel("celesta", "F#5:1 E5:1/2 D5:1 A4:1/2 | B4:1 D5:1/2 G5:1 F#5:1/2", vel=56)
     broken(s, "harp", 0, 6, (0, 2, 4, 6, 4, 2), 38, 49, vel=46)
     s.pad(["vla", "vln2", "vln2"], 3, 54, 69, bass_part="vc", bass_lo=38, bass_hi=50, vel=50)
     s.expr(["vla", "vln2", "vc"], [(0, -16), (1.5, -7), (6, -6)])
-    s.expr(["mbox", "celesta", "harp"], [(0, -2), (6, -3)])
+    s.expr(["mbox", "celesta", "harp"], [(0, -3), (6, -4)])
 
 
 def call(c):
@@ -157,7 +157,7 @@ def call(c):
     # God speaks: choir enters on bVI over a D pedal, bVII -> I, minor iv, half cadence
     g = c.seg(tC, c.dur, 4, "6/8", "D major", nominal=82, rit=0.12, label="call-God")
     g.prog("Bb/D:3@D-minor | C/D:3/2@D-mixolydian D:3/2 | Gm/D:3@D-minor | Asus4:3/2 A:3/2")
-    g.sync("choir enters with God's voice", 0, c.gap(2))
+    g.sync("choir enters with God's voice", 0, c.gap(2), kind="change")
     tops = [midi(x) for x in ("D5", "E5", "F#5", "G5", "E5", "E5")]
     g.pad("choir", 3, 57, 79, vel=62, tops=tops, bass_ref=(33, 44))
     g.pad(["vla", "vln2", "vln2"], 3, 50, 67, vel=50, bass_ref=(33, 44))
@@ -184,8 +184,8 @@ def flee(c):
     f.mel("clar", "r:4 | r:4 | D5:1/2:s F5:1/2:s A5:1/2:s r:1/2 G5:1/2:s F5:1/2:s E5:1/2:s D5:1/2:s | "
                   "C5:1/2:s E5:1/2:s G5:1/2:s r:1/2 F5:1/2:s E5:1/2:s D5:1/2:s C5:1/2:s", vel=78)
     # the run under "想要躲开上帝。" stays soft; the storm's downbeat right after the line is the arrival
-    f.mel("bsn", "A2:1/2 B2:1/2 C#3:1/2 D3:1/2 E3:1/2 F3:1/2 G3:1/2 A3:1/2:a", q=16, vel=62)
-    f.mel("clar", "A4:1/2 B4:1/2 C#5:1/2 D5:1/2 E5:1/2 F5:1/2 G5:1/2 A5:1/2:a", q=16, vel=60)
+    f.mel("bsn", "A2:1/2 B2:1/2 C#3:1/2 D3:1/2 E3:1/2 F3:1/2 G3:1/2 A3:1/2:a", q=16, vel=58)
+    f.mel("clar", "A4:1/2 B4:1/2 C#5:1/2 D5:1/2 E5:1/2 F5:1/2 G5:1/2 A5:1/2:a", q=16, vel=56)
     f.mel("pz_lo", " ".join(["D3:1/2 A2:1/2"] * 4) + " | " + " ".join(["G2:1/2 D3:1/2"] * 4) + " | "
           + " ".join(["D3:1/2 A2:1/2"] * 4) + " | " + " ".join(["C3:1/2 G2:1/2"] * 4) + " | "
           + "A2:1/2 E3:1/2 A2:1/2 E3:1/2 A2:1/2 C#3:1/2 E3:1/2 G3:1/2", vel=64, role="bass")
@@ -194,7 +194,7 @@ def flee(c):
     up = {"Dm": "[F4,A4,D5]", "G": "[G4,B4,D5]", "C": "[G4,C5,E5]", "A7": "[G4,C#5,E5]"}
     for bar, sym in enumerate(["Dm", "G", "Dm", "C", "A7"]):
         f.mel("pz_hi", " ".join([f"r:1/2 {up[sym]}:1/2"] * 4), q=bar * 4, vel=48, role="harmony")
-    f.expr(["bsn", "clar"], [(0, -4), (20, -4)])
+    f.expr(["bsn", "clar"], [(0, -5), (20, -5)])
     f.expr(["pz_lo", "pz_cb", "pz_hi"], [(0, -3), (16, -4), (20, -4)])
 
 
@@ -214,6 +214,7 @@ def storm(c):
     q_le0 = s1.q_of(c.t0 + c.le(0))
     q_le1, q_gap2, q_ls2 = (s2.q_of(c.t0 + x) for x in (c.le(1), c.gap(2), c.ls(2)))
     q_call = 5.5                                        # horn pickup: inside the pause before line 2
+    q_roll = max(6.5, q_le0 - 0.3)                      # crescendo roll in the pause before the hit
 
     # tremolo strings (the bass is played by cb_fast: bass_ref keeps the voicing clear of it)
     s1.pad(["trem_va", "trem_hi", "trem_hi", "trem_hi"], 4, 50, 81, vel=74, center=66, bass_ref=(28, 40))
@@ -236,15 +237,23 @@ def storm(c):
     # low brass: rising line under line 0 (soft), swells only in the pauses
     s1.mel("tbn", "D3:2 E3:1 F3:1 | G3:2 A3:2", vel=68)
     s1.mel("tuba", "D2:4 | Bb1:2 A1:2", vel=72, role="bass")
-    s2.pad(["tbn", "tbn", "brass"], 3, 50, 70, vel=80, center=60, bass_ref=(28, 40))
-    s2.mel("tuba", "D2:4 | Bb1:4 | G1:2 A1:2 | D2:2 A1:2", vel=80, role="bass")
-    s2.mel("horn", "r:4 | r:3/2 A4:1/2 D5:1 F5:1 | G5:1 F5:1 E5:2 | F5:2 E5:2", vel=84)
-    # timpani: hit on the storm downbeat, soft roll under line 0, crescendo roll in the pause into the hit
+    # brass: a short sforzando chord on the hit, out under line 1 (strings and timpani carry the
+    # storm there), back with the horn pickup in the pause before line 2
+    s2.pad(["tbn", "tbn", "brass"], 3, 50, 70, q0=0, q1=1, vel=80, center=60, bass_ref=(28, 40))
+    s2.pad(["tbn", "tbn", "brass"], 3, 50, 70, q0=q_call, vel=76, center=60, bass_ref=(28, 40))
+    s2.mel("tuba", "D2:1 r:3 | r:3/2 Bb1:5/2 | G1:2 A1:2 | D2:2 A1:2", vel=80, role="bass")
+    # horn call: pickup A4 and the leap to D5 in the pause before line 2, then motif x in D minor
+    # (F-E-D ... Bb-A) receding under the line and settling on G4, the 7th of A7, which the
+    # clarinet resolves to F4 when Jonah sleeps; inside the horn's range (<= F5), no parallels
+    # with the bass (F5 over Bb moves to D5 over G only via the passing E5)
+    s2.mel("horn", "r:4 | r:3/2 A4:1/2 D5:1 F5:1/2 E5:1/2 | D5:1 Bb4:1 A4:2 | A4:2 G4:2", vel=76)
+    # timpani: hit on the storm downbeat, soft roll under line 0, crescendo roll in the pause that
+    # stops a sixteenth before the hit (a breath, so the sforzando has a clean attack)
     s1.add("timp", 0, 1, "D2", 92, "timp", "h")      # answers the flight's run
     timp_roll(s1, 1, 4, midi("D2"), 34, 48)
     timp_roll(s1, 4, 6, midi("D2"), 46, 56)
-    timp_roll(s1, 6, max(6.5, q_le0 - 0.3), midi("A2"), 56, 66)
-    timp_roll(s1, max(6.5, q_le0 - 0.3), 8, midi("A2"), 80, 98)
+    timp_roll(s1, 6, q_roll, midi("A2"), 56, 66)
+    timp_roll(s1, q_roll, 7.75, midi("A2"), 70, 86)
     s2.add("timp", 0, 1, "D2", 100, "timp", "h")
     timp_roll(s2, 1, 4.5, midi("D2"), 40, 52)
     s2.add("timp", q_call + 0.5, 1, "D2", 84, "timp", "h")
@@ -252,17 +261,21 @@ def storm(c):
     timp_roll(s3, 0, 6, midi("D2"), 40, 22)
     s2.add("okit", 0, 1, 36, 88, "perc", "h")           # concert bass drum on the peak
     s2.add("okit", 0, 2, 57, 62, "perc", "h")           # soft cymbal crash
-    for k in range(10):                                 # suspended-cymbal swell into the peak
+    for k in range(9):                                  # suspended-cymbal swell into the peak
         s1.add("okit", 6 + k * 0.2, 0.2, 59, 16 + k * 4, "perc")
     # Jonah sleeps: the theme head in D minor on clarinet, a low bassoon sigh
     s3.mel("clar", "F4:3/2 E4:1/2 D4:3/2 A3:1/2 | D4:4", vel=58)
     s3.mel("bsn", "A2:4 | Bb2:2 A2:2", vel=50)
-    # dynamics: soft build under line 0 -> surge in the pause -> sfz hit, subito piano under line 1
-    # -> surge + horn call in the pause -> receding under line 2 -> hush
+    # dynamics: build under line 0 -> surge in the pause -> sfz hit, subito piano under line 1
+    # -> surge + horn call in the pause -> receding under line 2 -> hush (the storm still rumbles)
+    # The brass recedes further than the strings under the lines: it sits in the speech band.
     for p in ("trem_hi", "trem_va", "vc_fast", "cb_fast", "tbn", "tuba", "horn", "brass", "timp"):
-        s1.expr(p, [(0, -3), (1, -13), (max(1.5, q_le0 - 0.3), -9), (8, -1)])
-        s2.expr(p, [(0, 0), (0.4, -9), (q_le1, -9), (q_gap2, -2), (q_ls2, -7), (16, -11)])
-    s3.expr(["trem_lo", "trem_va", "cb", "clar", "bsn", "timp"], [(0, -9), (8, -11)])
+        brass = p in ("tbn", "tuba", "horn", "brass")
+        s1.expr(p, [(0, -3.5), (s1.q_of(c.t0 + c.ls(0)) - 0.9, -4.5), (s1.q_of(c.t0 + c.ls(0)), -13),
+                    (max(1.5, q_le0 - 0.3), -9), (8, -1)])
+        s2.expr(p, [(0, 0), (0.4, -12), (q_le1, -12), (q_gap2, -2), (q_ls2, -12 if brass else -10),
+                    (16, -15 if brass else -12)])
+    s3.expr(["trem_lo", "trem_va", "cb", "clar", "bsn", "timp"], [(0, -4), (8, -6)])
 
 
 def lots(c):
@@ -296,7 +309,7 @@ def fish(c):
     a.prog("Dm:4 | Bb:2 A7:2@D-harmonic")
     b.prog("D:2 G/D:1 D:1")
     g.prog("D:1 A/C#:1 Bm:1@B-minor")
-    b.sync("sea calm: D major + harp glissando", 0, t_calm)
+    b.sync("sea calm: D major + harp glissando", 0, t_calm, kind="change")
     g.sync("gulp accent", 0, t_gulp)
     # storm reprise (they throw Jonah in), calming during "海立刻平静了"
     a.pad(["trem_va", "trem_hi", "trem_hi"], 3, 52, 77, vel=64, bass_ref=(28, 40))
@@ -309,17 +322,19 @@ def fish(c):
     a.mel("timp", "r:3 D2:1 | r:4", vel=76, role="timp")
     a.mel("horn", "D4:4 | D4:2 C#4:2", vel=64)
     a.expr(["trem_va", "trem_hi", "vc_fast", "cb", "horn", "timp"], [(0, -8), (3, -6), (4, -8), (8, -16)])
-    # calm: D major strings + rising harp glissando exactly on the end of the line
-    gliss(b, "harp", 0, 0.65, midi("D3"), midi("D6"), v0=36, v1=72)
+    # calm: D major strings + a quick rising harp glissando exactly on the end of the line (it
+    # crests in the short pause, before "上帝安排了一条大鱼")
+    gliss(b, "harp", 0, 0.45, midi("D3"), midi("D6"), v0=38, v1=66)
     b.pad(["vla", "vln2", "vln1"], 3, 57, 78, vel=54, bass_part="vc", bass_lo=38, bass_hi=50)
     b.add("cb", 0, 4, "D2", 48, "bass")
-    # the great fish: tuba + contrabass, doubled four octaves up by glockenspiel
-    b.mel("tuba", "r:1/2 D2:1/2:s F#2:1/2:s A2:1/2:s B2:1 A2:1/2:s F#2:1/2:s", vel=86)
-    b.mel("contrab", "r:1/2 D2:1/2:s F#2:1/2:s A2:1/2:s B2:1 A2:1/2:s F#2:1/2:s", vel=66)
-    b.mel("glock", "r:1/2 D6:1/2 F#6:1/2 A6:1/2 B6:1 A6:1/2 F#6:1/2", vel=68)
+    # the great fish: tuba + contrabass, doubled four octaves up by glockenspiel -- light and
+    # playful, since it plays under the line that introduces the fish
+    b.mel("tuba", "r:1/2 D2:1/2:s F#2:1/2:s A2:1/2:s B2:1 A2:1/2:s F#2:1/2:s", vel=66)
+    b.mel("contrab", "r:1/2 D2:1/2:s F#2:1/2:s A2:1/2:s B2:1 A2:1/2:s F#2:1/2:s", vel=55)
+    b.mel("glock", "r:1/2 D6:1/2 F#6:1/2 A6:1/2 B6:1 A6:1/2 F#6:1/2", vel=48)
     b.sync("fish motif enters", 0.5, c.ls(1))
-    b.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -9), (1, -6), (4, -7)])
-    b.expr(["tuba", "contrab", "glock", "harp"], [(0, -4), (4, -4)])
+    b.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -9), (1, -9), (4, -9)])
+    b.expr(["tuba", "contrab", "glock", "harp"], [(0, -5), (4, -5)])
     # gulp: small accent, then the bass sinks D-C#-B into the dark belly
     g.mel("tuba", "D2:1:a C#2:1 B1:1", vel=92, role="bass")
     g.mel("contrab", "D2:1:a C#2:1 B1:1", vel=72, role="bass")
@@ -339,8 +354,8 @@ def belly(c):
     a.prog("Bm:3 | Em/B:3")
     b.prog("G:2 Em7:1 A:1")
     e.prog("D:2")
-    b.sync("hopeful turn (choir) on Jonah's prayer", 0, tp)
-    e.sync("D major swell on '救恩属于耶和华'", 0, ts)
+    b.sync("hopeful turn (choir) on Jonah's prayer", 0, tp, kind="change")
+    e.sync("D major swell on '救恩属于耶和华'", 0, ts, kind="change")
     # darkness: warm pad, low drone, sparse echoing celesta drops
     a.pad("pad", 3, 50, 69, vel=60, bass_ref=(35, 47))
     a.add("cb", 0, 6, "B1", 54, "bass")
@@ -375,14 +390,14 @@ def shore(c):
     s.prog("G:2 | C:2 | G/D:1 D7:1 | D7:2")
     # the Jonah motif (3-2-1-5) made bouncy: he is safe on dry land
     s.mel("flute", "B5:1/2:s A5:1/4:s G5:1/4:s D5:1/2:s G5:1/2:s | C6:1/2:s B5:1/4:s C6:1/4:s G5:1/2:s E5:1/2:s | "
-                   "B5:1/2:s G5:1/2:s A5:1/2:s F#5:1/2:s | C6:1/4:s B5:1/4:s A5:1/2:s F#5:1/2 D5:1/2", vel=84)
-    s.mel("glock", "B6:1 r:1 | C7:1 r:1 | B6:1 A6:1 | C7:1 r:1", vel=64)
+                   "B5:1/2:s G5:1/2:s A5:1/2:s F#5:1/2:s | C6:1/4:s B5:1/4:s A5:1/2:s F#5:1/2 D5:1/2", vel=70)
+    s.mel("glock", "B6:1 r:1 | C7:1 r:1 | B6:1 A6:1 | C7:1 r:1", vel=58)
     s.mel("pz_lo", "G2:1/2 r:1/2 D3:1/2 r:1/2 | C3:1/2 r:1/2 G2:1/2 r:1/2 | D3:1/2 r:1/2 D2:1/2 r:1/2 | "
                    "D2:1/2 r:1/2 A2:1/2 r:1/2", vel=72, role="bass")
     s.mel("pz_hi", "r:1/2 [G4,B4,D5]:1/2 r:1/2 [G4,B4,D5]:1/2 | r:1/2 [G4,C5,E5]:1/2 r:1/2 [G4,C5,E5]:1/2 | "
                    "r:1/2 [G4,B4,D5]:1/2 r:1/2 [F#4,A4,C5]:1/2 | r:1/2 [F#4,A4,C5]:1/2 r:1/2 [F#4,A4,C5]:1/2",
           vel=56, role="harmony")
-    s.expr(["flute", "glock", "pz_lo", "pz_hi"], [(0, -3), (8, -3)])
+    s.expr(["flute", "glock", "pz_lo", "pz_hi"], [(0, -5), (8, -5)])
 
 
 def nineveh(c):
@@ -407,14 +422,14 @@ def nineveh(c):
             drum(a, o + q, key, v)
         for q in (0.5, 1.5, 2.5, 3.5):
             drum(a, o + q, 54, 34)
-    a.expr(["oboe", "guitar", "pz_cb", "hand"], [(0, -5), (12, -5)])
+    a.expr(["oboe", "guitar", "pz_cb", "hand"], [(0, -8), (12, -8)])
     # "forty days": sustained solemn chord, slow low drum
     b.pad(["vla", "vln2", "vln1"], 3, 55, 74, vel=56, bass_part="vc", bass_lo=43, bass_hi=55)
     b.add("cb", 0, 4, "D2", 56, "bass")
     b.pad("horn", 2, 50, 66, vel=60, bass_ref=(43, 55))
     drum(b, 0, 45, 70)
     drum(b, 2, 45, 56)
-    b.expr(["vla", "vln2", "vln1", "vc", "cb", "horn"], [(0, -12), (1.5, -5), (4, -9)])
+    b.expr(["vla", "vln2", "vln1", "vc", "cb", "horn"], [(0, -12), (1.5, -6.5), (4, -10)])
 
 
 def repent(c):
@@ -426,17 +441,17 @@ def repent(c):
     a.prog("Gm:2 Eb:2 | Cm:2 D:2")
     b1.prog("G:2 Em:2")
     b2.prog("C:1 D:1")
-    b1.sync("mercy: G major", 0, tm)
+    b1.sync("mercy: G major", 0, tm, kind="change")
     va = a.pad("choir", 3, 55, 76, vel=58, tops=[midi(x) for x in ("D5", "Eb5", "Eb5", "D5")], bass_ref=(43, 55))
     a.pad(["vla", "vln2"], 2, 53, 70, vel=48, bass_part="vc", bass_lo=43, bass_hi=55)
     a.mel("cb", "G1:2 Eb2:2 | C2:2 D2:2", vel=52, role="bass")
-    vb = b1.pad("choir", 3, 55, 76, vel=62, tops=[midi("D5"), midi("E5")], prev=va[-1], bass_ref=(43, 55))
+    vb = b1.pad("choir", 3, 55, 76, vel=54, tops=[midi("D5"), midi("E5")], prev=va[-1], bass_ref=(43, 55))
     b2.pad("choir", 3, 55, 78, vel=60, tops=[midi("E5"), midi("F#5")], prev=vb[-1], bass_ref=(43, 55))
     for seg in (b1, b2):
         seg.pad(["vla", "vln2"], 2, 53, 70, vel=52, bass_part="vc", bass_lo=43, bass_hi=55)
     b1.mel("cb", "G1:2 E2:2", vel=52, role="bass")
     b2.mel("cb", "C2:1 D2:1", vel=52, role="bass")
-    b1.mel("vln_mel", "B5:3/2 A5:1/2 G5:2", vel=64)
+    b1.mel("vln_mel", "B5:3/2 A5:1/2 G5:2", vel=58)
     b2.mel("vln_mel", "G5:1 F#5:1", vel=64)        # not G5-A5 over C2-D2 (outer-voice fifths)
     broken(b1, "harp", 0, 4, (0, 2, 3, 4, 5, 6, 5, 4), 43, 54, vel=46)
     broken(b2, "harp", 0, 2, (0, 2, 3, 4), 36, 50, vel=44)
@@ -445,8 +460,8 @@ def repent(c):
     fill(c, "harp", c.pause_or_gap(1), n=3, lo=62, hi=82, vel=44)
     fill(c, "celesta", c.pause_or_gap(len(c.lines) - 1), n=3, lo=79, hi=96, vel=44)
     a.expr(["choir", "vla", "vln2", "vc", "cb"], [(0, -12), (4, -8), (8, -6)])
-    b1.expr(["choir", "vla", "vln2", "vc", "cb", "vln_mel", "harp", "celesta"], [(0, -6), (4, -5)])
-    b2.expr(["choir", "vla", "vln2", "vc", "cb", "vln_mel", "harp"], [(0, -5), (2, -9)])
+    b1.expr(["choir", "vla", "vln2", "vc", "cb", "vln_mel", "harp", "celesta"], [(0, -8), (4, -7)])
+    b2.expr(["choir", "vla", "vln2", "vc", "cb", "vln_mel", "harp"], [(0, -7), (2, -10)])
 
 
 def vine(c):
@@ -478,10 +493,11 @@ def vine(c):
                     "r:1/2 [D3,A3]:1/2 r:1/2 [D3,C4]:1/2", vel=54, role="harmony")
     v0.expr(["bsn", "pz_cb", "pz_lo"], [(0, -4), (6, -4)])
     # the plant grows: rising harp + celesta arpeggios over swelling strings (bVI - bVII - I)
-    broken(v1, "harp", 0, 6, tuple(range(12)), 39, 50, vel=48, step=0.25, accent=4, restart=True)
+    # the arpeggios climb until an eighth before the waltz, then ring (a breath before its downbeat)
+    broken(v1, "harp", 0, 5.5, tuple(range(12)), 39, 50, vel=48, step=0.25, accent=4, restart=True)
     for q0, q1, ch in v1.chord_spans():
         lad = [p for p in ch.tones(72, 100)]
-        n = int(round((q1 - q0) / 0.25))
+        n = int(round((min(q1, 5.5) - q0) / 0.25))
         for k in range(n):
             v1.add("celesta", q0 + k * 0.25, q1 - q0 - k * 0.25, lad[min(k, len(lad) - 1)], 48 + 2 * k, "arp")
     v1.pad(["vla", "vln2", "vln1"], 3, 58, 79, vel=50, bass_part="vc", bass_lo=48, bass_hi=60)
@@ -489,30 +505,34 @@ def vine(c):
     v1.add("glock", 4.5, 1.5, "G6", 54, "arp", "r")
     v1.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -16), (6, -5)])
     v1.expr(["harp", "celesta"], [(0, -6), (6, -3)])
-    # "约拿非常喜乐": a happy little waltz
-    v2.mel("flute", "D5:1 G5:1/2 A5:1/2 B5:1 | C6:1 B5:1/2 A5:1/2 F#5:1", vel=72)
-    v2.mel("glock", "G6:1 r:2 | F#6:1 r:2", vel=48)
+    # "约拿非常喜乐": a happy little waltz -- it plays almost entirely under that line, so the flute
+    # tune is light and the oom-pah-pah pizzicato carries the lilt
+    v2.mel("flute", "D5:1 G5:1/2 A5:1/2 B5:1 | C6:1 B5:1/2 A5:1/2 F#5:1", vel=62)
+    v2.mel("glock", "G6:1 r:2 | F#6:1 r:2", vel=44)
     v2.mel("pz_lo", "G2:1 r:2 | D2:1 r:2", vel=70, role="bass")
     v2.mel("pz_hi", "r:1 [B3,D4,G4]:1 [B3,D4,G4]:1 | r:1 [A3,C4,F#4]:1 [A3,C4,F#4]:1", vel=52, role="harmony")
-    v2.expr(["flute", "glock", "pz_lo", "pz_hi"], [(0, -3), (6, -3)])
+    v2.expr(["flute", "glock"], [(0, -6), (6, -6)])
+    v2.expr(["pz_lo", "pz_hi"], [(0, -3), (6, -3)])
     # the worm: descending chromatic pizzicato, the plant withers onto D
     v3.mel("pz_hi", "D5:1/2 C#5:1/2 C5:1/2 B4:1/2 Bb4:1/2 A4:1/2 Ab4:1/2 G4:1/2 | "
                     "F#4:1/2 F4:1/2 E4:1/2 Eb4:1/2 D4:2", vel=66, role="chromatic")
     v3.mel("pz_lo", "G2:1 r:1 D3:1 r:1 | D2:2 r:2", vel=60, role="bass")
     v3.mel("clar", "Bb3:4 | A3:4", vel=44)
     v3.expr(["pz_hi", "pz_lo", "clar"], [(0, -4), (8, -9)])
-    # heat: a thin, airy open fifth (violins E5/A5 at low expression, a hushed 'ooh' choir on D4/A4),
-    # basses on D, and a slow, soft, dry low drum
-    v4.add("vln1", 0, 4, "E5", 58, "pad", voice="vln1.0")
-    v4.add("vln1", 0, 4, "A5", 60, "pad", voice="vln1.1")
-    v4.add("ooh", 0, 4, "D4", 54, "pad", voice="ooh.0")
-    v4.add("ooh", 0, 4, "A4", 52, "pad", voice="ooh.1")
-    v4.add("cb", 0, 4, "D2", 48, "bass")
+    # heat: a thin, airy, shimmering open fifth E5/A5 over D -- string harmonics are almost pure
+    # tones, so they are voiced on soft flutes (the section-violin samples are shrill this high),
+    # with a hushed 'ooh' choir on D4/A4, basses on D, and a slow, soft, dry low drum
+    v4.add("flute", 0, 4, "E5", 46, "pad", voice="flute.0")
+    v4.add("flute", 0, 4, "A5", 48, "pad", voice="flute.1")
+    v4.add("ooh", 0, 4, "D4", 56, "pad", voice="ooh.0")
+    v4.add("ooh", 0, 4, "A4", 54, "pad", voice="ooh.1")
+    v4.add("cb", 0, 4, "D2", 50, "bass")
     drum(v4, 0, 45, 64)
     drum(v4, 2, 45, 56)
     drum(v4, 3.5, 61, 34)
     v4.add("piano", 3.5, 0.5, "D5", 54, "melody")          # the theme's anacrusis returns
-    v4.expr(["vln1", "ooh", "cb"], [(0, -10), (1.5, -7), (3.5, -6), (4, -6)])
+    v4.expr("flute", [(0, -14), (1.5, -10), (3.5, -9), (4, -9)])
+    v4.expr(["ooh", "cb"], [(0, -10), (1.5, -7), (3.5, -6), (4, -6)])
 
 
 def lesson(c):
@@ -539,12 +559,12 @@ def end(c):
     # the theme on violins, kept gentle under the two closing lines; the celesta doubles it only
     # where nobody speaks, and returns for the fills and the cadence
     a.mel("vln_mel", "F#5:1 E5:1/2 D5:1 A4:1/2 | B4:1 D5:1/2 G5:1 B5:1/2 | A5:1 F#5:1/2 E5:1 C#5:1/2", vel=76)
-    b.add("vln_mel", 0, 3, "D5", 80, "melody")
+    b.add("vln_mel", 0, 3, "D5", 74, "melody")
     drop_spoken(a.mel("celesta", "F#6:1 E6:1/2 D6:1 A5:1/2 | B5:1 D6:1/2 G6:1 B6:1/2 | A6:1 F#6:1/2 E6:1 C#6:1/2",
                       vel=56))
     b.mel("celesta", "D6:1 r:1/2 F#6:1/2 A6:1/2 D7:1/2", vel=50, art="r")
     a.mel("horn", "A4:3 | G4:3/2 B4:3/2 | F#4:3/2 G4:3/2", vel=56, role="counter")
-    b.add("horn", 0, 3, "F#4", 66, "counter")
+    b.add("horn", 0, 3, "F#4", 60, "counter")
     broken(a, "harp", 0, 9, (0, 2, 4, 6, 4, 2), 38, 49, vel=46, thin=True)
     fill(c, "celesta", c.pause_or_gap(1), n=3, lo=86, hi=100, vel=46)
     for k, nm in enumerate(["D2", "A2", "D3", "F#3", "A3", "D4", "F#4", "A4", "D5"]):
@@ -555,10 +575,11 @@ def end(c):
     b.add("cb", 0, 3, "D2", 56, "bass")
     # no crescendo under the closing line: the swell belongs to the final chord alone
     q_le1 = a.q_of(c.t0 + c.le(len(c.lines) - 1))
-    a.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn"], [(0, -8), (min(q_le1, 8.9), -8), (9, -5)])
-    b.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn"], [(0, -4), (0.75, -1), (1.5, -2), (3, -24)])
+    a.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn"], [(0, -9.5), (min(q_le1, 8.9), -9.5), (9, -6.5)])
+    # the final chord swells warmly but stays below the storm (the storm is the score's loud peak)
+    b.expr(["vla", "vln2", "vc", "cb", "vln_mel", "horn"], [(0, -11), (0.75, -9), (1.5, -10), (3, -29)])
     a.expr(["harp", "celesta"], [(0, -4), (9, -3)])
-    b.expr(["harp", "celesta"], [(0, -3), (3, -6)])
+    b.expr(["harp", "celesta"], [(0, -6), (3, -9)])
 
 
 CUES = {"title": title, "call": call, "flee": flee, "storm": storm, "lots": lots, "fish": fish,

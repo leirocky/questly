@@ -29,7 +29,8 @@ Metrics (independent of sfx.py's own meter: pyloudnorm's integrated loudness and
               (W = 0.2 s, or 15 % of the length for sounds under 1.33 s); flagged above -40 dB (a tail chopped
               while still ringing). mixfade = momentary-max change if mix.py's default 0.3 s fade_out is applied.
   seam        loops: |x[0]-x[-1]| divided by the 99th percentile of |x[i]-x[i-1]| (<= 1 means the wrap point is no
-              rougher than ordinary sample steps), the same for the second difference, and the end-sample levels
+              rougher than ordinary sample steps), the second difference across the wrap divided by the largest one
+              within +-10 ms of it (<= 1: no kink), and the end-sample levels
 """
 import argparse
 import sys
@@ -115,14 +116,25 @@ def band_share(x, sr=SR):
             float(P[f > 8000].sum() / tot))
 
 
-def seam_metrics(x):
+def seam_metrics(x, local=0.01):
+    """Wrap-point continuity of a loop (x[-1] -> x[0]).
+
+    seam_ratio   |x[0] - x[-1]| / 99th percentile of all |x[i] - x[i-1]|: a step (click) at the wrap.
+    seam2_ratio  largest second difference across the wrap / largest second difference within +-``local`` s of it
+                 (circular, wrap samples excluded): a kink (slope break) that stands out from the local waveform.
+                 Compared locally rather than with a global percentile, because the wrap is rotated to a quiet
+                 spot and a continuous loop's wrap curvature is an ordinary sample (a global p99 test fails ~1 %
+                 of seamless renders by chance).
+    """
     d1 = np.abs(np.diff(x, axis=0))
     p99 = np.percentile(d1, 99, axis=0).max() + 1e-12
     jump = np.abs(x[0] - x[-1]).max()
-    d2 = np.abs(np.diff(x, 2, axis=0))
-    q99 = np.percentile(d2, 99, axis=0).max() + 1e-12
-    s2 = max(np.abs(x[1] - 2 * x[0] + x[-1]).max(), np.abs(x[0] - 2 * x[-1] + x[-2]).max())
-    return dict(seam_jump=float(jump), seam_ratio=float(jump / p99), seam2_ratio=float(s2 / q99),
+    k = max(4, min(int(local * SR), len(x) // 2 - 2))
+    w = np.concatenate([x[-(k + 1):], x[:k + 1]])            # the wrap lies between w[k] (= x[-1]) and w[k+1]
+    d2 = np.abs(w[2:] - 2 * w[1:-1] + w[:-2])                 # d2[j] is centred on w[j+1]
+    s2 = d2[[k - 1, k]].max()
+    others = max(np.delete(d2, [k - 1, k], axis=0).max(), 1e-6)       # floor: -120 dB curvature is not a kink
+    return dict(seam_jump=float(jump), seam_ratio=float(jump / p99), seam2_ratio=float(s2 / others),
                 start=float(np.abs(x[0]).max()), end=float(np.abs(x[-1]).max()))
 
 
@@ -345,6 +357,7 @@ def _sweep_job(job):
         sm = seam_metrics(x.astype(np.float64))
         out["seam"] = max(sm["seam_ratio"], sm["seam2_ratio"])
         out["ends"] = max(sm["start"], sm["end"])
+        out["hp300"] = hp300_loss(x, kind)
     else:
         out["mom"] = momentary_max(x)
         out["tail"] = tail_metric(name, x)[0]
@@ -364,9 +377,10 @@ def sweep(names, log, workers=4):
     ok = True
     if loops:
         log(f"  loops: integrated LUFS min..max over seeds {SWEEP_SEEDS.start}-{SWEEP_SEEDS.stop - 1} per length; "
-            f"flag: outside {LOOP_RANGE[0]:.0f}..{LOOP_RANGE[1]:.0f} or > 1.5 dB from target, |L/R| > 1.5 dB, seam")
+            f"flag: outside {LOOP_RANGE[0]:.0f}..{LOOP_RANGE[1]:.0f} or > 1.5 dB from target, |L/R| > 1.5 dB, seam, "
+            "300 Hz high-pass loss > 6 dB, peak > 0.9")
         log("  " + f"{'loop':<14}{'target':>7}" + "".join(f"{f'{d:g} s':>15}" for d in SWEEP_DURS)
-            + f"{'max|L/R|':>10}{'max peak':>10}")
+            + f"{'max|L/R|':>10}{'max peak':>10}{'max hp300':>11}{'max seam':>10}")
         for n in loops:
             rr = [r for r in res if r["name"] == n]
             cells, bad = [], []
@@ -378,15 +392,19 @@ def sweep(names, log, workers=4):
                     bad.append(f"{d:g}s LUFS")
             lr = max(abs(r["lr"]) for r in rr)
             pk = max(r["peak"] for r in rr)
+            hp = max(r["hp300"] for r in rr)
+            sm = max(r["seam"] for r in rr)
             if lr > 1.5:
                 bad.append("L/R")
-            if max(r["seam"] for r in rr) > 1.0 or max(r["ends"] for r in rr) > 0.01:
+            if sm > 1.0 or max(r["ends"] for r in rr) > 0.01:
                 bad.append("seam")
             if pk > 0.9:
                 bad.append("peak")
+            if hp > 6.0:
+                bad.append("small speaker")
             ok &= not bad
             log("  " + f"{n:<14}{sfx.LOOP_LUFS[n]:7.1f}" + "".join(f"{c:>15}" for c in cells)
-                + f"{lr:10.1f}{pk:10.2f}" + (f"  !! {', '.join(bad)}" if bad else "  ok"))
+                + f"{lr:10.1f}{pk:10.2f}{-hp:11.1f}{sm:10.2f}" + (f"  !! {', '.join(bad)}" if bad else "  ok"))
     if shots:
         log("  one-shots over seeds: momentary max (target +-2 dB), peak (0.5..0.7), tail (<= -40 dB), "
             "300 Hz high-pass loss (<= 6 dB), |L/R| (<= 1.5 dB)")
@@ -489,6 +507,10 @@ def api_checks(names, log):
             check(np.isfinite(x).all() and len(x) > 0, f"{nm} {kw}: clamped, finite (peak {np.abs(x).max():.2f})")
         except Exception as e:  # noqa: BLE001
             check(False, f"{nm} {kw}: raised {type(e).__name__}: {e}")
+    # pitched pings (chime, sparkle, grow) are folded down by octaves, never clamped off-key
+    bad = [(nn, fm) for nn in range(36, 145) for fm in (1200.0, 2400.0, 4700.0)
+           if not (sfx._midi(sfx._fold(nn, fm)) <= fm * 1.0001 and (sfx._fold(nn, fm) - nn) % 12 == 0)]
+    check(not bad, f"_fold keeps every note (MIDI 36-144) in key and under its limit (failures {bad[:3]})")
     x = sfx.make("gull", None, SR, seed=1, calls=0)
     check(np.abs(x).max() == 0, "gull calls=0 gives silence (0 is not treated as 'unset')")
     x1 = sfx.make("gull", None, SR, seed=1, calls=1)
@@ -527,7 +549,7 @@ def main():
     log(f"sfx audition  seed={a.seed}  sr={SR}  ({time.strftime('%Y-%m-%d %H:%M:%S')})")
     results, audio = [], {}
     for nm in names:
-        kind, d, desc = sfx.NAMES[nm]
+        kind, d, _ = sfx.NAMES[nm]
         if a.debug:
             sfx._DEBUG = []
         t0 = time.time()
