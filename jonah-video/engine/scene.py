@@ -25,11 +25,28 @@ BOIL_TOKEN = "__BOIL__"   # style.svg_doc puts this into turbulence seeds
 
 
 @dataclass
+class Chunk:
+    text: str
+    start: float   # seconds from scene start
+    end: float
+
+
+@dataclass
 class Line:
+    """One spoken utterance. ``chunks`` are its subtitle pieces (cut at punctuation), timed from
+    the recognised speech — use them to key animation to a phrase inside a long utterance."""
     speaker: str
     text: str
     start: float   # seconds from scene start
     end: float
+    chunks: list = field(default_factory=list)
+
+    def at(self, phrase):
+        """Start time (s from scene start) of the subtitle chunk containing ``phrase``."""
+        for c in self.chunks:
+            if phrase in c.text:
+                return c.start
+        raise KeyError(f"{phrase!r} not in {self.text!r}")
 
 
 @dataclass
@@ -50,7 +67,9 @@ class SceneContext:
         return cls(
             id=sc["id"], duration=sc["duration"], start=sc["start"], mood=sc.get("mood", ""),
             note=sc.get("note", ""),
-            lines=[Line(ln["speaker"], ln["text"], ln["start"], ln["end"]) for ln in sc["lines"]],
+            lines=[Line(ln["speaker"], ln["text"], ln["start"], ln["end"],
+                        [Chunk(c["text"], c["start"], c["end"]) for c in ln.get("chunks", [])])
+                   for ln in sc["lines"]],
         )
 
 

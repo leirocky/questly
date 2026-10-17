@@ -274,7 +274,8 @@ def _draw_item(frame, item, t, C):
 
 # --------------------------------------------------------------------- subtitles
 
-SPEAKER_COLORS = {"N": (74, 50, 34), "G": (150, 92, 14), "J": (30, 88, 96)}
+SPEAKER_COLORS = {"N": (74, 50, 34), "G": (150, 92, 14), "J": (30, 88, 96),
+                  "C": (120, 52, 40), "S": (52, 70, 120), "K": (96, 52, 120)}
 
 
 def subtitle_image(text, speaker="N", size=50):
@@ -299,14 +300,19 @@ class Subtitles:
     def __init__(self, ctx, fade=0.16):
         self.fade = fade
         self.items = []
-        lines = ctx.lines
-        for i, ln in enumerate(lines):
-            t0 = max(0.0, ln.start - 0.08)
-            t1 = ln.end + 0.3
-            if i + 1 < len(lines):
-                t1 = min(t1, lines[i + 1].start - 0.06)
+        # One subtitle per chunk (falls back to one per line); each stays up until the next appears
+        # or shortly after the speech ends.
+        pieces = []
+        for ln in ctx.lines:
+            for c in (ln.chunks or [ln]):
+                pieces.append((c.text, ln.speaker, c.start, c.end, ln.end))
+        for i, (text, spk, start, end, line_end) in enumerate(pieces):
+            t0 = max(0.0, start - 0.08)
+            t1 = min(end, line_end) + 0.3
+            if i + 1 < len(pieces):
+                t1 = min(t1, pieces[i + 1][2] - 0.06)
             t1 = min(t1, ctx.duration - 0.3)
-            img = to_pm(subtitle_image(ln.text, ln.speaker))
+            img = to_pm(subtitle_image(text, spk))
             self.items.append((t0, t1, img))
 
     def draw(self, frame, t):

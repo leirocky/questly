@@ -1,13 +1,20 @@
-"""Offline Chinese text-to-speech for every story line, plus the master timeline.
+"""Offline Chinese text-to-speech for every story utterance, plus the master timeline.
 
-Engines (sherpa-onnx, models downloaded by setup.sh into .cache/models):
-  * matcha-icefall-zh-baker + vocos vocoder  -> narrator (clear female voice)
-  * kokoro-multi-lang-v1_1 (Kokoro 82M v1.1-zh) -> God (deep male) and Jonah (male)
+Engines (sherpa-onnx, models in .cache/models — see README):
+  * matcha-icefall-zh-baker + vocos-22khz   -> narrator (clear female voice)
+  * ZipVoice (distill, zh-en, Emilia)       -> God, Jonah, captain, sailors, king. Zero-shot: each male
+    voice takes its timbre from a short Kokoro v1.1-zh prompt clip, while ZipVoice (trained on natural
+    conversational speech) supplies the prosody and pauses. Chinese goes through a pinyin lexicon built
+    with pypinyin in context (voice/zv_lexicon.py), so polyphones follow their words.
+  * Kokoro v1.1-zh                          -> optional direct engine for the male voices (MALE_ENGINE).
+
+Each utterance is synthesised whole, checked by ASR (retried with other settings when it misreads),
+and cut into subtitle chunks at punctuation, timed from the recogniser's per-character timestamps.
 
 Outputs
-  build/voice/lines/<scene>_<n>.wav   processed 48 kHz mono clip per line
+  build/voice/lines/<scene>_<n>.wav   processed 48 kHz mono clip per utterance
   build/audio/voice.wav               all lines placed on the global timeline
-  build/timeline.json                 scene and line timing (seconds, frame aligned)
+  build/timeline.json                 scene, line and subtitle-chunk timing (seconds, frame aligned)
 """
 import hashlib
 import json
@@ -23,13 +30,27 @@ sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.par
 import story  # noqa: E402
 from engine.paths import BUILD, CACHE, FPS, MODELS, SR, ensure_dirs  # noqa: E402
 
+MALE_ENGINE = "zipvoice"   # "zipvoice" or "kokoro" for the male speakers
+
 VOICES = {
-    "N": {"engine": "matcha", "sid": 0, "speed": 1.05, "fx": None, "gain_db": 0.0},
-    "G": {"engine": "kokoro", "sid": 101, "speed": 1.0, "fx": "divine", "gain_db": 0.0},
-    "J": {"engine": "kokoro", "sid": 91, "speed": 1.08, "fx": None, "gain_db": 0.0},
+    "N": {"engine": "matcha", "sid": 0, "speed": 0.85, "fx": None, "gain_db": 0.0},
+    "G": {"engine": MALE_ENGINE, "sid": 101, "speed": 0.9, "fx": "divine", "gain_db": 0.0},
+    "J": {"engine": MALE_ENGINE, "sid": 91, "speed": 0.95, "fx": None, "gain_db": 0.0},
+    "C": {"engine": MALE_ENGINE, "sid": 88, "speed": 0.95, "fx": None, "gain_db": 0.0},
+    "S": {"engine": MALE_ENGINE, "sid": 95, "speed": 1.0, "fx": None, "gain_db": 0.0},
+    "K": {"engine": MALE_ENGINE, "sid": 100, "speed": 0.9, "fx": None, "gain_db": 0.0},
+}
+# Kokoro prompt sentences that give each ZipVoice male voice its timbre.
+PROMPTS = {
+    101: "我是创造天地的上帝，我爱这世上所有的人，也爱一切的生命。",
+    91: "我是约拿，我是一个先知，我的家在以色列的一个小村庄里。",
+    88: "我是这条船的船长，我在海上航行了很多很多年。",
+    95: "我们是船上的水手，每天都在海上拉绳子，划船，搬货物。",
+    100: "我是尼尼微的国王，我住在一座很大很大的城里。",
 }
 # Per-scene overrides of a speaker's effect (Jonah praying inside the fish).
-SCENE_FX = {("s07_belly", "J"): "cave"}
+SCENE_FX = {("s11_belly", "J"): "cave", ("s12_deep", "J"): "cave"}
+CER_RETRY = 0.10   # re-synthesise a ZipVoice utterance when ASR disagrees more than this
 
 TARGET_LUFS = -20.0  # per-clip loudness before the final mix
 _DC_SOS = signal.butter(2, 40, "highpass", fs=SR, output="sos")
@@ -73,34 +94,179 @@ def _engine(name):
             ),
             rule_fsts=f"{d}/phone-zh.fst,{d}/date-zh.fst,{d}/number-zh.fst",
         )
+    elif name == "zipvoice":
+        from voice import zv_lexicon
+
+        d = MODELS / "sherpa-onnx-zipvoice-distill-zh-en-emilia"
+        lex = zv_lexicon.build(story.SCENES, PROMPTS.values(), d / "tokens.txt")
+        cfg = so.OfflineTtsConfig(
+            model=so.OfflineTtsModelConfig(
+                zipvoice=so.OfflineTtsZipvoiceModelConfig(
+                    tokens=str(d / "tokens.txt"), encoder=str(d / "text_encoder.onnx"),
+                    decoder=str(d / "fm_decoder.onnx"), vocoder=str(MODELS / "vocos_24khz.onnx"),
+                    data_dir=str(d / "espeak-ng-data"), lexicon=str(lex), guidance_scale=3.0,
+                ),
+                num_threads=4,
+            ),
+        )
     else:
         raise ValueError(name)
     _engines[name] = so.OfflineTts(cfg)
     return _engines[name]
 
 
+_asr = None
+
+
+def asr(x, sr):
+    """Recognise speech; returns (text, tokens, token start times in s)."""
+    global _asr
+    import sherpa_onnx as so
+
+    if _asr is None:
+        d = MODELS / "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17"
+        _asr = so.OfflineRecognizer.from_sense_voice(model=str(d / "model.int8.onnx"), tokens=str(d / "tokens.txt"),
+                                                     language="zh", use_itn=False, num_threads=4)
+    st = _asr.create_stream()
+    st.accept_waveform(sr, np.asarray(x, np.float32))
+    _asr.decode_stream(st)
+    r = st.result
+    return r.text, list(r.tokens), list(r.timestamps)
+
+
 def tts_text(text, engine):
     """Normalise punctuation the front ends would otherwise read aloud."""
     t = re.sub(r"[“”‘’\"'《》「」]", "", text)
     t = t.replace("：", "，").replace("；", "，").replace("…", "。").replace("——", "，")
-    if engine == "kokoro":
+    if engine in ("kokoro", "zipvoice"):
         t = t.replace("、", "，")
     return t
 
 
+def _prompt(sid):
+    """Kokoro clip that gives a ZipVoice male voice its timbre (DC-free, cached)."""
+    text = PROMPTS[sid]
+    x, sr = synth_raw(text, {"engine": "kokoro", "sid": sid, "speed": 0.9})
+    x = signal.sosfiltfilt(signal.butter(2, 40, "highpass", fs=sr, output="sos"), soften_onsets(x, sr))
+    return np.asarray(x, np.float32), sr, text
+
+
+def _cache_path(text, voice, extra=""):
+    key = hashlib.sha1(json.dumps([text, voice["engine"], voice["sid"], voice["speed"], extra]).encode()).hexdigest()[:16]
+    return CACHE / "tts" / f"{key}.wav"
+
+
 def synth_raw(text, voice):
     """Synthesize (cached) and return float32 mono at the engine's sample rate."""
-    key = hashlib.sha1(json.dumps([text, voice["engine"], voice["sid"], voice["speed"]]).encode()).hexdigest()[:16]
-    path = CACHE / "tts" / f"{key}.wav"
+    extra = ""
+    if voice["engine"] == "zipvoice":
+        from voice import zv_lexicon
+        extra = zv_lexicon.version()
+    path = _cache_path(text, voice, extra)
     if path.exists():
         x, sr = sf.read(path, dtype="float32")
         return x, sr
     path.parent.mkdir(parents=True, exist_ok=True)
     tts = _engine(voice["engine"])
+    if voice["engine"] == "zipvoice":
+        px, psr, ptext = _prompt(voice["sid"])
+        best = None
+        # Flow matching can occasionally slur a word: verify with ASR and try other settings.
+        for spd, steps in ((voice["speed"], 8), (voice["speed"], 12), (voice["speed"] - 0.04, 8),
+                           (voice["speed"] + 0.04, 12)):
+            a = tts.generate(tts_text(text, "zipvoice"), ptext, px.tolist(), psr, spd, steps)
+            x = np.asarray(a.samples, dtype=np.float32)
+            err = _cer(text, asr(x, a.sample_rate)[0])
+            if best is None or err < best[0]:
+                best = (err, x, a.sample_rate)
+            if err <= CER_RETRY:
+                break
+        err, x, sr = best
+        if err > CER_RETRY:
+            print(f"  WARNING ASR mismatch {err:.2f} for: {text}")
+        sf.write(path, x, sr)
+        return x, sr
     a = tts.generate(tts_text(text, voice["engine"]), sid=voice["sid"], speed=voice["speed"])
     x = np.asarray(a.samples, dtype=np.float32)
     sf.write(path, x, a.sample_rate)
     return x, a.sample_rate
+
+
+_HOMOPHONES = {"威": "微", "师": "施", "实": "施", "哪": "拿", "纳": "拿", "地": "帝", "他": "它", "她": "它",
+               "颗": "棵", "莱": "来", "进": "禁", "亡": "王"}
+
+
+def _norm(s):
+    return re.sub(r"[^\u4e00-\u9fff]", "", s)
+
+
+def _cer(ref, hyp):
+    ref, hyp = _norm(ref), _norm(hyp)
+    hyp = "".join(c if c in ref else _HOMOPHONES.get(c, c) for c in hyp)
+    dp = list(range(len(hyp) + 1))
+    for i in range(1, len(ref) + 1):
+        prev, dp[0] = dp[0], i
+        for j in range(1, len(hyp) + 1):
+            cur = dp[j]
+            dp[j] = min(dp[j] + 1, dp[j - 1] + 1, prev + (ref[i - 1] != hyp[j - 1]))
+            prev = cur
+    return dp[-1] / max(1, len(ref))
+
+
+SUB_MAX = 16   # max Chinese characters per subtitle chunk
+
+
+def subtitle_chunks(text):
+    """Split an utterance at punctuation into readable subtitle chunks (<= SUB_MAX characters)."""
+    clauses = re.findall(r"[^，。！？；：、]+[，。！？；：、]*", text)
+    chunks, cur = [], ""
+    for c in clauses:
+        n_cur, n_c = len(_norm(cur)), len(_norm(c))
+        if cur and (n_cur + n_c > SUB_MAX or (cur[-1] in "。！？" and n_cur >= 6)):
+            chunks.append(cur)
+            cur = ""
+        cur += c
+    if cur:
+        chunks.append(cur)
+    return chunks
+
+
+def chunk_times(text, chunks, x, sr, dur):
+    """Start/end of each chunk (seconds within the clip) from ASR per-character timestamps."""
+    import difflib
+
+    ref = _norm(text)
+    _, toks, ts = asr(x, sr)
+    hyp = "".join(toks)
+    # map reference char index -> time via aligned tokens, interpolate the rest
+    anchors = {}
+    tok_starts = []
+    pos = 0
+    for t, tm in zip(toks, ts):
+        tok_starts.append((pos, tm))
+        pos += len(t)
+    hyp_time = {}
+    for p, tm in tok_starts:
+        hyp_time[p] = tm
+    sm = difflib.SequenceMatcher(None, hyp, ref, autojunk=False)
+    for a, b, size in sm.get_matching_blocks():
+        for k in range(size):
+            if a + k in hyp_time:
+                anchors[b + k] = hyp_time[a + k]
+    if len(anchors) < 2:
+        anchors = {0: 0.0, len(ref): dur}
+    xs = sorted(anchors)
+    def t_of(i):
+        return float(np.interp(i, xs, [anchors[k] for k in xs]))
+    out, idx = [], 0
+    starts = []
+    for c in chunks:
+        starts.append(max(0.0, t_of(idx) - 0.12))
+        idx += len(_norm(c))
+    for k, c in enumerate(chunks):
+        end = starts[k + 1] - 0.04 if k + 1 < len(chunks) else dur
+        out.append({"text": c, "start": round(starts[k], 3), "end": round(max(end, starts[k] + 0.4), 3)})
+    return out
 
 
 def soften_onsets(x, sr, ramp_s=0.005, silent=0.0015, jump=0.003):
@@ -248,15 +414,16 @@ def build():
         lines = []
         for j, ln in enumerate(sc["lines"]):
             spk, text = ln[0], ln[1]
-            pause = ln[2] if len(ln) > 2 else story.LINE_GAP
+            nxt = sc["lines"][j + 1][0] if j + 1 < len(sc["lines"]) else spk
+            pause = ln[2] if len(ln) > 2 else (story.SPEAKER_GAP if nxt != spk else story.LINE_GAP)
             v = VOICES[spk]
             x, sr = synth_raw(text, v)
             x = resample(trim(x, sr), sr)
-            if v["engine"] == "kokoro":
-                # Kokoro output carries a syllable-rate DC offset (infrasonic pulse); remove it
-                # with a zero-phase 40 Hz high-pass that leaves the voice's warmth untouched.
+            if v["engine"] in ("kokoro", "zipvoice"):
+                # Remove any DC offset / infrasonic pulse and onset ticks, zero-phase.
                 x = signal.sosfiltfilt(_DC_SOS, soften_onsets(x, SR)).astype(np.float32)
             speech_len = len(x) / SR
+            chunks = chunk_times(text, subtitle_chunks(text), x, SR, speech_len)
             fx = SCENE_FX.get((sc["id"], spk), v["fx"])
             x = loudness_normalize(apply_fx(x, SR, fx), SR, TARGET_LUFS + v["gain_db"])
             name = f"{sc['id']}_{j:02d}.wav"
@@ -265,6 +432,8 @@ def build():
             lines.append({
                 "speaker": spk, "text": text, "wav": f"voice/lines/{name}",
                 "start": start, "end": round(start + speech_len, 3), "fx": fx,
+                "chunks": [{**c, "start": round(start + c["start"], 3), "end": round(start + c["end"], 3)}
+                           for c in chunks],
             })
             cur = start + speech_len + pause
         dur = frames(lines[-1]["end"] + tail)
@@ -272,6 +441,7 @@ def build():
                        "transition": sc.get("transition", "fade"),
                        "start": frames(t_scene), "duration": dur, "lines": lines})
         t_scene = frames(t_scene + dur - story.XFADE)
+        print(f"  {sc['id']:14s} {dur:6.2f}s", flush=True)
 
     total = frames(scenes[-1]["start"] + scenes[-1]["duration"])
     timeline = {"fps": FPS, "xfade": story.XFADE, "duration": total, "title": story.TITLE,
