@@ -687,8 +687,8 @@ def build(ctx):
 
     # ---------------------------------------------------------------- key times (all from the narration)
     # hold: the captain comes in after the cross-dissolve and wakes Jonah ("船长叫醒了他")
-    t_cap_in0 = max(0.8, L[0].start + 0.2)
-    t_crouch = t_cap_in0 + 0.48
+    t_cap_in0 = max(0.8, L[0].start + 0.2)          # enters from beyond the right edge after the dissolve
+    t_crouch = t_cap_in0 + 0.55
     t_shake0, t_shake1 = t_crouch + 0.04, t_crouch + 0.34
     t_situp = t_shake1                               # Jonah sits up rubbing his eye; the captain stands back
     t_cpoint = t_situp + 0.12                        # captain points up the ladder
@@ -804,12 +804,10 @@ def build(ctx):
     shaking = lambda t: t_shake0 <= t <= t_shake1                            # noqa: E731
 
     def cap_extra(t):
-        if t < t_cap_in0:
-            return Tf(alpha=0.0)
-        if t < t_crouch:                    # hurries in from the ladder side, three little hops
-            u = (t - t_cap_in0) / (t_crouch - t_cap_in0)
-            dx = 440 * (1 - M.ease("out")(u))
-            return Tf(dx=dx, dy=-14 * abs(math.sin(3 * math.pi * u)), alpha=min(1.0, u / 0.25))
+        if t < t_crouch:                    # hurries in from the ladder side (off-frame until t_cap_in0)
+            u = min(1.0, max(0.0, (t - t_cap_in0) / (t_crouch - t_cap_in0)))
+            dx = 500 * (1 - u) ** 1.3
+            return Tf(dx=dx, dy=-14 * abs(math.sin(4 * math.pi * u)))
         if shaking(t):
             return Tf(dx=7 * math.sin(2 * math.pi * 4.6 * t))
         if t >= t_situp:
