@@ -84,11 +84,9 @@ GY = 1310                           # street ground line (Jonah's feet)
 BACK_Y = 1120                       # ground line of the back row of houses
 STEP_X, STEP_Y = 1810, 1324         # the stone step in the market: centre, bottom line
 STEP_TOP = STEP_Y - 62              # where Jonah stands to preach
-JX_STOP = STEP_X - 20               # his spot on the step
 JS = 0.92                           # Jonah's scale in the street
 WALK_A, WALK_N = 56, 6              # planted-foot walk: ankle travel (figure px) per half step, drawings per step
 ADV = 2 * WALK_A / WALK_N * JS      # stage px the anchor advances per walk drawing (planted sole stays put)
-CAM_ST0 = Cam(1180, 1000, 1800)     # the street framing right after the fly-through
 SKY_BOT = 1130                      # the street sky is hidden by houses and floor below this
 
 
@@ -912,6 +910,86 @@ def light_fx(col_fn):
     return fx
 
 
+# ================================================================ narration helpers
+
+
+def phrase_time(line, phrase):
+    """Start of ``phrase`` inside its subtitle chunk, interpolated by character position (chunks are timed from the
+    recognised speech; inside one chunk the syllables come at a near-even pace)."""
+    for c in line.chunks:
+        i = c.text.find(phrase)
+        if i >= 0:
+            n = max(1, len(c.text.rstrip("，。！？：；、")))
+            return c.start + (c.end - c.start) * i / n
+    raise KeyError(f"{phrase!r} not in {line.text!r}")
+
+
+def voice_env(ctx, i, line, hop=0.01):
+    """Loudness envelope (dB re. the take's peak, one value per ``hop`` s from the line's start) of the voice take
+    of line i, or None when the take is not on disk or does not match the line's timing."""
+    try:
+        import soundfile as sf
+        from engine.paths import BUILD
+        x, sr = sf.read(str(BUILD / "voice" / "lines" / f"{ctx.id}_{i:02d}.wav"), dtype="float32")
+    except Exception:
+        return None
+    if x.ndim > 1:
+        x = x.mean(axis=1)
+    if abs(len(x) / sr - (line.end - line.start)) > 0.25:
+        return None
+    n = max(1, int(sr * hop))
+    m = len(x) // n
+    if m < 20:
+        return None
+    e = np.sqrt((x[:m * n].reshape(m, n) ** 2).mean(axis=1)) + 1e-7
+    db = np.convolve(20 * np.log10(e), np.ones(3) / 3, mode="same")
+    return db - db.max()
+
+
+def comma_pause(line, env, hop=0.01, quiet=-28.0):
+    """(start, end), in scene seconds, of the pause at the line's first comma: the deepest quiet stretch of the
+    voice near the comma's character position; without a voice envelope, a guess from that position."""
+    text = line.text
+    n = max(1, len(text.rstrip("，。！？：；、")))
+    ci = text.find("，")
+    frac = ci / n if ci > 0 else 0.4
+    d = line.end - line.start
+    if env is not None:
+        lo, hi = max(2, int((frac - 0.2) * d / hop)), min(len(env) - 3, int((frac + 0.2) * d / hop))
+        if hi - lo > 6:
+            avg = np.convolve(env[lo:hi], np.ones(4) / 4, mode="valid")
+            j = int(np.argmin(avg)) + lo + 2
+            if env[j] < quiet:
+                a_, b_ = j, j
+                while a_ > lo and env[a_ - 1] < quiet:
+                    a_ -= 1
+                while b_ < hi and env[b_ + 1] < quiet:
+                    b_ += 1
+                return line.start + a_ * hop, line.start + (b_ + 1) * hop
+    tc = line.start + frac * d
+    return tc - 0.04, tc + 0.08
+
+
+def mouth_track(line, env, pause, fps, hop=0.01):
+    """Per-frame mouth state while a line is spoken (0 shut, 1 open, 2 wide), following the voice's loudness, with
+    one-frame flickers smoothed away. Without an envelope: a steady open/wide flap, shut in the comma pause."""
+    nf = int((line.end - line.start) * fps) + 2
+    st = []
+    for f in range(nf):
+        t0 = f / fps
+        if env is not None:
+            i0, i1 = int(t0 / hop), max(int(t0 / hop) + 1, int((t0 + 1 / fps) / hop))
+            v = float(np.mean(env[min(i0, len(env) - 1):min(i1, len(env))])) if i0 < len(env) else -90.0
+            st.append(0 if v < -26 else (1 if v < -11 else 2))
+        else:
+            tt = line.start + t0
+            st.append(0 if pause[0] <= tt < pause[1] else 1 + int(t0 / 0.19) % 2)
+    for f in range(1, nf - 1):
+        if st[f] != st[f - 1] and st[f] != st[f + 1]:
+            st[f] = st[f - 1]
+    return st
+
+
 # ================================================================ build
 
 
@@ -920,92 +998,116 @@ def build(ctx):
     sc = Scene(ctx, W=SW, H=SH)
     T = ctx.duration
     L0, L1, L2 = ctx.line(0), ctx.line(1), ctx.line(2)
-    d2 = L2.end - L2.start
     part = M.progress
 
     # ------------------------------------------------------------ key times (all from the narration)
-    t_pull0 = max(1.05, L0.start + 0.15)              # "尼尼微是一座非常非常大的城": pull back
+    t_pull0 = max(1.05, L0.start + 0.15)              # "尼尼微是一座非常非常大的城": pull back and travel east
     cB = L0.at("要走")                                 # "要走整整三天，才能走遍整座城。"
     cB_end = next(c.end for c in L0.chunks if "要走" in c.text)
     dB = cB_end - cB
-    t_wide = cB - 0.05                                # the whole city is on the page
+    t_wide = cB + 0.5                                 # the wide view of the city has settled
     t_trail0, t_trail1 = cB + 0.08, cB + 0.40 * dB    # the footprint trail walks across the city
     sun_fr = (1 / 3, 2 / 3, 1.0)                      # suns at each third of the way
-    t_push0 = L0.end - 0.6                            # trail fades, camera heads for the west gate
+    t_push0 = L0.end - 1.0                            # the camera heads for the west gate (trail fades at the end)
     t_fly0 = L1.start + 0.12                          # "约拿进了城": fly through the gate
     t_fly1 = t_fly0 + 0.78
-    t_st = t_fly0 + 0.62                              # the street framing is reached
-    t_call = L1.at("一边大声喊")                        # "一边大声喊": arm up, calling while walking
-    t_calloff = L1.end + 0.1
-    t_stop = L2.start - 0.3                           # he has walked up onto the step and stops
-    TAU = 0.5                                         # ...slowing down over the last stride
-    t_dec = t_stop - TAU
+    t_st = t_fly0 + 0.62                              # the camera's push-in has settled into the street
+    t_call = phrase_time(L1, "一边走") - 0.15          # "一边走，一边大声喊": arm up, calling while he walks
+    t_stop = L2.start - 0.2                           # he has walked up onto the step and stops
     t_preach = L2.start                               # "再过四十天，尼尼微就要毁灭了！"
-    t_phr2 = L2.start + 0.31 * d2                     # (after the comma) "尼尼微就要毁灭了"
+    env2 = voice_env(ctx, 2, L2)
+    t_comma0, t_comma1 = comma_pause(L2, env2)        # the pause at "，" in Jonah's cry
+    t_phr2 = t_comma1                                 # "尼尼微就要毁灭了"
     t_turn = L2.start + 0.22                          # people stop and turn
     t_wow = t_turn + 0.18
-    t_worry = t_phr2 + 0.45
+    t_worry = t_phr2 + 0.15
     t_down = L2.end + 0.12                            # arm down: calm ending
+    MOUTH = mouth_track(L2, env2, (t_comma0, t_comma1), ctx.fps)
 
-    # ------------------------------------------------------------ Jonah's street walk (distance-driven)
-    X_IN = 700.0                                      # where he is (just inside the gate) when the fly starts
-    STEP_X0, STEP_X1 = STEP_X - 175, STEP_X - 92      # he climbs the two tiers between these x
-    D_TOT = JX_STOP - X_IN
-    V_W = D_TOT / (t_stop - t_fly0 - TAU / 2)         # walking speed (stage px / s)
-    N_END = int(D_TOT / ADV)
+    # ------------------------------------------------------------ Jonah's street walk: explicit footfalls
+    S_FL = 2 * WALK_A * JS                            # stride (stage px) of one step
+    N_FL = 8                                          # level steps before the climb
+    P_LEDGE, P_TOP = STEP_X - 148, STEP_X - 58        # ankle spots: lower tier's side ledge, upper tier
+    H_LEDGE, H_TOP = GY - 1282, GY - STEP_TOP         # their heights above the street line
+    P0 = P_LEDGE - 90 - N_FL * S_FL
+    X_IN = P0 - S_FL / 2                              # his anchor when the fly-through starts
 
-    def walk_dist(t):
-        if t <= t_dec:
-            return max(0.0, t - t_fly0) * V_W
-        u = min(t, t_stop) - t_dec
-        return (t_dec - t_fly0) * V_W + V_W * (u - u * u / (2 * TAU))
+    def feet(n):
+        if n <= N_FL:
+            return P0 + n * S_FL
+        return (P_LEDGE, P_TOP, P_TOP + 90)[min(2, n - N_FL - 1)]
+
+    def treads(n):
+        return 0.0 if n <= N_FL else (H_LEDGE, H_TOP, H_TOP)[min(2, n - N_FL - 1)]
+    K_CL = WALK_N * N_FL                              # first drawing of the climb (swing foot heads for the ledge)
+    N_END = WALK_N * (N_FL + 2) + 3                   # passing drawing on the upper tier; then he stands
+    CLIMB = {k: climb_pose(feet, treads, k) for k in range(K_CL, N_END + 1)}
+    R0 = (K_CL + (N_END - K_CL) / 0.8) / (t_stop - 0.12 - t_fly0)   # drawings / s (the climb is 20% slower)
+    RC = 0.8 * R0
+    T_CL = t_fly0 + K_CL / R0
+    V_W = ADV * R0                                    # walking speed on the street (stage px / s)
 
     def walk_k(t):
-        return min(N_END, int(walk_dist(t) / ADV + 1e-6))
+        if t < T_CL:
+            return max(0, int((t - t_fly0) * R0 + 1e-6))
+        return min(N_END, K_CL + int((t - T_CL) * RC + 1e-6))
 
-    def jonah_x(t):
-        return X_IN + walk_k(t) * ADV
+    def k_time(k):
+        return t_fly0 + k / R0 if k <= K_CL else T_CL + (k - K_CL) / RC
 
-    def ground_at(x):
-        """Street line, then up the two tiers of the step."""
-        u = min(1.0, max(0.0, (x - STEP_X0) / (STEP_X1 - STEP_X0)))
-        return GY + (STEP_TOP - GY) * (0.5 - 0.5 * math.cos(math.pi * u))
+    def jonah_xy(t):
+        if t >= t_stop:
+            return P_TOP, STEP_TOP
+        k = walk_k(t)
+        if k < K_CL:
+            return X_IN + k * ADV, GY
+        return CLIMB[k][1], CLIMB[k][2]
 
-    def jonah_ground(t):
-        return ground_at(jonah_x(t))
+    k_up = walk_k(t_call) + 2                          # arm goes up over two drawings ...
+    k_dn = K_CL - 2                                    # ... and is down again before the climb starts
+    t_calloff = k_time(k_dn)
 
     # ------------------------------------------------------------ camera
-    CAM0 = Cam(820, 1128, 1560)
-    CAMW = Cam(1600, 900, 3180)
-    CAM_HOLD = Cam(1585, 905, 3110)
-    CAM_GATE = Cam(CAM_ST0.x, 975, CAM_ST0.w)
-    CAM_END0 = Cam(1900, 985, 1760)
+    CAM0 = Cam(820, 1128, 1560)                        # close on the road and the west gate
+    CAMW = Cam(1690, 935, 2760)                        # the city from the gate to the river; it runs off both edges
+    CAM_HOLD = Cam(1660, 945, 2720)
+    GATE_X = 1060                                      # the push-in ends with the gate ~30% from the left
+    CAM_ST0 = Cam(GATE_X, 1000, 1800)
+    D1, D2 = t_fly0 - t_push0, t_st - t_fly0
+    WG = CAM_HOLD.w + (CAM_ST0.w - CAM_HOLD.w) * D1 / (D1 + D2)   # zoom keeps going through the fly (no stall)
+    YG = CAM_HOLD.y + (CAM_ST0.y - CAM_HOLD.y) * D1 / (D1 + D2)
+    RAMP = 1.8                                         # the tracking camera eases up to walking speed
+    CAM_END = Cam(P_TOP + 0.27 * 1720, 985, 1720)      # Jonah on his step ~23% from the left (as s16 opens)
     t_endcam = L2.start + 0.9
+    t_dec = T_CL
 
-    RAMP = 1.5                                         # the tracking camera eases up to walking speed
+    out_cam = M.cam_keys([(0, CAM0), (t_pull0, CAM0), (t_wide, CAMW), (t_push0, CAM_HOLD)], "sine")
 
-    def cam_track_x(t):
-        u = min(1.0, max(0.0, (t - t_st) / RAMP))
-        dist = RAMP * (u ** 3 - 0.5 * u ** 4) + max(0.0, t - t_st - RAMP)
-        return CAM_ST0.x + V_W * dist
-
-    out_cam = M.cam_keys([(0, CAM0), (t_pull0, CAM0), (t_wide, CAMW), (t_push0, CAM_HOLD), (t_fly0, CAM_GATE),
-                          (t_st, CAM_ST0)], "sine")
-    x_hopcam = cam_track_x(t_dec)
-    CAM_END = Cam(max(CAM_END0.x, x_hopcam + 0.4 * V_W * (t_endcam - t_dec)), CAM_END0.y, CAM_END0.w)
+    def track_x(t):
+        d = max(0.0, t - t_fly0)
+        u = min(1.0, d / RAMP)
+        return GATE_X + V_W * (RAMP * (u ** 3 - 0.5 * u ** 4) + max(0.0, d - RAMP))
+    x_dec = track_x(t_dec)
 
     def camf(t):
-        if t < t_st:
+        if t < t_push0:
             return out_cam(t)
+        if t < t_fly0:
+            u = (t - t_push0) / D1
+            return Cam(M.lerp(CAM_HOLD.x, GATE_X, part(t, t_push0, t_fly0, "sine")),
+                       CAM_HOLD.y + (YG - CAM_HOLD.y) * u ** 3, CAM_HOLD.w + (WG - CAM_HOLD.w) * u ** 3)
+        if t < t_st:
+            e = 1 - (1 - (t - t_fly0) / D2) ** 3
+            return Cam(track_x(t), YG + (CAM_ST0.y - YG) * e, WG + (CAM_ST0.w - WG) * e)
         if t < t_dec:
             u = part(t, t_st, t_dec, "sine")
-            return Cam(cam_track_x(t), M.lerp(CAM_ST0.y, 995, u), M.lerp(CAM_ST0.w, 1790, u))
+            return Cam(track_x(t), M.lerp(CAM_ST0.y, 995, u), M.lerp(CAM_ST0.w, 1790, u))
         # glide from walking speed to rest on the market framing (Hermite: no velocity jump, no reversal)
         D = t_endcam - t_dec
         u = min(1.0, (t - t_dec) / D)
         h01 = 3 * u * u - 2 * u ** 3
         h10 = u ** 3 - 2 * u * u + u
-        x = x_hopcam * (1 - h01) + CAM_END.x * h01 + V_W * D * h10
+        x = x_dec * (1 - h01) + CAM_END.x * h01 + V_W * D * h10
         y = M.lerp(995, CAM_END.y, part(t, t_dec, t_endcam, "sine"))
         w = M.lerp(1790, CAM_END.w, part(t, t_dec, t_endcam, "sine"))
         v = part(t, t_endcam, T, "sine")       # a very slow settle to the end
@@ -1013,32 +1115,44 @@ def build(ctx):
     sc.camera = camf
 
     # ------------------------------------------------------------ fly-through (v1 technique)
-    a_, b_ = HOLE_CLEAR[0], HOLE_CLEAR[1]
-    c_, d_ = CAM_ST0.x - CAM_ST0.w / 2, CAM_ST0.x + CAM_ST0.w / 2
-    fpx = (a_ * d_ - c_ * b_) / (d_ + a_ - b_ - c_)
-    ys_, yb_ = HOLE_CLEAR[2], HOLE_CLEAR[3]
-    vy0, vy1 = CAM_ST0.y - CAM_ST0.w * 9 / 32, CAM_ST0.y + CAM_ST0.w * 9 / 32
-    fpy = (ys_ * vy1 - vy0 * yb_) / (vy1 + ys_ - yb_ - vy0)
-    FLY_C = (fpx, fpy)
+    def fly_pivot(cam):
+        """Centre inside the clear opening that makes its sides / top and bottom reach the frame edges of ``cam``
+        at the same scale (so the opening fills the frame as early as possible)."""
+        a_, b_ = HOLE_CLEAR[0], HOLE_CLEAR[1]
+        c_, d_ = cam.x - cam.w / 2, cam.x + cam.w / 2
+        ys_, yb_ = HOLE_CLEAR[2], HOLE_CLEAR[3]
+        vy0, vy1 = cam.y - cam.w * 9 / 32, cam.y + cam.w * 9 / 32
+        return ((a_ * d_ - c_ * b_) / (d_ + a_ - b_ - c_), (ys_ * vy1 - vy0 * yb_) / (vy1 + ys_ - yb_ - vy0))
     s_fly = lambda t: 1 + 21.0 * part(t, t_fly0, t_fly1, "in")
 
-    def covers(cam, s):
+    def covers(cam, s, pv, bottom_only=False):
         hx0, hx1, hs, hb = HOLE_CLEAR
-        px, py = FLY_C
+        px, py = pv
         vx0, vx1 = cam.x - cam.w / 2, cam.x + cam.w / 2
         vy0_, vy1_ = cam.y - cam.w * 9 / 32, cam.y + cam.w * 9 / 32
+        if bottom_only:
+            return py + s * (hb - py) >= vy1_ + 4
         return (px + s * (hx0 - px) <= vx0 - 4 and px + s * (hx1 - px) >= vx1 + 4
                 and py + s * (hs - py) <= vy0_ - 4 and py + s * (hb - py) >= vy1_ + 4)
-    t_cut = t_fly1
-    kk = 0
-    while t_fly0 + kk / 120 < t_fly1:
-        tt = t_fly0 + kk / 120
-        if covers(camf(tt), s_fly(tt)):
-            t_cut = tt
-            break
-        kk += 1
+
+    def first_time(pv, bottom_only=False):
+        kk = 0
+        while t_fly0 + kk / 120 < t_fly1:
+            tt = t_fly0 + kk / 120
+            if covers(camf(tt), s_fly(tt), pv, bottom_only):
+                return tt
+            kk += 1
+        return t_fly1
+    FLY_C = fly_pivot(camf(t_fly0 + 0.5))
+    for _ in range(3):                                 # the camera still moves during the fly: iterate the pivot
+        FLY_C = fly_pivot(camf(first_time(FLY_C)))
+    t_cut = first_time(FLY_C)
+    # people in the street are drawn only once the opening's bottom edge has left the frame: before that, their
+    # feet would be hidden by the scaled-up threshold (heads poking up over it, far too big for the little arch)
+    t_show = min(t_cut, first_time(FLY_C, bottom_only=True))
     out_a = lambda t: 1.0 if t < t_cut else 0.0
     in_a = lambda t: 1.0 if t >= t_fly0 - 0.02 else 0.0
+    shown = lambda t: t >= t_show
 
     def F(local=None, pivot=FLY_C):
         return V.fly(local, pivot, FLY_C, s_fly, out_a)
@@ -1046,8 +1160,8 @@ def build(ctx):
     # ============================================================ INSIDE (behind the outside layers)
     # sky, the day's sun, clouds, hazy far city
     sc.add("st_sky", street_sky_svg(), z=1, wc=0.6, motion=lambda t: Tf(alpha=in_a(t)))
-    eve = lambda t: part(t, t_call - 1.2, t_calloff + 0.4, "sine")
-    sc.add("st_sky_eve", street_sky_eve_svg(), z=1.05, wc=0.6, motion=lambda t: Tf(alpha=0.9 * eve(t) * in_a(t)))
+    eve = lambda t: part(t, t_call - 0.9, t_calloff + 0.4, "sine")
+    sc.add("st_sky_eve", street_sky_eve_svg(), z=1.05, wc=0.6, motion=lambda t: Tf(alpha=0.92 * eve(t) * in_a(t)))
     SUN0 = (CAM_ST0.x, 620)
 
     sun_rel = keyed([(t_st - 0.3, -880), (L1.end + 0.3, 600), (T, 660)], "linear")
@@ -1067,6 +1181,23 @@ def build(ctx):
            motion=M.combine(M.drift(vx=9), cl_par(0.6), lambda t: Tf(alpha=in_a(t))))
     sc.add("st_far", street_far_svg(), z=1.6, wc=0.8,
            motion=M.combine(cl_par(0.4), lambda t: Tf(alpha=in_a(t))))
+    # the low afternoon sun warms the air over the rooftops (a soft 'screen' glow that follows it)
+    GR = 430
+    glow = np.asarray(glow_image(GR))
+    glow_q = {}
+
+    def glow_fn(t):
+        a = 0.6 * eve(t) * in_a(t)
+        if a < 0.02:
+            return None
+        q = round(a * 14) / 14
+        if q not in glow_q:
+            g = glow.copy()
+            g[..., 3] = (g[..., 3].astype(np.float32) * q).astype(np.uint8)
+            glow_q[q] = Image.fromarray(g, "RGBA")
+        x, y = sun_pos(t)
+        return glow_q[q], (x - GR, y - GR)
+    sc.add_dynamic("st_sunglow", glow_fn, z=1.7, blend="screen")
 
     for i, (x0, x1, y, sag, cols, seed) in enumerate(LAUNDRY):
         frames = [doc(laundry(x0, x1, y, sag, cols, seed, ph)) for ph in (0, 1)]
@@ -1075,67 +1206,100 @@ def build(ctx):
 
     # ------------------------------------------------------------ people (sprites)
     people_heads = {}
-    static_shadows = []
 
-    def walker_frames(sp, s, kind, variant, face, expr=None):
-        return (sp.add(C.citizen(sp.ax, sp.ay, s, face, kind=kind, variant=variant, pose="walk_a", expr=expr)),
-                sp.add(C.citizen(sp.ax, sp.ay, s, face, kind=kind, variant=variant, pose="walk_b", expr=expr)))
+    def hop_amount(t, hops, s):
+        """Squash-and-hop that hides a hard pose cut: (sy factor, dy) for hops [(time, amplitude)]."""
+        sy, dy = 1.0, 0.0
+        for th, amp in hops:
+            u = t - th
+            if -0.08 <= u <= 0.3:
+                if u < 0:
+                    sy *= 1 - 0.05 * amp * part(u, -0.08, 0, "sine")
+                else:
+                    sy *= (1 - 0.05 * amp * (1 - part(u, 0, 0.1, "sine"))
+                           + 0.03 * amp * math.sin(math.pi * min(1.0, u / 0.3)))
+                    dy -= 16 * s * amp * math.sin(math.pi * min(1.0, u / 0.3))
+        return sy, dy
 
-    def person(name, kind, variant, x, y, s, face, z, walk=None, period=0.4, idle=None, events=(), hops=(),
-               shadow=True, seed=0):
-        """A townsperson sprite. walk=(x_from, t_a, t_b): stands at x_from until t_a, walks (walk_a/walk_b every
-        ``period`` s) to x by t_b. idle=(pose, expr, period): alternate stand / pose while waiting.
-        events: [(t, facing, pose, expr)] hard pose cuts, each sold by a little hop (and hops: extra hop times)."""
+    def person(name, kind, variant, x, y, s, face, z, walk=None, idle=None, events=(), shadow=True, seed=0):
+        """A townsperson sprite (drawn only from t_show on).
+        walk=(x_from, t_a, t_b[, stride_k]): a planted-foot walk (WALK_N drawings per step; the figure advances one
+            drawing's worth of stride at each drawing change, so the planted sole never slides) from about x_from,
+            arriving at x at t_b on a passing drawing; the speed follows from the window.
+        idle=(pose, expr, period): alternate stand / pose while waiting; every switch is sold by a small hop
+            (a 'cheer' idle jumps for joy instead).
+        events: [(t, facing, pose, expr)] hard pose cuts, each sold by a squash-and-hop."""
         sp = person_sprite(s, seed=seed + variant * 7)
         stand0 = sp.add(C.citizen(sp.ax, sp.ay, s, face, kind=kind, variant=variant, pose="stand"))
-        entries = [(0, stand0)]
+        alt = None
         if idle:
             alt = sp.add(C.citizen(sp.ax, sp.ay, s, face, kind=kind, variant=variant, pose=idle[0], expr=idle[1]))
-            entries = [(0, ("alt", stand0, alt, idle[2]))]
+        ev = [(te, sp.add(C.citizen(sp.ax, sp.ay, s, fc, kind=kind, variant=variant, pose=pose, expr=expr)))
+              for (te, fc, pose, expr) in sorted(events)]
+        t_ev0 = ev[0][0] if ev else 1e9
+        hops = [(te, 1.0) for te, _ in ev]
+        last_face = sorted(events)[-1][1] if events else face
+        wf, x_from, t_a, t_b, n_w, adv, rate, dirn = None, x, -1.0, -1.0, 0, 0.0, 1.0, 1
         if walk:
-            wa, wb = walker_frames(sp, s, kind, variant, face)
-            entries += [(walk[1], ("alt", wa, wb, period)), (walk[2], entries[0][1])]
-        hop_ts = list(hops)
-        last_face = face
-        for (te, fc, pose, expr) in events:
-            entries.append((te, sp.add(C.citizen(sp.ax, sp.ay, s, fc, kind=kind, variant=variant, pose=pose,
-                                                 expr=expr))))
-            hop_ts.append(te)
-            last_face = fc
-        idx_f = V.sched(entries)
+            lk = leg_k(kind)
+            A = WALK_A * lk * (walk[3] if len(walk) > 3 else 1.0)
+            adv = 2 * A / WALK_N * s
+            n_w = max(3, int(round((abs(x - walk[0]) / adv - 3) / 6)) * 6 + 3)
+            t_a, t_b = walk[1], walk[2]
+            rate = n_w / (t_b - t_a)
+            dirn = 1 if x > walk[0] else -1
+            x_from = x - dirn * n_w * adv
+            wf = [sp.add(cfig(sp.ax, sp.ay, s, kind, variant, face, walk_pose(k, A=A, lk=lk))) for k in range(12)]
+            if t_b < t_ev0 - 0.05:
+                hops.append((t_b, 0.5))
+        if idle and idle[0] != "cheer":
+            k = 1
+            while k * idle[2] < min(t_ev0, T):
+                if not (walk and t_a - 0.1 <= k * idle[2] <= t_b + 0.1):
+                    hops.append((k * idle[2], 0.4))
+                k += 1
+
+        def walk_i(t):
+            return min(n_w, int((t - t_a) * rate + 1e-6))
+
+        def idx(t):
+            cur = None
+            for te, fi in ev:
+                if t >= te:
+                    cur = fi
+            if cur is not None:
+                return cur
+            if wf and t_a <= t < t_b:
+                return wf[walk_i(t) % 12]
+            if alt is not None:
+                return (stand0, alt)[int(t / idle[2]) % 2]
+            return stand0
 
         def xpos(t):
-            if not walk:
+            if not wf or t >= t_b:
                 return x
-            return M.lerp(walk[0], x, part(t, walk[1], walk[2], "linear"))
+            return x_from if t < t_a else x_from + dirn * walk_i(t) * adv
 
         def fn(t):
-            if t < t_fly0 - 0.02:
+            if not shown(t):
                 return None
-            sy, dy = 1 + 0.012 * math.sin(2 * math.pi * (t / (2.8 + variant * 0.3) + variant * 0.17)), 0.0
-            if idle and idle[0] == "cheer" and not any(t >= ev[0] for ev in events):
+            sy, dy = hop_amount(t, hops, s)
+            sy *= 1 + 0.012 * math.sin(2 * math.pi * (t / (2.8 + variant * 0.3) + variant * 0.17))
+            if idle and idle[0] == "cheer" and t < t_ev0:
                 ph = t / idle[2]
                 if int(ph) % 2 == 1:                  # arms up: a little jump of joy
                     dy -= 18 * s * math.sin(math.pi * (ph % 1.0))
-            for th in hop_ts:
-                u = t - th
-                if -0.08 <= u <= 0.3:
-                    if u < 0:
-                        sy *= 1 - 0.05 * part(u, -0.08, 0, "sine")
-                    else:
-                        sy *= 1 - 0.05 * (1 - part(u, 0, 0.1, "sine")) + 0.03 * math.sin(math.pi * min(1, u / 0.3))
-                        dy -= 16 * s * math.sin(math.pi * min(1.0, u / 0.3))
-            return sp.place(idx_f(t), xpos(t), y, sx=1 / math.sqrt(sy), sy=sy, dy=dy)
-        if shadow and not walk:
-            static_shadows.append(C.ground_shadow(x, y, s, 80 if kind == "child" else 110))
-        elif shadow:
+            return sp.place(idx(t), xpos(t), y, sx=1 / math.sqrt(sy), sy=sy, dy=dy)
+        if shadow:
             shs = sprite(260 * s + 40, 70 * s + 30, 130 * s + 20, 35 * s + 15, wc=0)
             shi = shs.add(C.ground_shadow(shs.ax, shs.ay, s, 80 if kind == "child" else 110))
-            sc.add_dynamic(name + "_sh", lambda t: shs.place(shi, xpos(t), y) if t >= t_fly0 - 0.02 else None,
-                           z=z - 0.01)
+            sc.add_dynamic(name + "_sh", lambda t: shs.place(shi, xpos(t), y) if shown(t) else None, z=z - 0.01)
         sc.add_dynamic(name, fn, z=z)
         hp = C.body_points(C.citizen, x, y, s, last_face, kind=kind, variant=variant, pose="stand")["head_top"]
         people_heads[name] = hp
+        if wf:
+            print(f"  s15 walker {name}: {n_w} drawings, {WALK_N / rate:.2f} s/step, from x={x_from:.0f} "
+                  f"at {t_a:.2f}s")
         return hp
 
     # street: children playing by a doorway, a donkey, an old man at his door, a woman walking the other way
@@ -1143,21 +1307,22 @@ def build(ctx):
     person("kid1", "child", 1, 432, 1204, 0.58, -1, 3.12, idle=("cheer", "happy", 0.52), seed=2)
     person("elder_door", "elder", 1, 905, 1172, 0.58, -1, 3.0, seed=3,
            events=[(t_call + 0.3, -1, "stand", "surprised")])
-    person("w_walk", "woman", 1, 1080, 1186, 0.62, -1, 3.2, walk=(1900, t_fly0, t_call + 0.15), period=0.3, seed=4,
+    person("w_walk", "woman", 1, 1080, 1186, 0.62, -1, 3.2, walk=(1450, t_fly0, t_call + 0.25), seed=4,
            events=[(t_call + 0.25, 1, "stand", "surprised"), (t_call + 1.1, 1, "listen", None)])
-    # market back row: a vendor by his pots, a boy at the fruit stall, a stroller
-    person("vendor", "man", 2, 1395, 1188, 0.6, 1, 3.3, idle=("point", None, 1.6), seed=5,
+    # market back row: a vendor by his pots (hawking: he points at his wares now and then), a boy at the fruit
+    # stall, a stroller
+    person("vendor", "man", 2, 1395, 1188, 0.6, 1, 3.3, idle=("point", None, 1.9), seed=5,
            events=[(t_turn + 0.05, 1, "stand", "surprised"), (t_worry + 0.2, 1, "listen", None)])
     person("boy_fruit", "child", 2, 2250, 1200, 0.62, 1, 3.32, seed=6,
            events=[(t_turn + 0.1, -1, "stand", "surprised")])
-    person("stroller", "man", 1, 2080, 1214, 0.62, 1, 3.34, walk=(1560, t_fly0 + 1.9, t_call + 0.5), period=0.38,
-           seed=7, events=[(t_turn, -1, "stand", "surprised"), (t_worry, -1, "listen", None)])
+    person("stroller", "man", 1, 2080, 1214, 0.62, 1, 3.34, walk=(1700, t_fly0 + 0.2, t_call + 0.5), seed=7,
+           events=[(t_turn, -1, "stand", "surprised"), (t_worry, -1, "listen", None)])
     # a woman watching the market, a little behind Jonah's path (he walks past in front of her)
-    person("woman_fl", "woman", 3, 1330, 1238, 0.7, 1, 3.6, seed=18, idle=("listen", "neutral", 1.4),
-           events=[(t_call + 0.55, 1, "stand", "surprised"), (t_turn + 0.12, 1, "stand", "surprised"),
-                   (t_worry + 0.05, 1, "listen", None)])
+    person("woman_fl", "woman", 3, 1330, 1238, 0.7, 1, 3.6, seed=18,
+           events=[(t_call + 0.55, 1, "stand", "surprised"), (t_turn + 0.12, 1, "listen", None),
+                   (t_worry + 0.05, 1, "listen", "worried")])
 
-    sc.add("st_back", street_back_svg("".join(static_shadows)), z=2, motion=lambda t: Tf(alpha=in_a(t)))
+    sc.add("st_back", street_back_svg(), z=2, motion=lambda t: Tf(alpha=in_a(t)))
     sc.add("step", step_svg(), z=4, motion=lambda t: Tf(alpha=in_a(t)))
 
     # ------------------------------------------------------------ Jonah (street)
@@ -1167,12 +1332,10 @@ def build(ctx):
         F_MID = [JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, walk_pose(k, "mid"), "call")) for k in range(2 * WALK_N)]
         F_UPC = [JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, walk_pose(k, "up"), "call")) for k in range(2 * WALK_N)]
         F_UPS = [JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, walk_pose(k, "up"), "shout")) for k in range(2 * WALK_N)]
+        F_CLIMB = [JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, CLIMB[k][0], "serious")) for k in range(K_CL, N_END + 1)]
         F_STAND = JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, STAND, "serious"))
-        F_PRC = JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, PREACH, "call"))
-        F_PRS = JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, PREACH, "shout"))
-        F_END = F_STAND
-    k_call_up = walk_k(t_call) + 2           # arm goes up over two drawings
-    k_call_dn = walk_k(t_calloff)
+        F_PR = [JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, PREACH, e)) for e in ("call_shut", "call", "shout")]
+        F_END = JSPR.add(jfig(JSPR.ax, JSPR.ay, JS, STAND, "angry"))     # stern, as s16 opens
 
     def mouth(t, t0, per=0.19):
         return int(max(0.0, t - t0) / per) % 2 == 1
@@ -1180,23 +1343,23 @@ def build(ctx):
     def j_frame(t):
         if t < t_stop:
             k = walk_k(t)
+            if k >= K_CL:
+                return F_CLIMB[k - K_CL]
             km = k % (2 * WALK_N)
-            if t < t_call or k >= k_call_dn + 2:
+            if t < t_call:
                 return F_WALK[km]
-            if k < k_call_up or k >= k_call_dn:
+            if k < k_up or k >= k_dn:
                 return F_MID[km]
             return F_UPS[km] if mouth(t, t_call + 0.1) else F_UPC[km]
         if t < t_preach:
             return F_STAND
         if t < t_down:
-            if t_phr2 - 0.1 <= t < t_phr2 + 0.08:
-                return F_PRC
-            if t >= L2.end - 0.04:
-                return F_PRC
-            return F_PRS if mouth(t, t_preach + 0.04) else F_PRC
+            f = int((t - L2.start) * ctx.fps + 1e-6)
+            return F_PR[MOUTH[f] if 0 <= f < len(MOUTH) else 0]
         return F_END
 
-    hops = [(t_stop, 0.7, False), (t_preach, 0.5, True), (t_down, 0.6, True)]
+    hops = [(t_stop, 0.7, False), (t_preach, 0.5, True), (t_down, 0.6, True),
+            (k_time(K_CL + WALK_N), 0.8, False), (k_time(K_CL + 2 * WALK_N), 0.8, False)]   # climb landings
 
     def j_squash(t):
         sy, dy = 1.0, 0.0
@@ -1204,35 +1367,37 @@ def build(ctx):
             u = t - ts
             if -0.09 <= u <= 0.2:
                 if u < 0:
-                    sy = 1 - 0.05 * amp * part(u, -0.09, 0, "sine")
+                    sy *= 1 - 0.05 * amp * part(u, -0.09, 0, "sine")
                 elif u < 0.07:
-                    sy = 1 - 0.05 * amp + 0.09 * amp * part(u, 0, 0.07, "sine")
+                    sy *= 1 - 0.05 * amp + 0.09 * amp * part(u, 0, 0.07, "sine")
                 else:
-                    sy = 1 + 0.04 * amp - 0.04 * amp * part(u, 0.07, 0.2, "sine")
+                    sy *= 1 + 0.04 * amp - 0.04 * amp * part(u, 0.07, 0.2, "sine")
                 if up:
-                    dy = -14 * amp * math.sin(math.pi * min(1.0, max(0.0, u / 0.2)))
+                    dy -= 14 * amp * math.sin(math.pi * min(1.0, max(0.0, u / 0.2)))
         if t >= t_stop:
             sy *= 1 + 0.01 * math.sin(2 * math.pi * (t - t_stop) / 3.0)
         return sy, dy
 
     def j_fn(t):
-        if t < t_fly0 - 0.02:
+        if not shown(t):
             return None
         sy, dy = j_squash(t)
-        return JSPR.place(j_frame(t), jonah_x(t), jonah_ground(t), sx=1 / math.sqrt(sy), sy=sy, dy=dy)
+        x, y = jonah_xy(t)
+        return JSPR.place(j_frame(t), x, y, sx=1 / math.sqrt(sy), sy=sy, dy=dy)
 
     # his shadow swings round with the sun (morning: long to the right, noon: short, afternoon: to the left)
     JSH = sprite(520, 120, 260, 60, wc=0)
     JSH_I = JSH.add(C.ground_shadow(260, 60, JS, 120, opacity=0.26))
 
     def jsh_fn(t):
-        if t < t_fly0 - 0.02:
+        if not shown(t):
             return None
         rx = sun_rel(t)
-        off = -0.14 * rx
-        stretch = 1 + min(0.9, abs(rx) / 900)
-        im, (x, y) = JSH.place(JSH_I, jonah_x(t) + off * 0.5, jonah_ground(t), sx=stretch)
-        return im, (x, y)
+        x, y = jonah_xy(t)
+        k = walk_k(t)
+        if t < t_stop and k >= K_CL:                 # on the step: under the planted foot's tread
+            y = GY - treads(k // WALK_N)
+        return JSH.place(JSH_I, x - 0.07 * rx, y, sx=1 + min(0.9, abs(rx) / 900))
     sc.add_dynamic("jonah_sh", jsh_fn, z=4.9)
     sc.add_dynamic("jonah", j_fn, z=5)
 
@@ -1243,39 +1408,40 @@ def build(ctx):
     ARC_I = [ARC.add(arcs(40, 130, n, 1, 0.9)) for n in (1, 2, 3)]
 
     def arc_fn(t):
-        on_walk = t_call + 0.1 <= t < t_calloff - 0.1 and walk_k(t) >= k_call_up
+        on_walk = t_call + 0.1 <= t < t_calloff - 0.05 and walk_k(t) >= k_up
         on_step = t_preach + 0.05 <= t < L2.end + 0.1
-        if not (on_walk or on_step):
+        if not (on_walk or on_step) or not shown(t):
             return None
         hx, hy = HEAD_PRE if on_step else HEAD_WALK
-        return ARC.place(ARC_I[int(t * 7) % 3], jonah_x(t) + hx + 56, jonah_ground(t) + hy + 22)
+        x, y = jonah_xy(t)
+        return ARC.place(ARC_I[int(t * 7) % 3], x + hx + 56, y + hy + 22)
     sc.add_dynamic("arcs", arc_fn, z=20)
 
     # ------------------------------------------------------------ market front: people who stop and turn
-    person("mother", "woman", 2, 2330, 1352, 0.86, -1, 6.0, walk=(2700, t_stop - 1.5, t_turn - 0.05), period=0.4,
-           seed=12, events=[(t_turn, -1, "stand", "surprised"), (t_wow + 0.55, -1, "point", "surprised"),
-                            (t_worry + 0.1, -1, "listen", None)])
-    person("girl", "child", 1, 2440, 1372, 0.86, -1, 6.1, walk=(2810, t_stop - 1.5, t_turn - 0.05), period=0.3,
+    person("mother", "woman", 2, 2330, 1352, 0.86, -1, 6.0, walk=(2700, t_turn - 2.2, t_turn), seed=12,
+           events=[(t_turn, -1, "stand", "surprised"), (t_wow + 0.55, -1, "point", "surprised"),
+                   (t_worry + 0.1, -1, "listen", None)])
+    person("girl", "child", 1, 2440, 1372, 0.86, -1, 6.1, walk=(2810, t_turn - 2.15, t_turn + 0.05, 1.15),
            seed=13, events=[(t_turn + 0.05, -1, "stand", "surprised"), (t_worry + 0.3, -1, "sad", None)])
     person("elder", "elder", 0, 2590, 1346, 0.84, 1, 5.9, seed=14,
            events=[(t_turn + 0.15, -1, "stand", "surprised"), (t_worry + 0.25, -1, "listen", None)])
-    person("man_r", "man", 0, 2700, 1400, 0.9, 1, 6.2, seed=15, idle=("listen", "neutral", 1.3),
+    person("man_r", "man", 0, 2700, 1400, 0.9, 1, 6.2, seed=15,
            events=[(t_turn + 0.1, -1, "stand", "surprised"), (t_phr2 + 0.3, -1, "listen", None)])
     # animals in the square
     ANI = sprite(820, 360, 410, 330, seed=16)
     ani_i = ANI.add(C.ground_shadow(250, 330, 0.56, 170) + PR.animal(250, 330, 0.56, 1, kind="donkey"))
     sc.add_dynamic("donkey", lambda t: (ANI.place(ani_i, 560 + 160, 1214, sy=1 + 0.012 * math.sin(t * 2.3))
-                                        if t >= t_fly0 - 0.02 else None), z=3.15)
+                                        if shown(t) else None), z=3.15)
     SHP = sprite(520, 260, 260, 230, seed=17)
     shp_i = SHP.add(C.ground_shadow(160, 230, 0.68, 160) + PR.animal(160, 230, 0.68, -1, kind="sheep")
                     + C.ground_shadow(360, 240, 0.6, 140) + PR.animal(360, 240, 0.6, -1, kind="sheep"))
     sc.add_dynamic("sheep_r", lambda t: (SHP.place(shp_i, 2860, 1420, dy=-2 * abs(math.sin(t * 1.3)))
-                                         if t >= t_fly0 - 0.02 else None), z=6.3)
+                                         if shown(t) else None), z=6.3)
 
     # "!" marks over the surprised heads
     EXC = sprite(110, 120, 55, 75, wc=0)
     exc_i = EXC.add(exclaim(55, 75, 0.85))
-    for i, nm in enumerate(("woman_fl", "mother", "elder", "man_r", "stroller")):
+    for i, nm in enumerate(("stroller", "mother", "elder", "man_r")):
         hx, hy = people_heads[nm]
         x, y = hx + 2, hy - 44
 
@@ -1289,7 +1455,8 @@ def build(ctx):
         sc.add_dynamic(f"wow{i}", efn, z=30 + i)
 
     sc.add("st_fg", street_fg_svg(), z=8,
-           motion=M.combine(lambda t: Tf(dx=-0.22 * (camf(max(t, t_st)).x - CAM_END.x)), lambda t: Tf(alpha=in_a(t))))
+           motion=M.combine(lambda t: Tf(dx=-0.22 * (camf(max(t, t_st)).x - CAM_END.x)),
+                            lambda t: Tf(alpha=1.0 if shown(t) else 0.0)))
 
     # doves flying over the street
     dpts = ((1400, 640, 0.45), (1480, 600, 0.38), (1350, 585, 0.36))
@@ -1310,17 +1477,57 @@ def build(ctx):
     sc.add("p_boats", boats_svg(), z=56.5,
            motion=F(local=M.combine(M.bob(4, 2.8), M.sway(1.0, 3.4, (2700, 1450))), pivot=(2700, 1450)))
 
-    # tiny Jonah walking up the road to the west gate
-    JROAD = [(0.0, 598, 1400, 0.49), (t_push0 - 0.4, 636, 1168, 0.36), (t_fly0 - 0.32, GX + 4, WALL_Y + 4, 0.33),
-             (t_fly0 - 0.05, GX + 6, WALL_Y - 6, 0.3)]
-    J0 = (598, 1400, 0.49)
-    tj_frames = [doc(C.ground_shadow(J0[0], J0[1], J0[2], 120) + C.jonah(J0[0], J0[1], J0[2], 1, pose=p))
-                 for p in ("walk_a", "walk_b")]
-    tj_motion = M.keys([(t, {"dx": x - J0[0], "dy": y - J0[1], "s": s / J0[2]}) for t, x, y, s in JROAD],
-                       ["linear", "linear", "linear"], pivot=(J0[0], J0[1]))
-    tj_alpha = lambda t: Tf(alpha=1 - part(t, t_fly0 - 0.28, t_fly0 - 0.04, "sine"))
-    sc.add("p_jonah", tj_frames, z=57, frame_at=lambda t: float(int(t / 0.34) % 2),
-           motion=F(local=M.combine(tj_motion, tj_alpha), pivot=(J0[0], J0[1])))
+    # little Jonah walks up the road (planted-foot walk: the drawing follows the distance walked), through the
+    # gate and into the shade of the passage, which swallows him before the camera flies in after him
+    LJ_S = 0.58
+    LJ = person_sprite(LJ_S, wide=190, tall=380, seed=92)
+    LJ_F = [LJ.add(C.ground_shadow(LJ.ax, LJ.ay, LJ_S, 120) + jfig(LJ.ax, LJ.ay, LJ_S, walk_pose(k), "neutral"))
+            for k in range(2 * WALK_N)]
+    lj_scale = lambda y: float(np.interp(y, [WALL_Y - 16, WALL_Y, 1450, 1700], [0.28, 0.33, 0.52, 0.58]))
+    f_lo, f_hi = 0.0, 1.0                              # where on the road he is at the start (feet at y ~ 1450)
+    for _ in range(30):
+        f_md = (f_lo + f_hi) / 2
+        f_lo, f_hi = (f_md, f_hi) if road_point(f_md)[1] > 1450 else (f_lo, f_md)
+    path = [road_point(f_lo + (1 - f_lo) * i / 240) for i in range(241)]
+    n_road = len(path)
+    path += [(GX + 9 * i / 12, WALL_Y - 16 * i / 12) for i in range(1, 13)]     # into the passage's depth
+    figd = [0.0]
+    for i, (a_, b_) in enumerate(zip(path, path[1:])):
+        ds = math.hypot(b_[0] - a_[0], b_[1] - a_[1]) * (1.0 if i < n_road - 1 else 1.15)   # foreshortened
+        figd.append(figd[-1] + ds / lj_scale((a_[1] + b_[1]) / 2))
+    ADV0 = 2 * WALK_A / WALK_N                         # figure px per drawing
+    t_thr = t_fly0 - 0.6                               # his feet cross the threshold
+    R_LJ = figd[n_road - 1] / ADV0 / t_thr             # drawings / s
+    K_THR = figd[n_road - 1] / ADV0
+    K_LJ = int(figd[-1] / ADV0)
+    t_lj_end = (K_LJ + 0.999) / R_LJ
+
+    def lj_at(k):
+        dd = k * ADV0
+        i = max(1, min(len(figd) - 1, int(np.searchsorted(figd, dd))))
+        u = (dd - figd[i - 1]) / max(1e-6, figd[i] - figd[i - 1])
+        x = M.lerp(path[i - 1][0], path[i][0], u)
+        y = M.lerp(path[i - 1][1], path[i][1], u)
+        return x, y, lj_scale(y)
+    LJ_POS = [lj_at(k) for k in range(K_LJ + 1)]
+
+    def lj_fn(t):
+        k = min(K_LJ, int(t * R_LJ + 1e-6))
+        dark = part(t, K_THR / R_LJ, t_lj_end, "sine")
+        if dark > 0.93 or t >= t_fly0 - 0.02:          # gone into the shade (he matches it by now): cut
+            return None
+        x, y, s = LJ_POS[k]
+        res = LJ.place(k % (2 * WALK_N), x, y, sx=s / LJ_S, sy=s / LJ_S)
+        if dark <= 0.01:
+            return res
+        im, (px, py) = res
+        arr = np.asarray(im).astype(np.float32)
+        rows = np.array([passage_color(py + r) for r in range(arr.shape[0])], np.float32)[:, None, :]
+        arr[..., :3] = arr[..., :3] * (1 - dark) + rows * dark
+        return Image.fromarray(arr.clip(0, 255).astype(np.uint8), "RGBA"), (px, py)
+    sc.add_dynamic("p_jonah", lj_fn, z=57)
+    print(f"  s15 little Jonah: {WALK_N / R_LJ:.2f} s/step, threshold at {t_thr:.2f}s, gone at "
+          f"{min(t_fly0, K_THR / R_LJ + 0.93 * (t_lj_end - K_THR / R_LJ)):.2f}s")
 
     # foreground palms (sway)
     for i, (x, y, s, ln) in enumerate(((60, 1850, 1.3, 0.32), (3170, 1860, 1.15, -0.32))):
@@ -1355,13 +1562,13 @@ def build(ctx):
 
     # ------------------------------------------------------------ light over the day
     def light(t):
-        morning, noon, gold = (255, 240, 236), (255, 255, 255), (255, 233, 196)
+        morning, noon, gold = (255, 240, 236), (255, 255, 255), (255, 244, 224)
         if t < t_fly0:
             return noon
         if t < t_st:
             return [M.lerp(a, b, part(t, t_fly0, t_st, "sine")) for a, b in zip(noon, morning)]
         u1 = part(t, t_st, t_st + 1.6, "sine")
-        u2 = part(t, t_call - 0.9, t_calloff + 0.3, "sine")
+        u2 = part(t, t_call - 0.9, t_calloff + 0.4, "sine")
         c = [M.lerp(a, b, u1) for a, b in zip(morning, noon)]
         return [M.lerp(a, b, u2) for a, b in zip(c, gold)]
     sc.fx = [light_fx(light)]
@@ -1373,10 +1580,15 @@ def build(ctx):
         sc.sfx("pop", ts, gain_db=-12)
     sc.sfx("sparkle", t_trail0, gain_db=-16)
     sc.sfx("whoosh", t_fly0 + 0.1, gain_db=-11)
-    sc.sfx("crowd", t_fly0 + 0.2, dur=T - t_fly0 + 0.6, gain_db=-16, fade_in=0.6, fade_out=0.8)
-    sc.sfx("footsteps", t_fly0, dur=t_stop - t_fly0, gain_db=-13, fade_in=0.2, fade_out=0.2,
-           rate=V_W / (WALK_N * ADV))
+    # the street's bustle, then a hush while the whole square stops to listen to Jonah
+    sc.sfx("crowd", t_fly0 + 0.2, dur=t_turn + 0.35 - (t_fly0 + 0.2), gain_db=-16, fade_in=0.6, fade_out=0.5)
+    sc.sfx("crowd", t_turn - 0.1, dur=T - t_turn + 0.9, gain_db=-24, fade_in=0.5, fade_out=0.8)
+    sc.sfx("footsteps", t_fly0, dur=t_stop - t_fly0, gain_db=-13, fade_in=0.2, fade_out=0.2, rate=R0 / WALK_N)
     sc.sfx("pop", t_wow, gain_db=-14)
+
+    print(f"  s15 street: {WALK_N / R0:.2f} s/step ({V_W:.0f} px/s), arm up k={k_up}..{k_dn} "
+          f"({k_time(k_up):.2f}-{t_calloff:.2f}s), climb {T_CL:.2f}-{t_stop:.2f}s, cut {t_cut:.3f}s, "
+          f"people from {t_show:.3f}s, comma {t_comma0:.2f}-{t_comma1:.2f}s (voice {'yes' if env2 is not None else 'no'})")
 
     # rasterise all sprite drawings now (fills the disk caches during the prepare pass, so render workers only
     # load PNGs) and close the browser if we opened it

@@ -3,25 +3,35 @@
 Adapted from the approved v1 storm (art/scenes_v1/s04_storm.py: same ship, stage, sea, clouds, bolts, crew
 mechanics, hold painting and dive); everything is keyed to the narration chunks.
 
-Line 0  '但是，人怎么能躲开上帝呢？' a calm, sunny sea: the ship sails west (left) with a full sail, a wake, gulls,
-        the hazy coast of Joppa behind. '船开出去不久' the coast drifts away and the first dark clouds creep in.
-        '上帝就让海上刮起了狂风' the storm rises: the storm clouds roll in, the sky darkens, a squall line of dark
-        crested sea sweeps in from the east (right), curly gusts, rain, the gulls flee, the sailors start
-        (hard pose cuts hidden by squash-and-hop) and, after '狂风', the first lightning bolt.
+Opening = s03's last picture of the people, in the same ship-local spots: v0 points the way at the bow, v1 stands
+        by the mast, the captain just aft of it, Jonah crouches behind the stern rail by the cargo, looking back at
+        Joppa (s04's own t=0 framing is unchanged: hull x~615-1470, waterline y~800, sun upper right).
+Line 0  '但是，人怎么能躲开上帝呢？' a calm, sunny sea, the ship sails west (left) with a full sail, a wake, gulls,
+        the hazy coast of Joppa behind. Jonah gives up looking back, yawns and stretches, and climbs down the
+        stern hatch one rung at a time (plants Jonah 1:5b); the captain turns and walks aft to the helm, v1 follows
+        him aft to his place (legs hidden by the rail, a bob per step, soft footsteps). '船开出去不久' v2 and v3
+        climb up from below deck (head and shoulders, chest, then a hop); the coast drifts away and the first dark
+        clouds creep in. '上帝就让海上刮起了狂风' the storm rises: the storm clouds roll in, the sky darkens, a squall
+        line of dark crested sea sweeps in from the east (right), curly gusts, rain, the gulls flee, the crew start
+        (hard pose cuts hidden by squash-and-hop; every pose exists in both colour grades and only the grade of
+        the same drawing crossfades, with the ship's) and, after '狂风', the first lightning bolt (open sky, far
+        left, clear of the sail and the crew).
 Line 1  '大浪一个接着一个打过来' three breakers rise and crash one after another (stern, bow, stern): each jolts
         the ship and staggers the crew (two of them crouch and brace); '船摇来摇去' the ship pitches about
         +-12 deg; '好像就要被打碎了' a flash, the sail tears, a wave bursts over the bow, the hull creaks, the
-        camera shakes.
+        camera shakes. The captain at the helm holds his head in his hands.
 Line 2  '水手们都吓坏了' the camera pushes in on the four terrified sailors (variants 0-3). '每个人都向自己拜的神
         求救' one after another they pray with raised hands, each toward his own side, and a thought bubble with
-        his own god's sign pops up (sun, little clay idol, moon, star). '他们把船上的货物扔进海里' they heave a jar,
-        a jar, a sack, a jar, a crate and a sack overboard (spinning arcs, splashes); '想让船轻一些' the
-        lightened ship bobs up in the water and the tired crew catch their breath.
+        his own god's sign pops up (sun, little clay idol, moon, star; the idol's bubble covers the sail's hole).
+        '他们把船上的货物扔进海里' they heave a jar, a jar, a sack, a jar, a crate and a sack overboard (spinning
+        arcs, splashes), straightening up empty-handed between two loads; '想让船轻一些' the lightened ship bobs up
+        in the water and the tired crew catch their breath.
 Line 3  '这时候，约拿在哪里呢？' the camera looks down at the closed hull while the crew pray and panic above;
-        '原来' the hull opens in cutaway (Jonah asleep below the panicking crew); during '下到船舱底下' the camera
-        dives into the lantern-lit hold (v1 technique); '躺在那里' Jonah sleeps on the grain sacks, breathing
-        with the snore, 'Z z z'; after '呼呼大睡' the picture dips to warm dark (s05 opens in the hold out of
-        the dark, as in v1, so the two drawings of the hold never double up in the dissolve).
+        '原来' the hull opens in cutaway (Jonah asleep below the panicking crew, 'Z z z' drifting inside the hold);
+        during '下到船舱底下' the camera dives into the lantern-lit hold (v1 technique); '躺在那里' Jonah sleeps
+        on the grain sacks, breathing with the snore, 'Z z z'; '呼呼大睡' and the hold stays to the last frame:
+        s05 opens on this very picture (same painting and seed, same final camera), so there is no dip; the
+        Z's and the lantern swing are phase-locked to s05's and the snore hands over to s05's at T-0.6.
 
 Stage 2400 x 1350 (v1). Everything aboard shares one ship transform ``ship_tf(t)``.
 """
@@ -1343,8 +1353,9 @@ def build(ctx):
         sc.sfx(name, t_in_amb, dur=T + 0.6 - t_in_amb, gain_db=g_in, fade_in=1.0, fade_out=0.8)
     sc.sfx("drip", T_REV[0], dur=T + 0.6 - T_REV[0], gain_db=-16, fade_in=0.6, fade_out=0.8)
     sc.sfx("ship_creak", 0, dur=T + 0.6, gain_db=-13, fade_in=0.8, fade_out=0.8)
-    sc.sfx("footsteps", CW[0], dur=CW[1] - CW[0] + 0.1, gain_db=-21, pan=0.2, fade_in=0.15, fade_out=0.3)
-    sc.sfx("footsteps", BW[0] + 0.1, dur=BW[1] - BW[0], gain_db=-23, pan=0.1, fade_in=0.15, fade_out=0.3)
+    # soft steps on the deck while the captain and v1 walk aft (one per bob of walk_fn: 0.3 s)
+    sc.sfx("footsteps", CW[0], dur=CW[1] - CW[0] + 0.1, gain_db=-21, pan=0.2, fade_in=0.15, fade_out=0.3, rate=3.3)
+    sc.sfx("footsteps", BW[0] + 0.1, dur=BW[1] - BW[0], gain_db=-23, pan=0.1, fade_in=0.15, fade_out=0.3, rate=3.3)
     sc.sfx("ship_creak", l1.start - 0.1, dur=l1.end - l1.start + 0.8, gain_db=-7, fade_in=0.3, fade_out=0.5)
     for (ts, _), (bx_, *_r) in zip(STRIKES, bolts):
         sc.sfx("thunder", ts, gain_db=-6 if ts < S4 else -9, pan=max(-0.6, min(0.6, (bx_ - 1200) / 1300)))
