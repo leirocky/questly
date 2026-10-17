@@ -242,14 +242,14 @@ def synth_raw(text, voice):
                            (voice["speed"] + 0.03, 12), (voice["speed"], 16)):
             a = tts.generate(tts_text(text, "zipvoice"), ptext, px.tolist(), psr, spd, steps)
             x = np.asarray(a.samples, dtype=np.float32)
-            err = _cer(text, asr(x, a.sample_rate)[0])
-            if best is None or err < best[0]:
-                best = (err, x, a.sample_rate)
-            if err <= CER_OK:
+            score = _take_score(text, x, a.sample_rate)
+            if best is None or score < best[0]:
+                best = (score, x, a.sample_rate)
+            if not score[0]:
                 break
-        err, x, sr = best
-        if err > CER_OK:
-            print(f"  WARNING ASR mismatch {err:.2f} for: {text}")
+        (bad, err), x, sr = best
+        if bad:
+            print(f"  WARNING ASR mismatch {err:.2f} (or extra syllable) for: {text}")
         sf.write(path, x, sr)
         return x, sr
     if voice["engine"] == "matcha":
@@ -293,6 +293,24 @@ def _cer(ref, hyp):
             dp[j] = min(dp[j] + 1, dp[j - 1] + 1, prev + (ref[i - 1] != hyp[j - 1]))
             prev = cur
     return dp[-1] / max(1, len(ref))
+
+
+def _edge_junk(ref, hyp):
+    """True when the recogniser hears extra syllables before the first or after the last word:
+    a stray breath or mumble the model appended (it would otherwise pass the CER threshold)."""
+    import difflib
+
+    ref, hyp = _norm(ref), _norm(hyp)
+    ops = difflib.SequenceMatcher(None, ref, hyp, autojunk=False).get_opcodes()
+    return any(op == "insert" and (i1 == 0 or i1 == len(ref)) for op, i1, _, _, _ in ops)
+
+
+def _take_score(text, x, sr):
+    """(rejected, CER) of one take; ASR gets 0.3 s of padding (it is unreliable on a word at sample 0)."""
+    pad = np.zeros(int(0.3 * sr), np.float32)
+    hyp = asr(np.concatenate([pad, x, pad]), sr)[0]
+    err = _cer(text, hyp)
+    return (err > CER_OK or _edge_junk(text, hyp)), err
 
 
 PAUSE_AFTER = {"，": 0.30, "、": 0.22, "：": 0.36, "；": 0.36, "。": 0.50, "！": 0.50, "？": 0.50}
