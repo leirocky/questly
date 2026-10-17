@@ -9,17 +9,27 @@ Loops      ``dur`` is required (0.5 s .. 40 s+; ``None`` falls back to the defau
            circular loop: every component is periodic in ``dur`` (periodic random LFOs, events wrapped around the
            end, reverb tails folded back to the start, noise beds cross-faded at the seam), and the loop is rotated
            so it starts and ends on a quiet near-zero sample, so there is no click at either end or at the seam.
-           Integrated loudness is LOOP_LUFS[name] (-24..-20 LUFS). Renders shorter than REF_DUR are levelled
-           against a REF_DUR render of the same seed, so a 0.5 s and a 40 s render sit at the same level.
-One-shots  ``dur=None`` gives the natural length (NAMES default). A given ``dur`` trims (with a 15 ms fade) or
-           pads with silence. Sample peak is ONESHOT_PEAK[name] (0.5..0.7), mostly centred.
+           Integrated loudness is LOOP_LUFS[name] (about -25..-20 LUFS), measured on the render itself. For
+           renders shorter than REF_DUR the gain is additionally held within LOOP_CLAMP[name] dB of the gain a
+           REF_DUR render of the same seed needs, so a short sparse loop (one creak, one snore) is not boosted
+           wildly while dense beds (waves, wind, rain) simply follow their own content.
+One-shots  ``dur=None`` gives the natural length (NAMES default); generators render their decay/reverb tail in
+           full and it is then fitted into the natural length with a smooth exponential end fade (END_FADE).
+           A given ``dur`` trims (15 ms fade) or pads with silence; a negative ``dur`` gives an empty array.
+           Level: the loudest 400 ms window (momentary max, BS.1770) is ONESHOT_LUFS[name] (about -14 LUFS),
+           with sample peak kept inside PEAK_RANGE (0.5..0.7); transient-heavy sounds get a gentle look-ahead
+           limiter (at most ONESHOT_LIMIT[name] dB) so they can reach that loudness within the peak ceiling.
+           Mostly centred.
+Stereo     Event pans are stratified (alternating / spread slots) and every render is rebalanced so the L/R
+           energy differs by at most BALANCE_DB.
 
 Deterministic for (name, dur, sr, seed, params); different seeds give different variations. Unknown names raise
 ValueError. Unknown params are ignored with a warning; supported params are listed in PARAMS (every effect also
-accepts ``width``: stereo width multiplier, 1 = as designed, 0 = mono).
+accepts ``width``: stereo width multiplier, 1 = as designed, 0 = mono) and clamped to PARAM_RANGE.
 
 Character: a soft, warm children's picture book (cartoony for gulp, spit, snore and pop), never harsh. Everything
-is high-passed at 35 Hz (small speakers) and gently low-passed where the material allows.
+is high-passed at 35 Hz and gently low-passed where the material allows; low thumps (heartbeat, thud) carry
+saturated harmonics and a 250-600 Hz knock so they survive phone-sized speakers.
 
 Verify with ``python3 tools/sfx_audition.py`` (WAVs, spectrogram grid, level / seam report).
 """
@@ -55,35 +65,52 @@ NAMES = {
     # ---- one-shots (dur=None -> natural length)
     "thunder": ("oneshot", 3.6, "crack + long deep rolling rumble, not ear-splitting"),
     "splash": ("oneshot", 1.5, "big body splash with falling droplets"),
-    "splash_small": ("oneshot", 0.8, "crate plopping into water"),
-    "whoosh": ("oneshot", 0.8, "soft swish"),
-    "gulp": ("oneshot", 1.0, "big cartoon gulp: low sweep + wet pop"),
-    "spit": ("oneshot", 0.8, "cartoon 'ptooey': big bloop expelling + wet splatter"),
-    "thud": ("oneshot", 0.4, "soft landing on sand"),
+    "splash_small": ("oneshot", 0.9, "crate plopping into water"),
+    "whoosh": ("oneshot", 1.0, "soft swish (~0.7 s) + a breath of air"),
+    "gulp": ("oneshot", 1.1, "big cartoon gulp: low sweep + wet pop"),
+    "spit": ("oneshot", 0.85, "cartoon 'ptooey': big bloop expelling + wet splatter"),
+    "thud": ("oneshot", 0.45, "soft landing on sand"),
     "chime": ("oneshot", 2.6, "warm divine shimmer: celesta major chord + airy sparkle"),
     "sparkle": ("oneshot", 1.2, "magical glitter"),
-    "grow": ("oneshot", 2.0, "rising magical sweep with twinkles"),
+    "grow": ("oneshot", 2.1, "rising magical sweep with twinkles, blooming into a bell"),
     "wither": ("oneshot", 2.0, "descending dry rustle / deflate"),
     "crunch": ("oneshot", 1.5, "small nibbling crunches"),
     "gull": ("oneshot", 1.5, "seagull calls"),
     "lots": ("oneshot", 1.5, "wooden sticks rattling in a jar, then one dropping"),
-    "cloth": ("oneshot", 0.8, "fabric rustle"),
-    "sheep": ("oneshot", 1.0, "gentle sheep 'baa'"),
-    "pop": ("oneshot", 0.3, "light pop"),
+    "cloth": ("oneshot", 0.9, "fabric rustle"),
+    "sheep": ("oneshot", 1.1, "gentle sheep 'baa'"),
+    "pop": ("oneshot", 0.35, "light pop"),
 }
 
 LOOP_LUFS = {
     "waves_calm": -22.0, "waves_storm": -20.5, "storm_wind": -21.0, "rain": -22.0, "wind_soft": -23.5,
     "wind_hot": -22.0, "ship_creak": -23.0, "underwater": -22.5, "bubbles": -23.0, "heartbeat": -22.0,
     "drip": -23.0, "footsteps": -22.0, "footsteps_run": -21.5, "crowd": -23.0, "birds": -23.0, "snore": -22.0,
-    "heat": -24.0,
+    "heat": -25.0,          # 2.5-4 kHz is where (children's) ears are most sensitive: a little lower on purpose
 }
 
-ONESHOT_PEAK = {
-    "thunder": 0.6, "splash": 0.65, "splash_small": 0.6, "whoosh": 0.55, "gulp": 0.65, "spit": 0.6, "thud": 0.6,
-    "chime": 0.5, "sparkle": 0.5, "grow": 0.55, "wither": 0.55, "crunch": 0.6, "gull": 0.55, "lots": 0.6,
-    "cloth": 0.5, "sheep": 0.6, "pop": 0.55,
+# Short renders (< REF_DUR): allowed deviation (cut dB, boost dB) of the self-measured gain from the gain of a
+# REF_DUR render of the same seed. Dense beds follow their own content; sparse event loops are held close.
+_DENSE = (12.0, 12.0)
+_SPARSE = (6.0, 4.0)
+LOOP_CLAMP = {
+    "waves_calm": _DENSE, "waves_storm": _DENSE, "storm_wind": _DENSE, "rain": _DENSE, "wind_soft": _DENSE,
+    "wind_hot": _DENSE, "underwater": _DENSE, "crowd": _DENSE, "heat": _DENSE, "heartbeat": _DENSE,
+    "footsteps": _DENSE, "footsteps_run": _DENSE, "snore": _DENSE,
+    "ship_creak": _SPARSE, "bubbles": _SPARSE, "drip": _SPARSE, "birds": _SPARSE,
 }
+
+# One-shot level: momentary-max loudness target (loudest 400 ms window, LUFS) and the allowed sample-peak range.
+ONESHOT_LUFS = {k: -14.0 for k, v in NAMES.items() if v[0] == "oneshot"}
+PEAK_RANGE = (0.5, 0.7)
+# Max gain reduction (dB) of the transient limiter used to reach ONESHOT_LUFS within the peak ceiling.
+ONESHOT_LIMIT = {k: 3.0 for k in ONESHOT_LUFS}
+ONESHOT_LIMIT.update({"thud": 8.0, "pop": 5.0, "crunch": 6.0, "lots": 6.0, "splash_small": 5.0, "cloth": 4.0,
+                      "spit": 4.0, "splash": 4.0})
+BALANCE_DB = 1.0         # max L/R energy difference after rebalancing
+# Length (s) of the exponential end fade that fits a one-shot's rendered tail into its natural length.
+END_FADE = {k: min(0.25, 0.3 * NAMES[k][1]) for k in ONESHOT_LUFS}
+
 
 # Optional per-effect params and their defaults (``width`` is accepted everywhere).
 PARAMS = {
@@ -95,28 +122,52 @@ PARAMS = {
     "chime": {"root": 72}, "sparkle": {"root": 79}, "grow": {"root": 67},
     "sheep": {"pitch": 1.0}, "gull": {"pitch": 1.0, "calls": None},
 }
+# Numeric params are clamped into these ranges (0 / negative values would divide by zero or make no sense).
+PARAM_RANGE = {"density": (0.05, 8.0), "bpm": (20.0, 200.0), "rate": (0.5, 8.0), "cycle": (0.5, 20.0),
+               "root": (36.0, 96.0), "pitch": (0.25, 4.0), "calls": (0, 6), "width": (0.0, 2.0)}
 
 # Final filtering per effect: (high-pass Hz, low-pass Hz or None).
 _FINISH = {
-    "waves_calm": (35, 9000), "waves_storm": (35, 7000), "storm_wind": (35, 7500), "rain": (35, 8500),
-    "wind_soft": (35, 7000), "wind_hot": (35, 8000), "ship_creak": (35, 5000), "underwater": (35, 3500),
-    "bubbles": (35, 5000), "heartbeat": (35, 1500), "drip": (35, 6000), "footsteps": (35, 7000),
-    "footsteps_run": (35, 7000), "crowd": (35, 4000), "birds": (35, 7000), "snore": (35, 5000),
-    "heat": (35, 7000),
-    "thunder": (35, 6000), "splash": (35, 8000), "splash_small": (35, 8000), "whoosh": (35, 7000),
-    "gulp": (35, 6000), "spit": (35, 7000), "thud": (35, 6000), "chime": (35, 10000), "sparkle": (35, 8000),
+    "waves_calm": (35, 9000), "waves_storm": (40, 6500), "storm_wind": (35, 7500), "rain": (35, 8500),
+    "wind_soft": (35, 7000), "wind_hot": (35, 7000), "ship_creak": (40, 4500), "underwater": (40, 2500),
+    "bubbles": (35, 5000), "heartbeat": (45, 1500), "drip": (35, 6000), "footsteps": (35, 7000),
+    "footsteps_run": (35, 7000), "crowd": (35, 4000), "birds": (35, 7000), "snore": (35, 4500),
+    "heat": (35, 5000),
+    "thunder": (40, 5000), "splash": (35, 8000), "splash_small": (35, 8000), "whoosh": (35, 7000),
+    "gulp": (35, 6000), "spit": (35, 7000), "thud": (40, 6000), "chime": (35, 10000), "sparkle": (35, 8000),
     "grow": (35, 9000), "wither": (35, 7500), "crunch": (35, 7000), "gull": (35, 6500), "lots": (35, 8000),
     "cloth": (35, 7000), "sheep": (35, 6000), "pop": (35, 8000),
 }
 
-_DEBUG = None      # tools/sfx_audition.py --debug sets a list here to collect component levels
+_DEBUG = None      # tools/sfx_audition.py --debug sets a list here to collect component levels (strings)
 
 
 def _dbg(label, x):
     if _DEBUG is not None:
         x = np.asarray(x, float)
         rms = np.sqrt(np.mean(x ** 2)) if x.size else 0.0
-        _DEBUG.append((label, 20 * np.log10(rms + 1e-12), 20 * np.log10(np.abs(x).max() + 1e-12) if x.size else -240))
+        pk = np.abs(x).max() if x.size else 0.0
+        _DEBUG.append(f"[{label:<16}] rms {20 * np.log10(rms + 1e-12):6.1f} dB  peak {20 * np.log10(pk + 1e-12):6.1f} dB"
+                      "  (pre-normalisation)")
+
+
+def _dbg_vs(label, layer, bed, lo, hi, sr, win=0.05, top=0.05):
+    """--debug: band-limited level of a detail layer against the bed in the layer's loudest 50 ms windows."""
+    if _DEBUG is None:
+        return
+
+    def lev(x):
+        x = _stereo(x).mean(axis=1)
+        y = _fft_shape(x, sr, lambda f: _bpm(f, lo, hi, 4))
+        k = int(win * sr)
+        nw = len(y) // k
+        return 10 * np.log10(np.mean(y[:nw * k].reshape(nw, k) ** 2, axis=1) + 1e-20)
+
+    a, b = lev(layer), lev(bed)
+    sel = np.argsort(a)[-max(1, int(top * len(a))):]
+    d = a[sel] - b[sel]
+    _DEBUG.append(f"[{label:<16}] {lo}-{hi} Hz, loudest {100 * top:.0f}% of 50 ms windows: layer - bed "
+                  f"median {np.median(d):+5.1f} dB, max {d.max():+5.1f} dB")
 
 
 # =========================================================================================== public entry point
@@ -133,6 +184,9 @@ def make(name, dur, sr=48000, seed=0, **params):
                       stacklevel=2)
     p = {"width": 1.0, **PARAMS.get(name, {})}
     p.update({k: v for k, v in params.items() if k in allowed and v is not None})
+    for k, (lo, hi) in PARAM_RANGE.items():
+        if k in p and p[k] is not None:
+            p[k] = type(lo)(min(max(float(p[k]), lo), hi))
     if kind == "loop":
         T = float(default if dur is None else dur)
         n = int(round(T * sr))
@@ -142,26 +196,34 @@ def make(name, dur, sr=48000, seed=0, **params):
     else:
         x = _render_oneshot(name, sr, seed, p)
         if dur is not None:
-            x = _fit_len(x, int(round(float(dur) * sr)), sr)
+            x = _fit_len(x, max(0, int(round(float(dur) * sr))), sr)
     x = np.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
     return np.ascontiguousarray(x, dtype=np.float32)
 
 
 def _render_loop(name, n, sr, seed, p):
     m = max(n, int(0.25 * sr))
-    x = _loop_core(name, m, sr, seed, p)
-    nref = int(REF_DUR * sr)
-    ref = x if m >= nref else _loop_core(name, nref, sr, seed, p)
-    lufs = _lufs(ref, sr)
-    if np.isfinite(lufs):
-        x = x * 10 ** ((LOOP_LUFS[name] - lufs) / 20)
-    pk = np.abs(x).max()
-    if pk > 0.9:
-        x *= 0.9 / pk
-    x = _rotate_quiet(x, sr)
+    x = _rotate_quiet(_balance(_loop_core(name, m, sr, seed, p)), sr)
+    target = LOOP_LUFS[name]
+    g = target - _lufs(_tile(x, sr), sr)
+    nref = int(round(REF_DUR * sr))
+    if m < nref:
+        g_ref = target - _lufs(_balance(_loop_core(name, nref, sr, seed, p)), sr)
+        if np.isfinite(g_ref):
+            cut, boost = LOOP_CLAMP[name]
+            g = float(np.clip(g, g_ref - cut, g_ref + boost)) if np.isfinite(g) else g_ref
+    if np.isfinite(g):
+        x = x * 10 ** (g / 20)
+    x = _softknee(x, 0.7, 0.9)             # only touches rare transient peaks (footsteps, creaks)
     if m != n:                    # below the documented range: cut and fade (not seamless)
         x = _fade(x[:n], sr, 0.004, 0.004)
     return x
+
+
+def _tile(x, sr, T=0.6):
+    """A loop shorter than T seconds repeated (it is circular) so it can be loudness-measured."""
+    k = int(np.ceil(T * sr / max(len(x), 1)))
+    return np.tile(x, (k, 1)) if k > 1 else x
 
 
 def _loop_core(name, n, sr, seed, p):
@@ -174,19 +236,33 @@ def _loop_core(name, n, sr, seed, p):
 
 def _render_oneshot(name, sr, seed, p):
     rng = _rng(name, seed)
-    x = _stereo(_ONESHOTS[name](rng, sr, p))
+    x = _stereo(_ONESHOTS[name](rng, sr, p))          # may run past the natural length (decay / reverb tail)
     hp, lp = _FINISH[name]
     x = _filt(x, "hp", hp, sr, 4)
     if lp:
         x = _filt(x, "lp", lp, sr, 2)
     x = _width(x, p["width"])
     L = int(round(NAMES[name][1] * sr))
-    x = _fit_len(x, L, sr, fade=min(0.12, 0.25 * NAMES[name][1]))
-    x = _fade(x, sr, 0.002, 0.0)
+    x = _fit_len(x, L, sr, fade=END_FADE[name], curve="exp")
+    x = _balance(_fade(x, sr, 0.002, 0.0))
+    return _level_oneshot(x, sr, ONESHOT_LUFS[name], ONESHOT_LIMIT[name])
+
+
+def _level_oneshot(x, sr, target, max_gr):
+    """Gain to the momentary-max target; transient limiting (<= max_gr dB) if the peak ceiling is in the way."""
+    lo, hi = PEAK_RANGE
     pk = np.abs(x).max()
-    if pk > 0:
-        x = x * (ONESHOT_PEAK[name] / pk)
-    return x
+    if pk <= 0:
+        return x
+    floor = pk * 10 ** (-max_gr / 20)
+    for _ in range(3):
+        g = 10 ** ((target - _mom_max(x, sr)) / 20)
+        if g * pk <= hi * 1.001 or pk <= floor * 1.01:
+            break
+        x = _limit(x, max(hi / g, floor), sr)
+        pk = np.abs(x).max()
+    g = 10 ** ((target - _mom_max(x, sr)) / 20)
+    return x * float(np.clip(g, lo / pk, hi / pk))
 
 
 # =========================================================================================== small helpers
@@ -224,18 +300,134 @@ def _fade(x, sr, fi, fo):
     return x
 
 
-def _fit_len(x, m, sr, fade=0.015):
-    if len(x) >= m:
+def _fit_len(x, m, sr, fade=0.015, curve="cos"):
+    """Trim to m samples (end fade) or pad with silence. curve='exp': (1-u)*exp(-4u) end fade, which steepens a
+    ringing tail the way a damper would instead of chopping it."""
+    m = max(0, int(m))
+    if len(x) < m:
+        return np.concatenate([x, np.zeros((m - len(x),) + x.shape[1:], x.dtype)])
+    if curve != "exp":
         return _fade(x[:m], sr, 0.0, min(fade, m / sr / 4))
-    return np.concatenate([x, np.zeros((m - len(x),) + x.shape[1:], x.dtype)])
+    y = x[:m].copy()
+    k = min(m, int(fade * sr))
+    if k > 1:
+        u = np.arange(k) / (k - 1)
+        g = (1 - u) * np.exp(-4 * u)
+        y[-k:] *= g[:, None] if y.ndim == 2 else g
+    return y
+
+
+# ---- loudness (ITU-R BS.1770 / EBU R128; matches pyloudnorm's integrated loudness)
+_KW = {}
+
+
+def _kweight(x, sr):
+    if sr not in _KW:
+        import pyloudnorm as pyln
+        _KW[sr] = [(f.b, f.a) for f in pyln.Meter(sr)._filters.values()]
+    y = np.asarray(x, np.float64)
+    for b, a in _KW[sr]:
+        y = signal.lfilter(b, a, y, axis=0)
+    return y
+
+
+def _block_power(x, sr, block=0.4, hop=0.1):
+    """Channel-summed mean square of K-weighted x in blocks of ``block`` s every ``hop`` s (block layout as in
+    pyloudnorm, including its partial last block, so both meters agree)."""
+    y = _stereo(_kweight(x, sr))
+    n = len(y)
+    e = np.concatenate([[0.0], np.cumsum(np.sum(y ** 2, axis=1))])
+    B = block * sr
+    if n < B:
+        return np.array([e[-1] / B])
+    nb = int(np.round((n / sr - block) / hop)) + 1
+    j = np.arange(nb)
+    lo = np.minimum((block * (j * hop / block) * sr).astype(int), n)
+    hi = np.minimum((block * (j * hop / block + 1) * sr).astype(int), n)
+    return (e[hi] - e[lo]) / B
 
 
 def _lufs(x, sr):
-    import pyloudnorm as pyln
-    try:
-        return pyln.Meter(sr).integrated_loudness(np.asarray(x, np.float64))
-    except Exception:          # pragma: no cover - too short etc.
+    """Integrated loudness (gated) in LUFS; NaN for silence / too short."""
+    if len(x) < int(0.4 * sr):
         return float("nan")
+    z = _block_power(x, sr)
+    with np.errstate(divide="ignore"):
+        lk = -0.691 + 10 * np.log10(z)
+    z = z[lk >= -70.0]
+    if not len(z):
+        return float("nan")
+    rel = -0.691 + 10 * np.log10(np.mean(z)) - 10.0
+    with np.errstate(divide="ignore"):
+        z = z[-0.691 + 10 * np.log10(z) > rel]
+    return float(-0.691 + 10 * np.log10(np.mean(z))) if len(z) else float("nan")
+
+
+def _mom_max(x, sr):
+    """Loudest 400 ms window (momentary loudness, 10 ms hop), LUFS; shorter sounds count as zero-padded."""
+    z = _block_power(x, sr, 0.4, 0.01)
+    return float(-0.691 + 10 * np.log10(np.max(z) + 1e-20))
+
+
+def _limit(x, ceil, sr, look=0.004, rel=0.025):
+    """Smooth look-ahead peak limiter: gain dips start ``look`` s before a peak, are Hann-smoothed (no hard edges)
+    and release over ``rel`` s; the result's peaks stay <= ceil (up to the 4th-order smoothing tolerance)."""
+    a = np.max(np.abs(x), axis=1)
+    g0 = np.minimum(1.0, ceil / np.maximum(a, 1e-12))
+    W = max(1, int(look * sr))
+    g1 = ndimage.minimum_filter1d(g0, 2 * W + 1)
+    k = np.exp(-1 / (rel * sr))
+    g2 = np.minimum(g1, signal.lfilter([1 - k], [1, -k], g1, zi=[g1[0] * k])[0])
+    w = np.hanning(2 * W + 3)[1:-1]
+    g3 = np.convolve(g2, w / w.sum(), mode="same")
+    y = x * g3[:, None]
+    over = np.abs(y).max() / ceil
+    return y / over if over > 1 else y
+
+
+def _balance(x, max_db=None):
+    """Rebalance L/R so their energies differ by at most max_db (keeps total energy)."""
+    max_db = BALANCE_DB if max_db is None else max_db
+    eL, eR = np.mean(x[:, 0] ** 2), np.mean(x[:, 1] ** 2)
+    if eL <= 0 or eR <= 0:
+        return x
+    d = 10 * np.log10(eL / eR)
+    if abs(d) <= max_db:
+        return x
+    e = (abs(d) - max_db) * np.sign(d)
+    return x * np.array([10 ** (-e / 40), 10 ** (e / 40)])[None, :]
+
+
+def _spread(rng, k, w=0.6, jit=0.12):
+    """k stratified pan positions across [-w, w] (shuffled, jittered): never all on one side."""
+    if k <= 0:
+        return np.zeros(0)
+    if k == 1:
+        return np.array([rng.uniform(-0.2, 0.2)])
+    return np.clip(rng.permutation(np.linspace(-w, w, k)) + rng.uniform(-jit, jit, k), -1, 1)
+
+
+class _Alt:
+    """Alternating-side pans: each call returns side * |pan| in [lo, hi], sides alternating from a random start."""
+
+    def __init__(self, rng, lo=0.15, hi=0.6):
+        self.rng, self.lo, self.hi = rng, lo, hi
+        self.s = rng.choice([-1.0, 1.0])
+
+    def __call__(self):
+        self.s = -self.s
+        return self.s * self.rng.uniform(self.lo, self.hi)
+
+
+def _softknee(x, th, ceil):
+    """Memoryless soft limiter: identity below th, smooth tanh knee approaching ceil above it."""
+    a = np.abs(x)
+    over = a > th
+    if not over.any():
+        return x
+    y = x.copy()
+    y[over] = np.sign(x[over]) * (th + (ceil - th) * np.tanh((a[over] - th) / (ceil - th)))
+    return y
 
 
 def _rotate_quiet(x, sr):
@@ -386,9 +578,12 @@ class _Clock:
         return np.interp(t, self.t, v, period=self.T)
 
 
-def _ptimes(rng, T, gap, jitter=0.4):
-    """Irregular event times on the circle [0, T), mean spacing ``gap`` (count randomly rounded)."""
+def _ptimes(rng, T, gap, jitter=0.4, min_one=False):
+    """Irregular event times on the circle [0, T), mean spacing ``gap`` (count randomly rounded).
+    min_one guarantees at least one event (short loops of sparse sounds are then never silent)."""
     k = int(np.floor(T / gap + rng.random()))
+    if min_one:
+        k = max(k, 1)
     if k <= 0:
         return np.zeros(0)
     g = gap * (1 + jitter * rng.uniform(-1, 1, k))
@@ -405,6 +600,8 @@ def _beats(rng, T, period, jitter=0.02, tol=0.15):
     else:
         per = period
         times = np.arange(rng.uniform(0, per), T, per)
+        if len(times) == 0:                  # loop shorter than one period: still one event
+            times = np.array([rng.uniform(0, 0.3 * T)])
     times = times + rng.uniform(-jitter, jitter, len(times)) * per
     return np.mod(times, T), per
 
@@ -430,11 +627,13 @@ def _place(buf, x, i0, pan=0.0, gain=1.0, wrap=True):
             buf[a:b] += x[a - i0:b - i0]
 
 
-def _dust(rng, rate, sr):
-    """Random signed impulses; ``rate`` = per-sample array of events/second. Exponential amplitudes."""
+def _dust(rng, rate, sr, even=False):
+    """Random signed impulses; ``rate`` = per-sample array of events/second.
+    Amplitudes exponential (sparse sparkle of bigger grains) or, with ``even``, uniform 0.3..1 (no outliers)."""
     hit = np.flatnonzero(rng.random(len(rate)) < np.clip(np.asarray(rate) / sr, 0, 1))
     out = np.zeros(len(rate))
-    out[hit] = rng.exponential(1.0, len(hit)) * rng.choice([-1.0, 1.0], len(hit))
+    amp = rng.uniform(0.3, 1.0, len(hit)) if even else rng.exponential(1.0, len(hit))
+    out[hit] = amp * rng.choice([-1.0, 1.0], len(hit))
     return out
 
 
@@ -483,8 +682,9 @@ def _shaped(rng, m, sr, mask_fn, nper=1024):
 
 # ---- reverb
 def _ir(rng, sr, t60=1.0, pre=0.01, lp=5000.0, taps=()):
-    """Stereo decaying-noise impulse response (high frequencies die faster), unit energy per channel.
-    taps: (delay_s, gain) discrete reflections relative to the diffuse level."""
+    """Stereo decaying-noise impulse response (high frequencies die faster). Normalised to unit energy *before*
+    the final low-pass, so ``wet`` in _verb is roughly the wet/dry level ratio in the passband (lows a little
+    more, as their decay is longer). taps: (delay_s, gain) discrete reflections relative to the diffuse level."""
     L = int(sr * (pre + 1.1 * t60)) + 1
     t = np.arange(L) / sr
     tt = np.maximum(t - pre, 0.0)
@@ -503,9 +703,8 @@ def _ir(rng, sr, t60=1.0, pre=0.01, lp=5000.0, taps=()):
             j = int((pre + d * (1 + 0.04 * (2 * ch - 1))) * sr)
             if j < L:
                 ir[j, ch] += g * ed * rng.uniform(0.8, 1.2)
-    ir = _filt(ir, "lp", lp, sr, 2)
     ir /= np.sqrt(np.sum(ir ** 2, axis=0, keepdims=True)) + 1e-12
-    return ir
+    return _filt(ir, "lp", lp, sr, 2)
 
 
 def _verb(x, ir, wet, circular=False):
@@ -554,12 +753,12 @@ def _k_bubble(sr, f0, tau, rise=1.8, h2=0.1):
     return _ar(t, 0.0015, tau) * (np.sin(ph) + h2 * np.sin(2 * ph))
 
 
-def _k_thump(rng, sr, f0, f1, tau, noise=0.3, att=0.003, p=1.0, nlp=300):
+def _k_thump(rng, sr, f0, f1, tau, noise=0.3, att=0.003, p=1.0, nlp=300, harm=(1.0, 0.4, 0.15)):
     m = int(sr * tau * 7)
     t = np.arange(m) / sr
     f = f1 + (f0 - f1) * np.exp(-t / (tau * 0.4))
     ph = _osc(f, sr)
-    y = (np.sin(ph) + 0.4 * np.sin(2 * ph + 0.5) + 0.15 * np.sin(3 * ph)) * _ar(t, att, tau, p)
+    y = (harm[0] * np.sin(ph) + harm[1] * np.sin(2 * ph + 0.5) + harm[2] * np.sin(3 * ph)) * _ar(t, att, tau, p)
     nz = _nrms(_filt(rng.standard_normal(m), "lp", nlp, sr))
     return y + noise * nz * _ar(t, 0.002, tau * 0.35, p)
 
@@ -587,14 +786,19 @@ def _waves_calm(rng, n, sr, p):
     C = _Clock(T)
     S = np.zeros((2, C.K))
     Fz = np.zeros((2, C.K))
+    Dp = np.zeros(C.K)
     laps = []
-    for t0 in _ptimes(rng, T, 4.6 / p["density"], 0.45):
+    alt = _Alt(rng, 0.1, 0.55)
+    for t0 in _ptimes(rng, T, 4.6 / p["density"], 0.45, min_one=True):
         a, rise, fall = rng.uniform(0.55, 1.0), rng.uniform(1.1, 2.0), rng.uniform(0.9, 1.5)
-        g = _pan(rng.uniform(-0.55, 0.55))[:, None]
+        g = _pan(alt())[:, None]
         S += a * g * C.ev(t0, -rise, 6 * fall, lambda d: _swell(d, rise, fall))
         Fz += a * g * C.ev(t0 + 0.25, -0.5, 6 * 1.8 * fall, lambda d: _swell(d, 0.5, 1.8 * fall))
-        for _ in range(rng.integers(1, 4)):
-            laps.append((t0 + rng.uniform(0.35, 2.4), a * rng.uniform(0.35, 1.0), rng.uniform(-0.6, 0.6)))
+        for _ in range(rng.integers(1, 4)):        # the water slapping and plopping at the shore after each swell
+            tl, al = t0 + rng.uniform(0.35, 2.4), a * rng.uniform(0.45, 1.0)
+            laps.append((tl, al, rng.uniform(-0.6, 0.6)))
+            Dp += al * C.ev(tl, -0.05, 0.15, lambda d: 0.5 - 0.5 * np.cos(TAU * (d + 0.05) / 0.2))
+    dip = 1 - (1 - 10 ** (-3 / 20)) * np.clip(Dp, 0, 1)     # bed dips ~3 dB (150-1200 Hz) under each lap
     lev = 0.30 * (1 + 0.3 * _pnoise(rng, T, 0.12)(C.t))
     bfc = 430 + 130 * _pnoise(rng, T, 0.05)(C.t)
 
@@ -604,30 +808,39 @@ def _waves_calm(rng, n, sr, p):
         fc = 380 + 2300 * np.clip(s, 0, 1.3) ** 0.8
         bed = C.at(lev, t) * _unit(pk * _bpm(f, 50, C.at(bfc, t)))
         swell = s * _unit(pk * _hpm(f, 80, 1) * _lpm(f, fc))
-        fizz = 0.22 * C.at(Fz[ch], t) * _unit(_bpm(f, 1500, 6000) * _pinkm(f, 3000, 0.3))
-        return bed + swell + fizz
+        fizz = 0.12 * C.at(Fz[ch], t) * _unit(_bpm(f, 1500, 6000) * _pinkm(f, 3000, 0.3))
+        duck = 1 - (1 - C.at(dip, t)) * _bpm(f, 150, 1200, 2)
+        return (bed + swell) * duck + fizz
 
     x = _bed(rng, n, sr, mask, corr=0.25)
     _dbg("bed", x)
     lp = np.zeros((n, 2))
     for tl, a, pan in laps:
-        _place(lp, _norm(_k_lap(rng, sr)) * a * 0.35, int(tl * sr), pan)
+        _place(lp, _norm(_k_lap(rng, sr)) * a * 2.2, int(tl * sr), pan)
     _dbg("laps", lp)
+    _dbg_vs("laps vs bed", lp, x, 150, 1200, sr)
     rate = 260 * C.at(Fz.mean(0), np.arange(n) / sr)
-    dz = np.stack([_dust(rng, rate, sr), _dust(rng, rate, sr)], 1)
-    dz = _fft_shape(dz, sr, lambda f: _bpm(f, 2000, 6500)) * 0.35
+    dz = np.stack([_dust(rng, rate, sr, even=True), _dust(rng, rate, sr, even=True)], 1)
+    dz = _fft_shape(dz, sr, lambda f: _bpm(f, 2000, 6500)) * 4.0
     _dbg("fizz grains", dz)
+    _dbg_vs("fizz vs bed", dz, x + lp, 2000, 6500, sr)
     return x + lp + dz
 
 
 def _k_lap(rng, sr):
+    """Shore lap: 2-4 quick wet slaps (band noise) and sometimes a soft low plop."""
     m = int(0.4 * sr)
     t = np.arange(m) / sr
-    nz = _nrms(_filt(rng.standard_normal(m), "bp", (rng.uniform(160, 260), rng.uniform(700, 1100)), sr))
-    y = nz * _ar(t, 0.01, rng.uniform(0.06, 0.13))
-    if rng.random() < 0.6:
-        f0 = rng.uniform(170, 320)
-        y += 1.8 * np.sin(_osc(f0 * (1 + 0.8 * np.minimum(t / 0.12, 1)), sr)) * _ar(t - 0.01, 0.004, 0.04)
+    y = np.zeros(m)
+    t0 = 0.0
+    for j in range(rng.integers(2, 5)):
+        nz = _nrms(_filt(rng.standard_normal(m), "bp", (rng.uniform(150, 260), rng.uniform(800, 1400)), sr))
+        y += nz * _ar(t - t0, 0.004, rng.uniform(0.03, 0.07)) * (0.75 ** j) * rng.uniform(0.7, 1.0)
+        t0 += rng.uniform(0.02, 0.07)
+    if rng.random() < 0.5:
+        f0 = rng.uniform(220, 380)
+        pl = np.sin(_osc(f0 * (1 + 0.5 * np.minimum(t / 0.06, 1)), sr)) * _ar(t - 0.012, 0.004, 0.03)
+        y += 0.9 * pl * np.abs(y).max() / (np.abs(pl).max() + 1e-12)
     return y
 
 
@@ -638,14 +851,15 @@ def _waves_storm(rng, n, sr, p):
     Cr = np.zeros((2, C.K))
     W = np.zeros((2, C.K))
     crashes = []
-    for t0 in _ptimes(rng, T, 3.3 / p["density"], 0.4):
-        a, rise = rng.uniform(0.6, 1.0), rng.uniform(0.7, 1.4)
+    alt = _Alt(rng, 0.1, 0.6)
+    for t0 in _ptimes(rng, T, 3.3 / p["density"], 0.4, min_one=True):
+        a, rise, rc = rng.uniform(0.6, 1.0), rng.uniform(0.7, 1.4), rng.uniform(0.15, 0.25)
         tc, tw = rng.uniform(0.35, 0.6), rng.uniform(1.0, 1.6)
-        pan = rng.uniform(-0.6, 0.6)
+        pan = alt()
         g = _pan(pan)[:, None]
         B += a * g * C.ev(t0, -rise, 1.5, lambda d: _swell(d, rise, 0.2))
-        Cr += a * g * C.ev(t0, 0, 6 * tc, lambda d: _ar(d, 0.03, tc) * np.clip(6 - d / tc, 0, 1))
-        W += a * g * C.ev(t0, 0, 6 * tw, lambda d: _ar(d, 0.15, tw) * np.clip(6 - d / tw, 0, 1))
+        Cr += a * g * C.ev(t0, -rc, 6 * tc, lambda d: _swell(d, rc, tc))
+        W += a * g * C.ev(t0, 0, 6 * tw, lambda d: _ar(d, 0.2, tw, 2.0) * np.clip(6 - d / tw, 0, 1))
         crashes.append((t0, a, pan))
     l1, l2, l3 = (_pnoise(rng, T, r)(C.t) for r in (0.15, 0.08, 0.3))
     low = 0.55 * (1 + 0.3 * l1)
@@ -655,23 +869,26 @@ def _waves_storm(rng, n, sr, p):
     def mask(f, t, ch):
         pk = _pinkm(f)
         b, c, w = C.at(B[ch], t), C.at(Cr[ch], t), C.at(W[ch], t)
-        m = C.at(low, t) * _unit(pk * _bpm(f, 40, C.at(lfc, t)))
+        m = C.at(low, t) * _unit(pk * _bpm(f, 55, C.at(lfc, t)))
         m = m + C.at(mid, t) * _unit(pk * _bpm(f, 250, 1800))
-        m = m + 0.8 * b * _unit(pk * _bpm(f, 60, 500 + 900 * np.clip(b, 0, 1.2)))
-        m = m + 1.4 * c * _unit(pk ** 0.6 * _bpm(f, 45, 4500))
-        m = m + 0.7 * w * _unit(pk * _bpm(f, 400, 5500))
+        m = m + 0.8 * b * _unit(pk * _bpm(f, 70, 500 + 900 * np.clip(b, 0, 1.2)))
+        m = m + 1.4 * c * _unit(pk ** 0.7 * _bpm(f, 60, 3000))
+        m = m + 0.7 * w * _unit(pk * _bpm(f, 400, 4500))
         return m
 
     x = _bed(rng, n, sr, mask, corr=0.2)
     _dbg("bed", x)
     th = np.zeros((n, 2))
-    for t0, a, pan in crashes:
-        _place(th, _norm(_k_thump(rng, sr, 75, 45, 0.28, noise=0.6, att=0.01)) * a * 0.45, int(t0 * sr), pan)
+    for t0, a, pan in crashes:          # the body of each wave hitting: a dull boom with some 200-500 Hz weight
+        k = _k_thump(rng, sr, 120, 70, 0.25, noise=0.8, att=0.03, p=2.0, nlp=450, harm=(1.0, 0.7, 0.4))
+        _place(th, _norm(np.tanh(1.5 * _norm(k))) * a * 1.6, int(t0 * sr), pan)
     _dbg("thumps", th)
+    _dbg_vs("thumps vs bed", th, x, 60, 400, sr)
     rate = 500 * C.at(W.mean(0), np.arange(n) / sr)
-    dz = np.stack([_dust(rng, rate, sr), _dust(rng, rate, sr)], 1)
-    dz = _fft_shape(dz, sr, lambda f: _bpm(f, 1800, 6500)) * 0.4
+    dz = np.stack([_dust(rng, rate, sr, even=True), _dust(rng, rate, sr, even=True)], 1)
+    dz = _fft_shape(dz, sr, lambda f: _bpm(f, 1800, 5500)) * 4.5
     _dbg("spray", dz)
+    _dbg_vs("spray vs bed", dz, x + th, 1800, 5500, sr)
     return x + th + dz
 
 
@@ -679,10 +896,10 @@ def _storm_wind(rng, n, sr, p):
     T = n / sr
     C = _Clock(T)
     gust = np.zeros((2, C.K))
-    for t0 in _ptimes(rng, T, 4.5, 0.5):
+    alt = _Alt(rng, 0.1, 0.5)
+    for t0 in _ptimes(rng, T, 4.5, 0.5, min_one=True):
         a, rise, fall = rng.uniform(0.3, 0.7), rng.uniform(0.8, 1.8), rng.uniform(1.2, 2.5)
-        gust += a * _pan(rng.uniform(-0.5, 0.5))[:, None] * C.ev(t0, -rise, 6 * fall,
-                                                                  lambda d: _swell(d, rise, fall))
+        gust += a * _pan(alt())[:, None] * C.ev(t0, -rise, 6 * fall, lambda d: _swell(d, rise, fall))
     base = 0.45 + 0.18 * _pnoise(rng, T, 0.22)(C.t)
     G = [np.clip(base + 0.06 * _pnoise(rng, T, 0.7)(C.t) + gust[ch], 0.12, 1.6) for ch in range(2)]
     vib = [_pnoise(rng, T, 1.5)(C.t) for _ in range(4)]
@@ -718,7 +935,7 @@ def _rain(rng, n, sr, p):
     dr = np.zeros((n, 2))
     times = rng.uniform(0, T, int(140 * p["density"] * T))
     for t0 in times:
-        a = 0.35 * rng.lognormal(0, 0.5) * (2.2 if rng.random() < 0.04 else 1.0)
+        a = 0.6 * rng.lognormal(0, 0.5) * (2.2 if rng.random() < 0.04 else 1.0)
         _place(dr, kern[rng.integers(len(kern))] * a, int(t0 * sr), rng.uniform(-0.9, 0.9))
     _dbg("drops", dr)
     return x + dr
@@ -727,8 +944,13 @@ def _rain(rng, n, sr, p):
 def _wind_soft(rng, n, sr, p):
     T = n / sr
     C = _Clock(T)
-    base = 0.6 + 0.2 * _pnoise(rng, T, 0.1)(C.t)
-    G = [np.clip(base + 0.08 * _pnoise(rng, T, 0.35)(C.t), 0.25, 1.1) for _ in range(2)]
+    gust = np.zeros((2, C.K))                   # gentle breaths of breeze every ~6 s
+    alt = _Alt(rng, 0.1, 0.5)
+    for t0 in _ptimes(rng, T, 6.0, 0.5, min_one=True):
+        a, rise, fall = rng.uniform(0.2, 0.45), rng.uniform(1.2, 2.5), rng.uniform(1.5, 3.0)
+        gust += a * _pan(alt())[:, None] * C.ev(t0, -rise, 6 * fall, lambda d: _swell(d, rise, fall))
+    base = 0.5 + 0.2 * _pnoise(rng, T, 0.1)(C.t)
+    G = [np.clip(base + gust[ch] + 0.08 * _pnoise(rng, T, 0.35)(C.t), 0.2, 1.2) for ch in range(2)]
     rus = np.clip(_pnoise(rng, T, 0.25)(C.t), 0, None) ** 2
     flut = [0.6 + 0.4 * np.abs(_pnoise(rng, T, 12)(C.t)) for _ in range(2)]
 
@@ -745,10 +967,10 @@ def _wind_hot(rng, n, sr, p):
     T = n / sr
     C = _Clock(T)
     gust = np.zeros((2, C.K))
-    for t0 in _ptimes(rng, T, 3.2, 0.5):
+    alt = _Alt(rng, 0.1, 0.5)
+    for t0 in _ptimes(rng, T, 3.2, 0.5, min_one=True):
         a, rise, fall = rng.uniform(0.35, 0.8), rng.uniform(0.5, 1.1), rng.uniform(0.9, 1.8)
-        gust += a * _pan(rng.uniform(-0.5, 0.5))[:, None] * C.ev(t0, -rise, 6 * fall,
-                                                                  lambda d: _swell(d, rise, fall))
+        gust += a * _pan(alt())[:, None] * C.ev(t0, -rise, 6 * fall, lambda d: _swell(d, rise, fall))
     base = 0.35 + 0.15 * _pnoise(rng, T, 0.3)(C.t)
     G = [np.clip(base + gust[ch], 0.1, 1.5) for ch in range(2)]
 
@@ -760,9 +982,19 @@ def _wind_hot(rng, n, sr, p):
 
     x = _bed(rng, n, sr, mask, corr=0.3)
     _dbg("wind", x)
+    # Sand: grains whose rate (3000 G^2 /s) and size (0.3 + 0.7 G) follow the gusts. Below ~300 grains/s single
+    # grains would turn into ticks, so there the grains cross-fade into smooth hiss of the same power.
     ts = np.arange(n) / sr
-    sand = np.stack([_dust(rng, 2500 * C.at(G[ch], ts) ** 2, sr) for ch in range(2)], 1)
-    sand = _fft_shape(sand, sr, lambda f: _bpm(f, 2500, 8000)) * 0.5
+    sand = np.zeros((n, 2))
+    for ch in range(2):
+        g = C.at(G[ch], ts)
+        rate = 3000 * g ** 2
+        amp = 0.3 + 0.7 * g
+        wg = _smoothstep((rate - 120) / 300)
+        grains = _dust(rng, rate, sr, even=True) * amp
+        hiss = rng.standard_normal(n) * np.sqrt(0.43 * rate / sr) * amp
+        sand[:, ch] = wg * grains + np.sqrt(1 - wg ** 2) * hiss
+    sand = _fft_shape(sand, sr, lambda f: _bpm(f, 2500, 6000)) * 3.8
     _dbg("sand", sand)
     return x + sand
 
@@ -770,35 +1002,37 @@ def _wind_hot(rng, n, sr, p):
 def _ship_creak(rng, n, sr, p):
     T = n / sr
     x = np.zeros((n, 2))
-    for t0 in _ptimes(rng, T, 1.6 / p["density"], 0.65):
+    alt = _Alt(rng, 0.1, 0.6)
+    for t0 in _ptimes(rng, T, 1.6 / p["density"], 0.65, min_one=True):
         r = rng.random()
         kind = "creak" if r < 0.6 else ("groan" if r < 0.85 else "knock")
-        y = _norm(_k_creak(rng, sr, kind)) * rng.uniform(0.4, 1.0) * (0.6 if kind == "knock" else 1.0)
-        _place(x, y, int(t0 * sr), rng.uniform(-0.6, 0.6))
-    x = _verb(x, _ir(rng, sr, 0.5, 0.006, 3000), 0.35, circular=True)
+        y = _norm(_k_creak(rng, sr, kind, 0.8 * T)) * rng.uniform(0.4, 1.0) * (0.6 if kind == "knock" else 1.0)
+        _place(x, y, int(t0 * sr), alt())
+    x = _verb(x, _ir(rng, sr, 0.5, 0.006, 3000), 0.5, circular=True)
     _dbg("creaks", x)
     C = _Clock(T)
-    lv = 0.05 * (1 + 0.5 * _pnoise(rng, T, 0.2)(C.t))
-    bed = _bed(rng, n, sr, lambda f, t, ch: C.at(lv, t) * _unit(_pinkm(f) * _bpm(f, 60, 450)), corr=0.3)
+    lv = 0.03 * (1 + 0.5 * _pnoise(rng, T, 0.2)(C.t))
+    bed = _bed(rng, n, sr, lambda f, t, ch: C.at(lv, t) * _unit(_pinkm(f) * _bpm(f, 80, 450)), corr=0.3)
     _dbg("hull bed", bed)
     return x + bed
 
 
-def _k_creak(rng, sr, kind):
+def _k_creak(rng, sr, kind, dmax=9.0):
     if kind == "knock":
         m = int(0.25 * sr)
         imp = np.zeros(m)
         imp[0] = 1.0
         j = int(rng.uniform(0.03, 0.06) * sr)
         imp[j] = rng.uniform(0.25, 0.5)
+        imp = signal.fftconvolve(imp, np.hanning(int(0.001 * sr) + 2))[:m]
         f1, f2 = rng.uniform(220, 320), rng.uniform(650, 900)
         return _reson(imp, f1, 14, sr) + 0.5 * _reson(imp, f2, 16, sr)
     if kind == "creak":
-        D, r0, glide = rng.uniform(0.25, 0.9), rng.uniform(22, 70), rng.uniform(-0.45, 0.6)
+        D, r0, glide = min(rng.uniform(0.25, 0.9), dmax), rng.uniform(22, 70), rng.uniform(-0.45, 0.6)
         res = [(rng.uniform(380, 650), 10, 1.0), (rng.uniform(950, 1450), 12, 0.6), (rng.uniform(1900, 2600), 14, 0.25)]
         fr = 0.0
     else:
-        D, r0, glide = rng.uniform(0.7, 1.6), rng.uniform(18, 35), rng.uniform(-0.3, 0.3)
+        D, r0, glide = min(rng.uniform(0.7, 1.6), dmax), rng.uniform(18, 35), rng.uniform(-0.3, 0.3)
         res = [(rng.uniform(180, 300), 6, 1.0), (rng.uniform(520, 800), 8, 0.5)]
         fr = 0.25
     m = int((D + 0.1) * sr)
@@ -811,6 +1045,7 @@ def _k_creak(rng, sr, kind):
     env = np.sin(np.pi * u) ** 0.6 * (t <= D)
     imp = np.zeros(m)
     imp[idx] = env[idx] * rng.uniform(0.5, 1.0, len(idx))
+    imp = signal.fftconvolve(imp, np.hanning(int(0.0007 * sr) + 2))[:m]      # soft pulses: no broadband clicks
     y = sum(g * _reson(imp, f, q, sr) for f, q, g in res)
     y = _norm(y)
     if fr:
@@ -821,33 +1056,39 @@ def _k_creak(rng, sr, kind):
 def _underwater(rng, n, sr, p):
     T = n / sr
     C = _Clock(T)
-    l1, l2, l3, l4 = (_pnoise(rng, T, r)(C.t) for r in (0.07, 0.04, 0.1, 0.2))
+    l1, l2, l4 = (_pnoise(rng, T, r)(C.t) for r in (0.07, 0.04, 0.2))
     sw = np.zeros(C.K)
     for t0 in _ptimes(rng, T, 7.0, 0.5):
         a, rise, fall = rng.uniform(0.3, 0.7), rng.uniform(1.5, 3.0), rng.uniform(1.5, 3.0)
         sw += a * C.ev(t0, -rise, 6 * fall, lambda d: _swell(d, rise, fall))
-    low = 0.8 * (1 + 0.3 * l1)
-    rum = 0.45 * (0.6 + 0.3 * l2 + sw)
-    muf = 0.25 * (1 + 0.4 * l3)
-    shm = 0.05 * (1 + 0.5 * l4)
+    cur = np.zeros((2, C.K))                 # slow water-current swells: the filter opens as they pass
+    alt = _Alt(rng, 0.15, 0.6)
+    for t0 in _ptimes(rng, T, 5.0, 0.5, min_one=True):
+        a, rise, fall = rng.uniform(0.4, 1.0), rng.uniform(1.5, 3.0), rng.uniform(1.5, 3.0)
+        cur += a * _pan(alt())[:, None] * C.ev(t0, -rise, 6 * fall, lambda d: _swell(d, rise, fall))
+    low = 0.45 * np.clip(1 + 0.55 * l1, 0.3, None)
+    rum = 0.25 * (0.5 + 0.35 * l2 + sw)
+    shm = 0.035 * (1 + 0.5 * l4)
 
     def mask(f, t, ch):
-        m = C.at(low, t) * _unit(_pinkm(f, slope=0.9) * _bpm(f, 35, 320))
-        m = m + C.at(rum, t) * _unit(_bpm(f, 40, 140))
-        m = m + C.at(muf, t) * _unit(_pinkm(f) * _bpm(f, 200, 900))
-        return m + C.at(shm, t) * _unit(_bpm(f, 1000, 3000))
+        c = np.clip(C.at(cur[ch], t), 0, 1.3)
+        m = C.at(low, t) * _unit(_pinkm(f, slope=0.8) * _bpm(f, 55, 300))
+        m = m + C.at(rum, t) * _unit(_bpm(f, 50, 130))
+        m = m + (0.05 + 0.8 * c) * _unit(_pinkm(f) * _bpm(f, 150, 220 + 650 * c))
+        return m + C.at(shm, t) * _unit(_bpm(f, 900, 2500))
 
     x = _bed(rng, n, sr, mask, corr=0.1)
     _dbg("bed", x)
     bb = np.zeros((n, 2))
-    for t0 in _ptimes(rng, T, 3.5, 0.6):
-        pan, f0 = rng.uniform(-0.7, 0.7), rng.uniform(250, 500)
+    alt = _Alt(rng, 0.2, 0.7)
+    for t0 in _ptimes(rng, T, 2.2, 0.6):
+        pan, f0 = alt(), rng.uniform(220, 450)
         tt = t0
-        for j in range(rng.integers(3, 8)):
+        for j in range(rng.integers(3, 9)):
             k = _k_bubble(sr, f0 * rng.uniform(0.9, 1.3) * (1 + 0.1 * j), rng.uniform(0.03, 0.07), 1.9)
-            _place(bb, _filt(k, "lp", 1200, sr) * 0.12 * rng.uniform(0.5, 1.0), int(tt * sr), pan)
+            _place(bb, _filt(k, "lp", 1200, sr) * 1.0 * rng.uniform(0.5, 1.0), int(tt * sr), pan)
             tt += rng.uniform(0.05, 0.2)
-    bb = _verb(bb, _ir(rng, sr, 1.2, 0.02, 1500), 0.5, circular=True)
+    bb = _verb(bb, _ir(rng, sr, 1.2, 0.02, 1500), 1.6, circular=True)
     _dbg("distant bubbles", bb)
     return x + bb
 
@@ -855,8 +1096,9 @@ def _underwater(rng, n, sr, p):
 def _bubbles(rng, n, sr, p):
     T = n / sr
     x = np.zeros((n, 2))
-    for t0 in _ptimes(rng, T, 1.1 / p["density"], 0.6):
-        pan, f0 = rng.uniform(-0.6, 0.6), rng.uniform(260, 700)
+    alt = _Alt(rng, 0.1, 0.6)
+    for t0 in _ptimes(rng, T, 1.1 / p["density"], 0.6, min_one=True):
+        pan, f0 = alt(), rng.uniform(260, 700)
         tt = t0
         for j in range(rng.integers(2, 8)):
             f = f0 * rng.uniform(0.85, 1.3) * (1 + 0.12 * j)
@@ -865,10 +1107,9 @@ def _bubbles(rng, n, sr, p):
             tt += rng.uniform(0.04, 0.16)
         if rng.random() < 0.3:
             k = _k_bubble(sr, rng.uniform(150, 260), rng.uniform(0.09, 0.13), 2.2, 0.15)
-            _place(x, k * rng.uniform(0.8, 1.1), int((t0 + rng.uniform(-0.3, 0.3)) * sr), rng.uniform(-0.4, 0.4))
-    x = _verb(x, _ir(rng, sr, 0.6, 0.008, 2500), 0.25, circular=True)
+            _place(x, k * rng.uniform(0.8, 1.1), int((t0 + rng.uniform(-0.3, 0.3)) * sr), -0.5 * pan)
+    x = _verb(x, _ir(rng, sr, 0.6, 0.008, 2500), 0.55, circular=True)
     _dbg("bubbles", x)
-    C = _Clock(T)
     bed = _bed(rng, n, sr, lambda f, t, ch: 0.02 * _unit(_pinkm(f) * _bpm(f, 40, 400)) + 0 * t, corr=0.2)
     _dbg("bed", bed)
     return x + bed
@@ -882,39 +1123,59 @@ def _heartbeat(rng, n, sr, p):
     dub_dt = 0.30 * min(1.0, per / 1.2)
     for t0 in times:
         a = rng.uniform(0.92, 1.0)
-        lub = _k_thump(rng, sr, 95, 52, 0.11, noise=0.35, att=0.012, p=2.0, nlp=260)
-        dub = _k_thump(rng, sr, 115, 62, 0.08, noise=0.3, att=0.01, p=2.0, nlp=300)
+        lub = _k_beat(rng, sr, 120, 75, 0.11, att=0.012)
+        dub = _k_beat(rng, sr, 140, 85, 0.08, att=0.01)
         _place(x, lub * a, int(t0 * sr))
         _place(x, dub * a * 0.65, int((t0 + dub_dt) * sr))
         # soft blood "whoosh" swelling after each beat
         m = int(min(per, 1.2) * sr)
         tt = np.arange(m) / sr
-        w = _nrms(_filt(rng.standard_normal(m), "lp", 380, sr)) * _ar(tt - 0.05, 0.08, 0.25, 2.0)
+        w = _nrms(_filt(rng.standard_normal(m), "bp", (120, 600), sr)) * _ar(tt - 0.05, 0.08, 0.25, 2.0)
         _place(x, w * 0.12, int(t0 * sr))
     _dbg("beats", x)
     C = _Clock(T)
     lv = 0.05 * (1 + 0.3 * _pnoise(rng, T, 0.1)(C.t))
-    bed = _bed(rng, n, sr, lambda f, t, ch: C.at(lv, t) * _unit(_pinkm(f) * _bpm(f, 40, 260)), corr=0.3)
+    bed = _bed(rng, n, sr, lambda f, t, ch: C.at(lv, t) * _unit(_pinkm(f) * _bpm(f, 70, 450)), corr=0.3)
     _dbg("belly bed", bed)
-    x = _verb(x + bed, _ir(rng, sr, 0.35, 0.005, 900), 0.3, circular=True)
+    x = _verb(x + bed, _ir(rng, sr, 0.35, 0.005, 900), 0.35, circular=True)
     return x
+
+
+def _k_beat(rng, sr, f0, f1, tau, att=0.01, knock_db=-2.0, knock_tau=0.08, drive=2.0, sat=0.3,
+            harm=(0.8, 0.9, 0.7, 0.5, 0.35, 0.22), kf=(380, 560)):
+    """Soft low thump that survives small speakers: a pitch-gliding thump with a rich harmonic series (upper
+    harmonics decay faster), gently and slightly asymmetrically saturated (odd and even harmonics imply the
+    missing fundamental on a phone), plus a soft 250-600 Hz knock (noise through a Q 2 resonator) at the onset."""
+    m = int(sr * tau * 7)
+    t = np.arange(m) / sr
+    f = f1 + (f0 - f1) * np.exp(-t / (tau * 0.4))
+    ph = _osc(f, sr)
+    y = np.zeros(m)
+    for k, a in enumerate(harm, 1):
+        y += a * np.sin(k * ph + 0.4 * k) * _ar(t, att, tau * (1.15 - 0.15 * k) if k < 6 else tau * 0.3, 2.0)
+    y += 0.4 * _nrms(_filt(rng.standard_normal(m), "bp", (80, 600), sr)) * _ar(t, 0.002, tau * 0.35, 2.0)
+    y = _norm(y)
+    y = (1 - sat) * y + sat * np.tanh(drive * y) / np.tanh(drive)
+    exc = rng.standard_normal(m) * _ar(t, 0.002, knock_tau)
+    kn = _reson(exc, rng.uniform(*kf), 2.0, sr)
+    return y + 10 ** (knock_db / 20) * _norm(kn)
 
 
 def _drip(rng, n, sr, p):
     T = n / sr
     dry = np.zeros((n, 2))
-    sources = [(rng.uniform(1.2, 3.4) / p["density"], rng.uniform(700, 1900), rng.uniform(-0.7, 0.7),
-                rng.uniform(0.45, 1.0)) for _ in range(3)]
-    for per, f0, pan, a in sources:
-        for t0 in _ptimes(rng, T, per, 0.12):
+    pans = _spread(rng, 3, 0.5, 0.1)
+    sources = [(rng.uniform(1.2, 3.4) / p["density"], rng.uniform(700, 1900), pans[i],
+                rng.uniform(0.45, 1.0)) for i in range(3)]
+    for i, (per, f0, pan, a) in enumerate(sources):
+        for t0 in _ptimes(rng, T, per, 0.12, min_one=(i == 0)):
             _place(dry, _k_drip(rng, sr, f0 * rng.uniform(0.96, 1.04)) * a * rng.uniform(0.8, 1.0), int(t0 * sr), pan)
+    alt = _Alt(rng, 0.3, 0.8)
     for t0 in _ptimes(rng, T, 5.0 / p["density"], 0.6):
-        _place(dry, _k_drip(rng, sr, rng.uniform(600, 2200)) * rng.uniform(0.3, 0.6), int(t0 * sr),
-               rng.uniform(-0.8, 0.8))
+        _place(dry, _k_drip(rng, sr, rng.uniform(600, 2200)) * rng.uniform(0.3, 0.6), int(t0 * sr), alt())
     _dbg("dry drips", dry)
     taps = [(0.045, 0.5), (0.083, 0.4), (0.121, 0.3), (0.16, 0.25), (0.24, 0.35), (0.48, 0.15)]
-    x = _verb(dry, _ir(rng, sr, 2.4, 0.02, 3200, taps), 0.7, circular=True)
-    C = _Clock(T)
+    x = _verb(dry, _ir(rng, sr, 2.4, 0.02, 3200, taps), 1.3, circular=True)
     bed = _bed(rng, n, sr, lambda f, t, ch: 0.004 * _unit(_pinkm(f) * _bpm(f, 40, 300)) + 0 * t, corr=0.2)
     _dbg("room tone", bed)
     return x + bed
@@ -956,9 +1217,9 @@ def _k_step(rng, sr, run):
 
     def thump(t0, a, tau):
         tt = t - t0
-        nz = _nrms(_filt(rng.standard_normal(m), "lp", 300 if run else 240, sr))
-        s = np.sin(_osc(70 + 40 * np.exp(-np.maximum(tt, 0) / 0.01), sr))
-        return a * (0.6 * nz + 0.7 * s) * _ar(tt, 0.0015, tau)
+        nz = _nrms(_filt(rng.standard_normal(m), "bp", (90, 380 if run else 320), sr))
+        s = np.sin(_osc(95 + 50 * np.exp(-np.maximum(tt, 0) / 0.01), sr))
+        return a * (0.7 * nz + 0.6 * s) * _ar(tt, 0.0025, tau)
 
     def grit(t0, a, count, spread):
         imp = np.zeros(m)
@@ -995,26 +1256,31 @@ def _crowd(rng, n, sr, p):
     T16 = nv16 / vsr
     vox = np.zeros((nv16, 2))
     nvoices = max(3, int(round(14 * p["density"])))
-    for _ in range(nvoices):
+    pans = _spread(rng, nvoices, 0.8, 0.08)
+    for iv in range(nvoices):
         r = rng.random()
         f0, fs = ((rng.uniform(95, 135), 1.0) if r < 0.45 else
                   (rng.uniform(175, 235), 1.12) if r < 0.85 else (rng.uniform(240, 300), 1.25))
         dist = rng.uniform(0.35, 1.0)
         cut = 1300 + 1300 * dist
-        pan = rng.uniform(-0.85, 0.85)
+        pan = pans[iv]
         cur = rng.uniform(0, T16)
         end = cur + T16
-        while cur < end - 0.5:
-            ph = _phrase(rng, vsr, f0 * rng.uniform(0.95, 1.05), fs, int(rng.integers(3, 11)))
+        while True:
+            room = min(end - cur, T16) - 0.2
+            nsyl = min(int(rng.integers(3, 11)), int(room / 0.19))
+            if nsyl < 1:
+                break
+            ph = _phrase(rng, vsr, f0 * rng.uniform(0.95, 1.05), fs, nsyl)
             ph = _filt(ph, "lp", cut, vsr, 2) * dist
             _place(vox, ph, int(cur * vsr), pan)
             cur += len(ph) / vsr + rng.uniform(0.3, 2.2)
     vox = signal.resample(vox, n, axis=0)           # FFT resampling keeps the loop circular
-    vox = _verb(vox, _ir(rng, sr, 0.9, 0.015, 2500), 0.5, circular=True)
+    vox = _verb(vox, _ir(rng, sr, 0.9, 0.015, 2500), 1.1, circular=True)
     vox *= 0.5
     _dbg("voices", vox)
     C = _Clock(T)
-    lv = 0.12 * (1 + 0.25 * _pnoise(rng, T, 0.1)(C.t))
+    lv = 0.55 * (1 + 0.25 * _pnoise(rng, T, 0.1)(C.t))
     fl = [1 + 0.35 * _pnoise(rng, T, 4.0)(C.t) for _ in range(2)]
 
     def mask(f, t, ch):
@@ -1064,19 +1330,22 @@ def _birds(rng, n, sr, p):
     T = n / sr
     x = np.zeros((n, 2))
     nb = max(1, int(round(rng.integers(2, 4) * p["density"])))
-    kinds = ["up", "down", "trill", "whistle", "tweet"]
-    for _ in range(nb):
-        s, dist, pan = rng.uniform(0.82, 1.12), rng.uniform(0.4, 1.0), rng.uniform(-0.8, 0.8)
-        song = [(kinds[rng.integers(len(kinds))], rng.uniform(0.03, 0.09)) for _ in range(rng.integers(2, 7))]
+    species = list(rng.permutation(["chirper", "warbler", "twitter"]))
+    pans = _spread(rng, nb, 0.65, 0.12)
+    for b in range(nb):
+        sp = species[b % 3]
+        s, dist, pan = rng.uniform(0.88, 1.12), rng.uniform(0.45, 1.0), pans[b]
+        song = _bird_song(rng, sp)
         cut = 4500 + 2500 * dist
-        for t0 in _ptimes(rng, T, rng.uniform(3.5, 6.5) / p["density"], 0.6):
-            parts = []
-            for kind, gap in song[: len(song) - (1 if rng.random() < 0.3 else 0)] or song:
-                parts.append(_bird_note(rng, sr, kind, s * rng.uniform(0.96, 1.04)))
-                parts.append(np.zeros(int(gap * rng.uniform(0.85, 1.15) * sr)))
-            ph = _filt(np.concatenate(parts), "lp", cut, sr, 2) * dist * rng.uniform(0.7, 1.0)
+        for t0 in _ptimes(rng, T, rng.uniform(3.5, 6.5) / p["density"], 0.6, min_one=(b == 0)):
+            ph = _bird_render(rng, sr, _bird_vary(rng, sp, song), s)
+            ph = _filt(ph, "lp", cut, sr, 2) * dist * rng.uniform(0.7, 1.0)
             _place(x, ph, int(t0 * sr), pan + rng.uniform(-0.1, 0.1))
-    x = _verb(x, _ir(rng, sr, 0.9, 0.012, 4500), 0.25, circular=True)
+            if rng.random() < 0.35:            # a lone call a little later
+                call = _bird_render(rng, sr, [song[rng.integers(len(song))][:2] + (0.0,)], s)
+                _place(x, _filt(call, "lp", cut, sr, 2) * dist * 0.6, int((t0 + len(ph) / sr + rng.uniform(0.4, 1.2)) * sr),
+                       pan)
+    x = _verb(x, _ir(rng, sr, 0.9, 0.012, 4500), 0.4, circular=True)
     _dbg("birds", x)
     C = _Clock(T)
     lv = 0.006 * (1 + 0.3 * _pnoise(rng, T, 0.15)(C.t))
@@ -1085,44 +1354,65 @@ def _birds(rng, n, sr, p):
     return x + bed
 
 
-def _bird_note(rng, sr, kind, s):
-    if kind == "trill":
-        D = rng.uniform(0.15, 0.3)
-    elif kind == "whistle":
-        D = rng.uniform(0.12, 0.22)
-    elif kind == "tweet":
-        D = rng.uniform(0.025, 0.045)
-    else:
-        D = rng.uniform(0.05, 0.09)
-    m = int(D * sr)
-    u = np.arange(m) / m
-    am = 1.0
-    if kind == "up":
-        f = (2300 + 1600 * u ** rng.uniform(0.6, 1.6)) * s
-    elif kind == "down":
-        f = (3900 - 1400 * u ** rng.uniform(0.6, 1.6)) * s
-    elif kind == "tweet":
-        f = (4100 - 700 * u) * s
-    elif kind == "whistle":
-        f = (2550 + 350 * np.sin(np.pi * u / 2)) * s
-    else:
-        rate = rng.uniform(24, 34)
-        f = (3150 + 420 * np.sin(TAU * rate * u * D)) * s
-        am = 0.6 + 0.4 * np.sin(TAU * rate * u * D + 1.0)
-    f = np.minimum(f, 4400)
-    ph = _osc(f, sr)
-    env = np.sin(np.pi * u) ** 0.7 * am
-    return env * (np.sin(ph) + 0.08 * np.sin(2 * ph))
+_GLIDES = [(2200, 3000), (3300, 2400), (2400, 3300, 2600), (3000, 2300, 2900), (2650, 2850), (2300, 3500, 3100)]
+
+
+def _bird_song(rng, sp):
+    """A bird's song template: list of (duration_s, frequency knots Hz, gap_after_s)."""
+    if sp == "chirper":                       # sparrow-like repeated chips, maybe a closing trill
+        cnt, slope = rng.integers(3, 7), rng.uniform(-0.04, 0.04)
+        song = [(rng.uniform(0.03, 0.045), tuple(np.array([4100, 3300, 3000]) * (1 + slope * i)),
+                 rng.uniform(0.07, 0.11)) for i in range(cnt)]
+        if rng.random() < 0.5:
+            song += [(0.018, (3600, 3200), 0.012)] * int(rng.integers(5, 9))
+        return song
+    if sp == "warbler":                       # robin-like varied whistled glides
+        return [(rng.uniform(0.08, 0.2), tuple(np.array(_GLIDES[rng.integers(len(_GLIDES))]) * rng.uniform(0.85, 1.2)),
+                 rng.uniform(0.04, 0.09)) for _ in range(rng.integers(3, 7))]
+    song = [(rng.uniform(0.02, 0.03), (3800, 3000) if i % 2 else (3000, 3800), rng.uniform(0.015, 0.025))
+            for i in range(rng.integers(8, 15))]                 # finch-like twitter + longer ending notes
+    return song + [(0.1, (2600, 3400), 0.05)] * int(rng.integers(1, 3))
+
+
+def _bird_vary(rng, sp, song):
+    song = list(song)
+    if sp == "warbler" and len(song) > 2 and rng.random() < 0.4:
+        i = rng.integers(len(song) - 1)
+        song[i], song[i + 1] = song[i + 1], song[i]
+    if len(song) > 2 and rng.random() < 0.3:
+        song = song[:-1]
+    k = rng.uniform(0.97, 1.03)
+    return [(d * rng.uniform(0.9, 1.1), tuple(np.array(f) * k), g * rng.uniform(0.85, 1.15)) for d, f, g in song]
+
+
+def _bird_render(rng, sr, notes, s):
+    parts = []
+    for D, knots, gap in notes:
+        m = max(8, int(D * sr))
+        u = np.arange(m) / m
+        kn = np.minimum(np.array(knots, float) * s, 4400)
+        f = np.interp(_smoothstep(u) if len(kn) == 2 else u, np.linspace(0, 1, len(kn)), kn)
+        if len(kn) > 2:
+            f = ndimage.gaussian_filter1d(f, m / 12, mode="nearest")
+        ph = _osc(f, sr)
+        env = np.sin(np.pi * u ** 0.8) ** 0.7
+        parts.append(env * (np.sin(ph) + 0.05 * np.sin(2 * ph)))
+        parts.append(np.zeros(int(gap * sr)))
+    return np.concatenate(parts)
 
 
 # ---- snore
 def _snore(rng, n, sr, p):
     T = n / sr
-    times, per = _beats(rng, T, float(p["cycle"]), jitter=0.03, tol=0.2)
+    cyc = float(p["cycle"])
+    if T < 0.6 * cyc:
+        times, per = np.array([0.0]), T          # one compressed snore cycle per loop
+    else:
+        times, per = _beats(rng, T, cyc, jitter=0.03, tol=0.2)
     x = np.zeros((n, 2))
     for t0 in times:
         _place(x, _snore_cycle(rng, sr, per), int(t0 * sr), rng.uniform(-0.05, 0.05))
-    return _verb(x, _ir(rng, sr, 0.35, 0.005, 3000), 0.12, circular=True)
+    return _verb(x, _ir(rng, sr, 0.35, 0.005, 3000), 0.25, circular=True)
 
 
 def _snore_cycle(rng, sr, per):
@@ -1140,7 +1430,7 @@ def _snore_cycle(rng, sr, per):
     imp = np.zeros(mi)
     imp[idx] = rng.uniform(0.6, 1.0, len(idx))
     k = int(0.012 * sr)
-    flap = rng.standard_normal(k) * _ar(np.arange(k) / sr, 0.0008, 0.004)
+    flap = _filt(rng.standard_normal(k), "lp", 1600, sr) * _ar(np.arange(k) / sr, 0.0015, 0.005)
     src = signal.fftconvolve(imp, flap)[:mi]
     fs = rng.uniform(0.9, 1.1)
     rasp = _norm(_reson(src, 240 * fs, 4, sr) + 0.6 * _reson(src, 650 * fs, 5, sr) + 0.3 * _reson(src, 1150 * fs, 6, sr))
@@ -1158,35 +1448,36 @@ def _snore_cycle(rng, sr, per):
     envw = _smoothstep(te / 0.15) * _smoothstep((De - te) / 0.35)
     ph = _osc(f, sr)
     tone = np.sin(ph) + 0.08 * np.sin(2 * ph)
-    hh = _norm(_filt(rng.standard_normal(me), "bp", (500, 2800), sr))
+    hh = _norm(_filt(rng.standard_normal(me), "bp", (500, 2400), sr))
     y[j0:j0 + me] += envw * (0.38 * tone + 0.22 * hh)
     return y
 
 
 # ---- heat (cicadas)
 def _heat(rng, n, sr, p):
+    """Soft cicada chorus: 3-5 voices of band noise (2.5-4 kHz, wide) pulsed at ~100-150 Hz, each swelling by
+    6-10 dB over 3-6 s with staggered phases, over a little warm air. Low-passed at 5 kHz (_FINISH)."""
     T = n / sr
     C = _Clock(T)
     ts = np.arange(n) / sr
     x = np.zeros((n, 2))
-    for _ in range(rng.integers(3, 6)):
-        fc, bw = rng.uniform(3300, 4600), rng.uniform(500, 800)
+    k = int(rng.integers(3, 6))
+    pans = _spread(rng, k, 0.7, 0.1)
+    fcs = rng.permutation(np.linspace(2500, 3700, k)) * rng.uniform(0.96, 1.04, k)
+    for i in range(k):
+        fc, bw = fcs[i], rng.uniform(1000, 1500)
         fam = max(1, round(rng.uniform(95, 150) * T)) / T
-        sharp = rng.uniform(3, 6)
-        car = _cnoise(rng, n, sr, lambda f: _gauss(f, fc, bw / 2))
+        sharp = rng.uniform(1.5, 3.0)
+        car = _cnoise(rng, n, sr, lambda f: _gauss(f, fc, bw / 2) * _lpm(f, 4500, 2))
         am = (0.5 + 0.5 * np.cos(TAU * fam * ts + rng.uniform(0, TAU))) ** sharp
         am /= np.sqrt(np.mean(am ** 2))
-        puls = max(1, round(rng.uniform(2.5, 5) * T)) / T
-        env = np.zeros(C.K)
-        for t0 in _ptimes(rng, T, 7.0, 0.5):
-            rise, hold, fall = rng.uniform(1.0, 2.5), rng.uniform(2, 6), rng.uniform(1.5, 3)
-            env += rng.uniform(0.5, 1.0) * C.ev(t0, 0, rise + hold + fall,
-                                                 lambda d: _smoothstep(d / rise) * _smoothstep((rise + hold + fall - d) / fall))
-        if T < 4:
-            env += 0.6
-        env = np.clip(env, 0, 1.2)
-        e = C.at(env, ts) * (1 + 0.15 * np.sin(TAU * puls * ts))
-        _place(x, car * am * e * rng.uniform(0.5, 1.0), 0, rng.uniform(-0.7, 0.7))
+        cyc = max(1, int(round(T / rng.uniform(3.0, 6.0))))
+        depth = rng.uniform(6.0, 10.0) * min(1.0, T / 3.0)
+        warp = _pnoise(rng, T, 0.15)
+        sw = 0.5 - 0.5 * np.cos(TAU * cyc * ts / T + TAU * i / k + rng.uniform(-0.4, 0.4) + 0.7 * warp(ts))
+        e = 10 ** (-depth * (1 - sw) / 20) * (1 + 0.12 * np.sin(TAU * (max(1, round(3.5 * T)) / T) * ts))
+        _place(x, car * am * e * rng.uniform(0.6, 1.0), 0, pans[i])
+    x = _verb(x, _ir(rng, sr, 0.8, 0.012, 5000), 0.55, circular=True)
     _dbg("cicadas", x)
     lv = 0.15 * (1 + 0.3 * _pnoise(rng, T, 0.1)(C.t))
     bed = _bed(rng, n, sr, lambda f, t, ch: C.at(lv, t) * _unit(_pinkm(f) * _bpm(f, 80, 1200)), corr=0.3)
@@ -1195,96 +1486,110 @@ def _heat(rng, n, sr, p):
 
 
 # =========================================================================================== one-shots
+# Generators may return more than the natural length (decay and reverb tails rendered in full); _render_oneshot
+# fits that into NAMES[name][1] with an exponential end fade (END_FADE). Events are timed so each sound has
+# decayed by ~40 dB before the fade starts, so nothing is chopped while it still rings.
 def _thunder(rng, sr, p):
-    L = 4.0
+    L = 3.4
     m = int(L * sr)
     t = np.arange(m) / sr
-    out = np.zeros((m, 2))
     tc = 0.03
-    k = int(0.08 * sr)
+    crack = np.zeros((m, 2))
+    k = int(0.1 * sr)
     tk = np.arange(k) / sr
-    for i in range(rng.integers(5, 9)):
+    for i in range(rng.integers(5, 9)):                   # a cluster of sub-cracks in the first ~0.2 s
         ti = tc + (rng.exponential(0.06) if i else 0.0)
-        b = _filt(rng.standard_normal(k), "bp", (250, 4500), sr) * _ar(tk, 0.0015, rng.uniform(0.006, 0.02))
-        _place(out, _norm(b) * rng.uniform(0.4, 1.0) * 0.75 ** i, int(ti * sr), rng.uniform(-0.3, 0.3), wrap=False)
-    body = _nrms(_filt(rng.standard_normal((m, 2)), "bp", (150, 3000), sr)) * _ar(t - tc, 0.004, 0.14)[:, None]
-    out += 0.35 * body
-    _dbg("crack", out)
-    env = np.zeros(m)
-    rolls = [0.08, rng.uniform(0.35, 0.7), rng.uniform(0.9, 1.4), rng.uniform(1.5, 2.1), rng.uniform(2.2, 2.8)]
-    for ti, a in zip(rolls, (1.0, 0.85, 0.7, 0.5, 0.35)):
-        env += a * rng.uniform(0.75, 1.1) * _swell(t - ti - 0.15, rng.uniform(0.1, 0.25), rng.uniform(0.4, 0.8))
-    env *= np.exp(-t / 2.5) * _smoothstep((3.6 - t) / 0.6)
-    low = _nrms(_filt(rng.standard_normal((m, 2)), "lp", 170, sr, 2))
-    mid = _nrms(_filt(rng.standard_normal((m, 2)), "bp", (150, 900), sr))
-    rum = (low * env[:, None] + 0.45 * mid * (env ** 1.5)[:, None]) * 0.42
+        b = _filt(rng.standard_normal(k), "bp", (200, 3500), sr) * _ar(tk, 0.002, rng.uniform(0.008, 0.025))
+        _place(crack, _norm(b) * rng.uniform(0.5, 1.0) * 0.8 ** i, int(ti * sr), rng.uniform(-0.2, 0.2), wrap=False)
+    w2 = rng.standard_normal((m, 3))
+    w2 = np.stack([0.9 * w2[:, 0] + 0.45 * w2[:, 1], 0.9 * w2[:, 0] + 0.45 * w2[:, 2]], 1)
+    crack += 0.5 * _nrms(_filt(w2, "bp", (120, 2000), sr)) * _ar(t - tc, 0.006, 0.18)[:, None]
+    crack = np.tanh(1.3 * _norm(crack)) / np.tanh(1.3)
+    _dbg("crack", crack)
+    env = np.zeros(m)                                     # rolls of the rumble
+    rolls = [0.05, rng.uniform(0.35, 0.7), rng.uniform(0.9, 1.3), rng.uniform(1.4, 1.9), rng.uniform(2.0, 2.4)]
+    for ti, a in zip(rolls, (1.0, 0.9, 0.75, 0.55, 0.4)):
+        env += a * rng.uniform(0.8, 1.1) * _swell(t - ti - 0.15, rng.uniform(0.1, 0.22), rng.uniform(0.22, 0.4))
+    env = 0.15 * np.exp(-t / 1.2) * _smoothstep(t / 0.1) + env
+    env *= np.exp(-t / 2.2) * _smoothstep((3.2 - t) / 0.9)
+    env /= env.max()
+    rough = np.clip(1 + 0.7 * _nrms(_filt(rng.standard_normal(m), "lp", 6, sr, 2)), 0.15, None)
+    w = rng.standard_normal((m, 3))         # mostly shared noise (L/R corr ~0.8): centred, the width is in the verb
+    w = np.stack([0.9 * w[:, 0] + 0.45 * w[:, 1], 0.9 * w[:, 0] + 0.45 * w[:, 2]], 1)
+    low = _nrms(_filt(w, "bp", (45, 160), sr))
+    body = _nrms(_filt(w, "bp", (150, 450), sr))
+    top = _nrms(_filt(w, "bp", (400, 1200), sr))
+    rum = (low * env[:, None] + 0.6 * body * (env ** 1.3)[:, None] + 0.12 * top * (env ** 2.5)[:, None]) * rough[:, None]
+    rum = _norm(rum)
     _dbg("rumble", rum)
-    x = out + rum
-    x = _verb(x, _ir(rng, sr, 1.8, 0.03, 2500), 0.35)[:m]
-    return np.tanh(x * 1.6) / 1.6
+    x = 0.7 * crack + rum
+    return _verb(x, _ir(rng, sr, 1.2, 0.03, 1800), 0.8)
 
 
 def _splash_any(rng, sr, L, big):
     m = int(L * sr)
     t = np.arange(m) / sr
     x = np.zeros((m, 2))
-    sc = 1.0 if big else 0.55
-    th = _k_thump(rng, sr, 110 if big else 160, 60 if big else 90, 0.05 if big else 0.035, noise=0.6)
+    sc = 1.0 if big else 0.7
+    th = _k_thump(rng, sr, 110 if big else 160, 70 if big else 95, 0.05 if big else 0.04, noise=0.6,
+                  harm=(1.0, 0.6, 0.35))
     _place(x, _norm(th) * 0.7 * sc, 0, 0, wrap=False)
-    slap = _nrms(_filt(rng.standard_normal(m), "bp", (500, 6000), sr)) * _ar(t, 0.002, 0.035 if big else 0.025)
+    slap = _nrms(_filt(rng.standard_normal(m), "bp", (500, 6000), sr)) * _ar(t, 0.002, 0.035 if big else 0.03)
     x += (0.8 * slap)[:, None]
-    nz = _nrms(_filt(rng.standard_normal((m, 2)), "bp", (300, 1500), sr))
-    hz = _nrms(_filt(rng.standard_normal((m, 2)), "bp", (1500, 6000), sr))
+    w = rng.standard_normal((m, 3))
+    w = np.stack([0.85 * w[:, 0] + 0.5 * w[:, 1], 0.85 * w[:, 0] + 0.5 * w[:, 2]], 1)     # mostly centred
+    nz = _nrms(_filt(w, "bp", (300, 1500), sr))
+    hz = _nrms(_filt(w[::-1], "bp", (1500, 6000), sr))
     if big:
-        e1 = _ar(t, 0.02, 0.25) + 0.5 * _ar(t - 0.2, 0.08, 0.25)
-        e2 = _ar(t, 0.01, 0.15) + 0.45 * _ar(t - 0.22, 0.06, 0.2)
+        e1 = _ar(t, 0.02, 0.2) + 0.5 * _ar(t - 0.2, 0.08, 0.18)
+        e2 = _ar(t, 0.01, 0.13) + 0.45 * _ar(t - 0.22, 0.06, 0.16)
         x += 0.65 * nz * e1[:, None] + 0.4 * hz * e2[:, None]
-    else:
-        x += 0.4 * nz * _ar(t, 0.006, 0.12)[:, None] + 0.45 * hz * _ar(t, 0.003, 0.06)[:, None]
-        plop = _k_bubble(sr, rng.uniform(220, 320), 0.07, 2.2, 0.15)
+    else:              # crate into water: a fuller 'plunk' (body + plop + wooden knock), short and centred
+        x += 0.75 * nz * _ar(t, 0.006, 0.09)[:, None] + 0.45 * hz * _ar(t, 0.003, 0.05)[:, None]
+        plop = _k_bubble(sr, rng.uniform(220, 320), 0.06, 2.0, 0.15)
         _place(x, _norm(plop) * 0.9, int(0.004 * sr), 0, wrap=False)
         kn = np.zeros(int(0.2 * sr))
         kn[0] = 1
         knock = _reson(kn, rng.uniform(210, 260), 10, sr) + 0.5 * _reson(kn, rng.uniform(560, 660), 12, sr)
-        _place(x, _norm(knock) * 0.3, 0, 0, wrap=False)
+        _place(x, _norm(knock) * 0.4, 0, 0, wrap=False)
     _dbg("impact+body", x)
     dr = np.zeros((m, 2))
     nd = rng.integers(60, 120) if big else rng.integers(15, 30)
+    alt = _Alt(rng, 0.05, 0.6)
     for _ in range(nd):
         u = rng.random() ** 1.6
-        t0 = (0.12 + (L - 0.35) * u) if big else (0.06 + (L - 0.3) * u)
-        a = (1 - 0.7 * u) * rng.uniform(0.15, 0.5)
-        _place(dr, _norm(_k_drop_or_tick(rng, sr)) * a, int(t0 * sr), rng.uniform(-0.6, 0.6), wrap=False)
+        t0 = (0.12 + 0.8 * u) if big else (0.05 + 0.3 * u)
+        a = (1 - 0.75 * u) * rng.uniform(0.15, 0.5)
+        _place(dr, _norm(_k_drop_or_tick(rng, sr)) * a, int(t0 * sr), alt(), wrap=False)
     for _ in range(rng.integers(6, 12) if big else rng.integers(3, 6)):
-        t0 = rng.uniform(0.08, 0.9 * L)
-        k = _k_bubble(sr, rng.uniform(200, 700), rng.uniform(0.025, 0.06), 1.9)
-        _place(dr, k * rng.uniform(0.15, 0.35), int(t0 * sr), rng.uniform(-0.5, 0.5), wrap=False)
+        t0 = rng.uniform(0.08, 0.75) if big else rng.uniform(0.05, 0.3)
+        k = _k_bubble(sr, rng.uniform(200, 700), rng.uniform(0.025, 0.05), 1.9)
+        _place(dr, k * rng.uniform(0.15, 0.35), int(t0 * sr), alt(), wrap=False)
     _dbg("droplets", dr)
-    x = x + dr
-    return _verb(x, _ir(rng, sr, 0.6, 0.008, 5000), 0.15)[:m]
+    return _verb(x + dr, _ir(rng, sr, 0.5, 0.008, 5000), 0.25)
 
 
 def _splash(rng, sr, p):
-    return _splash_any(rng, sr, 1.5, True)
+    return _splash_any(rng, sr, 1.2, True)
 
 
 def _splash_small(rng, sr, p):
-    return _splash_any(rng, sr, 0.8, False)
+    return _splash_any(rng, sr, 0.6, False)
 
 
 def _whoosh(rng, sr, p):
-    L = 0.8
+    L = 0.68                          # the swish itself; the natural length adds a little air after it
     m = int(L * sr)
     t = np.arange(m) / sr
     u = t / L
-    a, b = 2.2, 2.7
+    a, b = 2.0, 3.2
     env = u ** a * (1 - u) ** b
     env /= env.max()
     f_lo, f_hi = rng.uniform(300, 420), rng.uniform(1400, 1900)
 
     def mask(f, tt):
         uu = np.clip(tt / L, 0, 1)
-        fc = f_lo * (f_hi / f_lo) ** np.sin(np.pi * uu ** 0.9)
+        fc = f_lo * (f_hi / f_lo) ** np.sin(np.pi * uu ** 0.85)
         return _gauss(np.log(np.maximum(f, 20)), np.log(fc), 0.45)
 
     y = _nrms(_shaped(rng, m, sr, mask)) * env
@@ -1310,7 +1615,7 @@ def _additive_voice(t, f0, formants, sr, kmax=40, tilt=1.0):
 
 
 def _gulp(rng, sr, p):
-    L = 1.0
+    L = 0.85
     m = int(L * sr)
     t = np.arange(m) / sr
     x = np.zeros(m)
@@ -1318,33 +1623,39 @@ def _gulp(rng, sr, p):
     k = int(0.1 * sr)
     tk = np.arange(k) / sr
     x[:k] += 0.25 * _nrms(_filt(rng.standard_normal(k), "bp", (400, 1800), sr)) * _ar(tk - 0.01, 0.003, 0.03)
-    _place2 = lambda y, at, g: x.__setitem__(slice(int(at * sr), int(at * sr) + len(y)),
-                                             x[int(at * sr): int(at * sr) + len(y)] + g * y[: m - int(at * sr)])
-    _place2(_norm(_k_bubble(sr, rng.uniform(450, 600), 0.03, 1.6)), 0.012, 0.4)
+
+    def add(y, at, g):
+        _place(xs, g * y, int(at * sr), wrap=False)
+
+    xs = np.zeros((m, 2))
+    add(_norm(_k_bubble(sr, rng.uniform(450, 600), 0.03, 1.6)), 0.012, 0.4)
     # 2) throat swallow: harmonic tone sweeping down through an 'oo' vowel
-    f0 = 70 + 105 * np.exp(-np.maximum(t - 0.05, 0) / 0.18)
-    F1 = 320 - 70 * np.clip((t - 0.05) / 0.5, 0, 1)
-    F2 = 780 - 180 * np.clip((t - 0.05) / 0.5, 0, 1)
-    v = _additive_voice(t, f0, [(F1, 90, 1.0), (F2, 130, 0.45), (2400, 300, 0.06)], sr, tilt=0.8)
-    envv = _smoothstep((t - 0.04) / 0.05) * _smoothstep((0.58 - t) / 0.12) * (1 + 0.25 * np.sin(np.pi * np.clip((t - 0.05) / 0.5, 0, 1)))
+    f0 = 75 + 100 * np.exp(-np.maximum(t - 0.05, 0) / 0.16)
+    F1 = 330 - 70 * np.clip((t - 0.05) / 0.42, 0, 1)
+    F2 = 800 - 180 * np.clip((t - 0.05) / 0.42, 0, 1)
+    v = _additive_voice(t, f0, [(F1, 90, 1.0), (F2, 130, 0.5), (2400, 300, 0.06)], sr, tilt=0.8)
+    envv = (_smoothstep((t - 0.04) / 0.05) * _smoothstep((0.5 - t) / 0.1)
+            * (1 + 0.25 * np.sin(np.pi * np.clip((t - 0.05) / 0.42, 0, 1))))
     x += _norm(v) * envv * 1.0
-    # 3) closing bloop, 4) wet pop, 5) slosh
-    _place2(_norm(_k_bubble(sr, 120, 0.06, 2.4, 0.2)), 0.52, 0.8)
-    kp = int(0.12 * sr)
+    # 3) closing bloop, 4) wet pop, 5) slosh + two little bubbles
+    add(_norm(_k_bubble(sr, 120, 0.05, 2.4, 0.2)), 0.44, 0.8)
+    kp = int(0.1 * sr)
     tp = np.arange(kp) / sr
-    fp = 1100 - 750 * np.exp(-tp / 0.004)
-    pop = np.sin(_osc(fp, sr)) * _ar(tp, 0.0005, 0.03) + 0.2 * _norm(_filt(rng.standard_normal(kp), "lp", 3000, sr)) * _ar(tp, 0.0002, 0.003)
-    _place2(pop, 0.64, 0.6)
-    sl = int(0.35 * sr)
-    _place2(_nrms(_filt(rng.standard_normal(sl), "lp", 600, sr)) * _ar(np.arange(sl) / sr, 0.01, 0.12), 0.65, 0.15)
+    fp = 300 * 3 ** (1 - np.exp(-tp / 0.012))
+    pop = (np.sin(_osc(fp, sr)) * _ar(tp, 0.0008, 0.016)
+           + 0.15 * _norm(_filt(rng.standard_normal(kp), "lp", 2500, sr)) * _ar(tp, 0.0003, 0.003))
+    add(pop, 0.53, 0.6)
+    sl = int(0.3 * sr)
+    add(_nrms(_filt(rng.standard_normal(sl), "lp", 600, sr)) * _ar(np.arange(sl) / sr, 0.01, 0.06), 0.54, 0.15)
     for _ in range(2):
-        _place2(_norm(_k_bubble(sr, rng.uniform(300, 600), 0.03, 1.8)), rng.uniform(0.7, 0.85), 0.2)
+        add(_norm(_k_bubble(sr, rng.uniform(300, 600), 0.02, 1.8)), rng.uniform(0.55, 0.6), 0.2)
+    x = x[:, None] + xs
     _dbg("gulp", x)
-    return _verb(x, _ir(rng, sr, 0.4, 0.005, 2500), 0.15)[:m]
+    return _verb(x, _ir(rng, sr, 0.4, 0.005, 2500), 0.33)
 
 
 def _spit(rng, sr, p):
-    L = 0.8
+    L = 0.6
     m = int(L * sr)
     t = np.arange(m) / sr
     x = np.zeros((m, 2))
@@ -1359,61 +1670,88 @@ def _spit(rng, sr, p):
     th = _k_thump(rng, sr, 140, 80, 0.02, noise=0.4)
     _place(x, _norm(th) * 0.5, int(tp * sr), 0, wrap=False)
     # "tooey": rising voiced glide oo -> ee + a big expelling bloop
-    u = np.clip((t - 0.13) / 0.3, 0, 1)
+    u = np.clip((t - 0.13) / 0.27, 0, 1)
     fv = 160 * 2 ** u
     tooey = _additive_voice(t, fv, [(320, 90, 1.0), (800 + 1400 * u ** 1.5, 150, 0.5), (2600, 300, 0.1)], sr)
-    ev = _smoothstep((t - 0.13) / 0.02) * _smoothstep((0.47 - t) / 0.12)
-    x += (0.35 * _norm(tooey) * ev)[:, None]
-    _place(x, _norm(_k_bubble(sr, 180, 0.08, 3.0, 0.2)) * 0.7, int(0.14 * sr), 0, wrap=False)
+    ev = _smoothstep((t - 0.13) / 0.02) * _smoothstep((0.42 - t) / 0.1)
+    x += (0.4 * _norm(tooey) * ev)[:, None]
+    _place(x, _norm(_k_bubble(sr, 180, 0.07, 3.0, 0.2)) * 0.7, int(0.14 * sr), 0, wrap=False)
     # wet splatter
+    alt = _Alt(rng, 0.05, 0.5)
     for _ in range(rng.integers(20, 40)):
-        t0 = rng.uniform(0.22, 0.72)
-        _place(x, _norm(_k_drop_or_tick(rng, sr)) * rng.uniform(0.08, 0.3), int(t0 * sr), rng.uniform(-0.5, 0.5), wrap=False)
+        t0 = 0.2 + 0.2 * rng.random() ** 1.3
+        _place(x, _norm(_k_drop_or_tick(rng, sr)) * rng.uniform(0.08, 0.3), int(t0 * sr), alt(), wrap=False)
     for _ in range(rng.integers(2, 5)):
-        t0 = rng.uniform(0.3, 0.6)
+        t0 = rng.uniform(0.24, 0.36)
         k = int(0.08 * sr)
-        sp = _nrms(_filt(rng.standard_normal(k), "bp", (800, 5000), sr)) * _ar(np.arange(k) / sr, 0.002, 0.03)
-        _place(x, sp * 0.18, int(t0 * sr), rng.uniform(-0.4, 0.4), wrap=False)
+        sp = _nrms(_filt(rng.standard_normal(k), "bp", (800, 5000), sr)) * _ar(np.arange(k) / sr, 0.002, 0.025)
+        _place(x, sp * 0.18, int(t0 * sr), alt(), wrap=False)
     _dbg("spit", x)
     return x
 
 
 def _thud(rng, sr, p):
+    """Soft landing on sand: a damped low thump (saturated so phones hear it) with a 250-500 Hz body and a soft
+    knock, a smaller settling bump ~80 ms later and a short scatter of sand, all within ~0.25 s."""
     L = 0.4
     m = int(L * sr)
     t = np.arange(m) / sr
-    f = 65 + 45 * np.exp(-t / 0.02)
-    y = np.sin(_osc(f, sr)) * _ar(t, 0.003, 0.07)
-    y += 0.6 * _nrms(_filt(rng.standard_normal(m), "lp", 350, sr)) * _ar(t, 0.002, 0.04) * 0.5
+
+    def impact(t0, a, f_hi, f_lo, d=1.0):
+        tt = np.maximum(t - t0, 0.0)
+        on = (t >= t0) * (1 - np.exp(-tt / 0.003))
+        th = np.maximum(tt - 0.012 * d, 0.0)                      # a short hold, then a body that the sand damps
+        damp = on * np.exp(-th / (0.075 * d) - (th / (0.14 * d)) ** 2)
+        ph = _osc(f_lo + (f_hi - f_lo) * np.exp(-tt / 0.015), sr)
+        low = _norm((np.sin(ph) + 0.5 * np.sin(2 * ph + 0.3) + 0.25 * np.sin(3 * ph)) * damp)
+        low = 0.6 * low + 0.4 * np.tanh(2.5 * low) / np.tanh(2.5)
+        body = _nrms(_filt(rng.standard_normal(m), "bp", (250, 600), sr)) * on \
+            * np.exp(-tt / (0.05 * d) - (tt / (0.13 * d)) ** 2)
+        kn = _reson(rng.standard_normal(m) * _ar(t - t0, 0.001, 0.008), rng.uniform(300, 450), 2.0, sr) \
+            * np.exp(-tt / 0.04)
+        return a * (0.8 * low + 1.0 * _norm(body) + 1.0 * _norm(kn))
+
+    y = impact(0.0, 1.0, 165, 92) + impact(rng.uniform(0.06, 0.08), 0.45, 145, 98, 0.7)
     imp = np.zeros(m)
-    ts = rng.exponential(0.06, rng.integers(40, 80))
+    ts = rng.exponential(0.045, rng.integers(90, 150))       # ~150 ms scatter of sand grains
     idx = (ts * sr).astype(int)
     idx = idx[idx < m]
-    np.add.at(imp, idx, rng.uniform(0.2, 1.0, len(idx)) * rng.choice([-1, 1], len(idx)) * np.exp(-idx / sr / 0.1))
-    sand = 0.25 * _norm(_filt(imp, "bp", (700, 4000), sr))
-    hiss = 0.15 * _nrms(_filt(rng.standard_normal(m), "bp", (1000, 5000), sr)) * _ar(t, 0.003, 0.08)
-    return _norm(y) + sand + hiss * 0.5
+    np.add.at(imp, idx, rng.uniform(0.3, 1.0, len(idx)) * rng.choice([-1, 1], len(idx)) * np.exp(-idx / sr / 0.06))
+    sand = _norm(_filt(imp, "bp", (600, 3500), sr))
+    hiss = _nrms(_filt(rng.standard_normal(m), "bp", (800, 3500), sr)) * _ar(t, 0.003, 0.05)
+    y = y + 0.35 * sand + 0.06 * hiss
+    pk = np.abs(y).max()                     # round off the first ~40 ms (soft clip, cross-faded back to linear)
+    w = _smoothstep((0.045 - t) / 0.02)
+    return w * np.tanh(2.5 * y / pk) / np.tanh(2.5) * pk + (1 - w) * y
 
 
 def _midi(m):
     return 440.0 * 2 ** ((m - 69) / 12)
 
 
+def _fold(nn, fmax):
+    """MIDI note folded down by octaves until its frequency is <= fmax (stays in key, unlike a frequency clamp)."""
+    nn = float(nn)
+    while _midi(nn) > fmax:
+        nn -= 12
+    return nn
+
+
 def _bell(sr, f, L, tau, rng, partials=((1, 1.0, 1.0), (2.0, 0.25, 0.45), (3.0, 0.08, 0.25), (4.2, 0.05, 0.15),
                                          (5.4, 0.025, 0.1)), att=0.004):
     m = int(L * sr)
     t = np.arange(m) / sr
-    y = np.zeros((m, 2))
+    y = np.zeros(m)
     for r, a, td in partials:
-        for ch, det in enumerate((-1, 1)):
-            fr = f * r * (1 + det * 0.0009)
-            if fr < 0.45 * sr:
-                y[:, ch] += a * np.sin(TAU * fr * t + rng.uniform(0, TAU)) * _ar(t, att, tau * td, 2.0)
-    return y
+        if f * r > 7500:
+            continue
+        for det, g in ((-1, 0.6), (1, 0.4)):          # gentle chorus, same in both channels
+            y += g * a * np.sin(TAU * f * r * (1 + det * 0.0006) * t + rng.uniform(0, TAU)) * _ar(t, att, tau * td, 2.0)
+    return np.stack([y, y], 1)
 
 
 def _chime(rng, sr, p):
-    L = 3.2
+    L = 2.3                          # bells ring out inside the natural length (reverb tail rendered on top)
     m = int(L * sr)
     t = np.arange(m) / sr
     root = float(p["root"])
@@ -1421,171 +1759,181 @@ def _chime(rng, sr, p):
     notes = [0, 4, 7, 12, 16]
     for i, nn in enumerate(notes):
         t0 = 0.07 * i + rng.uniform(-0.01, 0.01)
-        f = _midi(root + nn)
-        _place(x, _bell(sr, f, L - t0, 0.8 * (523 / f) ** 0.3, rng) * 0.5 * (0.9 ** i), int(max(t0, 0) * sr), wrap=False)
+        f = _midi(_fold(root + nn, 2400))
+        _place(x, _bell(sr, f, L - t0, 0.45 * (523 / f) ** 0.3, rng) * 0.5 * (0.9 ** i), int(max(t0, 0) * sr),
+               wrap=False)
     _dbg("bells", x)
     pad = np.zeros(m)
     for nn in (0, 4, 7):
-        f = _midi(root - 12 + nn)
+        f = _midi(_fold(root - 12 + nn, 1200))
         pad += np.sin(TAU * f * t) + 0.15 * np.sin(TAU * 2 * f * t)
-    pad *= _smoothstep(t / 0.4) * np.exp(-np.maximum(t - 0.4, 0) / 0.9) * 0.06
+    pad *= _smoothstep(t / 0.4) * np.exp(-np.maximum(t - 0.4, 0) / 0.5) * 0.06
     x += pad[:, None]
     _dbg("pad", pad)
     pent = [0, 2, 4, 7, 9]
-    for _ in range(rng.integers(18, 30)):
-        t0 = rng.uniform(0.05, 1.6) ** 1.0
-        nn = root + 24 + pent[rng.integers(5)] + 12 * rng.integers(0, 2)
-        f = min(_midi(nn), 4800)
+    side = rng.choice([-1.0, 1.0])
+    for _ in range(rng.integers(18, 30)):        # airy sparkle: major-pentatonic pings, alternating sides
+        t0 = rng.uniform(0.05, 1.3)
+        nn = _fold(root + 24 + pent[rng.integers(5)] + 12 * rng.integers(0, 2), 4700)
+        f = _midi(nn)
         k = int(0.3 * sr)
         tk = np.arange(k) / sr
-        ping = np.sin(TAU * f * tk) * _ar(tk, 0.0015, rng.uniform(0.04, 0.09))
-        _place(x, ping * rng.uniform(0.04, 0.09) * (1 - 0.4 * t0 / 1.6), int(t0 * sr), rng.uniform(-0.6, 0.6), wrap=False)
-    air = _nrms(_filt(rng.standard_normal((m, 2)), "bp", (3000, 8000), sr)) * (_ar(t, 0.3, 0.8, 2.0) * 0.02)[:, None]
+        ping = np.sin(TAU * f * tk) * _ar(tk, 0.0015, rng.uniform(0.04, 0.08))
+        side = -side
+        _place(x, ping * rng.uniform(0.04, 0.09) * (1 - 0.5 * t0 / 1.3), int(t0 * sr), side * rng.uniform(0.2, 0.6),
+               wrap=False)
+    air = _nrms(_filt(rng.standard_normal((m, 2)), "bp", (3000, 8000), sr)) * (_ar(t, 0.3, 0.5, 2.0) * 0.02)[:, None]
     x += air
-    return _verb(x, _ir(rng, sr, 2.2, 0.02, 6000), 0.35)[:m]
+    return _verb(x, _ir(rng, sr, 1.4, 0.02, 6000), 0.5)
 
 
 def _sparkle(rng, sr, p):
-    L = 1.6
+    L = 0.9
     m = int(L * sr)
     t = np.arange(m) / sr
     root = float(p["root"])
     x = np.zeros((m, 2))
     pent = [0, 2, 4, 7, 9]
-    scale = [root + o * 12 + s for o in range(3) for s in pent]
+    scale = [_fold(root + o * 12 + s, 4700) for o in range(3) for s in pent]
     N = rng.integers(22, 34)
     run = rng.integers(5, 9)
+    alt = _Alt(rng, 0.1, 0.5)
     for i in range(N):
         if i < run:                       # opening ascending run
             t0 = 0.035 * i
             nn = scale[min(i * 2, len(scale) - 1)]
-        else:
-            t0 = 0.12 + 0.85 * rng.random() ** 1.5
+        else:                             # glitter thinning out and fading
+            t0 = 0.1 + 0.5 * rng.random() ** 1.6
             nn = scale[rng.integers(len(scale))]
-        f = min(_midi(nn), 4500)
-        tau = rng.uniform(0.08, 0.22)
-        k = int(tau * 6 * sr)
+        f = _midi(nn)
+        tau = rng.uniform(0.05, 0.12)
+        k = int(tau * 7 * sr)
         tk = np.arange(k) / sr
-        ping = (np.sin(TAU * f * tk) + 0.15 * np.sin(TAU * 2 * f * tk) + 0.06 * np.sin(TAU * 2.76 * f * tk)) * _ar(tk, 0.0015, tau)
-        a = rng.uniform(0.5, 1.0) * (1 - 0.6 * min(t0, 1.0))
-        _place(x, ping * a * 0.3, int(t0 * sr), rng.uniform(-0.5, 0.5), wrap=False)
+        ping = (np.sin(TAU * f * tk) + 0.15 * np.sin(TAU * 2 * f * tk)
+                + 0.06 * np.sin(TAU * 2.76 * f * tk) * (2.76 * f < 7500)) * _ar(tk, 0.0015, tau)
+        a = rng.uniform(0.5, 1.0) * np.exp(-t0 / 0.35)
+        _place(x, ping * a * 0.3, int(t0 * sr), alt(), wrap=False)
     sh = _nrms(_filt(rng.standard_normal((m, 2)), "bp", (2500, 7000), sr))
     am = 0.6 + 0.4 * np.sin(TAU * 18 * t)
-    x += sh * (_ar(t, 0.05, 0.35) * am * 0.06)[:, None]
-    return _verb(x, _ir(rng, sr, 1.2, 0.012, 7000), 0.35)[:m]
+    x += sh * (_ar(t, 0.05, 0.2) * am * 0.06)[:, None]
+    return _verb(x, _ir(rng, sr, 0.8, 0.012, 7000), 0.45)
 
 
 def _grow(rng, sr, p):
-    L = 2.3
+    """Rising sweep and twinkle run that blooms into a bell at ~1.05 s, then rings out."""
+    L = 1.7
     m = int(L * sr)
     t = np.arange(m) / sr
     root = float(p["root"])
+    tb = 1.05                                   # bloom
     f0 = _midi(root - 12) * 0.95
-    f = f0 * 4 ** np.clip(t / 1.6, 0, 1) ** 1.2
-    env = _smoothstep(t / 0.25) * (0.35 + 0.65 * np.clip(t / 1.5, 0, 1)) * _smoothstep((1.95 - t) / 0.45)
-    y = np.zeros((m, 2))
-    for ch, det in enumerate((-1, 1)):
-        for dd in (-0.004, 0.0, 0.004):
-            ph = _osc(f * (1 + dd + det * 0.002), sr, rng.uniform(0, TAU))
-            y[:, ch] += np.sin(ph) + 0.1 * np.sin(3 * ph) + 0.3 * np.sin(2 * ph)
-    y *= (env * 0.12)[:, None]
+    f = f0 * 4 ** np.clip(t / tb, 0, 1) ** 1.2
+    env = _smoothstep(t / 0.25) * (0.35 + 0.65 * np.clip(t / tb, 0, 1)) * _smoothstep((tb + 0.25 - t) / 0.3)
+    sw = np.zeros(m)
+    for dd in (-0.004, 0.0, 0.004):
+        ph = _osc(f * (1 + dd), sr, rng.uniform(0, TAU))
+        sw += np.sin(ph) + 0.1 * np.sin(3 * ph) + 0.3 * np.sin(2 * ph)
+    y = np.stack([sw, sw], 1) * (env * 0.12)[:, None]
     _dbg("sweep", y)
 
     def mask(ff, tt):
-        fc = 400 * 10 ** np.clip(tt / 1.7, 0, 1)
+        fc = 400 * 10 ** np.clip(tt / (tb + 0.1), 0, 1)
         return _gauss(np.log(np.maximum(ff, 20)), np.log(fc), 0.35)
 
     nz = _nrms(_shaped(rng, m, sr, mask)) * env * 0.12
     y += nz[:, None] * np.array([1.0, 0.9])
     pent = [0, 2, 4, 7, 9]
-    scale = [root + o * 12 + s for o in range(3) for s in pent]
+    scale = [_fold(root + o * 12 + s, 4700) for o in range(3) for s in pent]
     N = rng.integers(10, 16)
     for i in range(N):
-        t0 = 1.8 * (i / N) ** 0.75 + rng.uniform(0, 0.03)
+        t0 = (tb - 0.05) * (i / N) ** 0.75 + rng.uniform(0, 0.03)
         nn = scale[min(int(i * len(scale) / N), len(scale) - 1)]
-        fr = min(_midi(nn), 4200)
+        fr = _midi(nn)
         k = int(0.6 * sr)
         tk = np.arange(k) / sr
-        ping = (np.sin(TAU * fr * tk) + 0.2 * np.sin(TAU * 2 * fr * tk)) * _ar(tk, 0.002, rng.uniform(0.08, 0.16))
+        ping = (np.sin(TAU * fr * tk) + 0.2 * np.sin(TAU * 2 * fr * tk)) * _ar(tk, 0.002, rng.uniform(0.06, 0.12))
         _place(y, ping * rng.uniform(0.25, 0.45) * 0.5, int(t0 * sr), 0.4 * (-1) ** i, wrap=False)
-    k = int(0.8 * sr)
-    tk = np.arange(k) / sr
-    _place(y, _bell(sr, _midi(root + 24), 0.8, 0.35, rng) * 0.18, int(1.8 * sr), wrap=False)
-    rate = 50 + 350 * np.clip(t / 1.8, 0, 1) * (t < 1.9)
+    _place(y, _bell(sr, _midi(_fold(root + 24, 2400)), 0.7, 0.16, rng) * 0.18, int(tb * sr), wrap=False)
+    rate = 50 + 350 * np.clip(t / tb, 0, 1) * (t < tb + 0.05)
     rs = _filt(np.stack([_dust(rng, rate, sr), _dust(rng, rate, sr)], 1), "bp", (1500, 5000), sr) * 0.06
     y += rs
     _dbg("twinkles+rustle", y)
-    return _verb(y, _ir(rng, sr, 1.4, 0.015, 7000), 0.3)[:m]
+    return _verb(y, _ir(rng, sr, 1.0, 0.015, 7000), 0.4)
 
 
 def _wither(rng, sr, p):
-    L = 2.1
+    L = 1.75
     m = int(L * sr)
     t = np.arange(m) / sr
-    f = 520 * (140 / 520) ** np.clip(t / 1.8, 0, 1) * (1 + 0.02 * np.sin(TAU * 6 * t))
+    D = 1.45
+    f = 520 * (140 / 520) ** np.clip(t / (D - 0.1), 0, 1) * (1 + 0.02 * np.sin(TAU * 6 * t))
     ph = _osc(f, sr)
-    env = _smoothstep(t / 0.05) * np.clip(1 - t / 1.9, 0, 1) ** 1.2
+    env = _smoothstep(t / 0.05) * np.clip(1 - t / D, 0, 1) ** 1.3
     tone = (np.sin(ph) + 0.11 * np.sin(3 * ph)) * env * 0.6
 
     def mask(ff, tt):
-        fc = 2500 * (500 / 2500) ** np.clip(tt / 1.7, 0, 1)
+        fc = 2500 * (500 / 2500) ** np.clip(tt / (D - 0.1), 0, 1)
         return _gauss(np.log(np.maximum(ff, 20)), np.log(fc), 0.5)
 
-    hiss = _nrms(_shaped(rng, m, sr, mask)) * _ar(t, 0.03, 0.7) * 0.4
+    hiss = _nrms(_shaped(rng, m, sr, mask)) * _ar(t, 0.03, 0.42) * 0.4
     x = np.stack([tone + hiss, tone + hiss], 1)
-    rate = 300 * np.exp(-t / 0.7) + 40 * (t < 1.8)
+    rate = (300 * np.exp(-t / 0.5) + 40) * _smoothstep((1.25 - t) / 0.2)
     cr = _filt(np.stack([_dust(rng, rate, sr), _dust(rng, rate, sr)], 1), "bp", (1500, 6000), sr)
     x += 0.35 * _norm(cr)
+    alt = _Alt(rng, 0.1, 0.4)
     for _ in range(rng.integers(5, 9)):
         k = int(0.06 * sr)
         b = _nrms(_filt(rng.standard_normal(k), "bp", (2000, 5000), sr)) * _ar(np.arange(k) / sr, 0.002, 0.015)
-        _place(x, b * 0.12, int(rng.uniform(0.05, 1.5) * sr), rng.uniform(-0.4, 0.4), wrap=False)
-    for t0 in (rng.uniform(1.35, 1.5), rng.uniform(1.65, 1.8)):
-        _place(x, _norm(_k_thump(rng, sr, 180, 120, 0.02, noise=0.6)) * 0.12, int(t0 * sr), rng.uniform(-0.3, 0.3), wrap=False)
+        _place(x, b * 0.12, int(rng.uniform(0.05, 1.1) * sr), alt(), wrap=False)
+    for t0 in (rng.uniform(0.95, 1.05), rng.uniform(1.15, 1.25)):    # a leaf or two dropping
+        _place(x, _norm(_k_thump(rng, sr, 180, 120, 0.02, noise=0.6)) * 0.12, int(t0 * sr), alt(), wrap=False)
     _dbg("wither", x)
-    return _verb(x, _ir(rng, sr, 0.6, 0.008, 5000), 0.15)[:m]
+    return _verb(x, _ir(rng, sr, 0.6, 0.008, 5000), 0.25)
 
 
 def _crunch(rng, sr, p):
-    L = 1.5
+    L = 1.2
     m = int(L * sr)
     x = np.zeros((m, 2))
     t0, i = 0.02, 0
     nb = rng.integers(6, 10)
-    while i < nb and t0 < 1.3:
-        a = rng.uniform(0.6, 1.0)
+    while i < nb and t0 < 0.95:
+        a = rng.uniform(0.75, 1.0)
         _place(x, _k_bite(rng, sr) * a, int(t0 * sr), rng.uniform(-0.15, 0.15), wrap=False)
         i += 1
-        t0 += rng.uniform(0.11, 0.2) + (0.22 if i % 3 == 0 else 0.0)
-    return _verb(x, _ir(rng, sr, 0.4, 0.005, 5000), 0.1)[:m]
+        t0 += rng.uniform(0.1, 0.17) + (0.15 if i % 3 == 0 else 0.0)
+    return _verb(x, _ir(rng, sr, 0.35, 0.005, 5000), 0.15)
 
 
 def _k_bite(rng, sr):
+    """One nibble: a dense burst of crisp fragments over a short 400-1500 Hz 'snap' body, gently compressed."""
     k = int(0.12 * sr)
     t = np.arange(k) / sr
     imp = np.zeros(k)
-    sp = rng.uniform(0.025, 0.06)
-    ts = rng.exponential(sp / 2, rng.integers(15, 40))
+    sp = rng.uniform(0.02, 0.04)
+    ts = rng.exponential(sp, rng.integers(50, 90))
     idx = (ts * sr).astype(int)
     idx = idx[idx < k]
-    np.add.at(imp, idx, rng.uniform(0.3, 1.0, len(idx)) * rng.choice([-1, 1], len(idx)))
-    cr = 0.7 * _norm(_filt(imp, "bp", (1200, 5000), sr))
-    body = 0.5 * _norm(_filt(rng.standard_normal(k), "bp", (350, 1200), sr) * _ar(t, 0.002, 0.015))
-    tick = 0.2 * np.sin(TAU * 220 * t) * _ar(t, 0.001, 0.008)
-    return cr + body + tick
+    np.add.at(imp, idx, rng.uniform(0.4, 1.0, len(idx)) * rng.choice([-1, 1], len(idx)) * np.exp(-ts[ts * sr < k] / 0.05))
+    cr = _norm(_filt(imp, "bp", (1200, 4500), sr))
+    body = _norm(_filt(rng.standard_normal(k), "bp", (400, 1500), sr) * _ar(t, 0.002, 0.025))
+    tick = np.sin(TAU * 230 * t) * _ar(t, 0.001, 0.01)
+    y = 0.65 * cr + 0.6 * body + 0.2 * tick
+    y = np.tanh(1.8 * y / np.abs(y).max()) / np.tanh(1.8)          # per-bite compressor: tames the spikiest grain
+    return _fade(y, sr, 0.0, 0.01)
 
 
 def _gull(rng, sr, p):
-    L = 1.6
+    L = 1.15
     m = int(L * sr)
     x = np.zeros(m)
     pitch = float(p["pitch"])
-    ncalls = int(p["calls"]) if p.get("calls") else int(rng.integers(2, 4))
+    ncalls = int(p["calls"]) if p["calls"] is not None else int(rng.integers(2, 4))
     t0 = 0.02
     base = rng.uniform(850, 1050) * pitch
     for i in range(ncalls):
-        D = rng.uniform(0.25, 0.38) * (0.9 ** i)
-        if t0 + D > L - 0.05:
+        D = rng.uniform(0.25, 0.36) * (0.9 ** i) * (1.0 if ncalls <= 3 else 3.0 / ncalls)
+        if t0 + D > L - 0.12:
             break
         k = int(D * sr)
         tt = np.arange(k) / sr
@@ -1600,39 +1948,44 @@ def _gull(rng, sr, p):
             y += a * np.sin(h * ph)
         rough = 1 + 0.25 * _nrms(_filt(rng.standard_normal(k), "lp", 120, sr))
         env = _smoothstep(tt / 0.02) * _smoothstep((D - tt) / 0.06)
-        _place2 = int(t0 * sr)
-        x[_place2:_place2 + k] += _norm(y * rough * env) * (0.8 ** i)
-        t0 += D + rng.uniform(0.08, 0.16)
+        j = int(t0 * sr)
+        x[j:j + k] += _norm(y * rough * env) * (0.8 ** i)
+        t0 += D + rng.uniform(0.07, 0.13)
     x = _filt(x, "lp", 6000, sr)
-    return _verb(x, _ir(rng, sr, 0.9, 0.02, 4000), 0.2)[:m]
+    return _verb(x, _ir(rng, sr, 0.7, 0.02, 4000), 0.35)
 
 
 def _lots(rng, sr, p):
-    L = 1.5
+    """Lots being cast: wooden sticks rattled in a clay jar (dense clicks through the jar's 450-650 Hz body
+    resonance), then one stick dropping out and bouncing."""
+    L = 1.15
     m = int(L * sr)
     x = np.zeros((m, 2))
     nsh = rng.integers(3, 5)
-    sp = rng.uniform(0.2, 0.24)
+    sp = rng.uniform(0.14, 0.17)
     for s in range(nsh):
         ts = 0.03 + s * sp
-        for _ in range(rng.integers(6, 13)):
-            tc = ts + rng.exponential(0.025)
-            jar = rng.random() < 0.3
-            _place(x, _k_click(rng, sr, jar) * rng.uniform(0.4, 1.0), int(tc * sr), -0.15 + rng.uniform(-0.1, 0.1),
-                   wrap=False)
-    td = 0.03 + nsh * sp + rng.uniform(0.12, 0.2)
-    for j, (dt, a) in enumerate(((0.0, 1.0), (0.08, 0.45), (0.13, 0.2))):
-        _place(x, _k_tock(rng, sr) * a * 0.9, int((td + dt * rng.uniform(0.9, 1.1)) * sr), 0.2, wrap=False)
-    return _verb(x, _ir(rng, sr, 0.5, 0.006, 6000), 0.15)[:m]
+        for _ in range(rng.integers(14, 26)):
+            tc = ts + rng.gamma(2.0, 0.018)
+            _place(x, _k_click(rng, sr, rng.random() < 0.5) * rng.uniform(0.35, 1.0), int(tc * sr),
+                   -0.1 + rng.uniform(-0.12, 0.12), wrap=False)
+    jar = np.zeros_like(x)                          # the jar body ringing under the rattle
+    for fj, q, g in ((rng.uniform(450, 520), 8, 1.0), (rng.uniform(580, 650), 9, 0.6), (rng.uniform(1050, 1250), 10, 0.3)):
+        jar += g * _reson(x, fj, q, sr)
+    x = 0.55 * x + 0.9 * _norm(jar) * np.abs(x).max()
+    td = 0.03 + nsh * sp + rng.uniform(0.06, 0.1)
+    for dt, a in ((0.0, 1.0), (0.08, 0.45), (0.13, 0.2)):
+        _place(x, _k_tock(rng, sr) * a * 0.9, int((td + dt * rng.uniform(0.9, 1.1)) * sr), 0.15, wrap=False)
+    return _verb(x, _ir(rng, sr, 0.4, 0.006, 6000), 0.22)
 
 
 def _k_click(rng, sr, jar):
-    k = int(0.12 * sr)
+    k = int(0.06 * sr)
     imp = np.zeros(k)
     imp[0] = 1
-    y = _reson(imp, rng.uniform(1800, 3200), 18, sr) + 0.3 * _reson(imp, rng.uniform(3600, 5000), 20, sr)
+    y = _reson(imp, rng.uniform(1800, 3200), 12, sr) + 0.3 * _reson(imp, rng.uniform(3600, 5000), 14, sr)
     if jar:
-        y = 0.6 * _norm(y) + 0.5 * _norm(_reson(imp, rng.uniform(480, 620), 12, sr))
+        y = 0.6 * _norm(y) + 0.5 * _norm(_reson(imp, rng.uniform(480, 620), 10, sr))
     return _norm(y)
 
 
@@ -1645,59 +1998,62 @@ def _k_tock(rng, sr):
 
 
 def _cloth(rng, sr, p):
-    L = 0.8
+    L = 0.6
     m = int(L * sr)
     t = np.arange(m) / sr
-    g1 = _swell(t - rng.uniform(0.1, 0.16), 0.08, 0.1)
-    g2 = 0.7 * _swell(t - rng.uniform(0.42, 0.5), 0.08, 0.12)
+    g1 = _swell(t - rng.uniform(0.09, 0.12), 0.07, 0.06)
+    g2 = 0.75 * _swell(t - rng.uniform(0.25, 0.29), 0.07, 0.05)
     env = g1 + g2
-    fr = 0.55 + 0.45 * np.abs(_nrms(_filt(rng.standard_normal(m), "lp", 40, sr))) / 2
+    fr = 0.65 + 0.35 * np.abs(_nrms(_filt(rng.standard_normal(m), "lp", 40, sr))) / 2
 
     def mask(f, tt):
-        return _bpm(f, 700, 5000) * _pinkm(f, 2000, 0.3)
+        return _bpm(f, 600, 5000) * _pinkm(f, 2000, 0.3)
 
     y = np.stack([_nrms(_shaped(rng, m, sr, mask)) for _ in range(2)], 1)
     y = 0.85 * y[:, :1] + 0.3 * y
     y *= (env * fr * 0.5)[:, None]
-    rate = 200 * env
-    cr = _filt(np.stack([_dust(rng, rate, sr), _dust(rng, rate, sr)], 1), "bp", (2500, 6500), sr)
-    return y + 0.15 * _norm(cr)
+    rate = 150 * env
+    cr = _filt(np.stack([_dust(rng, rate, sr, even=True), _dust(rng, rate, sr, even=True)], 1), "bp", (2500, 6000), sr)
+    return y + 0.1 * _norm(cr)
 
 
 def _sheep(rng, sr, p):
-    L = 1.0
+    L = 0.95
     m = int(L * sr)
     t = np.arange(m) / sr
     pitch = float(p["pitch"])
-    D = rng.uniform(0.78, 0.88)
+    D = rng.uniform(0.56, 0.64)
     base = rng.uniform(230, 270) * pitch
     vr = rng.uniform(6.5, 8.5)
-    contour = np.interp(t, [0, 0.15, D], [0.92, 1.05, 0.9])
+    contour = np.interp(t, [0, 0.13, D], [0.92, 1.05, 0.9])
     f0 = base * contour * (1 + 0.04 * np.sin(TAU * vr * t))
     on = np.clip(t / 0.05, 0, 1)
     F1 = 400 + 380 * on
-    F2 = 1100 + 450 * on - 200 * np.clip((t - 0.4) / 0.4, 0, 1)
+    F2 = 1100 + 450 * on - 200 * np.clip((t - 0.35) / 0.35, 0, 1)
     v = _additive_voice(t, f0, [(F1, 110, 1.0), (F2, 150, 0.6), (2700 + 0 * t, 250, 0.25), (3700 + 0 * t, 300, 0.1)],
                         sr, tilt=1.0)
     am = 1 - 0.35 * (0.5 + 0.5 * np.sin(TAU * vr * t - 0.5))
-    env = _smoothstep(t / 0.04) * _smoothstep((D - t) / 0.12) * am
+    env = _smoothstep(t / 0.04) * _smoothstep((D - t) / 0.12) * am * (t < D)
     y = _norm(v) * env
 
     def mask(f, tt):
         return 0.02 + _gauss(f, 780, 150) + 0.6 * _gauss(f, 1500, 200) + 0.25 * _gauss(f, 2700, 300)
 
     br = _nrms(_shaped(rng, m, sr, mask)) * env * 0.06
-    return _verb(y + br, _ir(rng, sr, 0.5, 0.01, 5000), 0.12)[:m]
+    return _verb(y + br, _ir(rng, sr, 0.4, 0.01, 5000), 0.2)
 
 
 def _pop(rng, sr, p):
+    """Light cartoon pop: a rising 'bloop' with a ~40 ms body, a soft low thump under it and a puff of air."""
     L = 0.3
     m = int(L * sr)
     t = np.arange(m) / sr
-    f = 1100 - 720 * np.exp(-t / 0.004)
-    y = np.sin(_osc(f * rng.uniform(0.9, 1.1), sr)) * _ar(t, 0.0005, 0.035)
-    y += 0.3 * _norm(_filt(rng.standard_normal(m), "lp", 4000, sr) * _ar(t, 0.0002, 0.0012))
-    y += 0.12 * np.sin(TAU * 2300 * t) * _ar(t, 0.0005, 0.015)
+    s = rng.uniform(0.9, 1.1)
+    f = (380 + 620 * (1 - np.exp(-t / 0.01))) * s
+    y = np.sin(_osc(f, sr)) * _ar(t, 0.0008, 0.035)
+    y += 0.45 * np.sin(_osc(np.full(m, 240.0 * s), sr)) * _ar(t, 0.001, 0.03)
+    y = np.tanh(1.6 * y) / np.tanh(1.6)
+    y += 0.12 * _nrms(_filt(rng.standard_normal(m), "bp", (2000, 6000), sr)) * _ar(t, 0.0005, 0.012)
     return y
 
 

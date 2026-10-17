@@ -84,10 +84,10 @@ class Chord:
         self.quality = m.group(2)
         ivs = QUALITIES[self.quality]
         self.pcs = tuple((self.root + i) % 12 for i in ivs)
-        self.pcset = frozenset(self.pcs)
+        self.upper = frozenset(self.pcs)          # the chord proper (used for voicing)
         self.bass = pc(m.group(3)) if m.group(3) else self.root
-        if self.bass not in self.pcset:
-            raise ValueError(f"bass of {sym} not a chord tone")
+        self.pedal = self.bass not in self.upper  # e.g. C/D: D is a pedal under a C triad
+        self.pcset = self.upper | {self.bass}     # tones that are consonant with this sonority
         # Tones a complete voicing must contain (the fifth may be omitted when a 7th/9th is present).
         need = [self.pcs[0], self.pcs[1]] if len(self.pcs) > 1 else [self.pcs[0]]
         if len(ivs) >= 4 or self.quality in ("add9", "madd9", "6", "m6"):
@@ -113,22 +113,24 @@ class Chord:
 
 # ----------------------------------------------------------------------------- voice-leading
 def _candidates(ch, n, lo, hi, bass_pc=None, max_gap=12, top=None):
-    pitches = ch.tones(lo, hi)
-    out = []
-    for combo in itertools.combinations(pitches, n):
-        if top is not None and combo[-1] != top:
-            continue
-        if any(b - a > max_gap for a, b in zip(combo, combo[1:])):
-            continue
-        pcs = {p % 12 for p in combo}
-        if bass_pc is not None:
-            pcs.add(bass_pc)
-        if not ch.need <= pcs:
-            continue
-        out.append(combo)
-    if not out and top is not None:
-        return _candidates(ch, n, lo, hi, bass_pc, max_gap + 7, top)
-    return out
+    pitches = [p for p in range(lo, hi + 1) if p % 12 in ch.upper]
+    root_third = frozenset(x for x in (ch.pcs[0], ch.third) if x is not None)
+    for gap, need in ((max_gap, ch.need), (max_gap + 7, ch.need), (max_gap + 7, root_third)):
+        out = []
+        for combo in itertools.combinations(pitches, n):
+            if top is not None and combo[-1] != top:
+                continue
+            if any(b - a > gap for a, b in zip(combo, combo[1:])):
+                continue
+            pcs = {p % 12 for p in combo}
+            if bass_pc is not None:
+                pcs.add(bass_pc)
+            if not need <= pcs:
+                continue
+            out.append(combo)
+        if out:
+            return out
+    return []
 
 
 def _static_cost(V, ch, center, bass):
@@ -166,17 +168,39 @@ def _trans_cost(A, B, bass_a, bass_b):
             dj = np.sign(Bf[None, :, j] - Af[:, None, j])
             moving = (di != 0) & (di == dj)
             perfect = ((ia % 12 == 0) & (ib % 12 == 0)) | ((ia % 12 == 7) & (ib % 12 == 7))
-            cost += np.where(moving & perfect, 14.0, 0.0)
+            cost += np.where(moving & perfect, 40.0, 0.0)
     return cost
 
 
-def voice_lead(chords, n, lo, hi, basses=None, center=None, prev=None, tops=None, max_gap=12):
+def _guide_cost(A, B, guides):
+    """Parallel P5/P8 (similar motion) between candidate voices and guide lines at one chord change.
+
+    guides: [(pitch before, pitch at the change, fifths_only)] of other parts that move there."""
+    cost = np.zeros((len(A), len(B)))
+    for gb, ga, fifths_only in guides:
+        dg = np.sign(ga - gb)
+        if dg == 0:
+            continue
+        moving = np.sign(B[None, :, :] - A[:, None, :]) == dg
+        ib = (np.abs(A - gb) % 12)[:, None, :]
+        ia = (np.abs(B - ga) % 12)[None, :, :]
+        perfect = (ib == ia) & ((ib == 7) | ((ib == 0) & (not fifths_only)))
+        cost += (moving & perfect).sum(axis=2) * 40.0
+    return cost
+
+
+def voice_lead(chords, n, lo, hi, basses=None, center=None, prev=None, tops=None, max_gap=12, prev_bass=None,
+               guides=None):
     """Choose smooth voicings (Viterbi) for a chord sequence.
 
     chords  list of Chord
     n       number of upper voices
     basses  optional list of bass pitches (part of coverage and parallel checks)
     prev    optional voicing that precedes the sequence (for continuity)
+    prev_bass  bass pitch under prev (parallels against the bass are then checked at the join)
+    guides  optional list (one per chord) of [(before, at, fifths_only)]: other lines (melody,
+            counter-melody, basses, other pads) that move at that chord change; the voicing avoids
+            parallel fifths/octaves with them (fifths only for doubling pads)
     tops    optional list of forced top pitches (None entries are free)
     """
     center = center if center is not None else (lo + hi) / 2
@@ -191,12 +215,17 @@ def voice_lead(chords, n, lo, hi, basses=None, center=None, prev=None, tops=None
         cands.append(V)
         costs.append(_static_cost(V, ch, center, b))
     score = costs[0].copy()
+    guides = guides or [[] for _ in chords]
     if prev is not None:
         P = np.array([prev])
-        score += _trans_cost(P, cands[0], None, basses[0])[0]
+        pb = prev_bass if (prev_bass is not None and basses[0] is not None) else None
+        score += _trans_cost(P, cands[0], pb, basses[0] if pb is not None else None)[0]
+        score += _guide_cost(P, cands[0], guides[0])[0]
     back = []
     for k in range(1, len(chords)):
         tc = _trans_cost(cands[k - 1], cands[k], basses[k - 1], basses[k])
+        if guides[k]:
+            tc = tc + _guide_cost(cands[k - 1], cands[k], guides[k])
         tot = score[:, None] + tc
         bi = tot.argmin(axis=0)
         back.append(bi)
