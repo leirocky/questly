@@ -272,8 +272,8 @@ def _face(R, skin, expr, look=(0, 0), brow_col=INK):
         cx, cy = (xi + xo) / 2, (yi + yo) / 2 - 0.05 * R
         s += _line(f"M{fmt(xo)},{fmt(yo)} Q{fmt(cx)},{fmt(cy)} {fmt(xi)},{fmt(yi)}", w=3.4, col=brow_col)
     # nose: small rounded bump on the far cheek
-    s += (f'<path d="M{fmt(0.62 * R)},{fmt(0.12 * R)} Q{fmt(0.86 * R)},{fmt(0.20 * R)} {fmt(0.66 * R)},{fmt(0.30 * R)}" '
-          f'fill="{shade(skin, -0.06)}" {_st(2.8)}/>')
+    s += _ell(0.70 * R, 0.21 * R, 0.10 * R, 0.085 * R, shade(skin, -0.10))
+    s += _line(f"M{fmt(0.61 * R)},{fmt(0.27 * R)} Q{fmt(0.72 * R)},{fmt(0.35 * R)} {fmt(0.81 * R)},{fmt(0.22 * R)}", w=2.6)
     s += _mouth(R, E["mouth"])
     if E.get("sweat"):
         s += _drop(0.98 * R, -0.42 * R, 0.09 * R)
@@ -376,21 +376,22 @@ def _beard(R, col, kind):
                    w=2.2, col=dark)
         return s
     if kind in ("assyrian", "assyrian_short"):
-        L = 1.72 if kind == "assyrian" else 1.40
-        pts = [(-0.86 * R, -0.05 * R), (-0.88 * R, 0.55 * R), (-0.58 * R, L * R), (0.12 * R, (L + 0.08) * R),
-               (0.70 * R, (L - 0.05) * R), (0.92 * R, 0.55 * R), (0.70 * R, 0.62 * R), (0.20 * R, 0.78 * R),
-               (-0.30 * R, 0.68 * R), (-0.62 * R, 0.25 * R)]
+        L = 1.52 if kind == "assyrian" else 1.30
+        pts = [(-0.86 * R, -0.05 * R), (-0.88 * R, 0.55 * R), (-0.62 * R, (L - 0.05) * R), (-0.20 * R, L * R),
+               (0.12 * R, (L + 0.06) * R), (0.46 * R, L * R), (0.74 * R, (L - 0.12) * R), (0.92 * R, 0.55 * R),
+               (0.70 * R, 0.62 * R), (0.20 * R, 0.78 * R), (-0.30 * R, 0.68 * R), (-0.62 * R, 0.25 * R)]
         s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
-        curl = shade(col, 0.35)
+        curl = mix(col, "#c9b29a", 0.55)
         rows = 3 if kind == "assyrian" else 2
         for r_ in range(rows):
-            yy = (0.98 + r_ * 0.28) * R
-            for c_ in range(4):
-                xx = (-0.42 + c_ * 0.34 + (0.17 if r_ % 2 else 0)) * R
-                if xx > 0.62 * R:
-                    continue
-                s += (f'<path d="M{fmt(xx - 0.07 * R)},{fmt(yy)} a{fmt(0.07 * R)},{fmt(0.07 * R)} 0 1 1 '
-                      f'{fmt(0.10 * R)},{fmt(0.05 * R)}" fill="none" {_st(2.0, curl)}/>')
+            yy = (0.92 + r_ * 0.22) * R
+            x0, x1 = (-0.62 + 0.06 * r_) * R, (0.70 - 0.04 * r_) * R
+            n = 5
+            w = (x1 - x0) / n
+            d = f"M{fmt(x0)},{fmt(yy)}"
+            for i in range(n):
+                d += f" q{fmt(w / 2)},{fmt(0.13 * R)} {fmt(w)},0"
+            s += f'<path d="{d}" fill="none" {_st(2.2, curl)}/>'
         return s
     return ""
 
@@ -578,23 +579,23 @@ def _P(**kw):
     base = dict(t=0, h=0, legs=((3, 1), (-3, -1)), arms=(("fk", 8, 3), ("fk", -8, -3)),
                 hands=("fist", "fist"), seat=False, anchor="pelvis", hem=None, flare=0,
                 far_front=False, near_back=False, tail=None, flip=False, spin=0, marks=(),
-                expr="neutral", look=(0, 0), feet=(None, None), tilt_tail=0)
+                expr="neutral", look=(0, 0), feet=(None, None), far_over_head=False, fan_arm=1)
     base.update(kw)
     return base
 
 
 POSES = {
-    "stand": _P(),
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3))),
     "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -24, -14), ("fk", 26, 46))),
     "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 48), ("fk", -24, -14))),
-    "run_a": _P(t=14, legs=((74, 14), (-36, -100)), arms=(("fk", -55, 20), ("fk", 50, 130)),
-                hands=("fist", "fist"), hem=0.62, tail=-125, flare=-4),
-    "run_b": _P(t=14, legs=((-36, -100), (74, 14)), arms=(("fk", 50, 130), ("fk", -55, 20)),
-                hands=("fist", "fist"), hem=0.62, tail=-125, flare=-4),
-    "sleep": _P(t=92, h=-22, legs=((-84, -100), (-74, -112)),
-                arms=(("ik", "headw", 0.15, 0.95, -1), ("ik", "headw", -0.05, 0.92, -1)),
-                hands=("open", "open"), anchor="center", near_back=False, tail=-100, expr="sleepy",
-                feet=(150, 150), hem=0.95),
+    "run_a": _P(t=14, legs=((66, 16), (-30, -96)), arms=(("fk", -62, -12), ("fk", 64, 104)),
+                hands=("fist", "fist"), hem=0.66, tail=-102, flare=-4),
+    "run_b": _P(t=14, legs=((-30, -96), (66, 16)), arms=(("fk", 64, 112), ("fk", -58, -14)),
+                hands=("fist", "fist"), hem=0.66, tail=-102, flare=-4),
+    "sleep": _P(t=-88, h=13, legs=((100, 80), (94, 86)),
+                arms=(("ik", "headw", 0.30, 0.92, 1), ("ik", "headw", 0.05, 0.95, 1)),
+                hands=("open", "open"), anchor="center", far_front=True, near_back=True, tail=-62,
+                expr="sleepy", feet=(-75, -80), hem=0.95),
     "kneel_pray": _P(t=-4, h=-16, legs=((4, -88), (0, -92)),
                      arms=(("ik", "torso", 1.55, 0.66, 1), ("ik", "torso", 1.55, 0.66, 1)),
                      hands=("none", "pray"), expr="peaceful", feet=(100, 100), hem=0.97),
@@ -603,16 +604,16 @@ POSES = {
     "sit_sulk": _P(t=-2, h=10, seat=True, legs=(("sit", 30), ("sit", 22)),
                    arms=(("ik", "torso", -0.2, 0.60, 1), ("ik", "torso", 1.25, 0.56, 1)),
                    far_front=True, hands=("fist", "fist"), expr="angry", hem=0.97),
-    "sit_faint": _P(t=-16, h=26, seat=True, legs=((86, 74), (80, 66)),
-                    arms=(("fk", -42, -20), ("ik", "headw", 1.15, -0.05, 1)), hands=("open", "open"),
-                    marks=("fan",), expr="tired", hem=0.97),
+    "sit_faint": _P(t=-16, h=24, seat=True, legs=((86, 74), (80, 66)),
+                    arms=(("ik", "headw", 1.55, 0.05, 1), ("fk", -40, -14)), hands=("open", "open"),
+                    marks=("fan",), fan_arm=0, expr="tired", hem=0.97),
     "sit_happy": _P(t=-6, h=-6, seat=True, legs=((84, 76), (92, 82)),
                     arms=(("fk", 118, 145), ("fk", -112, -140)), hands=("open", "open"), expr="happy", hem=0.97),
     "preach": _P(t=-3, h=-6, legs=((8, 3), (-7, -3)),
                  arms=(("fk", 152, 168), ("fk", 30, 74)), hands=("open", "open"), expr="shout"),
     "point": _P(legs=((5, 2), (-5, -2)), arms=(("fk", 84, 88), ("fk", -8, -3)), hands=("point", "fist")),
     "arms_up": _P(h=-6, arms=(("fk", 150, 168), ("fk", -150, -168)), hands=("open", "open"), expr="happy"),
-    "fall": _P(spin=32, legs=((52, 18), (-38, -78)), arms=(("fk", 128, 150), ("fk", -140, -165)),
+    "fall": _P(spin=28, legs=((44, 12), (-24, -64)), arms=(("fk", 128, 150), ("fk", -140, -165)),
                hands=("open", "open"), anchor="center", tail=175, expr="scared", flare=8),
     "float": _P(t=2, h=-6, legs=((18, -8), (-14, 14)), arms=(("fk", 96, 108), ("fk", -96, -108)),
                 hands=("open", "open"), anchor="center", tail=165, expr="scared", flare=14),
@@ -621,29 +622,29 @@ POSES = {
                  expr="angry", tail=-30),
     "confess": _P(t=6, h=18, arms=(("fk", 10, 5), ("ik", "torso", 0.55, 0.74, 1)), hands=("fist", "open"),
                   expr="sorry"),
-    "listen": _P(h=-14, arms=(("fk", 8, 3), ("ik", "head", -1.05, 0.12, 1)), hands=("fist", "cup"),
+    "listen": _P(h=-14, arms=(("fk", 14, 8), ("ik", "head", -1.12, 0.12, -1)), hands=("fist", "cup"),
                  near_back=False, look=(0.02, -0.06)),
-    "wake": _P(t=6, seat=True, legs=((88, 78), (84, 72)),
-               arms=(("fk", -36, -18), ("ik", "head", 0.38, 0.18, 1)), hands=("open", "fist"),
+    "wake": _P(t=2, h=-4, seat=True, legs=((88, 78), (84, 72)),
+               arms=(("fk", 148, 172), ("ik", "head", -0.14, 0.10, -1)), hands=("open", "fist"),
                expr="sleepy"),
     # ---- generic poses used by the other characters
     "scared": _P(t=-4, legs=((10, 2), (-8, -4)),
                  arms=(("ik", "headw", 1.15, 0.45, 1), ("ik", "headw", -1.15, 0.45, -1)),
                  hands=("open", "open"), expr="scared"),
-    "throw": _P(t=-10, h=-8, legs=((16, 4), (-14, -6)), arms=(("fk", 160, 176), ("fk", 168, 182)),
-                hands=("open", "open"), expr="worried"),
+    "throw": _P(t=-10, h=-8, legs=((16, 4), (-14, -6)), arms=(("fk", 150, 166), ("fk", 162, 172)),
+                hands=("open", "open"), expr="worried", near_back=True),
     "carry": _P(t=14, legs=((26, -6), (-16, -30)), arms=(("fk", 40, 80), ("fk", 52, 88)),
                 hands=("fist", "fist"), expr="worried"),
     "pray": _P(t=-6, h=-20, arms=(("fk", 158, 172), ("fk", -158, -172)), hands=("open", "open"),
                expr="scared", look=(0.02, -0.06)),
     "pull": _P(t=-20, legs=((30, 18), (-12, -4)), arms=(("fk", 76, 82), ("fk", 70, 78)),
                hands=("fist", "fist"), expr="angry"),
-    "lift": _P(t=-4, h=-14, legs=((12, 2), (-10, -2)), arms=(("fk", 168, 178), ("fk", 176, 184)),
-               hands=("open", "open"), expr="worried"),
+    "lift": _P(t=-4, h=-14, legs=((12, 2), (-10, -2)), arms=(("fk", 160, 176), ("fk", 172, 184)),
+               hands=("open", "open"), expr="worried", near_back=True),
     "wake_other": _P(t=26, h=-10, legs=((14, 6), (-12, -6)), arms=(("fk", 24, 18), ("fk", 50, 30)),
                      hands=("fist", "open"), expr="worried"),
-    "worried": _P(t=-2, arms=(("ik", "head", 0.55, -0.85, 1), ("ik", "head", -0.70, -0.70, -1)),
-                  hands=("open", "open"), expr="worried", near_back=False),
+    "worried": _P(t=-2, arms=(("ik", "head", 0.80, -0.78, 1), ("ik", "head", -0.80, -0.75, -1)),
+                  hands=("open", "open"), expr="worried", far_over_head=True),
     "sit_throne": _P(t=-2, legs=((86, 4), (82, 2)), arms=(("ik", "knee", 0, 0.25, 1), ("ik", "knee", 1, 0.25, 1)),
                      hands=("fist", "fist"), anchor="pelvis", hem=0.97),
     "sit_ashes": _P(t=6, h=24, seat=True, legs=(("sit", 30), ("sit", 24)),
@@ -853,7 +854,7 @@ def _figure(D, m, pose, expr, opts=None):
         s += _hand(W, dw, ps["hands"][i], skin, m["hr"])
         return s
 
-    if not ps["far_front"]:
+    if not ps["far_front"] and not ps["far_over_head"]:
         out.append(arm_svg(0))
     for i in (0, 1):
         H, K, A, a1, a2 = legs[i]
@@ -868,6 +869,8 @@ def _figure(D, m, pose, expr, opts=None):
     if ps["near_back"]:
         out.append(arm_svg(1))
     out.append(_head_svg(D, st, ps, expr))
+    if ps["far_over_head"]:
+        out.append(arm_svg(0))
     if not ps["near_back"]:
         out.append(arm_svg(1))
     if D.get("front"):
@@ -1008,8 +1011,6 @@ def _robe(D, st, ps):
         for fx, uy, r in ((-0.4, 0.3, 9), (0.5, 0.75, 7), (0.1, -0.9, 10)):
             c = tp(fx * m["ww"], uy * m["T"] * (0.6 if uy < 0 else 1))
             inner += _ell(c[0], c[1], r * 1.3, r, P["ash"], extra='opacity="0.55"')
-    if D.get("wet"):
-        inner += _ell(*tp(0.2 * m["ww"], 0.4 * m["T"]), 14, 22, shade(col, -0.15), extra='opacity="0.5"')
     s += clip + f'<g clip-path="url(#{cid})">{inner}</g>'
     return s
 
@@ -1147,7 +1148,7 @@ def _marks(D, st, ps, expr):
                 s += _line(f"M{fmt(cx)},{fmt(Hc[1] - 0.45 * R)} Q{fmt(cx + sgn * 0.14 * R)},{fmt(Hc[1])} "
                            f"{fmt(cx)},{fmt(Hc[1] + 0.45 * R)}", w=3.2, col=mcol)
     if "fan" in mk:
-        W = st["arms"][1][2]
+        W = st["arms"][ps["fan_arm"]][2]
         for k in range(3):
             r = 0.45 * R + k * 0.2 * R
             s += _line(f"M{fmt(W[0] + r * 0.9)},{fmt(W[1] - r * 0.5)} Q{fmt(W[0] + r * 1.15)},{fmt(W[1])} "
@@ -1224,10 +1225,13 @@ def _sailor_design(variant):
                 hair_style=v["hair_style"], hat=v["hat"], beard=v["beard"], flare_k=0.6, hem_w=9)
 
 
+_SAILOR_M = dict(_ADULT, lw=20.0)
+
+
 def sailor(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None):
     ps = _resolve_pose(pose, SAILOR_POSES, "sailor")
     e = expr or ps["expr"]
-    inner, _ = _figure(_sailor_design(variant), _ADULT, ps, e)
+    inner, _ = _figure(_sailor_design(variant), _SAILOR_M, ps, e)
     return _wrap_out(inner, x, y, scale, facing, f"sailor{variant}-{pose}")
 
 
@@ -1258,29 +1262,41 @@ KING_HAIR = "#2f2622"
 
 
 def _throne(st):
+    """High-backed wooden throne with gold trim, drawn behind a seated figure."""
     m, pel, legs = st["m"], st["pel"], st["legs"]
     g = st["ground"] or 0
     K = legs[1][1]
     seat_y = pel[1] + m["seat"] * 0.75
-    xb0, xb1 = pel[0] - m["ww"] - 30, pel[0] - m["ww"] + 16
-    top = st["N"][1] - 40
+    xb0, xb1 = pel[0] - m["ww"] - 34, pel[0] - m["ww"] + 18
+    top = st["N"][1] - 60
     wood, wd = P["wood"], P["wood_dark"]
+    cush = P["royal_light"]
+    xm = (xb0 + xb1) / 2
+    x_front = K[0] + 4
     s = ""
-    s += (f'<path d="M{fmt(xb0)},{fmt(seat_y)} L{fmt(xb0)},{fmt(top + 20)} Q{fmt((xb0 + xb1) / 2)},{fmt(top - 14)} '
-          f'{fmt(xb1)},{fmt(top + 20)} L{fmt(xb1)},{fmt(seat_y)} Z" fill="{wood}" {_st(OW)}/>')
-    s += (f'<path d="M{fmt(xb0 + 9)},{fmt(seat_y - 12)} L{fmt(xb0 + 9)},{fmt(top + 26)} Q{fmt((xb0 + xb1) / 2)},'
-          f'{fmt(top + 2)} {fmt(xb1 - 9)},{fmt(top + 26)} L{fmt(xb1 - 9)},{fmt(seat_y - 12)} Z" '
-          f'fill="{P["royal_light"]}" {_st(2.6)}/>')
-    s += f'<circle cx="{fmt((xb0 + xb1) / 2)}" cy="{fmt(top - 14)}" r="9" fill="{GOLD}" {_st(2.8)}/>'
-    x_front = K[0] + 6
-    for xx in (xb0 + 8, x_front - 8):
-        s += f'<rect x="{fmt(xx - 7)}" y="{fmt(seat_y)}" width="14" height="{fmt(g - seat_y - 6)}" fill="{wd}" {_st(3)}/>'
-        s += _ell(xx + 3, g - 6, 11, 6, GOLD, sw=2.6)
-    s += (f'<rect x="{fmt(xb0 - 6)}" y="{fmt(seat_y - 6)}" width="{fmt(x_front - xb0 + 12)}" height="18" rx="6" '
+    # back legs + front legs with gold paw feet
+    for xx in (xb0 + 10, x_front - 10):
+        s += f'<rect x="{fmt(xx - 8)}" y="{fmt(seat_y)}" width="16" height="{fmt(g - seat_y - 8)}" rx="4" fill="{wd}" {_st(3.2)}/>'
+        s += _ell(xx + 4, g - 7, 13, 7, GOLD, sw=2.8)
+    s += (f'<rect x="{fmt(xb0 + 14)}" y="{fmt(seat_y + (g - seat_y) * 0.55)}" width="{fmt(x_front - xb0 - 30)}" '
+          f'height="9" rx="3" fill="{wd}" {_st(2.6)}/>')
+    # backrest
+    s += (f'<path d="M{fmt(xb0)},{fmt(seat_y)} L{fmt(xb0)},{fmt(top + 26)} Q{fmt(xm)},{fmt(top - 16)} '
+          f'{fmt(xb1)},{fmt(top + 26)} L{fmt(xb1)},{fmt(seat_y)} Z" fill="{wood}" {_st(OW)}/>')
+    s += (f'<path d="M{fmt(xb0 + 10)},{fmt(seat_y - 14)} L{fmt(xb0 + 10)},{fmt(top + 32)} Q{fmt(xm)},'
+          f'{fmt(top + 4)} {fmt(xb1 - 10)},{fmt(top + 32)} L{fmt(xb1 - 10)},{fmt(seat_y - 14)} Z" '
+          f'fill="{cush}" {_st(2.6)}/>')
+    for k in range(3):
+        yy = top + 46 + k * 34
+        if yy < seat_y - 20:
+            s += f'<circle cx="{fmt(xm)}" cy="{fmt(yy)}" r="5" fill="{GOLD}" {_st(2.0)}/>'
+    for xx in (xb0, xb1):
+        s += f'<circle cx="{fmt(xx)}" cy="{fmt(top + 24)}" r="9" fill="{GOLD}" {_st(2.8)}/>'
+    s += f'<circle cx="{fmt(xm)}" cy="{fmt(top - 16)}" r="11" fill="{GOLD}" {_st(2.8)}/>'
+    # seat slab with gold edge + cushion
+    s += (f'<rect x="{fmt(xb0 - 8)}" y="{fmt(seat_y - 6)}" width="{fmt(x_front - xb0 + 16)}" height="20" rx="7" '
           f'fill="{wood}" {_st(OW)}/>')
-    s += _line(f"M{fmt(xb0 + 4)},{fmt(seat_y + 3)} L{fmt(x_front - 2)},{fmt(seat_y + 3)}", w=2.2, col=GOLD)
-    s += (f'<rect x="{fmt(xb0 + 10)}" y="{fmt((seat_y + g) / 2)}" width="{fmt(x_front - xb0 - 30)}" height="8" '
-          f'fill="{wd}" {_st(2.6)}/>')
+    s += _line(f"M{fmt(xb0 + 2)},{fmt(seat_y + 4)} L{fmt(x_front - 2)},{fmt(seat_y + 4)}", w=3, col=GOLD)
     return s
 
 
@@ -1317,9 +1333,13 @@ def _king_design(attire, pose, throne, ashes):
     if pose == "remove_crown":
         def held(st):
             W0, W1 = st["arms"][0][2], st["arms"][1][2]
+            R = st["m"]["R"]
             c = _lerp(W0, W1, 0.5)
-            return f'<g transform="translate({_pt(c)}) rotate(-8)">{_crown(st["m"]["R"], x0=0, y0=12, k=0.62)}</g>'
-        D["mid"] = held
+            s = f'<g transform="translate({_pt(c)}) rotate(-6)">{_crown(R, x0=0, y0=0.62 * R, k=0.8)}</g>'
+            for W in (W0, W1):
+                s += f'<circle cx="{fmt(W[0])}" cy="{fmt(W[1] + 4)}" r="{fmt(st["m"]["hr"])}" fill="{D["skin"]}" {_st(3.2)}/>'
+            return s
+        D["front"] = held
     return D
 
 
@@ -1332,7 +1352,7 @@ def king(x, y, scale=1.0, facing=1, pose="stand", attire="royal", expr=None, thr
         e = "sad"
     D = _king_design(attire, pose, throne, ashes)
     if pose == "remove_crown":
-        ps["arms"] = (("ik", "torso", 1.95, 0.52, 1), ("ik", "torso", 1.10, 0.52, 1))
+        ps["arms"] = (("ik", "torso", 2.30, 0.50, 1), ("ik", "torso", 0.75, 0.50, 1))
     inner, _ = _figure(D, _KING_M, ps, e)
     return _wrap_out(inner, x, y, scale, facing, f"king-{pose}")
 

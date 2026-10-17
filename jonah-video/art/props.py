@@ -13,8 +13,8 @@ HILITE = "#fffaf0"
 CREAM = "#f7efdc"
 
 SHIP_DECK_Y = -165
-SHIP_INTERIOR = (-360, -146, 360, 46)
-SHIP_BED = (-135, 245, 26)
+SHIP_INTERIOR = (-360, -146, 360, 34)
+SHIP_BED = (-130, 240, -4)
 
 
 def _f(v):
@@ -333,7 +333,7 @@ def _sail(kind, sid):
         pts = []
         for i in range(13):
             u = i / 12
-            pts.append((_lerp(-292, 272, u), -840 + 34 + 10 * math.sin(i * 1.9)))
+            pts.append((_lerp(-292, 272, u), -840 + 46 + 12 * math.sin(i * 1.9) - 10 * (u * (1 - u) < 0.03)))
         roll = [(-300, -846), (272, -846)] + list(reversed(pts))
         out += _p(_sm([(-296, -846)] + [(p[0], p[1] - 2) for p in pts[1:-1]] + [(276, -846)], closed=True),
                   P["sail"], 4)
@@ -595,7 +595,8 @@ def _ship_interior(lantern=True):
     wd, wood, wl = P["wood_dark"], P["wood"], P["wood_light"]
     pts = [(x0, y0), (x1, y0), (x1, -4), (x1 - 28, 30), (x1 - 90, y1), (x0 + 90, y1), (x0 + 28, 30), (x0, -4)]
     d = _poly(pts)
-    d = _sm([(x0, y0), (x1, y0), (x1, -10)], closed=False) + f" Q{x1},{y1} {x1 - 110},{y1} L{x0 + 110},{y1} Q{x0},{y1} {x0},-10 Z"
+    d = (f"M{x0},{y0} L{x1},{y0} L{x1},-20 Q{x1 - 8},{y1} {x1 - 110},{y1} L{x0 + 110},{y1} "
+         f"Q{x0 + 8},{y1} {x0},-20 Z")
     wall = S.mix(wd, wood, 0.25)
     inner = _rect(x0 - 10, y0 - 10, x1 - x0 + 20, y1 - y0 + 20, wall, 0)
     for yy in range(y0 + 26, y1, 28):
@@ -614,28 +615,29 @@ def _ship_interior(lantern=True):
     # warm glow
     gid = _uid("holdglow", 0)
     inner += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.8), (0.5, P["gold"], 0.3), (1, P["gold"], 0)])}</defs>'
-              f'<ellipse cx="-150" cy="-60" rx="360" ry="200" fill="url(#{gid})"/>')
+              f'<ellipse cx="-160" cy="-60" rx="380" ry="210" fill="url(#{gid})"/>')
     # bed: straw mat, folded blanket, pillow
     bx0, bx1, by = SHIP_BED
-    inner += _p(f"M{bx0},{y1 - 14} L{bx0 + 8},{by} L{bx1 - 8},{by} L{bx1},{y1 - 14} Z",
+    inner += _rect(bx0 - 6, by + 12, bx1 - bx0 + 12, y1 - 16 - by - 12, P["wood"], 3.5, rx=3)
+    inner += _p(f"M{bx0},{by + 14} Q{bx0 - 4},{by} {bx0 + 14},{by - 2} L{bx1 - 14},{by - 2} Q{bx1 + 4},{by} {bx1},{by + 14} Z",
                 S.mix(P["sackcloth"], P["sand"], 0.5), 3.5)
     for xx in range(bx0 + 20, bx1, 26):
-        inner += _line(xx, by + 3, xx - 2, y1 - 16, sw=2, color=P["sackcloth_dark"], extra='opacity="0.6"')
+        inner += _line(xx, by + 1, xx - 2, by + 12, sw=2, color=P["sackcloth_dark"], extra='opacity="0.6"')
     inner += _p(f"M{bx0 + 6},{by + 2} Q{bx0 - 4},{by - 30} {bx0 + 30},{by - 34} Q{bx0 + 70},{by - 38} "
                 f"{bx0 + 76},{by - 12} Q{bx0 + 76},{by + 4} {bx0 + 50},{by + 4} Z", P["headcloth"], 3.5)
     inner += _p(f"M{bx1 - 70},{by + 2} Q{bx1 - 78},{by - 24} {bx1 - 50},{by - 26} L{bx1 - 6},{by - 22} "
                 f"Q{bx1 + 6},{by - 8} {bx1 - 4},{by + 2} Z", P["jonah_sash"], 3.5)
     inner += _line(bx1 - 62, by - 14, bx1 - 10, by - 12, sw=2.5, color=S.shade(P["jonah_sash"], -0.4))
     # cargo
-    inner += _g(_amphora(-8), f"translate(-322,{y1 - 92}) scale(0.9)")
-    inner += _g(_amphora(6, S.mix(P["terracotta"], P["sand"], 0.35)), f"translate(-252,{y1 - 88}) scale(0.85)")
-    inner += _g(_sack(0.8, seed=2), f"translate(-186,{y1 - 14})")
-    inner += _g(_crate(0.85), f"translate(305,{y1 - 52})")
-    inner += _g(_sack(0.72, seed=5), f"translate(300,{y1 - 92})")
-    inner += _g(_rope_coil(0.6), f"translate(-300,{y0 + 100})", 'opacity="0"')
+    fl = y1 - 16
+    inner += _g(_amphora(-8), f"translate(-318,{fl - 64}) scale(0.9)")
+    inner += _g(_amphora(6, S.mix(P["terracotta"], P["sand"], 0.35)), f"translate(-254,{fl - 64}) scale(0.85)")
+    inner += _g(_sack(0.8, seed=2), f"translate(-190,{fl})")
+    inner += _g(_crate(0.85), f"translate(300,{fl - 39})")
+    inner += _g(_sack(0.72, seed=5), f"translate(296,{fl - 74})")
     if lantern:
-        inner += _line(-150, y0 + 14, -150, y0 + 30, sw=3)
-        inner += _g(_lantern_body(True, False), f"translate(-150,{y0 + 26}) scale(0.8)")
+        inner += _line(-160, y0 + 14, -160, y0 + 30, sw=3)
+        inner += _g(_lantern_body(True, False), f"translate(-160,{y0 + 26}) scale(0.8)")
     cid = _uid("hold", 0)
     out = _clip(cid, d, inner)
     out += _p(d, sw=22) + _p(d, sw=12, stroke=wl)

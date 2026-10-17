@@ -98,8 +98,8 @@ def sheets():
     items = [(e, _j("stand", e)) for e in ex]
     items += [("wet=True", _j("stand", "sad", wet=True)), ("facing=-1 happy", _j("stand", "happy", -1)),
               ("float wet", _j("float", wet=True))]
-    out.append(("jonah_expr", "Jonah — expressions (scale 1.5, upper body)", items, 8, 290, 330, 1.5,
-                {"clip_cells": True, "ground_pad": -150}))
+    out.append(("jonah_expr", "Jonah — expressions (scale 1.5, upper body)", items, 8, 290, 360, 1.5,
+                {"clip_cells": True, "ground_pad": -185}))
     items = [(p, _j(p)) for p in jp] + [(p + " -1", _j(p, facing=-1)) for p in jp]
     out.append(("jonah_small", "Jonah — readability check at scale 0.45 (top: facing=1, bottom: facing=-1)",
                 items, 10, 190, 230, 0.45, {"ground_pad": 14}))
