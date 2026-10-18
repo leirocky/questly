@@ -1,6 +1,6 @@
 """Scene 17 — the king of Nineveh repents and sends out his decree (Jonah 3:6-9), v2.
 
-One wide 4800 x 1440 stage, no cuts: the palace throne room on the left (the same purple-curtained portico,
+One wide 5400 x 1440 stage, no cuts: the palace throne room on the left (the same purple-curtained portico,
 throne and king as v1 s10), its terrace and steps, then the street outside — a little animal yard with a feed
 manger and a stone water trough, and a street where families live. The camera starts close on the king and
 travels right with the heralds and the decree.
@@ -15,34 +15,45 @@ travels right with the heralds and the decree.
           "坐在灰堆里，"            a heap of ashes puffs up in front of the throne and he sits down in it.
           "表示真心认错。"          he bows his head, sorry; the messenger and the scribe bow their heads too.
   line 1  "国王又派人在全城宣告："  the king lifts his head and speaks; the messenger and the scribe nod and walk out
-                                    onto the terrace one after the other (the camera goes with them); the scribe
-                                    unrolls the decree by the column while the messenger blows his long bronze horn
-                                    (s16's horn) at the open end; far heralds answer from the roofs, then kneel.
-  line 2  "所有的人和牛羊，都不可以吃，"  (the king's words, read from the scroll) the camera glides on to the yard:
-                                    a cow and a goat munch at the manger — the farmer lays a plank lid over it,
-                                    they lift their heads ("?").
+                                    onto the terrace one after the other (planted-foot steps: the anchor advances
+                                    one stride as each walk drawing cuts in, so the planted foot stays put; the
+                                    camera goes with them); the scribe unrolls the decree by the column while the
+                                    messenger blows his long bronze horn (s16's horn) against clear sky at the
+                                    open end; the camera rests on them; far heralds answer from the roofs.
+  line 2  "所有的人和牛羊，都不可以吃，"  (the king's words, read from the scroll) the camera glides on and pushes in
+                                    close on the yard: a cow and a goat munch at the manger — the farmer lays a
+                                    big plank lid over the hay (dust puff, bounce), they lift their heads ("?").
           "也不可以喝。"            his daughter pulls a reed mat over the water trough; the lamb looks up ("?").
-  line 3  "人和牛羊，都要穿上麻布衣服，"  pop, pop, pop: the cow, goat, sheep, lamb and donkey each get a little
-                                    sackcloth blanket (cloth puffs and happy hops).
+  line 3  "人和牛羊，都要穿上麻布衣服，"  the camera eases back out; pop, pop, pop: the cow, goat, sheep, lamb and
+                                    donkey each get a little sackcloth blanket (cloth puffs and happy hops).
           "诚心向上帝呼求。"        the farmer, his daughter and the neighbours kneel and pray; the animals bow;
-                                    the camera drifts on along the street.
-  line 4  "每个人都要改掉坏行为，"  two neighbours who were shouting and pointing at each other stop and hang their
-                                    heads; a young man lays a kind hand on an old neighbour's shoulder;
-          "不再欺负别人。"          a big boy who had snatched a little girl's toy lamb gives it back; the two men
-                                    step together and shake hands.
+                                    the camera holds on the praying yard while a low grey overcast starts to roll
+                                    in over the city, then glides on along the street (through the pause).
+  line 4  "每个人都要改掉坏行为，"  two neighbours who were shouting and pointing at each other (storm-cloud
+                                    grumbles over their heads) stop and hang their heads; a young man lays a kind
+                                    hand on an old neighbour's shoulder;
+          "不再欺负别人。"          a big boy who had snatched a little girl's toy lamb gives it back (she hugs it
+                                    to her chest); the two men step together and shake hands.
           "说不定上帝会可怜我们，"  everyone kneels and looks up hopefully;
-          "我们就能活下来！"        peaceful, hopeful faces (the children smile); the camera tilts up with their gaze
-                                    as a soft warm light begins to seep through the clouds (God's full mercy and the
-                                    joy come in s18). Calm hold for the dissolve.
+          "我们就能活下来！"        peaceful, hopeful faces (the children smile) under the grey, quiet overcast; the
+                                    crier on the roof kneels too; the camera tilts up a little with their gaze.
+                                    No light yet: God's answer (the cloud parting, warm light) belongs to s18, which
+                                    opens under the same grey cloud banks and gloom. Calm hold for the dissolve.
 
-Camera: every pan stays under ~20 output px per frame (long pans widen the view a little in the middle, and the
-viewport is clamped to the painted stage). Doves drift across the street sky; a crier on a roof keeps reading.
+Camera: every pan stays under ~20 output px per frame (long pans widen the view a little in the middle, with
+zero zoom speed at both ends, and the viewport's bottom edge is interpolated so the stage clamp never kinks a
+move). Doves drift across the street sky (entering and leaving outside the frame, with soft fades as a backstop);
+a crier on a roof keeps reading.
 
 Pose changes are hard cuts (no crossfades between different drawings) hidden at the bottom of a small squash /
 dip, or under a cloth puff. All times are derived from the narration chunks.
 """
 import math
 import random
+
+import cv2
+import numpy as np
+from PIL import Image
 
 from art import characters as C
 from art import props as PR
@@ -52,6 +63,7 @@ from art.style import P
 from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
+from engine.paths import OUT_H, OUT_W
 from engine.scene import Scene
 
 SW, SH = 5400, 1440
@@ -88,14 +100,18 @@ COW = dict(x=2600, y=1265, s=1.0, f=-1)
 GOAT = dict(x=2150, y=1275, s=0.95, f=1)
 SHEEP = dict(x=2765, y=1308, s=1.05, f=1)
 LAMB = dict(x=3162, y=1268, s=0.68, f=-1)
-DONKEY = dict(x=3330, y=1150, s=0.78, f=-1)
+DONKEY = dict(x=3275, y=1150, s=0.78, f=-1)  # rump ends at x ~3365, left of the families' framing
 
-MAN_A = dict(x=3900, y=1272, s=1.0, v=1)
-MAN_B = dict(x=4350, y=1278, s=1.0, v=3)
+# the families (drawn closer together than in the first draft so the pan from the yard is shorter and the
+# whole group, helpers included, fits inside the final framing with a margin)
+MAN_A = dict(x=3830, y=1272, s=1.0, v=1)
+MAN_B = dict(x=4280, y=1278, s=1.0, v=3)
 SHAKE_DX = 99                        # each man steps this far toward the other to shake hands
-KID_G = dict(x=4600, y=1306, s=0.85, v=1)    # the little girl
-KID_B = dict(x=4815, y=1298, s=1.0, v=0)     # the big boy
-MOTHER = dict(x=4995, y=1212, s=0.92, v=2)
+KID_G = dict(x=4475, y=1306, s=0.85, v=1)    # the little girl
+KID_B = dict(x=4665, y=1298, s=1.0, v=0)     # the big boy
+MOTHER = dict(x=4830, y=1212, s=0.92, v=2)
+ELDER = dict(x=5040, y=1166, s=0.82)         # the old neighbour...
+HELPER = dict(x=4890, y=1190, s=0.85)        # ...and the young man who comforts him (hand on his shoulder)
 
 HOUSES = ((1180, 0, 1), (1620, 2, -1), (2190, 1, 1), (2600, 3, -1), (3080, 0, 1), (3420, 2, 1), (3880, 1, -1),
           (4260, 3, 1), (4720, 0, -1), (5150, 2, 1))

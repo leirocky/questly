@@ -2,43 +2,52 @@
 
 All four lines are God speaking, gently. Late afternoon, warm golden light. Adapted from the approved v1 lesson
 scene (art/scenes_v1/s12_lesson.py: its 3800 x 1650 stage, land, city, people, animals, hearts, arc-length
-camera glides and drawing helpers are reused):
+camera glides and drawing helpers are reused), re-laid out on the right to continue the vine scenes s21/s22:
 
-  * right: Jonah's dry knoll east of the city — a near, higher vantage point — with his little booth and the
-    withered castor plant (same drawings and scale as the vine scenes); Jonah sits at the edge of the knoll,
-    facing the city below;
+  * right: Jonah's dry knoll east of the city — a near, higher vantage point — with the withered castor plant on
+    the LEFT and his little booth to its right, the dead canopy arching over the booth roof, and Jonah sitting
+    UNDER the booth facing the city (same drawings, scale and arrangement as s21/s22; the knoll crest is lower
+    than v1's so the opening camera can frame him exactly as s22 leaves him);
   * left / below: the green plain in front of Nineveh's hazy wall and open gate, full of life — families,
-    many little children, elders, people walking in and out of the gate, and a pasture with sheep, lambs,
-    goats, cows and donkeys. Long soft shadows point east (the low sun is in the west, on the left).
+    many little children, elders, people walking in and out of the gate, a pasture with sheep, lambs, goats,
+    cows and donkeys, and a goat and two sheep grazing on the lower slope of the knoll. Long soft shadows point
+    east (the low sun is in the west, on the left).
 
-Timing (every time comes from the narration: ctx chunk starts, or _at() for a phrase inside a chunk):
-  opening  a calm still for the 1.0 s dissolve from s22: Jonah sits sulking, arms crossed (as s22 leaves him),
-           in God's golden light, at about the same place in the frame.
-  line 0   "约拿，" — he hears his name: a squash-and-hop cut to sitting up, looking up toward the light and
-           the voice (listening); the clouds part, golden rays. "这棵蓖麻" — a dry leaf wobbles loose from the
-           withered plant, tumbles down past his back and lands in his open hand; he looks at it and lifts it.
-           "也不是你让它长大的" — he turns the leaf in his fingers, sad (blinks).
-  line 1   "它一夜长起来，" — a thought bubble puffs up beside him (three little puffs, then the cloud pops in):
-           a memory picture of the same spot at night — moon and stars — where the castor sprout springs up,
-           frame by frame, into a tall green plant, and the bubble sky turns to morning.
-           "一夜又枯死了，" — night falls again in the bubble and the plant droops and withers to brown.
-           "你都这么心疼它。" — the bubble fades; Jonah looks down at the leaf, tender and sorry. The camera
-           starts a slow pull-back.
-  line 2   "尼尼微这座大城里，有十二万多人，" — the pull-back settles on a held wide view of the whole city with
-           Jonah small on his knoll (doves fly over). "就像分不清左右手的小孩子，" — a slow glide down to the
-           children: two little ones point left and right with a '?' over each head and keep swapping sides
-           (hops). "不知道什么是对，什么是错。" — hearts rise over the people; the two children stop, hop, smile
-           and get their hearts too.
-  line 3   "还有许多牛羊。" — the glide drifts on over the pasture (a sheep bleats with a happy hop, hearts over
-           the animals). "我怎么能不心疼他们呢？" — the glide rises up the knoll back to Jonah; his face softens
-           (gentle smile, open eyes), the warm light returns on him, a chime; slow push-in to a calm last frame.
+Timing (every time comes from the narration: ctx chunk starts, or _at_in() for a phrase inside a chunk):
+  opening  a match dissolve from s22: same framing relative to Jonah (s22's END_CAM), same pose (sit_sulk,
+           angry), same booth, plant and veil cloud; the plant's sway is at rest through the dissolve.
+  line 0   "约拿，" — he hears his name: a squash-and-hop cut to sitting up, looking up toward the light and the
+           voice (up and to the right, under the veil cloud); the clouds part a little. "这棵蓖麻" — a pale, sun-
+           bleached dry leaf wobbles on a broken leaf stub of the arching branch (the booth's pale back cloth behind
+           it), swings out, sweeps left in front of his chest and drops into his open hand from above; his eyes
+           follow it (blink cut), he bends his head over it and lifts it. "也不是你让它长大的" — he turns it.
+  line 1   "它一夜长起来，" — a thought bubble scale-pops (opaque within 2 frames) out of a trail of puffs into the
+           open sky up-left: a memory picture of the same spot at night (moon and stars) where the castor sprout
+           springs up, step by step, into a tall green plant beside the booth; the moon sets at the upper left and
+           the morning sun rises low on the right (east). "一夜又枯死了，" — night again, the plant droops and
+           withers. "你都这么心疼它。" — the bubble shrinks back into the trail (3-frame alpha cut), the puffs pop out;
+           Jonah turns tender and sorry (blink cut). The camera starts a slow pull-back.
+  line 2   "尼尼微这座大城里，有十二万多人，" — a held wide view: the city, the plain, the pasture and Jonah under his
+           booth (doves fly over). "就像分不清左右手的小孩子，" — a slow glide down to the children: two little ones
+           point left and right with a '?' over each head and keep swapping sides (hops); two more play face to face
+           behind them (clear of the ball game's arc). "不知道什么是对，什么是错。" — hearts rise over the people; the
+           two children stop, hop, smile and get their hearts too.
+  line 3   "还有许多牛羊。" — the camera glides over to the pasture and RESTS on it while the animals are named: a
+           sheep bleats with a happy hop, hearts over the animals (all above the subtitle band).
+           "我怎么能不心疼他们呢？" — the camera rises up the knoll and arrives on Jonah just before "心疼他们";
+           his face softens through a blink into a thoughtful look down toward the city (raised brows, no smile,
+           no blush — the Bible ends on God's question and s24 asks the child how Jonah answered); the warm light
+           returns on him, a chime; slow push-in to a calm last frame.
 
 Notes for maintainers
-* Pose changes are hard cuts hidden by a squash-and-hop; only expression changes of the SAME pose crossfade
-  (adjacent flipbook frames); blinks are short hard cuts.
+* Pose changes are hard cuts hidden by a squash-and-hop; every expression change goes through a closed-eye frame
+  (blink -> new face, hard cuts), so two faces are never blended.
 * The memory plant is one exact castor drawing per step (leaf spins pinned to the full-grown drawing, as in
   v1 s11), shown as a stepped time-lapse flipbook (whole indices only, never two plants blended).
-* Camera: every move is re-parametrised by output-space arc length with soft ramps (v1 _cam_path / _glide).
+* Camera: every move is re-parametrised by output-space arc length with soft ramps (v1 _cam_path / _glide);
+  glide durations come from _cam_dur so the peak stays under ~19 output px / frame.
+* The light on Jonah is clipped to his silhouette (two drawings: sulking / sitting); its rim is a thin, faint
+  edge toward the light so his umber ink outline stays dark.
 """
 import math
 import random
@@ -57,30 +66,57 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 
 SW, SH = V.SW, V.SH
-GY, SP, XJ, XP, XB = V.GY, V.SP, V.XJ, V.XP, V.XB
 WALL_Y, GATE_X, SUN = V.WALL_Y, V.GATE_X, V.SUN
-KNOLL, ABOX, HEAD_DX = V.KNOLL, V.ABOX, V.HEAD_DX
-kmap, doc, f1, plain_scale = V.kmap, V.doc, V.f1, V.plain_scale
+ABOX, HEAD_DX = V.ABOX, V.HEAD_DX
+doc, f1, plain_scale = V.doc, V.f1, V.plain_scale
 _clamp, _env = V._clamp, V._env
 long_shadow, shdoc = V.long_shadow, V.shdoc
 hop_sched, hop_h, hop_motion, hop_frame, shadow_motion = V.hop_sched, V.hop_h, V.hop_motion, V.hop_frame, V.shadow_motion
 _cam_path, _glide = V._cam_path, V._glide
 INK = P["ink"]
 
+# ------------------------------------------------------------------ layout (stage px)
+# Same arrangement as the vine scenes s21/s22 (v1 s11): the withered castor root on the LEFT, the booth to its
+# right with the dead canopy arching over its roof, Jonah sitting UNDER the booth (XB + 28) facing the city.
+# The knoll crest is lower than v1's (GY 830, not 710) so that the opening camera can frame Jonah exactly as
+# s22's last frame does (same scale, same place in the picture) with the viewport inside the stage.
+GY = 830                 # knoll crest: plant root, booth, Jonah
+SP = V.SP                # 1.3, as in s21/s22
+XJ = 2880                # Jonah (sitting under the booth, facing the city on the left)
+XB = XJ - 28             # booth (s11/s22: XJ = XB + 28)
+XP = XB - PR.CASTOR_BOOTH_DX * SP   # withered castor root (its dead canopy arches over the booth roof)
+KDX = 200                # knoll detail sketch (v1) shifted right with Jonah
+
+
+def kmap(x, y):
+    """Map v1's knoll detail sketch (drawn for a crest at y 830) onto this knoll."""
+    return (x - 160 + KDX, GY + (y - 830) * (SH + 80 - GY) / (SH + 80 - 830))
+
+
+# knoll silhouette (top edge); the left slope runs down into (and over) the plain (v1's, with the lower crest)
+KNOLL = [(1900, SH + 80), (2010, 1421), (2140, 1157), (2255, 985), (2335, 893), (2395, 852), (2450, 836),
+         (2560, 831), (2800, 829), (3100, 825), (3400, 815), (3720, 803), (3900, 800)]
+
+# s22 ends on END_CAM = Cam(1169, 704, 1600) with Jonah (sit_sulk, angry) at (1209, 962) under the same booth and
+# plant: the same framing relative to Jonah here, so Jonah, plant and booth lie on top of each other in the dissolve
+C_S22 = Cam(XJ - 40, GY - 258, 1600)
+
 FIGS = []                # [(name, bbox, heart_spot)]
 HEARTS = {}
 
 # ------------------------------------------------------------------ the memory bubble (stage px)
-BC = (2195, 290)         # bubble centre (in the sky over the city, up-left of Jonah's head)
+BC = (XJ - 640, 320)     # bubble centre: open sky up-left of Jonah, left of the plant's crown
 BRX, BRY = 300, 214      # outer radii
 B_INSET = 20             # cream rim width
-BUB_PIV = (2440, 420)    # it grows out of the trail (lower right)
-BPX, BPY, BPS = 2132, 424, 0.46     # memory castor root + scale
-TRAIL = [(2628, 396, 9), (2590, 372, 13), (2545, 346, 18)]
+BUB_PIV = (BC[0] + 245, BC[1] + 130)     # it grows out of (and shrinks back into) the trail (lower right)
+BPX, BPY, BPS = BC[0] - 63, BC[1] + 134, 0.46     # memory castor root + scale
+TRAIL = [(XJ - 70, 526, 9), (XJ - 165, 498, 13), (XJ - 272, 470, 18)]    # from Jonah's head to the bubble
 
-# the dry leaf that falls into Jonah's hand
-TWIG = (2902, 395)       # where its stalk hangs from the withered stem (left side, a little above his head)
-HANG_DIR = -58           # direction of the hanging stalk from the leaf centre (deg; up and to the right)
+# the dry leaf that falls into Jonah's hand: it hangs from the broken leaf stub on the arching branch, just right
+# of his head-cloth, with the booth's pale back cloth behind it
+TWIG = (XP + 437, GY - 333)
+HANG_DIR = -134          # direction of the hanging stalk from the leaf centre (deg; up and to the left)
+LEAF_COL = "#c9a95e"     # sun-bleached straw: lighter than the plant's dead leaves so it reads against them
 
 _PUNCT = "，。！？：；、,.!?:;…"
 
@@ -115,12 +151,16 @@ def _when(ctx, phrases, default):
 
 # ------------------------------------------------------------------ Jonah's extra expressions
 _EXTRA_EXPRS = {
-    "hear": dict(eyes="dot", brow=(-0.07, 0.03, -0.04), mouth="flat", look=(0.03, -0.1)),
+    # the voice is up and to the right (God's light): he looks up toward it, listening
+    "hear": dict(eyes="dot", brow=(-0.07, 0.03, -0.04), mouth="flat", look=(-0.05, -0.11)),
     "hear_blink": dict(eyes="closed", brow=(-0.07, 0.03, -0.04), mouth="flat"),
-    "leaf": dict(eyes="dot", brow=(-0.09, 0.04, 0.01), mouth="frown", look=(0.07, 0.09)),
+    "leaf": dict(eyes="dot", brow=(-0.09, 0.04, 0.01), mouth="frown", look=(0.16, 0.14)),
     "leaf_blink": dict(eyes="closed", brow=(-0.09, 0.04, 0.01), mouth="frown"),
-    "soft": dict(eyes="dot", brow=(-0.05, 0.02, -0.03), mouth="smile", look=(0.06, 0.05), blush=True),
-    "soft_blink": dict(eyes="closed", brow=(-0.05, 0.02, -0.03), mouth="smile", blush=True),
+    "sorry_blink": dict(eyes="closed", brow=(-0.10, 0.05, 0.03), mouth="wobble", blush=True),
+    # softened, but thoughtful (the Bible leaves Jonah's answer open; s24 asks the child): relaxed, slightly
+    # raised brows, eyes down-left toward the city, no smile, no blush
+    "soft": dict(eyes="dot", brow=(-0.05, 0.0, -0.04), mouth="flat", look=(0.12, 0.12)),
+    "soft_blink": dict(eyes="closed", brow=(-0.05, 0.0, -0.04), mouth="flat"),
 }
 
 
@@ -171,6 +211,13 @@ def _star4(x, y, r, col="#fff3c8", op=0.95):
     return (f'<path d="M{f1(x)},{f1(y - r)} L{f1(x + w)},{f1(y - w)} L{f1(x + r)},{f1(y)} L{f1(x + w)},{f1(y + w)} '
             f'L{f1(x)},{f1(y + r)} L{f1(x - w)},{f1(y + w)} L{f1(x - r)},{f1(y)} L{f1(x - w)},{f1(y - w)} Z" '
             f'fill="{col}" opacity="{op}"/>')
+
+
+def _cam_dur(cams, r, peak=19.0):
+    """Shortest glide time (s) through ``cams`` with ramp fraction ``r`` that keeps the peak camera speed at
+    ``peak`` output px per frame (30 fps)."""
+    _, tot, _ = _cam_path(cams)
+    return tot / (peak * 30.0 * (1 - r))
 
 
 def _qmark(x, y, s=1.0):
@@ -236,7 +283,7 @@ def build(ctx):
     t_name = max(t_still + 0.12, l_first.start + 0.3)         # "约拿，" -> he looks up, listening (hop)
     t_plant = when("这棵蓖麻", l_first.start + 1.0)          # a dry leaf wobbles loose ...
     t_fall0 = t_plant + 0.35
-    t_catch = t_fall0 + 1.45                                   # ... and lands in his hand
+    t_catch = t_fall0 + 1.75                                   # ... and lands in his hand
     t_grow_line = when(["也不是你", "长大"], t_catch + 1.2)    # "也不是你让它长大的" -> turns the leaf
     t_night1 = when(["一夜长起来", "一夜长"], t_grow_line + 3.5)
     t_night2 = when(["一夜又", "又枯", "又干"], t_night1 + 1.8)
@@ -259,22 +306,38 @@ def build(ctx):
     t_g1 = max(t_g0 + 0.9, t_night2 - 0.8)                     # ... to a tall plant; morning in the bubble
     t_w0 = max(t_night2 + 0.35, t_dead - 0.35)                 # night again: it droops ...
     t_w1 = t_w0 + 1.1                                          # ... and withers
-    t_bout = max(t_w1 + 0.55, t_tender + 0.35)                 # the bubble fades away
-    # camera
-    t_pull0 = t_bout + 0.25
-    t_pull1 = max(t_city + 1.7, t_pull0 + 3.6)                 # settled on the wide city
-    t_down0 = max(t_pull1 + 0.9, t_many + 0.1)                 # glide down to the people and the children
-    t_down1 = max(t_down0 + 3.5, t_lr + 0.9)
-    t_go = max(t_down1 + 2.0, t_beasts - 2.0)                  # glide over the pasture and up to Jonah
-    t_back = max(t_go + 4.6, t_care - 0.55)
-    t_soft = max(t_back + 0.3, t_care - 0.1)                   # his face softens
-    t_baa = t_beasts + 0.55
+    t_bout = max(t_w1 + 0.55, t_tender + 0.35)                 # the bubble shrinks back into the trail
     # children: '?' and left/right swaps
     t_q0 = t_lr - 0.05
     lr_hops = [t_q0 - 0.12 + 0.95 * k for k in range(4)]        # into pointing, then swaps
     t_lr_end = max(lr_hops[-1] + 0.95, t_wrong - 0.6)          # hop back to standing, smiling
+
+    # camera (views; every glide's duration is checked against the speed limit with _cam_dur)
+    C0 = C_S22                          # as s22 leaves him: same scale, same place in the frame
+    C0b = Cam(XJ - 14, 556, 1410)       # slow push-in on Jonah and the leaf while God speaks
+    Cb = Cam(BC[0] + 290, 452, 1520)    # room for the memory bubble on the left
+    Cb2 = Cam(BC[0] + 302, 458, 1494)
+    Cw = Cam(1880, 840, 2800)           # held wide view: the city, the plain, the pasture, Jonah under his booth
+    Cw2 = Cam(1856, 852, 2760)
+    C1 = Cam(820, 1100, 1440)           # the children
+    C1b = Cam(930, 1092, 1440)
+    C2 = Cam(1650, 1080, 2000)          # the pasture (the children still at its left edge)
+    C2h = Cam(1690, 1070, 1984)         # a slow drift while the animals are named
+    C3 = Cam(2560, 770, 2160)           # Jonah under his booth, looking down at the city and the pasture
+    Cf = Cam(XJ - 10, 600, 1430)        # slow push-in: a calm last frame on Jonah's face
+    t_pull0 = t_bout + 0.25
+    t_pull1 = max(t_city + 1.7, t_pull0 + 3.6)                 # settled on the wide city
+    t_down0 = max(t_pull1 + 0.9, t_many + 0.1)                 # glide down to the people and the children
+    t_down1 = max(t_down0 + 3.5, t_lr + 0.9)
+    t_c2 = t_beasts + 0.15                                     # settled on the animals as they are named
+    t_go = max(t_down1 + 0.5, min(t_c2 - _cam_dur([C1b, C2], 0.3), t_lr_end + 0.1))   # leave the children
+    t_baa = t_beasts + 0.5                                     # a sheep bleats (camera at rest)
+    dur_rise = _cam_dur([C2h, C3], 0.3)
+    t_back = max(t_care - 0.1, t_c2 + 1.0 + dur_rise)          # arrive on Jonah just before "心疼他们"
+    t_rise = t_back - dur_rise                                 # rise from the pasture to Jonah
+    t_soft = max(t_back + 0.15, t_care - 0.1)                  # his face softens
     t_hearts_p0, t_hearts_p1 = t_dunno - 0.2, t_beasts + 0.2
-    t_hearts_a0, t_hearts_a1 = t_beasts - 0.1, t_how + 0.6
+    t_hearts_a0, t_hearts_a1 = t_beasts - 0.1, t_rise + 0.2
 
     # =============================================================== SKY
     sky = doc(
@@ -292,16 +355,22 @@ def build(ctx):
 
     far_clouds = doc(S.g(
         S.cloud(980, 190, 360, 100, "#fdf0e0", seed=4, sw=3, shade_fill="#f2cdb6") +
-        S.cloud(1820, 120, 300, 86, "#fdeedd", seed=6, sw=3, shade_fill="#f2cdb6") +
+        S.cloud(1660, 112, 300, 86, "#fdeedd", seed=6, sw=3, shade_fill="#f2cdb6") +
         S.cloud(150, 120, 260, 80, "#fdf0e0", seed=7, sw=3, shade_fill="#f2cdb6"), filter="wobble"))
     sc.add("far_clouds", far_clouds, z=2, wc=0.6)
-    cl_l = doc(S.g(S.cloud(XJ - 250, 230, 420, 116, "#fdf1e2", seed=11, sw=3.5, shade_fill="#f0c9b0") +
-                   S.cloud(XJ - 560, 312, 220, 66, "#fdf1e2", seed=14, sw=3, shade_fill="#f0c9b0"), filter="wobble"))
-    cl_r = doc(S.g(S.cloud(XJ + 410, 215, 460, 124, "#fdf1e2", seed=12, sw=3.5, shade_fill="#f0c9b0") +
-                   S.cloud(XJ + 800, 330, 280, 84, "#fdf1e2", seed=13, sw=3, shade_fill="#f0c9b0"), filter="wobble"))
+    # left clouds: well clear of the memory bubble (BC +- (300, 214)) the whole time
+    cl_l = doc(S.g(S.cloud(BC[0] - 560, 236, 420, 116, "#fdf1e2", seed=11, sw=3.5, shade_fill="#f0c9b0") +
+                   S.cloud(BC[0] - 900, 330, 220, 66, "#fdf1e2", seed=14, sw=3, shade_fill="#f0c9b0"), filter="wobble"))
+    # right: s22's soft veil cloud (same drawing, same place relative to Jonah as s22's last frame), God's light
+    # fans down from under its lower-left edge; a second cloud further east
+    VEIL = (XJ + 241, GY - 688)          # (s22's veil has drifted 50 px left by its end)
+    GAP = (XJ + 131, GY - 598)
+    cl_r = doc(S.g(S.cloud(VEIL[0], VEIL[1] - 4, 610, 214, "#fff2b8", seed=12, sw=0), filter="blur-md") +
+               S.g(S.cloud(VEIL[0], VEIL[1], 520, 170, "#fff6e2", seed=12, sw=3.5, shade_fill="#f8d596") +
+                   S.cloud(XJ + 760, 330, 280, 84, "#fdf1e2", seed=13, sw=3, shade_fill="#f0c9b0"), filter="wobble"))
     part = lambda t: M.progress(t, t_name - 0.1, t_name + 2.2, "inout")
     sc.add("cloud_l", cl_l, z=5.2, wc=0.6, motion=lambda t: Tf(dx=-70 * part(t) - 4 * t))
-    sc.add("cloud_r", cl_r, z=5.3, wc=0.6, motion=lambda t: Tf(dx=80 * part(t) - 4 * t))
+    sc.add("cloud_r", cl_r, z=5.3, wc=0.6, motion=M.combine(lambda t: Tf(dx=70 * part(t) - 4 * t), M.bob(5, 4.2, 0.21)))
 
     # =============================================================== LAND (static, flattened; as v1)
     FAR_INK = 'stroke="#9a7a60" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"'
@@ -433,7 +502,7 @@ def build(ctx):
 
     booth = (f'<ellipse cx="{XB + 60}" cy="{GY + 8}" rx="{340 * SP}" ry="30" fill="{INK}" opacity="0.16" '
              f'filter="url(#soft)"/>' + PR.booth(XB, GY, SP, facing=1))
-    booth += PR.sack(XB - 30, GY + 2, 0.62, seed=3) + PR.jar(XB + 95, GY - 50, 0.6)
+    booth += PR.jar(XB + 372, GY - 50, 0.6) + PR.sack(XB + 444, GY + 3, 0.62, seed=3)    # beside the booth
     sc.add("booth", doc(booth), z=5.6, wc=0.8)
 
     # =============================================================== PEOPLE on the plain
@@ -495,8 +564,10 @@ def build(ctx):
     # children playing (hops with rests: stand <-> cheer)
     for (nm, x, y, v, fc, seed, H, s_) in [("kid2", 1005, 1295, 3, 1, 5, 22, None), ("kid3", 560, 1185, 1, 1, 6, 18, None),
                                            ("toddler", 470, 1338, 0, -1, 7, 13, 0.56),
-                                           ("kid4", 1045, 1078, 0, 1, 11, 16, None),
-                                           ("kid5", 1102, 1066, 3, -1, 12, 16, None)]:
+                                           # (two more little ones playing face to face, between the family and the
+                                           # wall - clear of the ball's arc between kid0 and kid1)
+                                           ("kid4", 830, 975, 0, 1, 11, 16, None),
+                                           ("kid5", 884, 966, 3, -1, 12, 16, None)]:
         hops = hop_sched(seed, T + 1)
         person(nm, x, y, "child", v, facing=fc, frames=[("stand", "happy"), ("cheer", "happy")],
                frame_at=hop_frame(hops), motion=hop_motion(x, y, hops, H), s=s_, hops=hops, H=H)
@@ -643,6 +714,21 @@ def build(ctx):
     # one static layer with every grounded figure's long shadow, flattened with the land (render cost)
     sc.add("ground_shadows", shdoc("".join(ground_sh)), z=4.15, wc=0.3)
 
+    # a few more grazing on the lower slope of Jonah's knoll: they fill the bare slope beside the pasture and lead
+    # the eye up toward Jonah as the camera rises (their shadows sit on the knoll, above its layer)
+    knoll_sh = []
+    for (nm, x, y, kind, fc, s_, ph) in [("goat2", 2330, 1215, "goat", 1, 0.6, 0.3),
+                                         ("sheep5", 2235, 1380, "sheep", -1, 0.64, 0.6),
+                                         ("sheep6", 2450, 1330, "sheep", 1, 0.62, 0.1)]:
+        sc.add(nm, doc(PR.animal(x, y, s_, fc, kind=kind)), z=6 + y / 1000, wc=0.6,
+               motion=M.combine(nod(x, y, ph, 1.3, 2.8), M.bob(2, 2.3, ph)))
+        l, t_, r, b = ABOX[kind]
+        knoll_sh.append(long_shadow(x, y, s_, (r - l) * 0.85, (b - t_) * 0.75))
+        if fc < 0:
+            l, r = -r, -l
+        register(nm, (x + l * s_, y + t_ * s_, x + r * s_, y + b * s_), (x + HEAD_DX[kind] * s_ * fc, y + t_ * s_ - 25))
+    sc.add("knoll_shadows", shdoc("".join(knoll_sh)), z=5.05, wc=0.3)
+
     bx, by = 1640 - 0.62 * 112, 1292 - 0.62 * 100
     sc.add("baa", doc(V._baa(bx, by, 0.9)), z=9, wc=0.3, motion=lambda t: Tf(
         alpha=_env(t, t_baa - 0.05, t_baa + 0.1, t_baa + 0.7, t_baa + 1.0),
@@ -657,71 +743,89 @@ def build(ctx):
     q_zone = [("q", (qx - 40, qy - 50, qx + 40, qy + 50)) for qx, qy, _ in q_spots]
     HEARTS["people"] = _place_hearts(people, extra_obstacles=ball_zone + q_zone)
     HEARTS["animals"] = _place_hearts(beasts)
-    HEARTS["lr"] = _place_hearts({"lr_a", "lr_b"}, extra_obstacles=ball_zone)
+    HEARTS["lr"] = _place_hearts({"lr_b"}, extra_obstacles=ball_zone)
+    # lr_a's column above the head is blocked by the family behind him: his heart starts beside his head, on the
+    # open side, and rises less
+    top_a = next(sp for n, _, sp in FIGS if n == "lr_a")
+    HEARTS["lr_a"] = [(top_a[0] - 38, top_a[1] + 30)]
 
     # =============================================================== WITHERED PLANT + JONAH
     def castor_rot(t):
-        return 0.6 * math.sin(2 * math.pi * t / 3.6) + 0.25 * math.sin(2 * math.pi * t / 1.7)
+        """Gentle sway; at rest through the opening dissolve so it lies on s22's plant."""
+        k = M.progress(t, t_still - 0.2, t_still + 1.2, "sine")
+        return k * (0.6 * math.sin(2 * math.pi * t / 3.6) + 0.25 * math.sin(2 * math.pi * t / 1.7))
 
     plant = doc(PR.castor_plant(XP, GY, SP, growth=1, wither=1, bite=1, side=1, seed=2))
     sc.add("castor", plant, z=10, wc=0.9, motion=lambda t: Tf(rot=castor_rot(t), px=XP, py=GY))
 
     # God's golden light on Jonah: on from the start (as s22 leaves him), brighter at his name, fading as
-    # the camera pulls back to the city, and back on him as his face softens
+    # the camera pulls back to the city, and back on him as his face softens. It falls from under the veil
+    # cloud up to the right (as in s22).
     a_light = lambda t: (0.72 + 0.28 * M.progress(t, t_name - 0.2, t_name + 1.0, "sine")) * \
         (1 - M.progress(t, t_pull0 + 0.4, t_pull0 + 2.2, "sine"))
     a_end = lambda t: 0.6 * M.progress(t, t_soft - 0.3, t_soft + 1.2, "sine")
-    GAP = (XJ + 60, 190)
     beam = doc(
-        S.g(f'<path d="M{XJ - 90},{GAP[1]} L{XJ + 160},{GAP[1]} L{XJ + 140},{GY + 30} L{XJ - 260},{GY + 30} Z" '
+        S.g(f'<path d="M{GAP[0] - 70},{GAP[1]} L{GAP[0] + 70},{GAP[1]} L{XJ + 150},{GY + 30} L{XJ - 230},{GY + 30} Z" '
             f'fill="url(#bm)"/>', filter="blur-md") +
-        f'<ellipse cx="{XJ - 30}" cy="{GY - 170}" rx="240" ry="270" fill="url(#jg)"/>',
+        f'<ellipse cx="{XJ}" cy="{GY - 170}" rx="240" ry="270" fill="url(#jg)"/>',
         S.lin_grad("bm", [(0, "#ffe6a8", 0.22), (0.6, "#ffdc96", 0.12), (1, "#ffd68a", 0.05)]) +
         S.rad_grad("jg", [(0, "#ffe2a0", 0.26), (0.5, "#ffd890", 0.1), (1, "#ffd080", 0)]))
     sc.add("god_light", beam, z=10.5, wc=0, blend="add",
            motion=lambda t: Tf(alpha=max(a_light(t), a_end(t)) * (0.85 + 0.15 * math.sin(t * 2.6))))
-    rays = doc(S.g(V._ray_fan(GAP[0], GAP[1] - 40, 700, [88, 96, 104, 112, 120, 128], w0=8, w1=44,
+    rays = doc(S.g(V._ray_fan(GAP[0], GAP[1] - 30, 700, [96, 103, 110, 117, 124, 131], w0=8, w1=44,
                               fill="#ffe2a0", opacity=0.3), filter="soft"))
     sc.add("rays", rays, z=10.6, wc=0, blend="add", motion=lambda t: Tf(
         alpha=max(a_light(t), 0.8 * a_end(t)) * (0.75 + 0.25 * math.sin(t * 1.9)),
-        rot=2.0 * math.sin(t * 0.45), px=GAP[0], py=GAP[1] - 40))
+        rot=2.0 * math.sin(t * 0.45), px=GAP[0], py=GAP[1] - 30))
 
-    # Jonah: flipbook of (pose, expression); index order keeps every crossfaded pair adjacent
-    JF = [("sit_sulk", "angry"),      # 0 sulking, arms crossed (as s22 leaves him)
+    # Jonah: flipbook of (pose, expression). Every expression change goes through a closed-eye frame (hard
+    # cuts: blink -> new face), so two faces are never blended; the pose change is a hard cut hidden by a hop.
+    JF = [("sit_sulk", "angry"),      # 0 as s22 leaves him: sulking, arms crossed
           ("sit", "hear_blink"),      # 1
-          ("sit", "hear"),            # 2 sitting up, looking up toward the voice
+          ("sit", "hear"),            # 2 sitting up, looking up toward the voice and the light
           ("sit", "leaf_blink"),      # 3
-          ("sit", "leaf"),            # 4 looking at the dry leaf
-          ("sit", "sorry"),           # 5 tender, sorry (crossfade 4 -> 5)
-          ("sit", "soft"),            # 6 his face softens (crossfade 5 -> 6)
-          ("sit", "soft_blink")]      # 7
+          ("sit", "leaf"),            # 4 looking at the dry leaf in his hand
+          ("sit", "sorry_blink"),     # 5
+          ("sit", "sorry"),           # 6 tender, sorry
+          ("sit", "soft_blink"),      # 7
+          ("sit", "soft")]            # 8 softened and thoughtful, eyes toward the city
     jshadow = CH.ground_shadow(XJ, GY, SP, width=210, opacity=0.25)
+
+    def jfig(p, e):
+        """(markup, head centre in stage px)"""
+        mk = CH.jonah(XJ, GY, SP, -1, pose=p, expr=e)
+        return mk, CH.body_points(CH.jonah, XJ, GY, SP, -1, pose=p)["head"]
+
     with _exprs():
-        jframes = [doc(jshadow + CH.jonah(XJ, GY, SP, -1, pose=p, expr=e)) for p, e in JF]
+        jfigs = [jfig(p, e) for p, e in JF]
+    jframes = [doc(jshadow + mk) for mk, _ in jfigs]
 
     def blinks(t, times, a, b, d=0.13):
         return b if any(tb <= t < tb + d for tb in times) else a
 
-    t_look_leaf = t_catch - 0.45                     # his eyes follow the leaf into his hand
+    BL = 0.13                                        # a blink / an expression change through closed eyes
+    t_look_leaf = t_fall0 + 0.7                      # a blink, and his eyes follow the leaf down into his hand
+    hear_blinks = [b for b in (t_name + 1.15,) if b < t_look_leaf - 0.6]
     leaf_blinks = [t_grow_line + 0.9, t_night1 + 1.25, t_dead + 0.2]
-    hear_blinks = [t_name + 1.15]
-    soft_blinks = [t_soft + 1.25]
+    sorry_blinks = [b for b in (t_tender + 1.9 + 3.3 * k for k in range(8)) if b < t_soft - 0.5]
+    soft_blinks = [t_soft + 1.7]
 
     def jonah_frame(t):
         if t < t_name:
             return 0.0
         if t < t_look_leaf:
             return blinks(t, hear_blinks, 2.0, 1.0)
-        if t < t_look_leaf + 0.12:
-            return 1.0                                         # a blink, and his eyes go to the leaf
+        if t < t_look_leaf + BL:
+            return 1.0
         if t < t_tender:
             return blinks(t, leaf_blinks, 4.0, 3.0)
+        if t < t_tender + BL:
+            return 5.0
         if t < t_soft:
-            return 4.0 + M.progress(t, t_tender, t_tender + 0.35, "sine")
-        f = 5.0 + M.progress(t, t_soft, t_soft + 0.45, "sine")
-        if f >= 6.0:
-            return blinks(t, soft_blinks, 6.0, 7.0)
-        return f
+            return blinks(t, sorry_blinks, 6.0, 5.0)
+        if t < t_soft + BL:
+            return 7.0
+        return blinks(t, soft_blinks, 8.0, 7.0)
 
     HOP_H, HOP_D = 16, 0.34
 
@@ -741,13 +845,13 @@ def build(ctx):
         elif 0.08 + HOP_D <= u < 0.08 + HOP_D + 0.14:
             sy *= 1 - 0.04 * math.sin(math.pi * (u - 0.08 - HOP_D) / 0.14)
         # sits up and looks up toward the voice and the light while listening
-        rot += 2.6 * _env(t, t_name + 0.1, t_name + 0.7, t_catch - 0.3, t_catch + 0.3)
+        rot += 2.6 * _env(t, t_name + 0.1, t_name + 0.7, t_look_leaf - 0.1, t_look_leaf + 0.5)
         # the leaf lands in his hand: a tiny bump
         uc = t - t_catch
         if 0 <= uc < 0.25:
             dy += 3 * math.sin(math.pi * uc / 0.25)
-        # looks at the leaf, leaning in a little
-        rot -= 1.2 * _env(t, t_catch, t_catch + 0.6, t_pull0, t_pull0 + 0.8)
+        # bends his head over the leaf, looking at it
+        rot -= 2.6 * _env(t, t_look_leaf + 0.1, t_catch + 0.4, t_pull0, t_pull0 + 0.8)
         # a soft sigh at "你都这么心疼它"
         us = t - t_tender
         if 0 <= us < 1.6:
@@ -767,13 +871,14 @@ def build(ctx):
         x, y = (p[0] - XJ) * j.sx, (p[1] - GY) * j.sy
         return (XJ + x * math.cos(r) - y * math.sin(r) + j.dx, GY + x * math.sin(r) + y * math.cos(r) + j.dy)
 
-    # --- the dry leaf: hangs on a twig of the withered plant, wobbles loose, tumbles down past his back and
-    # lands in his open (near) hand; he lifts it to look at it and turns it in his fingers
+    # --- the dry leaf: hangs from a broken leaf stub on the arching branch just right of his head-cloth (the
+    # booth's pale back cloth behind it), wobbles loose, swings out, sweeps left in front of his chest and drops
+    # into his open (near) hand from above; he lifts it to look at it and turns it in his fingers
     hand = CH.body_points(CH.jonah, XJ, GY, SP, -1, pose="sit")["hands"][1]
     LCX, LCY = hand[0] - 58, hand[1] - 62
     SE = (hand[0] - 2, hand[1] + 4)                       # stalk end (in the hand)
-    leaf = doc(V._dry_leaf(LCX, LCY, 50, rot=-30, stalk=SE))
-    HANG_ROT = HANG_DIR - math.degrees(math.atan2(SE[1] - LCY, SE[0] - LCX))   # turns the stalk up to the stem
+    leaf = doc(V._dry_leaf(LCX, LCY, 50, rot=-30, col=LEAF_COL, stalk=SE))
+    HANG_ROT = HANG_DIR - math.degrees(math.atan2(SE[1] - LCY, SE[0] - LCX))   # turns the stalk up to the stub
 
     def held_tf(t):
         j = jonah_tf(t)
@@ -794,7 +899,7 @@ def build(ctx):
     def twig_at(t):
         return _rot_pt(TWIG, (XP, GY), castor_rot(t))
 
-    t_wob = t_fall0 - 0.4
+    t_wob = t_fall0 - 0.45
 
     def hang_tf(t):
         rot = HANG_ROT + castor_rot(t) + 2.5 * math.sin(2 * math.pi * t / 2.1)
@@ -807,18 +912,35 @@ def build(ctx):
     p_start = map_pt(H0, (LCX, LCY))
     HC = held_tf(t_catch)
     p_end = map_pt(HC, (LCX, LCY))
-    path = [p_start, (p_start[0] + 14, p_start[1] + 70), (p_start[0] - 30, p_start[1] + 150),
-            (2735, 668), (2630, 662), p_end]
+    hx0, hy0 = hand
+    path = [p_start,
+            (p_start[0] + 24, p_start[1] + 46),          # drops off the stub, swinging out to the right
+            (p_start[0] + 6, p_start[1] + 90),           # turns back
+            (XJ + 24, hy0 - 78),                         # sweeps left in front of his chest
+            (hx0 - 72, hy0 - 112),                       # rises a little at the end of the swing
+            (p_end[0] + 6, p_end[1] - 44),               # and drops into his hand from above
+            p_end]
+    # arc-length table of the Catmull-Rom path, so the leaf's speed follows the easing, not the knot spacing
+    samp = [_catmull(path, k / 240) for k in range(241)]
+    acc = [0.0]
+    for a_, b_ in zip(samp, samp[1:]):
+        acc.append(acc[-1] + math.hypot(b_[0] - a_[0], b_[1] - a_[1]))
+
+    def path_at(f):
+        d = _clamp(f) * acc[-1]
+        i = min(239, max(0, next((k for k in range(1, 241) if acc[k] >= d), 240) - 1))
+        seg = acc[i + 1] - acc[i]
+        v = (d - acc[i]) / seg if seg > 0 else 0.0
+        return (samp[i][0] + (samp[i + 1][0] - samp[i][0]) * v, samp[i][1] + (samp[i + 1][1] - samp[i][1]) * v)
 
     def fall_tf(t):
         u = M.progress(t, t_fall0, t_catch, "linear")
-        e = 0.5 - 0.5 * math.cos(math.pi * u)                  # starts from rest, slows into his hand
-        e = 0.6 * e + 0.4 * u
-        x, y = _catmull(path, e)
-        swing = math.sin(2 * math.pi * 1.5 * u) * (1 - u) * min(1.0, u / 0.1)
-        rot = H0.rot + (HC.rot - H0.rot) * (0.5 - 0.5 * math.cos(math.pi * u)) + 32 * swing
-        flip = abs(math.cos(math.pi * u * 2.4))
-        sy = 1 - 0.55 * (1 - flip) * (1 - u) ** 0.6
+        e = 0.62 * (0.5 - 0.5 * math.cos(math.pi * u)) + 0.38 * u    # starts from rest, slows into his hand
+        x, y = path_at(e)
+        swing = math.sin(2 * math.pi * 1.25 * u) * (1 - u) * min(1.0, u / 0.1)
+        rot = H0.rot + (HC.rot - H0.rot) * (0.5 - 0.5 * math.cos(math.pi * u)) + 28 * swing
+        flip = abs(math.cos(math.pi * u * 2.2))
+        sy = 1 - 0.5 * (1 - flip) * (1 - u) ** 0.6
         return Tf(dx=x - LCX, dy=y - LCY, rot=rot, sx=HC.sx, sy=HC.sy * sy, px=LCX, py=LCY)
 
     def leaf_tf(t):
@@ -830,26 +952,31 @@ def build(ctx):
 
     sc.add("leaf", leaf, z=11.2, wc=0.5, motion=leaf_tf)
 
-    # warm light ON Jonah (God's light, and again as his face softens): clipped to his silhouette
-    J = CH.jonah(XJ, GY, SP, -1, pose="sit", expr="sad")
-    hb = CH.body_points(CH.jonah, XJ, GY, SP, -1, pose="sit")
-    hx, hy = hb["head"]
+    # warm light ON Jonah (God's light, and again as his face softens), clipped to his silhouette: a glow on
+    # his head and shoulders plus a thin, faint rim on his upper-right edge (toward the light). Two drawings:
+    # the sulking pose (until he hears his name) and the sitting pose, cut with Jonah's own pose cut.
     jl_defs = (
         '<filter id="jwhite" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">'
         '<feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/></filter>'
         '<filter id="jblack" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">'
-        '<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/></filter>'
-        f'<mask id="jsil" maskUnits="userSpaceOnUse" x="0" y="0" width="{SW}" height="{SH}">'
-        f'<g filter="url(#jwhite)">{J}</g></mask>'
-        f'<mask id="jrim" maskUnits="userSpaceOnUse" x="0" y="0" width="{SW}" height="{SH}">'
-        f'<g filter="url(#jwhite)">{J}</g><g transform="translate(9,11)" filter="url(#jblack)">{J}</g></mask>' +
+        '<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/></filter>' +
         S.rad_grad("jl", [(0, "#ffe2a0", 1), (0.55, "#ffdc96", 0.5), (1, "#ffd890", 0)]) +
         S.rad_grad("jr", [(0, "#fff0c8", 1), (0.6, "#ffe6b0", 0.7), (1, "#ffe0a0", 0)]))
-    jl_body = (f'<g mask="url(#jsil)"><ellipse cx="{f1(hx - 10)}" cy="{f1(hy + 50)}" rx="200" ry="230" fill="url(#jl)" '
-               f'opacity="0.42"/></g>'
-               f'<g mask="url(#jrim)"><ellipse cx="{f1(hx - 50)}" cy="{f1(hy - 20)}" rx="250" ry="260" fill="url(#jr)"/></g>')
-    j_light = lambda t: max(a_light(t), a_end(t)) * M.progress(t, t_name - 0.1, t_name + 0.3)
-    sc.add("jonah_light", doc(jl_body, jl_defs), z=11.27, wc=0, blend="add",
+    with _exprs():
+        J_sil = [CH.jonah(XJ, GY, SP, -1, pose="sit_sulk", expr="angry"), CH.jonah(XJ, GY, SP, -1, pose="sit", expr="sad")]
+    jl_docs = []
+    for Jm, (_, (hx_, hy_)) in zip(J_sil, (jfigs[0], jfigs[2])):
+        masks = (f'<mask id="jsil" maskUnits="userSpaceOnUse" x="0" y="0" width="{SW}" height="{SH}">'
+                 f'<g filter="url(#jwhite)">{Jm}</g></mask>'
+                 f'<mask id="jrim" maskUnits="userSpaceOnUse" x="0" y="0" width="{SW}" height="{SH}">'
+                 f'<g filter="url(#jwhite)">{Jm}</g><g transform="translate(-4,5)" filter="url(#jblack)">{Jm}</g></mask>')
+        body = (f'<g mask="url(#jsil)"><ellipse cx="{f1(hx_ + 10)}" cy="{f1(hy_ + 50)}" rx="200" ry="230" '
+                f'fill="url(#jl)" opacity="0.42"/></g>'
+                f'<g mask="url(#jrim)"><ellipse cx="{f1(hx_ + 50)}" cy="{f1(hy_ - 20)}" rx="250" ry="260" '
+                f'fill="url(#jr)" opacity="0.5"/></g>')
+        jl_docs.append(doc(body, jl_defs + masks))
+    j_light = lambda t: max(a_light(t), a_end(t))
+    sc.add("jonah_light", jl_docs, z=11.27, wc=0, blend="add", frame_at=lambda t: 0.0 if t < t_name else 1.0,
            motion=lambda t: (lambda j: Tf(j.dx, j.dy, j.rot, j.sx, j.sy, 0.38 * j_light(t), j.px, j.py))(jonah_tf(t)))
 
     # =============================================================== THE MEMORY BUBBLE
@@ -857,11 +984,14 @@ def build(ctx):
     inner = _scallop(BC[0], BC[1], BRX - B_INSET, BRY - B_INSET)
     clip = f'<clipPath id="bubin"><path d="{inner}"/></clipPath>'
 
+    t_bgone = t_bout + 0.3                                     # the shrunken bubble is gone
+
     def bub_tf(t):
-        # pops in out of the trail; at the end it shrinks back toward Jonah's head as it fades
-        a = M.progress(t, t_bin, t_bin + 0.22, "sine") * (1 - M.progress(t, t_bout + 0.1, t_bout + 0.5, "sine"))
-        k = 0.25 + 0.75 * M.progress(t, t_bin, t_bin + 0.4, "back")
-        k *= 1 - 0.6 * M.progress(t, t_bout, t_bout + 0.5, "in")
+        """A scale pop out of the trail (opaque within 2 frames) and, at the end, a quick shrink back into the
+        trail with a 3-frame alpha cut: the bubble's separate layers are never see-through for long."""
+        a = M.progress(t, t_bin, t_bin + 0.067, "linear") * (1 - M.progress(t, t_bgone - 0.1, t_bgone, "linear"))
+        k = 0.22 + 0.78 * M.progress(t, t_bin, t_bin + 0.4, "back")
+        k *= 1 - 0.75 * M.progress(t, t_bout, t_bgone, "in")
         bob = 4 * math.sin(2 * math.pi * (t - t_bin) / 2.7)
         return Tf(dy=bob, sx=k, sy=k, alpha=a, px=BUB_PIV[0], py=BUB_PIV[1])
 
@@ -871,6 +1001,7 @@ def build(ctx):
 
     x0b, y0b = BC[0] - BRX, BC[1] - BRY
     wb, hb_ = 2 * BRX, 2 * BRY
+    BSUN = (BC[0] + 215, BPY - 22)       # morning: the sun rises low on the bubble's right (east) horizon
     # night sky with stars
     stars = ""
     srng = random.Random(5)
@@ -881,8 +1012,8 @@ def build(ctx):
                 f'{stars}</g>',
                 clip + S.lin_grad("bnight", [(0, "#4a5690"), (0.5, "#7a76ac"), (0.8, "#bf98b2"), (1, "#e2b3a6")]))
     day = doc(f'<g clip-path="url(#bubin)"><rect x="{x0b}" y="{y0b}" width="{wb}" height="{hb_}" fill="url(#bday)"/>'
-              f'<circle cx="{BC[0] - 165}" cy="{BC[1] - 80}" r="34" fill="#fcd877" stroke="#eaa951" stroke-width="3"/>'
-              f'<circle cx="{BC[0] - 165}" cy="{BC[1] - 80}" r="70" fill="#fff2c0" opacity="0.35"/></g>',
+              f'<circle cx="{BSUN[0]}" cy="{BSUN[1]}" r="72" fill="#fff2c0" opacity="0.4"/>'
+              f'<circle cx="{BSUN[0]}" cy="{BSUN[1]}" r="32" fill="#fcd877" stroke="#eaa951" stroke-width="3"/></g>',
               clip + S.lin_grad("bday", [(0, "#a9d4e6"), (0.6, "#e8e6c4"), (1, "#fbe2a8")]))
     moon = doc(S.g(f'<path d="M{BC[0] - 150},{BC[1] - 120} a34,34 0 1 0 30,52 a26,26 0 1 1 -30,-52 Z" '
                    f'fill="#fbeec0" stroke="{INK}" stroke-width="3"/>', filter="wobble-fine"))
@@ -904,12 +1035,16 @@ def build(ctx):
         b.dx, b.dy, b.rot, b.sx, b.sy, b.alpha * (1 - night_amt(t)), b.px, b.py))(bub_tf(t)))
 
     def moon_tf(t):
+        """Each night the moon crosses the top of the bubble from east to west (right to left) and fades out
+        at the upper left as morning comes, well away from where the sun rises."""
         b = bub_tf(t)
         if t < t_g1 + 0.3:
             u = M.progress(t, t_bin, t_g1 + 0.2, "linear")
         else:
-            u = M.progress(t, t_night2 - 0.1, t_w1 + 0.4, "linear")
-        mx, my = -40 + 120 * u, 50 - 70 * math.sin(math.pi * min(1.0, u * 0.9 + 0.1))
+            u = 0.45 + 0.55 * M.progress(t, t_night2 - 0.1, t_w1 + 0.4, "linear")   # (left of the grown crown)
+        cx = BC[0] + 70 - 265 * u
+        cy = BC[1] - 150 + 55 * u - 18 * math.sin(math.pi * u)
+        mx, my = cx - (BC[0] - 140), cy - (BC[1] - 94)          # the crescent drawing is centred near there
         return Tf(b.dx + mx * b.sx, b.dy + my * b.sy, 0, b.sx, b.sy, b.alpha * night_amt(t), b.px, b.py)
     sc.add("bub_moon", moon, z=12.07, wc=0.4, motion=moon_tf)
     sc.add("bub_ground", gdoc, z=12.1, wc=0.5, motion=bub_tf)
@@ -928,14 +1063,18 @@ def build(ctx):
         b.dx, b.dy, b.rot, b.sx, b.sy, b.alpha * night_amt(t), b.px, b.py))(bub_tf(t)))
     sc.add("bub_rim", rim, z=12.3, wc=0.4, motion=bub_tf)
     # the trail of little puffs from Jonah's head to the bubble
+    # (they pop in from his head outward; at the end they pop out from the bubble's end back to his head)
     for i, (tx, ty, tr) in enumerate(TRAIL):
         ti = t_trail + 0.11 * i
+        to = t_bgone + 0.02 + 0.09 * (len(TRAIL) - 1 - i)
         pd = doc(S.g(f'<circle cx="{tx}" cy="{ty}" r="{tr}" fill="#fff6e2" stroke="{INK}" stroke-width="3.5"/>',
                      filter="wobble-fine"))
-        sc.add(f"bub_trail{i}", pd, z=12.3, wc=0.3, motion=lambda t, ti=ti, tx=tx, ty=ty, i=i: Tf(
+        sc.add(f"bub_trail{i}", pd, z=12.3, wc=0.3, motion=lambda t, ti=ti, to=to, tx=tx, ty=ty, i=i: Tf(
             dy=2.5 * math.sin(2 * math.pi * (t - ti) / 1.9 + i),
-            sx=0.3 + 0.7 * M.progress(t, ti, ti + 0.22, "back"), sy=0.3 + 0.7 * M.progress(t, ti, ti + 0.22, "back"),
-            alpha=_env(t, ti, ti + 0.1, t_bout + 0.3 + 0.08 * (2 - i), t_bout + 0.5 + 0.08 * (2 - i)), px=tx, py=ty))
+            sx=(0.3 + 0.7 * M.progress(t, ti, ti + 0.22, "back")) * (1 - 0.5 * M.progress(t, to - 0.12, to, "in")),
+            sy=(0.3 + 0.7 * M.progress(t, ti, ti + 0.22, "back")) * (1 - 0.5 * M.progress(t, to - 0.12, to, "in")),
+            alpha=M.progress(t, ti, ti + 0.067, "linear") * (1 - M.progress(t, to - 0.067, to, "linear")),
+            px=tx, py=ty))
 
     # =============================================================== DOVES
     def flock(name, birds, t0, t1, dx, dy, z, fade_in=0.4):
@@ -953,7 +1092,7 @@ def build(ctx):
 
     flock("doves_a", [(3300, 300, 0.42), (3390, 266, 0.36), (3430, 330, 0.34)], t_pull0 - 0.4, t_down0 + 1.0,
           -2300, -240, 5.4)
-    flock("doves_b", [(3250, 300, 0.42), (3340, 260, 0.36), (3390, 335, 0.34)], t_back - 1.0, T + 2.5, -760, -30,
+    flock("doves_b", [(3250, 300, 0.42), (3340, 260, 0.36), (3390, 335, 0.34)], t_back - 2.2, T + 2.5, -1100, -40,
           5.45)
 
     # =============================================================== FOREGROUND (static)
@@ -965,28 +1104,20 @@ def build(ctx):
     sc.add("fg", doc(S.g(fg)), z=20, wc=0.9)
 
     # =============================================================== CAMERA
-    C0 = Cam(XJ - 40, 452, 1600)        # as s22 leaves him: Jonah at about the same place in the frame
-    C0b = Cam(XJ - 34, 486, 1430)       # slow push-in on Jonah and the leaf while God speaks
-    Cb = Cam(2385, 432, 1510)           # room for the memory bubble on the left
-    Cb2 = Cam(2400, 440, 1470)
-    Cw = Cam(1620, 850, 2420)           # held wide view: the whole city, the plain, the pasture, Jonah on his knoll
-    Cw2 = Cam(1590, 862, 2390)
-    C1 = Cam(820, 1100, 1440)           # the children
-    C1b = Cam(920, 1092, 1430)
-    C2 = Cam(1560, 1060, 1800)          # the animals
-    C2b = Cam(1920, 780, 1780)          # rise while panning right, so Jonah enters from the side
-    C3 = Cam(XJ - 20, 640, 1720)        # back up the knoll to Jonah
-    Cf = Cam(hx - 20, 590, 1460)        # slow push-in: Jonah's face near the centre, a calm last frame
+    # (views and key times are set with the narration timing above)
+    t_tob = t_bin - 0.3 - max(1.6, _cam_dur([C0b, Cb], 0.5))   # make room for the bubble before it pops
     moves = []
-    for (ta, tb, cams, r) in [(t_still, t_bin - 1.2, [C0, C0b], 0.45),
-                              (t_bin - 1.2, t_bin + 0.3, [C0b, Cb], 0.5),
+    for (ta, tb, cams, r) in [(t_still, t_tob, [C0, C0b], 0.45),
+                              (t_tob, t_bin + 0.3, [C0b, Cb], 0.5),
                               (t_bin + 0.3, t_pull0, [Cb, Cb2], 0.5),
                               (t_pull0, t_pull1, [Cb2, Cw], 0.3),
                               (t_pull1, t_down0, [Cw, Cw2], 0.5),
                               (t_down0, t_down1, [Cw2, C1], 0.32),
                               (t_down1, t_go, [C1, C1b], 0.5),
-                              (t_go, t_back, [C1b, C2, C2b, C3], 0.18),
-                              (t_back, T - 0.35, [C3, Cf], 0.5)]:
+                              (t_go, t_c2, [C1b, C2], 0.3),          # over to the pasture ...
+                              (t_c2, t_rise, [C2, C2h], 0.5),        # ... a slow drift while the animals are named
+                              (t_rise, t_back, [C2h, C3], 0.3),      # up the knoll to Jonah
+                              (t_back, T - 0.35, [C3, Cf], 0.45)]:   # slow push-in to the last frame
         fn, _, knots = _cam_path(cams)
         moves.append((ta, tb, fn, r, knots))
 
@@ -1013,6 +1144,7 @@ def build(ctx):
                     size=(8, 18), drift=-8, seed=23),
         V.hearts_fx(HEARTS["people"], t_hearts_p0, t_hearts_p1, seed=31),
         V.hearts_fx(HEARTS["lr"], t_lr_end + 0.35, t_hearts_p1 + 0.3, period=3.0, seed=33),
+        V.hearts_fx(HEARTS["lr_a"], t_lr_end + 0.5, t_hearts_p1 + 0.3, rise=40, period=3.0, seed=34),
         V.hearts_fx(HEARTS["animals"], t_hearts_a0, t_hearts_a1, life=2.4, seed=32),
         FX.sparkles((XJ - 300, GY - 420, XJ + 150, GY - 60), count=16, t0=t_soft, t1=T + 1, color=(255, 240, 190),
                     size=(8, 16), drift=-6, seed=24),

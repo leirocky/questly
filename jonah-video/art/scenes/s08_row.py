@@ -6,20 +6,30 @@ town lies far away on the left, ahead of the bow.
 
 Line 0 (N) '水手们不忍心把约拿扔下去。' the crew stand around Jonah (by the mast, hand on his chest as in s07); two
         sailors hold up a palm and shake their heads: no, we won't. '他们拼命划桨，' a squash-and-hop cut: the four
-        sailors grab long oars over the rail and row (an 8-drawing stroke cycle, hands glued to the handle by a small
-        continuous lean), blades dip with a splash in time with the 'oars' sound, the captain points at the shore;
-        '想让船回到岸边。' the camera pulls back to show the coast; it slowly grows (the ship gains a little).
-Line 1 (N) '但是，海浪越翻越高。' a huge wave rises between the ship and the shore, higher and higher (lightning);
-        '他们怎么用力划桨，' they row faster, sweating (tired faces); '都没有办法回到岸边。' the wave slams into the bow:
-        a burst of foam, the bow rears up, the ship is shoved back to the right, the shore shrinks into the haze, the
-        sailors lose their grip (scared) and the oars flail in their oarlocks, then trail in the water.
+        sailors grab long oars over the rail and row hard (an 8-drawing stroke cycle with a big body swing, a stroke
+        every ~1.3 s, hands glued to the handle by a small continuous lean), blades dip with a splash in time with
+        the 'oars' sound, the captain points at the shore on the horizon; '想让船回到岸边。' the camera pulls back to
+        show the coast (it has widened before the first splash, which so stays above the subtitles); the coast slowly
+        grows (the ship gains a little).
+Line 1 (N) '但是，海浪越翻越高。' a huge dark wall of water rises between the ship and the shore, higher and higher,
+        hiding the coast (lightning); its curl stays well ahead of the bow; frantic strokes (~1.05 s) from here;
+        '他们怎么用力划桨，' sweating, tired faces; '都没有办法回到岸边。' in the last 0.4 s the wave rushes in and
+        pitches onto the bow: a burst of foam, the bow rears up, the ship is shoved back to the right, the wave
+        collapses into the sea and the shore reappears smaller, receding into the haze; the sailors lose their grip
+        (scared): the wave wrenches the oars back in their locks, they bounce (always slanted), slip out through
+        the locks and drop into the sea (small splashes).
 Line 2 (N) '水手们只好向约拿的上帝耶和华祷告：' the sailors and the captain kneel (hard cuts hidden in a dip), hands
         pressed together, looking up; Jonah stands among them, hand on his chest; the camera moves in.
-Line 3 (S) '耶和华啊，' the clouds part a little above the ship: soft golden light and rays (God is never shown as a
-        person); the sailors raise their arms; '求你不要因为这个人惩罚我们，' hands pressed together again, pleading;
-        '也不要怪我们害了他。' heads bowed.
-Line 4 (S) '因为这一切，' arms raised once more, eyes closed; '都是你照着自己的心意做的。' the light glows on; the scene
-        ends on a calm, held frame (rain and rocking eased; the storm itself stops only in s09).
+Line 3 (S) '耶和华啊，' the clouds part a little above the ship: a small clear pale-gold opening, the lids' inner
+        edges lit warm, and four narrow golden shafts that pass between the kneeling heads and fade on the deck
+        (God is never shown as a person); the sailors raise their arms; '求你不要因为这个人惩罚我们，' hands pressed
+        together again, pleading, eyes to the sky; '也不要怪我们害了他。' heads bowed.
+Line 4 (S) '因为这一切，' arms raised once more, eyes closed, mouths a small earnest 'o' (praying aloud - not relieved:
+        the storm goes on until s09); '都是你照着自己的心意做的。' the light glows on; the scene ends on a calm, held
+        frame (rain and rocking eased).
+End frame (for s09): ship at SX0 + 262, no oars; kneeling, arms raised, eyes closed (expr 'sleepy'): sailor 0 at
+        lx 274, sailor 1 at 132, Jonah standing at -4 (hand on chest), sailor 2 at -116, sailor 3 at -250, the
+        captain at -382 (the stern lantern hangs behind his back); camera (1682, 670, 1600).
 
 Every key time comes from the narration chunks (a phrase inside a chunk is placed by its character position).
 Pose changes are hard cuts sold by a squash / hop (never crossfaded); each pose is held >= 0.5 s.
@@ -32,11 +42,14 @@ Technique notes
 * The stroke times ARE the 'oars' sound: plan_oars() synthesises the two 'oars' cues exactly as audio/mix.py will
   (same seed / length / cycle) and reads where each blade dips in; the visual catches (and splashes) sit on them.
 * Kneeling figures sit back on their heels (an upright kneel behind the rail would read as standing); they are drawn
-  in front of the rail, clipped at its top line, so the trailing oars pass behind them.
+  behind the rail, shields and stern lantern like everyone on deck (the oars are gone by then).
+* The huge wave is drawn at its impact place, wholly inside the canvas, and only ever moved left of it, so no cut
+  edge can show; its motion is planned by where the curl's lip should be.
 * Stage 2640 x 1520; the camera never shows y > 1440 nor the outer 48 px at the sides, and every layer that touches a
   canvas edge only ever moves away from it (a rasterised layer is cut at the canvas edge).
 """
 import bisect
+from dataclasses import replace
 import json
 import math
 import random
@@ -70,13 +83,16 @@ PIV = (SX0, SY + 40.0)        # pitch pivot
 ROWERS = [("A", 0, 300.0), ("B", 1, 158.0), ("C", 2, -142.0), ("D", 3, -276.0)]
 JON_LX = -4.0                 # Jonah in front of the mast
 CAPT_LX = -418.0              # the captain on the raised stern deck
+CAPT_KNEEL_LX = -382.0        # where he kneels to pray
 OAR_DX = 104.0                # oarlock this far (local px) toward the stern from each rower's feet
 
 # rowing stroke (rower-local px, scale 1, facing right = toward the stern)
 HX_CATCH, HX_FIN = 100.0, 26.0     # near-hand x at the catch / finish
 HY_DRIVE = -150.0                  # near-hand height while the blade pulls
-T_CATCH, T_FIN = 18.0, -22.0       # torso tilt
+T_CATCH, T_FIN = 22.0, -27.0       # torso tilt (a big swing: they row with all their strength)
+FIN_LEAN = {"C": 0.4}              # C (next to Jonah's head-cloth flap) leans back less at the finish
 N_ROW = 8                          # drawings per stroke
+CYCLE_STEADY, CYCLE_FAST = 1.4, 1.05   # 'oars' sound cycles (s per stroke): hard rowing, then frantic
 OAR_IN = 175.0                     # drawn inboard length (oarlock -> handle end) at sy = 1
 OAR_OUT = 330.0                    # drawn outboard length (oarlock -> blade tip) at sy = 1
 BLADE_L = 96.0
@@ -180,18 +196,20 @@ def person_points(kind, x, y, facing, ps, expr, variant=0):
         return None
 
 
-def row_curve(psi):
-    """Near-hand target (rower-local, scale 1), torso tilt for stroke position psi (0 catch, .5 finish)."""
+def row_curve(psi, fin=1.0):
+    """Near-hand target (rower-local, scale 1), torso tilt for stroke position psi (0 catch, .5 finish);
+    ``fin`` scales the backward lean at the finish."""
     psi %= 1.0
+    tf = T_FIN * fin
     if psi < 0.5:
         u = psi / 0.5
         e = 0.5 - 0.5 * math.cos(math.pi * u)
         return (HX_CATCH + (HX_FIN - HX_CATCH) * e, HY_DRIVE - 10 * math.sin(math.pi * u),
-                T_CATCH + (T_FIN - T_CATCH) * e)
+                T_CATCH + (tf - T_CATCH) * e)
     u = (psi - 0.5) / 0.5
     e = 0.5 - 0.5 * math.cos(math.pi * u)
     lift = sstep(u / 0.16) * (1 - sstep((u - 0.82) / 0.18))
-    return HX_FIN + (HX_CATCH - HX_FIN) * e, HY_DRIVE + 14 * lift, T_FIN + (T_CATCH - T_FIN) * e
+    return HX_FIN + (HX_CATCH - HX_FIN) * e, HY_DRIVE + 14 * lift, tf + (T_CATCH - tf) * e
 
 
 def blade_depth(psi):
@@ -204,13 +222,13 @@ def blade_depth(psi):
     return DEPTH_LIFT + (DEPTH_PULL - DEPTH_LIFT) * w
 
 
-def row_pose(psi, rel_o, expr):
+def row_pose(psi, rel_o, expr, fin=1.0):
     """Pose dict for stroke position psi; rel_o = oarlock in rower-local coords (to aim the far hand)."""
-    hx, hy, tilt = row_curve(psi)
+    hx, hy, tilt = row_curve(psi, fin)
     ux, uy = hx - rel_o[0], hy - rel_o[1]
     L = math.hypot(ux, uy) or 1.0
     fx, fy = hx + 24 * ux / L, hy + 24 * uy / L        # far hand further up the shaft (toward the handle end)
-    drop = 24 - 6 * (T_CATCH - tilt) / (T_CATCH - T_FIN)
+    drop = 24 - 6 * (T_CATCH - tilt) / (T_CATCH - T_FIN * fin)
     return C._P(t=tilt, h=-8, drop=drop, legs=(("ik", 64, 0), ("ik", -24, 1)),
                 arms=(("ik", "abs", fx, fy, 1), ("ik", "abs", hx, hy, 1)), expr=expr)
 
@@ -218,12 +236,13 @@ def row_pose(psi, rel_o, expr):
 POSE = C.POSES
 # kneeling low, sitting back on the heels (an upright kneel hidden behind the rail would read as standing)
 _LOW = dict(legs=((86, -100), (88, -100)), t=0)
-KNEEL_PRESS = dict(POSE["kneel_pray"], expr="worried", **_LOW)
+KNEEL_PRESS = dict(POSE["kneel_pray"], expr="worried", look=(0.02, -0.06), **dict(_LOW, t=-3))   # eyes to the sky
 KNEEL_UP = dict(POSE["kneel_pray"], arms=(("fk", 146, 164), ("fk", -140, -160)), hands=("open", "open"), h=-24,
                 look=(0.02, -0.06), **_LOW)
 KNEEL_BOW = dict(POSE["kneel_pray"], legs=_LOW["legs"], t=10, h=14)
 REFUSE = dict(POSE["refuse"], arms=(("fk", 8, 3), ("fk", -46, -112)))
-POINT_UP = dict(POSE["point"], arms=(("fk", 124, 130), ("fk", -8, -3)), h=-8)
+POINT_UP = dict(POSE["point"], arms=(("fk", 98, 102), ("fk", -8, -3)), h=-2)    # at the shore on the horizon
+END_EXPR = "sleepy"     # last prayer: eyes closed, a small 'o' mouth (praying aloud, earnest - not relieved)
 STAND = dict(POSE["stand"])
 SCARED = dict(POSE["scared"])
 POINT = dict(POSE["point"])
@@ -289,45 +308,71 @@ def oar_dips(scene_id, at, dur, cycle):
     except Exception:
         res = None
     if res is not None:
-        cache[key] = res
+        # parallel build workers share this file: merge with what is there now and replace it atomically
         try:
+            import os
+            import tempfile
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps(cache))
+            try:
+                cache = {**json.loads(path.read_text()), key: res}
+            except Exception:
+                cache[key] = res
+            fd, tmp = tempfile.mkstemp(prefix=".s08_oars.", suffix=".tmp", dir=str(path.parent))
+            try:
+                with os.fdopen(fd, "w") as fh:
+                    fh.write(json.dumps(cache))
+                os.replace(tmp, path)
+            except Exception:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
         except Exception:
             pass
     return res
 
 
-def plan_oars(scene_id, t_grab, t_fast, t_lose):
-    """Pick the two 'oars' cues (steady stroke, then faster) so the first dip comes ~0.6 s after the sailors grab
-    the oars, the tempo change has no double stroke and no stroke is cut by a cue's fade. Returns (cues, catches):
-    cues [(at, dur, cycle)], catch times in scene seconds (the visual stroke follows exactly these dips)."""
+def _cycle_for(dur, want, kmin=1):
+    """The 'oars' loop holds a whole number of strokes: pass exactly dur / k so the period is the wanted one."""
+    k = max(kmin, int(round(dur / want)))
+    return round(dur / k, 4)
+
+
+def plan_oars(scene_id, t_grab, t_switch, t_lose):
+    """Pick the two 'oars' cues (hard strokes ~1.4 s apart, then frantic ones ~1.05 s apart from ``t_switch``) so
+    the first dip comes ~0.85 s after the sailors grab the oars (the camera has pulled back by then, so the first
+    splash sits above the subtitles), the tempo change has no double stroke and no stroke is cut by a cue's fade.
+    Returns (cues, catches): cues [(at, dur, cycle)], catch times in scene seconds (the visual stroke follows
+    exactly these dips)."""
+    first_want = t_grab + 0.85
     best1 = None
-    for k in range(32):
-        at = round(t_grab - 0.3 + 0.025 * k, 3)
-        dur = round(t_fast + 0.12 - at, 3)
-        d = oar_dips(scene_id, at, dur, 1.9)
+    for k in range(44):        # (the loop is rotated to start quietly: its first dip comes 0.1-0.4 s after 'at')
+        at = round(t_grab - 0.1 + 0.025 * k, 3)
+        dur = round(t_switch + 0.12 - at, 3)
+        cyc = _cycle_for(dur, CYCLE_STEADY)
+        d = oar_dips(scene_id, at, dur, cyc)
         if d is None:
             break
         dips = sorted(at + x for x in d)
         first = dips[0]
         late = [x for x in dips if x > at + dur - 0.32]          # would be cut by the fade-out
-        score = abs(first - (t_grab + 0.6)) + 3 * len(late) + (3 if first < t_grab + 0.35 else 0)
+        score = abs(first - first_want) + 3 * len(late) + (3 if first < t_grab + 0.45 else 0)
         if best1 is None or score < best1[0]:
-            best1 = (score, at, dur, dips)
-        if score < 0.08:
+            best1 = (score, at, dur, cyc, dips)
+        if score < 0.06:
             break
     if best1 is None:          # no sound library: a plain metronome
-        c1 = list(np.arange(t_grab + 0.6, t_fast - 0.2, 1.75))
-        c2 = list(np.arange(c1[-1] + 1.45, t_lose - 0.25, 1.3))
+        c1 = list(np.arange(first_want, t_switch - 0.1, CYCLE_STEADY))
+        c2 = list(np.arange(c1[-1] + 1.2, t_lose - 0.25, CYCLE_FAST))
         return [], c1 + c2
-    _, a1, d1, dips1 = best1
-    keep1 = [x for x in dips1 if x < a1 + d1 - 0.32] or [t_grab + 0.6]
+    _, a1, d1, cy1, dips1 = best1
+    keep1 = [x for x in dips1 if x < a1 + d1 - 0.32] or [first_want]
     best2 = None
     for k in range(32):
-        at = round(t_fast - 0.05 + 0.025 * k, 3)
+        at = round(t_switch - 0.2 + 0.025 * k, 3)
         dur = round(t_lose + 0.12 - at, 3)
-        d = oar_dips(scene_id, at, dur, 1.3)
+        cyc = _cycle_for(dur, CYCLE_FAST, 2)
+        d = oar_dips(scene_id, at, dur, cyc)
         if d is None:
             break
         dips = sorted(at + x for x in d)
@@ -335,17 +380,17 @@ def plan_oars(scene_id, t_grab, t_fast, t_lose):
             continue
         gap = dips[0] - keep1[-1]
         late = [x for x in dips if t_lose - 0.25 < x]
-        score = abs(gap - 1.45) + (5 if gap < 1.05 else 0) + 3 * len(late)
+        score = abs(gap - 1.2) + (5 if gap < 0.95 else 0) + 3 * len(late)
         if best2 is None or score < best2[0]:
-            best2 = (score, at, dur, dips)
-        if score < 0.08:
+            best2 = (score, at, dur, cyc, dips)
+        if score < 0.06:
             break
     if best2 is None:
-        c2 = list(np.arange(keep1[-1] + 1.45, t_lose - 0.25, 1.3))
-        return [(a1, d1, 1.9)], keep1 + c2
-    _, a2, d2, dips2 = best2
+        c2 = list(np.arange(keep1[-1] + 1.2, t_lose - 0.25, CYCLE_FAST))
+        return [(a1, d1, cy1)], keep1 + c2
+    _, a2, d2, cy2, dips2 = best2
     keep2 = [x for x in dips2 if x < t_lose - 0.25]
-    return [(a1, d1, 1.9), (a2, d2, 1.3)], keep1 + keep2
+    return [(a1, d1, cy1), (a2, d2, cy2)], keep1 + keep2
 
 
 # ---------------------------------------------------------------- scenery drawings
@@ -466,56 +511,68 @@ def coast_svg():
     return doc(b, defs)
 
 
+WAVE_LIP = (330.0, -490.0)      # the curl's leading tip, relative to the wave anchor (unscaled)
+WAVE_SPIRAL = (262.0, -462.0)   # centre of the foam spiral in the curl
+
+
 def big_wave_svg(cx, base):
-    """The huge wave that rises between the ship and the shore: a tall rounded swell whose crest curls over toward
-    the ship (right), foam puffs along the top and a spiral of foam at the lip. Anchor = (cx, base)."""
+    """The huge wave that rises between the ship and the shore: a tall, steep, dark wall of water (darker than the
+    sea around it, so it reads as a rising wall) with a light translucent band under the crest, a curl over toward
+    the ship (right), foam puffs along the top and a small foam spiral in the curl. Anchor = (cx, base); drawn
+    with its back foot at x = cx - 570, so with cx >= 580 it lies wholly inside the canvas (no cut edge can show
+    whatever its motion)."""
     hgt = 640
-    col = S.mix(P["storm_sea_light"], P["storm_sea"], 0.35)
-    face = S.shade(P["storm_sea"], -0.12)
-    lite = S.mix(P["sea_light"], P["storm_sea_light"], 0.45)
-    pts = [(cx - 760, base + 90), (cx - 560, base + 20), (cx - 420, base - 170), (cx - 250, base - 450),
-           (cx - 80, base - 590), (cx + 60, base - hgt), (cx + 200, base - 628), (cx + 300, base - 570),
-           (cx + 330, base - 500), (cx + 300, base - 430), (cx + 250, base - 410), (cx + 230, base - 300),
-           (cx + 280, base - 140), (cx + 420, base + 60)]
+    wall = S.mix(S.shade(P["storm_sea"], -0.2), "#1f3d4c", 0.25)
+    mid = S.shade(P["storm_sea"], -0.04)
+    lite = S.mix(P["sea_light"], P["storm_sea_light"], 0.5)
+    pts = [(cx - 570, base + 90), (cx - 450, base + 18), (cx - 345, base - 150), (cx - 215, base - 420),
+           (cx - 80, base - 585), (cx + 60, base - hgt), (cx + 195, base - 626), (cx + 292, base - 566),
+           (cx + WAVE_LIP[0], base + WAVE_LIP[1]), (cx + 302, base - 428), (cx + 256, base - 408),
+           (cx + 236, base - 300), (cx + 280, base - 140), (cx + 410, base + 60)]
     d = S.smooth_path(pts, closed=True, tension=0.85)
-    defs = S.lin_grad("s8bw", [(0, lite), (0.35, col), (1, S.shade(P["storm_sea"], -0.2))], x1=0, y1=0, x2=0, y2=1)
+    defs = S.lin_grad("s8bw", [(0, lite), (0.2, mid), (0.55, wall), (1, S.shade(wall, -0.15))],
+                      x1=0, y1=0, x2=0, y2=1)
     b = S.path(d, fill="url(#s8bw)", sw=5)
-    # hollow under the curl (darker), translucent light band behind the crest, streaks on the back
-    b += S.path(S.smooth_path([(cx + 296, base - 470), (cx + 240, base - 420), (cx + 222, base - 300),
-                               (cx + 262, base - 160), (cx + 330, base - 80), (cx + 290, base - 260),
-                               (cx + 300, base - 400)], closed=True, tension=0.8), fill=face, stroke=False,
-                extra='opacity="0.75"')
-    for k, (xa, ya, xb, yb) in enumerate(((cx - 560, base - 120, cx - 330, base - 300),
-                                         (cx - 380, base - 260, cx - 160, base - 470),
-                                         (cx - 260, base - 160, cx - 60, base - 330),
-                                         (cx - 120, base - 300, cx + 60, base - 470),
-                                         (cx - 60, base - 110, cx + 120, base - 260))):
+    # hollow under the curl (darkest), a pale rim of light just under the crest, streaks on the back
+    b += S.path(S.smooth_path([(cx + 298, base - 470), (cx + 244, base - 420), (cx + 226, base - 300),
+                               (cx + 264, base - 160), (cx + 330, base - 80), (cx + 292, base - 260),
+                               (cx + 302, base - 400)], closed=True, tension=0.8), fill=S.shade(wall, -0.25),
+                stroke=False, extra='opacity="0.8"')
+    rim = [(cx - 300, base - 300), (cx - 190, base - 455), (cx - 60, base - 565), (cx + 70, base - 605),
+           (cx + 190, base - 590), (cx + 268, base - 540)]
+    b += (f'<path d="{S.smooth_path(rim, closed=False)}" fill="none" stroke="{P["sea_pale"]}" stroke-width="22" '
+          f'stroke-linecap="round" opacity="0.35"/>')
+    for k, (xa, ya, xb, yb) in enumerate(((cx - 420, base - 100, cx - 260, base - 300),
+                                         (cx - 300, base - 250, cx - 140, base - 460),
+                                         (cx - 200, base - 140, cx - 40, base - 330),
+                                         (cx - 90, base - 300, cx + 70, base - 480),
+                                         (cx - 40, base - 110, cx + 120, base - 260))):
         b += (f'<path d="M{xa},{ya} Q{(xa + xb) / 2 + 30},{(ya + yb) / 2 + 20} {xb},{yb}" fill="none" '
-              f'stroke="{P["sea_pale"]}" stroke-width="7" stroke-linecap="round" opacity="0.45"/>')
-    b += (f'<path d="M{cx - 520},{base - 60} Q{cx - 400},{base - 120} {cx - 200},{base - 80} T{cx + 250},{base - 60}" '
-          f'fill="none" stroke="{P["foam"]}" stroke-width="6" stroke-dasharray="40 22" opacity="0.5"/>')
+              f'stroke="{P["sea_pale"]}" stroke-width="7" stroke-linecap="round" opacity="0.4"/>')
+    b += (f'<path d="M{cx - 400},{base - 60} Q{cx - 300},{base - 120} {cx - 140},{base - 80} T{cx + 250},{base - 60}" '
+          f'fill="none" stroke="{P["foam"]}" stroke-width="6" stroke-dasharray="40 22" opacity="0.45"/>')
     body = S.g(b, filter="wobble")
-    # foam along the crest and a spiral curl at the lip
+    # foam along the crest and a small spiral in the curl
     circ = []
     for k in range(14):
         u = k / 13
-        x = cx - 240 + 540 * u
+        x = cx - 200 + 500 * u
         y = (base - 560 + 70 * (1 - u) ** 2 - 90 * math.sin(math.pi * min(1, u * 1.15))
              + (60 * (u - 0.75) / 0.25 if u > 0.75 else 0))
-        circ.append((x, y + 18, 26 + 18 * math.sin(math.pi * u)))
+        circ.append((x, y + 18, 24 + 16 * math.sin(math.pi * u)))
     foam = V.puffs(circ, P["foam"], 4.0, shade=(P["sea_pale"], (cx + 60, base - 560, 260, 40), 0.8), cid="s8bwf")
     sp = []
-    for k in range(26):
+    for k in range(24):
         a = math.radians(-60 + 26 * k)
-        rr = 74 * (1 - k / 32)
-        sp.append((cx + 250 + rr * math.cos(a), base - 470 + rr * math.sin(a)))
-    foam += (f'<path d="{S.smooth_path(sp, closed=False)}" fill="none" stroke="{INK}" stroke-width="34" '
+        rr = 50 * (1 - k / 30)
+        sp.append((cx + WAVE_SPIRAL[0] + rr * math.cos(a), base + WAVE_SPIRAL[1] + rr * math.sin(a)))
+    foam += (f'<path d="{S.smooth_path(sp, closed=False)}" fill="none" stroke="{INK}" stroke-width="25" '
              f'stroke-linecap="round"/>'
-             f'<path d="{S.smooth_path(sp, closed=False)}" fill="none" stroke="{P["foam"]}" stroke-width="26" '
+             f'<path d="{S.smooth_path(sp, closed=False)}" fill="none" stroke="{P["foam"]}" stroke-width="18" '
              f'stroke-linecap="round"/>')
     r = random.Random(4)
     for k in range(9):
-        x = cx - 200 + r.uniform(0, 520)
+        x = cx - 180 + r.uniform(0, 480)
         y = base - 640 - r.uniform(20, 90)
         foam += (f'<circle cx="{fm(x)}" cy="{fm(y)}" r="{fm(r.uniform(5, 10))}" fill="{P["foam"]}" stroke="{INK}" '
                  f'stroke-width="2.5"/>')
@@ -523,37 +580,57 @@ def big_wave_svg(cx, base):
 
 
 def gap_svg(gx, gy):
-    """Warm light behind the cloud lids (seen when they part): a soft glow with no visible rim, a paler patch of
-    sky in its middle."""
-    defs = (S.rad_grad("s8gap", [(0, "#fff4d0", 0.95), (0.25, "#ffe8b0", 0.7), (0.55, "#f6d690", 0.28),
-                                 (0.8, "#f0c878", 0.08), (1, "#f0c070", 0.0)])
-            + S.rad_grad("s8gapc", [(0, "#fbf3dc", 0.9), (0.6, "#f3e2b8", 0.5), (1, "#efd9a8", 0.0)]))
-    return doc(f'<ellipse cx="{gx}" cy="{gy + 20}" rx="560" ry="330" fill="url(#s8gap)"/>'
-               f'<ellipse cx="{gx}" cy="{gy + 30}" rx="230" ry="120" fill="url(#s8gapc)"/>', defs)
+    """The clear sky behind the cloud lids, seen when they part: a small pale-gold opening with a bright heart,
+    kept compact so it reads as a break in the clouds (the lids frame it), not a hazy moon."""
+    defs = (S.rad_grad("s8gap", [(0, "#fff7de", 1.0), (0.4, "#fdeab8", 0.95), (0.7, "#f7d995", 0.55),
+                                 (0.88, "#f2cc80", 0.18), (1, "#f0c878", 0.0)])
+            + S.rad_grad("s8gapw", [(0, "#f6d796", 0.32), (0.6, "#f0c880", 0.12), (1, "#f0c070", 0.0)]))
+    return doc(f'<ellipse cx="{gx}" cy="{gy}" rx="520" ry="300" fill="url(#s8gapw)"/>'
+               f'<ellipse cx="{gx + 10}" cy="{gy + 4}" rx="300" ry="190" fill="url(#s8gap)"/>', defs)
 
 
-def rays_svg(gx, gy, tx, ty, angles):
-    """Soft golden rays fanning down from the cloud gap: thin wedges from the gap with a radial falloff (none at
-    the gap itself, strongest a little below it, gone by the sea), blurred; plus a faint warm pool on the crew."""
-    defs = (f'<radialGradient id="s8rg" gradientUnits="userSpaceOnUse" cx="{gx}" cy="{gy}" r="1050">'
-            '<stop offset="0" stop-color="#ffe9b0" stop-opacity="0"/>'
-            '<stop offset="0.14" stop-color="#ffe6a8" stop-opacity="0.6"/>'
-            '<stop offset="0.45" stop-color="#ffdc94" stop-opacity="0.36"/>'
-            '<stop offset="0.8" stop-color="#ffd488" stop-opacity="0.1"/>'
-            '<stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient>'
-            '<filter id="s8rb" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="18"/>'
+def lid_glow_svg(cloud, focus, mid):
+    """A warm rim of light behind a cloud lit from behind: the same cloud in gold, a little larger, blurred, and
+    only on the side facing the light (masked by a radial falloff around ``focus``, the break in layer coords)."""
+    fx, fy = focus
+    defs = (f'<radialGradient id="{mid}g" gradientUnits="userSpaceOnUse" cx="{fm(fx)}" cy="{fm(fy)}" r="430">'
+            '<stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="0.55" stop-color="#fff" '
+            'stop-opacity="0.7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>'
+            f'<mask id="{mid}"><rect x="0" y="0" width="{W}" height="{H}" fill="url(#{mid}g)"/></mask>')
+    return doc(f'<g mask="url(#{mid})"><g filter="url(#soft)" opacity="0.95">{cloud}</g></g>', defs)
+
+
+def rays_svg(src, targets, pool):
+    """Narrow golden shafts from the cloud break down onto the deck and the crew: each a thin wedge (soft edge,
+    blur ~6) with a brighter narrow core, fading in just below the break and out where it lands; plus a faint
+    warm pool on the deck."""
+    defs = ('<filter id="s8rb" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>'
+            '<filter id="s8rc" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.5"/>'
             '</filter>')
-    b = ""
-    for ang, wa in angles:
-        a, w = math.radians(ang), math.radians(wa)
-        R = 1100
-        p = [(gx + 8 * math.cos(a + 1.57), gy + 8 * math.sin(a + 1.57)),
-             (gx + R * math.cos(a - w), gy + R * math.sin(a - w)),
-             (gx + R * math.cos(a + w), gy + R * math.sin(a + w)),
-             (gx - 8 * math.cos(a + 1.57), gy - 8 * math.sin(a + 1.57))]
-        b += '<path d="M' + " L".join(f"{fm(x)},{fm(y)}" for x, y in p) + '" fill="url(#s8rg)"/>'
-    b = f'<g filter="url(#s8rb)">{b}</g>'
-    b += (f'<ellipse cx="{tx}" cy="{ty}" rx="440" ry="190" fill="#ffe2a0" opacity="0.26" '
+    sx, sy = src
+    shafts, cores = "", ""
+    for i, (tx, ty, w) in enumerate(targets):
+        L = math.hypot(tx - sx, ty - sy)
+        nx, ny = -(ty - sy) / L, (tx - sx) / L         # unit normal
+        for kind, ww, col, stops in (
+                ("s", w, "#ffe3a0", ((0, 0), (0.1, 0.42), (0.5, 0.28), (0.8, 0.12), (1, 0))),
+                ("c", w * 0.3, "#fff4d2", ((0, 0), (0.12, 0.62), (0.5, 0.36), (0.8, 0.12), (1, 0)))):
+            gid = f"s8r{kind}{i}"
+            defs += (f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="{fm(sx)}" y1="{fm(sy)}" '
+                     f'x2="{fm(tx)}" y2="{fm(ty)}">'
+                     + "".join(f'<stop offset="{o}" stop-color="{col}" stop-opacity="{a}"/>' for o, a in stops)
+                     + '</linearGradient>')
+            w0 = ww * 0.12
+            p = [(sx + nx * w0, sy + ny * w0), (tx + nx * ww / 2, ty + ny * ww / 2),
+                 (tx - nx * ww / 2, ty - ny * ww / 2), (sx - nx * w0, sy - ny * w0)]
+            d = '<path d="M' + " L".join(f"{fm(x)},{fm(y)}" for x, y in p) + f' Z" fill="url(#{gid})"/>'
+            if kind == "s":
+                shafts += d
+            else:
+                cores += d
+    b = f'<g filter="url(#s8rb)">{shafts}</g><g filter="url(#s8rc)">{cores}</g>'
+    px, py, prx, pry = pool
+    b += (f'<ellipse cx="{fm(px)}" cy="{fm(py)}" rx="{prx}" ry="{pry}" fill="#ffe2a0" opacity="0.1" '
           f'filter="url(#blur-lg)"/>')
     return doc(b, defs)
 
@@ -605,13 +682,6 @@ def splash_svg(x, y, seed):
 def crew_doc(markup):
     """A figure on its own stage-sized layer, in the cool storm light."""
     return doc(graded(markup), GRADE)
-
-
-def kneel_clip(cid):
-    """Clip region above the rail top line (un-moved ship), for figures drawn in front of the rail."""
-    pts = [(stage_x(lx), rail_y(lx) - 1.5) for lx in np.arange(470, -471, -20)]
-    d = f"M{fm(pts[0][0])},-200 " + " ".join(f"L{fm(x)},{fm(y)}" for x, y in pts) + f" L{fm(pts[-1][0])},-200 Z"
-    return f'<clipPath id="{cid}"><path d="{d}"/></clipPath>'
 
 
 # ---------------------------------------------------------------- motion helpers
@@ -687,11 +757,11 @@ def build(ctx):
     T_LOSE = T_HIT + 0.38           # the sailors lose the oars
     T_SHOVE1 = T_HIT + 1.7
 
-    oar_cues, catches = plan_oars(ctx.id, T_GRAB, t_hard, T_LOSE)
+    oar_cues, catches = plan_oars(ctx.id, T_GRAB, t_hard - 0.75, T_LOSE)   # frantic as the wave rises
     catches = [c for c in catches if T_GRAB + 0.25 < c < T_LOSE - 0.15]
     # the drive (blade in the water) lasts like the sound's pull: ~0.63 s (compressed for fast strokes)
     periods = [b - a for a, b in zip(catches, catches[1:])]
-    periods.append(periods[-1] if periods else 1.9)
+    periods.append(periods[-1] if periods else CYCLE_STEADY)
 
     def drive_len(k):
         per = periods[min(k, len(periods) - 1)]
@@ -771,17 +841,26 @@ def build(ctx):
                             lambda t: Tf(dx=-40 * M.progress(t, t_wave, T_HIT, "inout"))))
     sc.add("clouds_right", doc(S.g(right, filter="wobble")), wc=0.9,
            motion=M.combine(M.drift(vx=4), M.bob(7, 4.4, 0.3)))
-    # the two lids over the gap: they part on '耶和华啊'
-    lid_l = V.storm_cloud(GX - 210, GY + 10, 620, 230, 81, cr, under, rim)
-    lid_r = V.storm_cloud(GX + 230, GY - 20, 640, 240, 82, cl, under, rim)
+    # the two lids over the gap: they part on '耶和华啊'; as they part their edges catch the light (a warm rim
+    # glows behind each lid and its own colours warm up - a colour change of the same drawing, not a new pose)
+    cl_w, cr_w = S.mix(cl, "#c8b08a", 0.3), S.mix(cr, "#d2bc94", 0.3)
+    under_w, rim_w, gold = S.mix(under, "#7a6656", 0.35), "#ffe2a0", "#ffd98c"
+    LIDS = (("lid_left", (GX - 210, GY + 10, 620, 230, 81), cr, cr_w, (210, 20),
+             M.combine(M.bob(5, 4.8, 0.2), lambda t: Tf(dx=-210 * gap_open(t), dy=-20 * gap_open(t)))),
+            ("lid_right", (GX + 230, GY - 20, 640, 240, 82), cl, cl_w, (-220, 30),
+             M.combine(M.bob(6, 5.3, 0.6), lambda t: Tf(dx=220 * gap_open(t), dy=-30 * gap_open(t)))))
+    for name, (x_, y_, w_, h_, seed), fill, fill_w, (ox_, oy_), m in LIDS:
+        glow = V.storm_cloud(x_, y_, w_, h_, seed, gold, gold, gold, sw=0)
+        sc.add(f"{name}_glow", lid_glow_svg(f'<g transform="translate({x_},{y_}) scale(1.07) translate({-x_},{-y_})">'
+                                            f'{glow}</g>', (GX + 10 + ox_, GY + oy_), f"m{name}"), wc=0,
+               motion=(lambda m_: lambda t: replace(m_(t), alpha=0.9 * gap_open(t)))(m))
+        cool = doc(S.g(V.storm_cloud(x_, y_, w_, h_, seed, fill, under, rim), filter="wobble"))
+        warm = doc(S.g(V.storm_cloud(x_, y_, w_, h_, seed, fill_w, under_w, rim_w), filter="wobble"))
+        sc.add(name, [cool, warm], wc=0.9, motion=m, frame_at=lambda t: gap_open(t))
     lid_c = V.storm_cloud(GX + 10, GY + 40, 460, 190, 83, cl, under, rim)
-    m_lid_l = M.combine(M.bob(5, 4.8, 0.2), lambda t: Tf(dx=-210 * gap_open(t), dy=-20 * gap_open(t)))
-    m_lid_r = M.combine(M.bob(6, 5.3, 0.6), lambda t: Tf(dx=220 * gap_open(t), dy=-30 * gap_open(t)))
-    sc.add("lid_left", doc(S.g(lid_l, filter="wobble")), wc=0.9, motion=m_lid_l)
-    sc.add("lid_right", doc(S.g(lid_r, filter="wobble")), wc=0.9, motion=m_lid_r)
-    # the light shining through the thinning clouds around the gap (screen: it lifts the clouds' edges softly)
-    glow_defs = S.rad_grad("s8gt", [(0, "#ffe7b0", 0.55), (0.4, "#f8d898", 0.3), (1, "#f0c880", 0.0)])
-    sc.add("gap_through", doc(f'<ellipse cx="{GX}" cy="{GY + 10}" rx="620" ry="400" fill="url(#s8gt)"/>', glow_defs),
+    # the light shining through right at the break (screen: it lifts the lids' inner edges softly)
+    glow_defs = S.rad_grad("s8gt", [(0, "#ffe7b0", 0.45), (0.45, "#f8d898", 0.2), (1, "#f0c880", 0.0)])
+    sc.add("gap_through", doc(f'<ellipse cx="{GX + 10}" cy="{GY}" rx="360" ry="220" fill="url(#s8gt)"/>', glow_defs),
            wc=0, blend="screen",
            motion=lambda t: Tf(alpha=M.progress(t, t_lord + 0.1, t_lord + 2.8, "sine") * (0.9 + 0.1 * math.sin(t * 1.3))))
     sc.add("lid_mid", doc(S.g(lid_c, filter="wobble")), wc=0.9,
@@ -789,7 +868,7 @@ def build(ctx):
                                                             sy=1 - 0.25 * gap_open(t), alpha=1 - gap_open(t),
                                                             px=GX, py=GY + 40)))
 
-    STRIKES = [(t_wave + 0.3, 0.34, (520, 330, 720)), (T_HIT - 0.06, 0.42, (1060, 360, 690))]
+    STRIKES = [(t_wave + 0.3, 0.34, (520, 330, 720)), (T_HIT - 0.06, 0.42, (1980, 300, 660))]
     for i, (ts, _, (bx, by0, by1)) in enumerate(STRIKES):
         sc.add(f"bolt{i}", doc(V.bolt_svg(bx, by0, by1, seed=17 + i, sway=-1 if i else 1, w0=30), V.BOLT_DEFS), wc=0,
                motion=(lambda ts_: lambda t: Tf(alpha=V.bolt_alpha(t - ts_)))(ts))
@@ -804,18 +883,29 @@ def build(ctx):
     sc.add("far_sea", far_sea_svg(), wc=0.7, motion=lambda t: Tf())
 
     # --------------------------------------------------- the huge wave
-    BW_X, BW_B = 690.0, 1110.0      # (its back slope reaches the canvas edge only below the sea's surface)
+    # Drawn at its impact place (wholly inside the canvas) and moved LEFT of it while it rises, so no cut edge can
+    # ever show. The motion is planned by where the curl's lip should be: it rises between the ship and the shore
+    # with the lip >= ~200 px ahead of the bow post (and clear of the sail's loose flap), and only in the last
+    # 0.4 s before T_HIT does it rush in and pitch forward onto the bow; then it collapses into the sea fast.
+    BW_X, BW_B = 590.0, 1110.0
+    bow_knob = V.apply(ship_tf(T_HIT), *ship_pt(488, -358))
+    LIP_EARLY, LIP_PRE, LIP_HIT = 470.0, 640.0, bow_knob[0] + 14.0
 
     def bigwave_m(t):
-        rise = M.progress(t, t_wave - 0.6, t_fail - 0.2, "out")
-        grow2 = M.progress(t, t_hard, T_HIT - 0.1, "inout")
-        surge = M.progress(t, T_HIT - 0.25, T_HIT + 1.3, "inout")
-        sink = M.progress(t, T_HIT + 0.1, T_HIT + 1.7, "in")
-        sy = 0.45 + 0.5 * rise + 0.36 * grow2
+        rise = M.progress(t, t_wave - 0.5, t_hard + 0.4, "sine")
+        grow2 = M.progress(t, t_hard, T_HIT - 0.45, "inout")
+        slam = M.progress(t, T_HIT - 0.4, T_HIT, "in")
+        follow = M.progress(t, T_HIT, T_HIT + 0.6, "out")
+        sink = M.progress(t, T_HIT + 0.05, T_HIT + 1.15, "inout")
+        sy = 0.38 + 0.54 * rise + 0.38 * grow2
         sx = 0.9 + 0.1 * rise + 0.12 * grow2
-        dx = -60 + 50 * rise + 40 * grow2 + 420 * surge
-        dy = 700 * (1 - rise) + 900 * sink + 18 * math.sin(2 * math.pi * t / 3.1)
-        return Tf(dx, dy, 3 * grow2 + 5 * surge, sx, sy, 1.0 if t < T_HIT + 1.9 else 0.0, BW_X, BW_B)
+        rot = 3 * grow2 + 6 * slam + 3 * follow
+        lip = (LIP_EARLY + (LIP_PRE - LIP_EARLY) * (0.5 * rise + 0.5 * grow2) + (LIP_HIT - LIP_PRE) * slam
+               + 60 * follow)
+        x0, _ = V.apply(Tf(0, 0, rot, sx, sy, 1, BW_X, BW_B), BW_X + WAVE_LIP[0], BW_B + WAVE_LIP[1])
+        dy = 250 * (1 - rise) + 100 * slam + 950 * sink + 14 * math.sin(2 * math.pi * t / 3.1)
+        alpha = 1 - M.progress(t, T_HIT + 0.75, T_HIT + 1.1, "linear")
+        return Tf(lip - x0, dy, rot, sx, sy, alpha, BW_X, BW_B)
     sc.add("big_wave", big_wave_svg(BW_X, BW_B), wc=1.0, motion=bigwave_m)
 
     # --------------------------------------------------- sea behind the ship
@@ -829,6 +919,7 @@ def build(ctx):
     sc.add("ship_back", doc(graded(PR.ship(SX0, SY, SS, SF, sail="torn", part="back", flag=False)
                                    + PR.rope_coil(*ship_pt(-60, hull_top(-60)), SS * 0.85)), GRADE),
            motion=ship_tf)
+    z_ship_back = sc.layers[-1].z
     flags = []
     for ph in (0.0, 1.6, 3.2):
         pts = [ship_pt(*q) for q in V.pennant_pts(ph)]
@@ -848,7 +939,11 @@ def build(ctx):
     t_fast_set = next((c for c in catches if c >= t_hard - 0.05), T_LOSE)   # tired faces from this catch on
 
     z_crew = len(sc.layers) + 1.0
-    kneel_layers = []          # added after the oars (in front of the rail, clipped at its top)
+    z_crew0 = z_crew
+    # kneeling drawings: hands pressed (looking up) -> arms raised -> pressed -> heads bowed -> arms raised, eyes shut
+    KNEEL_SEQ = ((KNEEL_PRESS, "worried"), (KNEEL_UP, "worried"), (KNEEL_PRESS, "worried"), (KNEEL_BOW, "sorry"),
+                 (KNEEL_UP, END_EXPR))
+    kneel_layers = []          # added later, between Jonah and the ship's front (rail, shields, lantern)
     oar_specs = []
 
     for name, variant, lx in ROWERS:
@@ -867,7 +962,7 @@ def build(ctx):
         hands.append(None)
         for e in (expr1, expr2):
             for j in range(N_ROW):
-                ps = row_pose(j / N_ROW, rel_o, e)
+                ps = row_pose(j / N_ROW, rel_o, e, FIN_LEAN.get(name, 1.0))
                 frames.append(crew_doc(person("sailor", X, Yd, 1, ps, e, variant, fallback="pull")))
                 bp = person_points("sailor", X, Yd, 1, ps, e, variant)
                 hands.append(bp["hands"][1] if bp else (X + 60 * SS, Yd - 155 * SS))
@@ -922,16 +1017,11 @@ def build(ctx):
         oar_specs.append(dict(name=name, F=F, O=O, hands=hands, frame_idx=frame_idx, rower_tf=rower_tf, lx=lx,
                               variant=variant, t_sc=t_sc))
 
-        # kneeling drawings (in front of the rail, clipped at its top line)
+        # kneeling drawings (behind the rail like everyone on deck: the oars are gone by then)
         kx = X + (26 if lx > 0 else -26) * SS
         kf = 1 if lx > 0 else -1
         kyd = deck_y(lx + (-26 if lx > 0 else 26))
-        cid = f"kc{name}"
-        kd = []
-        for ps, e in ((KNEEL_PRESS, "worried"), (KNEEL_UP, "worried"), (KNEEL_PRESS, "worried"), (KNEEL_BOW, "sorry"),
-                      (KNEEL_UP, "peaceful")):
-            body = person("sailor", kx, kyd, kf, ps, e, variant, fallback="pray")
-            kd.append(doc(kneel_clip(cid) + f'<g clip-path="url(#{cid})">{graded(body)}</g>', GRADE))
+        kd = [crew_doc(person("sailor", kx, kyd, kf, ps, e, variant, fallback="pray")) for ps, e in KNEEL_SEQ]
         kneel_layers.append((name, kd, (kx, kyd)))
 
     # Jonah by the mast: hand on chest (as s07 ends) -> watches, worried -> the wave (surprised) -> sorry among the
@@ -944,7 +1034,8 @@ def build(ctx):
     j_sched = [(0, 0), (T_GRAB + 0.3, 1), (t_wave + 0.15, 2), (t_pray + 0.15, 3)]
     j_hops = [(T_GRAB + 0.3, "dip", 0.5), (t_wave + 0.15, "hop", 0.4), (T_HIT + 0.02, "flinch", 0.8),
               (t_pray + 0.15, "dip", 0.5)]
-    sc.add("jonah", jon_frames, z=z_crew, frame_at=track(j_sched),
+    # (between B and C: C, leaning back at the finish, passes in front of Jonah's head-cloth flap, not behind it)
+    sc.add("jonah", jon_frames, z=z_crew0 + 0.015, frame_at=track(j_sched),
            motion=on_ship(lambda t: V.compose(hop_tf(t, j_hops, (JX, JY)),
                                               Tf(0, 0, 0.8 * math.sin(2 * math.pi * t / 3.6), 1,
                                                  1 + 0.008 * math.sin(2 * math.pi * t / 3.6 + 1), 1, JX, JY))))
@@ -965,12 +1056,9 @@ def build(ctx):
         return Tf(h.dx, h.dy, 0.9 * math.sin(2 * math.pi * t / 3.9 + 2), h.sx, h.sy,
                   0.0 if t >= T_KNEEL["capt"] else 1.0, CX, CY)
     sc.add("captain", cap_frames, z=z_crew - 0.5, frame_at=track(c_sched), motion=on_ship(capt_m))
-    ckx, cky = CX + 18 * SS, deck_y(CAPT_LX + 18)
-    ckd = []
-    for ps, e in ((KNEEL_PRESS, "worried"), (KNEEL_UP, "worried"), (KNEEL_PRESS, "worried"), (KNEEL_BOW, "sorry"),
-                  (KNEEL_UP, "peaceful")):
-        body = person("captain", ckx, cky, -1, ps, e, fallback="stand")
-        ckd.append(doc(kneel_clip("kccapt") + f'<g clip-path="url(#kccapt)">{graded(body)}</g>', GRADE))
+    # (he kneels a little toward the mast, so the stern lantern hangs behind his back, not over his face)
+    ckx, cky = stage_x(CAPT_KNEEL_LX), deck_y(CAPT_KNEEL_LX)
+    ckd = [crew_doc(person("captain", ckx, cky, -1, ps, e, fallback="stand")) for ps, e in KNEEL_SEQ]
     kneel_layers.append(("capt", ckd, (ckx, cky)))
 
     # --------------------------------------------------- ship (front): rail, shields, steering oar, oarlocks, lantern
@@ -980,8 +1068,9 @@ def build(ctx):
         locks += (f'<rect x="{fm(ox - 5 * SS)}" y="{fm(oy - 26 * SS)}" width="{fm(10 * SS)}" height="{fm(30 * SS)}" '
                   f'rx="3" fill="{P["wood_dark"]}" stroke="{INK}" stroke-width="3"/>')
     lan = PR.lantern(*ship_pt(-428, -372), 0.85 * SS)
+    z_front = z_crew + 0.5
     sc.add("ship_front", doc(graded(PR.ship(SX0, SY, SS, SF, sail="torn", part="front", lantern=False)
-                                    + S.g(locks, filter="wobble-fine")) + lan, GRADE), z=z_crew + 0.5,
+                                    + S.g(locks, filter="wobble-fine")) + lan, GRADE), z=z_front,
            motion=ship_tf)
 
     # --------------------------------------------------- the oars
@@ -995,51 +1084,72 @@ def build(ctx):
         lift = (tip - (SY + depth * SS)) / ca
         return s_out, lift
 
+    def lose_state(spec, u):
+        """After the sailors let go (u s after): the wave wrenches the blade back toward the stern, the oar bounces
+        (always clearly slanted, never swinging up through vertical), then it slips out through its lock and drops
+        into the sea. Returns (angle, visible inboard length (local px), blade depth, slide (stage px, along the
+        shaft toward the blade), alpha)."""
+        k = spec["k"]
+        a0 = spec.get("a_lose", -30.0)
+        rest = -38.0 - 3 * (k % 2)
+        a = V.keyc([(0, a0), (0.2, -60 + 3 * k), (0.52, -27 - 2 * k), (0.85, -45), (1.25, rest)], "sine")(u)
+        depth = 30.0 - 80 * math.sin(math.pi * min(1.0, u / 0.6)) * math.exp(-u / 1.4)
+        inl = 120.0 + 30 * math.exp(-u / 0.6)
+        v = max(0.0, u - spec["u_slip"]) / 0.9
+        slide = spec["slide_end"] * v * v
+        alpha = 0.0 if slide > spec["slide_end"] else 1.0
+        return a, inl, depth, slide, alpha
+
     def oar_state(spec, t):
-        """(angle deg, inboard sy, outboard sy, lift along the shaft) of an oar in un-moved ship coordinates."""
+        """(angle deg, inboard sy, outboard sy, lift along the shaft, slide along the shaft, alpha) of an oar in
+        un-moved ship coordinates."""
         O = spec["O"]
         idx = int(spec["frame_idx"](t))
         if t < T_GRAB or (t >= spec["t_sc"]):
-            # resting in its lock (before rowing) or let go: it swings, then trails in the water
-            if t < T_GRAB:
+            slide, alpha = 0.0, 1.0
+            if t < T_GRAB:       # resting in its lock before rowing
                 a, depth, inl = -34.0, 30.0, 120.0
             else:
-                u = t - spec["t_sc"]
-                seed = len(spec["name"]) + ord(spec["name"]) % 7
-                rest = -36.0 - 4 * (ord(spec["name"]) % 3)
-                a0 = spec.get("a_lose", -20.0)
-                swing = 30 * math.exp(-u / 0.75) * math.sin(2 * math.pi * u / (0.7 + 0.05 * seed) + 0.6)
-                a = rest + (a0 - rest) * math.exp(-u / 0.5) + swing
-                depth = 30.0 - 90 * math.sin(math.pi * min(1.0, u / 0.7)) * math.exp(-u / 1.4)
-                inl = 120.0 + 30 * math.exp(-u / 0.6)
+                a, inl, depth, slide, alpha = lose_state(spec, t - spec["t_sc"])
             a += 1.8 * math.sin(2 * math.pi * t / 2.7 + spec["lx"] / 90)
             s_in = inl / OAR_IN
             s_out, lift = out_geom(O, a, depth)
-            return a, s_in, s_out, lift
+            return a, s_in, s_out, lift, slide, alpha
         hk = spec["hands"][idx] if spec["hands"][idx] else (O[0] - 40, O[1] - 100)
         hx, hy = V.apply(spec["rower_tf"](t), *hk)
         a = math.degrees(math.atan2(hx - O[0], O[1] - hy))
         dist = math.hypot(hx - O[0], hy - O[1])
         s_in = (dist + HANDLE_OVER * SS) / (OAR_IN * SS)
         s_out, lift = out_geom(O, a, blade_depth(psi_at(t)))
-        return a, s_in, s_out, lift
+        return a, s_in, s_out, lift, 0.0, 1.0
 
-    for spec in oar_specs:
+    for k, spec in enumerate(oar_specs):
+        spec["k"] = k
+        spec["u_slip"] = 0.6 + 0.16 * (0, 2, 1, 3)[k]
         st = oar_state(spec, spec["t_sc"] - 0.01)
         spec["a_lose"] = st[0]
+        # slide far enough that the handle end ends up under the sea (near the hull the sea is calm: ~SY + 14)
+        ar = math.radians(-38.0)
+        spec["slide_end"] = 150 * SS + (SY + 60 - spec["O"][1]) / math.cos(ar)
+        # when the handle end passes the waterline: a small splash there
+        d_w = 120 * SS + (SY - spec["O"][1]) / math.cos(ar)
+        u_w = spec["u_slip"] + 0.9 * math.sqrt(min(1.0, d_w / spec["slide_end"]))
+        spec["t_drop"] = spec["t_sc"] + u_w
+        spec["drop_x"] = spec["O"][0] + (SY - spec["O"][1]) * math.tan(-ar)
 
     z_oar = z_crew + 1.0
     for i, spec in enumerate(oar_specs):
         ox, oy = spec["O"]
 
         def m_in(t, spec=spec, ox=ox, oy=oy):
-            a, s_in, _, _ = oar_state(spec, t)
-            return Tf(0, 0, a, 1, s_in, 1, ox, oy)
+            a, s_in, _, _, sl, al = oar_state(spec, t)
+            ar = math.radians(a)
+            return Tf(-sl * math.sin(ar), sl * math.cos(ar), a, 1, s_in, al, ox, oy)
 
         def m_out(t, spec=spec, ox=ox, oy=oy):
-            a, _, s_out, lift = oar_state(spec, t)
+            a, _, s_out, lift, sl, al = oar_state(spec, t)
             ar = math.radians(a)
-            return Tf(lift * math.sin(ar), -lift * math.cos(ar), a, 1, s_out, 1, ox, oy)
+            return Tf((lift - sl) * math.sin(ar), -(lift - sl) * math.cos(ar), a, 1, s_out, al, ox, oy)
         sc.add(f"oar_out_{spec['name']}", oar_svg(ox, oy, "out"), z=z_oar + 0.01 * i, motion=on_ship(m_out), wc=0.6)
         sc.add(f"oar_in_{spec['name']}", oar_svg(ox, oy, "in"), z=z_oar + 0.05 + 0.01 * i, motion=on_ship(m_in),
                wc=0.6)
@@ -1058,8 +1168,8 @@ def build(ctx):
         sc.add(f"fist_{spec['name']}", fr, z=z_oar + 0.1 + 0.01 * i, motion=on_ship(spec["rower_tf"]),
                frame_at=spec["frame_idx"])
 
-    # kneeling crew, in front of the rail and the trailing oars
-    z_kn = z_oar + 0.5
+    # kneeling crew: in front of Jonah, behind the rail, the shields and the stern lantern
+    z_k = z_front - 0.3
     for name, kd, (kx, kyd) in kneel_layers:
         tk = T_KNEEL[name]
         kn_sched = [(0, 0), (T_UP[name], 1), (T_PRESS[name], 2), (T_BOW[name], 3), (T_UP2[name], 4)]
@@ -1071,8 +1181,9 @@ def build(ctx):
             br = 1 + 0.01 * math.sin(2 * math.pi * t / 3.2 + len(name))
             return Tf(h.dx, h.dy, 0.6 * math.sin(2 * math.pi * t / 4.1 + len(name)), h.sx, h.sy * br,
                       1.0 if t >= tk else 0.0, kx, kyd)
-        sc.add(f"kneel_{name}", kd, z=z_kn, motion=on_ship(kn_m), frame_at=track(kn_sched))
-        z_kn += 0.01
+        sc.add(f"kneel_{name}", kd, z=z_k, motion=on_ship(kn_m), frame_at=track(kn_sched))
+        z_k += 0.01
+    z_kn = z_oar + 0.5         # (the sea in front of the ship and the effects stack above this)
 
     # --------------------------------------------------- sea in front of the ship
     def gx(x):     # calm pocket around the ship (between its start and end positions)
@@ -1098,48 +1209,65 @@ def build(ctx):
         sx_, sy_ = tip_x, SY - 6
 
         def sp_m(t, sx_=sx_, sy_=sy_, spec=spec):
-            if not catches or t < catches[0] - 0.05 or t >= spec["t_sc"] + 0.6:
-                return Tf(alpha=0.0, px=sx_, py=sy_)
-            k = bisect.bisect_right(catches, t + 0.02) - 1
-            u = t - catches[k] + 0.02
-            if u > 0.75:
-                return Tf(alpha=0.0, px=sx_, py=sy_)
+            u_d = t - spec["t_drop"]
+            if 0 <= u_d <= 0.75:        # the lost oar drops into the sea
+                u, dx = u_d, spec["drop_x"] - sx_
+            else:
+                if not catches or t < catches[0] - 0.05 or t >= spec["t_sc"] + 0.6:
+                    return Tf(alpha=0.0, px=sx_, py=sy_)
+                k = bisect.bisect_right(catches, t + 0.02) - 1
+                u, dx = t - catches[k] + 0.02, 0.0
+                if u > 0.75:
+                    return Tf(alpha=0.0, px=sx_, py=sy_)
             grow = M.progress(u, 0, 0.16, "out")
             a_ = (1 - M.progress(u, 0.35, 0.75, "sine"))
-            inner = Tf(0, 0, 0, 0.6 + 0.5 * grow, 0.2 + 0.8 * grow - 0.3 * M.progress(u, 0.4, 0.75), a_ * 0.95,
+            inner = Tf(dx, 0, 0, 0.6 + 0.5 * grow, 0.2 + 0.8 * grow - 0.3 * M.progress(u, 0.4, 0.75), a_ * 0.95,
                        sx_, sy_ + 10)
             return V.compose(ship_tf(t), inner)
         sc.add(f"oar_splash_{spec['name']}", splash_svg(sx_, sy_, 300 + i), z=z_sp + 0.01 * i, wc=0.5, motion=sp_m)
 
-    # the wave's crash over the bow
+    # the wave's crash over the bow: it bursts up, then collapses down onto its foamy base and sinks into the
+    # waves (never fading as a translucent ghost over the hull)
     bow_hit = V.apply(ship_tf(T_HIT), *ship_pt(470, -80))
     bx, by = bow_hit
-    sc.add("bow_crash", doc(V.burst(bx - 30, by + 40, 2.0, seed=12, n=7, spread=46, height=170, lean=26)), wc=0.5,
-           z=z_sp + 0.2,
+    # (it fans up and a little back over the bow, its tongues ending below the faces of the nearest rowers)
+    sc.add("bow_crash", doc(V.burst(bx - 60, by + 40, 2.0, seed=12, n=7, spread=44, height=170, lean=-4)), wc=0.5,
+           z=z_kn + 0.9,
            motion=M.keys([(T_HIT - 0.01, {"sy": 0.15, "sx": 0.6, "alpha": 0}), (T_HIT, {"alpha": 1}),
-                          (T_HIT + 0.3, {"sy": 1.0, "sx": 1.0, "dx": 30}),
-                          (T_HIT + 0.85, {"sy": 0.95, "sx": 1.1, "alpha": 0.95, "dx": 90}),
-                          (T_HIT + 1.45, {"sy": 0.3, "sx": 1.2, "alpha": 0, "dx": 150})],
-                         ["linear", "out", "sine", "in"], pivot=(bx - 30, by + 50)))
+                          (T_HIT + 0.3, {"sy": 1.0, "sx": 1.0, "dx": 20}),
+                          (T_HIT + 0.8, {"sy": 0.95, "sx": 1.08, "dx": 60}),
+                          (T_HIT + 1.3, {"sy": 0.3, "sx": 1.12, "dx": 85, "dy": 70}),
+                          (T_HIT + 1.55, {"sy": 0.1, "sx": 1.12, "dx": 95, "dy": 130, "alpha": 0})],
+                         ["linear", "out", "sine", "in", "in"], pivot=(bx - 60, by + 50)))
 
     f_fg = V.wave_fn(VIEW_BOTTOM - 60, 34, 540, 0.7, p=1.8, lean=0.3)
     sc.add("sea_fg", doc(sea_layer(f_fg, S.shade(P["storm_sea"], -0.18), P["storm_sea_light"],
                                    S.shade(P["storm_sea"], -0.45), 540, 34, 4, foam_size=0.8)),
            z=z_sp + 1, wc=1.0, motion=wave_motion(12, 30, 1.6, 3.0, lag=-0.15, extra=lambda t: 1.2 * surge_up(t)))
 
-    # rays from the gap (in front of everything but the rain)
-    ray_a = lambda t: M.progress(t, t_lord + 0.4, t_lord + 2.8, "inout") * (0.88 + 0.12 * math.sin(t * 1.1))  # noqa
-    rx_t = SX0 + 262
-    sc.add("rays", rays_svg(GX, GY + 30, rx_t, deck_mid - 110, ((97, 2.6), (106, 3.4), (115, 2.4), (124, 3.6),
-                                                                  (134, 2.6))),
+    # golden shafts from the break, landing on the deck among the kneeling crew (end place of the ship)
+    ray_a = lambda t: M.progress(t, t_lord + 0.4, t_lord + 2.8, "inout") * (0.9 + 0.1 * math.sin(t * 1.1))  # noqa
+    # Each shaft passes BETWEEN two kneeling heads (at head height, end place of the ship) and fades out on the
+    # deck, so it lights the crew without washing out a face.
+    ex = SX0 + 262 - SX0            # the ship's end offset
+    ray_src = (GX + 10, GY + 60)
+    head_y = deck_y(0) - 225
+    ray_targets = []
+    for lx_a, lx_b, w in ((274, 132, 78), (132, -4, 74), (-4, -116, 76), (-116, -250, 70)):   # kneeling places
+        gx_ = (stage_x(lx_a) + stage_x(lx_b)) / 2 + ex           # the gap between the two heads
+        k = (deck_y(0) - 10 - ray_src[1]) / (head_y - ray_src[1])
+        ray_targets.append((ray_src[0] + (gx_ - ray_src[0]) * k, deck_y(0) - 10, w))
+    sc.add("rays", rays_svg(ray_src, ray_targets, (SX0 + 262, deck_mid - 60, 380, 120)),
            z=z_sp + 2, wc=0, blend="screen",
            motion=lambda t: Tf(alpha=ray_a(t)))
 
-    # gusts while the wave rises
-    gusts = [(t_wave - 0.1, 1700, 360, 560), (t_wave + 0.6, 900, 520, 480), (t_hard + 0.2, 2100, 470, 460),
-             (t_fail - 0.3, 1300, 300, 600)]
+    # gusts while the wave rises: in the open sky right of / above the sail, and behind the ship (never across
+    # the sail, where they would read as rips)
+    gusts = [(t_wave - 0.1, 2150, 300, 520), (t_wave + 0.6, 2060, 610, 460), (t_hard + 0.2, 2250, 440, 460),
+             (t_fail - 0.3, 1960, 205, 520)]
     for i, (tg, gx_, gy_, gl) in enumerate(gusts):
-        sc.add(f"gust{i}", doc(S.g(V.wind_svg(gx_, gy_, gl, seed=30 + i), filter="wobble-fine")), wc=0, z=z_sp + 2.5,
+        sc.add(f"gust{i}", doc(S.g(V.wind_svg(gx_, gy_, gl, seed=30 + i), filter="wobble-fine")), wc=0,
+               z=z_ship_back - 0.3 + 0.01 * i,
                motion=(lambda tg_: M.combine(
                    M.keys([(tg_, {"dx": 260, "alpha": 0}), (tg_ + 0.25, {"alpha": 0.9}), (tg_ + 0.95, {"alpha": 0.9}),
                            (tg_ + 1.3, {"dx": -380, "alpha": 0})], "linear"),
@@ -1148,12 +1276,12 @@ def build(ctx):
     # --------------------------------------------------- camera
     sx_end = SX0 + 262
     cam_base = M.cam_keys([
-        (0.0, Cam(1430, 760, 1700)), (T_GRAB - 0.2, Cam(1420, 760, 1690)),
+        (0.0, Cam(1430, 760, 1700)), (T_GRAB - 0.6, Cam(1420, 760, 1690)),
         (t_shore + 1.2, Cam(1250, 740, 2300)), (t_wave, Cam(1240, 735, 2340)),
         (t_fail - 0.2, Cam(1260, 715, 2420)), (T_SHOVE1 + 0.2, Cam(1420, 720, 2400)),
         (T_SHOVE1 + 0.9, Cam(1440, 720, 2380)), (t_lord - 0.4, Cam(sx_end + 40, 700, 1700)),
         (t_lord + 2.6, Cam(sx_end + 70, 660, 1680)), (T, Cam(sx_end + 60, 670, 1600))],
-        ["sine", "inout", "sine", "inout", "inout", "sine", "inout", "inout", "sine"])
+        ["sine", "sine", "sine", "inout", "inout", "sine", "inout", "inout", "sine"])
     cam = M.cam_shake(cam_base, amp=14, t0=T_HIT - 0.05, t1=T_HIT + 1.3, freq=7.5, seed=3)
     cam = M.cam_shake(cam, amp=5, t0=STRIKES[0][0], t1=STRIKES[0][0] + 0.6, freq=9, seed=5)
 
@@ -1187,7 +1315,9 @@ def build(ctx):
         sc.sfx("thunder", ts, gain_db=-7, pan=max(-0.6, min(0.6, (bx_ - 1320) / 1300)))
     sc.sfx("whoosh", T_HIT - 0.45, gain_db=-10, pan=-0.4)
     sc.sfx("splash", T_HIT, gain_db=-5, pan=-0.3)
-    sc.sfx("splash_small", T_LOSE + 0.35, gain_db=-12, pan=0.1)
+    for k, spec in enumerate(oar_specs):          # the lost oars drop into the sea
+        if k % 2 == 0:
+            sc.sfx("splash_small", spec["t_drop"] - 0.03, gain_db=-14, pan=max(-0.6, min(0.6, (spec["drop_x"] - 1320) / 1300)))
     sc.sfx("chime", t_lord + 0.3, gain_db=-15, pan=0.3)
     sc.sfx("sparkle", t_all + 0.2, gain_db=-18, pan=0.3)
     return sc

@@ -8,7 +8,8 @@ heightened, so the full spread now shows both peoples:
   * LEFT-CENTRE: the calm bay under the setting sun, its golden glitter path, the little ship with its three
     sailors and the great fish leaping out of the mid sea band (about twice the ship's length);
   * CENTRE: Jonah on his grassy hill;
-  * RIGHT: the golden plain and Nineveh glowing in the last light, five Ninevites on the road;
+  * RIGHT: the golden plain and Nineveh glowing in the last light, five Ninevites come forward on the plain
+    toward Jonah (both peoples are drawn large enough to read on a phone: Israelites ~0.41, Ninevites ~0.34);
   * ABOVE: a huge dusk sky — sunset gradient, layered evening clouds, later the evening star and first stars.
 
 Timing (every beat keyed to the subtitle chunk that holds its phrase; ``when()`` places a phrase inside a chunk
@@ -41,8 +42,12 @@ by its character position and snaps it to the matching comma pause found in the 
     out from its centre and a small heart pops in (chime). The film then fades out (assemble.py).
 Pose / face changes are hard switches sold by a small squash (never crossfaded doubles), each held >= 0.5 s.
 Camera: one continuous move through monotone-cubic keys (v1), peak < ~19 output px / frame, always inside the stage.
-Cost: the sunset rays are painted into the sky layer (a 3-drawing flipbook for their outward reveal) and the
-sky stops at the horizon; the near sea is static and flattened with the land.
+Cost: the sunset rays are painted into the sky layer (a 4-drawing flipbook: their outward reveal, then the same
+rays at half strength as evening falls) and the sky stops at the horizon; the near sea is static and flattened with
+the land.
+Library gaps worked around here: characters.py has no per-expression blink (local eyes-closed copies of 'happy' and
+'neutral' are registered in C.EXPRS), and fx.sparkles measures its drift from the scene start, not from t0
+(sparkles_from() shifts the rect to compensate).
 """
 import bisect
 import math
@@ -76,7 +81,9 @@ JONAH_S = 0.8
 CITY_X0, CITY_X1, CITY_Y, CITY_S = 1770 + DX, 2690 + DX, 986 + DY, 0.5
 CARD_X, CARD_Y = 1690, 560   # end-card text baseline centre
 
-SHIP_X, SHIP_S, SHIP_VX = 1665, 0.19, -3.0
+# the ship sails slowly west; its stern (SHIP_X + 113) stays >= 50 stage px (64 output px in the opening framing)
+# clear of Jonah's back, and its bow (SHIP_X - 100) clear of the first leap's rising tail
+SHIP_X, SHIP_S, SHIP_VX = 1580, 0.19, -1.5
 FISH_S = 0.32            # leaps from the MID band (same depth as the ship): ~2x the ship's length
 SPLASH_K = 0.8
 
@@ -84,12 +91,19 @@ ISR_FOOT = NEAR_WL + 28  # waterline of Israel's coast (it stands in the near se
 # crest of Israel's hills (left): a soft summit with the village, a dip, a grassy knoll where the Israelites
 # stand, then a long slope down to the bay
 ISR_KEYS = ((-220, 1004), (-40, 975), (120, 962), (260, 978), (390, 1022), (500, 1040), (580, 1036),
-            (660, 1052), (760, 1112), (880, 1230), (980, 1345), (1050, ISR_FOOT))
+            (670, 1042), (770, 1100), (880, 1230), (980, 1345), (1050, ISR_FOOT))
 
 PAPER_RGB = (243, 233, 210)   # the compositor's blank-page base colour
 XFADE_DEFAULT = 1.0           # the cross-dissolve into this scene (read from the timeline when available)
 
 PUNCT = "，。；：？！、,.;:?!"
+
+# Blink drawings that close only the eyes: characters.py has no per-expression blink helper, so register local
+# eyes-closed copies of the expressions Jonah blinks from (a blink from 'happy' must keep the open grin, and one
+# from 'neutral' its brows). setdefault keeps it idempotent and leaves the shared expressions untouched.
+C.EXPRS.setdefault("e24_blink_happy", dict(C.EXPRS["happy"], eyes="closed"))
+C.EXPRS.setdefault("e24_blink_neutral", dict(C.EXPRS["neutral"], eyes="closed"))
+BLINK_EXPR = {"happy": "e24_blink_happy", "neutral": "e24_blink_neutral"}
 
 
 def doc(body, defs=""):
@@ -225,9 +239,10 @@ def isr_y(x):
 SKY_BOTTOM = HORIZON + 70   # the sky layer stops here: below it the sea and the land always cover the stage
 
 
-def sky_svg(rays=0.0):
+def sky_svg(rays=0.0, ray_op=1.0):
     """Sunset sky (gradient, sun halo, glow over the city, far streaks and puffs). rays 0 / 0.5 / 1: the sun's
-    golden rays painted in (screen blend), 0.5 = only out to ~half the sky (a step of the outward reveal)."""
+    golden rays painted in (screen blend), 0.5 = only out to ~half the sky (a step of the outward reveal).
+    ray_op < 1: the same full-reach rays, weaker (they fade as evening falls)."""
     defs = (f'<linearGradient id="e24sky" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="{HORIZON + 40}">'
             '<stop offset="0" stop-color="#323d6b"/>'
             '<stop offset="0.2" stop-color="#4d4f86"/>'
@@ -257,7 +272,7 @@ def sky_svg(rays=0.0):
     high, hdefs = clouds_svg("high")
     body += high
     if rays > 0:
-        r_body, r_defs = rays_markup(rays)
+        r_body, r_defs = rays_markup(rays, ray_op)
         body += r_body
         defs += r_defs
     clip = f'<clipPath id="e24skyclip"><rect x="-20" y="-20" width="{SW + 40}" height="{SKY_BOTTOM + 20}"/></clipPath>'
@@ -296,7 +311,7 @@ def _stars_markup(seed, n_big, n_small):
     while placed < n_big + n_small and tries < 6000:
         tries += 1
         x, y = rng.uniform(140, SW - 140), rng.uniform(150, 760 - rng.uniform(0, 140))
-        if CARD_X - 700 < x < CARD_X + 700 and CARD_Y - 230 < y < CARD_Y + 175:   # keep the end card clean
+        if not star_ok(x, y, 8 if placed < n_big else 0):
             continue
         if placed < n_big:
             r = rng.uniform(10, 16)
@@ -308,7 +323,7 @@ def _stars_markup(seed, n_big, n_small):
     return body
 
 
-EV_STAR = (1180, 795)
+EV_STAR = (1290, 770)   # clear of the drifting inked cloud at (870, 835) all scene long, and of the end card
 
 
 def evening_star_svg(x, y):
@@ -358,6 +373,43 @@ def streak_cloud(cx, cy, w, h, col, op, seed):
     return f'<g filter="url(#soft)">{body}</g>'
 
 
+# soft ink-less puffs (stage px): the two high ones are painted into the sky layer, the low one drifts with the
+# inked clouds
+SOFT_CLOUDS = ((1880 + DX, 735 + DY, 210, 48, 7, "#cf9db6", "#fbc9a0", 0.8),
+               (210 + DX, 330 + DY, 230, 58, 4, "#a48cba", "#dcabbb", 0.7),
+               (2860 + DX, 250 + DY, 250, 56, 9, "#9c88ba", "#cfa6bf", 0.6))
+# high far streaks (cx, cy, w, h, colour, opacity, seed), painted into the sky layer
+STREAKS = ((2540 + DX, 240 + DY, 560, 16, "#b8a0c8", 0.75, 1), (400 + DX, 165 + DY, 440, 13, "#a996c4", 0.7, 2),
+           (2290 + DX, 330 + DY, 300, 10, "#c7a6c4", 0.6, 3), (380, 230, 520, 14, "#9e8fc0", 0.6, 4),
+           (2950, 170, 480, 13, "#9a8cc0", 0.55, 5))
+
+
+def _keep_out():
+    """Ellipses (cx, cy, rx, ry) round everything in the sky that stars must not be drawn over: the high soft
+    puffs and streaks baked into the sky layer below the star field (S.cloud reaches ~0.4w + 0.86h sideways and
+    from cy - 1.15h to cy + 0.52h; a streak ~0.66w by 1.6h, plus its soft blur)."""
+    out = []
+    for cx, cy, w, h, *_ in SOFT_CLOUDS:
+        if cy <= 600 + DY:
+            out.append((cx, cy - 0.32 * h, max(0.52 * w, 0.4 * w + 0.86 * h) + 22, 0.84 * h + 22))
+    for cx, cy, w, h, *_ in STREAKS:
+        out.append((cx, cy, 0.66 * w + 16, 1.6 * h + 18))
+    return out
+
+
+SKY_KEEP_OUT = _keep_out()
+
+
+def star_ok(x, y, margin=0.0):
+    """True if a star at (x, y) stays clear of the end-card box and of the high clouds and streaks."""
+    if CARD_X - 700 < x < CARD_X + 700 and CARD_Y - 230 < y < CARD_Y + 175:   # keep the end card clean
+        return False
+    for cx, cy, rx, ry in SKY_KEEP_OUT:
+        if ((x - cx) / (rx + margin)) ** 2 + ((y - cy) / (ry + margin)) ** 2 < 1.0:
+            return False
+    return True
+
+
 def clouds_svg(part="low"):
     """v1's evening clouds moved into this stage, plus a cloud over Israel's hills and higher streaks for the
     taller sky (all clear of the end-card box). part 'high' = the far ink-less streaks and puffs (static, painted
@@ -374,26 +426,20 @@ def clouds_svg(part="low"):
         inked += b
         defs += d
     soft, high = "", ""
-    for cx, cy, w, h, seed, top, lit, op in ((1880, 735, 210, 48, 7, "#cf9db6", "#fbc9a0", 0.8),
-                                             (210, 330, 230, 58, 4, "#a48cba", "#dcabbb", 0.7),
-                                             (2860, 250, 250, 56, 9, "#9c88ba", "#cfa6bf", 0.6)):
-        b, d = soft_cloud(cx + DX, cy + DY, w, h, seed, top, lit, op)
-        if cy > 600:
+    for cx, cy, w, h, seed, top, lit, op in SOFT_CLOUDS:
+        b, d = soft_cloud(cx, cy, w, h, seed, top, lit, op)
+        if cy > 600 + DY:
             soft += b
         else:
             high += b
         defs += d
-    high = (streak_cloud(2540 + DX, 240 + DY, 560, 16, "#b8a0c8", 0.75, 1) +
-            streak_cloud(400 + DX, 165 + DY, 440, 13, "#a996c4", 0.7, 2) +
-            streak_cloud(2290 + DX, 330 + DY, 300, 10, "#c7a6c4", 0.6, 3) +
-            streak_cloud(380, 230, 520, 14, "#9e8fc0", 0.6, 4) +
-            streak_cloud(2950, 170, 480, 13, "#9a8cc0", 0.55, 5)) + high
+    high = "".join(streak_cloud(*st) for st in STREAKS) + high
     if part == "high":
         return high, defs
     return doc(soft + S.g(inked, filter="wobble"), defs)
 
 
-def rays_markup(reach=1.0):
+def rays_markup(reach=1.0, op=1.0):
     """Soft golden rays fanning up from the sun over the sky, screen-blended into the sky layer. reach < 1 masks
     them to a disc round the sun (a step of the outward reveal on '比天空还要高')."""
     sx, sy = SUN
@@ -425,7 +471,8 @@ def rays_markup(reach=1.0):
                  f'height="{SH + 100}"><rect x="-50" y="-50" width="{SW + 100}" height="{SH + 100}" '
                  f'fill="url(#e24raymg{int(reach * 100)})"/></mask>')
         mask = f' mask="url(#e24raym{int(reach * 100)})"'
-    return f'<g style="mix-blend-mode:screen"{mask}>{body}</g>', defs
+    op_attr = f' opacity="{op:.2f}"' if op < 1.0 else ""
+    return f'<g style="mix-blend-mode:screen"{mask}{op_attr}>{body}</g>', defs
 
 
 # ============================================================================ sea (v1)
@@ -548,10 +595,10 @@ def near_waves_svg(k):
 
 
 # village on the summit: (x, variant, scale, facing); houses sit on the crest line
-HOUSES = ((258, 0, 0.17, 1), (374, 2, 0.16, -1), (484, 3, 0.15, 1))
-# lamp spots (local house coords at scale 1, facing right): windows / doors measured from props.house drawings
-HOUSE_LAMPS = {0: ((152, -330), (-92, -170)), 2: ((128, -330), (262, -330), (-155, -160)),
-               3: ((-182, -395), (40, -180))}
+HOUSES = ((290, 0, 0.17, 1), (395, 2, 0.16, -1), (490, 3, 0.15, 1))   # leftmost house clear of the wide frame
+# lamp spots (local house coords at scale 1, facing right): windows only, measured from props.house drawings
+# (a glowing disc on a closed wooden door read as a target)
+HOUSE_LAMPS = {0: ((152, -330),), 2: ((128, -330), (262, -330)), 3: ((-182, -395),)}
 
 
 def headland_markup():
@@ -991,10 +1038,11 @@ def israelite_design(kind, var):
 
 
 # (x, kind, variant, scale) on the headland plateau, all facing east (right)
-ISRAELITES = ((566, "man", 3, 0.32), (608, "woman", 1, 0.31), (646, "child", 0, 0.31), (681, "child", 1, 0.3))
-# (x, y, kind, variant, scale) on the road before Nineveh, all facing west (left)
-NINEVITES = ((2492, 1262, "man", 0, 0.25), (2534, 1268, "woman", 2, 0.245), (2570, 1273, "child", 1, 0.245),
-             (2606, 1270, "man", 3, 0.25), (2644, 1265, "child", 0, 0.24))
+ISRAELITES = ((588, "man", 3, 0.42), (634, "woman", 1, 0.41), (674, "child", 0, 0.41), (709, "child", 1, 0.4))
+# (x, y, kind, variant, scale) on the plain before Nineveh, come forward toward Jonah, all facing west (left)
+# (all inside the close push-in framing too, so none is cut by its right edge during the quiet hold)
+NINEVITES = ((2292, 1326, "man", 0, 0.34), (2330, 1330, "woman", 2, 0.335), (2366, 1335, "child", 1, 0.335),
+             (2402, 1339, "man", 3, 0.34), (2440, 1344, "child", 0, 0.33))
 
 
 def group_markup(who, phase):
@@ -1100,8 +1148,9 @@ class DoveFlight:
     """Cubic-Bezier flight p0 -> p3 from t0 to t1; optional landing (then 'stand' with little pecks) — v1."""
 
     def __init__(self, t0, t1, p0, c1, c2, p3, scale, land=False, phase=0.0, flap_fps=15.0, glide=(1.1, 0.7),
-                 scale0=None):
+                 scale0=None, fade=0.0):
         self.t0, self.t1, self.p0, self.c1, self.c2, self.p3 = t0, t1, p0, c1, c2, p3
+        self.fade = fade
         self.scale, self.land, self.phase, self.flap_fps, self.glide = scale, land, phase, flap_fps, glide
         self.scale0 = scale if scale0 is None else scale0
 
@@ -1121,7 +1170,9 @@ class DoveFlight:
             bobv = 6 * math.sin(2 * math.pi * (t * 1.6 + self.phase))
         u = min(1.0, max(0.0, (t - self.t0) / (self.t1 - self.t0)))
         k = M.lerp(self.scale0, self.scale, u)
-        return Tf(dx=x - DOVE_BASE[0], dy=y - DOVE_BASE[1] + bobv * k, sx=k, sy=k, px=DOVE_BASE[0], py=DOVE_BASE[1])
+        a = M.progress(t, self.t0 - 0.05, self.t0 - 0.05 + self.fade, "sine") if self.fade > 0 else 1.0
+        return Tf(dx=x - DOVE_BASE[0], dy=y - DOVE_BASE[1] + bobv * k, sx=k, sy=k, alpha=a, px=DOVE_BASE[0],
+                  py=DOVE_BASE[1])
 
     def frame(self, t):
         if self.land and t >= self.t1:
@@ -1243,6 +1294,56 @@ def burst_fx(cx, cy, t0, n=14, dist=(90, 200), dur=1.0, size=(9, 18), color=(255
     return fx
 
 
+def sparkles_from(rect, t0, drift, **kw):
+    """FX.sparkles, but drifting from t0: FX.sparkles places each sparkle at py + drift * t with t counted from
+    the scene start, so a late, drifting set would appear far from its rect. Shift the rect to compensate."""
+    x0, y0, x1, y1 = rect
+    off = -drift * t0
+    return FX.sparkles((x0, y0 + off, x1, y1 + off), t0=t0, drift=drift, **kw)
+
+
+def star_points(rect, n, seed):
+    """n twinkle positions inside rect that keep clear of the high clouds, streaks and end card (star_ok)."""
+    rng = random.Random(seed)
+    x0, y0, x1, y1 = rect
+    pts, tries = [], 0
+    while len(pts) < n and tries < 4000:
+        tries += 1
+        x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+        if star_ok(x, y, 20) and all((x - a) ** 2 + (y - b) ** 2 > 140 ** 2 for a, b in pts):
+            pts.append((x, y))
+    return pts
+
+
+def twinkle_fx(pts, t0, color=(255, 246, 214), size=(9, 16), period=2.4, seed=61):
+    """Twinkling four-point stars at fixed stage positions (FX.sparkles' drawing, without drift or a random rect)."""
+    from PIL import Image, ImageDraw
+    rng = random.Random(seed)
+    ph = [rng.uniform(0, 1) for _ in pts]
+    sz = [rng.uniform(*size) for _ in pts]
+
+    def fx(frame, t, view):
+        k = M.progress(t, t0, t0 + 0.6, "sine")
+        if k <= 0:
+            return frame
+        ov = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(ov)
+        for (x, y), p, z in zip(pts, ph, sz):
+            tw = 0.5 + 0.5 * math.sin(2 * math.pi * (t / period + p))
+            if tw < 0.15:
+                continue
+            ox, oy = view.to_out(x, y)
+            r = z * view.scale * (0.5 + 0.5 * tw)
+            a = int(230 * k * tw)
+            w, g = r * 0.22, r * 0.55
+            d.ellipse([ox - g, oy - g, ox + g, oy + g], fill=(*color, a // 4))
+            d.polygon([(ox, oy - r), (ox + w, oy - w), (ox + r, oy), (ox + w, oy + w), (ox, oy + r),
+                       (ox - w, oy + w), (ox - r, oy), (ox - w, oy - w)], fill=(*color, a))
+        frame.alpha_composite(ov)
+        return frame
+    return fx
+
+
 # ============================================================================ warm light blooms
 
 
@@ -1253,6 +1354,8 @@ def bloom_svg(cx, cy, rx, ry, col="#ffcf87", op=0.34, name="b"):
 
 # ============================================================================ build
 
+
+CAM_WIDE_X = 1655   # centre of the full-spread framing: the whole village (left) and Nineveh (right) in frame
 
 TUFTS = ((1215, 2, 0.75), (1290, 0, 0.6), (1545, 0, 0.62), (1660, 2, 0.8), (1010, 0, 0.8), (1840, 1, 0.75),
          (860, 2, 0.9), (2050, 0, 0.9))
@@ -1297,19 +1400,25 @@ def build(ctx):
     # ------------------------------------------------------------------ sky
     t_rays = t_sky + 0.05      # "比天空还要高": the rays fan out from the sun up to the top of the sky
 
+    t_dim0 = max(t_wrong, t_rays + 2.1)    # evening falls: the same rays, weaker (frame 3 = frame 2 at half opacity)
+    t_dim1 = max(t_dim0 + 1.0, t_chance + 2.0)
+
     def sky_frame(t):
         if t < t_rays:
             return 0.0
         if t < t_rays + 0.8:
             return M.progress(t, t_rays, t_rays + 0.8, "sine")
-        return 1.0 + M.progress(t, t_rays + 0.8, t_rays + 2.0, "sine")
-    sc.add("sky", [sky_svg(0), sky_svg(0.5), sky_svg(1.0)], wc=0.55, frame_at=sky_frame)
+        if t < t_rays + 2.0:
+            return 1.0 + M.progress(t, t_rays + 0.8, t_rays + 2.0, "sine")
+        return 2.0 + M.progress(t, t_dim0, t_dim1, "sine")
+    sc.add("sky", [sky_svg(0), sky_svg(0.5), sky_svg(1.0), sky_svg(1.0, 0.5)], wc=0.55, frame_at=sky_frame)
     sc.add("dusk", dusk_svg(), wc=0, motion=M.keys(
         [(0, {"alpha": 0}), (t_wrong - 0.3, {"alpha": 0}), (t_chance + 1.4, {"alpha": 0.85}), (T, {"alpha": 1.0})],
         ["sine", "sine", "linear"]))
-    # the first stars come out one field after the evening star (the twinkling ones are fx sparkles below)
-    sc.add("stars", stars_svg(), wc=0, motion=M.combine(
-        M.keys([(t_chance + 0.6, {"alpha": 0}), (t_chance + 2.2, {"alpha": 1})], "sine"), M.pulse(0.75, 1.0, 2.6)))
+    # the first stars come out one field after the evening star; they hold steady (no unison pulse) and a few
+    # separate fx stars twinkle each on its own phase (below)
+    sc.add("stars", stars_svg(), wc=0, motion=M.keys([(t_chance + 0.6, {"alpha": 0}), (t_chance + 2.2, {"alpha": 1})],
+                                                    "sine"))
     sc.add("evening_star", evening_star_svg(*EV_STAR), wc=0, motion=M.combine(
         M.keys([(t_chance - 0.05, {"alpha": 0, "s": 0.2}), (t_chance + 0.5, {"alpha": 1, "s": 1.0})], "back",
                pivot=EV_STAR), M.pulse(0.75, 1.0, 1.4)))
@@ -1321,7 +1430,8 @@ def build(ctx):
     sc.add("glitter_far", glit + [glit[0]], wc=0.3, frame_at=lambda t: (t * 2.6) % 3.0,
            motion=M.pulse(0.75, 1.0, 2.3))
 
-    leaps = [(t_sea - 0.12, 1.35, 1400, 1040, -1), (t_new - 0.25, 1.35, 930, 1260, 1)]
+    # both leaps pass well west of the ship (its bow is at ~SHIP_X - 100 + SHIP_VX * t)
+    leaps = [(t_sea - 0.12, 1.35, 1245, 1005, -1), (t_new - 0.25, 1.35, 850, 1180, 1)]
     splash_events = []
     for i, (ls, ld, xa, xb, fc) in enumerate(leaps):
         fx0, fy0 = (xa + xb) / 2, MID_WL
@@ -1445,7 +1555,7 @@ def build(ctx):
             blink_of.append(i)
         else:
             blink_of.append(len(j_frames))
-            j_frames.append(doc(jonah_markup(ps, "peaceful")))
+            j_frames.append(doc(jonah_markup(ps, BLINK_EXPR.get(e, "peaceful"))))
     p_times = [p[0] for p in poses]
 
     def j_frame(t):
@@ -1499,10 +1609,11 @@ def build(ctx):
         (DoveFlight(t_back + 0.35, t_back + 2.45, (3360, 665), (2600, 675), (2080, 875), (2012, gy(2012)),
                     LD * 0.96, land=True, phase=0.45), fr_left),
         # line 4 "连我们不喜欢的人也一样": one dove from Israel, one from Nineveh, land side by side facing each other
-        (DoveFlight(t_even - 0.25, t_even + 2.0, (720, 1000), (1000, 800), (1380, 860), (1562, gy(1562)), LD,
-                    land=True, phase=0.2, scale0=0.55), fr_right),
-        (DoveFlight(t_even - 0.25, t_even + 2.05, (2600, 1180), (2350, 800), (1700, 640), (1632, gy(1632)), LD,
-                    land=True, phase=0.6, scale0=0.55), fr_left),
+        # (they fade in over 0.25 s just beside each group, small, so they seem to rise from among the people)
+        (DoveFlight(t_even - 0.25, t_even + 2.0, (762, 985), (1000, 800), (1380, 860), (1562, gy(1562)), LD,
+                    land=True, phase=0.2, scale0=0.5, fade=0.25), fr_right),
+        (DoveFlight(t_even - 0.25, t_even + 2.05, (2492, 1236), (2350, 800), (1700, 640), (1632, gy(1632)), LD,
+                    land=True, phase=0.6, scale0=0.5, fade=0.25), fr_left),
     ]
     for k, (fl, frs) in enumerate(flights):
         sc.add(f"dove{k}", frs, seed=77, motion=fl.motion, frame_at=fl.frame)
@@ -1573,11 +1684,12 @@ def build(ctx):
           (t_if, 2025, 1440, 1548),
           (l_ask.end + 0.3, 1935, 1160, 1482), (t_love, 1922, 1130, 1474),
           (t_sky + 0.1, 1520, 2120, 1712),
-          (t_isr + 0.45, 1680, 3040, 1838), (t_jon - 0.2, 1690, 3010, 1836),
+          (t_isr + 0.45, CAM_WIDE_X, 3040, 1838), (t_jon - 0.2, CAM_WIDE_X + 4, 3010, 1836),
           (t_you + 1.3, 1705, 2700, 1830), (t_back - 0.2, 1705, 2700, 1830),
-          (t_chance + 0.6, 1690, 3000, 1836), (t_card - 0.2, 1690, 3000, 1834), (max(T, t_card + 1), 1690, 2960, 1832)]
+          (t_chance + 0.6, CAM_WIDE_X + 4, 3000, 1836), (t_card - 0.2, CAM_WIDE_X + 4, 3000, 1834),
+          (max(T, t_card + 1), CAM_WIDE_X - 4, 2960, 1832)]
     cx_k = [(k[0], k[1]) for k in ck]
-    cx_k.insert(5, (t_sea + 0.1, 1740))   # x only: front-load the westward sweep so the first leap is in frame
+    cx_k.insert(5, (t_sea + 0.1, 1715))   # x only: front-load the westward sweep so the first leap is in frame
     cx_f = smooth_keys(cx_k)
     cw_f = smooth_keys([(k[0], k[2]) for k in ck])
     cb_f = smooth_keys([(k[0], k[3]) for k in ck])
@@ -1590,23 +1702,20 @@ def build(ctx):
     # ------------------------------------------------------------------ fx
     sc.fx = [
         # God's presence round Jonah while the question is asked (warm sparkles drifting down)
-        FX.sparkles((JONAH_X - 200, jy - 520, JONAH_X + 260, jy - 240), count=9, t0=t_up + 0.2, t1=t_love + 0.6,
-                    color=(255, 238, 180), size=(6, 12), period=1.9, drift=10, seed=41),
+        sparkles_from((JONAH_X - 220, jy - 440, JONAH_X + 260, jy - 285), t_up + 0.2, 8, count=9, t1=t_love + 0.6,
+                      color=(255, 238, 180), size=(6, 12), period=1.9, seed=41),
         # the "?" bursts into golden sparkles
         burst_fx(Q_POS[0], Q_POS[1] - 70, t_love + 0.05, n=14, dist=(110, 230), dur=1.1, size=(11, 20), seed=43),
-        FX.sparkles((0, 900, 760, 1120), count=12, t0=t_isr + 0.1, t1=t_isr + 4.2, color=(255, 236, 170),
-                    size=(6, 12), period=1.7, drift=-6, seed=47),
+        sparkles_from((170, 870, 800, 1090), t_isr + 0.1, -6, count=12, t1=t_isr + 4.2, color=(255, 236, 170),
+                      size=(6, 12), period=1.7, seed=47),
         FX.sparkles((CITY_X0 + 40, CITY_Y - 230, CITY_X1 - 40, CITY_Y - 40), count=16, t0=t_nin + 0.1,
                     color=(255, 236, 170), size=(6, 13), period=1.8, drift=0, seed=31),
-        FX.sparkles((JONAH_X - 170, jy - 420, JONAH_X + 170, jy - 120), count=8, t0=t_jon + 0.1, t1=t_jon + 3.6,
-                    color=(255, 240, 190), size=(6, 12), period=1.5, drift=-14, seed=53),
-        # the first stars twinkle (upper sky, clear of the clouds and the end card)
-        FX.sparkles((220, 160, 960, 560), count=5, t0=t_chance + 1.2, color=(255, 246, 214), size=(9, 16),
-                    period=2.4, drift=0, seed=61),
-        FX.sparkles((2420, 150, 3120, 520), count=5, t0=t_chance + 1.5, color=(255, 246, 214), size=(9, 16),
-                    period=2.9, drift=0, seed=62),
-        FX.sparkles((1000, 150, 2380, 300), count=4, t0=t_chance + 1.8, color=(255, 246, 214), size=(8, 14),
-                    period=2.1, drift=0, seed=63),
+        sparkles_from((JONAH_X - 170, jy - 400, JONAH_X + 170, jy - 110), t_jon + 0.1, -14, count=8, t1=t_jon + 3.6,
+                      color=(255, 240, 190), size=(6, 12), period=1.5, seed=53),
+        # the first stars twinkle (upper sky, clear of the high clouds, streaks and the end card)
+        twinkle_fx(star_points((220, 160, 960, 560), 5, 61), t_chance + 1.2, period=2.4, seed=61),
+        twinkle_fx(star_points((2420, 150, 3120, 520), 5, 62), t_chance + 1.5, period=2.9, seed=62),
+        twinkle_fx(star_points((1000, 150, 2380, 300), 4, 63), t_chance + 1.8, size=(8, 14), period=2.1, seed=63),
         FX.motes((200, 700, 3100, 1450), count=40, t0=t_isr - 0.2, color=(255, 236, 190), size=(2.5, 6),
                  alpha=120, seed=17),
         burst_fx(mini[0], mini[1] - 10, th2 + 0.05, n=8, dist=(40, 80), dur=0.9, size=(6, 11), seed=59),
@@ -1618,10 +1727,14 @@ def build(ctx):
     # ------------------------------------------------------------------ sound
     sc.sfx("waves_calm", 0, dur=T + 0.8, gain_db=-12, fade_in=0.8, fade_out=1.6, pan=-0.3)
     sc.sfx("sparkle", t_love - 0.05, gain_db=-11, pan=0.2)
-    sc.sfx("birds", t_isr - 0.4, dur=T - t_isr + 0.8, gain_db=-19, fade_in=1.2, fade_out=1.6, pan=0.1)
+    # evening birds until the first stars, then the crickets ('night') take over
+    sc.sfx("birds", t_isr - 0.4, dur=t_chance + 1.5 - (t_isr - 0.4), gain_db=-19, fade_in=1.2, fade_out=2.0,
+           pan=0.1)
     sc.sfx("sparkle", t_you, gain_db=-12)
     sc.sfx("cloth", t_back + 1.9, gain_db=-20, pan=0.2)
     sc.sfx("sparkle", t_chance, gain_db=-14, pan=-0.3)
     sc.sfx("night", t_chance, dur=T - t_chance + 0.8, gain_db=-22, fade_in=2.0, fade_out=1.6)
+    sc.sfx("cloth", t_even + 2.0, gain_db=-21, pan=-0.05)    # the two meeting doves land side by side
+    sc.sfx("pop", th2, gain_db=-18, pan=-0.05)               # ... and their tiny heart pops
     sc.sfx("chime", t_card, gain_db=-8)
     return sc

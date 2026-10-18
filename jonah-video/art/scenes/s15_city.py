@@ -6,32 +6,45 @@ city, walked a day's journey and, as he walked, called out: 'In forty days Ninev
 One 3200 x 1800 stage, two paintings on it, joined by a camera fly-through of the west gate:
 
   * OUTSIDE — the panorama (line 0). A morning view of Nineveh from the plain: the long crenellated front wall
-    with two gates and corner towers whose side walls run back toward the horizon, the palace on its mound, the
-    great ziggurat, rows and rows of flat roofs, a hazy skyline that goes on and on, the river Tigris winding in
-    on the right with boats, fields, palms, sheep and a resting camel. The picture opens close on the road and
-    the west gate, where little Jonah is walking up to the city (calm frame for the dissolve).
-      "尼尼微是一座非常非常大的城，" — the camera pulls back and back until the whole city fills the page.
+    with two gates (it runs off both edges of the stage, so no end of the city is ever seen), the palace on its
+    mound, the great ziggurat, rows and rows of flat roofs, a hazy skyline that goes on and on, the river Tigris
+    winding in on the right with boats, fields, palms, sheep and a resting camel. The picture opens close on the
+    road and the west gate, where little Jonah stands looking at the city (calm frame for the dissolve).
+      "尼尼微是一座非常非常大的城，" — he sets off up the road (it bends in from the lower left, so he walks up-right,
+          side-on, with a planted-foot walk) while the camera travels east along the wall and pulls back: palace,
+          ziggurat, the second gate, the river — and the wall still runs on past both edges of the page.
       "要走整整三天，" — a picture-book device: a trail of little footprints walks itself across the city from the
-          west gate to the far east end, and at each third of the way a smiling sun pops up (1, 2, 3).
-      "才能走遍整座城。" — the trail and suns stay up, the suns bob; then the trail fades and the camera pushes in
-          toward the west gate as Jonah reaches it.
+          west gate toward the east, and at each third of the way a smiling sun pops up (1, 2, 3).
+      "才能走遍整座城。" — the trail and suns stay up, the suns bob; then they fade and the camera pushes in on the
+          west gate (it settles ~30% from the left) as Jonah walks into the deep shade of the passage, darkening
+          until the shade has swallowed him.
   * THE FLY-THROUGH (v1 technique, "约拿进了城，"): every outside layer scales up around the gate opening (a hole
     cut through the wall and everything behind it) until the opening covers the frame; then the outside is dropped
-    and we are inside, in a street, with Jonah walking in from the gate.
+    and we are inside, in a street, with Jonah walking in from the gate. The camera's zoom keeps going through the
+    start of the fly (no stop-and-whoosh). The people in the street are drawn only once the opening's bottom edge
+    has left the frame (before that the threshold would cut them off at the knees: giants standing in a pit).
   * INSIDE — a long street that opens onto the market square (line 1, line 2).
       "走了一天的路，一边走，" — Jonah walks east (planted-foot walk cycle: the drawing follows the distance
-          walked), the camera tracking him past houses, palms, laundry, children playing and passers-by. The day
-          goes by: the sun rises behind the roofs on the left, arcs over the street and sinks toward the right; the
-          light goes from rosy morning through white noon to golden afternoon; Jonah's shadow swings round.
-      "一边大声喊：" — still walking, he raises his arm and calls out (sound arcs); people he passes stop and look.
-      He lowers his arm, reaches the market square and walks up the two tiers of the stone step.
-      Line 2 (Jonah) "再过四十天，尼尼微就要毁灭了！" — arm high, he proclaims; the people in the square stop and
-          turn to him (hard pose cuts sold by little hops), "!" marks pop over their heads, a mother points; on
-          "尼尼微就要毁灭了" they look worried (hand to chin, the girl hangs her head). He lowers his arm; a calm,
-          readable last second (golden late-afternoon light, low sun over the rooftops) for the dissolve into s16.
+          walked), the camera tracking him past houses, palms, laundry, children playing and passers-by (who walk
+          with planted-foot cycles too). The day goes by: the sun rises behind the roofs on the left, arcs over the
+          street and sinks toward the right; the light goes from rosy morning through white noon to a golden
+          afternoon (apricot sky, a warm glow round the low sun); Jonah's shadow swings round.
+      "一边走，一边大声喊：" — still walking, he raises his arm and calls out (sound arcs); people he passes stop and
+          look. He lowers his arm, reaches the market square and climbs the two tiers of the stone step on explicit
+          footfalls (ledge, then top: the planted foot stays put, the body rises onto each tread, a little squash
+          at each landing).
+      Line 2 (Jonah) "再过四十天，尼尼微就要毁灭了！" — arm high, he proclaims (his mouth follows the loudness of the
+          voice take, shut in the comma pause); the people in the square stop and turn to him (hard pose cuts sold
+          by little hops), "!" marks pop over their heads, a mother points; from "尼尼微就要毁灭了" (keyed to the
+          end of the comma pause found in the voice) they look worried (hand to chin, the girl hangs her head) and
+          the street's bustle drops to a hush. The camera glides on so Jonah ends ~23% from the left, as s16 opens;
+          he lowers his arm with a stern face (s16's opening expression); a calm, readable last second (golden
+          late-afternoon light, low sun over the rooftops) for the dissolve into s16.
 
 Notes for maintainers
-* Every time comes from ctx.lines[i].start / .end / .at(phrase) (fractions only inside one chunk).
+* Every time comes from ctx.lines[i].start / .end / .at(phrase), phrase_time() (character position inside
+  one chunk) or the voice take's loudness envelope (build/voice/lines/<id>_02.wav; falls back to the comma's
+  character position when the take is missing).
 * Characters in the street and market are SPRITES: drawn on small canvases (rasterised + watercoloured once,
   cached on disk like layers) and placed by Dynamic layers; full-stage layers would cost ~5 s each to rasterise
   on this big stage. Things seen in the zoomed-out panorama stay ordinary layers (they get the compositor's
@@ -76,8 +89,8 @@ HOLE_CLEAR = (GX - HOLE_R + 8, GX + HOLE_R - 8, SPRING, WALL_Y - 12)
 HORIZON = 640
 
 # footprint trail ("three days' walk") over the city, west gate -> east end
-TRAIL = [(GX + 10, 850), (820, 760), (1150, 705), (1550, 690), (1950, 700), (2330, 682), (2700, 696),
-         (2900, 765)]
+TRAIL = [(GX + 10, 850), (820, 760), (1150, 705), (1550, 690), (1950, 700), (2300, 682), (2640, 694),
+         (2830, 760)]
 
 # ================================================================ inside (street + market) geometry
 GY = 1310                           # street ground line (Jonah's feet)
@@ -265,21 +278,26 @@ def walk_pose(k, arm="down", A=WALK_A, lk=1.0):
 
 def climb_pose(feet, treads, k, s=JS):
     """Walk drawing k (WALK_N per step) over explicit footfalls: during step n = k // WALK_N the ankle planted at
-    stage x feet(n) (on a tread treads(n) stage px above the street) never moves; the swing foot arcs from feet(n-1)
-    to feet(n+1) (a higher arc when it climbs) and the body rises onto a higher tread over the first 60% of the step.
-    Returns (pose, anchor x, anchor y)."""
+    stage x feet(n) (on a tread treads(n) stage px above the street) never moves. The body rises onto a higher tread
+    over the first 40% of the step; the swing foot travels low and only rises to the next tread's height late in
+    its swing (when it crosses the riser), so the knee never comes up high under the robe (which would read as
+    kneeling). The robe is drawn a little narrower while climbing. Returns (pose, anchor x, anchor y)."""
     n, j = divmod(k, WALK_N)
     u = j / WALK_N
     prev, plant, nxt = feet(n - 1), feet(n), feet(n + 1)
     hp, hn, hx = treads(n - 1), treads(n), treads(n + 1)
     ax = M.lerp((prev + plant) / 2, (plant + nxt) / 2, u)
-    v = min(1.0, u / 0.6)
-    H = M.lerp(min(hp, hn), hn, v * v * (3 - 2 * v))
+
+    def ss(v):
+        v = min(1.0, max(0.0, v))
+        return v * v * (3 - 2 * v)
+    H = M.lerp(min(hp, hn), hn, ss(u / 0.4))
     e = 0.5 - 0.5 * math.cos(math.pi * u)
     sx = prev + (nxt - prev) * (u + e) / 2
-    w = M.lerp(hp, hx, e) + (22 * s + 0.6 * max(0.0, hx - hp)) * math.sin(math.pi * u)
+    w = hp + (hx - hp) * ss((u - 0.3) / 0.45) + (15 if hx <= hp else 7) * s * math.sin(math.pi * u)
     ph = (k % (2 * WALK_N)) / WALK_N
     ps = gait((plant - ax) / s, (sx - ax) / s, (hn - H) / s, (w - H) / s, n % 2, ph, u)
+    ps["flare"] = -9
     return ps, ax, GY - H
 
 
@@ -718,7 +736,7 @@ def street_sky_svg():
 def street_sky_eve_svg():
     """Golden late-afternoon sky wash (fades in over the noon sky as the day goes by): clear apricot above, gold
     toward the rooftops."""
-    defs = sky_grad("s15esky", [(0, S.mix(S.mix(P["sky_dawn"], P["sky_warm"], 0.5), "#fff4e2", 0.2)),
+    defs = sky_grad("s15esky", [(0, S.mix(S.mix(P["sky_dawn"], P["sky_warm"], 0.5), "#fff4e2", 0.3)),
                                 (0.45, S.mix(P["sky_warm"], P["sky_dawn"], 0.35)),
                                 (0.8, S.mix(P["sky_warm"], P["gold"], 0.3)), (1, S.mix(P["sky_warm"], P["gold"], 0.45))])
     return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SKY_BOT + 20}" fill="url(#s15esky)"/>', defs)
@@ -1028,7 +1046,7 @@ def build(ctx):
     S_FL = 2 * WALK_A * JS                            # stride (stage px) of one step
     N_FL = 8                                          # level steps before the climb
     P_LEDGE, P_TOP = STEP_X - 148, STEP_X - 58        # ankle spots: lower tier's side ledge, upper tier
-    H_LEDGE, H_TOP = GY - 1282, GY - STEP_TOP         # their heights above the street line
+    H_LEDGE, H_TOP = GY - 1286, GY - STEP_TOP         # their heights above the street line
     P0 = P_LEDGE - 90 - N_FL * S_FL
     X_IN = P0 - S_FL / 2                              # his anchor when the fly-through starts
 
@@ -1069,39 +1087,47 @@ def build(ctx):
 
     # ------------------------------------------------------------ camera
     CAM0 = Cam(820, 1128, 1560)                        # close on the road and the west gate
-    CAMW = Cam(1690, 935, 2760)                        # the city from the gate to the river; it runs off both edges
-    CAM_HOLD = Cam(1660, 945, 2720)
-    GATE_X = 1060                                      # the push-in ends with the gate ~30% from the left
-    CAM_ST0 = Cam(GATE_X, 1000, 1800)
+    CAMW = Cam(1650, 935, 2760)                        # the city from the gate to the river; it runs off both edges
+    CAM_HOLD = Cam(1620, 945, 2720)
+    CAM_ST0 = Cam(1000, 1000, 1800)                    # (y, w of) the street framing after the fly-through
     D1, D2 = t_fly0 - t_push0, t_st - t_fly0
     WG = CAM_HOLD.w + (CAM_ST0.w - CAM_HOLD.w) * D1 / (D1 + D2)   # zoom keeps going through the fly (no stall)
     YG = CAM_HOLD.y + (CAM_ST0.y - CAM_HOLD.y) * D1 / (D1 + D2)
-    RAMP = 1.8                                         # the tracking camera eases up to walking speed
+    LE_H, LE_G = CAM_HOLD.x - CAM_HOLD.w / 2, 40.0     # frame's left edge: at the hold, when the fly starts (the
+    #                                                    gate is then ~30% from the left)
+    RAMP = 0.6                                         # the tracking camera eases up to walking speed
     CAM_END = Cam(P_TOP + 0.27 * 1720, 985, 1720)      # Jonah on his step ~23% from the left (as s16 opens)
     t_endcam = L2.start + 0.9
     t_dec = T_CL
 
     out_cam = M.cam_keys([(0, CAM0), (t_pull0, CAM0), (t_wide, CAMW), (t_push0, CAM_HOLD)], "sine")
 
-    def track_x(t):
-        d = max(0.0, t - t_fly0)
+    def left_edge(t):
+        """The frame's left edge from the push-in on: it eases to rest at the far left of the stage as the zoom
+        reaches the gate, then (zoom still going, through the fly) eases up to Jonah's walking speed."""
+        if t < t_fly0:
+            return M.lerp(LE_H, LE_G, part(t, t_push0, t_fly0, "sine"))
+        d = t - t_fly0
         u = min(1.0, d / RAMP)
-        return GATE_X + V_W * (RAMP * (u ** 3 - 0.5 * u ** 4) + max(0.0, d - RAMP))
-    x_dec = track_x(t_dec)
+        return LE_G + V_W * (RAMP * (u ** 3 - 0.5 * u ** 4) + max(0.0, d - RAMP))
+
+    def cam_wy(t):
+        if t < t_fly0:
+            u = (t - t_push0) / D1
+            return CAM_HOLD.w + (WG - CAM_HOLD.w) * u ** 3, CAM_HOLD.y + (YG - CAM_HOLD.y) * u ** 3
+        if t < t_st:
+            e = 1 - (1 - (t - t_fly0) / D2) ** 3
+            return WG + (CAM_ST0.w - WG) * e, YG + (CAM_ST0.y - YG) * e
+        u = part(t, t_st, t_dec, "sine")
+        return M.lerp(CAM_ST0.w, 1790, u), M.lerp(CAM_ST0.y, 995, u)
+    x_dec = left_edge(t_dec) + 1790 / 2
 
     def camf(t):
         if t < t_push0:
             return out_cam(t)
-        if t < t_fly0:
-            u = (t - t_push0) / D1
-            return Cam(M.lerp(CAM_HOLD.x, GATE_X, part(t, t_push0, t_fly0, "sine")),
-                       CAM_HOLD.y + (YG - CAM_HOLD.y) * u ** 3, CAM_HOLD.w + (WG - CAM_HOLD.w) * u ** 3)
-        if t < t_st:
-            e = 1 - (1 - (t - t_fly0) / D2) ** 3
-            return Cam(track_x(t), YG + (CAM_ST0.y - YG) * e, WG + (CAM_ST0.w - WG) * e)
         if t < t_dec:
-            u = part(t, t_st, t_dec, "sine")
-            return Cam(track_x(t), M.lerp(CAM_ST0.y, 995, u), M.lerp(CAM_ST0.w, 1790, u))
+            w, y = cam_wy(t)
+            return Cam(left_edge(t) + w / 2, y, w)
         # glide from walking speed to rest on the market framing (Hermite: no velocity jump, no reversal)
         D = t_endcam - t_dec
         u = min(1.0, (t - t_dec) / D)
@@ -1152,7 +1178,8 @@ def build(ctx):
     t_show = min(t_cut, first_time(FLY_C, bottom_only=True))
     out_a = lambda t: 1.0 if t < t_cut else 0.0
     in_a = lambda t: 1.0 if t >= t_fly0 - 0.02 else 0.0
-    shown = lambda t: t >= t_show
+    shown = lambda t: t >= t_show - 0.05
+    shown_a = lambda t: part(t, t_show - 0.05, t_show + 0.02, "linear")   # a 2-frame materialise in the whoosh
 
     def F(local=None, pivot=FLY_C):
         return V.fly(local, pivot, FLY_C, s_fly, out_a)
@@ -1161,8 +1188,8 @@ def build(ctx):
     # sky, the day's sun, clouds, hazy far city
     sc.add("st_sky", street_sky_svg(), z=1, wc=0.6, motion=lambda t: Tf(alpha=in_a(t)))
     eve = lambda t: part(t, t_call - 0.9, t_calloff + 0.4, "sine")
-    sc.add("st_sky_eve", street_sky_eve_svg(), z=1.05, wc=0.6, motion=lambda t: Tf(alpha=0.92 * eve(t) * in_a(t)))
-    SUN0 = (CAM_ST0.x, 620)
+    sc.add("st_sky_eve", street_sky_eve_svg(), z=1.05, wc=0.6, motion=lambda t: Tf(alpha=eve(t) * in_a(t)))
+    SUN0 = (1100, 620)
 
     sun_rel = keyed([(t_st - 0.3, -880), (L1.end + 0.3, 600), (T, 660)], "linear")
 
@@ -1175,7 +1202,7 @@ def build(ctx):
     sc.add("st_sun", sun_svg(*SUN0), z=1.2, wc=0,
            motion=lambda t: Tf(dx=sun_pos(t)[0] - SUN0[0], dy=sun_pos(t)[1] - SUN0[1], rot=3.0 * t,
                                px=SUN0[0], py=SUN0[1], alpha=in_a(t)))
-    cl_par = lambda k: (lambda t: Tf(dx=k * (camf(max(t, t_st)).x - CAM_ST0.x)))
+    cl_par = lambda k: (lambda t: Tf(dx=k * (camf(max(t, t_st)).x - 1100)))
     sc.add("st_clouds", pano_clouds_svg([(640, 600, 250, 70, 31), (1420, 578, 210, 60, 33), (2250, 612, 270, 76, 35),
                                          (3000, 586, 220, 62, 37), (3600, 600, 240, 66, 39)]), z=1.4,
            motion=M.combine(M.drift(vx=9), cl_par(0.6), lambda t: Tf(alpha=in_a(t))))
@@ -1289,17 +1316,15 @@ def build(ctx):
                 ph = t / idle[2]
                 if int(ph) % 2 == 1:                  # arms up: a little jump of joy
                     dy -= 18 * s * math.sin(math.pi * (ph % 1.0))
-            return sp.place(idx(t), xpos(t), y, sx=1 / math.sqrt(sy), sy=sy, dy=dy)
+            return sp.place(idx(t), xpos(t), y, sx=1 / math.sqrt(sy), sy=sy, dy=dy, alpha=shown_a(t))
         if shadow:
             shs = sprite(260 * s + 40, 70 * s + 30, 130 * s + 20, 35 * s + 15, wc=0)
             shi = shs.add(C.ground_shadow(shs.ax, shs.ay, s, 80 if kind == "child" else 110))
-            sc.add_dynamic(name + "_sh", lambda t: shs.place(shi, xpos(t), y) if shown(t) else None, z=z - 0.01)
+            sc.add_dynamic(name + "_sh", lambda t: shs.place(shi, xpos(t), y, alpha=shown_a(t)) if shown(t) else None,
+                           z=z - 0.01)
         sc.add_dynamic(name, fn, z=z)
         hp = C.body_points(C.citizen, x, y, s, last_face, kind=kind, variant=variant, pose="stand")["head_top"]
         people_heads[name] = hp
-        if wf:
-            print(f"  s15 walker {name}: {n_w} drawings, {WALK_N / rate:.2f} s/step, from x={x_from:.0f} "
-                  f"at {t_a:.2f}s")
         return hp
 
     # street: children playing by a doorway, a donkey, an old man at his door, a woman walking the other way
@@ -1383,7 +1408,7 @@ def build(ctx):
             return None
         sy, dy = j_squash(t)
         x, y = jonah_xy(t)
-        return JSPR.place(j_frame(t), x, y, sx=1 / math.sqrt(sy), sy=sy, dy=dy)
+        return JSPR.place(j_frame(t), x, y, sx=1 / math.sqrt(sy), sy=sy, dy=dy, alpha=shown_a(t))
 
     # his shadow swings round with the sun (morning: long to the right, noon: short, afternoon: to the left)
     JSH = sprite(520, 120, 260, 60, wc=0)
@@ -1397,7 +1422,7 @@ def build(ctx):
         k = walk_k(t)
         if t < t_stop and k >= K_CL:                 # on the step: under the planted foot's tread
             y = GY - treads(k // WALK_N)
-        return JSH.place(JSH_I, x - 0.07 * rx, y, sx=1 + min(0.9, abs(rx) / 900))
+        return JSH.place(JSH_I, x - 0.07 * rx, y, sx=1 + min(0.9, abs(rx) / 900), alpha=shown_a(t))
     sc.add_dynamic("jonah_sh", jsh_fn, z=4.9)
     sc.add_dynamic("jonah", j_fn, z=5)
 
@@ -1430,8 +1455,8 @@ def build(ctx):
     # animals in the square
     ANI = sprite(820, 360, 410, 330, seed=16)
     ani_i = ANI.add(C.ground_shadow(250, 330, 0.56, 170) + PR.animal(250, 330, 0.56, 1, kind="donkey"))
-    sc.add_dynamic("donkey", lambda t: (ANI.place(ani_i, 560 + 160, 1214, sy=1 + 0.012 * math.sin(t * 2.3))
-                                        if shown(t) else None), z=3.15)
+    sc.add_dynamic("donkey", lambda t: (ANI.place(ani_i, 560 + 160, 1214, sy=1 + 0.012 * math.sin(t * 2.3),
+                                                  alpha=shown_a(t)) if shown(t) else None), z=3.15)
     SHP = sprite(520, 260, 260, 230, seed=17)
     shp_i = SHP.add(C.ground_shadow(160, 230, 0.68, 160) + PR.animal(160, 230, 0.68, -1, kind="sheep")
                     + C.ground_shadow(360, 240, 0.6, 140) + PR.animal(360, 240, 0.6, -1, kind="sheep"))
@@ -1456,7 +1481,7 @@ def build(ctx):
 
     sc.add("st_fg", street_fg_svg(), z=8,
            motion=M.combine(lambda t: Tf(dx=-0.22 * (camf(max(t, t_st)).x - CAM_END.x)),
-                            lambda t: Tf(alpha=1.0 if shown(t) else 0.0)))
+                            lambda t: Tf(alpha=shown_a(t))))
 
     # doves flying over the street
     dpts = ((1400, 640, 0.45), (1480, 600, 0.38), (1350, 585, 0.36))
@@ -1481,13 +1506,15 @@ def build(ctx):
     # gate and into the shade of the passage, which swallows him before the camera flies in after him
     LJ_S = 0.58
     LJ = person_sprite(LJ_S, wide=190, tall=380, seed=92)
-    LJ_F = [LJ.add(C.ground_shadow(LJ.ax, LJ.ay, LJ_S, 120) + jfig(LJ.ax, LJ.ay, LJ_S, walk_pose(k), "neutral"))
-            for k in range(2 * WALK_N)]
+    for k in range(2 * WALK_N):                        # drawings 0..11: the walk cycle
+        LJ.add(C.ground_shadow(LJ.ax, LJ.ay, LJ_S, 120) + jfig(LJ.ax, LJ.ay, LJ_S, walk_pose(k), "neutral"))
+    LJ_STAND = LJ.add(C.ground_shadow(LJ.ax, LJ.ay, LJ_S, 120) + jfig(LJ.ax, LJ.ay, LJ_S, STAND, "neutral"))
+    t_lj0 = t_pull0 + 0.5                              # he stands and looks at the great city, then sets off
     lj_scale = lambda y: float(np.interp(y, [WALL_Y - 16, WALL_Y, 1450, 1700], [0.28, 0.33, 0.52, 0.58]))
-    f_lo, f_hi = 0.0, 1.0                              # where on the road he is at the start (feet at y ~ 1450)
-    for _ in range(30):
+    f_lo, f_hi = 0.0, 1.0                              # where on the road he is at the start (feet at y ~ 1390,
+    for _ in range(30):                                # clear of the foreground palm)
         f_md = (f_lo + f_hi) / 2
-        f_lo, f_hi = (f_md, f_hi) if road_point(f_md)[1] > 1450 else (f_lo, f_md)
+        f_lo, f_hi = (f_md, f_hi) if road_point(f_md)[1] > 1390 else (f_lo, f_md)
     path = [road_point(f_lo + (1 - f_lo) * i / 240) for i in range(241)]
     n_road = len(path)
     path += [(GX + 9 * i / 12, WALL_Y - 16 * i / 12) for i in range(1, 13)]     # into the passage's depth
@@ -1497,10 +1524,10 @@ def build(ctx):
         figd.append(figd[-1] + ds / lj_scale((a_[1] + b_[1]) / 2))
     ADV0 = 2 * WALK_A / WALK_N                         # figure px per drawing
     t_thr = t_fly0 - 0.6                               # his feet cross the threshold
-    R_LJ = figd[n_road - 1] / ADV0 / t_thr             # drawings / s
     K_THR = figd[n_road - 1] / ADV0
+    R_LJ = K_THR / (t_thr - t_lj0)                     # drawings / s
     K_LJ = int(figd[-1] / ADV0)
-    t_lj_end = (K_LJ + 0.999) / R_LJ
+    t_lj_end = t_lj0 + (K_LJ + 0.999) / R_LJ
 
     def lj_at(k):
         dd = k * ADV0
@@ -1512,12 +1539,13 @@ def build(ctx):
     LJ_POS = [lj_at(k) for k in range(K_LJ + 1)]
 
     def lj_fn(t):
-        k = min(K_LJ, int(t * R_LJ + 1e-6))
-        dark = part(t, K_THR / R_LJ, t_lj_end, "sine")
+        k = min(K_LJ, int(max(0.0, t - t_lj0) * R_LJ + 1e-6))
+        dark = part(t, t_thr, t_lj_end, "sine")
         if dark > 0.93 or t >= t_fly0 - 0.02:          # gone into the shade (he matches it by now): cut
             return None
         x, y, s = LJ_POS[k]
-        res = LJ.place(k % (2 * WALK_N), x, y, sx=s / LJ_S, sy=s / LJ_S)
+        # the walk starts on a passing drawing (feet together), the closest to his standing pose
+        res = LJ.place(LJ_STAND if t < t_lj0 else (k + 3) % (2 * WALK_N), x, y, sx=s / LJ_S, sy=s / LJ_S)
         if dark <= 0.01:
             return res
         im, (px, py) = res
@@ -1526,8 +1554,6 @@ def build(ctx):
         arr[..., :3] = arr[..., :3] * (1 - dark) + rows * dark
         return Image.fromarray(arr.clip(0, 255).astype(np.uint8), "RGBA"), (px, py)
     sc.add_dynamic("p_jonah", lj_fn, z=57)
-    print(f"  s15 little Jonah: {WALK_N / R_LJ:.2f} s/step, threshold at {t_thr:.2f}s, gone at "
-          f"{min(t_fly0, K_THR / R_LJ + 0.93 * (t_lj_end - K_THR / R_LJ)):.2f}s")
 
     # foreground palms (sway)
     for i, (x, y, s, ln) in enumerate(((60, 1850, 1.3, 0.32), (3170, 1860, 1.15, -0.32))):
@@ -1540,7 +1566,7 @@ def build(ctx):
            motion=F(local=M.combine(M.drift(vx=70, vy=-5), M.bob(10, 1.6)), pivot=(900, 500)))
 
     # the three-days device: footprint trail + suns
-    trail_fade = lambda t: 1 - part(t, L0.end - 0.3, L0.end + 0.25, "sine")
+    trail_fade = lambda t: 1 - part(t, L0.end - 0.4, L0.end + 0.2, "sine")
 
     def trail_reveal(t):
         u = part(t, t_trail0, t_trail1, "linear")
@@ -1562,7 +1588,7 @@ def build(ctx):
 
     # ------------------------------------------------------------ light over the day
     def light(t):
-        morning, noon, gold = (255, 240, 236), (255, 255, 255), (255, 244, 224)
+        morning, noon, gold = (255, 240, 236), (255, 255, 255), (255, 246, 230)
         if t < t_fly0:
             return noon
         if t < t_st:
@@ -1585,10 +1611,6 @@ def build(ctx):
     sc.sfx("crowd", t_turn - 0.1, dur=T - t_turn + 0.9, gain_db=-24, fade_in=0.5, fade_out=0.8)
     sc.sfx("footsteps", t_fly0, dur=t_stop - t_fly0, gain_db=-13, fade_in=0.2, fade_out=0.2, rate=R0 / WALK_N)
     sc.sfx("pop", t_wow, gain_db=-14)
-
-    print(f"  s15 street: {WALK_N / R0:.2f} s/step ({V_W:.0f} px/s), arm up k={k_up}..{k_dn} "
-          f"({k_time(k_up):.2f}-{t_calloff:.2f}s), climb {T_CL:.2f}-{t_stop:.2f}s, cut {t_cut:.3f}s, "
-          f"people from {t_show:.3f}s, comma {t_comma0:.2f}-{t_comma1:.2f}s (voice {'yes' if env2 is not None else 'no'})")
 
     # rasterise all sprite drawings now (fills the disk caches during the prepare pass, so render workers only
     # load PNGs) and close the browser if we opened it

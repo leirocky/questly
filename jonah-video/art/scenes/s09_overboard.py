@@ -1,40 +1,55 @@
 """Scene 9 (v2) — the sailors throw Jonah into the sea; at once the sea is calm; they fear the LORD, offer a
 sacrifice and make vows (Jonah 1:15-16).
 
-Two shots joined by a push-in cross-dissolve in the pause after line 1:
+Two shots joined by a dip through the blank page in the pause after line 1:
 
   A (lines 0-1)  the approved v1 wide shot (art/scenes_v1/s06_fish.py, surface half): the ship (bow LEFT, torn
-                 striped sail, sailors 0-3 and the captain) rocking in the storm.
-  B (line 2)     on the calm, sunlit deck (the deck of s06/s07 seen from on board: bulwark with painted shields,
-                 mast and torn sail): the crew kneel round a small bronze brazier, the offering flame sends its
-                 smoke up into the sunlight, they lift their hands to make vows.
+                 striped sail) rocking in the storm. It OPENS on s08's end framing: the camera is sized and placed so
+                 this ship sits on s08's (art/scenes/s08_row.py: ship at SX0 + 262 / SY, scale .92, end camera
+                 (1682, 670, 1600) on its 2640 stage), the crew kneel with raised hands in s08's order and places
+                 (sailor 0, sailor 1, Jonah, sailor 2, sailor 3, the captain on the raised stern) under the fading
+                 gold of s08's prayer light, so the incoming dissolve lines up instead of doubling the ship.
+  B (line 2)     on the calm deck (bulwark with painted shields, mast and torn sail on the left): the crew kneel in two
+                 staggered rows, spread out so every face stays clear; a small bronze brazier on the right. God's
+                 presence is only light: a warm glowing break in the clouds above and right of the brazier (the sun
+                 stays hidden behind the clouds), soft rays and sparkles. The offering smoke rises BESIDE that light.
 
 Narration (every key time comes from the chunks; a phrase inside a chunk is placed by its characters and snapped
 to a pause in the voice take, see Cues):
-  line 0 '于是，他们把约拿抬起来，扔进了大海。'
-         '他们'     the two lifters crouch either side of Jonah (head bowed, sorry) and take hold of him;
+  line 0 '于是，'    the crew get up (low kneel -> upright kneel -> one knee -> standing, each cut eased so heads never
+                    pop) while the camera eases out to the v1 wide shot;
+         '他们'     the two lifters (sailors 1 and 2, either side of Jonah) crouch and take hold of him;
          '抬起来'   they hoist him overhead ('carried' on their hands; the cut is sold by a squash-hop and he rises
-                    onto their hands); '扔进了' heave (dip, push) and launch: he flies over the stern in an arc;
-         '大海'     splash crown, drops, ripples, a burst of bubbles; the crew watch, worried.
+                    onto their hands); '扔进了' heave (dip, push) and launch: he flies over the stern in a high arc
+                    (computed to clear the heads of sailor 3 and the captain);
+         '大海'     splash crown, drops, ripples, a burst of bubbles; the captain (on the stern, nearest the splash)
+                    leans over the rail pointing DOWN at the ripples, sailors 2 and 3 lean over and look down.
   line 1 '一下子，'  the rain stops at once, the storm banks slide away, the sky turns blue;
-         '海就平静了' the storm crests sink and the sea flattens, a golden sunbeam falls on the water, the crew
-                    (pose cut) pray and point in awe; the splash rings spread out on the calm water;
-         '风停了，'  the curly wind marks blowing across the sky fade away and the whipping pennant goes slack,
-                    gulls glide in;
+         '海就平静了' the storm crests sink and the sea flattens; the sun (its own layers: the glow fades in, the
+                    disc pops in opaque once the storm sky is nearly gone) and a golden sunbeam; the crew (pose cut)
+                    lift their hands in awe, sailor 3 raises an arm toward the light;
+         '风停了，'  the curly wind marks fade away and the pennant sags (12 / 25 / 45 deg in-betweens) to hang slack
+                    behind the yard, swaying slowly; gulls glide in;
          '浪也静了。' the last swell settles, the ship lies still, glints sparkle on the water.
-  pause          slow push-in on the ship, cross-dissolve to the deck.
-  line 2 '水手们看见了，' standing on the calm deck in the sunshine they gaze at the sea in wonder (one points to
-                    the light, one lifts his hands);
-         '心里对耶和华又敬又怕。' one after another they kneel and bow their heads, palms together;
-         '他们向耶和华献上祭物，' the captain lifts a bowl of grain over the brazier; at '献上' he pours it in:
-                    the flame flares, sparks rise and a big curl of smoke climbs into the sunbeams; the others
-                    raise their heads to watch it;
-         '还许下了诺言。' they all lift their hands to the sky (vows); warm sparkles in the light (God is shown
-                    only as light).
-  The scene ends on a held, calm frame (the raised hands, the flame, the smoke in the sunlight).
+  pause          the push-in on the ship continues while the picture dips to the blank page and the deck appears
+                 from it (no double exposure of the two shots).
+  line 2 '水手们看见了，' standing on the calm deck they turn three-quarters toward the light, heads up; sailor 0
+                    lifts his hands in wonder, sailor 3 raises an arm toward the light;
+         '心里对耶和华又敬又怕。' one after another (0.3 s apart) they kneel: stand -> one knee (held 4 frames) ->
+                    kneel with a small settle; heads bowed, palms together;
+         '他们向耶和华献上祭物，' the captain lifts a bowl of grain over the brazier; at '献上' he pours it in: the
+                    flame flares, sparks rise and a golden billow climbs the smoke; he sets the empty bowl down;
+                    the others raise their heads;
+         '还许下了诺言。' the sailors lift their hands toward the light (an open V, so hands go up, not forward
+                    over the next face), the captain beside the altar lifts open palms at shoulder height; the rays
+                    brighten, warm sparkles in the cloud break.
+  The scene ends on a held, calm frame (the camera has drifted left and up a little): s10's sinking Jonah appears at
+  output x 1040-1310, y 330-650 in the outgoing dissolve, and there the frame holds only sea and sky - no hands,
+  faces, fire or smoke.
 
-Pose changes are hard cuts (never crossfaded) sold by squash-and-hops; every pose is held >= 0.5 s. Stage 2112 x
-1188; the camera stays inside the painted area (both shots are painted over the whole stage).
+Pose changes are hard cuts (never crossfaded) sold by squash-and-hops, or by easing the new drawing in from half way
+when the head height changes a lot; every pose is held >= 0.5 s (in-betweens 3-4 frames). Stage 2112 x 1188; the
+camera stays inside the painted area.
 """
 import math
 import random
@@ -52,40 +67,65 @@ from art.style import P
 from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf, lerp, progress
-from engine.paths import BUILD
+from engine.paths import BUILD, OUT_W
 from engine.scene import Scene
 
 W, H = 2112, 1188
 HORIZON, WL = V.HORIZON, V.WL          # 690, 880 (v1 wide shot)
 SX, SS, SF = V.SX, V.SS, V.SF          # ship anchor x, scale, facing (-1: bow left)
-DECK = V.DECK
 SPLASH = V.SPLASH
 JS = V.JS
+PAPER_RGB = (243, 233, 210)            # the compositor's blank-page colour (paper grain is multiplied on top)
 
-# ---- shot A cast on the deck line (x, variant); all face the stern (+1) unless noted
-S3_X, CAPT_X, S1_X, L0_X, JON_X, L2_X = 545, 640, 725, 805, 893, 985
-HAND_Y = DECK - 316.5 * SS                                   # 'lift' hand line
-JCAR_C = ((L0_X + L2_X) / 2, HAND_Y + 6 * SS - 39.5 * JS)      # carried Jonah: bbox centre
-JCAR = (JCAR_C[0] - 20 * JS, HAND_Y + 6 * SS)                  # ...and anchor (facing -1, head to the stern)
+
+def deck_y(lx):
+    """Deck (feet) line at ship-local x (the stern deck rises), un-rocked."""
+    return WL + PR._hull_top(lx) * SS
+
+
+def ship_x(lx):
+    return SX - lx * SS                # SF = -1: local +x (toward the bow) is to the LEFT
+
+
+# ---- shot A cast: s08's order and kneeling places on the same ship (s08_row.py ROWERS / JON_LX / CAPT_LX):
+#      sailor 0, sailor 1, Jonah, sailor 2, sailor 3, the captain (on the raised stern deck)
+A_LX = dict(s0=274, s1=132, jon=-4, s2=-116, s3=-250, capt=-436)
+A_POS = {k: (ship_x(lx), deck_y(-400 if k == "capt" else lx)) for k, lx in A_LX.items()}
+A_F0 = dict(s0=1, s1=1, s2=-1, s3=-1, capt=-1)          # facings at the start (toward Jonah, as in s08)
+DECK = A_POS["s1"][1]
+L1X, L2X = A_POS["s1"][0], A_POS["s2"][0]                # the two lifters
+HAND_Y = (A_POS["s1"][1] + A_POS["s2"][1]) / 2 - 316.5 * SS   # 'lift' hand line
+JCAR_C = ((L1X + L2X) / 2, HAND_Y + 6 * SS - 39.5 * JS)      # carried Jonah: bbox centre
+JCAR = (JCAR_C[0] - 20 * JS, HAND_Y + 6 * SS)                 # ...and anchor (facing -1, head to the stern)
 JAIR_ROT = V.JAIR_ROT
 JAIR_C = JCAR_C
 JAIR = (JAIR_C[0] + 1 * JS, JAIR_C[1] + 135.5 * JS)          # 'fall' anchor
 PEN = PR.local_to_stage(SX, WL, SS, SF, -10, -930)           # masthead (pennant root)
+SUN_A = (1700, 215)                                          # v1 sun (removed from V.background, own layer)
+
+# s08's end framing in this stage: its ship (anchor SX0 + 262 = 1622, SY 1130, scale .92) seen by its end camera
+# (1682, 670, 1600) maps onto this ship (SX, WL, scale .8) with the camera below; its prayer-light gap
+# (2040, 350) lands at S08_GLOW.
+_O08 = OUT_W / 1600                                          # s08's end camera: output px per s08 stage px
+_K08 = 0.92 * _O08 / SS                                      # ...and per stage px here, for the matched camera
+CAM_S08 = Cam(SX - (1622 - 1682) * _O08 / _K08, WL - (1130 - 670) * _O08 / _K08, OUT_W / _K08)
+S08_GLOW = (CAM_S08.x + (2040 - 1682) * _O08 / _K08, CAM_S08.y + (350 - 670) * _O08 / _K08)
 
 # ---- shot B: the deck seen from on board
 B_HOR, B_RAIL, B_DBACK = 560, 780, 872
-SUN_B = (1560, 422)
-MAST_B = 480
-ALT = (1415, 1004)                     # brazier: foot line centre
+GAP = (1730, 365)                      # the glowing break in the clouds (God's presence shown only as light)
+MAST_B = 500
+ALT = (1490, 1004)                     # brazier: foot line centre
 RIM_Y = ALT[1] - 140                   # bowl rim
 FLAME_B = (ALT[0], RIM_Y - 6)          # flame base
-SMOKE_O = (ALT[0] + 2, RIM_Y - 70)     # smoke origin (the flame tip)
-B_CAPT = (1190, 1034, 1.02)
-B_S2 = (950, 1040, 1.04)               # variant 2, front row
-B_S3 = (690, 1046, 1.06)               # variant 3 (ginger beard), front row left
-B_S0 = (1075, 954, 0.88)               # variant 0, back row
-B_S1 = (820, 952, 0.88)                # variant 1, back row
-GULL_B = (318, B_RAIL - 26)            # gull perched on the rail
+SMOKE_O = (ALT[0] + 2, RIM_Y - 64)     # smoke origin (the flame tip)
+# two staggered rows, 160 px apart: every back-row face sits between two front-row figures
+B_S3 = (605, 1046, 1.06)               # variant 3 (ginger beard), front row left
+B_S1 = (765, 952, 0.88)                # variant 1, back row
+B_S2 = (925, 1040, 1.04)               # variant 2, front row
+B_S0 = (1085, 954, 0.88)               # variant 0, back row
+B_CAPT = (1245, 1034, 1.02)            # the captain, front row, beside the brazier
+GULL_B = (1835, B_RAIL - 26)           # gull perched on the rail
 
 PUNCT = "，。！？：；、,.!?:;"
 
@@ -170,7 +210,7 @@ def hermite(keys):
         if t <= keys[0][0]:
             return keys[0][1]
         if t >= keys[-1][0]:
-            return keys[-1][1]
+            return keys[-1][1] + keys[-1][2] * (t - keys[-1][0])
         for (t0, v0, s0), (t1, v1, s1) in zip(keys, keys[1:]):
             if t0 <= t <= t1:
                 h = t1 - t0
@@ -202,69 +242,141 @@ def steps(keys):
     return f
 
 
+def cut_plan(heads, sched, min_dy=12.0):
+    """For a hard-cut flipbook: each cut whose drawing moves the head by >= min_dy px is eased instead of popped
+    (the new drawing starts half way and slides home, with a small settle when it lands); smaller cuts get a hop.
+    heads: head y (stage px) of each frame; sched: [(t, idx)]. Returns (hop times, offset events)."""
+    sched = sorted(sched)
+    hops, offs = [], []
+    for k in range(1, len(sched)):
+        (_, i0), (t1, i1) = sched[k - 1], sched[k]
+        d = heads[i1] - heads[i0]
+        if abs(d) < min_dy:
+            hops.append(t1)
+            continue
+        nxt = sched[k + 1][0] if k + 1 < len(sched) else 1e9
+        dur = min(0.2, max(0.08, nxt - t1))
+        offs.append((t1, -0.5 * d, dur, "out" if nxt - t1 < 0.3 else "back"))
+    return hops, offs
+
+
+def offset_dy(t, offs):
+    v = 0.0
+    for t0, dy0, dur, curve in offs:
+        if t0 <= t < t0 + dur:
+            v += dy0 * (1 - M.ease(curve)((t - t0) / dur))
+    return v
+
+
+# ============================================================================ figures
+
+KNEEL = C.POSES["kneel_pray"]
+STAND = C.POSES["stand"]
+# s08's last drawing: kneeling low (sitting back on the heels), hands raised in an open V
+K_LOWUP = dict(KNEEL, arms=(("fk", 146, 164), ("fk", -140, -160)), hands=("open", "open"), h=-24,
+               look=(0.02, -0.06), legs=((86, -100), (88, -100)), t=0)
+K_UPR = dict(KNEEL, t=2, h=4, arms=(("fk", 24, 46), ("fk", 12, 34)), hands=("open", "open"))   # upright kneel
+HALF = dict(KNEEL, t=6, h=10, legs=((70, 8), (2, -90)), arms=(("fk", 20, 40), ("fk", 10, 30)),
+            hands=("open", "open"))                                    # one knee down (in-between)
+GAZE = dict(STAND, h=-16, look=(0.05, -0.07))                          # head up toward the light
+DIAG_UP = dict(STAND, h=-16, arms=(("fk", 138, 146), ("ik", "torso", 1.2, 0.7, 1)), hands=("open", "open"),
+               look=(0.05, -0.07))                                     # one arm raised toward the light
+LEAN_POINT = dict(STAND, t=12, h=18, arms=(("fk", 60, 52), ("fk", 20, 30)), hands=("point", "open"),
+                  look=(0.05, 0.06))                                   # leaning over, pointing DOWN at the water
+LEAN_LOOK = dict(STAND, t=14, h=20, arms=(("fk", 30, 40), ("fk", 10, 30)), hands=("open", "open"),
+                 look=(0.05, 0.07))                                    # leaning over, looking down
+PRAY = C.POSES["pray"]
+P_BOW = dict(KNEEL, t=6, h=16)                                         # palms together, head bowed
+P_UP = dict(KNEEL)                                                     # palms together, head tilted up
+P_VOW = dict(KNEEL, t=-4, h=-20, arms=(("fk", 156, 170), ("fk", -140, -160)), hands=("open", "open"),
+             look=(0.02, -0.06))                                       # hands lifted in an open V (up, not forward)
+P_VOW_LOW = dict(KNEEL, t=-3, h=-20, arms=(("fk", 20, 150), ("fk", -20, 160)), hands=("open", "open"),
+                 look=(0.03, -0.06))                                   # the captain: open palms at shoulder height
+P_OFFER = dict(KNEEL, t=2, h=2, arms=(("ik", "abs", 150, -196, 1), ("ik", "abs", 126, -186, 1)),
+               hands=("open", "open"))                                 # holding the bowl out over the brazier
+P_POUR = dict(KNEEL, t=4, h=10, arms=(("ik", "abs", 150, -214, 1), ("ik", "abs", 128, -204, 1)),
+              hands=("open", "open"))                                  # ...tipping it into the fire
+POUR_TILT = 48
+
+
+def kfig(kind, variant, x, y, s, ps, expr, facing=1):
+    """A sailor / the captain in any rig pose: (markup, hand points, head point) in stage px."""
+    if kind == "capt":
+        design, met = C._captain_design(), C._CAPTAIN_M
+    else:
+        design, met = C._sailor_design(variant), C._SAILOR_M
+    f = 1 if facing >= 0 else -1
+    inner, _ = C._figure(design, met, dict(ps), expr, f, True)
+    hands = [(x + hx * s * f, y + hy * s) for hx, hy in C._LAST["hands"]]
+    head = (x + C._LAST["head"][0] * s * f, y + C._LAST["head"][1] * s)
+    return C._wrap_out(inner, x, y, s, f, f"{kind}{variant}"), hands, head
+
+
 # ============================================================================ shot A painting
 
 
-A_CAST = [("s3", S3_X, 3), ("capt", CAPT_X, None), ("s1", S1_X, 1), ("l0", L0_X, 0), ("l2", L2_X, 2)]
-A_STAGES = [
-    # 0 before the lift: the lifters stand either side of Jonah; the bow sailor still prays (s08)
-    dict(s3=("pray", "scared", 1), capt=("worried", None, 1), s1=("stand", "worried", 1),
-         l0=("stand", "worried", 1), l2=("stand", "worried", -1)),
-    # 1 '他们' they crouch and take hold of him
-    dict(s3=("pray", "scared", 1), capt=("worried", None, 1), s1=("stand", "worried", 1),
-         l0=("carry", "worried", 1), l2=("carry", "worried", -1)),
-    # 2 '抬起来' hoisted overhead
-    dict(s3=("scared", None, 1), capt=("worried", None, 1), s1=("scared", None, 1),
-         l0=("lift", None, 1), l2=("lift", None, 1)),
-    # 3 after the throw: watching the splash
-    dict(s3=("scared", None, 1), capt=("worried", None, 1), s1=("scared", None, 1),
-         l0=("stand", "worried", 1), l2=("point", "worried", 1)),
-    # 4 the sea is calm: awe
-    dict(s3=("pray", "surprised", 1), capt=("stand", "surprised", 1), s1=("pray", "surprised", 1),
-         l0=("pray", "surprised", 1), l2=("point", "surprised", 1)),
-]
+def a_background():
+    """v1 calm sky / far sea, with its sun taken out (the sun gets its own layer so it never shows through the
+    half-faded storm sky as a dark disc)."""
+    b = V.background()
+    for sub in ('<circle cx="1700" cy="215" r="360" fill="url(#s6sun)"/>',
+                '<circle cx="1700" cy="215" r="88" fill="#fbd46b" stroke="#e49839" stroke-width="4"/>'):
+        b = b.replace(sub, "")
+    return b
 
 
-def a_crew(stage):
-    st = A_STAGES[stage]
-    b = ""
-    for name, x, v in A_CAST:
-        pose, ex, f = st[name]
-        if name == "capt":
-            b += C.captain(x, DECK, SS, f, pose=pose, expr=ex)
-        else:
-            b += C.sailor(x, DECK, SS, f, variant=v, pose=pose, expr=ex)
-    return doc(b)
+def a_sun(part):
+    """The v1 sun as two layers: its glow (fades in) and its disc (pops in opaque, so a half-faded yellow disc is
+    never seen over the blue / storm sky as an olive smudge)."""
+    x, y = SUN_A
+    if part == "glow":
+        defs = S.rad_grad("s9sun", [(0, "#fff6d6", 0.95), (0.3, "#fff0c0", 0.6), (1, "#ffe9b0", 0)])
+        return doc(f'<circle cx="{x}" cy="{y}" r="360" fill="url(#s9sun)"/>', defs)
+    return doc(S.g(f'<circle cx="{x}" cy="{y}" r="88" fill="{P["sun"]}" stroke="{S.shade(P["sun_hot"], -0.1)}" '
+                   f'stroke-width="4"/>', filter="wobble"))
 
 
-def pennant(mode, ph):
-    """The masthead pennant (terracotta streamer flying toward the bow, i.e. LEFT). mode: 'storm' (stretched out
-    and rippling), 'ease' (sagging), 'calm' (hanging slack down the mast)."""
+def a_prayer_glow():
+    """s08's warm prayer light where its cloud gap was (screen-blended, fades out as the crew get up)."""
+    x, y = S08_GLOW
+    defs = S.rad_grad("s9pg", [(0, "#ffe7b0", 0.6), (0.4, "#f8d898", 0.32), (1, "#f0c880", 0.0)])
+    return doc(f'<ellipse cx="{x:.0f}" cy="{y + 8:.0f}" rx="{620 * _O08 / _K08:.0f}" ry="{400 * _O08 / _K08:.0f}" '
+               f'fill="url(#s9pg)"/>', defs)
+
+
+def pennant(ang, L, curl=0.0, ripple=0.0, ph=0.0):
+    """The masthead pennant (terracotta streamer, root at the masthead, flying toward the bow = LEFT).
+    ang(s) is the direction along its length in degrees (0 = straight out to the left, 90 = hanging down)."""
     x0, y0 = PEN
     n = 16
-    if mode == "storm":
-        L = 168
-        ang = lambda s: math.radians(4 + 16 * s * math.sin(2 * math.pi * (1.4 * s - ph)))  # noqa: E731
-    elif mode == "ease":
-        L = 150
-        ang = lambda s: math.radians(28 + 34 * s + 8 * math.sin(2 * math.pi * (s - ph)))  # noqa: E731
-    else:
-        L = 136
-        ang = lambda s: math.radians(30 + 52 * s ** 1.3 + 8 * math.sin(2 * math.pi * (0.9 * s - ph)))  # noqa: E731
     cx, cy = x0 - 4, y0 + 14
     top, bot = [], []
+
+    def a_(s):
+        return math.radians(ang(s) + ripple * s * math.sin(2 * math.pi * (1.4 * s - ph)) +
+                            curl * max(0.0, (s - 0.62) / 0.38) ** 2)
     for i in range(n + 1):
         s = i / n
-        a = ang(s)
+        a = a_(s)
         w = 22 * (1 - s) + 3
         nx, ny = -math.sin(a), -math.cos(a)      # normal of the direction (-cos a, sin a)
         top.append((cx + nx * w / 2, cy + ny * w / 2))
         bot.append((cx - nx * w / 2, cy - ny * w / 2))
         cx += -math.cos(a) * L / n
         cy += math.sin(a) * L / n
-    pts = top + [(cx - math.cos(ang(1)) * 6, cy + math.sin(ang(1)) * 6)] + bot[::-1]
+    pts = top + [(cx - math.cos(a_(1)) * 6, cy + math.sin(a_(1)) * 6)] + bot[::-1]
     d = S.smooth_path(pts, closed=True, tension=0.8)
     return doc(S.g(S.path(d, fill=P["sail_stripe"], sw=3.2), filter="wobble-fine"))
+
+
+def pennant_frames():
+    """0-3 storm (stretched out, rippling), 4-6 sagging in-betweens (12 / 25 / 45 deg), 7 calm (hanging slack down
+    the mast with a soft curl at the tip; it sways by rotation, never by toggling drawings)."""
+    fr = [pennant(lambda s: 4.0, 168, ripple=16, ph=k / 4) for k in range(4)]
+    for base, L in ((12, 164), (25, 158), (45, 150)):
+        fr.append(pennant(lambda s, b=base: b + 0.35 * b * s, L, ripple=8, ph=0.1))
+    fr.append(pennant(lambda s: 78 + 6 * s, 140, curl=-38))
+    return fr
 
 
 SWIRL_O = (60, 80)      # where a wind mark is drawn inside its layer
@@ -285,15 +397,17 @@ def wind_swirl(k):
 
 
 def b_world():
-    """Calm sky with the sun, a far headland and the sunlit sea beyond the rail (one static layer)."""
-    defs = (S.lin_grad("bsky", [(0, "#74b6d6"), (0.45, "#a6d5e6"), (0.8, "#e2ecd9"), (1, "#f6e2b6")]) +
-            S.rad_grad("bsun", [(0, "#fff8de", 1), (0.22, "#fff1c4", 0.8), (0.6, "#ffe9b0", 0.25),
-                                (1, "#ffe9b0", 0)]) +
+    """Calm sky (warmer toward the cloud break), the glow behind the clouds, a far headland and the sea."""
+    gx, gy = GAP
+    defs = (S.lin_grad("bsky", [(0, "#78b8d6"), (0.45, "#a8d5e4"), (0.8, "#e4ecd8"), (1, "#f6e2b6")]) +
+            S.rad_grad("bgapw", [(0, "#fff2c8", 1), (0.2, "#ffe2a0", 0.9), (0.45, "#f9d27e", 0.55),
+                                 (0.75, "#f4c870", 0.18), (1, "#f0c070", 0.0)]) +
+            S.rad_grad("bgapc", [(0, "#fffaf0", 1), (0.5, "#fff3d6", 0.75), (1, "#fbe9c0", 0.0)]) +
             S.lin_grad("bsea", [(0, "#cfe8e0"), (0.3, "#9ed0d6"), (0.75, "#62a9c0"), (1, "#4a98b6")]))
     b = f'<rect x="-40" y="-40" width="{W + 80}" height="{B_HOR + 60}" fill="url(#bsky)"/>'
-    b += f'<circle cx="{SUN_B[0]}" cy="{SUN_B[1]}" r="560" fill="url(#bsun)"/>'
-    b += S.g(f'<circle cx="{SUN_B[0]}" cy="{SUN_B[1]}" r="78" fill="{P["sun"]}" '
-             f'stroke="{S.shade(P["sun_hot"], -0.1)}" stroke-width="4"/>', filter="wobble")
+    # warm light behind the clouds: no rim, no disc - a golden glow with a pale bright heart in the break
+    b += f'<ellipse cx="{gx}" cy="{gy + 20}" rx="700" ry="400" fill="url(#bgapw)"/>'
+    b += f'<ellipse cx="{gx}" cy="{gy + 10}" rx="230" ry="170" fill="url(#bgapc)"/>'
     # a hazy headland far away on the left horizon (as in the v1 calm)
     b += S.g(S.path(S.hill(-140, 620, B_HOR + 4, 74, seed=4, bottom=B_HOR + 12, bumps=2),
                     fill=S.mix(P["sea_light"], "#c9d9cf", 0.5), sw=2.5), filter="wobble", opacity=0.85)
@@ -302,15 +416,15 @@ def b_world():
     # the sea
     b += f'<rect x="-40" y="{B_HOR}" width="{W + 80}" height="{B_RAIL - B_HOR + 60}" fill="url(#bsea)"/>'
     b += S.g(S.path(f"M-40,{B_HOR} L{W + 40},{B_HOR}", sw=3), filter="wobble", opacity=0.55)
-    # the sun's glitter path on the water
+    # the light's glitter path on the water, under the cloud break
     r = random.Random(5)
     gl = ""
     for i in range(15):
         y = B_HOR + 7 + i * 12 + i * i * 0.45
-        w = 26 + i * 10 + r.uniform(-8, 8)
-        x = SUN_B[0] + r.uniform(-14, 14)
+        w = 22 + i * 9 + r.uniform(-8, 8)
+        x = gx + r.uniform(-14, 14) - i * 3
         gl += (f'<path d="M{x - w / 2:.0f},{y:.0f} L{x + w / 2:.0f},{y:.0f}" stroke="#fff7dc" '
-               f'stroke-width="{3 + i * 0.4:.1f}" stroke-linecap="round" opacity="{0.8 - i * 0.03:.2f}"/>')
+               f'stroke-width="{3 + i * 0.4:.1f}" stroke-linecap="round" opacity="{0.7 - i * 0.03:.2f}"/>')
     b += S.g(gl, filter="wobble")
     # long calm swells
     sw_ = ""
@@ -323,14 +437,28 @@ def b_world():
     return doc(b, defs)
 
 
+def _halo(cloud_markup, col="#f6c95e"):
+    """A golden rim light behind a cloud lit from behind: the same cloud, a little larger, in gold, blurred."""
+    return cloud_markup.replace(f'stroke="{S.INK}"', f'stroke="{col}"').replace('fill="#fbf4e6"', f'fill="{col}"')
+
+
 def b_clouds(drifting):
+    gx, gy = GAP
     if drifting:          # one small cloud drifts by (the others are part of the background)
-        b = S.cloud(1060, 486, 170, 52, "#fbf6ec", seed=12, sw=2.5, shade_fill="#dbe7ea")
-    else:
-        b = (S.cloud(-60, 420, 380, 110, "#fbf6ec", seed=3, sw=3, shade_fill="#dbe7ea") +
-             S.cloud(900, 376, 300, 92, "#fbf6ec", seed=5, sw=3, shade_fill="#dbe7ea") +
-             S.cloud(2080, 440, 330, 96, "#fbf6ec", seed=9, sw=3, shade_fill="#dbe7ea"))
-    return doc(S.g(b, filter="wobble"))
+        return doc(S.g(S.cloud(1000, 492, 170, 52, "#fbf6ec", seed=12, sw=2.5, shade_fill="#dbe7ea"),
+                       filter="wobble"))
+    # the cloud bank round the break: a cap over the hidden sun, two lids either side of the gap, all with a
+    # golden rim where the light behind them shines round their edges
+    lids = [(gx + 20, gy - 190, 700, 190, 16, 6), (gx - 268, gy + 6, 400, 118, 14, 5),
+            (gx + 300, gy - 12, 470, 146, 15, 6)]
+    halo, body = "", ""
+    for x, y, w, h, seed, puffs in lids:
+        halo += _halo(S.cloud(x, y + 4, w * 1.07, h * 1.16, "#fbf4e6", seed=seed, sw=7, puffs=puffs))
+        body += S.cloud(x, y, w, h, "#fbf4e6", seed=seed, sw=3, puffs=puffs, shade_fill="#f1e2c2")
+    b = f'<g filter="url(#soft)" opacity="0.9">{halo}</g>' + S.g(body, filter="wobble")
+    b += S.g(S.cloud(-60, 420, 380, 110, "#fbf6ec", seed=3, sw=3, shade_fill="#dbe7ea") +
+             S.cloud(860, 372, 300, 92, "#fbf6ec", seed=5, sw=3, shade_fill="#dbe7ea"), filter="wobble")
+    return doc(b)
 
 
 def inner(d):
@@ -339,12 +467,12 @@ def inner(d):
 
 
 def b_background():
-    """Shot B's static backdrop in ONE layer (cheap to composite): sky, sea, clouds, deck and rig, sunbeams."""
-    return doc(inner(b_world()) + inner(b_clouds(False)) + inner(b_deck()) + inner(b_beams(0.75)))
+    """Shot B's static backdrop in ONE layer (cheap to composite): sky, glow, sea, clouds, deck and rig."""
+    return doc(inner(b_world()) + inner(b_clouds(False)) + inner(b_deck()))
 
 
 def b_sea_lines(k):
-    """Soft foam ripple strokes on the calm water (two phases, slid gently)."""
+    """Soft foam ripple strokes on the calm water."""
     b = ""
     r = random.Random(20 + k)
     for i in range(9):
@@ -358,23 +486,19 @@ def b_sea_lines(k):
 
 
 def b_glints(k):
-    """Twinkling glints on the sun path (one of four phases)."""
+    """Twinkling glints on the light's path on the water (one of four phases)."""
     rng = random.Random(40 + k)
     b = ""
     for i in range(14):
         u = rng.random()
         y = B_HOR + 12 + u * (B_RAIL - B_HOR - 20)
-        x = SUN_B[0] + rng.uniform(-1, 1) * (40 + 220 * u)
+        x = GAP[0] - 30 * u + rng.uniform(-1, 1) * (40 + 200 * u)
         rr = 5 + 9 * rng.random()
         w = rr * 0.24
         b += (f'<path d="M{x:.1f},{y - rr:.1f} L{x + w:.1f},{y - w:.1f} L{x + rr * 1.3:.1f},{y:.1f} L{x + w:.1f},'
               f'{y + w:.1f} L{x:.1f},{y + rr:.1f} L{x - w:.1f},{y + w:.1f} L{x - rr * 1.3:.1f},{y:.1f} '
               f'L{x - w:.1f},{y - w:.1f} Z" fill="#fffbe8" opacity="0.9"/>')
     return doc(b)
-
-
-def shield(cx, cy, r, col):
-    return V5.shield(cx, cy, r, col)
 
 
 def b_rig():
@@ -394,7 +518,6 @@ def b_rig():
     sail = PR._sail("torn", "s9sail")
     b += (f'<g transform="rotate(3 {mx} {y_yard})"><g transform="translate({mx},{base_y}) scale({-k},{k}) '
           f'translate(10,0)">{sail}</g></g>')
-    # sheets: the stern one down to the bulwark (left), the bow one tied off on the mast (clear of the crew)
     sx = mx - k * 290
     b += (f'<path d="M{sx:.0f},{base_y - 585 * k:.0f} L{sx - 230:.0f},{B_RAIL + 4}" stroke="{P["ink_soft"]}" '
           f'stroke-width="4" fill="none"/>')
@@ -409,7 +532,7 @@ def b_deck():
     """Far bulwark with shields, the sunlit deck (puddles left by the storm), the rig, crate, jar and rope."""
     defs = (S.lin_grad("bdeck", [(0, "#c69259"), (0.45, "#d9a56b"), (1, "#b07a48")]) +
             S.lin_grad("bbulw", [(0, P["wood"]), (1, "#80502f")]) +
-            S.rad_grad("bwarm", [(0, "#fff1c4", 0.55), (1, "#fff1c4", 0)]))
+            S.rad_grad("bwarm", [(0, "#fff1c4", 0.5), (1, "#fff1c4", 0)]))
     b = ""
     b += (f'<rect x="-40" y="{B_RAIL + 14}" width="{W + 80}" height="{B_DBACK - B_RAIL - 4}" fill="url(#bbulw)" '
           f'{S.STROKE}/>')
@@ -417,14 +540,13 @@ def b_deck():
     for x in range(40, W + 80, 300):
         b += (f'<rect x="{x - 12}" y="{B_RAIL + 4}" width="24" height="{B_DBACK - B_RAIL}" fill="{P["wood_dark"]}" '
               f'{S.STROKE_THIN}/>')
-    for xr in (MAST_B - 360, MAST_B + 360):
+    for xr in (MAST_B - 360, MAST_B + 120):
         b += f'<circle cx="{xr}" cy="{B_RAIL + 8}" r="9" fill="{P["wood_dark"]}" {S.STROKE_THIN}/>'
     cols = [P["jonah_sash"], P["terracotta"], "#efe2c4", P["gold"]]
     for i, x in enumerate(range(110, W + 60, 150)):
-        b += shield(x, B_RAIL + 52, 33, cols[i % 4])
+        b += V5.shield(x, B_RAIL + 52, 33, cols[i % 4])
     b += (f'<path d="M-40,{B_RAIL} L{W + 40},{B_RAIL} L{W + 40},{B_RAIL + 18} L-40,{B_RAIL + 18} Z" '
           f'fill="{P["wood_light"]}" {S.STROKE}/>')
-    # sun on the rail top
     b += (f'<path d="M-40,{B_RAIL + 5} L{W + 40},{B_RAIL + 5}" stroke="#f6dca6" stroke-width="5" opacity="0.8"/>')
     b += f'<rect x="-40" y="{B_DBACK}" width="{W + 80}" height="{H - B_DBACK + 40}" fill="url(#bdeck)" {S.STROKE}/>'
     ys, y, gap = [], B_DBACK + 14, 15
@@ -434,50 +556,57 @@ def b_deck():
         gap *= 1.17
     b += V5.plank_lines(-40, W + 40, ys, seed=7, opacity=0.42, joint_every=(260, 620))
     # puddles left by the storm, mirroring the sky
-    for (x, y, rx, ry) in [(520, 1110, 120, 15), (1480, 1120, 150, 17), (940, 1165, 110, 13), (1720, 1010, 90, 11)]:
+    for (x, y, rx, ry) in [(560, 1122, 120, 15), (1130, 1160, 110, 13), (1700, 1104, 130, 15), (1930, 1004, 80, 10)]:
         b += f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#bfe0e6" opacity="0.6"/>'
         b += (f'<path d="M{x - rx * 0.55},{y - 3} l{rx * 0.5},0 M{x + rx * 0.1},{y + 4} l{rx * 0.3},0" '
               f'stroke="#fbfdf6" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>')
-    # warm sunlight pooled on the deck under the beams
-    b += '<ellipse cx="1180" cy="1010" rx="620" ry="120" fill="url(#bwarm)"/>'
+    # warm light pooled on the deck where the rays fall
+    b += '<ellipse cx="1180" cy="1010" rx="640" ry="120" fill="url(#bwarm)"/>'
     rig, rdefs = b_rig()
     b = S.g(b, filter="wobble") + rig
-    # props against the bulwark (left) and a coil of rope
-    b += PR.crate(360, 905, 1.0) + PR.jar(270, 930, 0.62, rot=-6) + C.ground_shadow(360, 958, 1.0, width=150,
+    b += PR.crate(380, 905, 1.0) + PR.jar(290, 930, 0.62, rot=-6) + C.ground_shadow(380, 958, 1.0, width=150,
                                                                                       opacity=0.16)
     b += PR.rope_coil(MAST_B + 70, B_DBACK + 82, 0.9)
     return doc(b, defs + rdefs)
 
 
 def b_foreground():
-    return doc(PR.rope_coil(290, 1150, 1.45) + V5.bucket(1660, 1132, 1.05) +
-               C.ground_shadow(1660, 1134, 1.0, width=120, opacity=0.18))
+    return doc(PR.rope_coil(430, 1158, 1.4) + V5.bucket(1800, 1132, 1.05) +
+               C.ground_shadow(1800, 1134, 1.0, width=120, opacity=0.18))
 
 
-def b_beams(k=1.0):
-    """Wedge-shaped sunbeams falling from the sun toward the lower left (light; k scales the opacity)."""
-    sx, sy = SUN_B
-    defs = (f'<linearGradient id="bbeam" gradientUnits="userSpaceOnUse" x1="{sx}" y1="{sy}" x2="{sx - 900}" '
-            f'y2="{sy + 900}"><stop offset="0" stop-color="#fff2c8" stop-opacity="0.75"/>'
-            f'<stop offset="0.55" stop-color="#ffeec0" stop-opacity="0.32"/>'
-            f'<stop offset="1" stop-color="#ffeec0" stop-opacity="0"/></linearGradient>')
-    d = ""
-    for ang, wd in [(112, 5), (121, 7), (131, 5), (139, 8), (149, 5), (158, 7), (168, 4)]:
-        a0, a1 = math.radians(ang - wd / 2), math.radians(ang + wd / 2)
-        r0, r1 = 110, 1500
-        d += (f"M{sx + r0 * math.cos(a0):.1f},{sy + r0 * math.sin(a0):.1f} L{sx + r1 * math.cos(a0):.1f},"
-              f"{sy + r1 * math.sin(a0):.1f} L{sx + r1 * math.cos(a1):.1f},{sy + r1 * math.sin(a1):.1f} "
-              f"L{sx + r0 * math.cos(a1):.1f},{sy + r0 * math.sin(a1):.1f} Z ")
-    return doc(S.g(S.g(S.path(d, fill="url(#bbeam)", stroke=False), filter="soft") +
-                   f'<circle cx="{sx}" cy="{sy}" r="230" fill="#fff6d6" opacity="0.55" filter="url(#blur-md)"/>',
-                   opacity=f"{k:.2f}"), defs)
+def b_gap_through():
+    """The light shining through / round the cloud edges at the break (screen-blended over the clouds)."""
+    gx, gy = GAP
+    defs = S.rad_grad("bgt", [(0, "#fff0c0", 0.95), (0.3, "#fbdc96", 0.55), (0.65, "#f6d08a", 0.18),
+                              (1, "#f6d08a", 0.0)])
+    return doc(f'<ellipse cx="{gx}" cy="{gy + 6}" rx="460" ry="320" fill="url(#bgt)"/>', defs)
 
 
-def sun_glow():
-    """A soft halo round the sun (screen-blended, pulsing; it swells at the vows)."""
-    sx, sy = SUN_B
-    defs = S.rad_grad("bhalo", [(0, "#fff4cc", 0.9), (0.35, "#ffefc0", 0.45), (1, "#ffefc0", 0)])
-    return doc(f'<circle cx="{sx}" cy="{sy}" r="300" fill="url(#bhalo)"/>', defs)
+def b_rays():
+    """Soft golden rays fanning down from the cloud break over the deck and the crew (thin blurred wedges with a
+    radial falloff: none at the break itself, strongest a little below it), and a faint warm pool on the crew."""
+    gx, gy = GAP[0], GAP[1] + 26
+    defs = (f'<radialGradient id="brg" gradientUnits="userSpaceOnUse" cx="{gx}" cy="{gy}" r="1300">'
+            '<stop offset="0" stop-color="#ffefc0" stop-opacity="0"/>'
+            '<stop offset="0.1" stop-color="#ffe6a6" stop-opacity="0.85"/>'
+            '<stop offset="0.45" stop-color="#ffdc94" stop-opacity="0.55"/>'
+            '<stop offset="0.85" stop-color="#ffd488" stop-opacity="0.16"/>'
+            '<stop offset="1" stop-color="#ffd488" stop-opacity="0"/></radialGradient>'
+            '<filter id="brb" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14"/>'
+            '</filter>')
+    b = ""
+    for ang, wa in ((82, 1.8), (96, 2.6), (110, 2.0), (123, 3.0), (135, 2.2), (146, 2.8), (156, 2.2), (165, 1.8)):
+        a, w = math.radians(ang), math.radians(wa)
+        R = 1400
+        p = [(gx + 8 * math.cos(a + 1.57), gy + 8 * math.sin(a + 1.57)),
+             (gx + R * math.cos(a - w), gy + R * math.sin(a - w)),
+             (gx + R * math.cos(a + w), gy + R * math.sin(a + w)),
+             (gx - 8 * math.cos(a + 1.57), gy - 8 * math.sin(a + 1.57))]
+        b += '<path d="M' + " L".join(f"{x:.1f},{y:.1f}" for x, y in p) + '" fill="url(#brg)"/>'
+    b = f'<g filter="url(#brb)">{b}</g>'
+    b += '<ellipse cx="1000" cy="900" rx="560" ry="210" fill="#ffe6ac" opacity="0.24" filter="url(#blur-lg)"/>'
+    return doc(b, defs)
 
 
 # ---------------------------------------------------------------- the offering: brazier, flame, smoke
@@ -490,7 +619,6 @@ def brazier():
     defs = S.lin_grad("bbowl", [(0, lt), (0.45, br), (1, dk)], x1=0, y1=0, x2=1, y2=0.4)
     b = C.ground_shadow(x, y + 2, 1.0, width=210, opacity=0.24)
     leg = ""
-    # back leg (behind, shorter), then the two front legs splaying out to paw feet
     leg += (f'<path d="M{x + 10},{RIM_Y + 34} Q{x + 18},{y - 60} {x + 14},{y - 16}" stroke="{S.INK}" '
             f'stroke-width="17" fill="none" stroke-linecap="round"/>'
             f'<path d="M{x + 10},{RIM_Y + 34} Q{x + 18},{y - 60} {x + 14},{y - 16}" stroke="{dk}" '
@@ -503,7 +631,6 @@ def brazier():
                 f'<path d="M{x + sgn * 47},{RIM_Y + 40} Q{x + sgn * 58},{y - 72} {x + sgn * 66},{y - 20}" '
                 f'stroke="{lt}" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>'
                 f'<ellipse cx="{x + sgn * 74}" cy="{y - 4}" rx="16" ry="9" fill="{br}" {S.STROKE_THIN}/>')
-    # a ring brace between the legs
     leg += (f'<ellipse cx="{x + 4}" cy="{y - 58}" rx="60" ry="9" fill="none" stroke="{S.INK}" stroke-width="10"/>'
             f'<ellipse cx="{x + 4}" cy="{y - 58}" rx="60" ry="9" fill="none" stroke="{br}" stroke-width="5"/>')
     b += S.g(leg, filter="wobble-fine")
@@ -515,7 +642,6 @@ def brazier():
     for i in range(7):
         u = -0.75 + i * 0.25
         bowl += f'<circle cx="{x + u * 68:.1f}" cy="{RIM_Y + 26 + 6 * (1 - u * u):.1f}" r="4" fill="{lt}" opacity="0.9"/>'
-    # coals heaped in the bowl, glowing
     coals = ""
     rr = random.Random(3)
     for i in range(9):
@@ -565,75 +691,78 @@ def glow():
     return doc(f'<circle cx="{x}" cy="{y - 40}" r="240" fill="url(#bglow)"/>', defs)
 
 
-SMOKE_L = 520          # height of the smoke column
+SMOKE_L = 370          # height of the smoke column (it has faded out before the cloud bank)
+SMOKE_LEAN = 60        # it leans a little toward the light, rising beside it (never over it)
+SMOKE_N = 11           # puffs along the column
+SMOKE_INK_A = 0.6      # opacity of its thin umber outline
 
 
-def smoke_xy(s, ph):
-    """Centre line of the smoke column at height fraction s (0 = flame tip) for wave phase ph: it sways and leans
-    toward the sun as it rises."""
+def smoke_xy(s):
+    """Centre line of the smoke column at height fraction s (0 = flame tip): a gentle S-curve leaning toward the
+    light. Static: the puffs travel along it, so the drawing cycle loops seamlessly."""
     ox, oy = SMOKE_O
-    return (ox + 150 * s ** 1.6 + 26 * s * math.sin(2 * math.pi * (1.25 * s - ph)), oy - SMOKE_L * s)
+    return (ox + SMOKE_LEAN * s ** 1.5 + 12 * s * math.sin(2 * math.pi * (0.9 * s - 0.15)), oy - SMOKE_L * s)
 
 
-def _billows(circles):
-    """Cloud-like smoke from circles [(x, y, r, colour)]: a darker rim on the outer silhouette only (all rim
-    circles first, then the bodies), then small highlights."""
-    rim = "".join(f'<circle cx="{x + r * 0.1:.1f}" cy="{y + r * 0.12:.1f}" r="{r * 1.06 + 2:.1f}" fill="#bfb2a3"/>'
-                  for x, y, r, _ in circles)
+def _puffs_svg(circles, sw=2.4):
+    """Picture-book smoke from circles [(x, y, r, fill)]: ONE thin umber outline round the whole silhouette (all
+    rims first in a translucent group, then all fills), a soft shade low on the right of the bigger puffs and pale
+    highlights. No blur."""
+    rim = "".join(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r + sw:.1f}" fill="{S.INK}"/>' for x, y, r, _ in circles)
     body = "".join(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="{c}"/>' for x, y, r, c in circles)
-    hi = "".join(f'<circle cx="{x - r * 0.28:.1f}" cy="{y - r * 0.3:.1f}" r="{r * 0.36:.1f}" fill="#fdfaf3" '
-                 f'opacity="0.5"/>' for x, y, r, _ in circles[1::3])
-    return rim + body + hi
+    big = [c for c in circles if c[2] > 13]
+    shade = "".join(f'<circle cx="{x + r * 0.22:.1f}" cy="{y + r * 0.26:.1f}" r="{r * 0.7:.1f}" fill="#ddd5d2" '
+                    f'opacity="0.4"/>' for x, y, r, _ in big)
+    body2 = "".join(f'<circle cx="{x - r * 0.1:.1f}" cy="{y - r * 0.12:.1f}" r="{r * 0.72:.1f}" fill="{c}"/>'
+                    for x, y, r, c in big)
+    hi = "".join(f'<path d="M{x - r * 0.62:.1f},{y - r * 0.05:.1f} q{r * 0.12:.1f},{-r * 0.5:.1f} {r * 0.58:.1f},'
+                 f'{-r * 0.58:.1f}" fill="none" stroke="#fffaf0" stroke-width="{max(2.0, r * 0.11):.1f}" '
+                 f'stroke-linecap="round" opacity="0.7"/>' for x, y, r, _ in big[::2])
+    return f'<g opacity="{SMOKE_INK_A}">{rim}</g>{body}{shade}{body2}{hi}'
 
 
-SMOKE_DEFS = '<filter id="s9blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.2"/></filter>'
+def _smoke_col(s):
+    return S.mix("#fbf7ef", "#f8e2a8", min(1.0, s * 1.2))     # cream low down, pale gold in the light
 
 
-def smoke_column(ph, thick=1.0, tag="c"):
-    """The smoke rising from the flame (phase ph of its sway): a chain of soft billows widening upward, cream-grey
-    low down and pale gold where it rises into the sunlight, fading in above the flame and out at the top (mask);
-    two hand-drawn curls ride on it."""
+def smoke_column(ph):
+    """The smoke rising from the flame, phase ph (0..1) of its rise: billowy little clusters (3 lobes each) that
+    grow and speed up as they climb a gentle S-curve, cream to pale gold, one thin umber wobble line, fading in
+    above the flame and out well below the clouds. Everything depends on the height only, so the 12-drawing
+    cycle loops seamlessly."""
     ox, oy = SMOKE_O
-    n = 18
     circ = []
-    for i in range(n):
-        s_ = (i + 0.35) / n
-        x, y = smoke_xy(s_, ph)
-        r = (11 + 46 * s_) * thick * (1 + 0.12 * math.sin(i * 2.3 + ph * 6.28))
-        circ.append((x + 5 * math.sin(i * 1.7), y, r, S.mix("#ece6dd", "#fbe9bf", min(1.0, s_ * 1.4))))
-    mid = f"smm{tag}{int(ph * 100)}"
-    gid = f"smg{tag}{int(ph * 100)}"
-    defs = (SMOKE_DEFS +
-            f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="{ox}" y1="{oy}" x2="{ox}" '
-            f'y2="{oy - SMOKE_L - 60}"><stop offset="0" stop-color="#fff" stop-opacity="0"/>'
-            f'<stop offset="0.1" stop-color="#fff" stop-opacity="0.92"/>'
-            f'<stop offset="0.55" stop-color="#fff" stop-opacity="0.8"/>'
-            f'<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
-            f'<mask id="{mid}" maskUnits="userSpaceOnUse" x="0" y="0" width="{W}" height="{H}">'
+    n = 14
+    for i in range(-1, n + 2):
+        u = (i + ph) / n
+        if u < 0 or u > 1.08:
+            continue
+        s_ = u ** 1.3
+        x, y = smoke_xy(min(1.0, s_))
+        x += (3 + 12 * s_) * math.sin(2 * math.pi * (1.6 * s_ + 0.15))
+        r = 10 + 30 * s_
+        a = 2 * math.pi * 1.3 * s_
+        col = _smoke_col(s_)
+        circ += [(x - 0.5 * r * math.cos(a), y + 0.22 * r, 0.72 * r, col),
+                 (x + 0.48 * r * math.cos(a), y - 0.12 * r, 0.66 * r, col),
+                 (x, y - 0.18 * r, r, col)]
+    gid, mid_ = f"smg{int(ph * 1000)}", f"smm{int(ph * 1000)}"
+    defs = (f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="{ox}" y1="{oy + 8}" x2="{ox}" '
+            f'y2="{oy - SMOKE_L - 30}"><stop offset="0" stop-color="#fff" stop-opacity="0"/>'
+            f'<stop offset="0.07" stop-color="#fff" stop-opacity="0.95"/>'
+            f'<stop offset="0.45" stop-color="#fff" stop-opacity="0.88"/>'
+            f'<stop offset="0.86" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+            f'<mask id="{mid_}" maskUnits="userSpaceOnUse" x="0" y="0" width="{W}" height="{H}">'
             f'<rect x="0" y="0" width="{W}" height="{H}" fill="url(#{gid})"/></mask>')
-    b = f'<g mask="url(#{mid})"><g filter="url(#s9blur)">{_billows(circ)}</g></g>'
-    curls = ""
-    for s0, sgn in ((0.32, 1), (0.6, -1)):
-        x, y = smoke_xy(s0, ph)
-        r = (10 + 22 * s0) * thick
-        curls += (f'<path d="M{x - sgn * r:.1f},{y + r * 0.4:.1f} q{sgn * r * 0.2:.1f},{-r * 1.1:.1f} '
-                  f'{sgn * r:.1f},{-r * 0.9:.1f} q{sgn * r * 0.7:.1f},{r * 0.3:.1f} {sgn * r * 0.2:.1f},{r * 0.75:.1f} '
-                  f'q{-sgn * r * 0.4:.1f},{r * 0.15:.1f} {-sgn * r * 0.45:.1f},{-r * 0.2:.1f}" fill="none" '
-                  f'stroke="#a8998a" stroke-width="3" stroke-linecap="round" opacity="{0.7 - 0.3 * s0:.2f}"/>')
-    return doc(b + S.g(curls, filter="wobble-fine"), defs)
+    return doc(f'<g mask="url(#{mid_})" opacity="0.92">{S.g(_puffs_svg(circ), filter="wobble-fine")}</g>', defs)
 
 
-def soft_puff(gold, seed, r0=34):
-    """A soft billow of smoke at SMOKE_O (grey-cream, or pale gold in the sunlight)."""
-    rr = random.Random(seed)
+def smoke_billow():
+    """The golden billow released at the flare (centred on SMOKE_O; it is moved up the column)."""
     x, y = SMOKE_O
-    col = "#fbe7b8" if gold else "#ece6dd"
-    circ = [(x + rr.uniform(-0.55, 0.55) * r0, y + rr.uniform(-0.35, 0.3) * r0, rr.uniform(0.5, 0.75) * r0, col)
-            for _ in range(5)]
-    curl = (f'<path d="M{x - r0 * 0.45:.1f},{y + r0 * 0.15:.1f} q{r0 * 0.1:.1f},{-r0 * 0.45:.1f} {r0 * 0.45:.1f},'
-            f'{-r0 * 0.35:.1f} q{r0 * 0.3:.1f},{r0 * 0.15:.1f} {r0 * 0.1:.1f},{r0 * 0.35:.1f}" fill="none" '
-            f'stroke="{"#d8b06a" if gold else "#a8998a"}" stroke-width="3" stroke-linecap="round" opacity="0.6"/>')
-    return doc(f'<g filter="url(#s9blur)">{_billows(circ)}</g>' + S.g(curl, filter="wobble-fine"), SMOKE_DEFS)
+    circ = [(x - 22, y + 6, 24, "#fbe6b0"), (x + 4, y - 14, 30, "#fbe3a6"), (x + 28, y + 4, 22, "#fbe6b0"),
+            (x + 2, y + 14, 22, "#fcebc0")]
+    return doc(S.g(_puffs_svg(circ, sw=2.2), filter="wobble-fine", opacity=0.92))
 
 
 def offering_bowl(cx, cy, s=1.0, tilt=0.0, full=True):
@@ -659,47 +788,29 @@ def offering_bowl(cx, cy, s=1.0, tilt=0.0, full=True):
     return S.g(b, filter="wobble-fine")
 
 
-# ---------------------------------------------------------------- the kneeling crew
-
-KNEEL = C.POSES["kneel_pray"]
-P_BOW = dict(KNEEL, t=6, h=16)                                         # palms together, head bowed
-P_UP = dict(KNEEL)                                                     # palms together, head tilted up
-P_VOW = dict(KNEEL, t=-4, h=-20, arms=(("fk", 135, 158), ("fk", 118, 142)), hands=("open", "open"))  # hands
-#                                                                      lifted up toward the light
-P_OFFER = dict(KNEEL, t=2, h=2, arms=(("ik", "abs", 150, -196, 1), ("ik", "abs", 126, -186, 1)),
-               hands=("open", "open"))                                 # holding the bowl out over the brazier
-P_POUR = dict(KNEEL, t=4, h=10, arms=(("ik", "abs", 150, -214, 1), ("ik", "abs", 128, -204, 1)),
-              hands=("open", "open"))                                 # ...tipping it into the fire
-POUR_TILT = 48
-
-
-def kfig(kind, variant, x, y, s, ps, expr, facing=1):
-    """A sailor / the captain in any rig pose (also the custom kneeling ones): (markup, hand points in stage px)."""
-    if kind == "capt":
-        design, met = C._captain_design(), C._CAPTAIN_M
-    else:
-        design, met = C._sailor_design(variant), C._SAILOR_M
-    inner, _ = C._figure(design, met, dict(ps), expr, 1 if facing >= 0 else -1, True)
-    hands = [(x + hx * s * facing, y + hy * s) for hx, hy in C._LAST["hands"]]
-    return C._wrap_out(inner, x, y, s, facing, f"{kind}{variant}"), hands
-
-
 def b_frames(kind, variant, pos, poses):
-    """Flipbook docs for one kneeling crew member. poses: [(pose dict, expr, extra)], extra None|'bowl'|'pour'."""
+    """Flipbook docs for one crew member on the deck. poses: [(pose dict, expr, extra)], extra None | 'bowl' |
+    'pour' | 'down' (the empty bowl set on the deck). Returns (docs, head y per frame, hands per frame)."""
     x, y, s = pos
-    out = []
+    out, heads, hand_l = [], [], []
     for ps, ex, extra in poses:
         kneeling = ps.get("legs") == KNEEL["legs"]
         body = C.ground_shadow(x + (-14 if kneeling else 0) * s, y, s, width=200 if kneeling else 130, opacity=0.2)
-        fig, hands = kfig(kind, variant, x, y, s, ps, ex)
+        fig, hands, head = kfig(kind, variant, x, y, s, ps, ex)
         body += fig
         if extra in ("bowl", "pour"):
             hx = (hands[0][0] + hands[1][0]) / 2
             hy = min(hands[0][1], hands[1][1])
             body += offering_bowl(hx + 4 * s, hy - 22 * s, s * 0.95, tilt=POUR_TILT if extra == "pour" else 0,
                                   full=extra == "bowl")
+        elif extra == "down":
+            bx = x + 128 * s
+            body = (C.ground_shadow(bx, y + 2, s * 0.5, width=110, opacity=0.18) +
+                    offering_bowl(bx, y - 29 * s, s * 0.95, full=False) + body)
         out.append(doc(body))
-    return out
+        heads.append(head[1])
+        hand_l.append(hands)
+    return out, heads, hand_l
 
 
 def grains(k, lip):
@@ -743,7 +854,6 @@ def sparks_fx(src, t0, t1, rate, seed=4):
             ox, oy = view.to_out(x, y)
             r = sz[i] * view.scale * (1 - 0.5 * age / life[i])
             pts.append((ox, oy, r, int(235 * (1 - age / life[i]))))
-        # draw into a small overlay around the sparks only (cheap)
         x0 = int(max(0, min(p[0] - 3 * p[2] for p in pts) - 2))
         y0 = int(max(0, min(p[1] - 3 * p[2] for p in pts) - 2))
         x1 = int(min(frame.size[0], max(p[0] + 3 * p[2] for p in pts) + 2))
@@ -771,29 +881,37 @@ def build(ctx):
     cue = Cues(ctx)
 
     # ---- timing, all from the narration
+    t_rise = L0.start + 0.02                               # '于是' the crew get up
     t_grab = cue.at("他们", L0.start + 0.7) + 0.12          # the lifters crouch and take hold of Jonah
-    t_lift = cue.at("抬起来", L0.start + 1.8) - 0.12        # ...hoist him overhead
+    t_grab = max(t_grab, t_rise + 0.75)
+    t_lift = max(cue.at("抬起来", L0.start + 1.8) - 0.12, t_grab + 0.5)   # ...hoist him overhead
     t_up = t_lift + 0.34
-    t_heave0 = cue.at("扔进", L0.start + 2.6) - 0.3         # dip...
+    t_heave0 = max(cue.at("扔进", L0.start + 2.6) - 0.3, t_up + 0.2)      # dip...
     t_launch = t_heave0 + 0.52                             # ...and heave him over the stern
     t_watch = t_launch + 0.42
     t_impact = t_launch + 0.72                             # '大海'
     t_flash = L0.start + 0.45
     t_calm0 = L1.start                                     # '一下子'
     t_calm1 = t_calm0 + 1.1                                # '海就平静了'
-    t_awe = cue.at("海就", t_calm0 + 0.6) + 0.15
+    t_awe = max(cue.at("海就", t_calm0 + 0.6) + 0.15, t_watch + 0.6)
     t_wind = cue.at("风停了", L1.start + 2.4)                # '风停了'
     t_still = cue.at("浪也", L1.start + 3.3)                 # '浪也静了'
-    t_d0 = L1.end + 0.06                                   # cross-dissolve to the deck
-    t_d1 = max(t_d0 + 0.9, L2.start - 0.12)
+    # the dip through the blank page in the pause after line 1
+    t_d0 = L1.end + 0.06
+    t_c1 = t_d0 + 0.45                                     # the page fully covers the ship
+    t_c3 = max(t_c1 + 0.35, L2.start - 0.1)                # the deck fully revealed
+    t_c2 = max(t_c1 + 0.04, t_c3 - 0.5)                    # ...starting here
+    t_sw = (t_c1 + t_c2) / 2                               # shot A -> shot B under the blank page
     c2a, c2b = L2.chunks[0], L2.chunks[-1]
-    t_see2 = c2a.start + 0.55                              # a sailor lifts his hands in wonder
-    t_kn = cue.at("心里", c2a.start + 1.7)                  # '心里对耶和华又敬又怕' they kneel one by one
+    t_see2 = max(c2a.start + 0.55, t_c3 + 0.2)             # sailor 0 lifts his hands in wonder
+    t_kn = max(cue.at("心里", c2a.start + 1.7), t_see2 + 0.9)   # '心里对耶和华又敬又怕' they kneel one by one
     t_off0 = c2b.start + 0.15                              # '他们向耶和华' the captain lifts the bowl
-    t_pour = cue.at("献上", c2b.start + 1.6, snap=False) - 0.05   # '献上祭物' he pours it into the fire
+    t_pour = max(cue.at("献上", c2b.start + 1.6, snap=False) - 0.05, t_off0 + 0.6)   # '献上祭物' he pours
     t_flare = t_pour + 0.22
+    t_cdown = t_pour + 0.75                                # he sets the empty bowl down, looks up
     t_look = t_flare + 0.25                                # the others raise their heads to the smoke
-    t_vow = cue.at("还许", c2b.end - 1.5) + 0.05            # '还许下了诺言' hands lifted to the sky
+    lk = [t_look + 0.08 * i for i in range(4)]             # look up: S2, S0, S3, S1
+    t_vow = max(cue.at("还许", c2b.end - 1.5) + 0.05, lk[-1] + 0.6, t_cdown + 0.5)   # '还许下了诺言'
 
     def storm(t):          # 1 = full storm, 0 = calm
         return 1 - progress(t, t_calm0, t_calm1, "inout")
@@ -804,27 +922,19 @@ def build(ctx):
     def stillness(t):      # '浪也静了': the last swell settles
         return progress(t, t_still, t_still + 1.3, "sine")
 
-    def a_on(t):           # shot A is hidden once the deck has dissolved in
-        return 1.0 if t < t_d1 + 0.04 else 0.0
-
-    def b_a(t):
-        return progress(t, t_d0, t_d1, "sine")
-
     def a_only(m):
-        return lambda t: replace(m(t), alpha=m(t).alpha * a_on(t)) if a_on(t) else Tf(alpha=0.0)
+        return lambda t: m(t) if t < t_sw else Tf(alpha=0.0)
 
     def b_only(m=None):
         def f(t):
-            k = b_a(t)
-            if k <= 0.002:
+            if t < t_sw:
                 return Tf(alpha=0.0)
-            v = m(t) if m else Tf()
-            return replace(v, alpha=v.alpha * k)
+            return m(t) if m else Tf()
         return f
 
     # ================================================================ shot A
-    def rock(t):
-        return 0.05 + 0.13 * (1 - stillness(t)) + 0.82 * storm(t)
+    def rock(t):           # s08 ends with its rocking eased: start there, build up to the full storm by '他们'
+        return (0.05 + 0.13 * (1 - stillness(t)) + 0.82 * storm(t)) * lerp(0.4, 1.0, progress(t, 0.7, 2.0, "sine"))
 
     def ship_tf(t):
         a = rock(t)
@@ -834,32 +944,35 @@ def build(ctx):
     heave = M.keys([(t_heave0, {"dy": 0}), (t_heave0 + 0.24, {"dy": 14}), (t_launch, {"dy": -34}),
                     (t_launch + 0.35, {"dy": 0})], ["inout", "out", "inout"])
 
-    def crew_m(t):
-        s = ship_tf(t)
-        hop = 7 * (bump(t, t_grab) + 1.4 * bump(t, t_lift) + bump(t, t_watch) + bump(t, t_awe))
-        return Tf(dx=s.dx, dy=s.dy + 0.45 * heave(t).dy - hop, rot=s.rot, px=SX, py=WL)
-
-    def stand_m(t):
-        c = crew_m(t)
-        return replace(c, dy=c.dy + 4 * bump(t, t_grab), alpha=float(t < t_lift))
+    def lifter_dy(t):
+        return 0.45 * heave(t).dy - 7 * 1.4 * bump(t, t_lift)
 
     rise = 104.0
 
     def carried_m(t):      # hoisted onto the lifters' hands, then rides on them; pushed higher by the heave
-        c = crew_m(t)
+        s = ship_tf(t)
         r = rise * (1 - progress(t, t_lift, t_up, "back"))
-        return Tf(dx=c.dx, dy=c.dy + r + 0.55 * min(0.0, heave(t).dy), rot=c.rot,
+        return Tf(dx=s.dx, dy=s.dy + lifter_dy(t) + r + 0.55 * min(0.0, heave(t).dy), rot=s.rot,
                   alpha=float(t_lift <= t < t_launch), px=SX, py=WL)
 
     # the calm-weather background is completely covered by the storm overlays until the calm: skip it till then
     def under_storm(t):
         return Tf(alpha=progress(t, t_calm0 - 0.9, t_calm0, "sine"))
-    sc.add("a_background", V.background(), z=0, wc=0.8, motion=a_only(under_storm))
+    sc.add("a_background", a_background(), z=0, wc=0.8, motion=a_only(under_storm))
+    # the sun only once the storm sky is nearly gone (storm < ~0.3), together with the sunbeams
+    t_sun = t_calm0 + 0.72
+    sc.add("a_sun_glow", a_sun("glow"), z=0.5, wc=0,
+           motion=a_only(lambda t: Tf(alpha=progress(t, t_calm0 + 0.45, t_calm0 + 1.4, "sine"))))
+    sc.add("a_sun", a_sun("disc"), z=0.6, wc=0.8,
+           motion=a_only(lambda t: Tf(alpha=float(t >= t_sun),
+                                      sx=0.25 + 0.75 * progress(t, t_sun, t_sun + 0.45, "back"),
+                                      sy=0.25 + 0.75 * progress(t, t_sun, t_sun + 0.45, "back"),
+                                      px=SUN_A[0], py=SUN_A[1])))
     sc.add("a_shafts", V.light_shafts(), z=1, wc=0, motion=a_only(under_storm))
     sc.add("a_clouds", V.clouds_clear(), z=2,
            motion=a_only(M.combine(M.visible(t_calm0 + 0.55, fade=0.45), M.drift(vx=6, t0=t_calm0))))
     sc.add("a_sunbeams", V.sunbeams(), z=3, wc=0,
-           motion=a_only(lambda t: Tf(alpha=progress(t, t_calm0 + 0.3, t_calm1 + 0.4, "sine") *
+           motion=a_only(lambda t: Tf(alpha=progress(t, t_calm0 + 0.6, t_calm1 + 0.5, "sine") *
                                       (0.8 + 0.2 * math.sin(2 * math.pi * t / 2.7)))))
     t_gull = t_wind - 0.3
     gull_frames = [doc(PR.gull(1900, 470, 0.55, -1, wing=w) + PR.gull(2030, 540, 0.45, -1, wing=-w * 0.8))
@@ -872,18 +985,30 @@ def build(ctx):
         sc.add(f"a_storm_bank{side}", V.storm_bank(side), z=6,
                motion=a_only(lambda t, s=side: Tf(dx=s * 1250 * progress(t, t_calm0 - 0.1, t_calm0 + 0.65, "sine") +
                                                   s * 8 * math.sin(t * 1.3), alpha=storm_fast(t))))
+    # s08's prayer light, fading as they get up
+    sc.add("a_prayer_glow", a_prayer_glow(), z=6.6, wc=0, blend="screen",
+           motion=a_only(lambda t: Tf(alpha=0.85 * (1 - progress(t, t_rise, t_rise + 1.3, "sine")))))
 
-    # pennant: whipping in the storm; at '风停了' it sags and hangs slack (flipbook, never crossfaded)
-    pen_frames = [pennant("storm", k / 4) for k in range(4)] + [pennant("ease", 0.0), pennant("ease", 0.3)] + \
-                 [pennant("calm", 0.0), pennant("calm", 0.5)]
+    # pennant: whipping in the storm; at '风停了' it sags (in-betweens) and hangs slack behind the yard and sail,
+    # swaying slowly by rotation about its root (composed with the ship's rocking)
+    t_slack = t_wind + 0.36
 
     def pen_idx(t):
         if t < t_wind:
             return float(int(t * 11) % 4)
-        if t < t_wind + 0.36:
-            return 4.0 + float(t >= t_wind + 0.18)
-        return 6.0 + float(int((t - t_wind) * 1.2) % 2)
-    sc.add("a_pennant", pen_frames, z=10.2, motion=a_only(ship_tf), frame_at=pen_idx)
+        if t < t_slack:
+            return 4.0 + min(2.0, float(int((t - t_wind) / 0.12)))
+        return 7.0
+
+    def pen_m(t):
+        s = ship_tf(t)
+        r2 = 4.0 * math.sin(2 * math.pi * (t - t_slack) / 3.4) * progress(t, t_slack, t_slack + 1.2, "sine")
+        th = math.radians(s.rot)
+        qx, qy = PEN[0] - SX, PEN[1] - WL
+        px_ = SX + qx * math.cos(th) - qy * math.sin(th) + s.dx
+        py_ = WL + qx * math.sin(th) + qy * math.cos(th) + s.dy
+        return Tf(dx=px_ - PEN[0], dy=py_ - PEN[1], rot=s.rot + r2, px=PEN[0], py=PEN[1])
+    sc.add("a_pennant", pennant_frames(), z=9.9, motion=a_only(pen_m), frame_at=pen_idx)
 
     # wind marks blowing across the sky toward the bow: strong in the storm, a breeze after the calm, gone at '风停了'
     def wind_k(t):
@@ -908,25 +1033,85 @@ def build(ctx):
            motion=a_only(ship_tf))
     sc.add("a_jonah_carried", doc(C.jonah(JCAR[0], JCAR[1], JS, -1, pose="carried")), z=10.5,
            motion=a_only(carried_m))
-    sc.add("a_crew", [a_crew(i) for i in range(5)], z=11, motion=a_only(crew_m),
-           frame_at=steps([(0, 0), (t_grab, 1), (t_lift, 2), (t_watch, 3), (t_awe, 4)]))
-    sc.add("a_jonah_stand", doc(C.jonah(JON_X, DECK, SS, 1, pose="confess")), z=11.5, motion=a_only(stand_m))
+
+    # ---- the crew: one flipbook layer each (hard cuts; big head-height changes eased, small ones hopped)
+    rise_at = dict(s1=0.0, s2=0.07, s0=0.17, s3=0.24, capt=0.31)
+
+    def rising(name):      # (the captain skips the one-knee drawing: on the curved stern its foot pokes out)
+        tr = t_rise + rise_at[name]
+        return [(0, 0), (tr, 1)] + ([] if name == "capt" else [(tr + 0.1, 2)]) + [(tr + 0.2, 3)]
+
+    f0 = A_F0
+    a_specs = {
+        "s0": ("s", 0, [(K_LOWUP, "peaceful", f0["s0"]), (K_UPR, "worried", 1), (HALF, "worried", 1),
+                        (STAND, "worried", 1), (C.POSES["scared"], "scared", 1), (dict(STAND, h=8), "worried", 1),
+                        (PRAY, "surprised", 1)],
+               rising("s0") + [(t_lift, 4), (t_watch, 5), (t_awe, 6)]),
+        "s1": ("s", 1, [(K_LOWUP, "peaceful", f0["s1"]), (K_UPR, "worried", 1), (HALF, "worried", 1),
+                        (STAND, "worried", 1), (C.POSES["carry"], "worried", 1), (C.POSES["lift"], "worried", 1),
+                        (dict(STAND, h=8), "worried", 1), (PRAY, "surprised", 1)],
+               rising("s1") + [(t_grab, 4), (t_lift, 5), (t_watch, 6), (t_awe, 7)]),
+        "s2": ("s", 2, [(K_LOWUP, "peaceful", f0["s2"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
+                        (STAND, "worried", -1), (C.POSES["carry"], "worried", -1), (C.POSES["lift"], "worried", 1),
+                        (LEAN_LOOK, "worried", 1), (PRAY, "surprised", 1)],
+               rising("s2") + [(t_grab, 4), (t_lift, 5), (t_watch, 6), (t_awe, 7)]),
+        "s3": ("s", 3, [(K_LOWUP, "peaceful", f0["s3"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
+                        (STAND, "worried", -1), (C.POSES["scared"], "scared", -1), (LEAN_LOOK, "worried", 1),
+                        (DIAG_UP, "surprised", 1)],
+               rising("s3") + [(t_lift, 4), (t_watch, 5), (t_awe + 0.08, 6)]),
+        "capt": ("capt", None, [(K_LOWUP, "peaceful", f0["capt"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
+                                (STAND, "worried", -1), (C.POSES["worried"], "worried", -1),
+                                (LEAN_POINT, "worried", 1), (GAZE, "surprised", 1)],
+                 rising("capt") + [(t_lift + 0.06, 4), (t_watch + 0.05, 5), (t_awe + 0.14, 6)]),
+    }
+    a_heads = {}
+    for i, (name, (kind, var, frames, sched)) in enumerate(a_specs.items()):
+        x, y = A_POS[name]
+        docs, heads = [], []
+        for ps, ex, f in frames:
+            mk, _, hd = kfig(kind, var, x, y, SS, ps, ex, f)
+            docs.append(doc(mk))
+            heads.append(hd[1])
+        a_heads[name] = heads
+        hops, offs = cut_plan(heads, sched, min_dy=10.0)
+        lifter = name in ("s1", "s2")
+
+        def person_m(t, hops=hops, offs=offs, lifter=lifter):
+            s = ship_tf(t)
+            dy = -6 * sum(bump(t, c) for c in hops) + offset_dy(t, offs) + (lifter_dy(t) if lifter else 0.0)
+            return Tf(dx=s.dx, dy=s.dy + dy, rot=s.rot, px=SX, py=WL)
+        sc.add(f"a_{name}", docs, z=11 + 0.01 * i, motion=a_only(person_m), frame_at=steps(sched))
+
+    jx, jy = A_POS["jon"]
+    sc.add("a_jonah_stand", doc(C.jonah(jx, jy, SS, -1, pose="confess")), z=11.5,
+           motion=a_only(lambda t: replace(ship_tf(t), dy=ship_tf(t).dy + 4 * bump(t, t_grab),
+                                           alpha=float(t < t_lift))))
     sc.add("a_ship_front", doc(PR.ship(SX, WL, SS, SF, sail="torn", part="front")), z=12, motion=a_only(ship_tf))
 
-    # Jonah's flight: launched from the carried centre at the top of the heave, a ballistic arc with a tumble
+    # Jonah's flight: launched from the carried centre at the top of the heave, a ballistic arc with a tumble,
+    # high enough to clear the heads of sailor 3 and the captain on the stern
     c_l = carried_m(t_launch - 1e-3)
     th = math.radians(c_l.rot)
     rx, ry = JAIR_C[0] - SX, JAIR_C[1] - WL
     p0 = (SX + rx * math.cos(th) - ry * math.sin(th) + c_l.dx,
           WL + rx * math.sin(th) + ry * math.cos(th) + c_l.dy)
     p1 = (SPLASH[0], SPLASH[1] - 6)
+    half_h = 125 * JS                                          # Jonah's half height while tumbling (+ margin)
+    peak = 230.0
+    for name, idx in (("s3", 4), ("capt", 4)):
+        hx = A_POS[name][0]
+        u = (hx - p0[0]) / (p1[0] - p0[0])
+        if 0 < u < 1:
+            top = a_heads[name][idx] - 52 * SS                 # top of the head (cap)
+            need = lerp(p0[1], p1[1], u) - (top - 26 - half_h)
+            peak = max(peak, need / (4 * u * (1 - u)))
 
     def jonah_air(t):
-        if t < t_launch or not a_on(t):
+        if t < t_launch or t >= t_sw:
             return Tf(alpha=0.0)
         u = min(1.0, (t - t_launch) / (t_impact - t_launch))
         x = lerp(p0[0], p1[0], u)
-        y = lerp(p0[1], p1[1], u) - 4 * 230 * u * (1 - u)
+        y = lerp(p0[1], p1[1], u) - 4 * peak * u * (1 - u)
         rot = c_l.rot + 60 * progress(u, 0.1, 1.0, "inout")
         a = 1 - progress(t, t_impact - 0.04, t_impact + 0.06, "linear")
         return Tf(dx=x - JAIR_C[0], dy=y - JAIR_C[1], rot=rot, alpha=a, px=JAIR_C[0], py=JAIR_C[1])
@@ -962,74 +1147,69 @@ def build(ctx):
          (t_impact + 0.5, {"s": 1.05, "dy": -10}), (t_impact + 0.95, {"s": 1.25, "dy": 70, "alpha": 0})],
         ["out", "linear", "in"], pivot=(px_, py_))))
 
-    # ================================================================ shot B (drawn over A, fades in)
+    # ================================================================ shot B (appears from the blank page)
     sc.add("b_background", b_background(), z=100, wc=0.85, motion=b_only())
     sc.add("b_cloud", b_clouds(True), z=101, motion=b_only(M.drift(vx=9)))
     sc.add("b_sea_lines", b_sea_lines(0), z=102, wc=0,
            motion=b_only(lambda t: Tf(dx=22 * math.sin(2 * math.pi * t / 7.0), alpha=0.85)))
     sc.add("b_glints", [b_glints(k) for k in range(4)], z=103, wc=0, motion=b_only(),
-           frame_at=lambda t: 1.5 + 1.5 * math.sin(2 * math.pi * t / 2.3))
+           frame_at=lambda t: float(int(t * 2.6) % 4))
 
-    # gulls gliding across the sky
-    gb = [doc(PR.gull(1880, 400, 0.5, -1, wing=w) + PR.gull(2010, 452, 0.42, -1, wing=-w * 0.8))
+    # gulls gliding across the sky (left of the light)
+    gb = [doc(PR.gull(1500, 470, 0.5, -1, wing=w) + PR.gull(1630, 520, 0.42, -1, wing=-w * 0.8))
           for w in (1.0, 0.5, 0.0, -0.5, -1.0, -0.5, 0.0, 0.5)]
-    t_gb = t_d0 - 1.0
-    sc.add("b_gulls", gb, z=104, motion=b_only(lambda t: Tf(dx=-118 * (t - t_gb), dy=-6 * (t - t_gb) +
+    t_gb = t_sw
+    sc.add("b_gulls", gb, z=104, motion=b_only(lambda t: Tf(dx=-96 * (t - t_gb), dy=-9 * (t - t_gb) +
                                                          10 * math.sin(t * 0.9))),
            frame_at=lambda t: float(int(t * 8) % 8) if (t // 3) % 2 == 0 else 2.0)
 
-    # the perched gull on the rail turns its head now and then (facing flip hidden by a hop)
-    g_turns = [t_d1 + 2.6, t_d1 + 5.4, t_d1 + 7.9]
-    sc.add("b_gull_perch", [doc(PR.gull(GULL_B[0], GULL_B[1], 0.62, f, pose="stand")) for f in (1, -1)], z=106,
+    # the perched gull on the rail turns its head once while they gaze, once in the final hold (hop)
+    g_turns = [t_see2 + 0.5, t_vow + 1.0]
+    sc.add("b_gull_perch", [doc(PR.gull(GULL_B[0], GULL_B[1], 0.62, f, pose="stand")) for f in (-1, 1)], z=106,
            motion=b_only(lambda t: Tf(dy=-9 * sum(bump(t, g, 0.09) for g in g_turns))),
            frame_at=lambda t: float(sum(t >= g for g in g_turns) % 2))
 
-    # light: the sun's halo pulses gently; at the vows the beams brighten (God is shown only as light)
-    sc.add("b_sunglow", sun_glow(), z=107, wc=0, blend="screen",
-           motion=b_only(lambda t: Tf(alpha=0.55 + 0.15 * math.sin(2 * math.pi * t / 3.7) +
-                                      0.3 * progress(t, t_vow - 0.2, t_vow + 1.2, "sine"),
-                                      sx=1 + 0.04 * math.sin(2 * math.pi * t / 3.7), sy=1 + 0.04 * math.sin(2 * math.pi * t / 3.7),
-                                      px=SUN_B[0], py=SUN_B[1])))
-    sc.add("b_beams", b_beams(), z=107.5, wc=0, blend="screen",
-           motion=b_only(lambda t: Tf(alpha=0.5 * progress(t, t_vow - 0.2, t_vow + 1.4, "sine") *
-                                      (0.85 + 0.15 * math.sin(2 * math.pi * t / 3.1)))))
+    # God's presence: the light through the cloud break glows and pulses gently; at the vows it swells and the
+    # rays brighten
+    def vow_k(t):
+        return progress(t, t_vow - 0.2, t_vow + 1.3, "sine")
+    sc.add("b_gap_glow", b_gap_through(), z=107, wc=0, blend="screen",
+           motion=b_only(lambda t: Tf(alpha=min(1.0, 0.6 + 0.1 * math.sin(2 * math.pi * t / 3.7) + 0.3 * vow_k(t)),
+                                      sx=1 + 0.03 * math.sin(2 * math.pi * t / 3.7) + 0.08 * vow_k(t),
+                                      sy=1 + 0.03 * math.sin(2 * math.pi * t / 3.7) + 0.08 * vow_k(t),
+                                      px=GAP[0], py=GAP[1])))
+    sc.add("b_rays", b_rays(), z=107.5, wc=0, blend="screen",
+           motion=b_only(lambda t: Tf(alpha=(0.62 + 0.38 * vow_k(t)) * (0.9 + 0.1 * math.sin(2 * math.pi * t / 3.1)))))
 
-    # ---- crew (back row first)
-    def b_motion(pos, cuts, kneels, phase):
+    # ---- crew
+    def b_motion(pos, hops, offs, phase):
         x, y, s = pos
 
         def m(t):
             br = 1 + 0.011 * math.sin(2 * math.pi * (t / 3.3 + phase))
-            dy = -7 * sum(bump(t, c) for c in cuts)
-            sy = 1.0
-            for tk in kneels:
-                u = t - tk
-                if -0.12 <= u < 0:
-                    sy *= 1 - 0.06 * (u + 0.12) / 0.12
-                elif 0 <= u < 0.16:
-                    sy *= 1 - 0.035 * (1 - u / 0.16)
-            return Tf(dy=dy, sx=br, sy=br * sy, px=x, py=y)
+            dy = -7 * sum(bump(t, c) for c in hops) + offset_dy(t, offs)
+            return Tf(dy=dy, sx=br, sy=br, px=x, py=y)
         return b_only(m)
 
-    kn = [t_kn + 0.04 + 0.21 * i for i in range(5)]     # kneel order: captain, S0, S2, S3, S1
+    kn = [t_kn + 0.04 + 0.3 * i for i in range(5)]      # kneel order: captain, S0, S2, S3, S1
     vw = [t_vow + 0.13 * i for i in range(5)]           # vows: captain, S2, S0, S3, S1
-    lk = [t_look + 0.1 * i for i in range(4)]           # look up: S2, S0, S3, S1
-
+    HOLD_HALF = 0.13                                    # the one-knee in-between (4 frames)
     sur = "surprised"
-    st_s = C.POSES["stand"]
-    # S1 (back, variant 1)
-    sc.add("b_s1", b_frames("s", 1, B_S1, [(st_s, sur, None), (P_BOW, "sorry", None), (P_UP, "peaceful", None),
-                                           (P_VOW, "happy", None)]), z=110,
-           motion=b_motion(B_S1, [lk[3], vw[4]], [kn[4]], 0.1),
-           frame_at=steps([(0, 0), (kn[4], 1), (lk[3], 2), (vw[4], 3)]))
-    # S0 (back, variant 0): lifts his hands in wonder first
-    sc.add("b_s0", b_frames("s", 0, B_S0, [(st_s, sur, None), (C.POSES["pray"], sur, None),
-                                           (P_BOW, "peaceful", None), (P_UP, "peaceful", None),
-                                           (P_VOW, "peaceful", None)]), z=111,
-           motion=b_motion(B_S0, [t_see2, lk[1], vw[2]], [kn[1]], 0.45),
-           frame_at=steps([(0, 0), (t_see2, 1), (kn[1], 2), (lk[1], 3), (vw[2], 4)]))
 
-    # ---- the brazier, flame, the captain (in front of it), grain, glow, smoke
+    def add_b(name, kind, var, pos, poses, sched, z, phase):
+        docs, heads, _ = b_frames(kind, var, pos, poses)
+        hops, offs = cut_plan(heads, sched)
+        sc.add(name, docs, z=z, motion=b_motion(pos, hops, offs, phase), frame_at=steps(sched))
+
+    # back row
+    add_b("b_s1", "s", 1, B_S1, [(GAZE, sur, None), (HALF, "sorry", None), (P_BOW, "sorry", None),
+                                 (P_UP, "peaceful", None), (P_VOW, "happy", None)],
+          [(0, 0), (kn[4], 1), (kn[4] + HOLD_HALF, 2), (lk[3], 3), (vw[4], 4)], 110, 0.1)
+    add_b("b_s0", "s", 0, B_S0, [(GAZE, sur, None), (PRAY, sur, None), (HALF, "peaceful", None),
+                                 (P_BOW, "peaceful", None), (P_UP, "peaceful", None), (P_VOW, "peaceful", None)],
+          [(0, 0), (t_see2, 1), (kn[1], 2), (kn[1] + HOLD_HALF, 3), (lk[1], 4), (vw[2], 5)], 111, 0.45)
+
+    # ---- the brazier, flame, glow, smoke
     sc.add("b_brazier", brazier(), z=112, motion=b_only())
 
     def flame_k(t):        # size of the fire: small, flares when the offering goes in, settles a little bigger
@@ -1044,115 +1224,108 @@ def build(ctx):
     sc.add("b_flame", [flame(i) for i in range(6)], z=113, wc=0.5, motion=b_only(flame_m),
            frame_at=lambda t: float(int(t * 9) % 6))
 
-    capt_frames = b_frames("capt", None, B_CAPT, [(st_s, sur, None), (P_BOW, "peaceful", None),
-                                                  (P_OFFER, "peaceful", "bowl"), (P_POUR, "peaceful", "pour"),
-                                                  (P_VOW, "peaceful", None)])
-    sc.add("b_capt", capt_frames, z=114, motion=b_motion(B_CAPT, [t_off0, t_pour, vw[0]], [kn[0]], 0.7),
-           frame_at=steps([(0, 0), (kn[0], 1), (t_off0, 2), (t_pour, 3), (vw[0], 4)]))
-    # grain pouring from the tipped bowl's lip into the coals
-    _, hands = kfig("capt", None, *B_CAPT, P_POUR, "peaceful")
+    capt_poses = [(GAZE, sur, None), (HALF, "peaceful", None), (P_BOW, "peaceful", None),
+                  (P_OFFER, "peaceful", "bowl"), (P_POUR, "peaceful", "pour"), (P_UP, "peaceful", "down"),
+                  (P_VOW_LOW, "peaceful", "down")]
+    add_b("b_capt", "capt", None, B_CAPT, capt_poses,
+          [(0, 0), (kn[0], 1), (kn[0] + HOLD_HALF, 2), (t_off0, 3), (t_pour, 4), (t_cdown, 5), (vw[0], 6)], 114, 0.7)
+    # grain pouring from the tipped bowl's lip into the coals (only while the bowl is tipped)
+    _, hands, _ = kfig("capt", None, *B_CAPT, P_POUR, "peaceful")
     sk = B_CAPT[2]
     hx, hy = (hands[0][0] + hands[1][0]) / 2 + 4 * sk, min(hands[0][1], hands[1][1]) - 22 * sk
     at = math.radians(POUR_TILT)
     lip = (hx + 34 * sk * 0.95 * math.cos(at), hy + 34 * sk * 0.95 * math.sin(at))
+    t_grain1 = min(t_pour + 0.8, t_cdown - 0.04, vw[0] - 0.05)
     sc.add("b_grain", [grains(k, lip) for k in range(3)], z=114.5,
-           motion=b_only(lambda t: Tf(alpha=float(t_pour + 0.04 <= t < t_pour + 0.8))),
+           motion=b_only(lambda t: Tf(alpha=float(t_pour + 0.04 <= t < t_grain1))),
            frame_at=lambda t: float(int(t * 10) % 3))
     sc.add("b_glow", glow(), z=115, wc=0, blend="screen",
            motion=b_only(lambda t: Tf(alpha=min(1.0, (0.5 + 0.08 * math.sin(t * 9.1)) * flame_k(t)),
                                       sx=0.8 + 0.3 * flame_k(t), sy=0.8 + 0.3 * flame_k(t),
                                       px=FLAME_B[0], py=FLAME_B[1] - 40)))
 
-    # smoke: a soft swaying column (5 phases, crossfaded in a loop) that thickens at the offering, puffs that
-    # drift off its top toward the sun, and one big billow at the flare
+    # smoke: a picture-book chain of puffs climbing beside the light (12 drawings at 8 fps, hard cuts, the puffs
+    # move ~3 px per drawing), thicker after the offering; one golden billow climbs it at the flare
     def smoke_k(t):
-        return 0.75 + 0.25 * progress(t, t_flare, t_flare + 0.9, "sine")
+        return progress(t, t_flare, t_flare + 0.9, "sine")
 
-    col = [smoke_column(k / 4, tag="a") for k in range(4)]
-    col.append(col[0])
-    sc.add("b_smoke", col, z=116, wc=0.3,
-           motion=b_only(lambda t: Tf(alpha=smoke_k(t), sx=0.9 + 0.12 * smoke_k(t), sy=0.75 + 0.3 * smoke_k(t),
+    NPH = 12
+    sc.add("b_smoke", [smoke_column(k / NPH) for k in range(NPH)], z=116, wc=0.3,
+           motion=b_only(lambda t: Tf(sx=0.92 + 0.14 * smoke_k(t), sy=0.94 + 0.08 * smoke_k(t),
                                       px=SMOKE_O[0], py=SMOKE_O[1])),
-           frame_at=lambda t: (t * 0.7) % 4.0)
+           frame_at=lambda t: float(int(t * 8) % NPH))
 
-    NP, PER = 4, 4.2
-
-    def puff_u(k, t):
-        return ((t - t_d0) / PER + k / NP) % 1.0
-
-    def puff_m(k):
-        def m(t):
-            u = puff_u(k, t)
-            env = min(1.0, u / 0.25) * (1 - progress(u, 0.55, 1.0, "sine"))
-            s = (0.7 + 1.5 * u) * (0.8 + 0.25 * smoke_k(t))
-            x, y = smoke_xy(0.55 + 0.45 * u, 0.0)
-            return Tf(dx=x - SMOKE_O[0] + 70 * u, dy=y - SMOKE_O[1] - 120 * u, rot=(24 if k % 2 else -24) * u,
-                      sx=s, sy=s, alpha=0.75 * env * smoke_k(t), px=SMOKE_O[0], py=SMOKE_O[1])
-        return m
-
-    for k in range(NP):
-        sc.add(f"b_puff{k}", [soft_puff(False, 80 + k), soft_puff(True, 80 + k)], z=116.1 + k * 0.01, wc=0.3,
-               motion=b_only(puff_m(k)), frame_at=lambda t, k=k: progress(puff_u(k, t), 0.1, 0.6, "linear"))
-
-    def billow_m(t):       # the big curl of smoke at the flare
-        u = (t - t_flare + 0.1) / 3.4
+    def billow_m(t):       # climbs the column, grows, fades well below the clouds
+        u = (t - t_flare + 0.05) / 2.6
         if u <= 0 or u >= 1:
             return Tf(alpha=0.0)
-        s = 0.6 + 2.6 * u ** 0.75
-        env = min(1.0, u / 0.1) * (1 - progress(u, 0.4, 1.0, "sine"))
-        x, y = smoke_xy(min(1.0, 1.15 * u ** 0.85), 0.2)
-        return Tf(dx=x - SMOKE_O[0] + 40 * u, dy=y - SMOKE_O[1] - 60 * u, rot=-30 * u, sx=s, sy=s,
-                  alpha=0.95 * env, px=SMOKE_O[0], py=SMOKE_O[1])
-    sc.add("b_billow", [soft_puff(False, 99, 40), soft_puff(True, 99, 40)], z=116.5, wc=0.3,
-           motion=b_only(billow_m), frame_at=lambda t: progress((t - t_flare) / 3.4, 0.1, 0.6, "linear"))
+        s = 0.4 + 1.1 * u ** 0.7
+        env = min(1.0, u / 0.08) * (1 - progress(u, 0.4, 1.0, "sine"))
+        x, y = smoke_xy(min(1.0, 0.95 * u ** 0.8))
+        return Tf(dx=x - SMOKE_O[0], dy=y - SMOKE_O[1], rot=-10 * u, sx=s, sy=s, alpha=env,
+                  px=SMOKE_O[0], py=SMOKE_O[1])
+    sc.add("b_billow", smoke_billow(), z=116.5, wc=0.3, motion=b_only(billow_m))
 
     # ---- front row
-    sc.add("b_s2", b_frames("s", 2, B_S2, [(st_s, sur, None), (P_BOW, "peaceful", None), (P_UP, "peaceful", None),
-                                           (P_VOW, "happy", None)]), z=120,
-           motion=b_motion(B_S2, [lk[0], vw[1]], [kn[2]], 0.25),
-           frame_at=steps([(0, 0), (kn[2], 1), (lk[0], 2), (vw[1], 3)]))
-    sc.add("b_s3", b_frames("s", 3, B_S3, [(C.POSES["point"], sur, None), (P_BOW, "sorry", None),
-                                           (P_UP, "peaceful", None), (P_VOW, "peaceful", None)]), z=121,
-           motion=b_motion(B_S3, [lk[2], vw[3]], [kn[3]], 0.6),
-           frame_at=steps([(0, 0), (kn[3], 1), (lk[2], 2), (vw[3], 3)]))
+    add_b("b_s2", "s", 2, B_S2, [(GAZE, sur, None), (HALF, "peaceful", None), (P_BOW, "peaceful", None),
+                                 (P_UP, "peaceful", None), (P_VOW, "happy", None)],
+          [(0, 0), (kn[2], 1), (kn[2] + HOLD_HALF, 2), (lk[0], 3), (vw[1], 4)], 120, 0.25)
+    add_b("b_s3", "s", 3, B_S3, [(GAZE, sur, None), (DIAG_UP, sur, None), (HALF, "sorry", None),
+                                 (P_BOW, "sorry", None), (P_UP, "peaceful", None), (P_VOW, "peaceful", None)],
+          [(0, 0), (t_see2 + 0.35, 1), (kn[3], 2), (kn[3] + HOLD_HALF, 3), (lk[2], 4), (vw[3], 5)], 121, 0.6)
     sc.add("b_fore", b_foreground(), z=130, motion=b_only())
 
     # ================================================================ camera
+    # A: s08's end framing -> eases out to the v1 wide shot before '他们' -> holds -> pushes in on the ship and
+    #    keeps pushing while the page covers it.  B: starts moving, drifts right / in, stops before the dissolve.
     A0 = (1000.0, 590.0, 1700.0)
     A1 = (945.0, 634.0, 1560.0)
-    B0 = (965.0, 688.0, 1470.0)
-    B1 = (1010.0, 682.0, 1396.0)
+    C08 = (CAM_S08.x, CAM_S08.y, CAM_S08.w)
+    t_ca0 = max(0.75, t_rise - 0.15)
+    t_ca1 = max(t_ca0 + 0.9, t_grab - 0.05)
     t_p0 = t_still - 0.2
-    tE = min(T - 0.6, c2b.end + 0.3)
-
-    def path(i):           # continuous velocity: ease into the push, keep moving through the dissolve, then drift
-        vd = (B0[i] - A1[i]) / (t_d1 - t_d0)
-        vb = (B1[i] - B0[i]) / (tE - t_d1)
-        return hermite([(0.0, A0[i], 0.0), (t_p0, A0[i], 0.0), (t_d0, A1[i], 0.8 * vd),
-                        (t_d1, B0[i], 0.5 * (vd + vb) * 0.5 + 0.5 * vb), (tE, B1[i], 0.0)])
-    cx_, cy_, cw_ = path(0), path(1), path(2)
+    vd = [1.4 * (A1[i] - A0[i]) / max(0.5, t_d0 - t_p0) for i in range(3)]
+    cam_a = [hermite([(0.0, C08[i], 0.0), (t_ca0, C08[i], 0.0), (t_ca1, A0[i], 0.0), (t_p0, A0[i], 0.0),
+                      (t_d0, A1[i], vd[i])]) for i in range(3)]
+    # B1: the area where s10's sinking Jonah appears in the outgoing dissolve (output x 1040-1310, y 330-650)
+    # holds only sea and sky - between the captain's head / S0's hands and the brazier and smoke
+    B0 = (1185.0, 668.0, 1600.0)
+    B1 = (1110.0, 600.0, 1640.0)
+    tE = min(T - 1.0, c2b.end + 0.3)
+    vb = [0.8 * (B1[i] - B0[i]) / (tE - t_sw) for i in range(3)]
+    cam_b = [hermite([(t_sw, B0[i], vb[i]), (tE, B1[i], 0.0)]) for i in range(3)]
 
     def camera(t):
-        a = storm(t)
-        return Cam(cx_(t) + 6 * a * math.sin(2 * math.pi * t / 3.3), cy_(t) + 7 * a * math.sin(2 * math.pi * t / 2.4),
-                   cw_(t), 0.45 * a * math.sin(2 * math.pi * t / 2.9))
+        if t < t_sw:
+            a = storm(t) * progress(t, 0.8, 2.0, "sine")       # no camera sway while s08 dissolves in
+            x, y, w = (f(t) for f in cam_a)
+            return Cam(x + 6 * a * math.sin(2 * math.pi * t / 3.3), y + 7 * a * math.sin(2 * math.pi * t / 2.4),
+                       w, 0.45 * a * math.sin(2 * math.pi * t / 2.9))
+        return Cam(*(f(t) for f in cam_b))
     sc.camera = camera
 
     # ================================================================ effects
+    def card(t):           # the blank page between the shots
+        return min(progress(t, t_d0, t_c1, "sine"), 1 - progress(t, t_c2, t_c3, "sine"))
+
     sc.fx = [
         FX.lightning([t_flash], strength=0.22),
         FX.rain(t0=-1, t1=t_calm0 + 0.45, density=0.85, angle=16, alpha=105),
         V.bubble_fx([(lambda t: (SPLASH[0], WL + 110), t_impact + 0.03, t_impact + 0.45, 60, 170, (6, 18), 70, 210)]),
-        # '浪也静了': glints on the flat sea (away from the ship), gone during the dissolve
-        FX.sparkles((1260, 720, 2050, 870), count=16, t0=t_still, t1=t_d0 + 0.5, color=(255, 250, 226),
+        # '浪也静了': glints on the flat sea (away from the ship), gone under the page
+        FX.sparkles((1260, 720, 2050, 870), count=16, t0=t_still, t1=t_sw, color=(255, 250, 226),
                     size=(5, 11), period=1.2, drift=0, seed=31),
-        # deck: dust motes in the sunbeams, sparks at the flare, warm sparkles in the light at the vows
-        FX.motes((700, 300, 1800, 1000), count=34, t0=t_d1 - 0.3, color=(255, 244, 206), size=(2.5, 5.5), alpha=120,
+        # deck: dust motes in the rays, sparks at the flare, sparkles in the cloud break (a few all along, more
+        # at the vows)
+        FX.motes((800, 360, 1800, 1000), count=34, t0=t_sw, color=(255, 244, 206), size=(2.5, 5.5), alpha=120,
                  seed=17),
         sparks_fx((FLAME_B[0], FLAME_B[1] - 70), t_flare - 0.05, t_flare + 1.3, 22),
-        sparks_fx((FLAME_B[0], FLAME_B[1] - 50), t_d1, T + 1, 1.6, seed=9),
-        FX.sparkles((1270, 290, 1880, 640), count=18, t0=t_vow - 0.1, t1=T + 2, color=(255, 236, 170),
-                    size=(7, 16), period=1.6, drift=-6, seed=41),
+        sparks_fx((FLAME_B[0], FLAME_B[1] - 50), t_sw, T + 1, 1.6, seed=9),
+        FX.sparkles((GAP[0] - 200, GAP[1] - 60, GAP[0] + 190, GAP[1] + 150), count=7, t0=t_sw, t1=T + 2,
+                    color=(255, 238, 180), size=(5, 11), period=1.9, drift=-4, seed=43),
+        FX.sparkles((GAP[0] - 300, GAP[1] - 90, GAP[0] + 230, GAP[1] + 260), count=18, t0=t_vow - 0.1, t1=T + 2,
+                    color=(255, 236, 170), size=(7, 16), period=1.6, drift=-6, seed=41),
+        FX.tint(PAPER_RGB, card),                         # last: the page covers everything
     ]
 
     # ================================================================ sound
@@ -1160,6 +1333,7 @@ def build(ctx):
     sc.sfx("rain", 0, dur=t_calm0 + 0.6, gain_db=-16, fade_in=0.8, fade_out=0.6)
     sc.sfx("waves_storm", 0, dur=t_calm1 + 0.3, gain_db=-12, fade_in=0.8, fade_out=1.5)
     sc.sfx("ship_creak", 0, dur=t_calm1, gain_db=-18, fade_in=0.8, fade_out=1.0)
+    sc.sfx("cloth", t_rise + 0.02, gain_db=-17, pan=-0.1)
     sc.sfx("thunder", t_flash - 0.02, gain_db=-18, pan=-0.3)
     sc.sfx("cloth", t_grab - 0.05, gain_db=-15, pan=0.0)
     sc.sfx("cloth", t_lift - 0.05, gain_db=-12, pan=0.05)
@@ -1169,12 +1343,10 @@ def build(ctx):
     sc.sfx("waves_calm", t_calm0 - 0.2, dur=T - t_calm0 + 1.0, gain_db=-14, fade_in=0.9, fade_out=0.8)
     sc.sfx("chime", t_calm0 + 0.3, gain_db=-15)
     sc.sfx("gull", t_gull + 0.4, gain_db=-18, pan=0.5)
-    sc.sfx("wind_soft", t_d0 - 0.4, dur=T - t_d0 + 1.2, gain_db=-20, fade_in=1.0, fade_out=0.8)
-    sc.sfx("fire", t_d0, dur=T - t_d0 + 0.8, gain_db=-17, fade_in=1.0, fade_out=0.8)
+    sc.sfx("fire", t_sw, dur=T - t_sw + 0.8, gain_db=-17, fade_in=0.8, fade_out=0.8)
     sc.sfx("fire", t_flare - 0.05, dur=2.4, gain_db=-12, fade_in=0.1, fade_out=1.4)
     sc.sfx("cloth", kn[0] - 0.05, gain_db=-17)
     sc.sfx("cloth", kn[3] - 0.05, gain_db=-18)
     sc.sfx("sparkle", t_flare - 0.02, gain_db=-14, pan=0.3)
-    sc.sfx("gull", g_turns[0] - 0.1, gain_db=-20, pan=0.5)
-    sc.sfx("chime", t_vow, gain_db=-14, pan=0.2)
+    sc.sfx("chime", t_vow, gain_db=-14, pan=0.4)
     return sc

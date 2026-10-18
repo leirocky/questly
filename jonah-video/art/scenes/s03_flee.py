@@ -15,9 +15,12 @@ are imported from art.scenes_v1.s03_flee):
     hazy Nineveh skyline. On '我们就会知道' the card pops away and he turns and runs on.
   * line 2 '他一路跑到海边的约帕城，' — he runs on past the hill town of Joppa onto the quay and the wooden pier;
     the camera reveals the harbour, where a porter tosses a jar up to the sailor by the mast while the captain
-    watches from the bow (the toss is timed from Jonah's run, so it is over before he reaches the porters).
+    watches from the bow (the toss is timed from Jonah's run, so it is over before he reaches the porters); the
+    other porter, carrying a crate at hip height, glances up in surprise as Jonah dashes past and, once Jonah is
+    clear, sets it down on the pier.
     '找到一条要开往他施的船。' — he stops on the pier by the ship (its berth board on the pier's front beam reads
-    他施 with a west arrow), looks up, points at it; the captain walks aft along the deck to meet him and nods.
+    他施 with a west arrow), looks up, points at it; the captain walks aft along the deck (behind the mast sailor)
+    to meet him and nods.
     '他施在很远很远的西边。' — the bow sailor points far out to sea, the captain and Jonah look west, a gull flies
     off that way and the camera drifts out over the open sea to the far horizon (a distant sail).
   * line 3 '约拿付了船钱，' — the camera pushes in on the two hands: Jonah takes coins from his sash and holds them
@@ -100,6 +103,9 @@ K_FAR, K_TOWN, K_CLOUD, K_SUN = 0.25, 0.1, 0.55, 0.85
 
 SHIP_SEED = 211
 COIN = "#e9b949"
+PALM_OFF = (6, -9)        # where the coins rest on the captain's open hand (from C.hand_positions' hand point)
+HAND_OFF = (-4, -10)      # ... and on Jonah's open hand
+COIN_ARC = 40             # each coin rises ~60 px above Jonah's hand, then drops into the captain's palm
 
 
 def doc(body, defs=""):
@@ -165,8 +171,9 @@ J_POSES = {
                 hands=("open", "open"), hem=0.7, tail=-80, expr="worried"),
 }
 CAP_POSES = {
-    # leaning over the rail, near arm held out forward, open palm (above and ahead of Jonah's hand, in the clear)
-    "receive": C._P(t=16, h=14, arms=(("fk", 10, 4), ("fk", 70, 85)), hands=("fist", "open"), expr="happy"),
+    # near arm held straight out forward, open palm (above and ahead of Jonah's hand, in the clear, well in front
+    # of his beard so the coins never land on his face)
+    "receive": C._P(t=6, h=6, arms=(("fk", 10, 4), ("fk", 78, 82)), hands=("fist", "open"), expr="happy"),
     # pointing up and away to the far horizon ('very, very far to the west'), clear of the mast sailor's head
     "point_far": C._P(t=-4, h=-14, arms=(("fk", 10, 4), ("fk", 124, 132)), hands=("fist", "point"), expr="happy"),
     # coins taken: fist at the chest
@@ -260,7 +267,7 @@ def far_svg():
         body += (f'<path d="M{f1(x)},{f1(y)} l{f1(w)},0" stroke="#fbfdf6" stroke-width="2.6" '
                  f'stroke-linecap="round" opacity="{rng.uniform(0.35, 0.7):.2f}"/>')
     # a distant ship far out to the west (its hull below the waterline painted over with sea)
-    for x, y, s, f in ((1020, 594, 0.07, -1),):
+    for x, y, s, f in ((1300, 594, 0.07, -1),):     # seen as the camera drifts west on '很远很远的西边'
         body += PR.ship(x, y, s, f, sail="full", lantern=False)
         body += f'<rect x="{x - 70}" y="{y}" width="140" height="16" fill="url(#s3farsea)"/>'
     # the rocks off Joppa
@@ -753,7 +760,7 @@ def wake_svg():
 
 # ============================================================================ the narrator's question card
 
-QCARD = (JSTOP + 330, 372)    # in the eastern sky above the road (toward Nineveh), clear of Jonah's head
+QCARD = (JSTOP + 270, 380)    # in the eastern sky above the road (toward Nineveh), clear of Jonah's head
 QR = 112                      # card radius
 SKY_SEED = 2                  # the nineveh_skyline seed s02 uses for its vision of the city
 
@@ -798,8 +805,8 @@ def build(ctx):
     T_RUN1 = T_TURN + 0.2
     T_STOP1 = L1.start - 0.45                            # stops under the olive tree, panting
     T_LOOKBACK = L1.start + 0.25                         # turns to look back east (mid-spin)
-    T_BUB = at(L1, "为什么") + 0.15                         # '？' bubble pops up
-    T_POP = at(L1, "我们就会知道") - 0.05                    # bubble pops
+    T_BUB = at(L1, "为什么") + 0.15                         # the narrator's '？' card pops up
+    T_POP = at(L1, "我们就会知道") - 0.05                    # ... and pops away
     T_TURN2 = T_POP + 0.22                               # spins west again
     T_RUN2 = T_TURN2 + 0.2
     T_ARR = L2.chunks[1].start - 0.12 if len(L2.chunks) > 1 else at(L2, "找到")   # on the pier
@@ -936,7 +943,7 @@ def build(ctx):
     T_SLOW0 = T_HIDE - 0.4
     T_PUSH1 = T - 1.0                    # the camera has finished its push-in on the stern by here
     DIST = 500                           # distance sailed by T_PUSH1 (the stern is then clear of the pier)
-    V_END = 0.12                         # drift speed at the end, as a fraction of the cruising speed
+    V_END = 0.08                         # drift speed at the end, as a fraction of the cruising speed
     _st = np.arange(T_DEPART, T + 1.01, 1 / 240)
     _sv = np.array([M.progress(t, T_DEPART, T_DEPART + 0.9, "sine")
                     * (1 - (1 - V_END) * M.progress(t, T_SLOW0, T_PUSH1, "sine")) for t in _st])
@@ -968,26 +975,28 @@ def build(ctx):
     W_CROSS, Y_CROSS = 1600, 640
     X_CROSS = min(JX0 + 110, PAINT_R - W_CROSS / 2 - 8)
     X_PIER = 2190
-    X_WEST, W_WEST, Y_WEST = 1930, 1840, 600
+    X_WEST, W_WEST, Y_WEST = 1950, 1780, 600
     T_WEST_END = min(T_WEST + 1.8, L2.end)
     # '约拿付了船钱': pushed in on the two hands (from T_WEST_END, finished by T_GIVE)
     X_PAY = (cap_palm[0] + give[0]) / 2 + 10
     W_PAY, Y_PAY = 1220, 650
-    # '上了船': eases back and up so the whole sail unrolling is in the picture ...
-    T_BACK0, T_BACK1 = T_LEAP - 0.25, T_SAIL_DONE + 0.3
-    W_SAIL, Y_SAIL = 1500, 560
-    # '躲开上帝': ... then pushes in slowly on Jonah peeking over the stern rail (the receding pier behind him)
-    # and holds nearly still (tracking the drifting ship) through the closing dissolve
-    W_END, Y_END = 1050, 664
-    X_END = jdeck_x(T_PUSH1) + 0.08 * W_END
-    X_SAIL = 0.5 * (X_PAY + X_END) + 40
+    # '上了船': eases back a little and tilts up so the sail unrolling from the yard is in the picture ...
+    T_BACK0, T_BACK1 = T_LEAP - 0.25, T_SAIL_DONE + 0.1
+    W_SAIL, Y_SAIL = 1360, 578
+    X_SAIL = SHIP_X + 60 - ship_d(T_BACK1)
+    # '躲开上帝': ... then pushes in slowly to a close-up of Jonah peeking over the stern rail (he sits at about
+    # 30 % from the left, looking back at the receding pier and Joppa) and holds nearly still, tracking the drifting
+    # ship, through the closing dissolve. The close-up is about 2.4x the scale of s04's opening wide shot of the
+    # ship, and the figures in it sit left of where s04's ship appears, so the dissolve never doubles up the ship.
+    W_END, Y_END = 900, 676
+    X_END = jdeck_x(T_PUSH1) + 0.2 * W_END
     LEAD = 0.13
 
     cam_w_f = M.keys([(0, {"dx": W_CROSS}), (T_TURN, {"dx": 1560}), (T_RUN1 + 1.2, {"dx": 1760}),
                       (T_STOP1, {"dx": 1700}), (T_BUB + 0.4, {"dx": 1560}), (T_RUN2, {"dx": 1580}),
                       (T_RUN2 + 1.8, {"dx": 1900}), (T_ARR + 0.6, {"dx": 1840}), (T_WEST, {"dx": 1720}),
                       (T_WEST_END, {"dx": W_WEST}), (T_GIVE, {"dx": W_PAY}), (T_BACK0, {"dx": W_PAY}),
-                      (T_BACK1, {"dx": W_SAIL}), (T_PUSH1, {"dx": W_END}), (T, {"dx": W_END * 0.985})], "sine")
+                      (T_BACK1, {"dx": W_SAIL}), (T_PUSH1, {"dx": W_END}), (T, {"dx": W_END * 0.98})], "sine")
     cam_y_f = M.keys([(0, {"dy": Y_CROSS}), (T_TURN, {"dy": 648}), (T_RUN1 + 1.2, {"dy": 612}),
                       (T_STOP1, {"dy": 612}), (T_BUB + 0.4, {"dy": 600}), (T_RUN2 + 1.8, {"dy": 606}),
                       (T_WEST, {"dy": 606}), (T_WEST_END, {"dy": Y_WEST}), (T_GIVE, {"dy": Y_PAY}),
@@ -1143,6 +1152,7 @@ def build(ctx):
                            doc(C.sailor(*d1, K, 1, variant=1, pose="stand", expr="happy")),
                            doc(C.sailor(*d1, K, 1, variant=1, pose="pull", expr="neutral"))],
            motion=mast_sailor_tf, frame_at=mast_sailor_frame)
+    Z_MAST = sc.layers[-1].z
 
     JAR_S = 0.45
     jd = (catch_hands[0], catch_hands[1] - 22)
@@ -1194,20 +1204,7 @@ def build(ctx):
     def cap_tf(t):
         return V.compose(ship_tf(t), cap_xy, dx=cap_dx(t), dy=cap_dy(t))
 
-    sc.add("captain", cap_frames, motion=cap_tf, frame_at=cap_frame)
-
-    # coins in the captain's palm (after they land) until he closes his hand
-    palm = (cap_palm[0] + 6, cap_palm[1] - 9)
-    coin_rest = [(palm[0] - 7, palm[1] + 2, -8), (palm[0] + 6, palm[1] + 1, 10), (palm[0] - 1, palm[1] - 5, 2)]
-    for i, (cx, cy, tilt) in enumerate(coin_rest):
-        t_land = T_COIN_LAND + 0.11 * i
-
-        def coin_palm_tf(t, t_land=t_land):
-            if t < t_land or t >= T_TAKE:
-                return Tf(alpha=0.0)
-            return V.compose(ship_tf(t), cap_xy, dy=cap_dy(t) + 2 * bump(t, t_land, 0.15))
-
-        sc.add(f"coin_palm{i}", doc(coin_svg(cx, cy, 7.5, tilt)), motion=coin_palm_tf, wc=0.3)
+    sc.add("captain", cap_frames, motion=cap_tf, frame_at=cap_frame, z=Z_MAST - 0.5)   # behind the mast sailor
 
     # Jonah on deck
     def jship_frame(t):
@@ -1255,14 +1252,18 @@ def build(ctx):
         return lambda t: (lambda b: Tf(b.dx, b.dy * 0.4, 0, b.sx, b.sy, alpha_fn(t), b.px, b.py))(ship_tf(t))
 
     sc.add("hull_shadow", hull_shadow_svg(), motion=water_tf(lambda t: 1.0), wc=0.2)
-    sc.add("wake", wake_svg(), motion=water_tf(lambda t: M.progress(t, T_DEPART, T_DEPART + 0.8, "sine")), wc=0.2)
+    sc.add("wake", wake_svg(), motion=water_tf(lambda t: M.progress(t, T_DEPART, T_DEPART + 0.8, "sine")
+                                               * (0.3 + 0.7 * ship_way(t))), wc=0.2)
 
     rngf = random.Random(77)
     FOAM_LIFE = 1.7
     foam = []
     tt = T_DEPART + 0.35
     while tt < T + 0.1:
-        foam.append((tt, rngf.uniform(10, 60), rngf.uniform(2, 30), rngf.uniform(26, 58), rngf.uniform(0.7, 1.0)))
+        way = ship_way(tt)                  # less bow foam as the ship slows to a drift
+        if way > 0.08:
+            foam.append((tt, rngf.uniform(10, 60), rngf.uniform(2, 30), rngf.uniform(26, 58) * (0.5 + 0.5 * way),
+                         rngf.uniform(0.7, 1.0) * min(1.0, 0.25 + way)))
         tt += rngf.uniform(0.07, 0.12)
 
     def bow_x(t):
@@ -1305,48 +1306,43 @@ def build(ctx):
     sc.add("pier_shadows", doc(C.ground_shadow(p1[0] + 4, p1[1], K, 120, 0.24) +
                                C.ground_shadow(p2[0] - 8, p2[1], K, 130, 0.24)))
 
+    # porter 1 carries a crate at hip height (shifting it, a little out of breath); as Jonah dashes past he
+    # glances up in surprise, and once Jonah is clear he sets it down on the pier (so the set-down is not hidden
+    # behind the running Jonah)
+    tp1 = t_pass(p1[0] + 40)
+    CRATE_DOWN_X = p1[0] - 108
+    T_CRATE = max(tp1 + 0.3, t_pass(CRATE_DOWN_X - 140))
+
     def p1_bob(t):
-        k = 1 - M.progress(t, T_CRATE - 0.35, T_CRATE, "sine")
+        k = 1 - M.progress(t, T_CRATE - 0.2, T_CRATE + 0.1, "sine")
         k2 = M.progress(t, T_CRATE + 0.6, T_CRATE + 1.2, "sine")
-        return Tf(dy=-4 * abs(math.sin(math.pi * t * 1.4)) * k - 1.5 * math.sin(2 * math.pi * t / 2.7) ** 2 * k2,
-                  rot=0.8 * math.sin(math.pi * t * 1.4) * k, px=p1[0], py=p1[1])
+        return Tf(dy=-4 * abs(math.sin(math.pi * t * 1.4)) * k - 1.5 * math.sin(2 * math.pi * t / 2.7) ** 2 * k2
+                  - 6 * bump(t, T_CRATE + 0.17, 0.2) - 6 * bump(t, T_P2POINT + 0.25, 0.2),
+                  rot=0.9 * math.sin(math.pi * t * 1.4) * k, px=p1[0], py=p1[1])
 
     CRATE_S = 0.62
-    c_lift = V.mid(C.hand_positions(V.dockhand, *p1, K, -1, variant=0, pose="lift"))
     c_carry = V.mid(C.hand_positions(V.dockhand, *p1, K, -1, variant=0, pose="carry"))
-    crate_up = (c_lift[0], c_lift[1] - 34)
     crate_hip = (c_carry[0] - 4, c_carry[1] - 6)
-    crate_down = (p1[0] - 108, PIER_Y - 49 * CRATE_S + 2)
-    tp1 = t_pass(p1[0] + 40)
+    crate_down = (CRATE_DOWN_X, PIER_Y - 49 * CRATE_S + 2)
 
     def crate_tf(t):
-        b = p1_bob(t)
         if t < T_CRATE:
-            return b
-        if t < T_CRATE + 0.25:
-            u = M.progress(t, T_CRATE, T_CRATE + 0.25, "inout")
-            x, y = M.lerp(crate_up[0], crate_hip[0], u), M.lerp(crate_up[1], crate_hip[1], u)
+            bx, by = V.apply_tf(p1_bob(t), *crate_hip, p1)
         else:
-            u = M.progress(t, T_CRATE + 0.25, T_CRATE + 0.47, "in")
-            x, y = M.lerp(crate_hip[0], crate_down[0], u), M.lerp(crate_hip[1], crate_down[1], u)
-            bx, by = x, y
-            return Tf(dx=bx - crate_up[0], dy=by - crate_up[1])
-        bx, by = V.apply_tf(b, x, y, p1)
-        return Tf(dx=bx - crate_up[0], dy=by - crate_up[1])
+            u = M.progress(t, T_CRATE, T_CRATE + 0.24, "in")
+            bx, by = M.lerp(crate_hip[0], crate_down[0], u), M.lerp(crate_hip[1], crate_down[1], u)
+        return Tf(dx=bx - crate_hip[0], dy=by - crate_hip[1])
 
     def p1_frame(t):
         if t >= T_P2POINT + 0.3:
-            return 4.0
-        if t >= T_CRATE + 0.42:
             return 3.0
-        if t >= T_CRATE + 0.12:
+        if t >= T_CRATE + 0.22:
             return 2.0
-        return 1.0 if tp1 <= t < tp1 + 1.2 else 0.0
+        return 1.0 if t >= tp1 - 0.1 else 0.0
 
-    sc.add("crate1", doc(PR.crate(*crate_up, CRATE_S)), motion=crate_tf)
-    sc.add("dockhand1", [doc(V.dockhand(*p1, K, -1, variant=0, pose="lift")),
-                         doc(V.dockhand(*p1, K, -1, variant=0, pose="lift", expr="surprised")),
-                         doc(V.dockhand(*p1, K, -1, variant=0, pose="carry")),
+    sc.add("crate1", doc(PR.crate(*crate_hip, CRATE_S)), motion=crate_tf)
+    sc.add("dockhand1", [doc(V.dockhand(*p1, K, -1, variant=0, pose="carry", expr="worried")),
+                         doc(V.dockhand(*p1, K, -1, variant=0, pose="carry", expr="surprised")),
                          doc(V.dockhand(*p1, K, -1, variant=0, pose="stand", expr="neutral")),
                          doc(V.dockhand(*p1, K, -1, variant=0, pose="stand", expr="happy"))],
            frame_at=p1_frame, motion=p1_bob)
@@ -1407,7 +1403,7 @@ def build(ctx):
     sc.add("jar_pier", doc(PR.jar(*j_carry, JAR_S)), motion=jar_pier_tf)
 
     # ---------------------------------------------------------------- Jonah on land
-    # frames: 0 stand east, 1 refuse, 2..9 run cycle west, 10 panting west, 11 looking back east,
+    # frames: 0 stand east, 1 refuse, 2..9 run cycle west, 10 panting west, 11 looking back east (stubborn),
     #         12 arrived (surprised), 13 points at the ship, 14 stand west, 15 fetch coins, 16 hold them up,
     #         17 stand west (worried), 18 hop (boarding)
     def jland_frame(t):
@@ -1439,7 +1435,7 @@ def build(ctx):
               doc(jonah_fig(JX0, GY, K, 1, pose="refuse", expr="angry"))] +
              [doc(jonah_fig(JX0, GY, K, -1, pose=p, expr="worried")) for p in V.RUN_SEQ] +
              [doc(jonah_fig(JX0, GY, K, -1, pose="stand", expr="tired")),
-              doc(jonah_fig(JX0, GY, K, 1, pose="stand", expr="worried")),
+              doc(jonah_fig(JX0, GY, K, 1, pose="stubborn")),
               doc(jonah_fig(JX0, GY, K, -1, pose="stand", expr="surprised")),
               doc(jonah_fig(JX0, GY, K, -1, pose="point", expr="neutral")),
               doc(jonah_fig(JX0, GY, K, -1, pose="stand", expr="neutral")),
@@ -1534,11 +1530,26 @@ def build(ctx):
                                alpha=1 - M.progress(t, T_LEAP, T_LEAP + 0.2, "linear")))
     sc.add("jonah_land", jland, motion=jland_tf, frame_at=jland_frame)
 
-    # coins in Jonah's raised hand, then dropping one by one into the captain's palm
+    # coins: three on Jonah's open palm; one by one each hops UP out of his hand (about 60 px) and drops DOWN into
+    # the captain's open palm, 45 px ahead of and 40 px above it. All coin layers are drawn above both figures.
+    COIN_R = 10.5
+    palm = (cap_palm[0] + PALM_OFF[0], cap_palm[1] + PALM_OFF[1])
+    coin_rest = [(palm[0] - 9, palm[1] + 2, -8), (palm[0] + 9, palm[1] + 1, 10), (palm[0], palm[1] - 7, 2)]
     for i, (cx, cy, tilt) in enumerate(coin_rest):
-        hand_c = (give[0] - 4 + (i - 1) * 9, give[1] - 10 - (i == 2) * 6)
-        t0 = T_DROP + 0.11 * i
-        t_land = T_COIN_LAND + 0.11 * i
+        t_land = T_COIN_LAND + COIN_GAP * i
+
+        def coin_palm_tf(t, t_land=t_land):
+            if t < t_land or t >= T_TAKE:
+                return Tf(alpha=0.0)
+            return V.compose(ship_tf(t), cap_xy, dy=cap_dy(t) + 3 * bump(t, t_land, 0.15))
+
+        sc.add(f"coin_palm{i}", doc(coin_svg(cx, cy, COIN_R, tilt)), motion=coin_palm_tf, wc=0.3)
+
+    hand0 = (give[0] + HAND_OFF[0], give[1] + HAND_OFF[1])     # where the coins sit on Jonah's palm
+    for i, (cx, cy, tilt) in enumerate(coin_rest):
+        hand_c = (hand0[0] + (i - 1) * 8, hand0[1] - (i == 2) * 7)
+        t0 = T_DROP + COIN_GAP * i
+        t_land = t0 + COIN_FLY
 
         def coin_fly_tf(t, hand_c=hand_c, t0=t0, t_land=t_land, dst=(cx, cy), i=i):
             if t < T_GIVE or t >= t_land:
@@ -1551,28 +1562,35 @@ def build(ctx):
             b = V.compose(ship_tf(t), cap_xy, dy=cap_dy(t))
             ex, ey = V.apply_tf(b, *dst, cap_xy)
             x = M.lerp(hx, ex, u)
-            y = M.lerp(hy, ey, u) - 26 * 4 * u * (1 - u)
-            return Tf(dx=x - hand_c[0], dy=y - hand_c[1], rot=200 * u * (1 if i % 2 else -1),
+            y = M.lerp(hy, ey, u) - COIN_ARC * 4 * u * (1 - u)
+            return Tf(dx=x - hand_c[0], dy=y - hand_c[1], rot=320 * u * (1 if i % 2 else -1),
                       px=hand_c[0], py=hand_c[1])
 
-        sc.add(f"coin_fly{i}", doc(coin_svg(hand_c[0], hand_c[1], 7.5, tilt)), motion=coin_fly_tf, wc=0.3)
+        sc.add(f"coin_fly{i}", doc(coin_svg(hand_c[0], hand_c[1], COIN_R, tilt)), motion=coin_fly_tf, wc=0.3)
 
-    # ---------------------------------------------------------------- thought bubble with '？'
-    def bub_tf(t):
+    # ---------------------------------------------------------------- the narrator's question card with '？'
+    def card_tf(t):
         if t < T_BUB or t >= T_POP + 0.25:
             return Tf(alpha=0.0)
-        s = M.progress(t, T_BUB, T_BUB + 0.35, "back") if t < T_POP else 1 + 0.25 * M.progress(t, T_POP, T_POP + 0.2)
-        a = 1.0 if t < T_POP else 1 - M.progress(t, T_POP + 0.05, T_POP + 0.25, "linear")
-        s = max(0.02, s)
-        return Tf(dy=-6 * math.sin(2 * math.pi * (t - T_BUB) / 1.8), sx=s, sy=s, alpha=a, px=JSTOP + 30, py=640)
+        if t < T_POP:
+            s_ = max(0.02, M.progress(t, T_BUB, T_BUB + 0.4, "back"))
+            a = 1.0
+        else:
+            s_ = 1 + 0.18 * M.progress(t, T_POP, T_POP + 0.2)
+            a = 1 - M.progress(t, T_POP + 0.04, T_POP + 0.24, "linear")
+        return Tf(dy=-7 * math.sin(2 * math.pi * (t - T_BUB) / 2.2),
+                  rot=2.0 * math.sin(2 * math.pi * (t - T_BUB) / 3.0), sx=s_, sy=s_, alpha=a,
+                  px=QCARD[0], py=QCARD[1])
 
     def qmark_tf(t):
-        b = bub_tf(t)
-        rot = 8 * math.sin(2 * math.pi * (t - T_BUB) / 1.4) * M.progress(t, T_BUB + 0.3, T_BUB + 0.8)
-        return Tf(b.dx, b.dy, rot, b.sx, b.sy, b.alpha * M.progress(t, T_BUB + 0.12, T_BUB + 0.3, "linear"),
-                  b.px, b.py) if b.alpha > 0 else b
+        b = card_tf(t)
+        if b.alpha <= 0:
+            return b
+        rot = b.rot + 7 * math.sin(2 * math.pi * (t - T_BUB) / 1.5) * M.progress(t, T_BUB + 0.35, T_BUB + 0.9)
+        return Tf(b.dx, b.dy, rot, b.sx, b.sy, b.alpha * M.progress(t, T_BUB + 0.14, T_BUB + 0.32, "linear"),
+                  b.px, b.py)
 
-    sc.add("bubble", bubble_svg(), motion=bub_tf, wc=0.35)
+    sc.add("qcard", qcard_svg(), motion=card_tf, wc=0.35)
     sc.add("qmark", qmark_svg(), motion=qmark_tf, wc=0)
 
     # butterfly by the signpost
@@ -1606,13 +1624,14 @@ def build(ctx):
     gull_layer("gull3", 3080, 150, 0.55, -1, -230, 0, 9, 5, t0=T_WEST - 2.0)
 
     # sparkles: the coins glint as they land in the captain's palm
-    sc.fx.append(_glint_fx(lambda t: V.apply_tf(cap_tf(t), *palm, cap_xy), T_COIN_LAND, T_TAKE + 0.15))
-    sc.fx.append(_glint_fx(lambda t: V.apply_tf(jland_tf(t), give[0] - 4 - (jpay - JX0), give[1] - 12, (JX0, GY)),
+    sc.fx.append(_glint_fx(lambda t: V.apply_tf(cap_tf(t), palm[0], palm[1] - 4, cap_xy), T_COIN_LAND,
+                           T_TAKE + 0.02))
+    sc.fx.append(_glint_fx(lambda t: V.apply_tf(jland_tf(t), hand0[0] - (jpay - JX0), hand0[1] - 4, (JX0, GY)),
                            T_GIVE + 0.05, T_DROP + 0.1, n=3))
 
     # ---------------------------------------------------------------- sound
-    sc.sfx("waves_calm", 0, dur=L2.start + 0.5, gain_db=-19, fade_in=0.8, fade_out=1.0)
-    sc.sfx("waves_calm", L2.start - 0.8, dur=T - L2.start + 1.6, gain_db=-13, fade_in=1.5, fade_out=0.8)
+    sc.sfx("wind_soft", 0, dur=L2.start + 0.6, gain_db=-18, fade_in=0.8, fade_out=1.4)
+    sc.sfx("waves_calm", L2.start - 1.0, dur=T - L2.start + 1.8, gain_db=-13, fade_in=1.6, fade_out=0.8)
     sc.sfx("birds", 0, dur=L2.start + 0.4, gain_db=-19, fade_in=0.8, fade_out=1.0, pan=0.3)
     sc.sfx("whoosh", T_TURN - 0.05, gain_db=-9, pan=0.2)
     sc.sfx("footsteps_run", LEG1_AT, dur=LEG1_DUR, gain_db=-9, fade_in=0.05, fade_out=0.25, rate=rate1)
@@ -1625,6 +1644,7 @@ def build(ctx):
     sc.sfx("ship_creak", L2.start + 1.0, dur=T - L2.start - 0.2, gain_db=-17, fade_in=1.0, fade_out=0.8)
     sc.sfx("gull", T_WEST + 0.3, gain_db=-17, pan=-0.5)
     sc.sfx("coins", T_COIN_LAND - 0.02, gain_db=-6)
+    sc.sfx("thud", T_CRATE + 0.24, gain_db=-19, pan=0.3)
     sc.sfx("whoosh", T_LEAP, gain_db=-13, pan=-0.1)
     sc.sfx("thud", T_LAND, gain_db=-13)
     sc.sfx("cloth", T_SAIL, gain_db=-13)

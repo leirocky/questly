@@ -4,27 +4,34 @@
 
 One 2800 x 1575 stage, no cuts: a wide view over the whole city of Nineveh from a family's flat mud-brick roof.
 Foreground: the roof terrace (a reed mat, a ladder hatch, pots, a dovecote with doves, a lamb and a goat in
-sackcloth blankets) where a family in sackcloth kneels in prayer - grandpa, father, mother, a girl and a boy.
-Beyond the low parapet: a street where neighbours kneel, rows of flat roofs (people praying on them too), palms,
-the great ziggurat, the far city with its wall and palace, and blue mountains on the horizon. A heavy grey cloud
-hangs low over the whole city (adapted from the approved v1 s10 ending: same cloud banks, gleam, rays, glazes).
+sackcloth blankets) where a family in sackcloth kneels in prayer as a group - the girl in front of grandpa,
+mother holding the boy close, father a step back. Beyond the low parapet: the street below (only the heads and
+shoulders of the neighbours kneeling there show over our wall), rows of flat roofs (people praying on them too),
+an open square in the middle of the city full of kneeling people, palms, the great ziggurat (small, far off on
+the left - the light never falls on it), the far city with its wall, and blue mountains on the horizon. A heavy
+overcast cloud hangs low over the whole city (adapted from the approved v1 s10 ending: cloud banks, gleam, rays).
 
-  line 0  "上帝看见他们真的改掉了坏行为，"  calm and grey, everyone kneels with eyes closed; a warm glow kindles
-                                          behind the cloud right above the ziggurat (God sees - never a figure);
-                                          the girl peeks up at it; the camera drifts slowly over the praying roof.
-          "就可怜他们，"                    the cloud splits above the ziggurat (chime), golden light pours down in
-                                          rays over the city, the gloom lifts; the family looks up in wonder.
+  line 0  "上帝看见他们真的改掉了坏行为，"  overcast and calm, everyone kneels with eyes closed. God sees: the
+                                          middle of the cloud, right above the square of praying people,
+                                          warms to gold, a golden seam glows along its lower edge, the gloom
+                                          under it thins and a few sparkles drift down (never a figure); the
+                                          girl peeks up at it; the camera drifts slowly over the praying roof.
+          "就可怜他们，"                    the middle cloud splits into two halves that slide apart (chime),
+                                          golden light pours down in rays over the square, the homes and our
+                                          roof, the gloom lifts; the family tilts up to look into the light.
           "没有毁灭这座城。"                the cloud banks drift apart and dissolve, the sky turns gold, the warm
                                           light spreads over all the roofs; faces turn to relief and joy, the
-                                          neighbours on the roofs and in the street smile up; doves rise.
-  line 1  "整座尼尼微城，"                  the camera pulls out to the whole city: the doves burst from the dovecote
-                                          and circle over the roofs; people all over the city stand up and cheer in
-                                          a wave from the centre outward.
-          "都得到了平安！"                  the children jump and cheer, father raises his arms, the lamb and the goat
-                                          hop; sparkles twinkle over the city. Calm, joyful hold for the dissolve.
+                                          neighbours on the roofs, in the square and in the street smile up;
+                                          doves take off from the roofs.
+  line 1  "整座尼尼微城，"                  one continuous camera pull-out to the whole city: the doves burst from
+                                          the dovecote and circle over the roofs; people all over the city stand
+                                          up and cheer in a wave from the centre outward.
+          "都得到了平安！"                  the children jump and cheer (left of the subtitle box), father raises
+                                          his arms, the lamb and the goat hop; sparkles twinkle over the city;
+                                          a soft blue comes back at the top of the sky. Calm, joyful hold.
 
 Pose changes are hard cuts (no crossfades between different drawings) hidden at the bottom of a small dip /
-squash-and-hop; the cloud's dark -> lit recolouring is a crossfade of the same drawing. All times come from the
+squash-and-hop; the clouds' dark -> lit recolouring is a crossfade of the same drawing. All times come from the
 narration chunks (a phrase inside a chunk is placed by its character index), with fallbacks if the text changes.
 """
 import math
@@ -48,12 +55,13 @@ from engine.scene import Scene
 SW, SH = 2800, 1575
 INK = P["ink"]
 
-GAP_X = 1640                 # where the cloud parts (right above the ziggurat)
-ZIG_Y, ZIG_S = 1010, 0.42    # the great ziggurat (its base is hidden by the house rows)
+GAP_X = 1640                 # where the cloud parts: right above the open square full of kneeling people
+ZIG_X, ZIG_Y, ZIG_S = 420, 985, 0.32    # the great ziggurat, far off on the left (base hidden by row A)
 SKY_Y = 930                  # far skyline ground line
 ROW_A_Y, ROW_A_S = 1042, 0.29
 ROW_B_Y, ROW_B_S = 1186, 0.38
-STREET_Y = 1240              # ground line of the neighbours kneeling in the street beyond our parapet
+SQUARE_Y = 1162              # ground line of the people kneeling in the open square (between row A and row B)
+STREET_Y = 1304              # the street below, beyond our parapet: our wall hides the neighbours below the chest
 PAR_TOP, PAR_FACE, PAR_BOT = 1240, 1257, 1336    # our parapet: top surface, inner face top, foot (floor starts)
 FS = 1.35                    # family scale
 
@@ -83,6 +91,11 @@ def cut_at(t, fps=30):
     return (math.floor(t * fps) + 0.5) / fps
 
 
+def out2(u):
+    """Quadratic ease-out: starts moving at once (no dead stop at a key), settles gently."""
+    return 1 - (1 - u) ** 2
+
+
 # ============================================================================ sky & far city
 
 
@@ -96,10 +109,24 @@ def sky_gold_svg():
     return doc(body, defs)
 
 
+def sky_blue_svg():
+    """Soft clear blue that comes back at the top of the sky at the end (eases the dissolve into s19)."""
+    defs = (S.lin_grad("s18skyb", [(0, "#a6d2e6", 0.95), (0.45, "#b8dbe8", 0.6), (1, "#c8e2ea", 0)]) +
+            S.rad_grad("s18skyh", [(0, "#ffffff", 1), (0.55, "#ffffff", 0.75), (1, "#ffffff", 0)]))
+    mask = (f'<mask id="s18skym" maskUnits="userSpaceOnUse" x="-20" y="-20" width="{SW + 40}" height="560">'
+            f'<rect x="-20" y="-20" width="{SW + 40}" height="560" fill="#ffffff"/>'
+            f'<ellipse cx="{GAP_X}" cy="120" rx="760" ry="420" fill="#000000" opacity="0.8" filter="url(#blur-lg)"/>'
+            f'</mask>')
+    body = f'<rect x="-20" y="-20" width="{SW + 40}" height="540" fill="url(#s18skyb)" mask="url(#s18skym)"/>'
+    return doc(body, defs + mask)
+
+
 def fair_clouds_svg():
+    """Fair-weather clouds, placed outside the earlier (closer) camera views: the pull-out brings them in from
+    the top and side edges of the frame after the overcast has gone (they never show through it)."""
     body = ""
-    for cx, cy, w, h, seed in ((380, 170, 340, 104, 61), (1030, 100, 260, 84, 62), (2330, 130, 310, 98, 63),
-                               (2690, 330, 240, 78, 64), (720, 400, 200, 64, 65)):
+    for cx, cy, w, h, seed in ((380, 92, 340, 104, 61), (1060, 58, 260, 84, 62), (2290, 78, 310, 98, 63),
+                               (2700, 330, 240, 78, 64), (20, 318, 210, 66, 65)):
         body += S.cloud(cx, cy, w, h, "#fff6e2", seed=seed, sw=3, shade_fill="#f6d9a8")
     return doc(S.g(body, filter="wobble"))
 
@@ -111,58 +138,66 @@ def mountains_svg():
     near = S.hill(-100, 2950, 825, 70, seed=12, bumps=7)
     body = (S.path(far, "#c9cbd6", sw=2.5) + S.path(far2, "#c4c6d4", sw=2.5)
             + S.path(near, "#d8d2cc", sw=2.5))
-    snow = ""
-    return doc(S.g(body + snow, filter="wobble", opacity=0.95))
+    return doc(S.g(body, filter="wobble", opacity=0.95))
 
 
 def palm(x, y, s, lean=0.0):
     return PR.palm_tree(x, y, s, lean=lean)
 
 
-# row B houses: (x, variant, facing). Gap around the ziggurat so the light lands in the middle of the city.
+# row B houses: (x, variant, facing). The gap in the middle is the open square where the light lands.
 ROW_B = [(-60, 2, 1), (300, 0, 1), (640, 1, -1), (990, 3, 1), (1330, 0, -1), (1960, 2, 1), (2330, 3, -1),
          (2650, 0, 1), (2930, 1, -1)]
+# row A (farther): homes fill the middle behind the square
 ROW_A = [(-40, 0, 1), (190, 2, -1), (430, 3, 1), (660, 0, -1), (880, 1, 1), (1120, 2, 1), (1350, 0, -1),
-         (1930, 3, 1), (2150, 0, -1), (2380, 2, 1), (2620, 1, -1), (2850, 0, 1)]
+         (1565, 2, 1), (1770, 0, -1), (1930, 3, 1), (2150, 0, -1), (2380, 2, 1), (2620, 1, -1), (2850, 0, 1)]
 ROOF_DY = {0: -510, 1: -845, 2: -524, 3: -594}
 
 
+def roof_y(i):
+    x, v, fc = ROW_B[i]
+    return ROW_B_Y + ROOF_DY[v] * ROW_B_S
+
+
 def city_svg():
-    """Far skyline, the great ziggurat and two rows of houses with palms (static)."""
+    """Far skyline, the great ziggurat (far left), two rows of houses with palms and the open square (static)."""
     defs = (S.lin_grad("s18haze", [(0, "#f1e2c4", 0), (1, "#f1e2c4", 0.5)]) +
             S.lin_grad("s18ground", [(0, "#e8d4aa"), (0.5, "#e2c899"), (1, "#d9bb88")]))
     body = PR.nineveh_skyline(-120, 2920, SKY_Y, scale=0.66, seed=5, haze=0.5)
     body += f'<rect x="-20" y="{SKY_Y - 200}" width="{SW + 40}" height="210" fill="url(#s18haze)"/>'
-    # the city floor between the house rows (streets and yards seen from above)
+    # the city floor between the house rows (streets, yards and the square seen from above)
     gy0, gy1 = SKY_Y - 6, PAR_TOP + 30
     ground = f'<rect x="-30" y="{gy0}" width="{SW + 60}" height="{gy1 - gy0}" fill="url(#s18ground)"/>'
     lanes = "".join(f'<path d="M-30,{y} L{SW + 30},{y}"/>' for y in (SKY_Y + 40, ROW_A_Y + 26, ROW_A_Y + 70, ROW_A_Y + 112))
     ground += f'<g stroke="{P["sand_dark"]}" stroke-width="2" opacity="0.28" fill="none">{lanes}</g>'
-    body += S.g(ground, filter="wobble")
-    body += PR.ziggurat(GAP_X, ZIG_Y, ZIG_S)
+    # paving of the open square
+    sq = (f'<path d="{S.blob(GAP_X, SQUARE_Y - 6, 190, 40, 0.06, 12, 3)}" fill="#ecd7ad" opacity="0.8"/>'
+          f'<path d="{S.blob(GAP_X, SQUARE_Y - 6, 120, 24, 0.06, 10, 4)}" fill="none" stroke="{P["sand_dark"]}" '
+          f'stroke-width="2.5" opacity="0.35"/>')
+    body += S.g(ground + sq, filter="wobble")
+    body += PR.ziggurat(ZIG_X, ZIG_Y, ZIG_S)
     # row A (farther) with palms behind
     rowa = ""
-    for x, s, ln in ((70, 0.29, 0.1), (560, 0.32, -0.1), (1040, 0.28, 0.15), (1250, 0.32, -0.2), (2050, 0.3, 0.1),
-                     (2520, 0.32, -0.1), (2760, 0.28, 0.2)):
+    for x, s, ln in ((70, 0.29, 0.1), (560, 0.32, -0.1), (1040, 0.28, 0.15), (1250, 0.32, -0.2), (1680, 0.3, 0.12),
+                     (2050, 0.3, 0.1), (2520, 0.32, -0.1), (2760, 0.28, 0.2)):
         rowa += palm(x, ROW_A_Y - 10, s, ln)
     for x, v, fc in ROW_A:
         rowa += PR.house(x, ROW_A_Y, ROW_A_S, variant=v, facing=fc)
     body += f'<g opacity="1">{rowa}</g>'
     body += f'<rect x="-20" y="{ROW_A_Y - 120}" width="{SW + 40}" height="140" fill="url(#s18haze)" opacity="0.6"/>'
-    # row B (nearer): palms in the open square in front of the ziggurat, houses
+    # row B (nearer): two palms at the sides of the open square, houses
     rowb = ""
-    for x, s, ln in ((1560, 0.44, -0.15), (1745, 0.4, 0.12), (1470, 0.36, 0.2), (1850, 0.35, -0.1),
-                     (170, 0.38, 0.1), (2140, 0.39, -0.12)):
+    for x, s, ln in ((1464, 0.42, 0.16), (1818, 0.4, -0.14), (170, 0.38, 0.1), (2140, 0.39, -0.12)):
         rowb += palm(x, ROW_B_Y - 8, s, ln)
     for x, v, fc in ROW_B:
         rowb += PR.house(x, ROW_B_Y, ROW_B_S, variant=v, facing=fc)
-    # the street in front of row B (between it and our parapet)
+    # the street in front of row B (below our parapet)
     street = (f'<path d="M-30,{ROW_B_Y - 4} L{SW + 30},{ROW_B_Y - 4} L{SW + 30},{PAR_TOP + 20} L-30,{PAR_TOP + 20} Z" '
               f'fill="#e3c796" stroke="{INK}" stroke-width="3"/>')
     street += (f'<g stroke="{P["ink_soft"]}" stroke-width="2" opacity="0.25" fill="none">'
                + "".join(f'<path d="M-30,{y} L{SW + 30},{y}"/>' for y in (ROW_B_Y + 14, ROW_B_Y + 34))
                + "</g>")
-    # a well and a few jars in the street
+    # a few jars and a sack in the street
     street += PR.jar(1385, ROW_B_Y + 14, 0.36) + PR.jar(1412, ROW_B_Y + 20, 0.3)
     street += PR.sack(2290, ROW_B_Y + 28, 0.32, seed=2)
     body += rowb + S.g(street, filter="wobble")
@@ -172,12 +207,15 @@ def city_svg():
 # ============================================================================ our roof terrace
 
 
+MAT = (150, 1190, 1418, 1572)     # reed mat under the family: x0, x1, y0, y1
+
+
 def terrace_svg():
     defs = (S.lin_grad("s18floor", [(0, "#dcbd8c"), (0.4, "#e7cb9a"), (1, "#ecd2a4")]) +
             S.lin_grad("s18par", [(0, "#d3ae78"), (1, "#c49c66")]) +
             S.lin_grad("s18hatch", [(0, "#5a3d2b"), (1, "#7a5638")]))
     out = ""
-    # floor (plaster) with perspective joints converging on the ziggurat
+    # floor (plaster) with perspective joints converging on the square
     out += (f'<rect x="-30" y="{PAR_BOT}" width="{SW + 60}" height="{SH - PAR_BOT + 40}" fill="url(#s18floor)" '
             f'stroke="{INK}" stroke-width="4"/>')
     j = ""
@@ -217,11 +255,11 @@ def terrace_svg():
         yy += 22
         row += 1
     par += f'<g stroke="{P["sand_dark"]}" stroke-width="2" opacity="0.5" fill="none">{br}</g>'
-    # plaster patches on the parapet and a drain spout
+    # plaster patches on the parapet
     for cx, cy in ((520, 1298), (1300, 1284), (2210, 1304)):
         par += f'<path d="{S.blob(cx, cy, 60, 18, 0.25, 8, cx + 7)}" fill="#e3c592" opacity="0.8"/>'
     out += par
-    # ladder hatch at the front left (a ladder top pokes out of it)
+    # ladder hatch at the front right (a ladder top pokes out of it)
     hx0, hx1, hy0 = 2620, 2820, 1500
     out += (f'<path d="M{hx0},{hy0} L{hx1},{hy0} L{hx1 + 40},{SH + 40} L{hx0 - 40},{SH + 40} Z" fill="url(#s18hatch)" '
             f'stroke="{INK}" stroke-width="4"/>')
@@ -235,7 +273,7 @@ def terrace_svg():
                 f'<path d="M{2676},{ry} L{2778},{ry}" stroke="{P["wood_light"]}" stroke-width="8" stroke-linecap="round"/>')
     out += lad
     # reed mat under the family
-    mx0, mx1, my0, my1 = 210, 1420, 1418, 1572
+    mx0, mx1, my0, my1 = MAT
     mat = (f'<path d="M{mx0 + 40},{my0} L{mx1 - 10},{my0} L{mx1 + 30},{my1} L{mx0 - 20},{my1} Z" fill="#d9b86a" '
            f'stroke="{INK}" stroke-width="4"/>')
     stripes = ""
@@ -247,9 +285,10 @@ def terrace_svg():
     mat += (f'<path d="M{mx0 + 26},{my0 + 30} L{mx1 + 2},{my0 + 30} M{mx0 + 6},{my1 - 34} L{mx1 + 18},{my1 - 34}" '
             f'stroke="{P["terracotta"]}" stroke-width="7" opacity="0.8"/>')
     out += mat
-    # pots and a basket along the parapet, a bedroll
-    deco = (PR.jar(1545, 1370, 0.7) + PR.jar(1625, 1392, 0.54, color="#c46f48")
-            + PR.sack(2240, 1408, 0.66, seed=5) + PR.rope_coil(1745, 1404, 0.64))
+    # pots, a rope coil and a sack along the parapet (static props under the subtitle box at the end)
+    deco = (PR.jar(1330, 1376, 0.7) + PR.jar(1410, 1398, 0.54, color="#c46f48")
+            + PR.rope_coil(1600, 1404, 0.64) + PR.sack(1790, 1402, 0.62, seed=5)
+            + PR.jar(1255, 1440, 0.46, color="#b9845a"))
     return doc(S.g(out, filter="wobble") + deco, defs)
 
 
@@ -303,7 +342,7 @@ def foreground_svg():
     """Static framing: potted plants and jars in the bottom corners."""
     body = (PR.bush(2770, SH + 8, 1.05, variant=1) + PR.jar(2600, SH - 46, 0.9) + PR.jar(2680, SH - 20, 0.66)
             + PR.grass_tuft(2470, SH + 4, 1.0, variant=2)
-            + PR.bush(-10, SH + 16, 0.95, variant=3) + PR.grass_tuft(330, SH + 6, 0.9, variant=0))
+            + PR.bush(-40, SH + 16, 0.95, variant=3) + PR.grass_tuft(1230, SH + 6, 0.9, variant=0))
     return doc(body)
 
 
@@ -322,59 +361,80 @@ def person(kind, variant, x, y, s, facing, state):
             + C.citizen(x, y, s, facing, kind=kind, variant=variant, pose=pose, attire="sackcloth", expr=expr))
 
 
-# the family on our roof: name -> (kind, variant, x, y, facing, z)
+# the family on our roof, grouped with overlaps and different depths (the children well left of the subtitle
+# box of the final framing): name -> (kind, variant, x, y, facing, z)
 FAMILY = {
-    "grandpa": ("elder", 1, 405, 1466, 1, 30.0),
-    "father": ("man", 2, 636, 1476, 1, 30.2),
-    "girl": ("child", 1, 832, 1516, 1, 31.0),
-    "mother": ("woman", 3, 1062, 1472, 1, 30.4),
-    "boy": ("child", 0, 1270, 1512, 1, 31.2),
+    "girl": ("child", 1, 330, 1522, 1, 31.2),       # in front of grandpa
+    "grandpa": ("elder", 1, 462, 1458, 1, 30.0),
+    "mother": ("woman", 3, 640, 1480, 1, 30.5),     # the boy kneels close against her
+    "boy": ("child", 0, 772, 1518, 1, 31.0),
+    "father": ("man", 2, 965, 1444, 1, 29.8),       # a step back
 }
 
-# neighbours: in the street beyond the parapet and kneeling on the roofs of row B
+# neighbours in the street below our parapet (z 4: our terrace hides them below the chest), in small
+# irregular groups: (kind, variant, x, y, scale, facing)
 STREET = {
-    "st_l": [("woman", 0, 1440, STREET_Y, 0.44, 1), ("man", 3, 1508, STREET_Y + 4, 0.44, 1),
-             ("child", 2, 1566, STREET_Y + 6, 0.44, 1)],
-    "st_c": [("elder", 2, 1700, STREET_Y, 0.44, -1), ("man", 0, 1768, STREET_Y + 4, 0.44, -1),
-             ("woman", 1, 1838, STREET_Y + 2, 0.44, -1), ("child", 3, 1898, STREET_Y + 6, 0.44, -1)],
-    "st_r": [("man", 1, 2010, STREET_Y + 2, 0.44, -1), ("woman", 2, 2082, STREET_Y + 4, 0.44, -1),
-             ("elder", 3, 2155, STREET_Y, 0.44, -1)],
+    "st_l": [("woman", 0, 1196, STREET_Y, 0.46, 1), ("child", 2, 1250, STREET_Y - 8, 0.46, 1),
+             ("man", 3, 1352, STREET_Y + 2, 0.46, -1)],
+    "st_c": [("elder", 2, 1548, STREET_Y - 2, 0.46, 1), ("woman", 1, 1668, STREET_Y + 3, 0.46, -1),
+             ("child", 3, 1718, STREET_Y - 10, 0.46, -1)],
+    "st_r": [("man", 1, 1908, STREET_Y, 0.46, -1), ("man", 0, 2052, STREET_Y + 4, 0.46, 1),
+             ("woman", 2, 2112, STREET_Y - 2, 0.46, -1)],
+}
+
+# the open square in the middle of the city, right under the gap in the cloud
+SQUARE = {
+    "sq_back": [("man", 1, 1598, SQUARE_Y - 26, 0.31, 1), ("woman", 2, 1676, SQUARE_Y - 30, 0.31, -1),
+                ("elder", 3, 1735, SQUARE_Y - 24, 0.31, -1)],
+    "sq_l": [("man", 2, 1500, SQUARE_Y, 0.34, 1), ("woman", 3, 1546, SQUARE_Y + 6, 0.34, 1),
+             ("child", 1, 1590, SQUARE_Y + 12, 0.34, 1)],
+    "sq_r": [("child", 0, 1680, SQUARE_Y + 12, 0.34, -1), ("elder", 0, 1722, SQUARE_Y + 2, 0.34, -1),
+             ("woman", 0, 1780, SQUARE_Y + 8, 0.34, -1)],
 }
 
 
 def roof_people():
-    """Little groups kneeling on the roofs of row B: name -> members."""
-    out = {}
-    picks = {1: ("man", 1, "woman", 0), 3: ("elder", 0, "child", 1), 4: ("woman", 2, "man", 3),
-             5: ("man", 0, "child", 2), 6: ("woman", 1, "elder", 2), 2: ("child", 0, "woman", 3)}
+    """Little groups kneeling on the roofs of row B (varied counts, spacing and facing): name -> members."""
     s = 0.31
-    for i, (k1, v1, k2, v2) in picks.items():
+    plan = {  # roof index: [(kind, variant, dx from the roof centre, facing)]
+        1: [("man", 1, -52, 1), ("woman", 0, 0, 1), ("child", 2, 40, -1)],
+        2: [("woman", 2, -18, 1), ("child", 0, 30, -1)],
+        3: [("elder", 0, 22, 1)],
+        4: [("woman", 1, -30, 1), ("man", 3, 8, 1)],
+        5: [("child", 3, -44, 1), ("man", 0, 4, -1)],
+        6: [("woman", 3, -48, -1), ("elder", 2, 30, -1)],
+        7: [("man", 2, -10, -1)],
+    }
+    out = {}
+    for i, mem in plan.items():
         x, v, fc = ROW_B[i]
-        ry = ROW_B_Y + ROOF_DY[v] * ROW_B_S + 2
+        ry = roof_y(i) + 2
         cx = x - 40 * ROW_B_S * fc
-        f = 1 if x < GAP_X else -1
-        out[f"roof{i}"] = [(k1, v1, cx - 26, ry, s, f), (k2, v2, cx + 26, ry + 1, s, f)]
+        out[f"roof{i}"] = [(k, var, cx + dx, ry + (2 if j % 2 else 0), s, f) for j, (k, var, dx, f) in enumerate(mem)]
     return out
 
 
 # ============================================================================ light
 
 
-def light_fx(gloom_a, hole_r, gap, warm_a, glow_a, glow_s, glow_c, glow_r=(900, 520)):
+def light_fx(gloom_a, hole_r, gap, warm_a, glow_a, glow_s, glow_c, glow_r=(900, 520), glow_floor=(1190, 1290)):
     """One cheap output-space pass (instead of three full-frame glaze layers, see the render budget):
 
-    * gloom: a cool multiply glaze under the heavy cloud (strongest at the top of the frame). From God's mercy
-      on it lifts outward from the cloud gap: a soft elliptical hole of radius hole_r(t) (stage px) centred on
-      ``gap`` lets the light spread over the city, while gloom_a(t) thins what is left;
+    * gloom: a cool multiply glaze under the overcast (strongest at the top of the frame). It thins under the
+      cloud's middle as God sees, then lifts outward from the cloud gap: a soft elliptical hole of radius
+      hole_r(t) (stage px) centred on ``gap`` lets the light spread over the city, while gloom_a(t) thins the
+      rest;
     * warm: a light golden multiply glaze, warm_a(t);
-    * glow: a warm screen glow over the roofs where the rays land (glow_c, radii glow_r * glow_s(t)), glow_a(t).
+    * glow: a warm screen glow over the square and the roofs where the rays land (glow_c, radii
+      glow_r * glow_s(t)), glow_a(t); it fades out below our parapet (stage y glow_floor) so the family in the
+      foreground keeps its own colours.
     The maps are computed on a 1/8-resolution grid and upsampled (they are all soft).
     """
     f = 8
     gw, gh = OUT_W // f, OUT_H // f
     X, Y = np.meshgrid((np.arange(gw) + 0.5) * f, (np.arange(gh) + 0.5) * f)
     v = (Y / OUT_H)[..., None]
-    gstr = np.interp(Y / OUT_H, [0, 0.4, 0.7, 1.0], [0.62, 0.55, 0.36, 0.22])[..., None]
+    gstr = np.interp(Y / OUT_H, [0, 0.4, 0.7, 1.0], [0.32, 0.27, 0.17, 0.1])[..., None]
     top, bot = np.array([0x8d, 0x90, 0xad]) / 255.0, np.array([0xb4, 0xb1, 0xc0]) / 255.0
     gdark = gstr * (1 - (top * (1 - v) + bot * v))           # darkening per channel at full gloom
     wdark = 0.14 * (1 - np.array([255, 223, 174]) / 255.0)
@@ -409,6 +469,9 @@ def light_fx(gloom_a, hole_r, gap, warm_a, glow_a, glow_s, glow_c, glow_r=(900, 
             k = glow_s(t) * view.scale
             r = np.sqrt(((X - cx) / (glow_r[0] * k)) ** 2 + ((Y - cy) / (glow_r[1] * k)) ** 2)
             a = np.interp(r, [0, 0.45, 1.0], [0.5, 0.26, 0.0]) * al
+            oy0 = view.to_out(0, 0)[1]
+            sy = (Y - oy0) / view.scale                       # stage y of each grid cell (camera never rotates)
+            a = a * np.clip((glow_floor[1] - sy) / (glow_floor[1] - glow_floor[0]), 0, 1)
             s8 = np.zeros((gh, gw, 4), np.uint8)
             s8[..., :3] = np.clip(gcol * a[..., None] + 0.5, 0, 255)
             arr = cv2.subtract(255, cv2.multiply(cv2.subtract(255, arr), cv2.subtract(255, up(s8)), scale=1 / 255.0))
@@ -416,14 +479,18 @@ def light_fx(gloom_a, hole_r, gap, warm_a, glow_a, glow_s, glow_c, glow_r=(900, 
     return fx
 
 
-# cloud colours: v1's pre-darkened greys divided by the gloom they now sit under (the gloom is applied after
-# all layers by light_fx); the lit colours are v1's
-CLOUD_DARK = {"back": ("#8a8ea0", "#6d7085"), "front": ("#7f8396", "#64677b"), "low": ("#7b7f92", "#606377")}
+# cloud colours: an overcast grey (lighter than v1's storm slate so the dissolve from s17's hazy sky does not
+# darken into a storm; the lowest banks are the lightest, so the cloud thins toward its bottom edge). The gloom
+# is applied after all layers by light_fx. Lit: warm gold-beige, the clouds catching God's light (not v1's mauve,
+# which turns bruise-purple under the cool gloom).
+CLOUD_DARK = {"back": ("#9b9eac", "#828495"), "front": ("#9294a3", "#7b7d8c"), "low": ("#9fa1ac", "#8c8d98")}
+CLOUD_LIT = {"back": ("#c8b39c", "#a8937f"), "front": ("#c6ae95", "#a68f7b"), "low": ("#cfb48f", "#ab9279"),
+             "centre": ("#d6b98a", "#b0946f")}
 
 
-def bank_frames(items, kind, rect=None):
+def bank_frames(items, kind, rect=None, lit_kind=None):
     out = []
-    for fill, shade in (CLOUD_DARK[kind], V.CLOUD_LIT[kind]):
+    for fill, shade in (CLOUD_DARK[kind], CLOUD_LIT[lit_kind or kind]):
         extra = ""
         if rect:
             x0, x1, y1 = rect
@@ -432,19 +499,58 @@ def bank_frames(items, kind, rect=None):
     return out
 
 
-# grey cloud banks over the city: (items, kind, rect)
+# the overcast over the city: (items, kind, rect). The middle banks (back_c*, low_c*) are drawn as left and
+# right halves so they can slide apart, opaque, when the cloud splits; together they look like one bank.
 BANKS = {
     "back_l": ([(240, 60, 920, 360, 71), (900, 30, 860, 330, 72), (260, 300, 760, 300, 83)], "back",
                (-40, 1240, 230)),
     "back_r": ([(2440, 50, 960, 350, 73), (2790, 90, 620, 300, 74), (2700, 300, 640, 280, 84)], "back",
                (2020, 2900, 230)),
-    "back_c": ([(GAP_X, 120, 860, 360, 75)], "back", (1260, 2020, 160)),
+    "back_cl": ([(GAP_X - 215, 118, 480, 360, 75)], "back", (1190, GAP_X - 80, 140)),
+    "back_cr": ([(GAP_X + 215, 124, 480, 350, 87)], "back", (GAP_X + 80, 2060, 140)),
     "front_l": ([(1080, 250, 1060, 380, 76)], "front", (560, 1580, 190)),
     "front_r": ([(2230, 260, 1020, 360, 77)], "front", (1740, 2900, 190)),
     "low_l": ([(380, 560, 700, 220, 78), (1060, 560, 660, 230, 79)], "low", None),
     "low_r": ([(2200, 555, 720, 225, 80), (2760, 575, 500, 200, 81)], "low", None),
-    "low_c": ([(GAP_X, 530, 560, 210, 82)], "low", None),
+    "low_cl": ([(GAP_X - 150, 532, 380, 205, 82)], "low", None),
+    "low_cr": ([(GAP_X + 155, 526, 390, 212, 88)], "low", None),
 }
+
+
+def cloud_geom(cx, cy, w, h, seed, puffs=6):
+    """The circles and base ellipse of S.cloud(cx, cy, w, h, seed=seed, puffs=puffs) (same random sequence)."""
+    r = random.Random(seed)
+    circles = []
+    for i in range(puffs):
+        u = (i + 0.5) / puffs
+        rad = h * (0.42 + 0.35 * math.sin(math.pi * u)) * r.uniform(0.85, 1.12)
+        x = cx - w / 2 + w * u + r.uniform(-w * 0.03, w * 0.03)
+        y = cy + h * 0.18 - rad * 0.55 + r.uniform(-h * 0.06, h * 0.06)
+        circles.append((x, y, rad))
+    return circles, (cx, cy + h * 0.2, w * 0.52, h * 0.32)
+
+
+def rim_svg(items, rid, y0, y1, col="#ffe6a0", r_out=12, r_in=9):
+    """God's light catching the lower edge of a cloud bank (a golden 'silver lining'): a soft band straddling
+    the bank's silhouette (r_in px inside, r_out px outside, blurred), only below y0 and full by y1."""
+    sil = ""
+    for cx, cy, w, h, seed in items:
+        circles, (bx, by, brx, bry) = cloud_geom(cx, cy, w, h, seed)
+        sil += f'<ellipse cx="{f1(bx)}" cy="{f1(by)}" rx="{f1(brx)}" ry="{f1(bry)}"/>'
+        sil += "".join(f'<circle cx="{f1(x)}" cy="{f1(y)}" r="{f1(r)}"/>' for x, y, r in circles)
+    hgt = SH - y0
+    defs = (f'<filter id="{rid}f" x="-10%" y="-25%" width="120%" height="150%">'
+            f'<feMorphology in="SourceAlpha" operator="dilate" radius="{r_out}" result="d"/>'
+            f'<feMorphology in="SourceAlpha" operator="erode" radius="{r_in}" result="e"/>'
+            f'<feComposite in="d" in2="e" operator="out" result="ring"/>'
+            f'<feGaussianBlur in="ring" stdDeviation="6" result="rb"/>'
+            f'<feFlood flood-color="{col}"/><feComposite in2="rb" operator="in"/></filter>'
+            + S.lin_grad(f"{rid}g", [(0, "#ffffff", 0), (min(1.0, (y1 - y0) / hgt), "#ffffff", 1), (1, "#ffffff", 1)])
+            + f'<mask id="{rid}m" maskUnits="userSpaceOnUse" x="-100" y="-100" width="{SW + 200}" height="{SH + 200}">'
+              f'<rect x="-40" y="{y0}" width="{SW + 80}" height="{hgt}" fill="url(#{rid}g)"/></mask>')
+    body = (f'<g mask="url(#{rid}m)"><g filter="url(#{rid}f)"><g filter="url(#wobble)" fill="#000000">{sil}</g>'
+            f'</g></g>')
+    return doc(body, defs)
 
 
 # ============================================================================ doves
@@ -469,6 +575,31 @@ def perch_wings(t_off, rate, phase, glide_from):
             return 0.0
         return 1.0 + cyc(t)
     return fa
+
+
+# ============================================================================ camera
+
+
+def hermite_cam(keys):
+    """keys [(t, Cam, (vx, vy, vw))]: piecewise cubic Hermite through the keys with the given velocities
+    (stage px/s), so a long move can start out of a slow drift and never comes to a dead stop half-way."""
+    keys = sorted(keys, key=lambda k: k[0])
+
+    def c(t):
+        if t <= keys[0][0]:
+            return keys[0][1]
+        if t >= keys[-1][0]:
+            return keys[-1][1]
+        for (t0, a, va), (t1, b, vb) in zip(keys, keys[1:]):
+            if t0 <= t <= t1:
+                d = t1 - t0
+                u = (t - t0) / d
+                h00, h10 = 2 * u ** 3 - 3 * u ** 2 + 1, u ** 3 - 2 * u ** 2 + u
+                h01, h11 = -2 * u ** 3 + 3 * u ** 2, u ** 3 - u ** 2
+                pa, pb = (a.x, a.y, a.w), (b.x, b.y, b.w)
+                x, y, w = (h00 * pa[i] + h10 * d * va[i] + h01 * pb[i] + h11 * d * vb[i] for i in range(3))
+                return Cam(x, y, w)
+    return c
 
 
 # ============================================================================ build
@@ -497,14 +628,16 @@ def build(ctx):
     t_glad = t_spared + 0.1                                 # relief and joy
     t_cheer0 = t_whole + 0.15                               # the city cheers, from the centre outward
 
-    # ---- sky and city: one static group (the grey of the storm comes from the gloom in light_fx) ----
+    # ---- sky and city (the grey of the overcast comes from the gloom in light_fx) ----
     sc.add("sky", sky_gold_svg(), z=0, wc=0.6)
+    sc.add("sky_blue", sky_blue_svg(), z=0.5, wc=0.4,
+           motion=M.keys([(T - 2.6, {"alpha": 0}), (T - 0.5, {"alpha": 1})], "sine"))
     sc.add("mountains", mountains_svg(), z=1.5)
     sc.add("city", city_svg(), z=2)
-    sc.add("fair", fair_clouds_svg(), z=2.4, motion=M.combine(
-        M.keys([(t_spared + 0.9, {"alpha": 0}), (t_spared + 2.2, {"alpha": 1})], "sine"), M.drift(vx=5, t0=t_spared)))
+    # fair-weather clouds: brought into view by the camera pull-out (no pop-in, never seen through the overcast)
+    sc.add("fair", fair_clouds_svg(), z=2.4, motion=M.drift(vx=3))
 
-    # ---- neighbours on the roofs and in the street: pray -> glad (wave from the centre) -> cheer ----
+    # ---- neighbours on the roofs, in the square and in the street: pray -> glad (wave from the centre) -> cheer
     def dist_delay(gx, k=0.00045):
         return abs(gx - GAP_X) * k
 
@@ -525,6 +658,8 @@ def build(ctx):
 
     for i, (name, members) in enumerate(roof_people().items()):
         add_group(name, members, 3 + 0.01 * i, t_glad + 0.2, t_cheer0)
+    for i, (name, members) in enumerate(SQUARE.items()):
+        add_group(name, members, 3.5 + 0.01 * i, t_glad - 0.05, t_cheer0)
     for i, (name, members) in enumerate(STREET.items()):
         add_group(name, members, 4 + 0.01 * i, t_glad + 0.05, t_cheer0 + 0.1)
 
@@ -542,18 +677,21 @@ def build(ctx):
         sc.add(name, doc(body), z=z, motion=M.combine(*parts))
 
     animal_layer("goat", "goat", 2190, 1410, 0.82, -1, 29.0, t_peace + 0.45, per=2.5, ph=0.2)
-    animal_layer("lamb", "sheep", 2000, 1436, 0.82, -1, 29.5, t_peace + 0.2, per=2.2, ph=0.6)
+    animal_layer("lamb", "sheep", 2040, 1438, 0.82, -1, 29.5, t_peace + 0.2, per=2.2, ph=0.6)
 
-    # the family
+    # the family: hard pose / face cuts hidden by a small squash-and-hop; at the wonder cut the whole figure
+    # tilts back a little to look up into the light (held, easing to a smaller tilt when they turn glad)
     fam_wonder = {"grandpa": 0.3, "father": 0.15, "girl": 0.0, "mother": 0.22, "boy": 0.08}
-    fam_glad = {"grandpa": 0.35, "father": 0.2, "girl": 0.05, "mother": 0.12, "boy": 0.0}
+    fam_glad = {"grandpa": 0.44, "father": 0.3, "girl": 0.14, "mother": 0.38, "boy": 0.28}   # every wonder >= 1.1 s
     fam_cheer = {"girl": 0.0, "boy": 0.14, "father": 0.32}
     for name, (kind, v, x, y, fc, z) in FAMILY.items():
         states = ["pray"]
         sched = [(0, 0)]
+        tp = None
         if name == "girl":
+            tp = cut_at(t_peek)
             states.append("peek")
-            sched.append((cut_at(t_peek), len(states) - 1))
+            sched.append((tp, len(states) - 1))
         tw = cut_at(t_wonder + fam_wonder[name])
         tg = cut_at(t_glad + fam_glad[name])
         states.append("wonder")
@@ -573,6 +711,14 @@ def build(ctx):
         for t_c in [e[0] for e in sched[1:]]:
             if t_c != tc:
                 parts.append(V.hop(t_c, lift, pv, ["in", "out", "sine"]))
+        # look up: tilt back around a point between the knees and the toes, low over the ground
+        tilt = [(0, {"rot": 0})]
+        if tp is not None:
+            tilt += [(tp, {"rot": 0}), (tp + 0.3, {"rot": -1.6 * fc})]
+        tilt += [(tw, {}), (tw + 0.3, {"rot": -3.6 * fc}), (tg, {}), (tg + 0.3, {"rot": -1.2 * fc})]
+        if tc is not None:
+            tilt += [(tc - 0.02, {}), (tc, {"rot": 0})]
+        parts.append(M.keys(tilt, ["sine"] * (len(tilt) - 1), pivot=(x - 30 * fc, y - 24)))
         if tc is not None:
             kid = kind == "child"
             big = 40 if kid else 16
@@ -586,7 +732,7 @@ def build(ctx):
 
         sc.add(name, frames, z=z, frame_at=V.sched(sched, fade=0.0), motion=M.combine(*parts))
 
-    # ---- doves: four perched on the dovecote burst out on "整座尼尼微城", two rise from the roofs earlier ----
+    # ---- doves: four perched on the dovecote burst out on "整座尼尼微城", three take off from roofs earlier ----
     k = DC_K
     perched = [  # (x, y body centre when perched, facing, flight [(dt, dx, dy)], rate, phase)
         (DOVECOTE_X - 34 * k, DC_TOP - 40 * k - 30, -1,
@@ -608,22 +754,28 @@ def build(ctx):
                motion=M.combine(V.flight(pts, DOVE_REF),
                                 lambda t, a=t_off, p=ph: Tf(dy=1.5 * math.sin(2 * math.pi * (t / 1.3 + p))) if t < a
                                 else Tf()))
-    fr_l, fr_r = V.dove_frames(-1), V.dove_frames(1)
-    far_doves = [  # (facing, [(t, x, y)], rate, phase, scale)
-        (-1, [(t_spared + 0.5, 1900, 960), (t_spared + 1.6, 1700, 700), (t_whole + 1.0, 1350, 520), (T, 900, 360)], 12, 0.1),
-        (1, [(t_spared + 0.8, 1420, 980), (t_spared + 1.9, 1560, 740), (t_whole + 1.2, 1900, 570), (T, 2300, 400)], 13, 0.5),
-        (-1, [(t_whole + 0.4, 1100, 940), (t_whole + 1.4, 1000, 700), (T, 700, 480)], 12, 0.8),
+    # far doves: perched on row-B roof edges from the start (small), they take off as the city is spared
+    fs = 0.62
+    far_doves = [  # (facing, perch (x, y), take-off time, flight [(dt, x, y)], rate, phase)
+        (-1, (1838, roof_y(5) - 17), t_spared + 0.5,
+         [(0.5, 1780, 870), (1.6, 1650, 680), (t_whole + 1.0 - t_spared - 0.5, 1350, 520), (T - t_spared - 0.5, 900, 360)],
+         12, 0.1),
+        (1, (1436, roof_y(4) - 17), t_spared + 0.8,
+         [(0.5, 1480, 880), (1.5, 1580, 730), (t_whole + 1.2 - t_spared - 0.8, 1900, 570), (T - t_spared - 0.8, 2300, 400)],
+         13, 0.5),
+        (-1, (1150, roof_y(3) - 17), t_whole + 0.4,
+         [(0.5, 1110, 860), (1.4, 1000, 690), (T - t_whole - 0.4, 700, 480)], 12, 0.8),
     ]
-    for i, (fc, pts, rate, ph) in enumerate(far_doves):
-        ta = pts[0][0]
-        sc.add(f"fdove{i}", fr_l if fc < 0 else fr_r, z=2.5 + 0.01 * i, seed=910 + (fc > 0),
-               frame_at=V.wing_cycle(rate, ph, glide_from=T - 2.0),
+    for i, (fc, (qx, qy), ta, path, rate, ph) in enumerate(far_doves):
+        pts = [(ta - 0.01, qx, qy)] + [(ta + dt, x, y) for dt, x, y in path]
+        sc.add(f"fdove{i}", dove_frames(fc, 0.85, True), z=2.5 + 0.01 * i, seed=910 + (fc > 0),
+               frame_at=perch_wings(ta, rate, ph, T - 2.0),
                motion=M.combine(V.flight(pts, DOVE_REF),
-                                M.keys([(ta - 0.01, {"alpha": 0, "s": 0.4}), (ta + 0.25, {"alpha": 1, "s": 0.62})],
-                                       "out", pivot=DOVE_REF),
-                                M.bob(6, 0.9, phase=ph, axis="y")))
+                                M.keys([(0, {"s": fs})], pivot=DOVE_REF),
+                                lambda t, a=ta, p=ph: Tf(dy=6 * math.sin(2 * math.pi * (t / 0.9 + p))
+                                                         * M.progress(t, a, a + 0.6, "sine")) if t > a else Tf()))
 
-    # ---- golden light behind the cloud: kindles while God sees, bursts through the gap ----
+    # ---- golden light behind the cloud: grows while God sees, bursts through the gap ----
     sc.add("gleam", V.gleam_svg(GAP_X, 330, 280, 360), z=40.1, wc=0, motion=M.combine(
         M.keys([(0, {"alpha": 0.3, "sx": 0.5, "sy": 0.6}), (t_see, {"alpha": 0.3, "sx": 0.5, "sy": 0.6}),
                 (t_mercy - 0.1, {"alpha": 0.85, "sx": 0.8, "sy": 0.85}),
@@ -633,70 +785,98 @@ def build(ctx):
                ["sine", "sine", "out", "sine", "sine"], pivot=(GAP_X, 200)),
         M.pulse(0.88, 1.0, 2.6)))
 
-    # ---- the heavy grey cloud: churns, catches light, parts at the gap, drifts apart and dissolves ----
-    lit_c = lambda t: 0.2 + 0.8 * M.progress(t, t_see + 0.3, t_mercy + 0.3, "sine")   # the centre warms first
+    # ---- the overcast: churns, catches the light, splits at the gap, drifts apart and dissolves ----
+    lit_c = lambda t: M.progress(t, t_see + 0.3, t_mercy, "sine")        # the middle warms while God sees
     lit = lambda t: M.progress(t, t_mercy - 0.6, t_mercy + 1.4, "sine")
 
-    def cloud_motion(part_dx, go_dx, go_dy, t_go1, fade0, fade1, drift, pivot, s1=1.06, part_dy=0, churn=0.0):
+    def cloud_motion(go_dx, go_dy, t_go1, fade0, fade1, drift, pivot, s1=1.06, churn=0.0):
+        # one eased-out move from the moment of mercy: the banks start at once, keep going, settle; opaque
+        # until fade0 (the middle halves are well clear of the gap by then)
         return M.combine(
-            M.keys([(t_mercy, {"dx": 0, "dy": 0, "s": 1.0}), (t_mercy + 0.6, {"dx": part_dx, "dy": part_dy, "s": 1.0}),
-                    (t_go1, {"dx": go_dx, "dy": go_dy, "s": s1})], ["out", "sine"], pivot=pivot),
+            M.keys([(t_mercy, {"dx": 0, "dy": 0, "s": 1.0}), (t_go1, {"dx": go_dx, "dy": go_dy, "s": s1})],
+                   out2, pivot=pivot),
             M.keys([(fade0, {"alpha": 1}), (fade1, {"alpha": 0})], "sine"),
             M.drift(vx=drift),
             M.bob(churn, 5.5, phase=pivot[0] / 977.0, axis="y") if churn else None,
             M.bob(churn * 2.2, 7.5, phase=pivot[0] / 1311.0, axis="x") if churn else None)
 
     dur = max(1.6, l0.end - t_mercy)                     # the cloud dissolves over the whole phrase
-    plan = {  # name: (z, part_dx, go_dx, go_dy, go_end, fade0, fade1, drift, pivot, s1, part_dy)
-        "back_l": (40.2, -20, -420, -180, 0.62, 0.42, 0.66, -3, (560, 80), 1.06, 0),
-        "back_r": (40.21, 25, 420, -170, 0.62, 0.42, 0.66, 3, (2500, 80), 1.06, 0),
-        "back_c": (40.22, 0, 0, -150, 0.35, 0.0, 0.2, 0, (GAP_X, 120), 1.3, -40),
-        "low_l": (40.3, -40, -300, -170, 0.7, 0.36, 0.7, -2, (760, 560), 1.04, -10),
-        "low_r": (40.31, 40, 300, -160, 0.7, 0.36, 0.7, 2, (2400, 560), 1.04, -10),
-        "low_c": (40.32, 0, 0, -230, 0.3, 0.0, 0.17, 0, (GAP_X, 530), 1.35, -60),
-        "front_l": (40.4, -110, -540, -220, 0.85, 0.5, 0.82, -3, (1080, 250), 1.06, 0),
-        "front_r": (40.41, 110, 540, -200, 0.85, 0.5, 0.82, 3, (2230, 260), 1.06, 0),
+    plan = {  # name: (z, go_dx, go_dy, go_end, fade0, fade1, drift, pivot, s1)
+        "back_l": (40.2, -460, -180, 0.62, 0.42, 0.66, -3, (560, 80), 1.06),
+        "back_r": (40.21, 460, -170, 0.62, 0.42, 0.66, 3, (2500, 80), 1.06),
+        "back_cl": (40.22, -640, -160, 0.66, 0.34, 0.6, -3, (GAP_X - 215, 120), 1.08),
+        "back_cr": (40.23, 640, -150, 0.66, 0.34, 0.6, 3, (GAP_X + 215, 120), 1.08),
+        "low_l": (40.3, -360, -170, 0.7, 0.36, 0.7, -2, (760, 560), 1.04),
+        "low_r": (40.31, 360, -160, 0.7, 0.36, 0.7, 2, (2400, 560), 1.04),
+        "low_cl": (40.32, -560, -190, 0.62, 0.32, 0.58, -2, (GAP_X - 150, 530), 1.06),
+        "low_cr": (40.33, 560, -190, 0.62, 0.32, 0.58, 2, (GAP_X + 155, 530), 1.06),
+        "front_l": (40.4, -660, -220, 0.85, 0.5, 0.82, -3, (1080, 250), 1.06),
+        "front_r": (40.41, 660, -200, 0.85, 0.5, 0.82, 3, (2230, 260), 1.06),
     }
-    for name, (z, pdx, gdx, gdy, ge, f0, f1_, dr, pv, s1, pdy) in plan.items():
+    motions = {}
+    for name, (z, gdx, gdy, ge, f0, f1_, dr, pv, s1) in plan.items():
         items, kind, rect = BANKS[name]
-        fa = lit_c if name.endswith("_c") else lit
-        sc.add(f"cloud_{name}", bank_frames(items, kind, rect), z=z, frame_at=fa,
-               motion=cloud_motion(pdx, gdx, gdy, t_mercy + ge * dur, t_mercy + f0 * dur, t_mercy + f1_ * dur,
-                                   dr, pv, s1, pdy, churn=5.0))
+        centre = name.startswith(("back_c", "low_c"))
+        mo = cloud_motion(gdx, gdy, t_mercy + ge * dur, t_mercy + f0 * dur, t_mercy + f1_ * dur, dr, pv, s1,
+                          churn=5.0)
+        motions[name] = mo
+        sc.add(f"cloud_{name}", bank_frames(items, kind, rect, "centre" if centre else None), z=z,
+               frame_at=lit_c if centre else lit, motion=mo)
 
-    # ---- God's mercy: golden rays pour down through the gap ----
+    # God sees: a golden seam glows along the lower edge of the middle of the cloud before it splits; each
+    # half of the seam travels with its half of the cloud and fades as the gap opens
+    seam_a = M.keys([(t_see + 0.3, {"alpha": 0}), (t_mercy - 0.15, {"alpha": 0.75}), (t_mercy + 0.15, {"alpha": 0.85}),
+                     (t_mercy + 0.75, {"alpha": 0})], ["sine", "sine", "sine"])
+    for side in ("l", "r"):
+        items = BANKS[f"low_c{side}"][0]
+        sc.add(f"seam_{side}", rim_svg(items, f"s18rim{side}", 500, 590), z=40.5, wc=0, blend="screen",
+               motion=M.combine(motions[f"low_c{side}"], seam_a, M.pulse(0.85, 1.0, 1.9)))
+
+    # ---- God's mercy: golden rays pour down through the gap over the square, the homes and our roof ----
     rsrc = (GAP_X, 330)
     sc.add("rays", V.rays_svg(rsrc, 92, 97, n=11, length=1600, seed=6), z=41, wc=0, blend="add",
            motion=M.combine(M.keys([(t_mercy + 0.05, {"alpha": 0, "sx": 0.4, "sy": 0.3}), (t_mercy + 0.75, {"alpha": 1}),
                                     (t_spared + 0.8, {"sx": 1.0, "sy": 1.0}), (t_whole + 1.5, {"alpha": 0.4})],
                                    ["sine", "out", "sine"], pivot=rsrc),
                             M.pulse(0.8, 1.0, 3.2), M.sway(1.0, 7.0, rsrc)))
-    # gloom lifting outward from the gap, warm glaze, warm glow spreading over the roofs (see light_fx)
+    # gloom thinning under the middle while God sees, then lifting outward from the gap; warm glaze; warm glow
+    # spreading over the square and the roofs (see light_fx)
     gloom_a = M.keys([(t_mercy, {"alpha": 1}), (t_gold1 + 0.3, {"alpha": 0})], "sine")
-    hole = M.keys([(t_mercy + 0.1, {"s": 0}), (t_mercy + 0.9, {"s": 500}), (t_gold1, {"s": 3400})], ["out", "sine"])
-    warm_a = M.keys([(t_gold0, {"alpha": 0}), (t_gold1 + 0.4, {"alpha": 1})], "sine")
+    hole = M.keys([(t_see, {"s": 0}), (t_see + 0.9, {"s": 120}), (t_mercy + 0.1, {"s": 170}),
+                   (t_mercy + 0.9, {"s": 560}), (t_gold1, {"s": 3400})], ["sine", "sine", "out", "sine"])
+    warm_a = M.keys([(t_gold0, {"alpha": 0}), (t_gold1 + 0.4, {"alpha": 1}), (T - 0.4, {"alpha": 0.6})], "sine")
     glow = M.combine(M.keys([(t_mercy + 0.3, {"alpha": 0, "s": 0.25}), (t_spared, {"alpha": 0.75, "s": 0.8}),
-                             (t_whole + 0.6, {"alpha": 0.36, "s": 1.7}), (T, {"alpha": 0.28, "s": 1.9})],
+                             (t_whole + 0.6, {"alpha": 0.34, "s": 1.5}), (T, {"alpha": 0.22, "s": 1.6})],
                             ["out", "sine", "sine"]), M.pulse(0.9, 1.0, 3.0))
     light = light_fx(lambda t: gloom_a(t).alpha, lambda t: hole(t).sx, (GAP_X, 500), lambda t: warm_a(t).alpha,
-                     lambda t: glow(t).alpha, lambda t: glow(t).sx, (GAP_X, 1020))
+                     lambda t: glow(t).alpha, lambda t: glow(t).sx, (GAP_X, 1130))
 
-    # ---- camera: close over the praying roof, a little up toward the light, then the whole city ----
-    sc.camera = M.cam_keys([
-        (0, Cam(1265, 902, 2290)),
-        (t_mercy, Cam(1340, 888, 2250)),
-        (t_spared + 1.2, Cam(1390, 858, 2400)),
-        (t_whole + 2.6, Cam(1400, 789, 2756)),
-        (T, Cam(1400, 787, 2760)),
-    ], ["sine", "inout", "inout", "sine"])
+    # ---- camera: a slow drift over the praying roof, then one continuous pull-out to the whole city ----
+    t_d = t_whole + 2.6
+    A = Cam(1306, 900, 2262)          # right edge just clear of the top dove on the dovecote
+    B = Cam(1340, 886, 2300)
+    D = Cam(1400, 789, 2756)
+    E = Cam(1400, 787, 2760)
+    v_ab = tuple((getattr(B, k) - getattr(A, k)) / t_mercy for k in ("x", "y", "w"))
+    v_de = tuple((getattr(E, k) - getattr(D, k)) / max(0.5, T - t_d) for k in ("x", "y", "w"))
+    sc.camera = hermite_cam([(0, A, v_ab), (t_mercy, B, v_ab), (t_d, D, v_de), (max(T, t_d + 0.5), E, v_de)])
 
     # ---- effects ----
     sc.fx = [
         light,
-        FX.sparkles((200, 300, 2600, 1150), count=34, t0=t_gold0 + 0.6, t1=T + 1, color=(255, 238, 172),
-                    size=(9, 20), drift=-10, seed=31),
-        FX.sparkles((300, 600, 2500, 1250), count=26, t0=t_peace - 0.2, t1=T + 1, color=(255, 230, 150),
-                    size=(8, 17), drift=-14, seed=37, period=1.3),
+        # God sees: a few slow sparkles drift down from the seam toward the praying square
+        FX.sparkles((GAP_X - 250, 600, GAP_X + 250, 700), count=10, t0=t_see + 0.5, t1=t_mercy + 1.8,
+                    color=(255, 234, 164), size=(6, 13), period=2.4, drift=28, seed=29),
+        # sparkles over the city: in the air above the skyline and over the homes, kept off every temple
+        # (the great ziggurat on the far left and the two small ones in the far skyline)
+        *[FX.sparkles(r, count=n, t0=t_gold0 + 0.6, t1=T + 1, color=(255, 238, 172), size=(9, 20), drift=-10,
+                      seed=31 + i)
+          for i, (r, n) in enumerate((((700, 240, 2600, 560), 14), ((990, 900, 2060, 1160), 12),
+                                      ((2340, 900, 2650, 1160), 4), ((60, 1010, 700, 1200), 4)))],
+        *[FX.sparkles(r, count=n, t0=t_peace - 0.2, t1=T + 1, color=(255, 230, 150), size=(8, 17), drift=-14,
+                      seed=41 + i, period=1.3)
+          for i, (r, n) in enumerate((((990, 990, 2060, 1250), 14), ((2340, 990, 2600, 1250), 4),
+                                      ((60, 1040, 700, 1220), 4)))],
         FX.motes((100, 150, 2700, 1400), count=40, t0=t_gold0 + 0.4, t1=T + 1, color=(255, 240, 200),
                  size=(3, 7), alpha=140, seed=41),
     ]

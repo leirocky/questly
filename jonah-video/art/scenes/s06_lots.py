@@ -11,26 +11,34 @@ Line 6 (S)  你怎么能做这样的事呢？
 On deck in the storm — the approved v1 deck of s05_lots (same far bulwark with shields, mast, torn striped sail,
 open hatch, big curling wave beyond the starboard rail, tilting horizon, rain), reused layer by layer.
 
-Line 0: the captain and the four sailors (variants 0-3) huddle round a crate, leaning in, talking with their hands
-and nodding; Jonah stands apart by the open hatch he has just climbed out of, worried.
-Line 1: the ginger-bearded sailor (S3, the sailors' voice in this scene) takes the clay lots jar from the crate,
-holds it up beside his head and shakes it ('来，我们来抽签'), sets it back; then '看看' he draws a plain stick and looks
-at it, the sailor behind the crate draws, the sailor on the right draws ('惹来了…'); lightning at '大风暴'.
-Line 2: S3 beckons; Jonah walks over and draws ('他们就抽签'), looks at his stick ('结果，'); '抽中的正是约拿！' the
-stick's mark glows gold, he holds it up, warm light breaks through the clouds onto him (God is only light), the
-sailors start back, drop their plain sticks and point; he steps back into the light. '水手们赶紧问他' they crowd in.
+Line 0: the captain and the four sailors (variants 0-3) huddle round a crate, talking with raised open palms and
+hands at their chins (all at chest / face height, clear of the lots jar: nobody touches it before S3 suggests drawing
+lots); Jonah stands apart by the open hatch he has just climbed out of, worried.
+Line 1: the ginger-bearded sailor (S3, the sailors' voice in this scene) grabs the clay lots jar, lifts it (one
+in-between, one squash-hop) high on his open palm ('来，我们来抽签') and rattles it, sets it back (mirrored in-between);
+'看看' he draws a plain stick and looks at it held upright before his eyes; the red-headband sailor (S1) draws next
+('是哪个人'), then hops upstage-right and walks (planted feet) along the back row behind Jonah to the hatch side;
+the sailor behind the crate (S0) draws ('惹来了'); lightning at '大风暴'.
+Line 2: S3 beckons; once S1 is past him, Jonah walks over (planted feet) and draws ('他们就抽签'), looks at his stick,
+'结果，' looks closer; '抽中的正是约拿！' the stick's mark glows gold, he holds it up, warm light breaks through the
+clouds onto him (God is only light; a soft low rumble, only a few sparkles: grave, not a prize), the sailors start
+back, drop their plain sticks and point; he steps back into the light. '水手们赶紧问他' they crowd in.
 Line 3: S3 asks, gesturing (open hand, pointing, open palm); the others nod in turn.
-Line 4: Jonah answers humbly: hand on chest ('我是希伯来人'), eyes closed ('我敬拜耶和华'), arm up to heaven
-('天上的上帝' — the light brightens, the sailors look up), a sweep down to the sea ('大海'), a point out to the far
-coast on the horizon ('和陆地'), both arms open ('都是他造的').
+Line 4: Jonah answers humbly: hand on chest ('我是希伯来人'), eyes closed ('我敬拜耶和华'), arm straight up to heaven
+('天上的上帝' — the light brightens, the sailors look up), a paper turn to sweep an open palm up at the towering sea
+('大海' — a wave bursts over the rail), a turn back to point out to the far coast ('和陆地' — green hills, a sandy
+shore, trees and a tiny white town, lit by a warm glint through '都是他造的'), both arms open ('都是他造的').
 Line 5: '耶和华，就是上帝的名字' the light glows and twinkles, the sailors look up in awe; then Jonah bows his head and
-tells them he is running away — a thought bubble shows a little Jonah running from the golden light; '更加害怕了'
-thunder, and the sailors gasp and hop back, hands at their faces (the captain clutches his cap).
-Line 6: S3 spreads his arms '你怎么能做这样的事呢？'; Jonah stands sorry with his head bowed — the calm final frame.
+tells them he is running away — a thought bubble shows a little Jonah running away from the golden light; '更加害怕了'
+thunder, and the sailors gasp and hop back, hands at their heads (the captain clutches his cap); the far land fades
+into the rain.
+Line 6: S3 spreads his arms '你怎么能做这样的事呢？'; Jonah stands sorry with his head bowed — the calm, held final
+frame, which is exactly s07's opening frame (same marks, poses, camera, plain coast, dropped lots).
 
 Every pose change is a hard cut sold by a small squash-and-hop (no crossfades between poses); moves are hops or
-planted walks; every main pose is held >= 0.5 s; all key times come from the narration (sub-phrases timed from the
-punctuation pauses in the voice takes, with a proportional fallback).
+planted-foot walks; every main pose is held >= 0.5 s whatever the voice take (min-hold rules on the derived times);
+all key times come from the narration (sub-phrases timed from the punctuation pauses in the voice takes — ignored if
+a take's length does not match the timeline — with a proportional fallback).
 
 Stage 2112 x 1240 (the v1 deck world; v1 layers are re-hosted on this canvas).
 """
@@ -99,12 +107,16 @@ def _nchar(s):
     return max(1, sum(1 for ch in s if ch not in PUNCT and not ch.isspace()))
 
 
-def _voice_gaps(path):
-    """Silent stretches (>= 70 ms) inside a voice take: [(start, end)] in seconds, or [] if unreadable."""
+def _voice_gaps(path, expect=None):
+    """Silent stretches (>= 70 ms) inside a voice take: [(start, end)] in seconds, or [] if unreadable — or if the
+    take's length differs from the timeline's (``expect``) by more than 0.1 s: then the take on disk is not the one
+    the timeline was laid out from (voices being re-generated), and its pauses would be misplaced."""
     try:
         import soundfile as sf
         x, sr = sf.read(str(path), dtype="float32")
     except Exception:
+        return []
+    if expect is not None and abs(len(x) / sr - expect) > 0.1:
         return []
     if x.ndim == 2:
         x = x.mean(axis=1)
@@ -137,7 +149,7 @@ class Phrases:
         self.gaps = []
         for i, ln in enumerate(ctx.lines):
             gaps = [(ln.start + a, ln.start + b)
-                    for a, b in _voice_gaps(BUILD / "voice" / "lines" / f"{ctx.id}_{i:02d}.wav")]
+                    for a, b in _voice_gaps(BUILD / "voice" / "lines" / f"{ctx.id}_{i:02d}.wav", ln.end - ln.start)]
             self.gaps += gaps
             spans = [(c.text, c.start, c.end) for c in (ln.chunks or [])] or [(ln.text, ln.start, ln.end)]
             for text, c0, c1 in spans:
@@ -183,7 +195,8 @@ class Phrases:
         return it[2] if it else default
 
     def inner(self, key, sub, default):
-        """Time at which ``sub`` starts inside the piece containing ``key`` (snapped to a nearby voice pause)."""
+        """Time at which ``sub`` starts inside the piece containing ``key`` (snapped to a nearby voice pause; the
+        pause at the piece's own start — the lead-in before its first word — is never taken)."""
         it = self.find(key)
         if not it or sub not in it[0]:
             return default
@@ -191,7 +204,7 @@ class Phrases:
         est = s + (e - s) * _nchar(text[:text.index(sub)]) / _nchar(text)
         best = None
         for a, b in self.gaps:
-            if s < a and b < e and abs(b - est) < 0.35 and (best is None or abs(b - est) < abs(best - est)):
+            if s + 0.2 < a and b < e and abs(b - est) < 0.35 and (best is None or abs(b - est) < abs(best - est)):
                 best = b
         return best if best is not None else est
 
@@ -207,20 +220,30 @@ POSE = {
     "chin": _P(t=8, h=4, arms=(("fk", 8, 3), ("ik", "head", 0.30, 1.05, 1)), hands=("fist", "fist"),
                expr="worried"),
     "nod_lean": _P(t=16, h=22, arms=(("fk", 40, 95), ("fk", -4, 12)), hands=("open", "fist"), expr="worried"),
-    "show_jar": _P(t=-6, h=-10, arms=(("fk", 135, 150), ("fk", 60, 110)), hands=("fist", "open"), expr="call",
-                   look=(0.02, -0.05)),
-    "lift_in": _P(t=6, arms=(("fk", 104, 114), ("fk", 64, 96)), hands=("fist", "open"), expr="worried"),
+    # huddle (line 0): talking with raised open palms and hands at the chin, at chest / face height and on their
+    # own side of the crate — nobody's hand goes near the lots jar before S3 suggests drawing lots
+    "h_talk": _P(t=6, h=2, arms=(("fk", 8, 3), ("fk", 34, 142)), hands=("fist", "open"), expr="worried"),
+    "h_talk_nod": _P(t=6, h=18, arms=(("fk", 8, 3), ("fk", 34, 142)), hands=("fist", "open"), expr="worried"),
+    "h_both": _P(t=4, h=0, arms=(("fk", 26, 128), ("fk", 22, 138)), hands=("open", "open"), expr="worried"),
+    "chin_nod": _P(t=8, h=18, arms=(("fk", 8, 3), ("ik", "head", 0.30, 1.05, 1)), hands=("fist", "fist"),
+                   expr="worried"),
+    # the jar shown round on a raised palm (high, so the sailor behind the crate keeps his face)
+    "show_jar": _P(t=-6, h=-10, arms=(("fk", 150, 166), ("fk", 40, 100)), hands=("open", "open"), expr="call",
+                   look=(0.04, -0.08)),
+    "lift_in": _P(t=4, arms=(("fk", 104, 126), ("fk", 40, 96)), hands=("open", "open"), expr="worried"),
     "reach": _P(t=6, legs=((5, 2), (-5, -2)), arms=(("fk", 84, 92), ("fk", -8, -3)), hands=("fist", "fist"),
                 expr="worried"),
     "reach_down": _P(t=18, h=10, arms=(("ik", "abs", 82, -170, 1), ("fk", -6, -2)), hands=("fist", "fist"),
                      expr="worried"),
-    "look_stick": _P(t=0, h=2, arms=(("fk", 70, 150), ("fk", -8, -3)), hands=("fist", "fist"), expr="worried"),
+    # looking at a drawn stick: fist up in front of the chin, the stick upright before the eyes (see held_up)
+    "look_stick": _P(t=2, h=14, arms=(("ik", "headw", 1.4, 1.15, 1), ("fk", -8, -3)), hands=("fist", "fist"),
+                     expr="worried", look=(0.08, 0.06)),
     "relief": _P(t=-2, h=-4, arms=(("fk", 14, 8), ("fk", -8, -3)), expr="neutral"),
     "beckon": _P(t=-2, arms=(("fk", 60, 140), ("fk", -8, -3)), hands=("open", "fist"), expr="neutral"),
     "palm": _P(t=4, h=-2, arms=(("fk", 72, 96), ("fk", -8, -3)), hands=("open", "fist"), expr="worried"),
     "palm_up": _P(t=0, h=-6, arms=(("fk", 96, 128), ("fk", -8, -3)), hands=("open", "fist"), expr="worried"),
     "dismay": _P(t=-4, h=-4, arms=(("fk", 62, 112), ("fk", -58, -10)), hands=("open", "open"), expr="scared"),
-    "lookup": _P(h=-16, arms=(("fk", 14, 8), ("fk", -8, -3)), look=(0.03, -0.09), expr="worried"),
+    "lookup": _P(t=-3, h=-26, arms=(("fk", 14, 8), ("fk", -8, -3)), look=(0.04, -0.16), expr="worried"),
     "nod": _P(h=18, arms=(("fk", 14, 8), ("fk", -8, -3)), expr="worried"),
     "stand": STAND,
     "point": C.POSES["point"],
@@ -230,13 +253,18 @@ POSE = {
     "walk_b": C.POSES["walk_b"],
     # Jonah
     "j_reach": _P(t=4, legs=((5, 2), (-5, -2)), arms=(("fk", 80, 88), ("fk", -8, -3)), hands=("fist", "fist")),
-    "j_look": _P(t=2, h=6, arms=(("fk", 66, 148), ("fk", -8, -3)), hands=("fist", "fist")),
+    "j_look": _P(t=3, h=12, arms=(("ik", "headw", 1.5, 1.2, 1), ("fk", -8, -3)), hands=("fist", "fist"),
+                 look=(0.08, 0.06)),
+    "j_look2": _P(t=8, h=20, arms=(("ik", "headw", 1.2, 0.95, 1), ("fk", -8, -3)), hands=("fist", "fist"),
+                  look=(0.05, 0.1)),
     "j_raise": _P(t=-3, h=-6, legs=((8, 3), (-7, -3)), arms=(("fk", 152, 168), ("fk", 30, 74)),
                   hands=("fist", "open")),
     "j_chest": _P(t=4, h=8, arms=(("fk", 10, 5), ("ik", "torso", 0.55, 0.74, 1)), hands=("fist", "fist")),
-    "j_heaven": _P(t=-4, h=-16, arms=(("fk", 150, 166), ("fk", -6, -2)), hands=("open", "fist"),
-                   look=(0.02, -0.08)),
-    "j_sea": _P(t=4, h=8, arms=(("fk", 62, 74), ("fk", -6, -2)), hands=("open", "fist")),
+    "j_heaven": _P(t=-5, h=-22, arms=(("fk", 166, 172), ("fk", -6, -2)), hands=("open", "fist"),
+                   look=(0.02, -0.14)),
+    # drawn facing RIGHT (a paper turn toward the rail): an open palm swept up and out at the towering sea
+    "j_sea": _P(t=-3, h=-10, legs=((8, 3), (-7, -3)), arms=(("fk", 136, 146), ("fk", -6, -2)),
+                hands=("open", "fist"), look=(0.05, -0.08)),
     "j_land": _P(t=-2, h=-8, arms=(("fk", 118, 122), ("fk", -6, -2)), hands=("point", "fist"),
                  look=(0.0, -0.05)),
     "j_all": _P(t=-2, h=-6, arms=(("fk", 118, 138), ("fk", -78, -70)), hands=("open", "fist")),
@@ -286,6 +314,32 @@ def stick_in(pts, hand=0, s=1.0, marked=False, out=26):
 
 
 # ============================================================== animation helpers
+
+# Planted-foot walk (the technique of v1 s05 / v2 s05_captain): WALK_N drawings per step, two steps per cycle.
+# Drawing k (phase k / WALK_N, 0..2): the planted leg (far leg in the first step, near leg in the second) sweeps its
+# ankle from +A to -A figure px (forward = +) while the other leg swings from -A to +A with a bent knee; drawing 0 is
+# the contact with the far foot forward. The anchor advances 2 A / WALK_N * scale stage px per drawing, so the
+# planted sole stays on the same plank for the whole step (measured: within 1 px per drawing). Legs are forward
+# kinematics with the stance leg nearly straight, so long robes hang as in walk_a / walk_b (IK legs with a lowered
+# pelvis made the robes bunch up like a crouch).
+WALK_N = 3
+WALK_A = {"sailor": 46, "jonah": 44, "captain": 50}
+WALK_LEG = {"sailor": 116.0, "jonah": 116.0, "captain": 125.5}   # ~ thigh + shin, a touch short of straight
+
+
+def walk_pose(k, who, n=WALK_N):
+    A, leg = WALK_A[who], WALK_LEG[who]
+    ph = (k % (2 * n)) / n
+    step, u = divmod(ph, 1.0)
+    ap = math.degrees(math.asin(A * (1 - 2 * u) / leg))
+    plant = (ap + 3, ap - 3)
+    xs = -A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u))
+    as_ = math.degrees(math.asin(xs / leg)) + 10 * math.sin(math.pi * u)
+    swing = (as_, as_ - 42 * math.sin(math.pi * u) - 6)
+    sw = 30 * math.cos(math.pi * ph)            # arms swing against the legs
+    return C._P(t=5, h=-4, legs=(plant, swing) if step == 0 else (swing, plant),
+                arms=(("fk", -sw, -sw + 14), ("fk", sw, sw + 14)))
+
 
 def apply_tf(tf, p, pivot):
     """Where stage point p goes under a layer transform tf (pivot = the layer's default pivot)."""
@@ -340,7 +394,9 @@ class Track:
     def pos(self, t):
         for (t0, t1, a, b, k) in self.moves:
             if t0 <= t < t1:
-                if k == "walk":
+                if isinstance(k, tuple):          # planted steps: the anchor jumps one stride share per drawing
+                    u = math.floor((t - t0) / (t1 - t0) * k[1] + 1e-6) / k[1]
+                elif k == "walk":
                     u = (t - t0) / (t1 - t0)
                 else:
                     u = M.progress(t, t0, t1, "sine")
@@ -359,15 +415,21 @@ class Track:
         self.keys.sort(key=lambda k: k[0])
         return pts
 
-    def walk(self, t0, t1, to, facing, expr=None, props=None, step=0.15, pose_after=None):
-        """Planted-ish walk: alternate walk_a / walk_b every ``step`` s while moving to ``to``."""
-        self.move(t0, t1, to, "walk")
-        n = max(2, round((t1 - t0) / step))
-        for i in range(n):
-            self.key(t0 + i * (t1 - t0) / n, "walk_a" if i % 2 == 0 else "walk_b", facing, expr, props,
-                     pop=False)
+    def walk(self, t0, to, facing, expr=None, props=None, dt=0.1, pose_after="stand"):
+        """Planted-foot walk to ``to`` starting at t0 (walk_pose drawings, ``dt`` s each; the number of drawings
+        follows the distance, so the planted sole never slides). Ends on ``pose_after`` (a squash-hop). Returns
+        the arrival time."""
+        frm = self.rest(t0)
+        s = 0.5 * (frm[2] + (to[2] if len(to) > 2 else frm[2]))
+        A = WALK_A[self.who]
+        m = max(2, round(abs(to[0] - frm[0]) / (2 * A * s / WALK_N)))
+        t1 = t0 + m * dt
+        self.move(t0, t1, to, ("steps", m))
+        for k in range(m):
+            self.key(t0 + k * dt, walk_pose(k, self.who), facing, expr, props, pop=False)
         if pose_after:
             self.key(t1, pose_after, facing, expr, props, pop=True)
+        return t1
 
     def idx(self, t):
         i = 0
@@ -393,7 +455,7 @@ class Track:
                     if kind == "hop":
                         dist = math.hypot(b[0] - a[0], b[1] - a[1])
                         dy -= min(26.0, 6 + 0.12 * dist) * math.sin(math.pi * (t - t0) / (t1 - t0))
-                    else:
+                    elif kind == "walk":
                         dy -= 5 * abs(math.sin(math.pi * (t - t0) / 0.15))
             sy = 1 + self.amp * math.sin(2 * math.pi * (t / 3.1 + self.phase))
             sx = 1.0
@@ -458,11 +520,20 @@ def held(hand=1, marked=False, s_mul=1.0, out=26):
     return f
 
 
-def jar_hanging(pts, s, facing, rot=0.0):
-    """The lots jar held by its lip in the far fist (6 sticks), as S3 shows it round; ``rot`` swings it about
-    its foot (the rattle), with little shake marks."""
+def held_up(hand=0, lean=0.3, out=30):
+    """Prop function: a plain lot held upright in a fist (leaning a little forward), to look at it."""
+    def f(pts, s, facing):
+        hx, hy = pts["hands"][hand]
+        d = math.atan2(-1.0, lean * facing)
+        return lot_svg(hx + out * s * math.cos(d), hy + out * s * math.sin(d), s, math.degrees(d))
+    return f
+
+
+def jar_on_palm(pts, s, facing, rot=0.0):
+    """The lots jar (6 sticks) standing on S3's raised open far hand, as he shows it round; ``rot`` rocks it about
+    its foot on the palm (the rattle), with little shake marks."""
     hx, hy = pts["hands"][0]
-    bx, by = hx + 14 * facing, hy + 84
+    bx, by = hx + 2 * facing, hy - 7
     out = PR.lots_jar(bx, by, 1.0, sticks=6)
     if rot:
         out = f'<g transform="rotate({rot:.1f} {bx:.1f} {by:.1f})">{out}</g>'
@@ -475,7 +546,7 @@ def jar_hanging(pts, s, facing, rot=0.0):
 
 
 def jar_rattle(rot):
-    return lambda pts, s, facing: jar_hanging(pts, s, facing, rot)
+    return lambda pts, s, facing: jar_on_palm(pts, s, facing, rot)
 
 
 # ============================================================== world extras
@@ -545,6 +616,44 @@ def coast_layer():
     return doc(S.g(body, filter="wobble"))
 
 
+def land_layer():
+    """Land colours and features over the faint coast (registered with coast_layer): warm green hills, a sandy
+    shore, round trees and a palm with trunks, a tiny white town — so '陆地' reads as land, not as another swell.
+    Its own layer so it can fade back to the plain coast that s07 opens on."""
+    d = S.hill(960, 1500, 606, 96, seed=4, bottom=650, bumps=3)
+    d2 = S.hill(1120, 1430, 606, 62, seed=9, bottom=650, bumps=2)
+    body = S.path(d, fill="#a3b47c", sw=3)
+    body += S.path(d2, fill="#8fa66c", sw=2.5)
+    # soft fields on the slopes
+    for (x, y, rx, ry, c) in ((1030, 590, 50, 9, "#b9c487"), (1350, 596, 46, 8, "#c3c98f"), (1160, 584, 38, 7, "#9bb070")):
+        body += f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="{c}" opacity="0.8"/>'
+    # sandy shore along the water line
+    body += (f'<path d="M944,612 Q1000,598 1080,600 Q1200,594 1320,599 Q1440,596 1516,610 L1516,622 L944,622 Z" '
+             f'fill="#e6d29e" stroke="{INK}" stroke-width="2"/>')
+    trees = ""
+    for x, y, r in ((1060, 560, 11), (1300, 548, 10), (1380, 572, 10), (1012, 586, 8)):
+        trees += (f'<path d="M{x},{y + r + 13} L{x},{y + 2}" stroke="#7a5638" stroke-width="3.2" '
+                  f'stroke-linecap="round"/>')
+        trees += f'<circle cx="{x}" cy="{y}" r="{r + 1}" fill="#5f8048" stroke="{INK}" stroke-width="2"/>'
+        trees += f'<circle cx="{x - r * 0.35:.1f}" cy="{y - r * 0.35:.1f}" r="{r * 0.35:.1f}" fill="#7d9b5c"/>'
+    # a palm on the shore
+    px_, py_ = 1452, 604
+    trees += (f'<path d="M{px_},{py_} Q{px_ + 6},{py_ - 18} {px_ + 2},{py_ - 36}" fill="none" stroke="#7a5638" '
+              f'stroke-width="3.4" stroke-linecap="round"/>')
+    for ang in (-160, -125, -90, -55, -20):
+        a = math.radians(ang)
+        ex, ey = px_ + 2 + 17 * math.cos(a), py_ - 36 + 17 * math.sin(a) + 6
+        trees += (f'<path d="M{px_ + 2},{py_ - 36} Q{(px_ + 2 + ex) / 2:.1f},{py_ - 44 + 2 * math.sin(a):.1f} '
+                  f'{ex:.1f},{ey:.1f}" fill="none" stroke="#4f7040" stroke-width="4" stroke-linecap="round"/>')
+    # a tiny white town on the front hill (flat roofs, dark doorways)
+    town = ""
+    for x, y, w, h in ((1222, 572, 15, 11), (1238, 566, 13, 15), (1253, 574, 16, 10), (1270, 569, 12, 13),
+                       (1284, 576, 14, 9)):
+        town += f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#f2e7cd" stroke="{INK}" stroke-width="1.6"/>'
+        town += f'<rect x="{x + w * 0.4:.1f}" y="{y + h * 0.45:.1f}" width="3" height="{h * 0.5:.1f}" fill="#8a6a50"/>'
+    return doc(S.g(body, filter="wobble") + S.g(trees + town, filter="wobble-fine"))
+
+
 def bubble_layer(cx, cy, tail):
     """Thought bubble: a cloud with a soft green-gold landscape inside and warm light on its right."""
     rx, ry = 214, 128
@@ -592,43 +701,53 @@ def build(ctx):
         return PH.start(key, default, line)
 
     # ---------------------------------------------------------------- key times (all from the narration)
-    t_l0 = L[0].start
-    t_lai = ph("来，", L[1].start)                         # '来，' S3 takes the jar
-    t_draw_ph = ph("看看", L[1].start + 1.3)               # '看看…' the sailors draw
-    t_who = PH.inner("看看是哪个人", "是哪个人", t_draw_ph + 0.8)
-    t_rela = PH.inner("看看是哪个人", "惹来了", t_who + 0.9)
-    t_storm = PH.inner("这场大风暴", "大风暴", L[1].end - 0.6)  # lightning
+    def after(t, prev, gap=0.55):
+        """t, but no earlier than ``gap`` after prev: every pose is held long enough to read whatever the voice
+        take (a short pause or a re-timed take can bring two phrase times very close)."""
+        return max(t, prev + gap)
+
+    t_l0, t_l0e = L[0].start, L[0].end
+    t_up = t_l0e + 0.12                                   # the huddle breaks up
+    t_lai = after(ph("来，", L[1].start), t_up, 0.6)        # '来，' S3 takes the jar
+    t_draw_ph = after(ph("看看", L[1].start + 1.3), t_lai, 1.0)    # '看看…' the sailors draw
+    t_who = after(PH.inner("看看是哪个人", "是哪个人", t_draw_ph + 0.8), t_draw_ph, 0.25)
+    t_rela = after(PH.inner("看看是哪个人", "惹来了", t_who + 0.9), t_who, 0.6)
+    t_storm = after(PH.inner("这场大风暴", "大风暴", L[1].end - 0.6), t_rela, 0.5)   # lightning
     t_they = ph("他们就抽签", L[2].start)
-    t_result = ph("结果", t_they + 1.4)
-    t_glow = ph("抽中的正是约拿", t_result + 0.8)
-    t_ask = ph("水手们赶紧问他", L[2].chunks[-1].start if L[2].chunks else t_glow + 2)
+    t_result = after(ph("结果", t_they + 1.4), t_they, 0.9)
+    t_glow = after(ph("抽中的正是约拿", t_result + 0.8), t_result, 0.6)
+    t_ask = after(ph("水手们赶紧问他", L[2].chunks[-1].start if L[2].chunks else t_glow + 2), t_glow, 1.6)
     t_q0 = ph("请你告诉我们", L[3].start)
-    t_q1 = ph("你是做什么的", t_q0 + 1.1)
-    t_q2 = ph("你从哪里来", t_q1 + 1.0)
-    t_q3 = ph("你是哪国人", t_q2 + 1.2)
+    t_q1 = after(ph("你是做什么的", t_q0 + 1.1), t_q0)
+    t_q2 = after(ph("你从哪里来", t_q1 + 1.0), t_q1)
+    t_q3 = after(ph("你是哪国人", t_q2 + 1.2), t_q2)
     t_hebrew = ph("我是希伯来人", L[4].start)
-    t_worship = ph("我敬拜耶和华", t_hebrew + 1.4)
-    t_heaven = ph("天上的上帝", t_worship + 1.7)
-    t_sea = ph("大海和陆地", t_heaven + 1.1)
-    t_land = PH.inner("大海和陆地", "和陆地", t_sea + 0.6)
-    t_made = ph("都是他造的", t_land + 0.7)
+    t_worship = after(ph("我敬拜耶和华", t_hebrew + 1.4), t_hebrew, 0.6)
+    t_heaven = after(ph("天上的上帝", t_worship + 1.7), t_worship, 0.6)
+    t_sea = after(ph("大海和陆地", t_heaven + 1.1), t_heaven, 0.6)
+    t_land = after(PH.inner("大海和陆地", "和陆地", t_sea + 0.6), t_sea, 0.6)
+    t_made = after(ph("都是他造的", t_land + 0.7), t_land, 0.6)
     t_name = ph("耶和华，", L[5].start, line=5)
-    t_name2 = ph("就是上帝的名字", t_name + 1.1)
-    t_told = ph("约拿还告诉他们", t_name2 + 1.6)
-    t_flee = ph("他正在逃跑", t_told + 1.8)
-    t_hide = ph("想要躲开耶和华", t_flee + 1.3)
-    t_heard = ph("水手们听了", t_hide + 2.2)
-    t_afraid = ph("更加害怕了", t_heard + 1.5)
-    t_how = L[6].start
+    t_name2 = after(ph("就是上帝的名字", t_name + 1.1), t_name, 0.5)
+    t_told = after(ph("约拿还告诉他们", t_name2 + 1.6), t_name2, 0.8)
+    t_flee = after(ph("他正在逃跑", t_told + 1.8), t_told, 0.8)
+    t_hide = after(ph("想要躲开耶和华", t_flee + 1.3), t_flee, 0.6)
+    t_heard = after(ph("水手们听了", t_hide + 2.2), t_hide, 0.6)
+    t_afraid = after(ph("更加害怕了", t_heard + 1.5), t_heard, 0.6)
+    t_how = after(L[6].start, t_afraid, 0.9)
 
     # ---------------------------------------------------------------- outboard world (rocks against the ship)
     # sky + cloud bank drift slowly (dx >= 0 keeps the sky's right edge outside the view)
     sc.add("sky", sky_clouds_layer(), z=0, wc=0.7,
            motion=lambda t: Tf(dx=22 + 22 * math.sin(2 * math.pi * t / 40 - 1.2)))
     sc.add("coast", coast_layer(), z=0.4, motion=V.tilted(), wc=0.8)
-    # a warm glint touches the far land as Jonah names it ('和陆地')
+    # its land colours and features; they fade into the rain as the storm grows at '更加害怕了', so the scene ends on
+    # the plain hazy coast that s07 opens on (and lets vanish)
+    land_a = keyed([(0, 1.0), (t_heard, 1.0), (t_afraid + 1.2, 0.0)])
+    sc.add("land", land_layer(), z=0.42, wc=0.8, motion=V.tilted(lambda t: Tf(alpha=land_a(t))))
+    # a warm glint touches the far land as Jonah names it ('和陆地') and stays through '都是他造的'
     cg = S.rad_grad("cglint", [(0, "#ffe2a0", 0.75), (0.5, "#ffd27a", 0.3), (1, "#ffd27a", 0)])
-    land_env = keyed([(t_land - 0.05, 0.0), (t_land + 0.4, 1.0), (t_made + 0.8, 0.8), (t_name + 0.4, 0.0)])
+    land_env = keyed([(t_land - 0.05, 0.0), (t_land + 0.4, 1.0), (L[4].end + 0.3, 0.9), (t_name + 0.5, 0.0)])
     sc.add("coast_glint", doc('<ellipse cx="1240" cy="560" rx="300" ry="70" fill="url(#cglint)"/>', cg), z=0.45,
            wc=0, blend="add", motion=V.tilted(lambda t: Tf(alpha=land_env(t))))
     sc.add("sea_far", rehost(V.sea_far_layer()), z=0.5, motion=V.tilted(), wc=0.9)
@@ -655,6 +774,7 @@ def build(ctx):
 
     # ambient splashes over the rail, away from faces and key moments
     splashes = [(2.0, 2010, 0.7, 3), (t_who + 0.4, 1990, 0.62, 7), (t_q2 + 0.2, 2020, 0.7, 5),
+                (t_sea + 0.1, 1975, 0.95, 17),        # the sea answers Jonah's sweep toward it ('大海')
                 (t_told + 0.6, 1980, 0.66, 11), (t_afraid + 0.25, 2000, 0.85, 13)]
 
     def splash_m(base, t0, dur=0.95):
@@ -719,51 +839,53 @@ def build(ctx):
     _, p = figure("jonah", 0, JY, 1.0, -1, "j_reach")
     J_SLOT = MOUTH[0] + 16 - p["hands"][0][0]
 
-    # ---- line 0: the huddle (heads together, talking with their hands, nodding); Jonah apart by the hatch
+    # ---- line 0: the huddle (heads together, talking with raised palms, hands at chins, nodding); Jonah apart by
+    # the hatch. Keys follow line 0's length; nothing changes in the opening dissolve, and nobody's hand goes near the
+    # jar until S3 suggests drawing lots.
+    def hud(f):
+        return min(max(1.05, t_l0 + f * (t_l0e - t_l0)), t_up - 0.5)
     CP.key(0, "lean", 1)
-    CP.key(t_l0 + 0.55, "talk", 1)
-    CP.key(t_l0 + 1.75, "lean", 1)
+    CP.key(hud(0.3), "talk", 1)
+    CP.key(hud(0.72), "lean", 1)
     S2.key(0, "lean", 1)
-    S2.key(t_l0 + 1.15, "nod_lean", 1, pop=False)
-    S2.key(t_l0 + 1.5, "lean", 1, pop=False)
-    S3.key(0, "talk", 1)
-    S3.key(t_l0 + 1.05, "chin", 1)
-    S0.key(0, "lean", 1)
-    S0.key(t_l0 + 0.3, "nod_lean", 1, pop=False)
-    S0.key(t_l0 + 0.65, "lean", 1, pop=False)
-    S0.key(t_l0 + 1.5, "talk", 1)
+    S2.key(hud(0.5), "nod_lean", 1, pop=False)
+    S2.key(hud(0.68), "lean", 1, pop=False)
+    S3.key(0, "h_talk", 1)
+    S3.key(hud(0.45), "chin", 1)
+    S0.key(0, "chin", 1)
+    S0.key(hud(0.22), "chin_nod", 1, pop=False)
+    S0.key(hud(0.4), "chin", 1, pop=False)
     S1.key(0, "chin", -1)
-    S1.key(t_l0 + 0.85, "talk", -1)
-    S1.key(t_l0 + 1.9, "lean", -1)
+    S1.key(hud(0.35), "h_talk", -1)
+    S1.key(hud(0.58), "h_talk_nod", -1, pop=False)
+    S1.key(hud(0.76), "h_talk", -1, pop=False)
     JN.key(0, "j_stand", -1, "worried")
-    JN.key(t_l0 + 1.3, "j_down", -1, "sorry", pop=False)
+    JN.key(hud(0.6), "j_down", -1, "sorry", pop=False)
 
-    # end of the huddle: they straighten up, S3 has an idea
-    t_up = L[0].end + 0.12
+    # end of the huddle: they straighten up; S3 has an idea and reaches for the jar (below)
     CP.key(t_up + 0.1, "stand", 1, "worried")
     S2.key(t_up + 0.22, "stand", 1, "worried")
     S0.key(t_up + 0.16, "stand", 1, "worried")
     S1.key(t_up + 0.04, "stand", -1, "worried")
-    S3.key(t_up - 0.08, "stand", 1, "surprised")
     JN.key(t_up + 0.3, "j_stand", -1, "worried")
 
-    # ---- line 1: S3 takes the jar, shows it round and shakes it, sets it back and draws first
-    t_grab = t_lai - 0.32                     # hand on the jar (anticipation, in the pause)
-    t_show = t_lai + 0.02                     # '来，' up beside his head, shaking it ('我们来抽签')
-    t_shake0, t_shake1 = t_show + 0.25, t_draw_ph - 0.28
-    t_setdown = t_draw_ph - 0.2               # back on the crate
-    t_s3_pull = t_draw_ph + 0.3               # '看看' pulls a stick and looks at it
-    t_s3_relief = t_who + 0.15
-    S3.key(t_grab, "reach", 1, "worried")
-    S3.key(t_show - 0.12, "lift_in", 1, "worried", props=[jar_hanging])
-    S3.key(t_show, "show_jar", 1, "call", props=[jar_hanging])
+    # ---- line 1: S3 takes the jar, shows it round on his palm and shakes it, sets it back and draws first
+    t_grab = max(t_up - 0.06, t_lai - 0.6)    # hand on the jar (anticipation, in the pause)
+    t_show = t_lai + 0.02                     # '来，' up on his raised palm, shaking it ('我们来抽签')
+    t_setdown = after(t_draw_ph - 0.15, t_show, 0.9)   # back on the crate
+    t_shake0, t_shake1 = t_show + 0.25, t_setdown - 0.13
+    S3.key(t_grab, "reach", 1, "surprised")
+    S3.key(t_show - 0.11, "lift_in", 1, "worried", props=[jar_on_palm], pop=False)   # in-between (no pop)
+    S3.key(t_show, "show_jar", 1, "call", props=[jar_on_palm])
     k, tk = 0, t_shake0
     while tk < t_shake1 - 0.05:                # the rattle: two drawings, 3 frames each
         S3.key(tk, "show_jar", 1, "call", props=[jar_rattle(6 if k % 2 == 0 else -6)], pop=False)
         k, tk = k + 1, tk + 0.1
-    S3.key(t_shake1, "show_jar", 1, "call", props=[jar_hanging], pop=False)
+    S3.key(t_shake1, "lift_in", 1, "worried", props=[jar_on_palm], pop=False)       # down again (in-between)
     S3.key(t_setdown, "reach", 1, "worried")
-    S3.key(t_s3_pull, "look_stick", 1, "worried", props=[held(0)])
+    t_s3_pull = after(t_draw_ph + 0.3, t_setdown, 0.45)     # '看看' pulls a stick and looks at it
+    t_s3_relief = after(t_who + 0.15, t_s3_pull, 0.6)
+    S3.key(t_s3_pull, "look_stick", 1, "worried", props=[held_up(0)])
     S3.key(t_s3_relief, "relief", 1, "neutral", props=[held(1)])
     S3.key(t_s3_relief + 0.75, "stand", 1, "worried", props=[held(1)], pop=False)
 
@@ -774,41 +896,48 @@ def build(ctx):
         return (0.0, 0.0)
     S3.jiggle = s3_jiggle
 
-    # S0 (behind the crate) and S1 (right of it) draw next
-    t_s0_reach, t_s0_pull, t_s0_relief = t_who + 0.05, t_who + 0.5, t_rela + 0.25
+    # S1 (right of the crate) draws next ('是哪个人'), then makes room for Jonah before he is called: one hop
+    # upstage-right (the turn hidden in the hop), a planted walk along the back row behind Jonah to the hatch
+    # side, a paper turn back to face the crew — all done before Jonah sets off, so nobody crosses his draw
+    t_s1_reach = after(t_who + 0.05, t_s3_pull, 0.2)
+    t_s1_pull = t_s1_reach + 0.45
+    t_s1_relief = after(t_rela - 0.05, t_s1_pull, 0.6)
+    S1.key(t_s1_reach, "reach", -1, "worried")
+    S1.key(t_s1_pull, "look_stick", -1, "worried", props=[held_up(0)])
+    S1.key(t_s1_relief, "relief", -1, "neutral", props=[held(1)])
+    t_s1_hop = t_s1_relief + 0.5
+    S1.move(t_s1_hop, t_s1_hop + 0.3, (1532, 928, 0.86))
+    S1.key(t_s1_hop, "stand", 1, "worried", props=[held(1)])
+    t_s1_arr = S1.walk(t_s1_hop + 0.36, (1806, 928, 0.86), 1, "worried", props=[held(1)], pose_after=None)
+    S1.turns.append(t_s1_arr)
+    S1.key(t_s1_arr, "stand", -1, "worried", props=[held(1)])
+
+    # S0 (behind the crate) draws last of the crew ('惹来了')
+    t_s0_reach = after(t_rela + 0.02, t_s1_pull, 0.2)
+    t_s0_pull = t_s0_reach + 0.45
+    t_s0_relief = after(t_storm + 0.12, t_s0_pull, 0.6)
     S0.key(t_s0_reach, "reach_down", 1, "worried")
-    S0.key(t_s0_pull, "look_stick", 1, "worried", props=[held(0)])
+    S0.key(t_s0_pull, "look_stick", 1, "worried", props=[held_up(0)])
     S0.key(t_s0_relief, "relief", 1, "neutral", props=[held(1)])
     S0.key(t_s0_relief + 0.8, "stand", 1, "worried", props=[held(1)], pop=False)
-    t_s1_reach, t_s1_pull, t_s1_relief = t_rela + 0.02, t_rela + 0.5, t_storm + 0.12
-    S1.key(t_s1_reach, "reach", -1, "worried")
-    S1.key(t_s1_pull, "look_stick", -1, "worried", props=[held(0)])
-    S1.key(t_s1_relief, "relief", -1, "neutral", props=[held(1)])
-    # S1 makes room for Jonah: he walks off upstage to the right, behind Jonah coming the other way, and turns
-    t_s1_up = t_s1_relief + 0.5               # first a hop back upstage ...
-    S1.move(t_s1_up, t_s1_up + 0.3, (S1.start[0] - 24, 928, 0.86))
-    S1.key(t_s1_up, "stand", -1, "worried", props=[held(1)])
-    t_s1_back = t_s1_up + 0.36                # ... then along the back row, behind Jonah coming the other way
-    S1.turns.append(t_s1_back)
-    S1.walk(t_s1_back, t_s1_back + 1.2, (1806, 928, 0.86), 1, "worried", props=[held(1)], step=0.16)
-    S1.turns.append(t_s1_back + 1.2)
-    S1.key(t_s1_back + 1.2, "stand", -1, "worried", props=[held(1)])
 
-    # S3 beckons Jonah over ('你来'), Jonah walks to the jar
-    t_beckon = t_storm + 0.25
+    # S3 beckons Jonah over ('你来'); Jonah walks to the jar once S1 is past him
+    t_beckon = after(t_storm + 0.25, t_s3_relief + 0.75, 0.5)
     S3.key(t_beckon, "beckon", 1, "neutral", props=[held(1)])
-    S3.key(t_they + 0.1, "stand", 1, "worried", props=[held(1)])
-    t_jw0 = t_beckon + 0.22
-    t_jw1 = t_they + 0.02
     JN.key(t_draw_ph + 0.65, "j_down", -1, "sorry", pop=False)       # he knows whose lot it will be
-    JN.key(t_storm - 0.25, "j_stand", -1, "worried")
-    JN.walk(t_jw0, t_jw1, (J_SLOT, JY, 1.0), -1, "worried", step=0.16)
+    t_jstand = after(t_storm - 0.25, t_draw_ph + 0.65, 0.6)
+    JN.key(t_jstand, "j_stand", -1, "worried")
+    t_jw0 = max(t_beckon + 0.3, t_s1_arr - 0.3, t_jstand + 0.6)
+    t_jw1 = JN.walk(t_jw0, (J_SLOT, JY, 1.0), -1, "worried", dt=0.11, pose_after=None)
+    S3.key(after(t_they + 0.1, t_jw1, 0.0), "stand", 1, "worried", props=[held(1)])
 
-    # ---- line 2: Jonah draws the last-but-two stick; '结果，' he looks; '抽中的正是约拿！' it glows
+    # ---- line 2: Jonah draws the last-but-one stick; '结果，' he looks closer; '抽中的正是约拿！' it glows
     t_j_reach = t_jw1
-    t_j_pull = t_they + 0.62
+    t_j_pull = after(t_they + 0.62, t_j_reach, 0.45)
+    t_j_look2 = after(t_result, t_j_pull, 0.6)
     JN.key(t_j_reach, "j_reach", -1, "worried")
-    JN.key(t_j_pull, "j_look", -1, "worried", props=[held(0)])
+    JN.key(t_j_pull, "j_look", -1, "worried", props=[held_up(0)])
+    JN.key(t_j_look2, "j_look2", -1, "worried", props=[held_up(0, lean=0.2)], pop=False)
     JN.key(t_glow, "j_raise", -1, "surprised", props=[held(0, marked=True, s_mul=1.1, out=30)])
     # two startled little hops back into the light
     t_jback0 = t_glow + 0.8
@@ -828,16 +957,16 @@ def build(ctx):
     S0.key(t_r[2], "scared", 1, "surprised")
     S2.key(t_r[3], "scared", 1, "surprised")
     CP.key(t_r[4], "worried", 1, "surprised")
-    dropped = [(t_r[0], S3, (58, 30)), (t_r[1], S1, (-60, 22))]
+    # (S0's stick falls just behind the crate he stands behind: out of sight here and in s07, which opens on this)
+    dropped = [(t_r[0], S3, (58, 30)), (t_r[1], S1, (-60, 22)), (t_r[2], S0, (44, 6))]
 
     # '水手们赶紧问他' — they crowd round Jonah (planted walks / hops)
-    S3.walk(t_ask + 0.05, t_ask + 0.95, (1362, FRONT_Y, 1.0), 1, "worried", step=0.15, pose_after="stand")
-    CP.walk(t_ask + 0.2, t_ask + 1.05, (1112, 1018, CAPT_S), 1, "worried", step=0.17, pose_after="stand")
-    S2.walk(t_ask + 0.35, t_ask + 1.3, (1292, 930, 0.86), 1, "worried", step=0.17, pose_after="stand")
+    S3.walk(t_ask + 0.05, (1362, FRONT_Y, 1.0), 1, "worried")
+    CP.walk(t_ask + 0.2, (1112, 1018, CAPT_S), 1, "worried")
+    S2.walk(t_ask + 0.35, (1292, 930, 0.86), 1, "worried")
     S0.move(t_ask + 0.3, t_ask + 0.62, (S0.start[0] + 34, 952, 0.9))
     S0.key(t_ask + 0.3, "stand", 1, "worried")
-    S1.move(t_ask + 0.45, t_ask + 0.77, (1772, 934, 0.87))
-    S1.key(t_ask + 0.45, "chin", -1, "worried")
+    S1.key(t_ask + 0.45, "chin", -1, "worried")       # stays by the hatch, clear of Jonah's sweep to the sea
 
     # ---- line 3: S3 asks (gestures on each question), the others nod in turn
     S3.key(t_q0, "palm", 1, "worried")
@@ -845,35 +974,39 @@ def build(ctx):
     S3.key(t_q2, "palm_up", 1, "worried")
     S3.key(t_q3, "palm", 1, "worried")
     S3.key(L[3].end + 0.25, "stand", 1, "worried")
-    for tr, (t0, pose_a, pose_b, f) in ((S1, (t_q1 + 0.15, "nod", "chin", -1)),
+    for tr, (t0, pose_a, pose_b, f) in ((S1, (t_q1 + 0.15, "chin_nod", "chin", -1)),
                                         (S0, (t_q2 + 0.1, "nod", "stand", 1)),
                                         (CP, (t_q3 + 0.05, "nod", "stand", 1)),
                                         (S2, (t_q1 + 0.55, "nod", "stand", 1))):
         tr.key(t0, pose_a, f, "worried", pop=False)
-        tr.key(t0 + 0.36, pose_b, f, "worried", pop=False)
+        tr.key(t0 + 0.4, pose_b, f, "worried", pop=False)
     S1.key(L[3].end + 0.3, "stand", -1, "worried")
     JN.key(t_q2 + 0.1, "j_down", -1, "sorry", props=[held(1, marked=True)], pop=False)
     JN.key(t_q3 + 0.35, "j_stand", -1, "worried", props=[held(1, marked=True)], pop=False)
 
-    # ---- line 4: Jonah answers humbly
+    # ---- line 4: Jonah answers humbly: hand on chest, eyes closed, arm straight up to heaven (the light above him),
+    # a paper turn to sweep an open palm out at the towering sea ('大海', a wave bursts over the rail), a turn back
+    # to point out to the far coast ('和陆地'), both arms open ('都是他造的')
     lot_near = held(1, marked=True)
     JN.key(t_hebrew, "j_chest", -1, "neutral", props=[lot_near])
     JN.key(t_worship, "j_chest", -1, "peaceful", props=[lot_near], pop=False)
     JN.key(t_heaven, "j_heaven", -1, "neutral", props=[lot_near])
-    JN.key(t_sea, "j_sea", -1, "neutral", props=[lot_near])
+    JN.turns.append(t_sea)
+    JN.key(t_sea, "j_sea", 1, "neutral", props=[lot_near])
+    JN.turns.append(t_land)
     JN.key(t_land, "j_land", -1, "neutral", props=[lot_near])
     JN.key(t_made, "j_all", -1, "peaceful", props=[lot_near])
     JN.key(L[4].end + 0.45, "j_stand", -1, "neutral", props=[lot_near])
-    # the sailors look up with him at '天上的上帝', back at '大海'
+    # the sailors look up with him at '天上的上帝', back down at '大海'
     for tr, dt, f in ((S1, 0.18, -1), (S0, 0.3, 1), (S2, 0.4, 1), (CP, 0.5, 1), (S3, 0.25, 1)):
         tr.key(t_heaven + dt, "lookup", f, "worried", pop=False)
-        tr.key(t_sea + dt * 0.5, "stand", f, "worried", pop=False)
+        tr.key(max(t_sea + dt * 0.5, t_heaven + dt + 0.55), "stand", f, "worried", pop=False)
 
     # ---- line 5: '耶和华，就是上帝的名字' — awe at the light; then the confession and the thought bubble
     for tr, dt in ((S2, 0.2), (CP, 0.35), (S0, 0.45), (S1, 0.6), (S3, 0.75)):
         f = -1 if tr is S1 else 1
         tr.key(t_name + dt, "lookup", f, "surprised", pop=False)
-        tr.key(t_told + dt * 0.4, "stand", f, "worried", pop=False)
+        tr.key(max(t_told + dt * 0.4, t_name + dt + 0.6), "stand", f, "worried", pop=False)
     JN.key(t_name + 0.1, "j_chest", -1, "peaceful", props=[lot_near])
     JN.key(t_told, "confess", -1, "sorry", props=[lot_near])
     # as he tells them he is running away, they grow uneasy
@@ -883,7 +1016,8 @@ def build(ctx):
     S0.key(t_hide + 0.5, "stand", 1, "scared", pop=False)
     S2.key(t_heard + 0.1, "stand", 1, "scared", pop=False)
     S3.key(t_heard + 0.2, "stand", 1, "scared", pop=False)
-    # '更加害怕了' — gasp and hop back
+    # '更加害怕了' — gasp and hop back. These are s07's opening marks and poses (art/scenes/s07_confess.py CAPT, SV0-3,
+    # JON): keep them in step with that file.
     back = [(S3, 0.0, (1290, FRONT_Y, 1.0), "scared"), (S1, 0.08, (1834, 928, 0.86), "scared"),
             (CP, 0.14, (1046, 1018, CAPT_S), "worried"), (S0, 0.2, (S0.start[0] - 10, 952, 0.9), "scared"),
             (S2, 0.26, (1246, 930, 0.86), "scared")]
@@ -899,7 +1033,7 @@ def build(ctx):
     lot_glow = doc(f'<ellipse cx="{LG0[0]}" cy="{LG0[1]}" rx="120" ry="100" fill="url(#lotg)"/>', wdefs)
 
     # ---------------------------------------------------------------- jar on the crate (sticks: 6 5 4 3 2)
-    jar_keys = [(0, 6), (t_s3_pull, 5), (t_s0_pull, 4), (t_s1_pull, 3), (t_j_pull, 2)]
+    jar_keys = [(tk, 6 - i) for i, tk in enumerate(sorted([0, t_s3_pull, t_s0_pull, t_s1_pull, t_j_pull]))]
     jar_frames = [doc(PR.lots_jar(JAR[0], JAR[1], 1.0, sticks=n)) for _, n in jar_keys]
 
     def jar_at(t):
@@ -910,7 +1044,7 @@ def build(ctx):
         return float(i)
 
     def jar_m(t):
-        a = 0.0 if t_show - 0.12 <= t < t_setdown else 1.0
+        a = 0.0 if t_show - 0.11 <= t < t_setdown else 1.0
         jig = sum(3.0 * math.sin(2 * math.pi * 7 * (t - tj)) * max(0.0, 1 - abs(t - tj) / 0.25)
                   for tj in (t_setdown, t_s3_pull, t_s0_pull, t_s1_pull, t_j_pull))
         return Tf(rot=jig, alpha=a, px=JAR[0], py=JAR[1])
@@ -974,15 +1108,15 @@ def build(ctx):
     def tiny_at(t):
         if t < t_flee:
             return 2.0
-        return float(int((t - t_flee) / 0.14) % 2)
+        return float(int((t - t_flee) / 0.2) % 2)
 
     def tiny_m(t):
         b = bub_m(t)
         if b.alpha <= 0.003:
             return Tf(alpha=0.0)
         u = M.progress(t, t_flee, t_b1 - 0.2, "linear")
-        x = 60 - 190 * u
-        y = -4 * abs(math.sin(math.pi * (t - t_flee) / 0.14)) if t >= t_flee else 0.0
+        x = 150 - 300 * u
+        y = -5 * abs(math.sin(math.pi * (t - t_flee) / 0.2)) if t >= t_flee else 0.0
         # follow the bubble's own pop: carry the tiny figure's feet through the bubble's transform
         foot = (BC[0], BC[1] + 92)
         q = apply_tf(b, (foot[0] + x, foot[1] + y), (0, 0))
@@ -1024,9 +1158,9 @@ def build(ctx):
     # ---------------------------------------------------------------- fx
     sc.fx = [
         V.rain_fx(),
-        FX.lightning([t_storm, t_afraid], dur=0.5, strength=0.24),
-        FX.sparkles((J_END - 170, JY - 420, J_END + 170, JY - 40), count=22, t0=t_glow - 0.05, t1=t_q0 + 1.2,
-                    color=(255, 226, 140), size=(8, 18), period=1.3, drift=-18, seed=5),
+        FX.lightning([t_storm, t_afraid - 0.12], dur=0.5, strength=0.24),
+        FX.sparkles((J_END - 150, JY - 420, J_END + 150, JY - 120), count=6, t0=t_glow - 0.05, t1=t_ask + 0.8,
+                    color=(255, 226, 140), size=(7, 14), period=1.4, drift=-14, seed=5),
         FX.sparkles((1420, 160, 1900, 460), count=20, t0=t_name - 0.1, t1=t_told + 0.6,
                     color=(255, 232, 160), size=(7, 16), period=1.6, drift=-6, seed=8),
     ]
@@ -1036,25 +1170,29 @@ def build(ctx):
     sc.sfx("storm_wind", 0, dur=T + 0.8, gain_db=-18, fade_in=0.8, fade_out=1.0, pan=-0.2)
     sc.sfx("rain", 0, dur=T + 0.8, gain_db=-16, fade_in=0.8, fade_out=1.0)
     sc.sfx("ship_creak", 0, dur=T + 0.8, gain_db=-18, fade_in=0.8, fade_out=1.0)
-    sc.sfx("lots", t_show, gain_db=-8, pan=-0.1)
+    sc.sfx("lots", t_show, gain_db=-12, pan=-0.1)
     for tt in (t_s3_pull, t_s0_pull, t_s1_pull):
         sc.sfx("lots", tt - 0.08, gain_db=-14, pan=0.0)
+    sc.sfx("footsteps", t_s1_hop + 0.36, dur=t_s1_arr - t_s1_hop - 0.3, gain_db=-19, pan=0.55, fade_out=0.15)
     sc.sfx("footsteps", t_jw0, dur=t_jw1 - t_jw0 + 0.1, gain_db=-17, pan=0.4, fade_out=0.15)
     sc.sfx("lots", t_j_pull - 0.08, gain_db=-12, pan=0.15)
-    sc.sfx("sparkle", t_glow - 0.04, gain_db=-7, pan=0.3)
+    # the lot falls on Jonah: a soft, low far rumble (the crack faded out) — grave, not a prize
+    sc.sfx("thunder", t_glow - 0.1, dur=2.4, gain_db=-18, pan=0.3, fade_in=0.45, fade_out=1.0)
     sc.sfx("footsteps", t_ask + 0.05, dur=1.0, gain_db=-17, pan=0.0, fade_out=0.2)
     sc.sfx("chime", t_name + 0.05, gain_db=-12, pan=0.35)
     sc.sfx("pop", t_b0, gain_db=-14, pan=0.1)
     sc.sfx("pop", t_b1 - 0.2, gain_db=-16, pan=0.1)
-    sc.sfx("thunder", t_storm, dur=2.6, gain_db=-14, pan=0.3, fade_out=1.2)
-    sc.sfx("thunder", t_afraid, dur=3.0, gain_db=-12, pan=0.2, fade_out=1.2)
+    sc.sfx("thunder", t_storm, dur=2.6, gain_db=-15, pan=0.3, fade_out=1.2)
+    sc.sfx("thunder", t_afraid - 0.15, dur=2.0, gain_db=-16, pan=0.2, fade_out=0.9)   # starts in the pause before
     sc.sfx("cloth", t_afraid + 0.05, gain_db=-12, pan=-0.1)
 
     # key times, for reviewers (seconds from scene start)
     sc.events = {
         "huddle talk/nods": t_l0 + 0.3, "huddle breaks up": t_up, "S3 takes the jar ('来，')": t_show,
-        "jar rattle": (t_shake0, t_shake1), "S3 draws ('看看')": t_s3_pull, "S0 draws": t_s0_pull,
-        "S1 draws ('惹来了')": t_s1_pull, "lightning ('大风暴')": t_storm, "S3 beckons": t_beckon,
+        "jar rattle": (t_shake0, t_shake1), "S3 draws ('看看')": t_s3_pull,
+        "S1 draws ('是哪个人')": t_s1_pull, "S0 draws ('惹来了')": t_s0_pull, "lightning ('大风暴')": t_storm,
+        "S1 hops up and walks behind Jonah": (t_s1_hop, t_s1_arr), "S3 beckons": t_beckon,
+        "Jonah looks closer ('结果，')": t_j_look2,
         "Jonah walks to the jar": (t_jw0, t_jw1), "Jonah draws ('他们就抽签')": t_j_pull,
         "lot glows + light ('抽中的正是约拿')": t_glow, "sailors start back": t_r[0],
         "Jonah hops into the light": t_jback0, "crowd in ('水手们赶紧问他')": t_ask, "S3 asks": (t_q0, t_q1, t_q2, t_q3),
