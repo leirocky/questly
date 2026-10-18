@@ -63,7 +63,6 @@ SCENE_FX = {("s11_belly", "J"): "cave", ("s12_deep", "J"): "cave"} if STORY == "
 VOICES.update(getattr(story, "VOICES", {}))
 SCENE_FX.update(getattr(story, "SCENE_FX", {}))
 from voice import lexicons as _LX  # noqa: E402
-_LX.SANDHI_PAIRS = STORY != "jonah"
 _LX.ZV_FIX.update(getattr(story, "LEXICON", {}))   # the story's own pronunciation fixes
 PROMPTS = {k: v["prompt"]["text"] for k, v in VOICES.items() if "prompt" in v}
 CER_OK = 0.06      # re-synthesise an utterance until ASR agrees at least this well (best take kept)
