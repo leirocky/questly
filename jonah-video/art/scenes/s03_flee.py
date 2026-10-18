@@ -37,9 +37,10 @@ are imported from art.scenes_v1.s03_flee):
     '躲开上帝。' — Jonah glances back at the shore and ducks behind the stern rail by the cargo, peeking; the
     camera follows the departing ship, leans in a little on him as he ducks, then pulls back (the receding pier
     behind) while the ship slows to a gentle drift, and ends on s04's opening picture of the ship: same size and
-    place, rocking in step with s04's ship. Through the closing dissolve the ship, crew and Jonah stay put and only
-    the background changes from the harbour to the open sea (the sun settles onto s04's sun; the distant ship of
-    line 2 has sailed on over the horizon).
+    place, rocking in step with s04's ship. Through the closing dissolve the ship, crew, Jonah and the cargo on
+    deck (s04's opening layout of it all through this scene: see deck_cargo_svg) stay put and only the background
+    changes from the harbour to the open sea (the sun settles onto s04's sun; the distant ship of line 2 has
+    sailed on over the horizon).
 
 Pose changes are hard cuts hidden by a small hop / squash or an in-between (no crossfades between poses). The crew is
 the s04-s09 crew: the captain, sailor variant 1 (by the mast) and variant 0 (at the bow), same props.ship
@@ -57,6 +58,7 @@ from art import characters as C
 from art import props as PR
 from art import style as S
 from art.scenes_v1 import s03_flee as V
+from art.scenes import s04_storm as S4
 from art.scenes_v1 import s04_storm as V4
 from art.style import P
 from engine import motion as M
@@ -85,7 +87,6 @@ MAST_SAILOR_LX = 72       # sailor 1 by the mast: hauls the halyard when they sa
 BOW_SAILOR_LX = 270       # sailor 0 at the bow: points the way out to sea
 CAP_LX0 = 150             # the captain watches the loading from here, then walks aft ...
 CAP_LX = -60              # ... to meet Jonah, just aft of the mast
-CARGO_LX = -320           # crates at the stern
 
 
 def lx2x(lx):
@@ -752,20 +753,40 @@ def hull_cover_svg():
                clip)
 
 
-def deck_cargo_svg():
-    out = ""
+def s04_to_here(x, y):
+    """A point on s04's stage (its ship at rest, V4.SX / SY / SS / SF) -> the same ship-local spot on this ship."""
+    return PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, (x - V4.SX) / (V4.SS * V4.SF), (y - V4.SY) / V4.SS)
 
-    def deck_y(lx):
-        return SHIP_WL + (-165 - 75 * (abs(lx) / 480) ** 3.2) * K
 
-    for lx, sc, rot in ((322, 0.48, -4), (354, 0.44, 6)):
-        x = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, lx, 0)[0]
-        out += PR.jar(x, deck_y(lx) - 80 * sc, sc, rot=rot)
-    x = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, CARGO_LX, 0)[0]
-    y = deck_y(CARGO_LX)
-    out += PR.crate(x, y - 49 * 0.6, 0.6) + PR.crate(x + 4, y - 49 * 0.6 - 64, 0.55, rot=-5)
-    xs = PR.local_to_stage(SHIP_X, SHIP_WL, K, -1, CARGO_LX - 50, 0)[0]
-    out += PR.sack(xs, deck_y(CARGO_LX - 50) + 2, 0.5, seed=3)
+def deck_cargo_svg(part):
+    """The cargo on deck, laid out as s04 shows it at its t = 0 for the whole scene: this scene ends on s04's
+    opening picture of the ship, so the loads must stay put through the dissolve. These are the six loads s04's
+    sailors later heave overboard, at the spots s04_storm.build gives them (a_cr, a_jar, d_sack, c_jar, b_jar,
+    b_sack, with their scales, seeds and colours: keep the two in step), moved to the same ship-local spots on
+    this ship and scaled by K / SS.
+      part 'fore': the crate and jar by the bow sailor and the sack at the mast sailor's feet (behind the crew,
+                   as in s04);
+      part 'aft':  the jar and sack just forward of Jonah's spot on the stern deck and the tall jar just aft of
+                   it, drawn in front of him (s04 draws its cargo in front of its Jonah)."""
+    d, k = V4.deck_y_at, K / V4.SS
+
+    def carry_x(sx, variant):
+        """x of a sailor's carrying hands (s04's carry_over)."""
+        hc = C.hand_positions(C.sailor, sx, V4.DECK, V4.SS, 1, variant=variant, pose="carry")
+        return (hc[0][0] + hc[1][0]) / 2
+
+    def put(prop, x, y, s, **kw):
+        return prop(*s04_to_here(x, y), s * k, **kw)
+
+    if part == "fore":
+        ax, dx = S4.AX, S4.DX
+        out = (put(PR.crate, ax + 45, d(ax + 45) - 37, 0.78) + put(PR.jar, ax + 112, d(ax + 112) - 51, 0.62)
+               + put(PR.sack, dx + 44, d(dx + 44) + 2, 0.6, seed=9))
+    else:
+        cx, bx = carry_x(S4.CX, 3) - 8, carry_x(S4.BX, 1)
+        out = (put(PR.jar, cx, d(cx) - 50, 0.6, color=S.mix(P["terracotta"], P["sand"], 0.15))
+               + put(PR.jar, bx, d(bx) - 53, 0.66, color=S.mix(P["terracotta"], P["sand"], 0.35))
+               + put(PR.sack, S4.BX - 52, d(S4.BX - 52) + 2, 0.62, seed=6))
     return doc(out)
 
 
@@ -1072,9 +1093,9 @@ def build(ctx):
     # from the sail shot the camera picks up the departing ship and follows it (a follow pan of up to ~530 output
     # px/s, like the run-follows above: the ship stays steady on screen while the pier slides away), tilts down
     # and leans in a little on Jonah as he ducks behind the stern rail, then pulls back until the ship has s04's
-    # size and place, and tracks the drifting ship through the dissolve. Ship, sail, crew, Jonah, stern scroll and
-    # lantern stay put through the dissolve; only the backgrounds (the pier and Joppa -> the open sea) and the
-    # clouds cross-fade.
+    # size and place, and tracks the drifting ship through the dissolve. Ship, sail, crew, Jonah, deck cargo, stern
+    # scroll and lantern stay put through the dissolve; only the backgrounds (the pier and Joppa -> the open sea)
+    # and the clouds cross-fade.
     W_IN = 1290                             # leaned in on Jonah at T_IN, back at s04's framing by T_OUT
     LEAD = 0.13
 
@@ -1160,8 +1181,8 @@ def build(ctx):
     # the opening dissolve: s02 ends on Jonah, arms folded, at the left of its frame; this scene opens on him in
     # the same place and size (s02's end framing, in this stage's px), holds it through the dissolve, then eases
     # to the follow framing (Jonah right of centre, the road west ahead of him) by the time he turns to run.
-    # The tilt and the widening go first, on a quicker ease right after the dissolve (zoom peaks at ~26 %/s), so
-    # his feet are clear of the first subtitle's box by ~1.5 s; the pan west takes until the turn.
+    # His feet are above the first subtitle's box from the first frame on. The widening (and the small tilt) go
+    # first, on a quicker ease right after the dissolve (zoom peaks at ~26 %/s); the pan west takes until the turn.
     # Both framings lie inside the painted stage, and the frame stays inside it in between (checked).
     g = np.array([M.progress(t, T_OPEN_HOLD, T_OPEN_END, "sine") for t in ts])
     gy = np.array([M.progress(t, T_OPEN_HOLD - 0.05, T_OPEN_UP, "sine") for t in ts])
@@ -1173,6 +1194,15 @@ def build(ctx):
         return Cam(float(np.interp(t, ts, xs)), float(np.interp(t, ts, ys)), float(np.interp(t, ts, ws)))
 
     sc.camera = cam
+
+    # the opening framing sits low (Jonah's feet above the subtitle box), so the sky things near the top of it
+    # (the sun, the clouds, gull1) are lowered by the same amount through the dissolve and the hold: they keep
+    # their earlier, uncropped place in the frame (the camera opened at y 578 before), and settle back onto
+    # their stage places as the camera widens; from T_OPEN_UP on the offset is 0
+    SKY_DY = OPEN_CAM[1] - 578.0
+
+    def sky_dy(t):
+        return SKY_DY * (1.0 - M.progress(t, T_OPEN_HOLD - 0.05, T_OPEN_UP, "sine"))
 
     def parallax(k, vx=0.0):
         return lambda t: Tf(dx=k * (cam(t).x - X_REF) + vx * t)
@@ -1188,7 +1218,7 @@ def build(ctx):
         dx = K_SUN * (cam(t).x - X_REF)
         g = M.progress(t, T_IN, T_OUT, "sine")
         if g <= 0.0:
-            return Tf(dx=dx)
+            return Tf(dx=dx, dy=sky_dy(t))
         c = cam(t)
         k = c.w / 1920
         ox = (S4_SUN[0] + 9 * max(0.0, t - (T - XF)) - S4_CAM[0]) * S4_K + 960
@@ -1198,7 +1228,8 @@ def build(ctx):
         return Tf(dx=dx + g * (tx - SUN[0] - dx), dy=g * (ty - SUN[1]), sx=s_, sy=s_, px=SUN[0], py=SUN[1])
 
     sc.add("sun", sun_svg(), motion=sun_tf, wc=0.4)
-    sc.add("clouds", clouds_svg(), motion=parallax(K_CLOUD, 7.0), wc=0.6)
+    sc.add("clouds", clouds_svg(), motion=lambda t: Tf(dx=K_CLOUD * (cam(t).x - X_REF) + 7.0 * t, dy=sky_dy(t)),
+           wc=0.6)
     sc.add("town", town_svg(), motion=parallax(K_TOWN))
     sc.add("harbour_back", harbour_back_svg())
 
@@ -1313,7 +1344,7 @@ def build(ctx):
 
     sc.add("sail_roll", sail_roll_svg(), motion=roll_tf, wc=0.6)
     Z_ROLL = sc.layers[-1].z
-    sc.add("deck_cargo", deck_cargo_svg(), motion=ship_tf)
+    sc.add("deck_cargo", deck_cargo_svg("fore"), motion=ship_tf)
 
     # bow sailor (variant 0): watches the pier; on '他施在很远很远的西边' he points far out to sea (west), then
     # looks ahead, and points the way again as they sail
@@ -1460,6 +1491,7 @@ def build(ctx):
     sc.add("jonah_ship", jship, motion=jship_tf, frame_at=jship_frame)
     sc.add("hull_cover", hull_cover_svg(), motion=ship_tf)
     sc.add("ship_front", ship_svg("front", "furled"), motion=ship_tf)
+    Z_FRONT = sc.layers[-1].z
 
     sea_front_m = M.combine(M.bob(4, 2.9, 0.3), M.bob(-18, 4.4, axis="x"))
     sc.add("sea_front", sea_band_svg(950, 7, 360, 1.3, P["sea_light"], S.mix(P["sea"], P["sea_deep"], 0.3), 12, 41,
@@ -1857,13 +1889,13 @@ def build(ctx):
 
     wing = (1, 0.5, 0, -0.5, -1, -0.5, 0, 0.5)
 
-    def gull_layer(name, x, y, s, f, vx, vy, fps, phase, t0=0.0, t_vis=-1.0):
+    def gull_layer(name, x, y, s, f, vx, vy, fps, phase, t0=0.0, t_vis=-1.0, dy_f=lambda t: 0.0):
         frames = [doc(PR.gull(x, y, s, f, wing=w)) for w in wing]
         sc.add(name, frames, frame_at=lambda t: float(int(t * fps + phase) % len(wing)),
-               motion=lambda t: Tf(dx=vx * (t - t0), dy=vy * (t - t0) + 10 * math.sin(t * 1.7 + phase),
+               motion=lambda t: Tf(dx=vx * (t - t0), dy=vy * (t - t0) + 10 * math.sin(t * 1.7 + phase) + dy_f(t),
                                    alpha=1.0 if t >= t_vis else 0.0), wc=0.6)
 
-    gull_layer("gull1", 5700, 300, 0.6, -1, -100, 2, 9, 0)
+    gull_layer("gull1", 5700, 300, 0.6, -1, -100, 2, 9, 0, dy_f=sky_dy)
     gull_layer("gull2", 3300, 350, 0.55, -1, -140, 3, 8, 3, t0=8.0)
     # flies off west, high above the masthead, as the captain points (enters from beyond the right edge)
     gull_layer("gull3", 3080, 150, 0.55, -1, -230, 0, 9, 5, t0=T_WEST - 2.0)
@@ -1900,6 +1932,9 @@ def build(ctx):
            frame_at=lambda t: 0.0 if t < T_TAKE_MID else 1.0,
            motion=lambda t: (V.compose(ship_tf(t), cap_xy, dy=cap_dy(t)) if T_TAKE <= t < T_TAKE_IN
                              else Tf(alpha=0.0)))
+    # the cargo by Jonah's spot on the stern deck (s04's layout, see deck_cargo_svg): in front of him and behind
+    # the ship's rail, as s04 draws it, so the two pictures match through the closing dissolve
+    sc.add("deck_cargo_aft", deck_cargo_svg("aft"), motion=ship_tf, z=Z_FRONT - 0.5)
 
     # ---------------------------------------------------------------- sound
     sc.sfx("wind_soft", 0, dur=L2.start + 0.6, gain_db=-18, fade_in=0.8, fade_out=1.4)

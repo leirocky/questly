@@ -25,13 +25,14 @@ Line 3 (S) '耶和华啊，' the clouds part a little above the ship: a small cl
         (God is never shown as a person); the sailors raise their arms; '求你不要因为这个人惩罚我们，' hands pressed
         together again, pleading, eyes to the sky; '也不要怪我们害了他。' heads bowed.
 Line 4 (S) '因为这一切，' arms raised once more, eyes closed, mouths a small earnest 'o' (praying aloud - not relieved:
-        the storm goes on until s09); the captain, lifting his arms, hops back under the stern lantern (s09's mark);
-        '都是你照着自己的心意做的。' the light glows on; the scene ends on a calm, held frame (rain eased; in the
-        last 2.6 s the rocking eases into s09's opening roll, which it then follows exactly through the dissolve).
+        the storm goes on until s09); the captain keeps his place, the stern lantern hanging beside him (right of
+        his face and beard), never over his mouth; '都是你照着自己的心意做的。' the light glows on; the scene ends
+        on a calm, held frame (rain eased; in the last 2.6 s the rocking eases into s09's opening roll, which it
+        then follows exactly through the dissolve).
 End frame (for s09): ship at SX0 + 262 rocking as s09's ship_tf, no oars; kneeling, arms raised, eyes closed
         (expr 'sleepy'): sailor 0 at lx 274, sailor 1 at 132, Jonah standing at -4 (hand on chest), sailor 2 at
-        -116, sailor 3 at -250, the captain at -436 on the deck height at -400 (s09's A_LX / A_POS; the stern
-        lantern hangs in front of his chest); camera (1682, 670, 1600).
+        -116, sailor 3 at -250, the captain at -362 on the deck height there (s09's A_LX / A_POS / A_CAPT_KNEEL;
+        the stern lantern hangs beside him, right of his face and beard, which stay clear); camera (1682, 670, 1600).
 
 Every key time comes from the narration chunks (a phrase inside a chunk is placed by its character position).
 Pose changes are hard cuts sold by a squash / hop (never crossfaded); each pose is held >= 0.5 s.
@@ -87,11 +88,10 @@ PIV = (SX0, SY + 40.0)        # pitch pivot
 ROWERS = [("A", 0, 300.0), ("B", 1, 158.0), ("C", 2, -142.0), ("D", 3, -276.0)]
 JON_LX = -4.0                 # Jonah in front of the mast
 CAPT_LX = -418.0              # the captain on the raised stern deck
-CAPT_PRAY_LX = -362.0         # where he kneels to pray (the stern lantern hangs behind his back, clear of his
-                              # face and pressed hands) ...
-CAPT_KNEEL_LX = -436.0        # ...and where he ends, after shuffling back on '因为这一切': s09_overboard's opening
-CAPT_KNEEL_DECK_LX = -400.0   # captain mark (A_LX capt, on the deck height at -400), so the dissolve lands him on
-                              # himself (under the lantern, as s09 has him)
+CAPT_KNEEL_LX = -362.0        # where he kneels to pray, on the deck height there, and ends: s09_overboard's opening
+                              # captain kneel mark (A_CAPT_KNEEL), so the dissolve lands him on himself. Here the stern
+                              # lantern (hook at lx -428) hangs beside him, right of his face and beard, never over
+                              # his mouth (further toward the stern its hook ring lands on his lips)
 OAR_DX = 104.0                # oarlock this far (local px) toward the stern from each rower's feet
 
 # rowing stroke (rower-local px, scale 1, facing right = toward the stern)
@@ -1122,13 +1122,11 @@ def build(ctx):
         return Tf(h.dx, h.dy, 0.9 * math.sin(2 * math.pi * t / 3.9 + 2), h.sx, h.sy,
                   0.0 if t >= T_KNEEL["capt"] else 1.0, CX, CY)
     sc.add("captain", cap_frames, z=z_crew - 0.5, frame_at=track(c_sched), motion=on_ship(capt_m))
-    # (drawn on his end mark = s09's opening one; until '因为这一切' he kneels a little toward the mast, so the stern
-    # lantern hangs behind his back, not over his face and pressed hands; lifting his arms once more he shuffles
-    # back under it in a small hop)
-    ckx, cky = stage_x(CAPT_KNEEL_LX), deck_y(CAPT_KNEEL_DECK_LX)
+    # (he kneels on his end mark = s09's opening one, a little toward the mast, so the stern lantern hangs beside
+    # him, not over his face, beard and pressed hands)
+    ckx, cky = stage_x(CAPT_KNEEL_LX), deck_y(CAPT_KNEEL_LX)
     ckd = [crew_doc(person("captain", ckx, cky, -1, ps, e, fallback="stand")) for ps, e in KNEEL_SEQ]
     kneel_layers.append(("capt", ckd, (ckx, cky)))
-    capt_pray_off = (stage_x(CAPT_PRAY_LX) - ckx, deck_y(CAPT_PRAY_LX) - cky)
 
     # --------------------------------------------------- ship (front): rail, shields, steering oar, oarlocks, lantern
     locks = ""
@@ -1273,18 +1271,13 @@ def build(ctx):
     for name, kd, (kx, kyd) in kneel_layers:
         tk = T_KNEEL[name]
         kn_sched = [(0, 0), (T_UP[name], 1), (T_PRESS[name], 2), (T_BOW[name], 3), (T_UP2[name], 4)]
-        shuffle = name == "capt"       # the captain hops back onto his end mark as he lifts his arms once more
         ev = [(tk, "dip", 0.8)] + [(T_UP[name], "hop", 0.25), (T_PRESS[name], "dip", 0.4), (T_BOW[name], "dip", 0.3),
-                                   (T_UP2[name], "hop", 0.6 if shuffle else 0.25)]
+                                   (T_UP2[name], "hop", 0.25)]
 
-        def kn_m(t, tk=tk, ev=ev, kx=kx, kyd=kyd, name=name, shuffle=shuffle):
+        def kn_m(t, tk=tk, ev=ev, kx=kx, kyd=kyd, name=name):
             h = hop_tf(t, ev, (kx, kyd))
             br = 1 + 0.01 * math.sin(2 * math.pi * t / 3.2 + len(name))
-            ox_ = oy_ = 0.0
-            if shuffle:
-                k_ = 1 - M.progress(t, T_UP2[name] - 0.06, T_UP2[name] + 0.4, "inout")
-                ox_, oy_ = capt_pray_off[0] * k_, capt_pray_off[1] * k_
-            return Tf(h.dx + ox_, h.dy + oy_, 0.6 * math.sin(2 * math.pi * t / 4.1 + len(name)), h.sx, h.sy * br,
+            return Tf(h.dx, h.dy, 0.6 * math.sin(2 * math.pi * t / 4.1 + len(name)), h.sx, h.sy * br,
                       1.0 if t >= tk else 0.0, kx, kyd)
         sc.add(f"kneel_{name}", kd, z=z_k, motion=on_ship(kn_m), frame_at=track(kn_sched))
         z_k += 0.01
@@ -1394,7 +1387,7 @@ def build(ctx):
     # Sparkles hang in the light between the cloud break and the kneeling crew: three small sets stepping down the
     # fan of shafts (stage px; they do not ride the ship). Every rect's bottom stays >= ~30 px above the highest
     # head / raised hand under it over the whole prayer, rocking and the captain's hop included (Jonah's head ~667
-    # at x 1520-1640, sailor D's and the captain's raised hands ~692 at x 1820-2120, sailor C's head ~740 at
+    # at x 1520-1640, sailor D's and the captain's raised hands ~692 at x 1820-2060, sailor C's head ~740 at
     # x 1680-1800), and they only drift up, so no sparkle ever lands on a face or a hand.
     spark = dict(t0=t_lord + 1.2, t1=T + 2, period=2.2, drift=-6)
     sc.fx = [V.rain_fx(0.0, t_lord + 1.5, density=0.85, angle=-16),

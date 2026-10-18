@@ -840,18 +840,19 @@ def build(ctx):
     fall_j = (JY - DOOR[1]) / (n_draw / N_J) / JS                        # the path runs a little downstage
     hold_j = 2.0 / ctx.fps
     t_arrive = t_walk0 + n_draw * hold_j
-    # he stops on an in-between drawing at his spot (in place of the last passing drawing, held 3 frames): feet
-    # almost together and down, torso tilt halved, hips nearly at stand height, arms nearly at his sides. It
-    # splits the step from the narrow, forward-tilted walk to the wide front-facing stand (head, robe outline)
-    # into two small ones; the jonah layer's stand takes over at t_stop.
+    # he stops on an in-between drawing at his spot (in place of the last passing drawing, held 3 frames), half
+    # way from the last walk drawing to the front-facing stand: the swing (near) foot comes down where the
+    # stand has it, the planted (far) foot eases half way to its stand spot, torso tilt and hip drop are small,
+    # the arms hang nearly at his sides. It splits the head move (~7 px forward, then ~3 px back, ~4 px up each
+    # time) and the growth of the robe outline into two small steps; the jonah layer's stand takes over at t_stop.
     t_stop = t_arrive + 3.0 / ctx.fps
     walk_frames = [_doc(_shadow(DOOR[0], DOOR[1], JS) +
                         _jfig(DOOR[0], DOOR[1], JS, _walk_pose(k, A_J, N_J, off=0.5, fall=fall_j), "happy", f"jw{k}"))
                    for k in range(NW_J)]
     walk_frames.append(_doc(_shadow(DOOR[0], DOOR[1], JS) + C.jonah(DOOR[0], DOOR[1], JS, 1, expr="happy")))
     walk_frames.append(_doc(_shadow(DOOR[0], DOOR[1], JS) + C.jonah(DOOR[0], DOOR[1], JS, 1, expr="peaceful")))
-    STOP = C._P(t=1.5, h=-1, drop=2, legs=(("ik", 0.15 * A_J, 1), ("ik", -0.15 * A_J, 1)),
-                arms=(("fk", -6, 10), ("fk", 6, 22)))
+    STOP = C._P(t=1.5, h=-1.5, drop=3, legs=(("ik", 0.2 * A_J, 1), ("ik", -0.4 * A_J, 1)),
+                arms=(("fk", 8, 7), ("fk", 2, 10)))
     walk_frames.append(_doc(_shadow(DOOR[0], DOOR[1], JS) + _jfig(DOOR[0], DOOR[1], JS, STOP, "happy", "jstop")))
 
     def jw_i(t):
@@ -961,11 +962,12 @@ def build(ctx):
         for ts, k in squashes:
             a, b = _squash(t, ts, k)
             sx, sy = sx * a, sy * b
-        if t_stop - 1e-6 <= t <= t_stop + 0.5:      # settle after the walk
-            a, b = _squash(t, t_stop - 1e-6, 0.03)
+        if t_stop - 1e-6 <= t <= t_stop + 0.5:      # settle after the walk (light: the stop drawing has eased
+            a, b = _squash(t, t_stop - 1e-6, 0.015)   # him in, so a deeper dip would read as a rise-and-dip bob)
             sx, sy = sx * a, sy * b
         dy = sum(_hop(t, th, h) for th, h in hops)
-        br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)
+        # breathing eases in after the walk (the walk drawings do not breathe), so it adds no jump on the switch
+        br = 1 + 0.008 * M.progress(t, t_stop, t_stop + 0.8, "sine") * math.sin(2 * math.pi * t / 3.2)
         return Tf(dy=dy, sx=sx, sy=sy * br, px=JX, py=JY)
     sc.add("jonah", jf, frame_at=j_fa, motion=j_m, seed=213)
 

@@ -47,9 +47,11 @@ behind it), its low sun (still turning) and its stone step under Jonah, who stan
 leaves him. This scene's set pieces stand in front of that street and come in with the dissolve itself: the herald
 on his plinth, the merchant's stall, the bread oven and the well. After the dissolve nothing fades: s15's
 townspeople carry on by motion - the stroller and the boy at the fruit stall stay and listen (they are part of the
-crowd from here on), the vendor leaves his pots and walks over behind Jonah, with two newcomers following him in
-from the left edge, the bearded man walks off to the right with his two sheep trotting ahead, and two more groups hop
-in from the right edge beside the merchant's stall, all before "尼尼微的人听了" ends. The mother, her little girl
+crowd from here on), the vendor turns from his pots and walks off the left edge (he is the herald's design, man
+variant 2, so he does not stay as a twin), the bearded man walks off to the right in front of the merchant's stall
+with his two sheep trotting ahead - and newcomers gather: three walk in from the left edge to stand behind Jonah,
+stopping as "竟然" begins, and two groups hop in from the right edge beside the merchant's stall (each held at alpha
+0 until it sets off outside the frame). The mother, her little girl
 and the elder (the same three people s15 ends on) start in s15's places and poses: the mother and the girl take
 little steps forward to their places here, and the elder walks over in front of the square to Jonah's step
 (planted-foot walk, s15's gait drawings with his stick) and stops on "竟然". s15's golden sky and warm light fade
@@ -156,17 +158,18 @@ def s15_person(kind, v, x, y, s, fc, pose, expr):
 
 
 VENDOR, STROLLER, BOY, BEARD = (s15_person(*p) for p in (S15_VENDOR, S15_STROLLER, S15_BOY, S15_BEARD))
-# The vendor walks over from his pots to stand behind Jonah, two newcomers following him in from the left edge
-# (one rigid group: planted-foot walk drawings, WALK_NL drawings of WALK_ADV px each)
-WALK_NL = 42
-WALK_D = 820 - VENDOR[2]                 # he stops at x 820
+# Three newcomers walk in from the left edge to stand behind Jonah (one rigid group: planted-foot walk drawings,
+# WALK_NL drawings of WALK_ADV px each); they set off just outside the frame (camera A's left edge is x 155)
+WALK_NL = 48
+WALK_X = 790                            # where the elder in front stops
+WALK_D = WALK_X + 0.69 * 70 - 140       # (he sets off at x 92, his stick ahead of him)
 WALK_ADV = WALK_D / WALK_NL
 
 CROWD = {   # (kind, variant, x, y, scale, facing in line 0, facing when kneeling)
     # everyone faces Jonah (left) while they listen; they kneel facing right, toward God's light (upper right)
-    # the walkers (drawn where they stop): the vendor and the two newcomers (off the left edge when he sets off)
-    "walk_l": [("man", 3, 820 - 160, 988, 0.69, -1, 1), ("woman", 0, 820 - 80, 984, 0.69, -1, 1),
-               ("man", 2, 820, VENDOR[3], VENDOR[4], -1, 1)],
+    # the walkers (drawn where they stop)
+    "walk_l": [("elder", 3, WALK_X, 980, 0.69, -1, 1), ("woman", 0, WALK_X - 75, 984, 0.69, -1, 1),
+               ("man", 3, WALK_X - 150, 988, 0.69, -1, 1)],
     # s15's stroller and the boy at the fruit stall, where s15 leaves them
     "c15": [("man", 1) + STROLLER[2:5] + (-1, 1), ("child", 2) + BOY[2:5] + (-1, 1)],
     # newcomers hopping in from the right edge, beside the merchant's stall
@@ -1007,7 +1010,7 @@ def glaze_svg(kind):
     if kind == "believe":   # a brief warm golden patch in the sky above the crowd (normal blend, behind the city)
         defs = S.rad_grad("s16bel", [(0, "#ffe6a6", 0.95), (0.35, "#ffd88a", 0.7), (0.7, "#ffcf7a", 0.28),
                                      (1, "#ffcf7a", 0)])
-        return doc('<ellipse cx="1240" cy="450" rx="640" ry="250" fill="url(#s16bel)"/>', defs)
+        return doc('<ellipse cx="1200" cy="400" rx="640" ry="220" fill="url(#s16bel)"/>', defs)
     if kind == "gleam":     # golden light behind the cloud at the upper right (normal blend, behind the city)
         cx, cy = GLOW_C
         defs = S.rad_grad("s16glm", [(0, "#fff0c0", 1), (0.3, "#ffe09a", 0.9), (0.62, "#ffd27a", 0.45),
@@ -1183,10 +1186,10 @@ def build(ctx):
     def group_frames(members, turn):
         return [doc("".join(state_fig(m, st, j % 2 == turn) for j, m in enumerate(members))) for st in range(7)]
 
-    # the walkers: the vendor sets off from his pots just after the dissolve and they stop, turn to Jonah and listen
-    # as "竟然" begins (planted-foot walk: s15's gait drawings, the group advancing one drawing's stride per drawing)
+    # the walkers set off just after the dissolve (as s15's vendor leaves the frame) and stop, turn to Jonah and
+    # listen as "竟然" begins (planted-foot walk: s15's gait drawings, one drawing's stride per drawing)
     t_wl0 = snap(0.92)
-    t_wl1 = snap(c0b.start) - 0.5 / 30
+    t_wl1 = snap(c0b.start + 0.1)
     rate_wl = WALK_NL / (t_wl1 - t_wl0)
 
     def wl_i(t):
@@ -1220,7 +1223,7 @@ def build(ctx):
         if tt is not None:
             parts.append(dip(tt, s, (gx, gy), 3))
         if name == "walk_l":
-            # [s15's vendor at his pots (newcomers off the left edge)] + 12 walk drawings + the 7 states
+            # 12 walk drawings + the 7 states
             ph = (0, 6, 0)                      # gait phases: everyone sets off and arrives on a passing drawing
             order = sorted(range(len(members)), key=lambda j: members[j][3])
 
@@ -1231,27 +1234,18 @@ def build(ctx):
                     ps = S15.walk_pose((k + ph[j]) % 12, A=WALK_ADV * S15.WALK_N / (2 * s_), lk=leg_k(kind))
                     body += C.ground_shadow(x, y, s_, 110, opacity=0.2) + gait_fig(x, y, s_, kind, v, 1, ps)
                 return body
-            pre = ""
-            for j in order:
-                kind, v, x, y, s_, _, _ = members[j]
-                if kind == "man" and v == VENDOR[1] and abs(y - VENDOR[3]) < 1e-6:
-                    pre += s15_fig_markup(*VENDOR, dx=WALK_D)
-                else:
-                    ps = S15.walk_pose((3 + ph[j]) % 12, A=WALK_ADV * S15.WALK_N / (2 * s_), lk=leg_k(kind))
-                    pre += C.ground_shadow(x, y, s_, 110, opacity=0.2) + gait_fig(x, y, s_, kind, v, 1, ps)
-            frames = [doc(pre)] + [doc(gait_body(k)) for k in range(12)] + frames
-            cut = cuts([(0, 0)] + [(tk, 13 + i) for tk, i in sched])
+            frames = [doc(gait_body(k)) for k in range(12)] + frames
+            cut = cuts([(0, 0)] + [(tk, 12 + i) for tk, i in sched])
 
             def fa(t, cut=cut):
-                if t < t_wl0:
-                    return 0.0
                 if t < t_wl1:
-                    return float(1 + (3 + wl_i(t)) % 12)
+                    return float((3 + wl_i(t)) % 12) if t >= t_wl0 else 3.0
                 return cut(t)
 
             def walk_mot(t):
-                return Tf(dx=-WALK_D + (WALK_ADV * wl_i(t) if t >= t_wl0 else 0.0))
-            parts += [walk_mot, dip(t_wl0, s, (gx, gy), 3)]
+                return Tf(dx=-WALK_D + (WALK_ADV * wl_i(t) if t >= t_wl0 else 0.0),
+                          alpha=1.0 if t >= t_wl0 else 0.0)
+            parts.append(walk_mot)
             sc.add(f"crowd_{name}", frames, z=zrow[name], frame_at=fa, motion=M.combine(*parts))
         elif name == "c15":
             # [s15's stroller and boy exactly as s15 leaves them] + the 7 states (the stroller turns to the boy)
@@ -1270,6 +1264,22 @@ def build(ctx):
             body += small_puff(x, y, hh, seed=40 + j + 7 * len(name))
         group_puffs.append((name, c, body, (gx, gy - 150 * s)))
 
+    # ---- s15's vendor turns from his pots and walks off the left edge (hidden once out of the frame) ----
+    _, _, vx, vy, vs, _, _, _ = VENDOR
+    A_V, N_V, RATE_V = 56.0, 9, 12.5
+    adv_v = 2 * A_V / S15.WALK_N * vs
+    t_v0 = snap(0.92)
+    vfr = [doc(s15_fig_markup(*VENDOR))] + [
+        doc(C.ground_shadow(vx, vy, vs, 110) + gait_fig(vx, vy, vs, "man", 2, -1, S15.walk_pose(k, A=A_V)))
+        for k in range(12)]
+
+    def v_i(t):
+        return min(N_V, int((t - t_v0) * RATE_V + 1e-6))
+    sc.add("vendor15", vfr, z=10.55, frame_at=lambda t: 0.0 if t < t_v0 else float(1 + (3 + v_i(t)) % 12),
+           motion=M.combine(lambda t: Tf(dx=-adv_v * v_i(t) if t >= t_v0 else 0.0,
+                                         alpha=0.0 if t >= t_v0 + N_V / RATE_V else 1.0),
+                            dip(t_v0, vs, (vx, vy), 4)))
+
     # ---- s15's bearded man walks off to the right in front of the merchant's stall, his two sheep trotting ahead
     # (they turn round just after the dissolve; once out of the frame they are hidden) ----
     _, _, bx, by, bs, _, _, _ = BEARD
@@ -1286,16 +1296,16 @@ def build(ctx):
            motion=M.combine(lambda t: Tf(dx=adv_b * b_i(t) if t >= t_b0 else 0.0,
                                          alpha=0.0 if t >= t_b0 + N_B / RATE_B else 1.0),
                             dip(t_b0, bs, (bx, by), 4)))
-    t_s0 = snap(0.95)
+    t_s0 = snap(0.9)
 
     def sheep_mot(t):
         if t < t_s0:
             return Tf()
         u = t - t_s0
-        if u > 1.9:
+        if u > 1.6:
             return Tf(alpha=0)
         w = max(0.0, u - 0.12)                         # they turn with a little hop, then trot off
-        run = 320 * (w * w / 0.4 if w < 0.2 else w - 0.1)
+        run = 400 * (w * w / 0.4 if w < 0.2 else w - 0.1)
         hopf = 14 * math.sin(math.pi * u / 0.24) if u < 0.24 else 9 * abs(math.sin(math.pi * 2.6 * (u - 0.24)))
         return Tf(dx=run, dy=-hopf)
     sc.add("sheep15", [doc(sheep15_markup(-1)), doc(sheep15_markup(1))], z=16.45,
@@ -1603,6 +1613,7 @@ def build(ctx):
 
     # ---- sound ----
     sc.sfx("crowd", 0, dur=t_change + 1.0, gain_db=-20, fade_in=0.8, fade_out=1.4)
+    sc.sfx("footsteps", t_wl0, dur=t_wl1 - t_wl0, gain_db=-24, pan=-0.5, fade_in=0.4, fade_out=0.3)
     sc.sfx("wind_soft", 0, dur=T + 0.8, gain_db=-20, fade_in=0.8, fade_out=0.8)
     sc.sfx("sparkle", t_up - 0.05, gain_db=-15)
     sc.sfx("horn", t_horn + 0.12, dur=t_call - t_horn + 0.05, gain_db=-14, pan=0.1, fade_out=0.35)

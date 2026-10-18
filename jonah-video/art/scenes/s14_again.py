@@ -10,7 +10,8 @@ on the road.
 
   open       a page of soft cream clouds, gold light glowing through a seam above Jonah, fills the frame through the
              1 s dissolve from s13, so s13's standing Jonah never shares the screen with this one (a new page,
-             'a second time'); as L0 begins the cloud banks part sideways and fade, revealing the page below.
+             'a second time'); as L0 begins the cloud banks part sideways and slide off the page (opaque all the
+             way: no see-through clouds over the landscape), revealing the page below.
   start      calm page: Jonah kneels in prayer on the road (eyes closed), empty-handed as he came out of the fish
              in s13 (and as he walks up to the gate in s15: no staff, no bag); waves run up the beach, gulls
              glide, palms sway, two sheep graze, a butterfly flutters.
@@ -28,9 +29,11 @@ on the road.
              turned side-on (eyes ahead, arms swinging fore and aft beside him; planted-foot walk starting from a
              passing drawing: the drawing follows the distance walked; the planted sole stays fixed on the rising
              road, the swing foot lands on the higher road ahead), the camera following and widening to s15's
-             framing (he ends left of centre, about as big as s15's Jonah at its gate). He ends in open meadow
-             with the sign and the far city ahead of him; calm, slowly settling last second for the dissolve into
-             s15.
+             framing. About 1.2 s before the end the walk stops on a contact drawing (last footstep) and cuts to
+             him standing upright (s15's STAND pose and soft smile, a small squash), in open meadow past the
+             palms with the sign and the far city ahead of him, left of centre; calm, standing still for the
+             dissolve into s15, which opens on the same standing Jonah in the same spot and size of the frame
+             (s15's CAM0 is fitted to this last frame).
 
 Pose changes are hard cuts sold by small hops / squashes, blinks are expression cuts; no crossfades between
 poses. Every beat comes from ctx.lines / chunks (phrase position inside a chunk), nothing is hard-coded to the
@@ -296,6 +299,28 @@ def _seam_x(y):
     return SEAM_X[0] + (SEAM_X[1] - SEAM_X[0]) * y / SH
 
 
+def _veil_puffs(side):
+    """The row of big puffs along one veil bank's inner edge (cx, cy, r), and the bank's random stream, which
+    veil_svg goes on using for the clouds inside the bank."""
+    rng = random.Random(60 + side)
+    puffs = []
+    y = -90.0 + (0.0 if side < 0 else 68.0)
+    while y < SH + 160:
+        r = rng.uniform(118, 160)
+        puffs.append((_seam_x(y) + side * (0.35 * r + rng.uniform(-12, 12)), y, r))
+        y += rng.uniform(125, 150)
+    return puffs, rng
+
+
+def veil_edge(side):
+    """Stage x of a veil bank's innermost painted pixel (west bank: its rightmost, east bank: its leftmost): the
+    puffs plus a margin for the 8 px ink, the wobble filter and the watercolour edge (6-7 px when rasterised)."""
+    puffs, _ = _veil_puffs(side)
+    if side < 0:
+        return max(x + r for x, _, r in puffs) + 20
+    return min(x - r for x, _, r in puffs) - 20
+
+
 def veil_svg(side):
     """One half (side -1 = west, +1 = east) of the bank of soft cream clouds that fills the page at the start.
 
@@ -304,14 +329,8 @@ def veil_svg(side):
     ('God spoke to Jonah a second time': a new page). The seam lies right over God's gap and Jonah. The two halves
     overlap by 80-200 px along it (rows of big puffs bulge across), so nothing behind them shows until they move
     apart; a soft gold light glows on the clouds along the seam."""
-    rng = random.Random(60 + side)
+    puffs, rng = _veil_puffs(side)
     uid = "w" if side < 0 else "e"
-    puffs = []
-    y = -90.0 + (0.0 if side < 0 else 68.0)
-    while y < SH + 160:
-        r = rng.uniform(118, 160)
-        puffs.append((_seam_x(y) + side * (0.35 * r + rng.uniform(-12, 12)), y, r))
-        y += rng.uniform(125, 150)
     e0, e1 = _seam_x(-140) + side * 40, _seam_x(SH + 140) + side * 40
     far = -140 if side < 0 else SW + 140
     body = f'<path d="M{far},-140 L{f1(e0)},-140 L{f1(e1)},{SH + 140} L{far},{SH + 140} Z" {{a}}/>'
@@ -1135,18 +1154,37 @@ def build(ctx):
     sc.add("warm", warm_svg(), z=9, wc=0, blend="add", motion=lambda t: Tf(alpha=0.55 * ray_alpha(t)))
 
     # the opening cloud page: it covers everything through the dissolve from s13 (so the two Jonahs are never on
-    # screen together) and parts over Jonah as the narrator begins, together with the clouds above him
+    # screen together) and parts over Jonah as the narrator begins, together with the clouds above him. The banks
+    # stay fully opaque while they slide apart (a see-through bank would lay its inked puffs over the landscape like
+    # a double exposure) and are dropped only once their inner edges have left the frame (~1.2 s after they start,
+    # before Jonah looks up). The seam lies left of the frame's centre, so the east bank travels further.
     t_v0 = max(0.85, t_light - 0.1)
+    t_v1 = t_v0 + 1.6
+
+    def veil_dx(side, dist, t):
+        return side * (3 * t + dist * part(t, t_v0, t_v1, "sine"))
+
+    def veil_gone(side, dist):
+        """The first time the bank's inner edge lies outside the camera's view."""
+        edge = veil_edge(side)
+        for k in range(int((t_v1 - t_v0) * 120) + 1):
+            t = t_v0 + k / 120
+            c = cam(t)
+            x = edge + veil_dx(side, dist, t)
+            if (x < c.x - c.w / 2) if side < 0 else (x > c.x + c.w / 2):
+                return t
+        raise AssertionError(f"s14 veil bank {side} never leaves the frame")
 
     def veil_m(side, dist):
+        t_gone = veil_gone(side, dist)
+
         def m(t):
-            if t >= t_v0 + 1.25:
+            if t >= t_gone:
                 return Tf(alpha=0.0)
-            u = part(t, t_v0, t_v0 + 1.3, "sine")
-            return Tf(dx=side * (3 * t + dist * u), alpha=1 - part(t, t_v0 + 0.5, t_v0 + 1.25, "sine"))
+            return Tf(dx=veil_dx(side, dist, t))
         return m
-    sc.add("veil_w", veil_svg(-1), z=9.5, wc=0.8, motion=veil_m(-1, 700))
-    sc.add("veil_e", veil_svg(1), z=9.51, wc=0.8, motion=veil_m(1, 1000))
+    sc.add("veil_w", veil_svg(-1), z=9.5, wc=0.8, motion=veil_m(-1, 950))
+    sc.add("veil_e", veil_svg(1), z=9.51, wc=0.8, motion=veil_m(1, 1650))
 
     # ---------------------------------------------------------------- effects
     sc.fx = [

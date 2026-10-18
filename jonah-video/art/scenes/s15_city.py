@@ -1112,8 +1112,10 @@ def build(ctx):
 
     # ------------------------------------------------------------ camera
     CAM0 = Cam(630, 1218, 1051)                       # close on little Jonah on the road, the west gate in the
-    #                                                    middle (he stands near where s14's Jonah walks: one
-    #                                                    Jonah through the dissolve, not two)
+    #                                                    middle. Fitted to s14's last frame (Jonah standing at
+    #                                                    the end of his walk, ~298 px tall, head at x ~555): his
+    #                                                    head and feet land within ~2 px of s14's, so one
+    #                                                    standing Jonah dissolves into the other, not two
     CAMW = Cam(1650, 935, 2760)                        # the city from the gate to the river; it runs off both edges
     CAM_HOLD = Cam(1620, 945, 2720)
     CAM_ST0 = Cam(1000, 1000, 1800)                    # (y, w of) the street framing after the fly-through

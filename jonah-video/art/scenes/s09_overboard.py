@@ -8,7 +8,7 @@ Two shots joined by a dip through the blank page in the pause after line 1:
                  this ship sits on s08's (art/scenes/s08_row.py: ship at SX0 + 262 / SY, scale .92, end camera
                  (1682, 670, 1600) on its 2640 stage), the crew kneel with raised hands, eyes closed and mouths a
                  small 'o' (s08's END_EXPR 'sleepy'), in s08's order and places (sailor 0, sailor 1, Jonah, sailor 2,
-                 sailor 3, the captain on the raised stern under the lantern, where s08 ends him) under s08's prayer
+                 sailor 3, the captain on the stern beside the lantern, where s08 ends him) under s08's prayer
                  light as it ends (a small warm opening in the clouds and four narrow golden shafts, redrawn in s08's
                  coordinates), which fades as they get up, so the incoming dissolve lines up instead of doubling.
   B (line 2)     on the calm deck (bulwark with painted shields, mast and torn sail on the left): the crew kneel in two
@@ -20,8 +20,9 @@ Narration (every key time comes from the chunks; a phrase inside a chunk is plac
 to a pause in the voice take, see Cues):
   line 0 '于是，'    the crew get up one after another, the lifters first, 0.17 s apart (low kneel -> upright kneel ->
                     one knee -> standing, 4 frames per drawing; the captain on the stern goes straight from the upright
-                    kneel to standing; each cut eased so heads never pop, then a quick stretch-and-settle about the
-                    feet as follow-through) while the camera holds s08's framing;
+                    kneel to standing, stepping back from s08's kneel mark to the raised stern; each cut eased so
+                    heads never pop, then a quick stretch-and-settle about the feet as follow-through) while the
+                    camera holds s08's framing;
          '他们'     the two lifters (sailors 1 and 2, either side of Jonah) crouch and take hold of him; once all are
                     up a lightning flash (camera still), then one slow pull-out to the v1 wide shot (zoom <= ~19 %/s)
                     that has settled before the launch;
@@ -100,10 +101,14 @@ def ship_x(lx):
 
 
 # ---- shot A cast: s08's order and end places on the same ship (s08_row.py's End frame: sailors kneel at 274 / 132 /
-#      -116 / -250, Jonah stands at JON_LX -4, the captain ends on the raised stern deck at CAPT_KNEEL_LX -436 on the
-#      deck height at CAPT_KNEEL_DECK_LX -400, the lantern in front of his chest)
+#      -116 / -250, Jonah stands at JON_LX -4, the captain ends on the stern deck at CAPT_KNEEL_LX -362 on the deck
+#      height there, the stern lantern (hook at lx -428) hanging beside him, right of his face and beard). The captain
+#      is drawn on his standing place, the raised stern at -436 on the deck height at -400 (clear of sailor 3, the
+#      lantern by his hip); he kneels at s08's mark (A_CAPT_KNEEL, never with the lantern over his mouth) and steps
+#      back to it as he stands up.
 A_LX = dict(s0=274, s1=132, jon=-4, s2=-116, s3=-250, capt=-436)
 A_POS = {k: (ship_x(lx), deck_y(-400 if k == "capt" else lx)) for k, lx in A_LX.items()}
+A_CAPT_KNEEL = (ship_x(-362) - A_POS["capt"][0], deck_y(-362) - A_POS["capt"][1])   # offset of s08's kneel mark
 A_F0 = dict(s0=1, s1=1, s2=-1, s3=-1, capt=-1)          # facings at the start (toward Jonah, as in s08)
 DECK = A_POS["s1"][1]
 L1X, L2X = A_POS["s1"][0], A_POS["s2"][0]                # the two lifters
@@ -1216,16 +1221,23 @@ def build(ctx):
         if lifter:
             offs = [o for o in offs if abs(o[0] - t_lift) > 1e-6] + hoist_offs
         cuts = [tk for tk, _ in rising(name)[1:]]           # the rise cuts stretch and settle
+        # the captain steps back from s08's kneel mark (lantern beside his face) to the raised stern as he stands
+        step = (cuts[0], cuts[0] + 0.55) if name == "capt" else None
 
-        def person_m(t, hops=hops, offs=offs, lifter=lifter, cuts=cuts, foot=(x, y)):
+        def person_m(t, hops=hops, offs=offs, lifter=lifter, cuts=cuts, foot=(x, y), step=step):
             s = ship_tf(t)
             dy = -6 * sum(bump(t, c) for c in hops) + offset_dy(t, offs) + (lifter_dy(t) if lifter else 0.0)
             k = sum(stretch(t - c - 1 / 30) for c in cuts)   # from the frame after the cut: follow-through
-            if abs(k) < 1e-4:
+            ox = oy = 0.0
+            if step:           # the captain: from s08's kneel mark back to his drawn (standing) place
+                u = 1 - progress(t, step[0], step[1], "inout")
+                ox, oy = A_CAPT_KNEEL[0] * u, A_CAPT_KNEEL[1] * u
+            if abs(k) < 1e-4 and not (ox or oy):
                 return Tf(dx=s.dx, dy=s.dy + dy, rot=s.rot, px=SX, py=WL)
-            # stretch / squash about the feet, then the ship's rocking about (SX, WL): one Tf pivoted on the feet
+            # (shifted by the step,) stretch / squash about the feet, then the ship's rocking about (SX, WL): one Tf
+            # pivoted on the drawn feet
             th = math.radians(s.rot)
-            qx, qy = foot[0] - SX, foot[1] - WL
+            qx, qy = foot[0] + ox - SX, foot[1] + oy - WL
             ex = SX + qx * math.cos(th) - qy * math.sin(th) - foot[0]
             ey = WL + qx * math.sin(th) + qy * math.cos(th) - foot[1]
             return Tf(dx=s.dx + ex, dy=s.dy + dy + ey, rot=s.rot, sx=1 - 0.5 * k, sy=1 + k, px=foot[0], py=foot[1])
