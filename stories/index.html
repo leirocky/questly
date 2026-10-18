@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="圣经绘本故事：用绘本画风、旁白配音和配乐讲述的圣经故事动画。">
+<title>圣经绘本故事</title>
+<style>
+  :root {
+    --bg: #f7f0e3; --card: #fffaf0; --ink: #3e2c1c; --muted: #7a6450; --line: #e3d3b8;
+    --accent: #b5532f; --chip: #f1e4cc; --shadow: 0 6px 24px rgba(80, 50, 20, .12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1c1712; --card: #27201a; --ink: #f2e6d4; --muted: #b9a58c; --line: #3d3328;
+            --accent: #e08a5f; --chip: #332a21; --shadow: 0 6px 24px rgba(0, 0, 0, .4); }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.7 "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 16px 56px; }
+  header h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: .04em; }
+  header p { margin: 0; color: var(--muted); }
+  .story { margin-top: 28px; background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+           box-shadow: var(--shadow); overflow: hidden; }
+  video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+  .body { padding: 18px 20px 22px; }
+  .body h2 { margin: 0; font-size: 22px; }
+  .meta { color: var(--muted); font-size: 14px; margin: 2px 0 10px; }
+  .body p { margin: 0 0 14px; }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .chapters button { font: inherit; font-size: 14px; color: var(--ink); background: var(--chip);
+                     border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  .chapters button:hover, .chapters button:focus-visible { border-color: var(--accent); outline: none; }
+  .chapters time { color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; }
+  footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>圣经绘本故事</h1>
+    <p>用绘本画风、旁白配音和配乐讲给孩子听的圣经故事。</p>
+  </header>
+
+  <article class="story" id="jonah">
+    <video controls preload="metadata" playsinline poster="jonah-poster.jpg">
+      <source src="../jonah-video/output/jonah_story.mp4" type="video/mp4">
+      你的浏览器无法播放这个视频。
+    </video>
+    <div class="body">
+      <h2>约拿的故事</h2>
+      <div class="meta">《约拿书》1–4 章 · 9 分 51 秒 · 中文配音与字幕 · 适合 3–8 岁</div>
+      <p>上帝叫约拿去尼尼微，约拿却坐船往反方向逃跑。海上起了大风暴，约拿被抛进海里，又被大鱼吞进肚子……
+        最后，一棵蓖麻让约拿明白：上帝爱惜每一个人。</p>
+      <ul class="chapters" aria-label="章节">
+        <li><button data-t="4.6"><time>0:05</time>上帝的呼召</button></li>
+        <li><button data-t="37.3"><time>0:37</time>逃往他施</button></li>
+        <li><button data-t="65.6"><time>1:06</time>海上风暴</button></li>
+        <li><button data-t="116.4"><time>1:56</time>抽签</button></li>
+        <li><button data-t="213.0"><time>3:33</time>被抛进大海</button></li>
+        <li><button data-t="232.2"><time>3:52</time>大鱼腹中</button></li>
+        <li><button data-t="299.5"><time>5:00</time>回到陆地</button></li>
+        <li><button data-t="332.7"><time>5:33</time>尼尼微悔改</button></li>
+        <li><button data-t="412.9"><time>6:53</time>约拿生气</button></li>
+        <li><button data-t="468.7"><time>7:49</time>蓖麻的教训</button></li>
+      </ul>
+    </div>
+  </article>
+
+  <footer>画面、配音、配乐和音效都由程序生成（<a href="https://github.com/leirocky/questly/tree/main/jonah-video">源代码</a>）。
+    经文依据和合本改写成儿童语言。</footer>
+</main>
+<script>
+  // chapter buttons seek the video and play from there
+  const video = document.querySelector('#jonah video');
+  document.querySelectorAll('#jonah .chapters button').forEach(b => b.addEventListener('click', () => {
+    video.currentTime = parseFloat(b.dataset.t);
+    video.play().catch(() => {});
+  }));
+</script>
+</body>
+</html>

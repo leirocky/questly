@@ -1,0 +1,3214 @@
+"""Creatures, vehicles, plants, buildings and props for the Jonah picture-book video.
+
+Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
+wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
+outlines (``art.style.INK``) of 3-5 px at scale 1 with round joins; never pure black or pure white.
+This module does not import art/characters.py (the throne / ash-heap geometry that matches the king is
+hard-coded), so it is safe to import from anywhere.
+
+Conventions (read these first)
+------------------------------
+* Signature style ``fn(x, y, scale=1.0, facing=1, **options)``. ``(x, y)`` is the ANCHOR in stage px (listed
+  for each function). ``facing=1`` faces / moves right, ``facing=-1`` mirrors around the anchor's x.
+* ``scale`` multiplies everything, including ink width (a 0.5-scale drawing has ~2 px lines, as distant
+  things should). Scale 1 is "person scale": an adult (Jonah, art/characters.py) is ~330 px tall.
+* BBox = rendered alpha extent MEASURED at scale 1, facing=1, as (left, top, right, bottom) px relative to
+  the anchor, wobble included. For facing=-1 use (-right, top, -left, bottom); multiply everything by scale.
+* Local -> stage: ``local_to_stage(x, y, scale, facing, lx, ly)`` converts a documented local point (the
+  ship bed, the fish mouth, ...) to stage px for a drawing placed at (x, y, scale, facing).
+* clipPath / mask / gradient ids are derived from the parameters, so many copies may share one document.
+* Animate by rendering a flipbook of frames with different option values (all "0..1" / "-1..1" options are
+  continuous and look good at intermediate values), or by moving the layer with engine.motion.
+* RENDERING COST: every unique markup is rasterised once (measured on a 2112 x 1188 layer: fish ~1.2 s,
+  castor frame ~0.9 s, gull ~0.6 s, full-width skyline ~1.5 s) and then cached, so never feed a per-frame
+  float into an option. Use a small
+  fixed flipbook of quantised values and pick the nearest frame: fish mouth in steps of 1/8, tail ~6 phases
+  (e.g. sin at 0, 60, 120 ... deg), eye per beat; castor growth / wither in steps of 0.1 (or 0, .25, .5, .75,
+  1); bird wing 4-6 phases; sway 2-4 phases. Keep nineveh_skyline / city_wall / ziggurat on static layers.
+* Compositions whose coordinates are absolute (city_wall, nineveh_skyline, harbor_dock) take x0 / x1 / y in
+  stage px and have no facing.
+
+1. THE GREAT FISH
+-----------------
+fish(x, y, scale=1.0, facing=1, mouth=0.0, eye='open', tail=0.0, blush=True, part='all')
+    Anchor: centre of the round body (about the level of the top of the pectoral fin).
+    A huge friendly blue fish, ~1400 px long at scale 1 (tail tip -791 .. snout +605): blue body
+    P['fish'], darker back P['fish_dark'], light belly / lower jaw P['fish_belly'], light spots
+    P['fish_spot'], scale arcs, a gill line ending at the belly colour, dorsal / anal / pectoral fins, a
+    vertical forked tail fin, one big kind eye with highlights, rosy cheek, a smile that curls up at the corner.
+    BBox: mouth 0 (-791, -462, 605, 359); .33 right 593; .66 right 589; mouth 1 (-791, -462, 588, 371);
+          tail=+1 left -879; tail=-1 left -879, bottom 419.
+    Options:
+      mouth 0..1  the jaw opens: lower jaw swings down, the throat stretches into a soft pouch that stays
+                  close to the belly line, the snout lifts, the lip tips curl in so the opening is rounded;
+                  dark-red inside P['mouth_inside'] with a pink tongue. Smooth at every value. At 1 the
+                  opening is ~415 px tall — a 330 px person fits (see fish_mouth_points()['box']).
+      eye         'open' | 'closed' (sleepy curve with lashes) | 'happy' (^ arc) | 'surprised' (big eye,
+                  small pupil, raised brow).
+      tail -1..1  tail fin bends around the peduncle (+1 = up, -1 = down, 22 deg); the pectoral fin
+                  counter-flaps. Cycle it for swimming (quantise: see RENDERING COST).
+      blush       rosy cheek on/off.
+      part        'all' | 'back' | 'front'. SWALLOW / SPIT RECIPE (same x, y, scale, facing, mouth, eye, tail
+                  for all three):  fish(..., part='back')  ->  in_fish_mouth(jonah(...), x, y, scale, facing,
+                  mouth)  ->  fish(..., part='front').  'back' = tail, fins, body, mouth cavity, face; 'front' =
+                  lower jaw + pouch, upper-lip rim, gill, pectoral fin, so a figure between them is inside the
+                  mouth: hidden by the jaws and head, visible through the opening and in the water in front.
+fish_mouth_points(mouth=0.0) -> {'corner', 'upper', 'lower', 'center', 'box'}
+    Local (scale 1, facing right) key points: corner = back of the mouth (hinge); upper / lower = lip tips;
+    center = middle of the dark opening (aim swallowed things here); box = (x0, y0, x1, y1), the largest
+    axis-aligned rectangle inside the dark opening (a point when the mouth is closed).
+      mouth 0    corner (274, 30)  upper (588, 16)   lower (596, 28)  center (426, 48)  box: point (426, 48)
+      mouth .33  corner (256, 42)  upper (583, -32)  lower (579, 103) center (464, 55)  box (366, 13, 562, 97)
+      mouth .66  corner (233, 57)  upper (576, -92)  lower (558, 197) center (437, 60)  box (335, -58, 539, 178)
+      mouth 1    corner (214, 70)  upper (570, -142) lower (540, 274) center (410, 71)  box (300, -111, 520, 253)
+    The eye is at about (380, -118) closed .. (340, -222) wide open. Convert with local_to_stage().
+fish_mouth_path(mouth=1.0, x=0.0, y=0.0, scale=1.0, facing=1, reach=1600.0) -> SVG path data (stage px)
+    Clip region for a fish drawn at (x, y, scale, facing): the dark mouth opening plus the open water in front
+    of the lips (the half-plane beyond the line from the upper to the lower lip tip, `reach` px deep). The
+    head, cheeks and jaws are outside it. Use it in your own <clipPath>, or use in_fish_mouth().
+in_fish_mouth(markup, x, y, scale=1.0, facing=1, mouth=1.0) -> markup
+    Wraps figure markup in a clip of fish_mouth_path(); x, y, scale, facing, mouth are the FISH's. See the
+    swallow recipe under fish(part=...). Example (props_fish.png): Jonah at 0.8 x the fish scale, placed at
+    local_to_stage(.., center[0], center[1] + 132) with pose='float'.
+
+2. THE SHIP
+-----------
+ship(x, y, scale=1.0, facing=1, sail='full', cutaway=False, lantern=True, oars=False, part='all', flag=True)
+    Anchor: hull centre on the WATERLINE (y=0). Ancient Phoenician-style merchant ship, bow on the facing
+    side: curved planked hull (P['wood'] tones) with a teal / terracotta painted band, raised bow post,
+    curling stern post, rail with a row of round painted shields, one mast, yard and square striped sail
+    P['sail'] / P['sail_stripe'], stays and sheets, a pennant, a big steering oar at the stern.
+    BBox (-602, -944, 525, 126) for every sail; oars=True bottom 158. The hull below the waterline (y 0..+98)
+    is drawn: cover it with your sea layer. Stays / sheets never get thinner than ~2.6 px on screen.
+    Geometry (local, facing right): deck / feet of people standing on board SHIP_DECK_Y = -165 (valid for
+    |x| < 300); rail top ~-220; mast x=-10 from -170 to -930; yard y~-850 spanning x -318..298; sail foot
+    ~-500..-550 (just above the head of an adult standing on deck); stern curl x -520..-420, y -440..-175;
+    bow knob (488, -358); stern lantern hook (-428, -372).
+    Options:
+      sail     'full' (billowing, striped) | 'furled' (rolled under the yard, tied) | 'torn' (ragged edges, a
+               hole, a flapping loose strip, yard tilted - for the storm).
+      cutaway  True shows the hull in dollhouse cross-section with a warm lantern-lit hold: two amphorae and a
+               sack (stern side), a straw mattress with pillow and folded teal blanket, a crate with a sack on
+               it (bow side), ribs and deck beams, and a small lantern hanging from a deck beam.
+               SHIP_INTERIOR = (-360, -146, 360, 34): the hold rectangle (x0, top, x1, bottom; bottom corners
+               rounded, floor surface y~18). Its lower part is BELOW the waterline: in cutaway shots draw the
+               sea in front only below y~+40 (or translucent).
+               SHIP_BED = (-130, 240, -4): mattress x0, x1 and its top surface y; the pillow is at x~-100.
+               SHIP_SLEEP = (48, -2): put jonah(*local_to_stage(x, y, scale, facing, *SHIP_SLEEP), scale,
+               facing, pose='sleep') here - he lies on the mattress with his head on the pillow; ~140 px of
+               headroom above him.
+               SHIP_HOLD_LANTERN = (200, -140): the hook of the hold lantern (toward the bow, clear of the
+               sleeper's head); the lantern hangs down to y~-75. Its warm glow is centred near x~60.
+      lantern  a small lit lantern hanging from the stern post (no glow halo in cutaway).
+      oars     a row of 7 oars dipping into the water.
+      part     'all' | 'back' | 'front'. 'back' = flag, stays, mast, sail, sheets, hull, posts and the cutaway
+               hold; 'front' = rail with shields, steering oar, oars, stern lantern. Draw ship(part='back') ->
+               characters standing on deck (feet at SHIP_DECK_Y) -> ship(part='front') so the rail hides
+               their shins.
+      flag     the pennant on the masthead.
+
+3. PROPS
+--------
+crate(x, y, scale=1.0, rot=0)
+    Anchor: centre. Planked wooden box with a diagonal brace, top and side faces. BBox (-54, -59, 69, 49).
+jar(x, y, scale=1.0, rot=0, color=None)
+    Anchor: centre. Terracotta amphora with two handles, cream band, wavy line; color overrides the clay.
+    BBox (-54, -86, 54, 82).
+sack(x, y, scale=1.0, rot=0, color=None, seed=0)
+    Anchor: bottom centre. Lumpy burlap sack tied with rope, with a patch; seed varies the lumps.
+    BBox (-60, -122, 58, 5).
+lots_jar(x, y, scale=1.0, sticks=5)
+    Anchor: bottom centre. Clay pot the lots are drawn from, with wooden lot sticks poking out (sticks=0 for
+    an empty pot). BBox (-51, -150, 51, 4); sticks=0 (-51, -90, 51, 4); pot rim at y~-78.
+lot(x, y, scale=1.0, rot=0, marked=False)
+    Anchor: centre. A small flat wooden lot stick 76 x 22. marked=True adds a glowing orange-gold mark and a
+    soft golden halo (the lot that falls on Jonah). BBox (-41, -14, 41, 14); marked incl. halo (-75, -54, 75, 54).
+lantern(x, y, scale=1.0, lit=True)
+    Anchor: the top hook ring (hang it from a beam). Oil lantern 58 x 136 (bottom tip y~135); lit adds a warm
+    flame and a soft glow halo. BBox unlit (-30, -3, 29, 136); lit incl. halo (-113, -24, 112, 200).
+rope_coil(x, y, scale=1.0)
+    Anchor: bottom centre. Three-loop coil of rope with a loose end to the right. BBox (-59, -66, 91, 5).
+scroll(x, y, scale=1.0, rot=0, opened=False)
+    Anchor: centre. Closed: rolled parchment with a red tie, BBox (-77, -23, 76, 46). opened=True: parchment
+    between two wooden rollers with lines of writing, BBox (-100, -79, 100, 79).
+booth(x, y, scale=1.0, facing=1, shade=False)
+    Anchor: bottom centre (ground, between the front posts). Jonah's little shelter (Jonah 4:5) in a slight
+    3/4 view: rough stick posts, a front and a back A-frame (the back frame is offset by BOOTH_DEPTH =
+    (54, -28)), a ridge pole, and a striped cloth thrown over the ridge - its sloped top is visible, sagging
+    between the rafters, hanging past the eaves at the sides with ragged hems and as a short shade cloth at
+    the back; the inside under the roof is shaded; leafy branches lie on the cloth. facing=-1 mirrors.
+    BBox (-205, -432, 245, 13). Front posts at x=-158 and 146, front eaves y~-238, front apex (0, -374), back
+    apex (54, -402). BOOTH_SEAT = (-140, -250, 132, 0): the open space under the roof (x0, top, x1, ground)
+    where a seated Jonah fits (draw him after the booth). A standing adult (330 px) fits only near the centre:
+    his head rises above the eaves into the gable, under the ridge.
+    shade=True adds a soft cool shadow ellipse on the ground under the roof (x ~-170..190; BBox bottom 35),
+    so the shade reads even before the castor plant grows.
+throne(x, y, scale=1.0, facing=1)
+    Anchor: the FLOOR UNDER THE SEATED KING'S ANCHOR - i.e. pass the same x, y, scale, facing as
+    characters.king(x, y, scale, facing, pose='sit_throne', throne=False), and draw the throne first.
+    (It is not centred on its own anchor: the back is at x -86..-12, the seat runs x -90..60.)
+    Assyrian throne in side view: tall back upholstered in royal purple P['royal'] with gold studs, a blue
+    glazed rosette band and a gold pine-cone finial sitting on the top rail; a purple cushion; a wooden seat
+    box with a gold band and tassel; a far-side armrest with a blue rosette band on gold supports ending in a
+    little gold lion head; gold turned legs with lion paws; a small footstool in front (x 70..152, top y~-46)
+    whose back edge is under the seated king's feet. BBox (-93, -299, 154, 3). KING_SEAT_Y = -74 is the
+    cushion top (under the king's hips); armrest top y~-160; back top y~-262, finial to ~-296.
+    The empty throne works for "the king rose from his throne" (draw king(pose='stand' / 'remove_crown')
+    beside it). NOTE: characters.king(pose='sit_throne', throne=True) still draws its own older wooden chair;
+    use throne=False + props.throne() so the occupied and the empty throne match.
+ash_pile(x, y, scale=1.0, smoke=False, facing=1, part='all')
+    Anchor: bottom centre of the mound (ground). The heap of ashes the king sits in (Jonah 3:6): a lumpy grey
+    mound ~76 px high (pale ash on top, darker below, speckled), dark charcoal lumps, two half-burnt sticks
+    (one with a glowing ember tip), a low pale lip of ash spreading in front and scattered specks at the edge.
+    BBox (-185, -79, 177, 5); part='back' (the mound + sticks + smoke) (-125, -79, 127, 4); part='front' (the
+    low lip, lumps, specks) (-184, -17, 178, 5). smoke=True adds three soft translucent puffs / curls rising
+    to y~-261 (drawn with part 'all' / 'back').
+    With the king: ash_pile(x + KING_ASH_DX*scale*facing, y, scale, facing=facing, part='back', smoke=...) ->
+    characters.king(x, y, scale, facing, pose='sit_ashes', ashes=False) -> ash_pile(same, part='front').
+    KING_ASH_DX = 21.8 (scale 1, facing right).
+
+4. PLANTS
+---------
+castor_plant(x, y, scale=1.0, growth=1.0, wither=0.0, bite=0.0, side=1, seed=0)
+    Anchor: root point on the ground (centre of a small soil mound). The castor-oil plant (蓖麻, Ricinus
+    communis), drawn as a giant herb: a thick glossy GREEN stem (P['leaf_dark'] toward P['leaf']) with a
+    red-purple flush down one side and pale node rings (no bark), reddish petioles, very large peltate
+    palm-shaped leaves with 7-9 pointed lobes and pale veins (P['leaf']), a side branch, spiky red seed
+    clusters at the top. side=+1 leans / spreads the canopy to the right (+x), side=-1 to the left (mirror).
+    Stem height castor_height(growth) = 30 + 470 * growth**2.2 (g 0: 30, .25: 52, .5: 132, .75: 280, 1: 500).
+    BBox (side=1): growth 0 (-49, -44, 48, 12) sprout with two seed-leaves; .25 (-53, -80, 52, 12);
+          .5 (-99, -196, 93, 13) about waist high; .75 (-151, -369, 219, 13);
+          1 (-220, -622, 503, 14) taller than a standing man; wither .5 (-181, -556, 513, 14);
+          wither 1 (-91, -531, 459, 19); bite 1 (-200, -622, 530, 14); wither 1 + bite 1 (-85, -519, 468, 17).
+    Shade: at growth=1 the leaves form a canopy between y~-620 and -330 spanning x -210..500, densest over
+    CASTOR_SHADE = (-180, 400) (ground x-range of the shade for a high sun, relative to the anchor; mirror
+    for side=-1). Put the booth at x + CASTOR_BOOTH_DX*scale*side (CASTOR_BOOTH_DX = 270) so the canopy arches
+    over its roof (see props_castor.png).
+    Options (all continuous; check 0 / .25 / .5 / .75 / 1):
+      growth 0..1  sprout -> waist-high bush -> tall plant; leaves are born one by one and unfold, the
+                   branch grows from .4 to .85, seed clusters appear after .68, seed-leaves vanish by .37.
+      wither 0..1  two phases so the SAME leaves stay recognisable: 0..0.7 every leaf keeps its pointed
+                   palmate silhouette but swings down on its drooping petiole until it hangs face-on below
+                   it, the lobe tips cup and hook toward the centre, the colour goes P['leaf'] -> P['leaf_dry']
+                   (reached at .7) with brown spots; 0.7..1 the leaves shrink and crumple into limp brown
+                   (P['leaf_dead']) hanging hands, and the stem bends over.
+      bite 0..1    a scalloped notch eaten into the stem 16 px above the ground on the side opposite the
+                   canopy (pale pith rim, crumbs); at 1 it reaches ~3/4 through the stem and the plant leans
+                   3.5 deg away from it (toward the canopy). It is a small detail: show it in a close-up
+                   (scale >= 2 or a camera zoom); in a wide shot the lean and the worm carry it. For the worm:
+                   worm(x - WORM_BITE_DX*scale*side, y, scale, facing=side, chomp=...) puts its mouth in the
+                   notch (WORM_BITE_DX = 52).
+      seed         varies leaf spin.
+castor_height(growth) -> stem height in px at scale 1 (see above).
+palm_tree(x, y, scale=1.0, lean=0.0, sway=0.0, dates=True)
+    Anchor: base of the trunk. Date palm ~600 px tall: ringed tapering trunk, a crown of drooping feathery
+    pinnate fronds (central rib with a comb of narrow pointed leaflets; darker back fronds), date clusters.
+    lean -1..1 moves the crown +-150 px sideways (crown at (150*lean, -430)); sway -1..1 swings the fronds for
+    wind. BBox lean 0 (-229, -602, 230, 6); lean 1 (-79, -602, 380, 6); lean -1 (-379, -602, 79, 6);
+    sway 1 (-220, -604, 229, 6).
+olive_tree(x, y, scale=1.0, seed=0)
+    Anchor: base of the trunk. Gnarled olive: a twisted grey-brown trunk with a knot hole, splitting into three
+    limbs, each carrying its own silvery grey-green clump (plus one small low clump) with sky gaps between
+    them, slim silver leaves and small dark olives; seed varies leaf / olive placement. BBox (-202, -379, 201, 6).
+bush(x, y, scale=1.0, variant=0)
+    Anchor: base centre. variant 0 green, 1 green with pink flowers, 2 dry grey-olive desert shrub with bare
+    forked twigs, 3 dark green with red berries. BBox 0 / 1 / 3 (-99, -112, 104, 19); 2 (-98, -102, 94, 6).
+grass_tuft(x, y, scale=1.0, variant=0, sway=0.0)
+    Anchor: base centre. variant 0 green (-41, -59, 37, 3), 1 dry yellow (-47, -55, 43, 3), 2 green with red /
+    yellow wild flowers (-47, -93, 54, 3). sway -1..1 bends the blades (sway 1: right edge ~49).
+seaweed(x, y, scale=1.0, variant=0, sway=0.0)
+    Anchor: base on the sea floor. variant 0 olive kelp ribbons (-46, -248, 41, 4); 1 pink bubbly weed
+    (-84, -129, 81, 7); 2 teal sea-grass (-72, -185, 76, 3); 3 orange branching coral (-117, -155, 109, 12).
+    sway -1..1 bends the tips (variant 0 sway 1: right edge 81); animate with a few phases for currents.
+reeds(x, y, scale=1.0, variant=0, sway=0.0)
+    Anchor: base centre. Clump of reed blades with three brown cattails; variant changes the blade pattern.
+    BBox (-65, -290, 79, 5); sway 1 (-39, -289, 140, 5).
+
+5. CREATURES
+------------
+worm(x, y, scale=1.0, facing=1, chomp=0.0, crawl=0.0)
+    Anchor: bottom centre (on the ground). Small cute pink caterpillar-like worm with green spots, antennae, a
+    big dot eye and rosy cheek; head on the facing side. Body ~62 px long. BBox (-35, -44, 45, 3) for every
+    option. Mouth at local (40, -11). chomp 0..1 opens a round mouth with tiny teeth; crawl 0..1 arches the
+    middle of the body like an inchworm.
+gull(x, y, scale=1.0, facing=1, wing=0.0, pose='fly')
+    Anchor: body centre. Cream seagull with grey wings, black wing tips with white spots, yellow beak.
+    pose 'fly' | 'stand' (wings folded, orange legs, feet at y~+40). In flight both wings show: the near wing
+    in front of the body and the far wing peeking out behind it.
+      wing  1  wings up in a V (raised wing no longer than ~1.1 x the body)   BBox (-76, -107, 66, 21)
+      wing .5  half up                                                       (-76, -93, 66, 21)
+      wing  0  GLIDE: wings level, seen nearly edge-on as slim arched blades swept back over the tail, far
+               wing a sliver above the back                                  (-89, -40, 66, 21)
+      wing -.5 sweeping down                                                 (-80, -28, 66, 41)
+      wing -1  down-stroke: near wing below the body, far wing tip under the belly (-76, -28, 66, 69)
+      stand                                                                  (-65, -36, 61, 42)
+    Cycle wing (1, .5, 0, -.5, -1, -.5, 0, .5) for flapping, hold 0 for drifting / gliding gulls.
+dove(x, y, scale=1.0, facing=1, wing=0.0, pose='fly')
+    Anchor: body centre. Plump cream-white dove with a rosy breast, round head, short pink beak, short tail and
+    soft lavender wings with rounded feather tips; same wing / pose options as gull, smaller.
+    BBox wing 1 (-56, -87, 51, 22); .5 (-56, -74, 51, 22); 0 (-71, -34, 51, 22); -.5 (-64, -32, 51, 33);
+    -1 (-56, -32, 51, 54); stand (-47, -39, 47, 38).
+small_fish(x, y, scale=1.0, facing=1, color='orange', tail=0.0)
+    Anchor: centre. Little striped round fish with a big eye. color: a FISH_COLORS name ('orange', 'yellow',
+    'pink', 'teal', 'purple', 'blue', 'red') or any hex. tail -1..1 bends the tail. BBox (-58, -28, 40, 25);
+    tail +-1 (-62, -31, 40, 25).
+animal(x, y, scale=1.0, facing=1, kind='sheep', sackcloth=False)
+    Anchor: bottom centre (hooves on the ground). Cute rounded picture-book animals, head on the facing side,
+    open dot eyes and rosy cheeks:
+      'sheep'  fluffy cream wool, tan face                                     BBox (-95, -147, 121, 3)
+      'goat'   round cream body with brown patches, short sturdy legs, short thick curved neck, big head,
+               curled horns, floppy ear, beard                                 (-91, -256, 139, 3)
+      'cow'    cream with brown patches, pink muzzle                           (-139, -226, 195, 3)
+      'donkey' grey, long ears, dark mane                                      (-115, -303, 170, 3)
+      'camel'  tan dromedary: rounded barrel body with ONE hump in the middle of the back, legs set in
+               under the body with knobbly knees and pad feet, long neck dipping then rising, soft muzzle,
+               open eye with lashes                                            (-139, -358, 284, 3)
+    sackcloth=True drapes a burlap blanket with a patch and a rope tie over the back (Jonah 3:8); on the camel
+    it follows the hump and back with a sag on each flank. The BBox does not change.
+
+6. BUILDINGS
+------------
+house(x, y, scale=1.0, variant=0, facing=1)
+    Anchor: bottom centre of the front wall (ground). Flat-roofed mud-brick house at person scale (doors
+    ~330 px tall), front face + a 3/4 side face on the facing side, roof beam ends, small dark windows,
+    exposed bricks. facing=-1 mirrors (side face and stairs swap sides).
+      0 one storey, pot on the roof                      BBox (-325, -653, 386, 13), roof y~-510
+      1 two storeys, outside stair up to a landing and an upper door, teal awning
+                                                         (-431, -890, 331, 20), roof y~-845
+      2 wide, striped door awning, rooftop shade, pots   (-394, -733, 452, 13), roof y~-524
+      3 palm-frond roof shade, laundry line, bush        (-305, -786, 457, 17), roof y~-594
+    For background streets use scale 0.2-0.5.
+city_wall(x0, x1, y, height=260, gate=None, doors_open=0.0, towers=True, seed=0, ink=1.0)
+    Anchor: ground line y, from x0 to x1 (absolute stage px, no scale). Thick Assyrian mud-brick wall with
+    stepped crenellations, brick courses, base band and projecting towers every ~420*k px (k = height/260;
+    every detail scales with k). Wall top y-height, merlons to y-height-34k, towers to y-height-90k.
+    gate=(gx, width) adds an arched gate centred at gx: flanking towers 120k wide reaching y-1.45*height-34k,
+    blue glazed rosette bands, an arched opening from y up to y - 0.62*height - width/2 with tall studded
+    wooden doors; doors_open 0..1 swings them open showing the passage and the bright far side.
+    A 330 px adult walks through comfortably with height >= 520 and width >= 220. ink multiplies every
+    outline width (e.g. 0.6 for a distant wall drawn at small height). BBox ~ (x0-4, top, x1+4, y+4):
+    h 260 no gate top y-353; h 300 with gate top y-478.
+ziggurat(x, y, scale=1.0)
+    Anchor: bottom centre. Stepped temple tower: three tiers with buttress lines, a central stair and a small
+    shrine with a glazed rosette band on top. Drawn at person scale (huge): BBox (-771, -1199, 770, 4); use
+    scale 0.2-0.5 in backgrounds.
+nineveh_skyline(x0, x1, y, scale=1.0, seed=0, haze=0.35, tint=None)
+    Anchor: ground line y from x0 to x1 (absolute). Dense distant panorama for far backgrounds: one or two
+    ziggurats or a palace, rows of flat-roofed houses with tiny windows, towers, date palms and a
+    crenellated city wall with towers in front. Colours are mixed toward tint (default P['sky_warm']) by
+    haze 0..1 (distance). Height ~505*scale (ziggurat top), wall 110*scale.
+    BBox ~ (x0 - 76*scale, y - 506*scale, x1 + 75*scale, y + 3). Static layers only (see RENDERING COST).
+harbor_dock(x0, x1, y, depth=250, bollards=True, scale=1.0)
+    Anchor: y = the plank walking surface (feet of people on the pier), from x0 to x1 (absolute). Wooden pier:
+    planks, front beam, posts every 150*scale px going down to y+depth (dark and wet lower half, put the sea
+    in front), cross braces, bollards with rope. scale shrinks planks, posts, bollards and ink for a distant
+    pier (x0, x1, y and depth stay in stage px). BBox ~ (x0-4, y-50*scale, x1+4, y+depth+3).
+signpost(x, y, scale=1.0, left_text='他施', right_text='尼尼微')
+    Anchor: foot of the post (ground). Wooden post with two arrow boards painted in LXGW WenKai: the upper
+    board points LEFT (left_text, default '他施' Tarshish, west, centred y=-276), the lower board points
+    RIGHT (right_text, default '尼尼微' Nineveh, east, centred y=-196); each board is 50*len(text)+70 px long.
+    Pass '' to omit a board. Text is never mirrored. BBox with the defaults (-199, -343, 249, 9).
+
+Helpers / constants
+-------------------
+local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
+fish_mouth_points(mouth); fish_mouth_path(...); in_fish_mouth(...).
+SHIP_DECK_Y = -165, SHIP_INTERIOR, SHIP_BED, SHIP_SLEEP, SHIP_HOLD_LANTERN (ship, section 2);
+BOOTH_SEAT, BOOTH_DEPTH (booth); KING_SEAT_Y, KING_ASH_DX (throne / ash_pile); CASTOR_SHADE,
+CASTOR_BOOTH_DX, WORM_BITE_DX (castor_plant); FISH_COLORS (small_fish); HOUSE_K = 2.2 and ZIGGURAT_K = 2.4
+are the internal up-scales of the house / ziggurat drawings (informational).
+Contact sheets of everything: ``python3 tools/props_sheet.py [fish ship items castor plants creatures
+buildings]`` -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
+"""
+import hashlib
+import math
+import random
+import re
+
+from art import style as S
+from art.style import INK, P
+
+# ====================================================================== helpers
+EYE_WHITE = "#fbf6ea"
+PUPIL = "#2e2630"
+HILITE = "#fffaf0"
+CREAM = "#f7efdc"
+
+SHIP_DECK_Y = -165
+SHIP_INTERIOR = (-360, -146, 360, 34)
+SHIP_BED = (-130, 240, -4)
+SHIP_SLEEP = (48, -2)
+SHIP_HOLD_LANTERN = (200, -140)
+BOOTH_SEAT = (-140, -250, 132, 0)
+CASTOR_SHADE = (-180, 400)
+CASTOR_BOOTH_DX = 270
+WORM_BITE_DX = 52
+
+
+def _f(v):
+    return f"{v:.1f}"
+
+
+def _clamp(v, a=0.0, b=1.0):
+    return max(a, min(b, float(v)))
+
+
+def _lerp(a, b, t):
+    return a + (b - a) * t
+
+
+def _lerp2(p, q, t):
+    return (p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)
+
+
+def _smooth(t):
+    t = _clamp(t)
+    return t * t * (3 - 2 * t)
+
+
+def _uid(prefix, *parts):
+    return f"pr-{prefix}-{hashlib.md5(repr(parts).encode()).hexdigest()[:10]}"
+
+
+def _st(sw=4.0, color=INK):
+    return f'stroke="{color}" stroke-width="{_f(sw)}" stroke-linejoin="round" stroke-linecap="round"'
+
+
+def _p(d, fill="none", sw=4.0, stroke=INK, extra=""):
+    s = _st(sw, stroke) if sw else ""
+    return f'<path d="{d}" fill="{fill}" {s} {extra}/>'
+
+
+def _sm(pts, closed=True, tension=1.0):
+    return S.smooth_path(pts, closed, tension)
+
+
+def _poly(pts, closed=True):
+    d = "M" + " L".join(f"{_f(x)},{_f(y)}" for x, y in pts)
+    return d + (" Z" if closed else "")
+
+
+def _ell(cx, cy, rx, ry, fill, sw=4.0, stroke=INK, extra=""):
+    s = _st(sw, stroke) if sw else ""
+    return f'<ellipse cx="{_f(cx)}" cy="{_f(cy)}" rx="{_f(rx)}" ry="{_f(ry)}" fill="{fill}" {s} {extra}/>'
+
+
+def _circ(cx, cy, r, fill, sw=4.0, stroke=INK, extra=""):
+    s = _st(sw, stroke) if sw else ""
+    return f'<circle cx="{_f(cx)}" cy="{_f(cy)}" r="{_f(r)}" fill="{fill}" {s} {extra}/>'
+
+
+def _rect(x, y, w, h, fill, sw=4.0, rx=0, stroke=INK, extra=""):
+    s = _st(sw, stroke) if sw else ""
+    return (f'<rect x="{_f(x)}" y="{_f(y)}" width="{_f(w)}" height="{_f(h)}" rx="{_f(rx)}" '
+            f'fill="{fill}" {s} {extra}/>')
+
+
+def _line(x1, y1, x2, y2, sw=4.0, color=INK, extra=""):
+    return f'<path d="M{_f(x1)},{_f(y1)} L{_f(x2)},{_f(y2)}" fill="none" {_st(sw, color)} {extra}/>'
+
+
+def _tube(d, width, fill, sw=4.0, extra=""):
+    """A rounded 'tube' along path data d: ink stroke underneath, coloured stroke on top."""
+    return (f'<path d="{d}" fill="none" {_st(width + 2 * sw, INK)} {extra}/>'
+            f'<path d="{d}" fill="none" {_st(width, fill)} {extra}/>')
+
+
+def _rot(px, py, cx, cy, deg):
+    a = math.radians(deg)
+    dx, dy = px - cx, py - cy
+    return (cx + dx * math.cos(a) - dy * math.sin(a), cy + dx * math.sin(a) + dy * math.cos(a))
+
+
+def _g(body, tr=None, extra=""):
+    t = f' transform="{tr}"' if tr else ""
+    return f"<g{t} {extra}>{body}</g>"
+
+
+def _upscale(body, k):
+    """Scale geometry by k while keeping ink line widths unchanged (outlines stay 3-5 px)."""
+    body = re.sub(r'stroke-width="([0-9.]+)"', lambda m: f'stroke-width="{float(m.group(1)) / k:.2f}"', body)
+    return f'<g transform="scale({k})">{body}</g>'
+
+
+def _clip(cid, d, body):
+    return f'<clipPath id="{cid}"><path d="{d}"/></clipPath><g clip-path="url(#{cid})">{body}</g>'
+
+
+def _place(body, x, y, scale=1.0, facing=1, rot=0.0, filt="wobble-fine"):
+    """Put local markup (anchor at 0,0, facing right, scale 1) onto the stage."""
+    sx = scale * (-1 if facing < 0 else 1)
+    tr = f"translate({_f(x)},{_f(y)})"
+    if rot:
+        tr += f" rotate({rot:.2f})"
+    tr += f" scale({sx:.4f},{scale:.4f})"
+    inner = f'<g transform="{tr}">{body}</g>'
+    return f'<g filter="url(#{filt})">{inner}</g>' if filt else inner
+
+
+def local_to_stage(x, y, scale, facing, lx, ly):
+    """Convert a point (lx, ly) given in a drawing's local scale-1 coordinates (relative to its
+    anchor, facing right) to stage pixels for a drawing placed at (x, y, scale, facing)."""
+    return (x + lx * scale * (-1 if facing < 0 else 1), y + ly * scale)
+
+
+def _eye(cx, cy, r, kind="open", look=(0.35, 0.15), sw=4.0):
+    """Big friendly eye. kind: open | closed | happy | surprised."""
+    if kind == "closed":
+        d = f"M{_f(cx - r)},{_f(cy)} Q{_f(cx)},{_f(cy + r * 0.85)} {_f(cx + r)},{_f(cy)}"
+        out = _p(d, sw=sw * 1.25)
+        for k in (-0.6, 0.0, 0.6):
+            bx, by = cx + k * r * 0.95, cy + r * 0.38 * (1 - k * k * 0.6)
+            out += _line(bx, by, bx + k * r * 0.25, by + r * 0.32, sw=sw * 0.8)
+        return out
+    if kind == "happy":
+        d = f"M{_f(cx - r)},{_f(cy + r * 0.3)} Q{_f(cx)},{_f(cy - r * 0.95)} {_f(cx + r)},{_f(cy + r * 0.3)}"
+        return _p(d, sw=sw * 1.3)
+    if kind == "surprised":
+        rr = r * 1.12
+        out = _ell(cx, cy, rr * 0.95, rr * 1.08, EYE_WHITE, sw)
+        out += _circ(cx + look[0] * r * 0.1, cy, r * 0.36, PUPIL, 0)
+        out += _circ(cx + look[0] * r * 0.1 - r * 0.12, cy - r * 0.13, r * 0.12, HILITE, 0)
+        return out
+    out = _ell(cx, cy, r * 0.95, r * 1.05, EYE_WHITE, sw)
+    ix, iy = cx + look[0] * r * 0.32, cy + look[1] * r * 0.3
+    out += _circ(ix, iy, r * 0.62, PUPIL, 0)
+    out += _circ(ix - r * 0.2, iy - r * 0.24, r * 0.22, HILITE, 0)
+    out += _circ(ix + r * 0.22, iy + r * 0.2, r * 0.09, HILITE, 0)
+    return out
+
+
+def _dot_eye(cx, cy, r, kind="open"):
+    """Small picture-book dot eye with a highlight (for little creatures and animals)."""
+    if kind == "closed":
+        return _p(f"M{_f(cx - r * 1.2)},{_f(cy)} Q{_f(cx)},{_f(cy + r * 1.1)} {_f(cx + r * 1.2)},{_f(cy)}",
+                  sw=max(2.5, r * 0.55))
+    if kind == "happy":
+        return _p(f"M{_f(cx - r * 1.2)},{_f(cy + r * 0.4)} Q{_f(cx)},{_f(cy - r * 1.1)} "
+                  f"{_f(cx + r * 1.2)},{_f(cy + r * 0.4)}", sw=max(2.5, r * 0.55))
+    return _circ(cx, cy, r, PUPIL, 0) + _circ(cx - r * 0.3, cy - r * 0.35, r * 0.36, HILITE, 0)
+
+
+def _blush(cx, cy, rx, ry, op=0.55):
+    return _ell(cx, cy, rx, ry, P["cheek"], 0, extra=f'opacity="{op}"')
+
+
+# ====================================================================== 1. the great fish
+
+_FISH_LIP_U = [(274, 30), (345, 47), (430, 54), (518, 44), (588, 16)]      # closed mouth (a gentle smile),
+_FISH_LIP_L = [(274, 30), (345, 41), (430, 48), (518, 38), (596, 28)]      # corner -> tip
+# wide-open targets (mouth=1): a rounded throat at the back, bowed lips, protruding rounded lip tips
+_FISH_OPEN_U = [(214, 70), (216, 0), (236, -62), (284, -118), (352, -158), (430, -180), (500, -184), (546, -170),
+                (570, -142)]
+_FISH_OPEN_L = [(214, 70), (216, 138), (238, 202), (284, 254), (346, 290), (414, 310), (476, 314), (516, 302),
+                (540, 274)]
+_FISH_FORE = [((590, -40), (584, -192)), ((556, -122), (564, -238)), ((500, -200), (500, -284)),
+              ((418, -252), (420, -312)), ((268, -296), (268, -326)), ((80, -315), (80, -322))]
+_FISH_POUCH = [((598, 62), (538, 322)), ((570, 150), (500, 350)), ((486, 232), (424, 366)), ((380, 284), (336, 364)),
+               ((268, 304), (252, 340)), ((205, 302), (200, 316))]
+_FISH_US = (0.0, 0.07, 0.17, 0.3, 0.45, 0.6, 0.75, 0.88, 1.0)
+_FISH_T = (178.0, 297.0)      # throat point where the lower jaw meets the belly
+
+
+def _along(poly, u):
+    """Point at fraction u (by arc length) along a polyline."""
+    segs = [math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(poly, poly[1:])]
+    s = _clamp(u) * sum(segs)
+    for i, ln in enumerate(segs):
+        if s <= ln or i == len(segs) - 1:
+            return _lerp2(poly[i], poly[i + 1], 0 if ln == 0 else min(1.0, s / ln))
+        s -= ln
+    return poly[-1]
+
+
+def _fish_geom(mouth=0.0):
+    """All mouth-dependent fish geometry (local coords, facing right)."""
+    m = _clamp(mouth)
+    e = m * m * (3 - 2 * m) * 0.35 + m * 0.65          # gentle ease, still moving at both ends
+    up = [_lerp2(_along(_FISH_LIP_U, u), _along(_FISH_OPEN_U, u), e) for u in _FISH_US]
+    lo = [_lerp2(_along(_FISH_LIP_L, u), _along(_FISH_OPEN_L, u), e) for u in _FISH_US]
+    C, U, L = up[0], up[-1], lo[-1]
+    fore = [_lerp2(a, b, e) for a, b in _FISH_FORE]
+    chin = [_lerp2(a, b, e) for a, b in _FISH_POUCH]
+    eye = _lerp2((380, -118), (340, -222), e)
+    # the opening between the lip tips bows slightly inward, so the lips read as protruding
+    mid = _lerp2(_lerp2(U, L, 0.5), C, 0.08 * e)
+    front = [_lerp2(U, mid, 0.5), mid, _lerp2(mid, L, 0.5)] if m > 0.004 else []
+    cavity = up + front + list(reversed(lo))[:-1]
+    return dict(m=m, e=e, C=C, up=up, lo=lo, U=U, L=L, fore=fore, chin=chin, eye=eye, front=front,
+                cavity=cavity)
+
+
+def _fish_cavity_d(G):
+    """Closed path of the dark mouth opening: spline lip edges joined by the (slightly bowed) front."""
+    d_up = _sm(G["up"], closed=False)
+    d_lo = _sm(list(reversed(G["lo"])), closed=False)
+    if not G["front"]:
+        return d_up + " Z"
+    mid = G["front"][1]
+    U, L = G["U"], G["L"]
+    ctrl = (2 * mid[0] - (U[0] + L[0]) / 2, 2 * mid[1] - (U[1] + L[1]) / 2)
+    return d_up + f" Q{_f(ctrl[0])},{_f(ctrl[1])} " + d_lo[1:] + " Z"
+
+
+def _fish(mouth=0.0, eye="open", tail=0.0, blush=True, part="all"):
+    G = _fish_geom(mouth)
+    m = G["m"]
+    tl = _clamp(tail, -1, 1)
+    C, U, L = G["C"], G["U"], G["L"]
+    body_col, dark, light, belly_col = P["fish"], P["fish_dark"], P["fish_light"], P["fish_belly"]
+    fin_col = S.mix(body_col, light, 0.45)
+    inside = P["mouth_inside"]
+    back, front = "", ""
+
+    # ---- outlines
+    back_pts = [(-120, -297), (-300, -229), (-432, -133), (-506, -58)]
+    belly = [(-514, 0), (-506, 58), (-432, 140), (-292, 232), (-110, 292), (60, 306)]
+    body_line = G["up"] + G["fore"] + back_pts + belly + [_FISH_T]
+    d_body_open = _sm(body_line, closed=False)
+    d_body = d_body_open + " Z"
+    jaw_line = G["lo"] + G["chin"] + [_FISH_T]
+    d_jaw_open = _sm(jaw_line, closed=False)
+    d_jaw = d_jaw_open + f" L{_f(_FISH_T[0] - 6)},{_f(_FISH_T[1] - 20)} L{_f(C[0] - 6)},{_f(C[1] + 6)} Z"
+
+    # ---- tail fin (behind body), bends around the peduncle
+    tail_pts = [(-430, -58), (-560, -150), (-672, -270), (-760, -330), (-788, -268), (-752, -130),
+                (-690, 0), (-752, 130), (-788, 268), (-760, 330), (-672, 270), (-560, 150), (-430, 58)]
+    td = _sm(tail_pts, closed=False) + " L-400,0 Z"
+    rays = ""
+    for a in (-62, -44, -26, -9, 9, 26, 44, 62):
+        ex, ey = -470 - 250 * math.cos(math.radians(a)), 285 * math.sin(math.radians(a))
+        rays += _line(-500, ey * 0.12, ex, ey, sw=3.5, color=dark, extra='opacity="0.45"')
+    back += _g(_p(td, fin_col, 0) + _clip(_uid("fisht", 0), td, rays) + _p(td, sw=4.5), f"rotate({22 * tl:.2f} -470 0)")
+
+    # ---- dorsal and anal fins (behind body)
+    dors = [(-235, -262), (-196, -372), (-80, -452), (55, -446), (150, -372), (196, -292), (110, -260)]
+    back += _p(_sm(dors, closed=False) + " Z", fin_col, 4.5)
+    for i in range(6):
+        bx = -200 + i * 66
+        back += _line(bx, -300, bx + 6 + i * 4, -400 + abs(i - 2.5) * 18, sw=3.5, color=dark, extra='opacity="0.45"')
+    anal = [(-170, 285), (-245, 342), (-330, 352), (-372, 300), (-300, 240)]
+    back += _p(_sm(anal, closed=False) + " Z", fin_col, 4.5)
+
+    # ---- inside of the mouth (dark throat, gums, tongue)
+    d_cav = _fish_cavity_d(G)
+    if m > 0.004:
+        cid = _uid("fishm", round(m, 4))
+        inner = _p(d_cav, inside, 0)
+        deep = S.shade(inside, -0.5)
+        thr = _lerp2(C, _lerp2(U, L, 0.5), 0.22)
+        inner += _ell(thr[0], thr[1], 30 + 95 * m, 26 + 120 * m, deep, 0, extra='filter="url(#soft)" opacity="0.9"')
+        gum = S.shade(inside, 0.25)
+        inner += _p(_sm(G["up"], closed=False), sw=6 + 16 * m, stroke=gum, extra='opacity="0.55"')
+        # tongue resting on the floor of the mouth (its lower half is hidden under the jaw by the clip)
+        lo = G["lo"]
+        top, bot = [], []
+        for u in (0.1, 0.22, 0.36, 0.5, 0.64, 0.78, 0.9):
+            p = _along(lo, u)
+            q = _along(lo, min(1.0, u + 0.02))
+            dx, dy = q[0] - p[0], q[1] - p[1]
+            ln = math.hypot(dx, dy) or 1
+            nx, ny = dy / ln, -dx / ln          # toward the inside of the mouth
+            hgt = (10 + 62 * m) * math.sin(math.pi * (u - 0.04) / 0.92) ** 0.8
+            top.append((p[0] + nx * hgt, p[1] + ny * hgt))
+            bot.append((p[0] - nx * 30, p[1] - ny * 30))
+        tc = "#e48a8c"
+        inner += _p(_sm(top + list(reversed(bot)), closed=True, tension=0.8), tc, 3.5)
+        groove = [_lerp2(top[i], _along(lo, u), 0.42) for i, u in ((1, 0.22), (2, 0.36), (3, 0.5), (4, 0.64), (5, 0.78))]
+        inner += _p(_sm(groove, closed=False), sw=3, stroke=S.shade(tc, -0.3), extra='opacity="0.8"')
+        inner += _ell(top[3][0] - 6, top[3][1] + 16, 22 + 18 * m, 7 + 5 * m, S.shade(tc, 0.35), 0,
+                      extra=f'opacity="0.6" transform="rotate({_f(math.degrees(math.atan2(top[4][1] - top[2][1], top[4][0] - top[2][0])))} {_f(top[3][0] - 6)} {_f(top[3][1] + 16)})"')
+        back += _clip(cid, d_cav, inner)
+
+    # ---- body with clipped shading
+    bid = _uid("fishb", round(m, 4))
+    belly_shape = [(-540, 30), (-420, 110), (-260, 160), (-60, 185), (110, 172), (212, 122), (252, 80),
+                   (278, 62), (330, 330), (-560, 330)]
+    shade = _p(_sm(belly_shape, closed=True), belly_col, 0)
+    shade += _p(_sm([(140, 168), (-60, 186), (-260, 162), (-420, 112)], closed=False), sw=3.5,
+                stroke=S.shade(belly_col, -0.15), extra='opacity="0.7"')
+    back_shape = [(-540, -40), (-330, -170), (-80, -238), (200, -236), (420, -190), (520, -130), (520, -420),
+                  (-540, -420)]
+    shade += _p(_sm(back_shape, closed=True), dark, 0, extra='filter="url(#soft)" opacity="0.75"')
+    shade += _ell(40, -150, 230, 38, light, 0, extra='filter="url(#soft)" opacity="0.38" transform="rotate(-6 40 -150)"')
+    for row, yy in enumerate((-175, -100, -25, 50)):
+        for k in range(8):
+            xx = -400 + k * 66 + (33 if row % 2 else 0)
+            if xx > 130 - abs(yy) * 0.15:
+                continue
+            op = 0.32 if yy < 40 else 0.22
+            shade += _p(f"M{_f(xx)},{_f(yy - 30)} Q{_f(xx - 34)},{_f(yy)} {_f(xx)},{_f(yy + 30)}", sw=3.5,
+                        stroke=dark, extra=f'opacity="{op}"')
+    for sx, sy, sr in ((-60, -232, 22), (40, -262, 15), (-185, -205, 18), (125, -222, 13), (-300, -150, 14),
+                       (-105, -165, 11), (225, -250, 12), (-385, -92, 10), (-235, -118, 9), (300, -205, 9)):
+        shade += _circ(sx, sy, sr, P["fish_spot"], 0, extra='opacity="0.95"')
+    body_fill = _p(d_body, body_col, 0) + _clip(bid, d_body, shade)
+    back += body_fill + _p(d_body_open, sw=4.5)
+
+    # ---- face (on the head, always above the mouth)
+    ec = G["eye"]
+    face = ""
+    if eye == "surprised":
+        face += _p(f"M{_f(ec[0] - 60)},{_f(ec[1] - 112)} Q{_f(ec[0])},{_f(ec[1] - 150)} {_f(ec[0] + 58)},{_f(ec[1] - 108)}",
+                   sw=5)
+    face += _eye(ec[0], ec[1], 64, eye, look=(0.55, 0.1), sw=4.5)
+    if blush:
+        bl = _lerp2((ec[0] + 34, ec[1] + 98), (ec[0] - 78, ec[1] + 62), G["e"])
+        face += _blush(bl[0], bl[1], 48, 24, 0.8)
+    back += face
+
+    # ---- FRONT: lower jaw + pouch, gill, pectoral fin, upper-lip rim and the ink over the mouth
+    jid = _uid("fishj", round(m, 4))
+    lo = G["lo"]
+    band = []
+    for i, p in enumerate(lo):
+        q0, q1 = lo[max(0, i - 1)], lo[min(len(lo) - 1, i + 1)]
+        dx, dy = q1[0] - q0[0], q1[1] - q0[1]
+        ln = math.hypot(dx, dy) or 1
+        band.append((p[0] - dy / ln * 34, p[1] + dx / ln * 34))   # 34 px into the jaw
+    jaw_detail = _p(_sm(lo + list(reversed(band)), closed=True, tension=0.8), S.mix(body_col, light, 0.15), 0)
+    jaw_detail += _p(_sm(band, closed=False), sw=3, stroke=S.shade(belly_col, -0.12), extra='opacity="0.6"')
+    front += _p(d_jaw, belly_col, 0) + _clip(jid, d_jaw, jaw_detail)
+    # upper-lip rim: the body (with its shading) re-drawn in a band along the upper lip, so anything placed
+    # between part='back' and part='front' slips under the lip
+    mid_ = _uid("fishrim", round(m, 4))
+    d_up = _sm(G["up"], closed=False)
+    front += (f'<mask id="{mid_}" maskUnits="userSpaceOnUse" x="-1200" y="-1200" width="2400" height="2400">'
+              f'<path d="{d_up}" fill="none" stroke="#ffffff" stroke-width="{_f(26 + 12 * m)}" stroke-linecap="round"/>'
+              f'</mask><g mask="url(#{mid_})">{body_fill}</g>')
+    front += _p(d_jaw_open, sw=4.5) + _p(d_up, sw=4.5)
+    # gill line (slides back as the mouth opens) and pectoral fin
+    e = G["e"]
+    front += _p(f"M{_f(236 - 8 * e)},-205 Q{_f(162 - 40 * e)},-40 {_f(204 - 48 * e)},{_f(116 + 6 * e)}", sw=4.5)
+    front += _p(f"M{_f(205 - 8 * e)},-150 Q{_f(150 - 40 * e)},-30 {_f(196 - 46 * e)},110", sw=3, stroke=dark,
+                extra='opacity="0.4"')
+    pb = (182, 104)
+    fan = [(196, 70), (120, 60), (40, 92), (6, 140), (24, 176), (70, 182), (120, 160), (176, 136)]
+    fan_rays = ""
+    for q in ((45, 98), (25, 140), (55, 172), (110, 160)):
+        fan_rays += _line(170, 104, q[0] + 10, q[1] - 4, sw=3, color=dark, extra='opacity="0.5"')
+    front += _g(_p(_sm(fan, closed=True), fin_col, 4.5) + fan_rays,
+                f"translate({_f(-30 * e)},{_f(10 * e)}) rotate({-10 * tl:.2f} {pb[0]} {pb[1]})")
+    if m < 0.5:  # smile: the mouth line curls up into a little dimple at the corner
+        a = 1 - m * 2
+        front += _p(f"M{_f(C[0] + 14)},{_f(C[1] + 8)} Q{_f(C[0] - 6)},{_f(C[1] + 2)} {_f(C[0] - 12)},{_f(C[1] - 18)}",
+                    sw=4.5, extra=f'opacity="{a:.2f}"')
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def fish_mouth_points(mouth=0.0):
+    """Local (scale 1, facing right) key points of the fish mouth for a given mouth value:
+    {'corner', 'upper', 'lower', 'center', 'box'} — corner = back of the mouth, upper/lower = lip tips,
+    center = middle of the dark opening (aim swallowed things here), box = largest axis-aligned rectangle
+    (x0, y0, x1, y1) inside the dark opening. Convert points with local_to_stage()."""
+    G = _fish_geom(mouth)
+    box = _fish_mouth_box(round(G["m"], 3))
+    c = ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2) if box[2] > box[0] else _lerp2(_lerp2(G["U"], G["L"], 0.5),
+                                                                                         G["C"], 0.3)
+    return {"corner": G["C"], "upper": G["U"], "lower": G["L"], "center": c, "box": box}
+
+
+_BOX_CACHE = {}
+
+
+def _fish_mouth_box(m):
+    """Largest axis-aligned rectangle inside the cavity polygon (8 px grid, 6 px margin)."""
+    if m in _BOX_CACHE:
+        return _BOX_CACHE[m]
+    G = _fish_geom(m)
+    poly = []
+    cav = G["cavity"]
+    for i in range(len(cav)):
+        for k in range(4):
+            poly.append(_lerp2(cav[i], cav[(i + 1) % len(cav)], k / 4))
+    xs = [p[0] for p in poly]
+    ys = [p[1] for p in poly]
+    step, mg = 8.0, 6.0
+    x0, y0 = min(xs), min(ys)
+    nx, ny = int((max(xs) - x0) / step) + 1, int((max(ys) - y0) / step) + 1
+    if nx < 2 or ny < 2:
+        _BOX_CACHE[m] = (G["C"][0], G["C"][1], G["C"][0], G["C"][1])
+        return _BOX_CACHE[m]
+
+    def inside(px, py):
+        c = False
+        n = len(poly)
+        for i in range(n):
+            ax, ay = poly[i]
+            bx, by = poly[(i + 1) % n]
+            if (ay > py) != (by > py) and px < ax + (py - ay) * (bx - ax) / (by - ay):
+                c = not c
+        return c
+    grid = [[inside(x0 + i * step, y0 + j * step) for i in range(nx)] for j in range(ny)]
+    best, hts = (0, None), [0] * nx
+    for j in range(ny):
+        for i in range(nx):
+            hts[i] = hts[i] + 1 if grid[j][i] else 0
+        stack = []
+        for i in range(nx + 1):
+            h = hts[i] if i < nx else 0
+            start = i
+            while stack and stack[-1][1] >= h:
+                si, sh_ = stack.pop()
+                area = sh_ * (i - si)
+                if area > best[0]:
+                    best = (area, (si, j - sh_ + 1, i - 1, j))
+                start = si
+            stack.append((start, h))
+    if best[1] is None:
+        r = (G["C"][0], G["C"][1], G["C"][0], G["C"][1])
+    else:
+        i0, j0, i1, j1 = best[1]
+        r = (x0 + i0 * step + mg, y0 + j0 * step + mg, x0 + i1 * step - mg, y0 + j1 * step - mg)
+    if r[2] < r[0] or r[3] < r[1]:          # (nearly) closed mouth: collapse to a point between the lips
+        cx_, cy_ = (r[0] + r[2]) / 2, (r[1] + r[3]) / 2
+        r = (cx_, cy_, cx_, cy_)
+    r = tuple(round(v) for v in r)
+    _BOX_CACHE[m] = r
+    return r
+
+
+def fish_mouth_path(mouth=1.0, x=0.0, y=0.0, scale=1.0, facing=1, reach=1600.0):
+    """Clip path data (stage px for a fish drawn at x, y, scale, facing) of everything a swallowed / spat-out
+    figure may show through: the dark mouth opening plus the open water in front of the lips (the half-plane
+    beyond the line from the upper to the lower lip tip, `reach` px deep). The head, cheeks and jaws are
+    outside it. Use with in_fish_mouth() or your own <clipPath>."""
+    G = _fish_geom(mouth)
+    U, L = G["U"], G["L"]
+    dx, dy = L[0] - U[0], L[1] - U[1]
+    ln = math.hypot(dx, dy)
+    if ln < 1e-3:
+        dx, dy, ln = 8.0, 12.0, math.hypot(8.0, 12.0)
+    c = (dx / ln, dy / ln)                 # along the opening, top -> bottom
+    n = (c[1], -c[0])                      # forward, out of the mouth
+    R = reach
+    far = [(U[0] - c[0] * R, U[1] - c[1] * R), (U[0] - c[0] * R + n[0] * R, U[1] - c[1] * R + n[1] * R),
+           (L[0] + c[0] * R + n[0] * R, L[1] + c[1] * R + n[1] * R), (L[0] + c[0] * R, L[1] + c[1] * R)]
+    pts = []
+    for seg in (G["up"], far, list(reversed(G["lo"]))):
+        pts += seg
+    sx = scale * (-1 if facing < 0 else 1)
+    return _poly([(x + px * sx, y + py * scale) for px, py in pts])
+
+
+def in_fish_mouth(markup, x, y, scale=1.0, facing=1, mouth=1.0):
+    """Wrap figure markup in a clip so it only shows inside the fish's mouth / in front of it. Draw
+    fish(..., part='back') -> in_fish_mouth(jonah(...), same x, y, scale, facing, mouth) -> fish(..., part='front')."""
+    cid = _uid("inmouth", round(x, 2), round(y, 2), scale, facing, round(_clamp(mouth), 4))
+    return (f'<clipPath id="{cid}"><path d="{fish_mouth_path(mouth, x, y, scale, facing)}"/></clipPath>'
+            f'<g clip-path="url(#{cid})">{markup}</g>')
+
+
+def fish(x, y, scale=1.0, facing=1, mouth=0.0, eye="open", tail=0.0, blush=True, part="all"):
+    return _place(_fish(mouth, eye, tail, blush, part), x, y, scale, facing)
+
+
+
+# ====================================================================== 2. the ship
+
+
+def _hull_top(x):
+    return -165 - 75 * (abs(x) / 480) ** 3.2
+
+
+def _hull_bot(x):
+    return 96 - 250 * (abs(x) / 490) ** 3.5
+
+
+def _sail_pt(u, v, kind):
+    """Point on the square sail surface (u: 0 stern edge .. 1 bow edge, v: 0 yard .. 1 foot)."""
+    if kind == "torn":
+        xl = -300 - 18 * math.sin(math.pi * v)
+        xr = 280 + 22 * math.sin(math.pi * v)
+        yb = -585 + 30 * math.sin(math.pi * u)
+    else:
+        xl = -300 - 46 * math.sin(math.pi * v) ** 0.9
+        xr = 280 + 74 * math.sin(math.pi * v) ** 0.8
+        yb = -548 + 74 * math.sin(math.pi * u) ** 0.9
+    return (_lerp(xl, xr, u), _lerp(-842, yb, v))
+
+
+def _sail(kind, sid):
+    out = ""
+    yard = "M-318,-848 Q-10,-866 298,-848"
+    if kind == "furled":
+        pts = []
+        for i in range(13):
+            u = i / 12
+            pts.append((_lerp(-292, 272, u), -840 + 46 + 12 * math.sin(i * 1.9) - 10 * (u * (1 - u) < 0.03)))
+        out += _p(_sm([(-296, -846)] + [(p[0], p[1] - 2) for p in pts[1:-1]] + [(276, -846)], closed=True),
+                  P["sail"], 4)
+        for i in range(1, 12, 2):
+            u = i / 12
+            xx = _lerp(-292, 272, u)
+            out += _p(f"M{_f(xx - 14)},{_f(-842)} Q{_f(xx)},{_f(-822)} {_f(xx + 12)},{_f(-842)}", sw=2.5,
+                      stroke=S.shade(P["sail"], -0.35))
+        for xx in (-210, -60, 90, 220):
+            out += _rect(xx - 7, -852, 14, 46, P["wood_light"], 3, rx=5)
+        out = _tube(yard, 14, P["wood"]) + out
+        return out
+    # surface outline
+    n = 14
+    left = [_sail_pt(0, i / n, kind) for i in range(n + 1)]
+    bottom = [_sail_pt(i / n, 1, kind) for i in range(n + 1)]
+    right = [_sail_pt(1, 1 - i / n, kind) for i in range(n + 1)]
+    top = [_sail_pt(1 - i / n, 0, kind) for i in range(n + 1)]
+    if kind == "torn":
+        rng = random.Random(4)
+        tb = [0, 26, -8, 38, 4, 18, -14, 44, 10, 30, -6, 52, 0, 22, 0]
+        bottom = [(px + rng.uniform(-8, 8), py + tb[i]) for i, (px, py) in enumerate(bottom)]
+        tr_ = [0, -40, 6, -18, 16, -52, 0, -10, 14, -34, -4, -22, 8, 0, 0]
+        right = [(px + tr_[i], py) for i, (px, py) in enumerate(right)]
+        outline = _poly(left[:-1] + bottom + right[1:] + top[1:-1])
+    else:
+        outline = _sm(left[:-1] + bottom + right[1:] + top[1:-1], closed=True, tension=0.6)
+    hole = ""
+    if kind == "torn":
+        hc = _sail_pt(0.62, 0.48, kind)
+        hp = [(hc[0] - 50, hc[1] - 6), (hc[0] - 22, hc[1] - 30), (hc[0] - 4, hc[1] - 12), (hc[0] + 30, hc[1] - 40),
+              (hc[0] + 40, hc[1] - 8), (hc[0] + 22, hc[1] + 4), (hc[0] + 30, hc[1] + 30), (hc[0] - 2, hc[1] + 22),
+              (hc[0] - 30, hc[1] + 34)]
+        hole = " " + _poly(hp)
+    stripes = ""
+    for u0, u1 in ((1 / 7, 2 / 7), (3 / 7, 4 / 7), (5 / 7, 6 / 7)):
+        a = [_sail_pt(u0, i / n, kind) for i in range(n + 1)]
+        b = [_sail_pt(u1, 1 - i / n, kind) for i in range(n + 1)]
+        a[-1] = (a[-1][0], a[-1][1] + 60)
+        b[0] = (b[0][0], b[0][1] + 60)
+        stripes += _p(_poly(a + b), P["sail_stripe"], 0)
+    shade = _p(_poly([_sail_pt(0, i / n, kind) for i in range(n + 1)] +
+                     [_sail_pt(0.28, 1 - i / n, kind) for i in range(n + 1)]),
+               S.shade(P["sail"], -0.25), 0, extra='filter="url(#soft)" opacity="0.55"')
+    shade += _p(_poly([_sail_pt(0.62, i / n, kind) for i in range(n + 1)] +
+                      [_sail_pt(0.9, 1 - i / n, kind) for i in range(n + 1)]),
+                HILITE, 0, extra='filter="url(#soft)" opacity="0.2"')
+    if kind == "full":   # wind-filled belly: shadow under the curve of the foot, a soft light band above
+        belly = [_sail_pt(i / n, 0.68 + 0.1 * math.sin(math.pi * i / n), kind) for i in range(n + 1)]
+        foot = [_sail_pt(1 - i / n, 1.05, kind) for i in range(n + 1)]
+        shade += _p(_sm(belly, closed=False, tension=0.8) + " L" + _poly(foot)[1:], S.shade(P["sail"], -0.3), 0,
+                    extra='filter="url(#soft)" opacity="0.45"')
+        lit = [_sail_pt(i / n, 0.3 + 0.12 * math.sin(math.pi * i / n), kind) for i in range(n + 1)]
+        lit2 = [_sail_pt(1 - i / n, 0.46 + 0.14 * math.sin(math.pi * i / n), kind) for i in range(n + 1)]
+        shade += _p(_poly(lit + lit2), HILITE, 0, extra='filter="url(#soft)" opacity="0.35"')
+        shade += _p(_sm([_sail_pt(i / n, 0.62 + 0.12 * math.sin(math.pi * i / n), kind) for i in range(1, n)],
+                        closed=False), sw=3, stroke=S.shade(P["sail"], -0.4), extra='opacity="0.35"')
+    seams = ""
+    for v in (0.33, 0.66):
+        pts = [_sail_pt(i / n, v, kind) for i in range(n + 1)]
+        seams += _p(_sm(pts, closed=False), sw=2.5, stroke=S.shade(P["sail"], -0.4), extra='opacity="0.6"')
+    body = _p(outline + hole, P["sail"], 0, extra='fill-rule="evenodd"')
+    inner = stripes + shade + seams
+    out += body + f'<clipPath id="{sid}"><path d="{outline + hole}" clip-rule="evenodd"/></clipPath>'
+    out += f'<g clip-path="url(#{sid})">{inner}</g>'
+    out += _p(outline + hole, sw=4.5, extra='fill-rule="evenodd"')
+    if kind == "torn":
+        bc = _sail_pt(0.93, 0.93, kind)
+        flap = [(bc[0] - 60, bc[1] - 10), (bc[0] - 10, bc[1] - 30), (bc[0] + 60, bc[1] - 6), (bc[0] + 120, bc[1] + 20),
+                (bc[0] + 150, bc[1] + 8), (bc[0] + 128, bc[1] + 46), (bc[0] + 92, bc[1] + 40), (bc[0] + 70, bc[1] + 64),
+                (bc[0] + 30, bc[1] + 42), (bc[0] - 30, bc[1] + 40)]
+        out += _p(_poly(flap), S.shade(P["sail"], -0.1), 4)
+        out += _p(_poly([(bc[0] + 4, bc[1] - 22), (bc[0] + 44, bc[1] - 10), (bc[0] + 38, bc[1] + 44), (bc[0] + 4, bc[1] + 42)]),
+                  P["sail_stripe"], 0, extra='opacity="0.9"')
+    out = _tube(yard, 14, P["wood"]) + out
+    for xx in (-200, -60, 80, 210):
+        tp = _sail_pt((xx + 300) / 580, 0, kind)
+        out += _circ(tp[0], tp[1] + 2, 6, P["wood_light"], 3)
+    return out
+
+
+def _amphora(rot=0.0, col=None, s=1.0):
+    col = col or P["terracotta"]
+    body = [(0, -70), (22, -64), (38, -40), (40, -5), (30, 34), (12, 62), (0, 74), (-12, 62), (-30, 34), (-40, -5),
+            (-38, -40), (-22, -64)]
+    out = ""
+    for sx in (-1, 1):      # loop handles standing out beside the neck, joining the shoulders
+        hd = f"M{sx * 13},-72 C{sx * 46},-78 {sx * 58},-56 {sx * 36},-40"
+        out += _p(hd, sw=13, stroke=INK) + _p(hd, sw=6, stroke=col)
+    out += _p(_sm(body, closed=True), col, 4)
+    out += _rect(-15, -84, 30, 20, col, 4, rx=4)
+    out += _ell(0, -84, 17, 5, S.shade(col, -0.3), 3)
+    out += _p("M-37,-18 Q0,-8 37,-18", sw=7, stroke=CREAM, extra='opacity="0.85"')
+    out += _p("M-39,4 Q-26,10 -13,4 Q0,-2 13,4 Q26,10 39,4", sw=3, stroke=S.shade(col, -0.35))
+    out += _ell(-16, -30, 7, 18, HILITE, 0, extra='opacity="0.35"')
+    return _g(out, f"rotate({rot:.1f}) scale({s})")
+
+
+def _sack(s=1.0, col=None, seed=0):
+    col = col or P["sackcloth"]
+    r = random.Random(seed)
+    j = lambda v: v + r.uniform(-4, 4)  # noqa: E731
+    pts = [(j(-24), -84), (j(-44), -64), (j(-54), -30), (j(-50), -4), (0, 2), (j(50), -4), (j(54), -30), (j(44), -64),
+           (j(24), -84)]
+    out = _p(_sm(pts, closed=False) + " L14,-90 L-14,-90 Z", col, 4)
+    out += _p("M-26,-94 Q-34,-118 -16,-114 Q-6,-126 2,-112 Q14,-124 22,-110 Q36,-114 26,-94 Z", col, 4)
+    out += _p("M-24,-90 Q0,-82 24,-90", sw=7, stroke=P["wood_light"]) + _p("M-24,-90 Q0,-82 24,-90", sw=2.5)
+    for k in range(-2, 3):
+        out += _p(f"M{k * 18},-70 Q{k * 20 + 3},-40 {k * 19},-8", sw=2.5, stroke=S.shade(col, -0.25),
+                  extra='opacity="0.5"')
+    out += _ell(14, -40, 13, 11, S.shade(col, 0.25), 2.5, extra='opacity="0.9"')
+    return _g(out, f"scale({s})")
+
+
+def _crate(s=1.0):
+    out = _p("M-50,-40 L-34,-56 L66,-56 L50,-40 Z", P["wood_light"], 4)
+    out += _p("M50,-40 L66,-56 L66,30 L50,46 Z", P["wood_dark"], 4)
+    out += _rect(-50, -40, 100, 86, P["wood"], 4, rx=3)
+    for yy in (-12, 17):
+        out += _line(-46, yy, 46, yy, sw=3, color=P["wood_dark"])
+    out += _rect(-50, -40, 100, 86, "none", 4, rx=3)
+    out += _p("M-42,38 L42,-32", sw=13, stroke=INK) + _p("M-42,38 L42,-32", sw=6, stroke=P["wood_light"])
+    for cx, cy in ((-42, -32), (42, -32), (-42, 38), (42, 38)):
+        out += _circ(cx, cy, 3, INK, 0)
+    return _g(out, f"scale({s})")
+
+
+def _lantern_body(lit=True, glow=True, gid="lg"):
+    """Hanging lantern, hook at (0,0), about 54 x 132."""
+    out = ""
+    if lit and glow:
+        out += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.85), (0.4, P["gold"], 0.35), (1, P["gold"], 0)])}</defs>'
+                f'<circle cx="0" cy="88" r="120" fill="url(#{gid})"/>')
+    out += _circ(0, 8, 8, "none", 3.5)
+    out += _line(0, 16, 0, 34, sw=3.5)
+    out += _p("M-24,52 Q-24,32 0,30 Q24,32 24,52 Z", P["wood_dark"], 4)
+    win = P["glow"] if lit else S.mix(P["sand"], P["ink"], 0.3)
+    out += _rect(-22, 52, 44, 60, win, 4, rx=6)
+    if lit:
+        out += _ell(0, 90, 9, 14, P["sun_hot"], 0) + _ell(0, 93, 5, 8, P["glow"], 0)
+    out += _line(-8, 54, -8, 110, sw=3, color=P["wood_dark"]) + _line(8, 54, 8, 110, sw=3, color=P["wood_dark"])
+    out += _rect(-27, 110, 54, 12, P["wood_dark"], 4, rx=4)
+    out += _p("M-12,122 L0,134 L12,122", P["wood_dark"], 3.5)
+    return out
+
+
+def _rope_coil(s=1.0, col=None):
+    col = col or S.mix(P["sackcloth"], P["sand"], 0.4)
+    dark = S.shade(col, -0.35)
+    out = ""
+    for ry, rx, cy in ((15, 56, -15), (15, 50, -33), (14, 42, -49)):
+        out += _ell(0, cy, rx, ry, col, 4)
+        out += _ell(0, cy - 3, rx - 13, ry - 7, S.shade(col, -0.15), 3)
+        for k in range(9):
+            a = math.pi * (0.1 + 0.8 * k / 8)
+            px, py = rx * math.cos(a), cy + ry * math.sin(a)
+            out += _line(px - 4, py - 6, px + 4, py + 4, sw=2.5, color=dark, extra='opacity="0.7"')
+    out += _p("M30,-52 Q58,-64 62,-40 Q66,-14 84,-6", sw=13, stroke=INK) + _p("M30,-52 Q58,-64 62,-40 Q66,-14 84,-6",
+                                                                             sw=6, stroke=col)
+    return _g(out, f"scale({s})")
+
+
+def _ship(sail="full", cutaway=False, lantern=True, oars=False, part="all", flag=True, rig=4.0):
+    back, front = "", ""
+    wood, wd, wl = P["wood"], P["wood_dark"], P["wood_light"]
+    # ---- rigging behind the sail
+    mast_top = (-10, -930)
+    stay_c = S.shade(INK, 0.15)
+    back += _line(mast_top[0], mast_top[1] + 10, 505, -352, sw=rig, color=stay_c)
+    back += _line(mast_top[0], mast_top[1] + 10, -478, -420, sw=rig, color=stay_c)
+    # pennant
+    if flag:
+        fl = "M-10,-922 Q30,-948 70,-930 Q100,-918 128,-934 Q104,-906 72,-912 Q36,-918 -10,-900 Z"
+        back += _p(fl, P["sail_stripe"], 4)
+    back += _tube("M-10,-170 L-10,-930", 18, wood)
+    back += _ell(-10, -930, 18, 9, wd, 4)
+    tilt = -6 if sail == "torn" else 0
+    sid = _uid("sail", sail)
+    back += _g(_sail(sail, sid), f"rotate({tilt} -10 -850)")
+    # sheets
+    if sail != "furled":
+        bl, br = _sail_pt(0, 1, sail), _sail_pt(1, 1, sail)
+        if sail == "torn":
+            bl = _rot(bl[0], bl[1], -10, -850, tilt)
+            br = _rot(br[0], br[1], -10, -850, tilt)
+        back += _line(bl[0], bl[1], -360, -200, sw=rig, color=stay_c)
+        back += _line(br[0], br[1], 380, -205, sw=rig, color=stay_c)
+    # ---- hull
+    xs = [-480 + i * 20 for i in range(49)]
+    top = [(x, _hull_top(x)) for x in xs]
+    hull_pts = top + [(503, -196), (494, -136), (466, -72), (418, -14), (340, 40), (200, 80), (0, 96), (-200, 82),
+                      (-350, 42), (-430, -14), (-478, -80), (-500, -146), (-505, -204)]
+    hull_d = _sm(hull_pts, closed=True, tension=0.5)
+    hid = _uid("hull", 1)
+    hull_in = _rect(-520, -10, 1040, 140, S.mix(wd, P["sea_deep"], 0.15), 0)
+    hull_in += _p(_poly([(x, _hull_top(x) + 2) for x in xs] + [(x, _hull_top(x) + 32) for x in reversed(xs)]),
+                  wl, 0)
+    hull_in += _p(_poly([(x, _hull_top(x) + 44) for x in xs] + [(x, _hull_top(x) + 64) for x in reversed(xs)]),
+                  P["jonah_sash"], 0)
+    tri = ""
+    for x in range(-440, 460, 44):
+        yy = _hull_top(x) + 44
+        tri += _poly([(x - 12, yy), (x + 12, yy), (x, yy + 18)]) + " "
+    hull_in += _p(tri, P["sail_stripe"], 0)
+    for t in (0.26, 0.44, 0.62, 0.8):
+        pts = [(x, _lerp(_hull_top(x) + 64, _hull_bot(x), t)) for x in xs]
+        hull_in += _p(_sm(pts, closed=False), sw=3, stroke=wd, extra='opacity="0.75"')
+    hull_in += _p(_sm([(x, _hull_top(x) + 32) for x in xs], closed=False), sw=3, stroke=wd)
+    hull_in += _p(_sm([(x, _hull_top(x) + 64) for x in xs], closed=False), sw=3, stroke=S.shade(P["jonah_sash"], -0.4))
+    rng = random.Random(3)
+    for _ in range(26):
+        x = rng.uniform(-430, 430)
+        t = rng.choice((0.35, 0.53, 0.71))
+        y0 = _lerp(_hull_top(x) + 64, _hull_bot(x), t)
+        hull_in += _circ(x, y0, 2.6, wd, 0, extra='opacity="0.8"')
+    hull_in += _ell(-60, -60, 360, 30, HILITE, 0, extra='filter="url(#soft)" opacity="0.18"')
+    hull = _p(hull_d, wood, 0) + _clip(hid, hull_d, hull_in) + _p(hull_d, sw=4.5)
+    # posts
+    bow = "M474,-222 Q500,-262 508,-306 Q512,-340 490,-356"
+    stern = ("M-474,-222 Q-504,-268 -512,-330 Q-520,-392 -478,-420 Q-436,-438 -418,-400 Q-404,-366 -436,-356 "
+             "Q-462,-350 -458,-376")
+    posts = _tube(bow, 22, wood) + _circ(488, -358, 14, wl, 4)
+    posts += _tube(stern, 24, wood)
+    posts += _p("M-498,-300 Q-500,-370 -470,-404", sw=4, stroke=wl, extra='opacity="0.8"')
+    if cutaway:
+        back += hull + _ship_interior(lantern) + posts
+    else:
+        back += hull + posts
+    # ---- rail and shields (in front of standing people)
+    rail = ""
+    for x in range(-400, 440, 40):
+        yt = _hull_top(x)
+        rail += _line(x, yt, x, yt - 52, sw=5, color=INK) + _line(x, yt, x, yt - 52, sw=2, color=wl)
+    rail += _tube(_sm([(x, _hull_top(x) - 54) for x in range(-410, 450, 40)], closed=False), 8, wl, 3.5)
+    cols = (P["terracotta"], P["sail"], P["jonah_sash"], P["gold"])
+    for i, x in enumerate(range(-330, 360, 66)):
+        cy = _hull_top(x) - 30
+        c = cols[i % 4]
+        rail += _circ(x, cy, 27, c, 4)
+        rail += _circ(x, cy, 17, "none", 2.5, stroke=S.shade(c, -0.3))
+        rail += _circ(x, cy, 6, S.shade(c, -0.25), 3)
+    front += rail
+    # steering oar (stern, near side)
+    so = "M-372,-262 L-548,72"
+    front += _tube(so, 13, wl)
+    front += _p("M-520,10 Q-530,-12 -548,-6 L-600,106 Q-590,128 -566,122 Z", wl, 4)
+    front += _rect(-394, -284, 52, 16, wd, 4, rx=6, extra="transform='rotate(-25 -372 -276)'")
+    if oars:
+        for x in range(-280, 320, 85):
+            y0 = _hull_top(x) + 64
+            d = f"M{x},{y0} L{x - 110},{y0 + 210}"
+            front += _circ(x, y0, 9, wd, 3.5)
+            front += _tube(d, 9, wl, 3.5)
+            front += _p(f"M{x - 96},{y0 + 176} L{x - 132},{y0 + 250} Q{x - 124},{y0 + 262} {x - 110},{y0 + 254} "
+                        f"L{x - 88},{y0 + 182} Z", wl, 3.5)
+    if lantern and not cutaway:
+        front += _g(_lantern_body(True, True, _uid("shiplan", 0)), "translate(-428,-372) scale(0.85)")
+    elif lantern and cutaway:
+        front += _g(_lantern_body(True, False, _uid("shiplan", 1)), "translate(-428,-372) scale(0.85)")
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def _ship_interior(lantern=True):
+    x0, y0, x1, y1 = SHIP_INTERIOR
+    wd, wood, wl = P["wood_dark"], P["wood"], P["wood_light"]
+    d = (f"M{x0},{y0} L{x1},{y0} L{x1},-20 Q{x1 - 8},{y1} {x1 - 110},{y1} L{x0 + 110},{y1} "
+         f"Q{x0 + 8},{y1} {x0},-20 Z")
+    wall = S.mix(wd, wood, 0.25)
+    inner = _rect(x0 - 10, y0 - 10, x1 - x0 + 20, y1 - y0 + 20, wall, 0)
+    for yy in range(y0 + 26, y1, 28):
+        inner += _line(x0, yy, x1, yy, sw=3, color=S.shade(wd, -0.25), extra='opacity="0.6"')
+    for xx in range(x0 + 60, x1, 120):
+        inner += _p(f"M{xx - 10},{y0} Q{xx + 8},{(y0 + y1) / 2} {xx - 6},{y1}", sw=20, stroke=INK)
+        inner += _p(f"M{xx - 10},{y0} Q{xx + 8},{(y0 + y1) / 2} {xx - 6},{y1}", sw=13, stroke=S.mix(wood, wd, 0.3))
+    # deck beams
+    inner += _rect(x0 - 10, y0 - 4, x1 - x0 + 20, 20, S.shade(wd, -0.15), 0)
+    for xx in range(x0 + 30, x1, 90):
+        inner += _rect(xx - 10, y0 + 6, 20, 16, wood, 3, rx=2)
+    # floor
+    inner += _rect(x0, y1 - 16, x1 - x0, 30, wl, 3.5)
+    for xx in range(x0 + 40, x1, 70):
+        inner += _line(xx, y1 - 14, xx - 6, y1 + 10, sw=2.5, color=wd, extra='opacity="0.6"')
+    # warm glow
+    gid = _uid("holdglow", 0)
+    lx_ = SHIP_HOLD_LANTERN[0]
+    inner += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.8), (0.5, P["gold"], 0.3), (1, P["gold"], 0)])}</defs>'
+              f'<ellipse cx="{lx_ - 140}" cy="-70" rx="420" ry="220" fill="url(#{gid})"/>')
+    # bed: straw mat, folded blanket, pillow
+    bx0, bx1, by = SHIP_BED
+    inner += _rect(bx0 - 6, by + 12, bx1 - bx0 + 12, y1 - 16 - by - 12, P["wood"], 3.5, rx=3)
+    inner += _p(f"M{bx0},{by + 14} Q{bx0 - 4},{by} {bx0 + 14},{by - 2} L{bx1 - 14},{by - 2} Q{bx1 + 4},{by} {bx1},{by + 14} Z",
+                S.mix(P["sackcloth"], P["sand"], 0.5), 3.5)
+    for xx in range(bx0 + 20, bx1, 26):
+        inner += _line(xx, by + 1, xx - 2, by + 12, sw=2, color=P["sackcloth_dark"], extra='opacity="0.6"')
+    inner += _p(f"M{bx0 + 6},{by + 2} Q{bx0 - 4},{by - 30} {bx0 + 30},{by - 34} Q{bx0 + 70},{by - 38} "
+                f"{bx0 + 76},{by - 12} Q{bx0 + 76},{by + 4} {bx0 + 50},{by + 4} Z", P["headcloth"], 3.5)
+    inner += _p(f"M{bx1 - 70},{by + 2} Q{bx1 - 78},{by - 24} {bx1 - 50},{by - 26} L{bx1 - 6},{by - 22} "
+                f"Q{bx1 + 6},{by - 8} {bx1 - 4},{by + 2} Z", P["jonah_sash"], 3.5)
+    inner += _line(bx1 - 62, by - 14, bx1 - 10, by - 12, sw=2.5, color=S.shade(P["jonah_sash"], -0.4))
+    # cargo
+    fl = y1 - 16
+    inner += _g(_amphora(-8), f"translate(-318,{fl - 64}) scale(0.9)")
+    inner += _g(_amphora(6, S.mix(P["terracotta"], P["sand"], 0.35)), f"translate(-254,{fl - 64}) scale(0.85)")
+    inner += _g(_sack(0.8, seed=2), f"translate(-190,{fl})")
+    inner += _g(_crate(0.85), f"translate(300,{fl - 39})")
+    inner += _g(_sack(0.72, seed=5), f"translate(296,{fl - 74})")
+    if lantern:   # hangs toward the bow, clear of a sleeper's head on the pillow
+        lx_, ly_ = SHIP_HOLD_LANTERN
+        inner += _line(lx_, y0 + 12, lx_, ly_ + 4, sw=3)
+        inner += _g(_lantern_body(True, False), f"translate({lx_},{ly_}) scale(0.48)")
+    cid = _uid("hold", 0)
+    out = _clip(cid, d, inner)
+    out += _p(d, sw=22) + _p(d, sw=12, stroke=wl)
+    return out
+
+
+def ship(x, y, scale=1.0, facing=1, sail="full", cutaway=False, lantern=True, oars=False, part="all", flag=True):
+    rig = max(4.0, 2.6 / max(scale, 0.05))      # stays / sheets never thinner than ~2.6 px on screen
+    return _place(_ship(sail, cutaway, lantern, oars, part, flag, rig), x, y, scale, facing)
+
+
+# ====================================================================== 3. props
+
+
+def crate(x, y, scale=1.0, rot=0):
+    return _place(_crate(), x, y, scale, 1, rot)
+
+
+def jar(x, y, scale=1.0, rot=0, color=None):
+    return _place(_g(_amphora(0, color), "translate(0,6)"), x, y, scale, 1, rot)
+
+
+def sack(x, y, scale=1.0, rot=0, color=None, seed=0):
+    return _place(_sack(1.0, color, seed), x, y, scale, 1, rot)
+
+
+def _lots_jar(sticks=5):
+    col = S.mix(P["terracotta"], P["sand_dark"], 0.35)
+    out = ""
+    rng = random.Random(7)
+    for i in range(sticks):
+        a = -18 + 36 * i / max(1, sticks - 1) + rng.uniform(-4, 4)
+        ln = rng.uniform(56, 74)
+        tip = _rot(0, -78 - ln, 0, -60, a)
+        out += _tube(f"M0,-56 L{_f(tip[0])},{_f(tip[1])}", 9, P["wood_light"], 3)
+    body = [(-26, -78), (-40, -62), (-48, -34), (-42, -10), (-26, 0), (26, 0), (42, -10), (48, -34), (40, -62),
+            (26, -78)]
+    out += _p(_sm(body, closed=False) + " Z", col, 4)
+    out += _ell(0, -78, 30, 9, S.shade(col, -0.45), 4)
+    out += _p("M-46,-40 Q0,-28 46,-40", sw=6, stroke=CREAM, extra='opacity="0.85"')
+    out += _p("M-44,-22 L-34,-30 L-24,-22 L-14,-30 L-4,-22 L6,-30 L16,-22 L26,-30 L36,-22", sw=2.5,
+              stroke=S.shade(col, -0.4))
+    out += _ell(-24, -50, 6, 14, HILITE, 0, extra='opacity="0.35"')
+    return out
+
+
+def lots_jar(x, y, scale=1.0, sticks=5):
+    return _place(_lots_jar(sticks), x, y, scale)
+
+
+def _lot(marked=False, gid="lot"):
+    out = ""
+    if marked:
+        out += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.95), (0.45, P["gold"], 0.5), (1, P["gold"], 0)])}</defs>'
+                f'<ellipse cx="0" cy="0" rx="78" ry="56" fill="url(#{gid})"/>')
+    out += _rect(-38, -11, 76, 22, P["wood_light"], 4, rx=10)
+    out += _p("M-26,-2 Q-6,-6 10,0 Q22,4 30,0", sw=2.5, stroke=P["wood"])
+    out += _line(-30, 5, -12, 5, sw=2.5, color=P["wood"], extra='opacity="0.7"')
+    if marked:
+        out += _circ(8, 0, 8, P["sun_hot"], 3)
+        out += _circ(8, 0, 3.5, P["glow"], 0)
+    return out
+
+
+def lot(x, y, scale=1.0, rot=0, marked=False):
+    return _place(_lot(marked, _uid("lot", marked)), x, y, scale, 1, rot)
+
+
+def lantern(x, y, scale=1.0, lit=True):
+    return _place(_lantern_body(lit, lit, _uid("lan", lit)), x, y, scale)
+
+
+def rope_coil(x, y, scale=1.0):
+    return _place(_rope_coil(), x, y, scale)
+
+
+def _scroll(opened=False):
+    parch, roll = "#efdfb8", "#e2cb98"
+    out = ""
+    if not opened:
+        out += _rect(-64, -18, 128, 36, parch, 4, rx=16)
+        out += _ell(-64, 0, 9, 18, roll, 4) + _p("M-64,-8 Q-58,0 -64,8", sw=2.5)
+        out += _ell(64, 0, 9, 18, roll, 4)
+        out += _p("M58,-8 Q64,-12 66,0 Q64,10 58,8", sw=2.5)
+        out += _rect(-6, -21, 16, 42, P["sail_stripe"], 3.5, rx=3)
+        out += _p("M2,20 Q-6,36 -14,42 M2,20 Q10,36 18,40", sw=6, stroke=INK) + \
+            _p("M2,20 Q-6,36 -14,42 M2,20 Q10,36 18,40", sw=3, stroke=P["sail_stripe"])
+        out += _ell(-50, -6, 26, 4, HILITE, 0, extra='opacity="0.5"')
+        return out
+    out += _p("M-80,-52 L80,-52 Q86,0 80,52 L-80,52 Q-74,0 -80,-52 Z", parch, 4)
+    for i, yy in enumerate((-30, -14, 2, 18, 34)):
+        x0, x1 = -60, 60 - (i % 2) * 22
+        d = f"M{x0},{yy}"
+        xx = x0
+        while xx < x1:
+            d += " q5,-5 10,0 q5,5 10,0"
+            xx += 20
+        out += _p(d, sw=2.5, stroke=P["ink_soft"], extra='opacity="0.8"')
+    for sx in (-86, 86):
+        out += _rect(sx - 11, -62, 22, 124, roll, 4, rx=10)
+        out += _rect(sx - 4, -76, 8, 16, P["wood"], 3, rx=3) + _rect(sx - 4, 60, 8, 16, P["wood"], 3, rx=3)
+        out += _line(sx - 4, -50, sx - 4, 50, sw=2.5, color=S.shade(roll, -0.25))
+    return out
+
+
+def scroll(x, y, scale=1.0, rot=0, opened=False):
+    return _place(_scroll(opened), x, y, scale, 1, rot)
+
+
+def _stick(pts, w, col, sw=3.5, knots=()):
+    """A rough wooden stick along a polyline (slightly uneven) with optional knots."""
+    out = _tube(_poly(pts, closed=False), w, col, sw)
+    for t in knots:
+        i = min(len(pts) - 2, int(t * (len(pts) - 1)))
+        q = _lerp2(pts[i], pts[i + 1], t * (len(pts) - 1) - i)
+        out += _ell(q[0], q[1], w * 0.45, w * 0.3, S.shade(col, -0.3), 0)
+    return out
+
+
+def _lashing(x, y, k=1.0, col=None):
+    col = col or S.mix(P["sackcloth"], P["sand"], 0.3)
+    out = ""
+    for j in (-1, 0, 1):
+        d = f"M{_f(x - 9 * k)},{_f(y + j * 6 * k - 4 * k)} L{_f(x + 9 * k)},{_f(y + j * 6 * k + 4 * k)}"
+        out += _p(d, sw=6.5 * k, stroke=INK) + _p(d, sw=3 * k, stroke=col)
+    return out
+
+
+BOOTH_DEPTH = (54, -28)        # offset of the back frame (slight 3/4 view from the front-right, above)
+
+
+def _booth(shade=False):
+    """Jonah's little shelter (Jonah 4:5) in a slight 3/4 view: rough sticks lashed into a front and a back
+    A-frame, a striped cloth thrown over the ridge so its sloped top is visible, sagging between the rafters and
+    hanging down past the eaves at the sides and back; the inside under the roof is in shade."""
+    wood, wd = P["wood"], P["wood_dark"]
+    cloth = S.mix(P["headcloth"], P["sand"], 0.3)
+    cloth_d = S.shade(cloth, -0.18)
+    under = S.mix(S.shade(cloth, -0.45), P["ink_soft"], 0.15)
+    stripe = P["sail_stripe"]
+    DX, DY = BOOTH_DEPTH
+    out = ""
+    if shade:      # soft cool shadow on the ground under the roof (inside BOOTH_SEAT)
+        out += _ell(10, -6, 182, 30, S.mix(P["ink"], P["sky_day_top"], 0.3), 0,
+                    extra='opacity="0.5" filter="url(#soft)"')
+    # front-frame key points (the back frame is the same shifted by BOOTH_DEPTH)
+    FL, FR, FA = (-178, -236), (178, -240), (0, -374)          # front left / right eave, front apex
+    BL, BR, BA = (FL[0] + DX, FL[1] + DY), (FR[0] + DX, FR[1] + DY), (FA[0] + DX, FA[1] + DY)
+    # back posts (farther: base higher, thinner, darker)
+    out += _stick([(-112 + DX * 0.9, -16), (-115 + DX, -150), (-110 + DX, -258 + DY)], 9, S.shade(wd, 0.05), 3)
+    out += _stick([(146 + DX * 0.9, -18), (149 + DX, -140), (146 + DX, -262 + DY)], 9, S.shade(wd, 0.05), 3)
+    # shady inside of the roof seen through the open front: the underside of the far slope, and a short shade
+    # cloth hanging from the back eave
+    gid = _uid("boothund", 0)
+    out += (f'<defs>{S.lin_grad(gid, [(0, S.shade(under, -0.1)), (0.7, under), (1, S.mix(under, cloth, 0.4))])}</defs>')
+    out += _p(_poly([FL, FA, (FR[0] - 4, FR[1] - 4), (BR[0] - 8, BR[1] + 8), (BL[0] + 8, BL[1] + 8)]), f"url(#{gid})", 0)
+    back_curtain = [(BL[0] + 10, BL[1] + 2), (BR[0] - 10, BR[1] + 2), (BR[0] - 14, -196), (BR[0] - 60, -188),
+                    (BA[0] + 20, -198), (BA[0] - 40, -190), (BL[0] + 60, -200), (BL[0] + 14, -192)]
+    out += _p(_poly(back_curtain), S.mix(under, cloth, 0.45), 3)
+    for xx in (-60, 20, 100):
+        out += _line(xx + DX * 0.5, -246, xx + DX * 0.5 + 3, -200, sw=2.5, color=S.shade(under, -0.15),
+                     extra='opacity="0.5"')
+    # front posts: uneven sticks, the tops poke up past the tie bar
+    out += _stick([(-158, 2), (-162, -120), (-156, -200), (-160, -292)], 13, wood, 3.5, knots=(0.45,))
+    out += _stick([(146, 2), (150, -110), (146, -205), (152, -284)], 13, wood, 3.5, knots=(0.62,))
+    out += _stick([(-196, -256), (-40, -260), (194, -254)], 9, S.shade(wood, -0.1), 3)
+    for bx, by in ((-158, 0), (146, 0)):
+        out += _ell(bx - 14, by - 2, 15, 7, P["stone"], 3) + _ell(bx + 14, by - 1, 11, 6, P["stone_dark"], 3)
+    # the cloth: two sloped panels from the front rafters back to the ridge pole, sagging between the frames,
+    # the side edges hanging below the eaves with ragged hems
+    def slope(e_front, e_back, sgn):
+        hem = []
+        for i in range(7):
+            u = i / 6
+            p = _lerp2((e_front[0] + sgn * 14, e_front[1] + 30), (e_back[0] + sgn * 10, e_back[1] + 26), u)
+            hem.append((p[0], p[1] + (10 if i % 2 else 0)))
+        sag = _lerp2(_lerp2(FA, BA, 0.5), _lerp2(e_front, e_back, 0.5), 0.55)
+        sag = (sag[0], sag[1] + 12)
+        top = [FA, BA]
+        pts = top + [_lerp2(BA, e_back, 0.5), (e_back[0] + sgn * 6, e_back[1] + 4)] + list(reversed(hem)) + \
+            [(e_front[0] + sgn * 6, e_front[1] + 4), _lerp2(e_front, FA, 0.5)]
+        d = _poly(pts)
+        inner = _p(_poly([_lerp2(e_front, FA, 0.6), sag, _lerp2(e_back, BA, 0.6), BA, FA]), S.shade(cloth, 0.12), 0,
+                   extra='opacity="0.6" filter="url(#soft)"')
+        for k in (0.18, 0.3):                    # two terracotta stripes running along the hem
+            a_ = _lerp2(e_front, FA, k)
+            b_ = _lerp2(e_back, BA, k)
+            inner += _line(a_[0], a_[1] + 8, b_[0], b_[1] + 8, sw=7, color=stripe, extra='opacity="0.85"')
+        inner += _p(f"M{_f(FA[0])},{_f(FA[1])} Q{_f(sag[0])},{_f(sag[1])} {_f(e_back[0])},{_f(e_back[1])}", sw=3,
+                    stroke=cloth_d, extra='opacity="0.6"')
+        return _p(d, cloth, 0) + _clip(_uid("boothsl", sgn), d, inner) + _p(d, sw=4)
+    out += slope(FL, BL, -1) + slope(FR, BR, 1)
+    # front edge of the cloth hanging a little below the front rafters (striped, scalloped)
+    for e, sgn in ((FL, -1), (FR, 1)):
+        hem = []
+        for i in range(9):
+            u = i / 8
+            p = _lerp2(FA, e, u)
+            hem.append((p[0], p[1] + 14 + (8 if i % 2 else 0) + 6 * u))
+        d = _poly([FA, (e[0] + sgn * 8, e[1] + 2)] + list(reversed(hem)))
+        out += _p(d, cloth_d, 0) + _clip(_uid("boothhem", sgn), d, _line(FA[0], FA[1] + 10, e[0], e[1] + 12, sw=6,
+                                                                         color=stripe, extra='opacity="0.8"'))
+        out += _p(d, sw=3.5)
+    # ridge pole and rafters crossing at both apexes, ends sticking out above the cloth
+    out += _stick([(BA[0] - 2, BA[1] - 4), (FA[0] + 2, FA[1] - 2)], 9, wd, 3.2)
+    out += _stick([(BL[0] + 4, BL[1]), (BA[0] + 26, BA[1] - 22)], 8, S.shade(wd, 0.05), 3)
+    out += _stick([(BR[0] - 4, BR[1]), (BA[0] - 22, BA[1] - 20)], 8, S.shade(wd, 0.05), 3)
+    out += _stick([(-176, -228), (-80, -300), (30, -400)], 10, wd, 3.5)
+    out += _stick([(174, -232), (84, -298), (-26, -394)], 10, wd, 3.5)
+    out += _lashing(0, -372) + _lashing(BA[0], BA[1] + 2, 0.8) + _lashing(-158, -262, 0.85) + _lashing(148, -260, 0.85)
+    # a few leafy branches laid on the cloth
+    for sx, sy, ang in ((-130, -284, -30), (60, -360, 28)):
+        out += _g(_p("M0,0 Q60,-6 128,-2", sw=4, stroke=P["leaf_dark"]) +
+                  "".join(_ell(16 + 24 * i, -5 - (i % 2) * 8, 14, 6, P["leaf"] if i % 2 else P["leaf_dark"], 2.5,
+                               extra=f'transform="rotate({-30 + 60 * (i % 2)} {16 + 24 * i} {-5 - (i % 2) * 8})"')
+                          for i in range(5)), f"translate({sx},{sy}) rotate({ang})")
+    return out
+
+
+def booth(x, y, scale=1.0, facing=1, shade=False):
+    return _place(_booth(shade), x, y, scale, facing)
+
+
+# Seated-king geometry, measured once from art/characters.king (scale 1, facing right, relative to the king's
+# anchor = the floor under him). Hard-coded so that importing props never touches characters' private API.
+KING_SEAT_Y = -74          # top of the throne cushion = under the hips of king(pose='sit_throne', throne=False)
+KING_ASH_DX = 21.8         # x from king(pose='sit_ashes')'s anchor to the centre of his ash heap
+_GOLD = P["crown"]
+_GOLD_DARK = S.shade(P["crown"], -0.32)
+
+
+def _rosette(cx, cy, r, petal=CREAM, heart=None, sw=0.0):
+    out = ""
+    for j in range(8):
+        a = j * math.pi / 4
+        out += _circ(cx + r * 0.55 * math.cos(a), cy + r * 0.55 * math.sin(a), r * 0.36, petal, 0)
+    return out + _circ(cx, cy, r * 0.34, heart or _GOLD, sw)
+
+
+def _lion_leg(x, top, bottom, w=20):
+    """Turned gold throne leg ending in a lion's paw (side view, paw pointing toward +x)."""
+    out = _p(f"M{_f(x - w / 2)},{_f(top)} Q{_f(x - w * 0.2)},{_f((top + bottom) / 2)} {_f(x - w * 0.38)},{_f(bottom - 22)} "
+             f"L{_f(x + w * 0.38)},{_f(bottom - 22)} Q{_f(x + w * 0.2)},{_f((top + bottom) / 2)} {_f(x + w / 2)},{_f(top)} Z",
+             _GOLD, 3.5)
+    for yy in (top + 14, (top + bottom) / 2):                        # turned rings
+        out += _ell(x, yy, w * 0.56, 5, _GOLD_DARK, 3)
+    paw = (f"M{_f(x - w * 0.55)},{_f(bottom)} Q{_f(x - w * 0.7)},{_f(bottom - 24)} {_f(x - w * 0.1)},{_f(bottom - 26)} "
+           f"Q{_f(x + w * 0.9)},{_f(bottom - 28)} {_f(x + w * 1.25)},{_f(bottom - 8)} Q{_f(x + w * 1.35)},{_f(bottom)} "
+           f"{_f(x + w * 1.1)},{_f(bottom)} Z")
+    out += _p(paw, _GOLD, 3.5)
+    for k in (0.25, 0.65):                                           # toes
+        tx = x + w * k
+        out += _p(f"M{_f(tx)},{_f(bottom)} Q{_f(tx + 3)},{_f(bottom - 8)} {_f(tx + 1)},{_f(bottom - 13)}", sw=2.4,
+                  stroke=_GOLD_DARK)
+    return out
+
+
+def _throne():
+    """Assyrian throne in side view, built around king(pose='sit_throne', throne=False) at the same anchor."""
+    wood, wd = P["wood"], P["wood_dark"]
+    purple, lav = P["royal"], P["royal_light"]
+    out = ""
+    # footstool in front (the seated king's feet rest at its back edge)
+    out += _lion_leg(84, -26, 0, 12) + _lion_leg(132, -26, 0, 12)
+    out += _rect(70, -36, 82, 14, wood, 3.5, rx=5) + _line(74, -29, 148, -29, sw=2.5, color=_GOLD)
+    out += _p("M72,-36 Q110,-46 150,-36 Z", lav, 3)
+    # back legs and stretcher
+    out += _lion_leg(-70, -62, 0) + _lion_leg(42, -62, 0)
+    out += _rect(-74, -34, 120, 10, wd, 3, rx=4) + _rect(-60, -32, 92, 5, _GOLD, 0, rx=2)
+    # tall back: wooden frame, royal purple upholstery with gold studs, attached gold finial
+    top = -262
+    back = f"M-86,-58 L-86,{top + 30} Q-86,{top} -58,{top} L-36,{top} Q-12,{top} -12,{top + 30} L-12,-58 Z"
+    out += _p(back, wood, 4)
+    inner = f"M-78,-72 L-78,{top + 34} Q-78,{top + 9} -56,{top + 9} L-38,{top + 9} Q-20,{top + 9} -20,{top + 34} L-20,-72 Z"
+    out += _p(inner, purple, 3)
+    out += _p(f"M-70,-78 L-70,{top + 40} Q-70,{top + 18} -54,{top + 18}", sw=4, stroke=lav, extra='opacity="0.7"')
+    for yy in range(top + 50, -90, 34):
+        out += _circ(-49, yy, 4.5, _GOLD, 2)
+    out += _rect(-90, top + 52, 82, 18, "#4f86b0", 3, rx=3)           # glazed rosette band across the back
+    for cx_ in (-74, -49, -24):
+        out += _rosette(cx_, top + 61, 9, "#f4e3b0")
+    # finial: a gold pine-cone sitting ON the top rail (no gap)
+    fx, fy = -49, top + 2
+    out += _p(f"M{fx - 15},{fy} Q{fx - 18},{fy - 22} {fx},{fy - 36} Q{fx + 18},{fy - 22} {fx + 15},{fy} Z", _GOLD, 3.5)
+    out += _p(f"M{fx - 10},{fy - 10} L{fx + 10},{fy - 20} M{fx - 10},{fy - 20} L{fx + 10},{fy - 10}", sw=2.2,
+              stroke=_GOLD_DARK)
+    out += _ell(fx, fy, 19, 6, _GOLD_DARK, 3)
+    # seat box with a gold edge, royal cushion on top (its top is KING_SEAT_Y)
+    out += _rect(-90, -64, 150, 26, wood, 4, rx=6)
+    out += _line(-84, -50, 54, -50, sw=3, color=_GOLD)
+    for cx_ in (-62, -22, 18):
+        out += _circ(cx_, -50, 4, _GOLD, 2)
+    out += _p("M-88,-62 Q-90,-80 -70,-80 L50,-80 Q66,-78 62,-62 Z", purple, 3.5)
+    out += _p("M-70,-75 L48,-75", sw=4, stroke=lav, extra='opacity="0.6"')
+    out += _circ(62, -66, 5, _GOLD, 2.5)                                 # tassel
+    out += _p("M62,-62 L60,-50 M64,-62 L66,-50", sw=2.4, stroke=_GOLD_DARK)
+    # armrest (far side, behind the king): a bar with a blue rosette band, carried on a gold post at the front,
+    # ending in a little gold lion head
+    out += _rect(-14, -150, 14, 80, _GOLD, 3.5, rx=5)                   # rear support
+    out += _rect(34, -146, 18, 76, _GOLD, 3.5, rx=6)                    # front post
+    out += _ell(43, -112, 11, 5, _GOLD_DARK, 2.5)
+    out += _rect(-24, -160, 92, 22, wood, 4, rx=9)
+    out += _rect(-18, -156, 72, 14, "#4f86b0", 0, rx=5)
+    for cx_ in (-8, 16, 40):
+        out += _rosette(cx_, -149, 6.5, "#f4e3b0")
+    out += _circ(66, -150, 14, _GOLD, 3.5)
+    out += _p("M60,-150 Q66,-160 74,-150", sw=2.2, stroke=_GOLD_DARK)
+    out += _circ(70, -152, 2.4, INK, 0)
+    return out
+
+
+def throne(x, y, scale=1.0, facing=1):
+    return _place(_throne(), x, y, scale, facing)
+
+
+def _ash_heap(part="all"):
+    """Lumpy mound of ashes centred on x=0: pale ash on top, darker underneath, charcoal lumps, two half-burnt
+    sticks, a scattered soft edge. part='back' = the mound, 'front' = the low lip of ash and lumps that lie in
+    front of someone sitting in it."""
+    pale, mid_, darkash = S.shade(P["ash"], 0.35), P["ash"], S.shade(P["ash"], -0.18)
+    coal = S.mix(P["ash"], INK, 0.7)
+    rng = random.Random(17)
+    back, front = "", ""
+    if part in ("all", "back"):
+        mound = [(-124, 0), (-114, -18), (-98, -30), (-84, -44), (-66, -48), (-48, -62), (-24, -66), (-6, -76),
+                 (16, -72), (36, -64), (54, -56), (70, -50), (90, -38), (110, -24), (124, 0)]
+        md = _sm(mound, closed=False, tension=0.85) + " Z"
+        inner = _p(_sm([(-130, -6), (-80, -16), (-20, -14), (40, -20), (130, -8), (130, 10), (-130, 10)]), darkash, 0)
+        inner += _p(_sm([(-70, -46), (-30, -66), (10, -66), (50, -52), (30, -40), (-20, -44), (-56, -36)]), pale, 0,
+                    extra='opacity="0.9"')
+        for _ in range(40):                                              # speckled grey grain
+            px, py = rng.uniform(-110, 110), rng.uniform(-66, -4)
+            inner += _circ(px, py, rng.uniform(1.6, 3.4), rng.choice((pale, darkash, coal)), 0, extra='opacity="0.55"')
+        back += _p(md, mid_, 0) + _clip(_uid("ashm", 0), md, inner) + _p(md, sw=4)
+        # two half-burnt sticks poking out of the heap, charred black at the buried end, an ember at one tip
+        for (x0, y0, x1, y1) in ((-64, -30, -112, -70), (52, -36, 104, -66)):
+            back += _tube(f"M{x0},{y0} L{x1},{y1}", 10, P["wood"], 3.2)
+            back += _tube(f"M{x0},{y0} L{_f(_lerp(x0, x1, 0.45))},{_f(_lerp(y0, y1, 0.45))}", 10, coal, 3.2)
+        back += _circ(-112, -70, 4, P["sun_hot"], 2.2) + _circ(-112, -70, 1.8, P["glow"], 0)
+        for cx_, cy_, r_ in ((-30, -52, 9), (16, -60, 7), (-74, -18, 8), (70, -22, 9), (32, -30, 6), (-6, -24, 7)):
+            back += _p(S.blob(cx_, cy_, r_ * 1.25, r_, 0.25, 7, int(cx_ * 7 + cy_)), coal, 2.8)
+    if part in ("all", "front"):
+        lip = [(-150, 2), (-128, -10), (-90, -14), (-40, -12), (10, -15), (60, -12), (110, -14), (146, -6), (156, 2)]
+        front += _p(_sm(lip, closed=False, tension=0.8) + " Z", pale, 3.5)
+        for cx_, cy_, r_ in ((-104, -5, 6), (-20, -6, 5), (88, -6, 6), (130, -4, 4)):
+            front += _p(S.blob(cx_, cy_, r_ * 1.3, r_, 0.25, 7, int(cx_ * 3)), coal, 2.4)
+        for _ in range(14):                                              # scattered soft edge
+            px = rng.choice((-1, 1)) * rng.uniform(150, 182)
+            front += _circ(px, rng.uniform(-6, 0), rng.uniform(2, 4), mid_, 0, extra='opacity="0.7"')
+    return back + front
+
+
+def _ash_smoke(phase=0.0):
+    """Two or three soft translucent curls of smoke rising from the heap (y -60 .. -230)."""
+    c = S.mix(P["ash"], P["storm_cloud_light"], 0.3)
+    out = ""
+    for x0, h, ph, op in ((-34, 170, 0.0, 0.8), (26, 136, 1.8, 0.7), (-2, 110, 3.3, 0.6)):
+        for k in range(7):
+            u = k / 6
+            px = x0 + 22 * math.sin(ph + phase + u * 3.2) * u
+            py = -60 - h * u
+            r = 10 + 16 * u
+            out += _circ(px, py, r, c, 0, extra=f'opacity="{op * (1 - 0.75 * u):.2f}" filter="url(#soft)"')
+        pts = [(x0 + 22 * math.sin(ph + phase + k / 6 * 3.2) * k / 6, -60 - h * k / 6) for k in range(7)]
+        out += _p(_sm(pts, closed=False), sw=3, stroke=c, extra=f'opacity="{op * 0.8:.2f}"')
+    return out
+
+
+def ash_pile(x, y, scale=1.0, smoke=False, facing=1, part="all"):
+    body = (_ash_smoke() if smoke and part != "front" else "") + _ash_heap(part)
+    return _place(body, x, y, scale, facing)
+
+
+# ====================================================================== 4. plants
+
+
+def _palmate(cx, cy, r, lobes, spin, tilt, hang, fill, vein, wither=0.0, seed=0, sw=4.0):
+    """Peltate palm-shaped leaf (castor) attached at (cx, cy). Geometry is transformed in python so the ink
+    stays even. Withering has two phases so the same leaf stays recognisable through a flipbook:
+    0 .. 0.7  the blade keeps its 7-9 pointed lobes but swings down on the petiole (it ends up hanging below
+              the stalk tip, seen face-on) while the lobe tips cup and curl in toward the centre;
+    0.7 .. 1  the blade shrinks and crumples: the fan closes downward into a limp, wrinkled 'hand'."""
+    rng = random.Random(seed)
+    w = _clamp(wither)
+    da = _smooth(w / 0.7)                       # phase A: droop + curl
+    db = _smooth((w - 0.7) / 0.3)               # phase B: shrink + crumple
+    comp = 1 - 0.14 * da - 0.3 * db             # the top lobes swing down, then the fan half-closes
+    spin_e = math.radians(spin * (1 - da))
+    tilt_e = tilt + (0.9 - tilt) * da           # a hanging blade is seen face-on
+    hang_e = math.radians(hang * (1 - da))
+    size = 1 - 0.06 * da - 0.2 * db
+    ca, sa = math.cos(hang_e), math.sin(hang_e)
+    oy = r * size * (0.5 * da + 0.12 * db)      # blade centre slides below the stalk tip as it hangs
+
+    def tf(px, py):
+        qx, qy = px * math.cos(spin_e) - py * math.sin(spin_e), px * math.sin(spin_e) + py * math.cos(spin_e)
+        qy *= tilt_e
+        return (cx + qx * ca - qy * sa, cy + oy + qx * sa + qy * ca)
+
+    n = lobes
+    hw = math.pi / n * comp
+    rs = r * size * (0.34 + 0.06 * w)
+    d = ""
+    tips = []
+    for i in range(n):
+        rel = 2 * math.pi * (i - (n - 1) / 2) / n
+        a = math.pi / 2 + rel * comp + rng.uniform(-0.04, 0.04) + db * rng.uniform(-0.12, 0.12)
+        lob = _lerp(0.72 - 0.28 * math.cos(rel), 0.86 - 0.1 * abs(rel) / math.pi, db)
+        rt = r * size * lob * rng.uniform(0.93, 1.05) * (1 - 0.14 * da) * (1 + db * rng.uniform(-0.12, 0.08))
+        bw = hw * (0.82 - 0.1 * da + 0.06 * db)
+        s0 = (rs * math.cos(a - hw), rs * math.sin(a - hw))
+        s1 = (rs * math.cos(a + hw), rs * math.sin(a + hw))
+        cup = 0.86 + 0.1 * da                    # cupped sides: the tip sits inside the lobe's curve
+        c0 = (rt * cup * math.cos(a - bw), rt * cup * math.sin(a - bw))
+        c1 = (rt * cup * math.cos(a + bw), rt * cup * math.sin(a + bw))
+        curl = (0.22 * da + 0.1 * db) * rng.uniform(0.6, 1.2) * (-1 if rel >= 0 else 1)   # hook toward the middle
+        t = (rt * math.cos(a + curl), rt * math.sin(a + curl))
+        tips.append((a, rt))
+        P0, C0, T, C1, P1 = tf(*s0), tf(*c0), tf(*t), tf(*c1), tf(*s1)
+        if i == 0:
+            d += f"M{_f(P0[0])},{_f(P0[1])}"
+        d += (f" Q{_f(C0[0])},{_f(C0[1])} {_f(T[0])},{_f(T[1])}"
+              f" Q{_f(C1[0])},{_f(C1[1])} {_f(P1[0])},{_f(P1[1])}")
+    hub = tf(0, -rs * (0.5 + 0.5 * da))      # the sinus where the petiole meets the blade
+    d += f" L{_f(hub[0])},{_f(hub[1])} Z"
+    under = (f'<path d="{d}" fill="{S.shade(fill, -0.3)}" '
+             f'transform="translate({_f(2 - 2 * da)},{_f(5 + 3 * tilt_e)})"/>')
+    vein_c = S.mix(vein, S.shade(fill, -0.28), w)
+    inner = ""
+    c = tf(0, 0)
+    for a, rt in tips:
+        e = tf(rt * 0.78 * math.cos(a), rt * 0.78 * math.sin(a))
+        inner += _line(c[0], c[1], e[0], e[1], sw=sw * 0.7, color=vein_c, extra='opacity="0.85"')
+    if da > 0.05:                                 # the cupped lobe edges catch a darker fold
+        for a, rt in tips:
+            e0 = tf(rt * 0.45 * math.cos(a - hw * 0.5), rt * 0.45 * math.sin(a - hw * 0.5))
+            e1 = tf(rt * 0.85 * math.cos(a - hw * 0.25), rt * 0.85 * math.sin(a - hw * 0.25))
+            inner += _line(e0[0], e0[1], e1[0], e1[1], sw=sw * 0.8, color=S.shade(fill, -0.3),
+                           extra=f'opacity="{0.5 * da:.2f}"')
+    if w > 0.25:
+        spot = S.shade(P["leaf_dead"], -0.25)
+        for k in range(int(2 + 7 * w)):
+            a, rt = tips[rng.randrange(n)]
+            rr = rng.uniform(0.35, 0.8) * rt
+            spt = tf(rr * math.cos(a), rr * math.sin(a))
+            inner += _ell(spt[0], spt[1], 4 + 6 * w, 3 + 3 * w, spot, 0, extra=f'opacity="{0.25 + 0.45 * w:.2f}"')
+    cid = _uid("leaf", round(cx, 1), round(cy, 1), round(r, 1), seed, round(w, 3))
+    out = under + _p(d, fill, 0) + _clip(cid, d, inner) + _p(d, sw=sw)
+    out += _circ(hub[0], hub[1], 3 + r * 0.03, vein_c, 0)
+    return out
+
+
+def _leaf_col(w, base=None):
+    base = base or P["leaf"]
+    if w <= 0.7:
+        return S.mix(base, P["leaf_dry"], _smooth(w / 0.7) * 0.85 + 0.15 * w / 0.7)
+    return S.mix(P["leaf_dry"], P["leaf_dead"], (w - 0.7) / 0.3)
+
+
+def castor_height(growth):
+    """Stem height in px (scale 1) of castor_plant at a growth value."""
+    return 30 + 470 * _clamp(growth) ** 2.2
+
+
+def _castor(growth=1.0, wither=0.0, bite=0.0, side=1, seed=0):
+    g, w, b = _clamp(growth), _clamp(wither), _clamp(bite)
+    sd = 1 if side >= 0 else -1
+    Hs = castor_height(g)
+    rng = random.Random(seed)
+
+    def stem_pt(f):
+        x = sd * (0.16 * Hs * f * f + w * 0.2 * Hs * f ** 3)
+        y = -Hs * f + w * 0.1 * Hs * f ** 3
+        return (x, y)
+
+    def normal(f):
+        a, c = stem_pt(max(0, f - 0.02)), stem_pt(min(1, f + 0.02))
+        dx, dy = c[0] - a[0], c[1] - a[1]
+        L = math.hypot(dx, dy) or 1
+        return (-dy / L, dx / L)
+
+    base_w = 5 + 12 * g
+
+    def hw(f):
+        return base_w * (1 - 0.55 * f)
+
+    brown = S.shade(P["leaf_dead"], -0.18)
+    # a giant herb, not a tree: green stem with a red-purple flush (castor stems are glossy and reddish)
+    stem_c = S.mix(S.mix(P["leaf_dark"], P["leaf"], 0.25), brown, w * 0.8)
+    flush_c = S.mix("#a3405a", brown, w * 0.6)
+    pet_c = S.mix(S.mix(P["leaf_dark"], "#b8484f", 0.55), brown, w * 0.8)
+    vein_c = S.mix(P["leaf_light"], "#d9b3a0", 0.25)
+
+    # branch
+    bg = _smooth((g - 0.4) / 0.45)
+    b0 = stem_pt(0.6)
+    bend = (b0[0] + sd * 0.62 * Hs * bg, b0[1] - 0.18 * Hs * bg + w * 0.22 * Hs * bg)
+    bmid = (b0[0] + sd * 0.32 * Hs * bg, b0[1] - 0.2 * Hs * bg + w * 0.06 * Hs * bg)
+
+    def branch_pt(f):
+        u = 1 - f
+        return (u * u * b0[0] + 2 * u * f * bmid[0] + f * f * bend[0], u * u * b0[1] + 2 * u * f * bmid[1] + f * f * bend[1])
+
+    # leaf table: (on, f, petiole dx, dy [x Hs], radius, birth, back, tilt)
+    table = [("s", .26, -.24, -.02, 80, .05, False, .8), ("s", .38, .26, -.06, 92, .12, True, .75),
+             ("s", .50, -.30, -.08, 110, .22, False, .7), ("s", .68, -.26, -.10, 130, .36, True, .55),
+             ("b", .35, .00, -.16, 130, .48, True, .45), ("b", .85, .04, .04, 120, .74, True, .5),
+             ("b", .65, .04, -.14, 150, .56, False, .42), ("b", 1.0, .10, -.08, 160, .64, False, .42),
+             ("s", .88, .14, -.14, 150, .50, False, .45), ("s", 1.0, -.10, -.10, 130, 0.0, False, .55)]
+    back_l, front_l = "", ""
+    for i, (on, f, pdx, pdy, r, birth, back, tilt) in enumerate(table):
+        if on == "b" and bg <= 0.01:
+            continue
+        if birth == 0.0:
+            k = 0.22 + 0.78 * _smooth(g / 0.55)
+        else:
+            k = _smooth((g - birth) / 0.3)
+        if k <= 0.01:
+            continue
+        a = stem_pt(f) if on == "s" else branch_pt(f)
+        Hk = Hs if on == "s" else max(Hs, 200)
+        vx, vy = sd * pdx * Hk * (0.4 + 0.6 * k), pdy * Hk * (0.4 + 0.6 * k)
+        # wither: petioles droop toward hanging
+        ang = math.atan2(vy, vx)
+        L = math.hypot(vx, vy)
+        down = math.pi / 2
+        ang = ang + (down - ang if abs(down - ang) <= math.pi else (down - ang) - math.copysign(2 * math.pi, down - ang)) * 0.62 * _smooth(w)
+        L *= 1 - 0.25 * w
+        c = (a[0] + L * math.cos(ang), a[1] + L * math.sin(ang))
+        mid = ((a[0] + c[0]) / 2, (a[1] + c[1]) / 2 - L * 0.18 * (1 - w))
+        rr = r * k * (1 - 0.15 * w) * (0.45 + 0.55 * g)
+        lobes = 7 if r < 100 else 9
+        spin = rng.uniform(-12, 12)
+        hang = 0.0
+        tl = tilt
+        lc = _leaf_col(w, S.mix(P["leaf"], P["leaf_dark"], 0.3) if back else P["leaf"])
+        pet = _p(f"M{_f(a[0])},{_f(a[1])} Q{_f(mid[0])},{_f(mid[1])} {_f(c[0])},{_f(c[1])}",
+                 sw=4 + 3.5 * k + 2 * g, stroke=INK) + \
+            _p(f"M{_f(a[0])},{_f(a[1])} Q{_f(mid[0])},{_f(mid[1])} {_f(c[0])},{_f(c[1])}",
+               sw=max(1.5, 3.5 * k + 2 * g - 2), stroke=pet_c)
+        leaf = _palmate(c[0], c[1], rr, lobes, spin, tl, hang, lc, vein_c, w, seed * 31 + i, sw=3.2 + 1.3 * k)
+        if back:
+            back_l += pet + leaf
+        else:
+            front_l += pet + leaf
+    # stem polygon
+    N = 14
+    left, right = [], []
+    for j in range(N + 1):
+        f = j / N
+        p = stem_pt(f)
+        nx, ny = normal(f)
+        h = hw(f)
+        left.append((p[0] + nx * h, p[1] + ny * h))
+        right.append((p[0] - nx * h, p[1] - ny * h))
+    tip = stem_pt(1.0)
+    stem_d = _sm(left + [(tip[0], tip[1] - hw(1) * 0.8)] + list(reversed(right)), closed=True, tension=0.8)
+    stem = _p(stem_d, stem_c, 0)
+    fl = [(p[0] - nx * h * 0.8, p[1] - ny * h * 0.8) for p, (nx, ny), h in
+          ((stem_pt(j / N), normal(j / N), hw(j / N)) for j in range(0, N + 1))]
+    stem += _clip(_uid("stemfl", g, w, b, sd), stem_d, _p(_sm(fl, closed=False), sw=base_w * 0.75, stroke=flush_c,
+                                                           extra='opacity="0.6"'))      # red-purple flush
+    hl = [(p[0] + nx * h * 0.4, p[1] + ny * h * 0.4) for p, (nx, ny), h in
+          ((stem_pt(j / N), normal(j / N), hw(j / N)) for j in range(1, N))]
+    stem += _p(_sm(hl, closed=False), sw=max(2, base_w * 0.32), stroke=S.shade(stem_c, 0.42),
+               extra='opacity="0.75"')                                     # glossy highlight
+    ring = S.mix(P["leaf_light"], "#f1e3c8", 0.5)
+    for f in (0.26, 0.38, 0.5, 0.6, 0.68, 0.8, 0.92):                       # pale node rings, not bark
+        if f * Hs > 20:
+            p = stem_pt(f)
+            nx, ny = normal(f)
+            h = hw(f) * 1.05
+            a_, b_ = (p[0] + nx * h, p[1] + ny * h), (p[0] - nx * h, p[1] - ny * h)
+            stem += _p(f"M{_f(a_[0])},{_f(a_[1])} Q{_f(p[0] - ny * 5)},{_f(p[1] + nx * 5 + 4)} {_f(b_[0])},{_f(b_[1])}",
+                       sw=3.2, stroke=ring, extra='opacity="0.85"')
+    stem += _p(stem_d, sw=3.5 + g)
+    # bite notch: one concave scallop with little tooth nicks, pale pith along the cut
+    if b > 0.01:
+        fb = min(16.0, Hs * 0.45) / Hs
+        p = stem_pt(fb)
+        nx, ny = normal(fb)
+        e = (p[0] - sd * abs(nx) * hw(fb) * 1.05, p[1])
+        rb = hw(fb) * (0.3 + 1.2 * b)            # at bite=1 the notch reaches ~3/4 through the stem
+        ry = rb * 1.15
+        nicks = [(e[0] + sd * rb * math.cos(t_), e[1] + ry * math.sin(t_)) for t_ in (-0.8, 0.0, 0.8)]
+        mid_ = _uid("bite", g, b, sd)
+        holes = _ell(e[0], e[1], rb, ry, "black", 0) + "".join(_circ(qx, qy, 2.2 + 1.2 * b, "black", 0)
+                                                                for qx, qy in nicks)
+        stem = (f'<mask id="{mid_}" maskUnits="userSpaceOnUse" x="-2000" y="-2000" width="4000" height="4000">'
+                f'<rect x="-2000" y="-2000" width="4000" height="4000" fill="white"/>{holes}</mask>'
+                f'<g mask="url(#{mid_})">{stem}</g>')
+        cid = _uid("bitec", g, b, sd)
+        rims = _ell(e[0], e[1], rb + 3.5, ry + 3.5, "none", 6, stroke="#e6e2ad") + _ell(e[0], e[1], rb, ry, "none", 3)
+        stem += _g(_clip(cid, stem_d, rims), extra=f'mask="url(#{mid_})"')
+        for k in range(int(1 + 4 * b)):
+            stem += _circ(e[0] - sd * rng.uniform(6, 26), rng.uniform(-5, -1.5), rng.uniform(1.8, 3.0), "#d8dca2", 1.4)
+    # branch
+    branch = ""
+    if bg > 0.01:
+        bpts = [branch_pt(j / 8) for j in range(9)]
+        bw_ = 3 + 6 * bg
+        branch = _tube(_sm(bpts, closed=False), bw_, stem_c, 3.5)
+    # cotyledons
+    cot = ""
+    kc = 1 - _smooth((g - 0.12) / 0.25)
+    if kc > 0.01:
+        fc = min(1.0, 26 / Hs)
+        p = stem_pt(fc)
+        for s_ in (-1, 1):
+            cx_, cy_ = p[0] + s_ * 16 * kc, p[1] - 6 * kc
+            cot += _ell(cx_, cy_, 17 * kc, 8 * kc, _leaf_col(w, P["leaf_light"]), 3,
+                        extra=f'transform="rotate({s_ * -22} {_f(cx_)} {_f(cy_)})"')
+    # seeds (spiky red clusters)
+    seeds = ""
+    ks = _smooth((g - 0.68) / 0.3)
+    if ks > 0.01:
+        t0 = stem_pt(1.0)
+        sc_col = S.mix("#c8473f", "#8a5a3a", w)
+        top = (t0[0] + sd * 10 * ks, t0[1] - 66 * ks)
+        seeds += _tube(f"M{_f(t0[0])},{_f(t0[1])} Q{_f(t0[0])},{_f(t0[1] - 40 * ks)} {_f(top[0])},{_f(top[1])}",
+                       4, pet_c, 3)
+        for j, (dx, dy) in enumerate(((-12, -20), (12, -30), (-8, -44), (10, -54), (0, -66), (-16, -58))):
+            cx_, cy_ = t0[0] + (dx + sd * 6) * ks, t0[1] + dy * ks
+            rr = 9 * ks
+            spikes = ""
+            for q in range(10):
+                a = q * math.pi / 5
+                spikes += f"M{_f(cx_ + rr * math.cos(a))},{_f(cy_ + rr * math.sin(a))} l{_f(5 * ks * math.cos(a))},{_f(5 * ks * math.sin(a))} "
+            seeds += _p(spikes, sw=2.2, stroke=S.shade(sc_col, -0.3))
+            seeds += _circ(cx_, cy_, rr, sc_col, 2.8) + _circ(cx_ - rr * 0.3, cy_ - rr * 0.3, rr * 0.25, "#f2a99a", 0)
+    mound = _ell(0, 0, 46 + 14 * g, 9 + 2 * g, P["earth"], 3.5) + _ell(-10, -3, 20, 4, S.shade(P["earth"], 0.25), 0)
+    plant = back_l + branch + stem + cot + front_l + seeds
+    if b > 0.01:      # the gnawed stem leans a little away from the notch (toward the canopy)
+        plant = _g(plant, f"rotate({sd * 3.5 * _smooth(b):.2f} 0 -4)")
+    return mound + plant
+
+
+def castor_plant(x, y, scale=1.0, growth=1.0, wither=0.0, bite=0.0, side=1, seed=0):
+    return _place(_castor(growth, wither, bite, side, seed), x, y, scale)
+
+
+def _frond(base, ang, length, droop, width, col, seed=0, lite=False):
+    """Simple palm frond: a tapered, arching feather with a soft comb of rounded leaflet tips (used for distant
+    palms and roof shades; lite=True drops the leaflet lines and most points for far backgrounds)."""
+    a = math.radians(ang)
+    end = (base[0] + math.cos(a) * length, base[1] + math.sin(a) * length + droop)
+    ctrl = (base[0] + math.cos(a) * length * 0.6, base[1] + math.sin(a) * length * 0.6 - droop * 0.25)
+
+    def at(t):
+        u = 1 - t
+        return (u * u * base[0] + 2 * u * t * ctrl[0] + t * t * end[0], u * u * base[1] + 2 * u * t * ctrl[1] + t * t * end[1])
+
+    N = 14 if lite else 40
+    L, R, frame = [], [], []
+    for i in range(N + 1):
+        t = i / N
+        p, q = at(max(0, t - 0.01)), at(min(1, t + 0.01))
+        dx, dy = q[0] - p[0], q[1] - p[1]
+        ln = math.hypot(dx, dy) or 1
+        tx, ty = dx / ln, dy / ln
+        nx, ny = -ty, tx
+        wv = 0.82 * width * math.sin(math.pi * min(1.0, t * 1.04)) ** 0.7
+        comb = 0.72 + 0.28 * abs(math.sin(math.pi * t * 9.5))     # soft rounded leaflet tips
+        c = at(t)
+        sh = wv * 0.35                                           # leaflets sweep toward the tip
+        L.append((c[0] + nx * wv * comb + tx * sh, c[1] + ny * wv * comb + ty * sh))
+        R.append((c[0] - nx * wv * comb + tx * sh, c[1] - ny * wv * comb + ty * sh))
+        frame.append((c, (nx, ny), (tx, ty), wv))
+    d = _sm(L + list(reversed(R)), closed=True, tension=0.8)
+    inner = ""
+    dark = S.shade(col, -0.3)
+    for i in range(3, N - 2, 3):
+        c, (nx, ny), (tx, ty), wv = frame[i]
+        for sgn in (1, -1):
+            e = (c[0] + sgn * nx * wv * 0.85 + tx * wv * 0.45, c[1] + sgn * ny * wv * 0.85 + ty * wv * 0.45)
+            inner += _line(c[0], c[1], e[0], e[1], sw=2.2, color=dark, extra='opacity="0.45"')
+    if lite:
+        out = _p(d, col, 3.2)
+    else:
+        out = _p(d, col, 0) + _clip(_uid("frond", round(base[0], 1), round(base[1], 1), ang, length, col), d, inner)
+        out += _p(d, sw=3.2)
+    out += _p(f"M{_f(base[0])},{_f(base[1])} Q{_f(ctrl[0])},{_f(ctrl[1])} {_f(end[0])},{_f(end[1])}", sw=3,
+              stroke=S.shade(col, -0.38))
+    return out
+
+
+def _pinnate(base, ang, length, droop, width, col, n=12, sw=2.6):
+    """Date-palm frond: a drooping central rib with a comb of narrow pointed leaflets on both sides, angled toward
+    the tip and hanging a little with gravity (one filled outline, so the ink stays clean)."""
+    a = math.radians(ang)
+    end = (base[0] + math.cos(a) * length, base[1] + math.sin(a) * length + droop)
+    ctrl = (base[0] + math.cos(a) * length * 0.62, base[1] + math.sin(a) * length * 0.62 - droop * 0.3)
+
+    def at(t):
+        u = 1 - t
+        return (u * u * base[0] + 2 * u * t * ctrl[0] + t * t * end[0], u * u * base[1] + 2 * u * t * ctrl[1] + t * t * end[1])
+
+    def frame(t):
+        p, q = at(max(0, t - 0.01)), at(min(1, t + 0.01))
+        dx, dy = q[0] - p[0], q[1] - p[1]
+        ln = math.hypot(dx, dy) or 1
+        return (dx / ln, dy / ln), (-dy / ln, dx / ln)
+    sides = []
+    for s in (1, -1):
+        pts = []
+        for i in range(n):
+            t0 = 0.1 + 0.86 * i / n
+            t1 = 0.1 + 0.86 * (i + 0.8) / n
+            r0, r1 = at(t0), at(t1)
+            (tx, ty), (nx, ny) = frame(t0)
+            L = width * (0.45 + 0.55 * math.sin(math.pi * min(1.0, (t0 - 0.05) * 1.08)) ** 0.7)
+            dx, dy = tx * 0.62 + s * nx * 0.78, ty * 0.62 + s * ny * 0.78 + 0.3     # forward, out, a little down
+            dl = math.hypot(dx, dy) or 1
+            tip = (r0[0] + dx / dl * L, r0[1] + dy / dl * L)
+            bulge = 6.5
+            c0 = ((r0[0] + tip[0]) / 2 - tx * bulge, (r0[1] + tip[1]) / 2 - ty * bulge)
+            c1 = ((r1[0] + tip[0]) / 2 + tx * bulge, (r1[1] + tip[1]) / 2 + ty * bulge)
+            pts.append((r0, c0, tip, c1, r1))
+        sides.append(pts)
+    tipp = at(1.0)
+    d = f"M{_f(base[0])},{_f(base[1])}"
+    for r0, c0, tip, c1, r1 in sides[0]:
+        d += f" L{_f(r0[0])},{_f(r0[1])} Q{_f(c0[0])},{_f(c0[1])} {_f(tip[0])},{_f(tip[1])} Q{_f(c1[0])},{_f(c1[1])} {_f(r1[0])},{_f(r1[1])}"
+    d += f" L{_f(tipp[0])},{_f(tipp[1])}"
+    for r0, c0, tip, c1, r1 in reversed(sides[1]):
+        d += f" L{_f(r1[0])},{_f(r1[1])} Q{_f(c1[0])},{_f(c1[1])} {_f(tip[0])},{_f(tip[1])} Q{_f(c0[0])},{_f(c0[1])} {_f(r0[0])},{_f(r0[1])}"
+    d += " Z"
+    out = _p(d, col, sw)
+    out += _p(f"M{_f(base[0])},{_f(base[1])} Q{_f(ctrl[0])},{_f(ctrl[1])} {_f(end[0])},{_f(end[1])}", sw=sw * 1.1,
+              stroke=S.shade(col, -0.4))
+    return out
+
+
+def _palm(lean=0.0, sway=0.0, dates=True, detail=True):
+    top = (lean * 150, -430)
+    ctrl = (lean * 10, -230)
+
+    def at(t):
+        u = 1 - t
+        return (2 * u * t * ctrl[0] + t * t * top[0], 2 * u * t * ctrl[1] + t * t * top[1])
+
+    L, R = [], []
+    for i in range(13):
+        t = i / 12
+        p, q = at(max(0, t - 0.01)), at(min(1, t + 0.01))
+        dx, dy = q[0] - p[0], q[1] - p[1]
+        ln = math.hypot(dx, dy) or 1
+        nx, ny = -dy / ln, dx / ln
+        h = 24 - 9 * t + (8 if i == 0 else 0)
+        c = at(t)
+        L.append((c[0] + nx * h, c[1] + ny * h))
+        R.append((c[0] - nx * h, c[1] - ny * h))
+    trunk_c = "#a8825a"
+    out = ""
+    sw_ = sway * 9
+    fr = ((lambda b, a_, l_, d_, w_, c_: _pinnate(b, a_, l_, d_, w_ * 1.25, c_)) if detail else
+          (lambda b, a_, l_, d_, w_, c_: _frond(b, a_, l_, d_, w_, c_, lite=True)))
+    for ang, ln, dr in ((-150, 200, 70), (-110, 190, 40), (-70, 195, 40), (-30, 200, 70)):
+        out += fr(top, ang + sw_, ln, dr, 30, S.mix(P["leaf_dark"], P["olive"], 0.3))
+    trunk_d = _sm(L + list(reversed(R)), closed=True, tension=0.7)
+    out += _p(trunk_d, trunk_c, 0)
+    chev = ""
+    for i in range(1, 17):
+        t = i / 17
+        c = at(t)
+        p, q = at(t - 0.01), at(t + 0.01)
+        dx, dy = q[0] - p[0], q[1] - p[1]
+        ln = math.hypot(dx, dy) or 1
+        nx, ny = -dy / ln, dx / ln
+        h = 24 - 9 * t
+        chev += (f"M{_f(c[0] + nx * h)},{_f(c[1] + ny * h)} Q{_f(c[0] + dx / ln * 9)},{_f(c[1] + dy / ln * 9)} "
+                 f"{_f(c[0] - nx * h)},{_f(c[1] - ny * h)} ")
+    out += _clip(_uid("palm", lean), trunk_d, _p(chev, sw=3, stroke=S.shade(trunk_c, -0.35)) +
+                 _p(_sm([(c[0] + 8, c[1]) for c in (at(i / 10) for i in range(11))], closed=False), sw=8,
+                    stroke=S.shade(trunk_c, 0.25), extra='opacity="0.5"'))
+    out += _p(trunk_d, sw=4)
+    if dates:
+        for dx_, s_ in ((-24, 1), (26, -1)):
+            cx_, cy_ = top[0] + dx_, top[1] + 30
+            out += _p(f"M{_f(top[0] + dx_ * 0.4)},{_f(top[1] + 6)} Q{_f(cx_)},{_f(cy_ - 20)} {_f(cx_)},{_f(cy_)}",
+                      sw=3, stroke=P["wood"])
+            for j, (ox, oy) in enumerate(((0, 0), (-9, 8), (9, 8), (-5, 18), (6, 19), (-12, 20), (12, 21), (0, 28))):
+                out += _ell(cx_ + ox, cy_ + oy, 6, 8, "#d68a3c" if j % 3 else "#a85a2c", 2.5)
+    for ang, ln, dr in ((-175, 220, 120), (-135, 210, 55), (-92, 180, 10), (-50, 210, 55), (-5, 220, 120),
+                        (155, 160, 70), (25, 160, 70)):
+        out += fr(top, ang + sw_ * (1.4 if abs(ang) > 90 else 1), ln, dr, 34, P["leaf"])
+    out += _circ(top[0], top[1] + 4, 14, S.shade(trunk_c, -0.2), 3.5)
+    return out
+
+
+def palm_tree(x, y, scale=1.0, lean=0.0, sway=0.0, dates=True):
+    return _place(_palm(lean, sway, dates), x, y, scale)
+
+
+def _cluster(circles, fill, sw=4.0):
+    a = "".join(_circ(cx, cy, r, fill, sw * 2) for cx, cy, r in circles)
+    b = "".join(_circ(cx, cy, r, fill, 0) for cx, cy, r in circles)
+    return a + b
+
+
+def _olive(seed=0):
+    """Gnarled olive: a twisted trunk that splits into three limbs (with a dark hollow), each carrying its own
+    silvery grey-green clump of foliage, with sky showing between the clumps; small dark olives."""
+    rng = random.Random(seed)
+    bark, bark_d = "#9a8c78", "#6f6252"
+    leaf, leaf_d, silver = "#a3b08a", "#7d8c69", "#dfe5c8"
+    out = ""
+    # limbs (tubes) twisting out of the trunk toward the three clumps
+    limbs = [[(-18, -110), (-46, -160), (-92, -196), (-118, -232)], [(4, -116), (8, -180), (-4, -236), (10, -284)],
+             [(20, -104), (52, -150), (96, -178), (122, -210)]]
+    for pts in limbs:
+        out += _band(pts, 30, 14, bark)
+    out += _band([(-30, -150), (-52, -186), (-46, -214)], 14, 8, bark, 3.5)                 # a little side twig
+    # trunk: two twisted strands with a split / hollow in the middle
+    trunk = ("M-44,0 Q-30,-30 -36,-60 Q-44,-96 -20,-120 Q-2,-132 12,-122 Q34,-104 28,-66 Q24,-34 44,0 Z")
+    out += _p(trunk, bark, 4)
+    out += _p("M2,-44 Q-12,-60 -4,-84 Q10,-74 12,-58 Q12,-48 2,-44 Z", S.shade(bark_d, -0.3), 3.2)       # knot hole
+    out += _p("M-34,-6 Q-10,-40 -30,-74 Q-40,-100 -12,-118", sw=3, stroke=bark_d, extra='opacity="0.8"')   # twisted
+    out += _p("M30,-6 Q4,-30 22,-64 Q30,-92 6,-120", sw=3, stroke=bark_d, extra='opacity="0.8"')          # strands
+    out += _p("M-14,-4 Q10,-24 -6,-40", sw=3, stroke=bark_d, extra='opacity="0.6"')
+    out += _p("M-24,-30 Q-20,-60 -26,-90", sw=6, stroke=S.shade(bark, 0.3), extra='opacity="0.5"')
+    out += _ell(-50, -2, 16, 6, bark, 3) + _ell(48, -2, 14, 6, bark, 3)                                   # root flare
+    # three separate foliage clumps (sky gaps between them)
+    clumps = [(-128, -262, 72, 44), (8, -318, 84, 50), (130, -240, 66, 42), (-58, -214, 40, 26)]
+    for k, (cx, cy, rx, ry) in enumerate(clumps):
+        circles = [(cx + rx * 0.62 * math.cos(a), cy + ry * 0.55 * math.sin(a), ry * rng.uniform(0.55, 0.7))
+                   for a in (math.pi * (0.1 + 0.4 * j) for j in range(5))]
+        circles += [(cx, cy - ry * 0.15, ry * 0.85), (cx - rx * 0.45, cy + ry * 0.2, ry * 0.6),
+                    (cx + rx * 0.45, cy + ry * 0.2, ry * 0.6)]
+        out += _cluster(circles, leaf, 4)
+        out += _ell(cx, cy + ry * 0.45, rx * 0.8, ry * 0.32, leaf_d, 0, extra='opacity="0.6" filter="url(#soft)"')
+        for _ in range(16):                                     # slim silver leaves
+            a = rng.uniform(0, 2 * math.pi)
+            rr = rng.uniform(0, 1) ** 0.6
+            px, py = cx + rx * 0.8 * rr * math.cos(a), cy - 6 + ry * 0.6 * rr * math.sin(a)
+            rot = rng.uniform(-50, 50)
+            out += _ell(px, py, 9, 3, silver if rng.random() < 0.7 else leaf_d, 0,
+                        extra=f'transform="rotate({rot:.0f} {_f(px)} {_f(py)})" opacity="0.9"')
+        for _ in range(3):
+            px, py = cx + rng.uniform(-rx * 0.6, rx * 0.6), cy + rng.uniform(-ry * 0.3, ry * 0.4)
+            out += _ell(px, py, 5, 6.5, "#5c4a63", 2)
+    return out
+
+
+def olive_tree(x, y, scale=1.0, seed=0):
+    return _place(_olive(seed), x, y, scale)
+
+
+def _bush(variant=0):
+    v = variant % 4
+    rng = random.Random(11 + v)
+    if v == 2:  # dry desert shrub: a fan of bare forked twigs with a few small grey-green tufts
+        twig = S.shade(P["wood"], -0.15)
+        tuft = S.mix(P["olive"], P["stone"], 0.45)
+        out, tips = "", []
+
+        def br(x0, y0, ang, ln, depth, wdt):
+            nonlocal out
+            a_ = math.radians(ang)
+            x1, y1 = x0 + math.cos(a_) * ln, y0 + math.sin(a_) * ln
+            mx_, my_ = (x0 + x1) / 2 + rng.uniform(-5, 5), (y0 + y1) / 2 + rng.uniform(-4, 4)
+            out += _tube(f"M{_f(x0)},{_f(y0)} Q{_f(mx_)},{_f(my_)} {_f(x1)},{_f(y1)}", wdt, twig, 2.6)
+            if depth < 2:
+                br(x1, y1, ang - rng.uniform(18, 32), ln * 0.66, depth + 1, wdt * 0.7)
+                br(x1, y1, ang + rng.uniform(16, 30), ln * 0.62, depth + 1, wdt * 0.7)
+            else:
+                tips.append((x1, y1))
+        for ang in (-150, -122, -98, -76, -52, -28):
+            br(rng.uniform(-8, 8), 0, ang + rng.uniform(-6, 6), rng.uniform(34, 46), 0, 6.5)
+        for i, (tx, ty) in enumerate(tips):
+            if i % 2 == 1:
+                continue
+            blobs = [(tx + rng.uniform(-5, 5), ty + rng.uniform(-4, 4), rng.uniform(6, 9)) for _ in range(3)]
+            out += _cluster(blobs, tuft if i % 2 else S.shade(tuft, -0.12), 2.6)
+        out += _ell(0, -2, 44, 6, S.shade(P["sand_dark"], -0.1), 0, extra='opacity="0.35"')
+        return out
+    base = {0: P["leaf"], 1: S.mix(P["leaf"], P["olive"], 0.4), 3: P["leaf_dark"]}[v]
+    circles = [(-58, -34, 36), (-20, -62, 46), (30, -60, 44), (66, -32, 34), (4, -30, 44)]
+    out = _cluster(circles, base, 4)
+    out += _ell(0, -14, 70, 14, S.shade(base, -0.25), 0, extra='opacity="0.5" filter="url(#soft)"')
+    for _ in range(14):
+        px, py = rng.uniform(-70, 70), rng.uniform(-90, -24)
+        out += _p(f"M{_f(px - 6)},{_f(py + 3)} Q{_f(px)},{_f(py - 6)} {_f(px + 6)},{_f(py + 3)}", sw=2.5,
+                  stroke=S.shade(base, 0.35), extra='opacity="0.8"')
+    if v == 1:
+        for _ in range(9):
+            px, py = rng.uniform(-70, 70), rng.uniform(-92, -24)
+            for k in range(5):
+                a = k * 2 * math.pi / 5
+                out += _circ(px + 5 * math.cos(a), py + 5 * math.sin(a), 4.2, "#f3b8c4", 1.8)
+            out += _circ(px, py, 3, P["gold"], 0)
+    if v == 3:
+        for _ in range(12):
+            px, py = rng.uniform(-68, 68), rng.uniform(-90, -22)
+            out += _circ(px, py, 5.5, "#c8473f", 2.5) + _circ(px - 1.6, py - 1.6, 1.6, "#f6c6b6", 0)
+    return out
+
+
+def bush(x, y, scale=1.0, variant=0):
+    return _place(_bush(variant), x, y, scale)
+
+
+def _blades(n, spread, hmin, hmax, cols, seed, sway=0.0, wmin=5, wmax=8, sw=2.8):
+    rng = random.Random(seed)
+    out = ""
+    for i in range(n):
+        u = (i + 0.5) / n
+        bx = (u - 0.5) * spread + rng.uniform(-4, 4)
+        h = rng.uniform(hmin, hmax) * (0.75 + 0.25 * math.sin(math.pi * u))
+        lean = (u - 0.5) * h * 0.7 + rng.uniform(-8, 8) + sway * h * 0.35
+        wd = rng.uniform(wmin, wmax)
+        tip = (bx + lean, -h)
+        out += _p(f"M{_f(bx - wd)},0 Q{_f(bx - wd * 0.3 + lean * 0.3)},{_f(-h * 0.55)} {_f(tip[0])},{_f(tip[1])} "
+                  f"Q{_f(bx + wd * 0.5 + lean * 0.45)},{_f(-h * 0.5)} {_f(bx + wd)},0 Z", cols[i % len(cols)], sw)
+    return out
+
+
+def _grass(variant=0, sway=0.0):
+    v = variant % 3
+    if v == 1:
+        return _blades(9, 70, 34, 66, [P["leaf_dry"], P["sand_dark"], S.mix(P["leaf_dry"], P["sand"], 0.5)], 21, sway)
+    out = _blades(9, 70, 36, 70, [P["grass"], P["grass_dark"], S.mix(P["grass"], P["leaf_light"], 0.5)], 20 + v, sway)
+    if v == 2:
+        for fx, fh, c in ((-18, 74, "#d9544d"), (16, 62, "#e9b949"), (30, 80, "#d9544d")):
+            tx = fx + sway * fh * 0.35
+            out += _p(f"M{fx},0 Q{fx + 2},{-fh * 0.5} {_f(tx)},{-fh}", sw=3, stroke=P["grass_dark"])
+            for k in range(5):
+                a = k * 2 * math.pi / 5 - math.pi / 2
+                out += _ell(tx + 6 * math.cos(a), -fh + 6 * math.sin(a), 6, 6, c, 2)
+            out += _circ(tx, -fh, 3.5, INK, 0)
+    return out
+
+
+def grass_tuft(x, y, scale=1.0, variant=0, sway=0.0):
+    return _place(_grass(variant, sway), x, y, scale)
+
+
+def _ribbon(base, h, amp, waves, width, col, sway, phase=0.0, n=22):
+    L, R = [], []
+    for i in range(n + 1):
+        t = i / n
+        y = -h * t
+        x = base + amp * math.sin(waves * 2 * math.pi * t + phase) * t ** 0.6 + sway * h * 0.3 * t * t
+        wv = width * (0.55 + 0.45 * math.sin(math.pi * min(1.0, t * 1.3 + 0.1))) * (1 - 0.85 * t ** 3)
+        L.append((x - wv, y))
+        R.append((x + wv, y))
+    return _p(_sm(L + [(L[-1][0] + 0, -h - width * 0.4)] + list(reversed(R)), closed=True, tension=0.8), col, 3.5)
+
+
+def _seaweed(variant=0, sway=0.0):
+    v = variant % 4
+    if v == 0:
+        out = ""
+        for b, h, ph, c in ((-22, 200, 0.0, S.shade(P["olive"], -0.1)), (18, 240, 1.7, P["olive"]),
+                            (-2, 170, 3.1, S.mix(P["olive"], P["leaf"], 0.5))):
+            out += _ribbon(b, h, 18, 1.6, 13, c, sway, ph)
+        return out
+    if v == 1:
+        col = "#d77a8a"
+        out = ""
+        rng = random.Random(41)
+        for i in range(5):
+            a = -90 + (i - 2) * 22
+            ln = rng.uniform(90, 140)
+            ex = math.cos(math.radians(a)) * ln + sway * ln * 0.3
+            ey = math.sin(math.radians(a)) * ln
+            out += _tube(f"M0,0 Q{_f(ex * 0.3)},{_f(ey * 0.6)} {_f(ex)},{_f(ey)}", 7, col, 3)
+            for k in (0.45, 0.7, 0.95):
+                out += _circ(ex * k + rng.uniform(-6, 6), ey * k, rng.uniform(9, 14), S.mix(col, P["sun"], 0.15 * k), 3)
+        return out
+    if v == 2:
+        return _blades(9, 70, 120, 210, [P["sea_light"], S.mix(P["leaf"], P["sea"], 0.5), P["leaf_light"]], 33,
+                       sway, 8, 12)
+    col = "#f0915a"
+    out = ""
+
+    def branch(x0, y0, ang, ln, depth):
+        nonlocal out
+        a = math.radians(ang)
+        x1, y1 = x0 + math.cos(a) * ln + sway * ln * 0.2, y0 + math.sin(a) * ln
+        out += _tube(f"M{_f(x0)},{_f(y0)} L{_f(x1)},{_f(y1)}", 15 - depth * 3.5, col, 3.2)
+        if depth < 2:
+            branch(x1, y1, ang - 34, ln * 0.78, depth + 1)
+            branch(x1, y1, ang + 30, ln * 0.72, depth + 1)
+        else:
+            out += _circ(x1, y1, 6, S.mix(col, P["sun"], 0.5), 2.5)
+
+    branch(-8, 0, -112, 62, 0)
+    branch(8, 0, -70, 66, 0)
+    branch(0, 0, -92, 54, 1)
+    return out
+
+
+def seaweed(x, y, scale=1.0, variant=0, sway=0.0):
+    return _place(_seaweed(variant, sway), x, y, scale)
+
+
+def _reeds(variant=0, sway=0.0):
+    rng = random.Random(51 + variant)
+    out = _blades(8, 80, 140, 220, [S.mix(P["grass"], P["olive"], 0.5), P["grass_dark"]], 52 + variant, sway, 4, 6)
+    for i, (bx, h) in enumerate(((-26, 230), (6, 262), (34, 214))):
+        tx = bx + sway * h * 0.3 + rng.uniform(-6, 6)
+        out += _tube(f"M{bx},0 Q{bx + 2},{-h * 0.5} {_f(tx)},{-h}", 4, S.mix(P["grass_dark"], P["olive"], 0.5), 2.8)
+        out += _rect(tx - 8, -h - 6, 16, 46, "#8a5a36", 3.2, rx=8)
+        out += _line(tx, -h - 6, tx + sway * 6, -h - 26, sw=3)
+    return out
+
+
+def reeds(x, y, scale=1.0, variant=0, sway=0.0):
+    return _place(_reeds(variant, sway), x, y, scale)
+
+
+# ====================================================================== 5. creatures
+
+
+def _worm(chomp=0.0, crawl=0.0):
+    c = _clamp(chomp)
+    k = _clamp(crawl)
+    body, dark = P["worm"], P["worm_dark"]
+    green = P["leaf_light"]
+    segs = []
+    for i in range(5):
+        u = i / 4
+        x = -24 + 42 * u - k * 6 * math.sin(math.pi * u)
+        r = 7.5 + 2.2 * math.sin(math.pi * (0.25 + 0.6 * u))
+        y = -r - k * 13 * math.sin(math.pi * u) ** 1.5
+        segs.append((x, y, r))
+    out = ""
+    for x, yy, r in segs:    # little prolegs tucked under every segment (they lift with the arch)
+        out += _ell(x - 2.5, yy + r * 0.82, 2.8, 2.6, dark, 2)
+        out += _ell(x + 2.5, yy + r * 0.86, 2.8, 2.6, dark, 2)
+    for i, (x, yy, r) in enumerate(segs):
+        out += _circ(x, yy, r, body if i % 2 else S.shade(body, 0.12), 3)
+    for x, yy, r in segs:
+        out += _circ(x - 1, yy - r * 0.55, r * 0.3, green, 1.6)
+    hx, hy = segs[-1][0] + 12, segs[-1][1] - 5
+    out += _p(f"M{_f(hx - 4)},{_f(hy - 10)} Q{_f(hx - 8)},{_f(hy - 22)} {_f(hx - 14)},{_f(hy - 24)}", sw=2.4)
+    out += _p(f"M{_f(hx + 3)},{_f(hy - 11)} Q{_f(hx + 4)},{_f(hy - 24)} {_f(hx + 10)},{_f(hy - 27)}", sw=2.4)
+    out += _circ(hx - 14, hy - 24, 3.4, green, 2) + _circ(hx + 10, hy - 27, 3.4, green, 2)
+    out += _circ(hx, hy, 12.5, S.shade(body, 0.08), 3)
+    out += _dot_eye(hx + 3, hy - 3.5, 2.8)
+    out += _blush(hx + 2, hy + 4, 3.6, 2.2, 0.8)
+    mx, my = hx + 7.5, hy + 4.5
+    if c < 0.08:
+        out += _p(f"M{_f(mx - 3)},{_f(my - 1)} Q{_f(mx + 1)},{_f(my + 2.5)} {_f(mx + 4)},{_f(my - 1.5)}", sw=2)
+    else:   # round 'O' mouth, up to ~40% of the head height, with one row of tiny teeth
+        rx, ry = 2.2 + 2.6 * c, 1.8 + 3.4 * c
+        md = (f"M{_f(mx - rx)},{_f(my)} A{_f(rx)},{_f(ry)} 0 1 0 {_f(mx + rx)},{_f(my)} "
+              f"A{_f(rx)},{_f(ry)} 0 1 0 {_f(mx - rx)},{_f(my)} Z")
+        teeth = _rect(mx - rx, my - ry, 2 * rx, ry * 0.42, CREAM, 0)
+        teeth += _line(mx, my - ry, mx, my - ry * 0.55, sw=0.9, color=S.shade(CREAM, -0.3))
+        out += _p(md, P["mouth_inside"], 0) + _clip(_uid("wormm", round(c, 3)), md, teeth) + _p(md, sw=2)
+    return out
+
+
+def worm(x, y, scale=1.0, facing=1, chomp=0.0, crawl=0.0):
+    return _place(_worm(chomp, crawl), x, y, scale, facing)
+
+
+# flap keyframes: wing value -> (screen angle of the span in degrees, 0 = forward, 90 = straight up, 180 = back;
+# length factor; apparent breadth of the wing (1 = full chord, small = seen edge-on); upward arch)
+_FLAP = [(-1.0, 248, 0.86, 1.0, 0.04), (-0.5, 212, 0.9, 0.78, 0.08), (0.0, 172, 0.86, 0.44, 0.16),
+         (0.5, 128, 1.0, 0.9, 0.1), (1.0, 98, 1.0, 1.0, 0.08)]
+
+
+def _flap(w):
+    w = _clamp(w, -1, 1)
+    for a, b in zip(_FLAP, _FLAP[1:]):
+        if w <= b[0]:
+            t = (w - a[0]) / (b[0] - a[0])
+            return tuple(_lerp(a[i], b[i], t) for i in range(1, 5))
+    return _FLAP[-1][1:]
+
+
+def _wing(sh, ang, length, col, tip_col=None, round_=False, chord=44.0, breadth=1.0, arch=0.1, uid="w"):
+    """Flying bird wing in screen space: root at the shoulder sh, the span pointing at screen angle `ang`
+    (degrees, 0 = toward the head, 90 = up, 180 = toward the tail), `breadth` = apparent chord (1 = flat-on,
+    ~0.35 = seen nearly edge-on in a glide). Leading edge on the front / top side, scalloped feather tips
+    on the trailing edge, optional dark tip (gull)."""
+    a = math.radians(ang)
+    V = (math.cos(a) * length, -math.sin(a) * length)
+    vl = math.hypot(*V) or 1.0
+    u = (V[0] / vl, V[1] / vl)
+    n = (-u[1], u[0])
+    if n[0] - n[1] < 0:                         # the perpendicular toward front / up = leading edge side
+        n = (-n[0], -n[1])
+    N = 36
+
+    def ctr(t):
+        bow = arch * vl * math.sin(math.pi * min(1.0, t))
+        return (sh[0] + V[0] * t + n[0] * bow, sh[1] + V[1] * t + n[1] * bow)
+    lead, trail = [], []
+    for i in range(N + 1):
+        t = i / N
+        c = ctr(t)
+        ch = (chord * (1 - t) ** 0.6 + 8) * breadth
+        dep = 0.0
+        if t > 0.4 and breadth > 0.5:            # rounded feather tips with small notches
+            dep = (7 if round_ else 6) * breadth * abs(math.sin(math.pi * (t - 0.4) / 0.15))
+        lead.append((c[0] + n[0] * ch * 0.38, c[1] + n[1] * ch * 0.38))
+        trail.append((c[0] - n[0] * (ch * 0.62 + dep), c[1] - n[1] * (ch * 0.62 + dep)))
+    tip = ctr(1.05)
+    ch0 = (chord + 8) * breadth
+    root = (sh[0] - u[0] * ch0 * 0.35 - n[0] * ch0 * 0.12, sh[1] - u[1] * ch0 * 0.35 - n[1] * ch0 * 0.12)
+    pts = lead + [tip] + list(reversed(trail)) + [root]        # rounded shoulder, no straight cut at the root
+    d = _sm(pts, closed=True, tension=0.75)
+    out = _p(d, col, 0)
+    k0 = int(N * 0.64)
+    if tip_col:
+        out += _p(_sm(lead[k0:] + [tip] + list(reversed(trail[k0:])), closed=True, tension=0.75), tip_col, 0)
+        for j in (k0 + 4, k0 + 8):               # white mirror spots on the black tip
+            q = _lerp2(lead[j], trail[j], 0.45)
+            out += _circ(q[0], q[1], 2.6 * breadth + 1, CREAM, 0, extra='opacity="0.85"')
+    if breadth > 0.5:
+        for f in (0.3, 0.62):                    # two soft feather rows
+            row = [_lerp2(lead[j], trail[j], f) for j in range(2, int(N * 0.8), 4)]
+            out += _p(_sm(row, closed=False), sw=2.4, stroke=S.shade(col, -0.25), extra='opacity="0.55"')
+    else:                                        # edge-on: one highlight along the leading edge
+        out += _p(_sm([_lerp2(lead[j], trail[j], 0.3) for j in range(2, N - 4, 4)], closed=False), sw=2.4,
+                  stroke=S.shade(col, 0.4), extra='opacity="0.7"')
+    return out + _p(d, sw=3.5)
+
+
+def _bird(kind="gull", wing=0.0, pose="fly"):
+    wv = _clamp(wing, -1, 1)
+    dove = kind == "dove"
+    if dove:
+        bodyc, wingc, tipc, beak, feet = "#f6f0e4", "#d9d1e2", None, "#e8a0a0", "#e58f8f"
+        hr, wl = 20, 96
+        body = [(-48, 2), (-26, -16), (6, -22), (28, -16), (42, 0), (34, 18), (8, 26), (-22, 22), (-44, 12)]
+        tail = [(-40, 0), (-64, -6), (-72, 4), (-66, 14), (-40, 12)]
+        head = (40, -20)
+    else:
+        bodyc, wingc, tipc, beak, feet = "#f7f2e7", "#b9c4cb", "#5f6a74", "#f2b84b", "#f09a4a"
+        hr, wl = 16, 112
+        body = [(-62, 4), (-30, -14), (10, -18), (34, -10), (40, 6), (20, 20), (-20, 18), (-58, 12)]
+        tail = [(-50, 0), (-84, -6), (-90, 6), (-84, 14), (-50, 12)]
+        head = (42, -16)
+    out = ""
+    if pose == "stand":
+        if dove:
+            body = [(-40, -8), (-18, -24), (12, -26), (30, -14), (34, 6), (20, 24), (-12, 24), (-36, 8)]
+            tail = [(-32, -4), (-58, 6), (-60, 16), (-52, 20), (-28, 12)]
+            head = (34, -30)
+        else:
+            body = [(-48, -8), (-22, -24), (12, -24), (32, -12), (34, 6), (16, 22), (-16, 22), (-44, 6)]
+            tail = [(-40, -4), (-74, 8), (-76, 18), (-66, 22), (-36, 12)]
+            head = (36, -26)
+        for lx in (-6, 8):
+            out += _line(lx, 18, lx + 2, 46, sw=6.5, color=INK) + _line(lx, 18, lx + 2, 46, sw=2.8, color=feet)
+            out += _p(f"M{lx - 8},48 L{lx + 2},44 L{lx + 14},48 Z", feet, 2.5)
+    sh = (-6, -12 if pose == "fly" else -14)
+    if pose == "fly":
+        ang, lf, br, arch = _flap(wv)
+        # far wing: peeks out as a V above the back when the wings are up, as a thin sliver over the back in a
+        # glide and as a short tip below the belly on the down-stroke
+        if wv >= 0:
+            fang, flen, fsh = ang - 14 - 10 * wv, 0.86 - 0.26 * (1 - wv) ** 3, (sh[0] + 10, sh[1] - 4 - 4 * (1 - wv))
+        else:
+            fang, flen, fsh = ang + 34 * (-wv), 0.62, (sh[0] + 14, sh[1] + 8)
+        far_col = S.shade(wingc, -0.18)
+        out += _wing(fsh, fang, wl * lf * flen, far_col, S.shade(tipc, -0.1) if tipc else None, dove, 38,
+                     max(0.32, br * 0.9), arch, "f")
+    tcol = S.mix(bodyc, wingc, 0.4) if dove else bodyc
+    out += _p(_sm(tail, closed=True, tension=0.6), tcol, 3.5)
+    if not dove:
+        out += _clip(_uid("gtail", pose), _sm(tail, closed=True, tension=0.6), _rect(-100, -20, 22, 50, tipc, 0))
+        out += _p(_sm(tail, closed=True, tension=0.6), sw=3.5)
+    out += _p(_sm(body, closed=True), bodyc, 3.8)
+    if dove:      # plump rosy-cream breast
+        bd = _sm(body, closed=True)
+        out += _clip(_uid("dbreast", pose), bd, _ell(28, 10, 26, 18, "#f6dcd2", 0, extra='opacity="0.8"'))
+        out += _p(bd, sw=3.8)
+    out += _circ(head[0], head[1], hr, bodyc, 3.8)
+    bx = head[0] + hr - 3
+    if dove:
+        out += _p(f"M{_f(bx)},{_f(head[1] - 3)} Q{_f(bx + 10)},{_f(head[1] + 1)} {_f(bx + 9)},{_f(head[1] + 4)} "
+                  f"L{_f(bx)},{_f(head[1] + 5)} Z", beak, 2.8)
+        out += _dot_eye(head[0] + 6, head[1] - 4, 3.8)
+        out += _blush(head[0] + 6, head[1] + 7, 5.5, 3.2, 0.6)
+    else:
+        out += _p(f"M{_f(bx)},{_f(head[1] - 4)} L{_f(bx + 24)},{_f(head[1] + 1)} Q{_f(bx + 22)},{_f(head[1] + 8)} "
+                  f"{_f(bx)},{_f(head[1] + 6)} Z", beak, 2.8)
+        out += _circ(bx + 17, head[1] + 4, 2.2, "#d9544d", 0)
+        out += _dot_eye(head[0] + 5, head[1] - 4, 3.6)
+        out += _blush(head[0] + 4, head[1] + 6, 5, 3, 0.55)
+    if pose == "fly":
+        for lx in ((-36, -28) if not dove else (-24, -16)):     # feet tucked back under the tail
+            out += _p(f"M{lx},16 L{lx - 16},22", sw=5, stroke=INK) + _p(f"M{lx},16 L{lx - 16},22", sw=2, stroke=feet)
+        out += _wing(sh, ang, wl * lf, wingc, tipc, dove, 44 if not dove else 40, br, arch, "n")
+    else:
+        if dove:
+            fw = [(-12, -16), (18, -16), (24, -2), (0, 12), (-34, 10), (-50, 4)]
+        else:
+            fw = [(-16, -16), (20, -16), (26, -2), (0, 10), (-40, 10), (-62, 4)]
+        out += _p(_sm(fw, closed=True, tension=0.7), wingc, 3.5)
+        if not dove:
+            out += _clip(_uid("fw", kind), _sm(fw, closed=True, tension=0.7), _rect(-70, -30, 34, 50, tipc, 0))
+            out += _p(_sm(fw, closed=True, tension=0.7), sw=3.5)
+        out += _p("M-10,-6 Q6,-2 14,-8 M-24,2 Q-6,6 6,2", sw=2.5, stroke=S.shade(wingc, -0.3))
+    return out
+
+
+def gull(x, y, scale=1.0, facing=1, wing=0.0, pose="fly"):
+    return _place(_bird("gull", wing, pose), x, y, scale * 0.82, facing)
+
+
+def dove(x, y, scale=1.0, facing=1, wing=0.0, pose="fly"):
+    return _place(_bird("dove", wing, pose), x, y, scale * 0.75, facing)
+
+
+FISH_COLORS = {"orange": "#f0a04b", "yellow": "#f2cf5b", "pink": "#e98f9f", "teal": "#5fb3a8",
+               "purple": "#9d86c6", "blue": "#7fb6d6", "red": "#e06a55"}
+
+
+def _small_fish(color="orange", tail=0.0):
+    col = FISH_COLORS.get(color, color)
+    dark, light = S.shade(col, -0.3), S.shade(col, 0.45)
+    out = ""
+    out += _g(_p(_sm([(-26, -4), (-50, -22), (-56, -12), (-50, 0), (-56, 12), (-50, 22), (-26, 4)], closed=True), col, 3.2),
+              f"rotate({18 * _clamp(tail, -1, 1):.1f} -28 0)")
+    out += _p("M-14,-18 Q-2,-34 14,-20 Z", dark, 3)
+    out += _p("M-6,16 Q2,28 10,18 Z", dark, 3)
+    body = [(-30, 0), (-18, -18), (10, -22), (32, -10), (38, 2), (28, 15), (4, 22), (-20, 16)]
+    bd = _sm(body, closed=True)
+    out += _p(bd, col, 0)
+    out += _clip(_uid("sf", col), bd, _p("M-20,-30 Q-26,0 -16,30 L-6,30 Q-16,0 -10,-30 Z M2,-30 Q-4,0 6,30 L14,30 Q4,0 10,-30 Z",
+                                         light, 0, extra='opacity="0.75"') +
+                 _ell(6, 18, 34, 9, light, 0, extra='opacity="0.6"'))
+    out += _p(bd, sw=3.2)
+    out += _eye(20, -5, 9, "open", look=(0.6, 0.0), sw=2.5)
+    out += _p("M31,8 Q34,11 37,8", sw=2.2)
+    out += _blush(24, 8, 5, 3, 0.7)
+    return out
+
+
+def small_fish(x, y, scale=1.0, facing=1, color="orange", tail=0.0):
+    return _place(_small_fish(color, tail), x, y, scale, facing)
+
+
+def _leg(x, top, bottom, w, col, hoof=None, knee=None):
+    hoof = hoof or S.shade(col, -0.55)
+    out = _p(f"M{_f(x - w / 2)},{_f(top)} L{_f(x - w / 2 + 1)},{_f(bottom - 4)} Q{_f(x)},{_f(bottom + 1)} "
+             f"{_f(x + w / 2 - 1)},{_f(bottom - 4)} L{_f(x + w / 2)},{_f(top)} Z", col, 3.5)
+    out += _p(f"M{_f(x - w / 2 - 1)},{_f(bottom - 10)} L{_f(x + w / 2 + 1)},{_f(bottom - 10)} L{_f(x + w / 2 + 1)},{_f(bottom)} "
+              f"L{_f(x - w / 2 - 1)},{_f(bottom)} Z", hoof, 3)
+    if knee:
+        out += _ell(x, knee, w * 0.62, w * 0.5, col, 3)
+    return out
+
+
+def _qleg(hip, foot_x, w0, w1, col, hind=False, far=False, ground=0.0, hoof="hoof", knob=0.0, bend=1.0):
+    """Tapered animal leg from the hip/shoulder point to a hoof on the ground at foot_x. Hind legs bend back at
+    the hock, front legs bow slightly forward at the knee. far=True: the other side of the animal (darker,
+    a little higher). hoof: 'hoof' | 'cloven' | 'pad' (camel). knob>0 adds a knobbly knee."""
+    if far:
+        col = S.shade(col, -0.2)
+        ground -= 5
+    hx, hy = hip
+    L = ground - hy
+    hh = max(9.0, w1 * 0.95) if hoof != "pad" else max(8.0, w1 * 0.6)
+    fet = (foot_x, ground - hh + 2)
+    if hind:
+        knee = (_lerp(hx, foot_x, 0.45) - 0.13 * L * bend, hy + 0.56 * L)
+    else:
+        knee = (_lerp(hx, foot_x, 0.55) + 0.04 * L * bend, hy + 0.5 * L)
+    top = (hx + (hx - knee[0]) * 0.15, hy - 0.12 * L)
+    path = [top, hip, knee, fet]
+    N = 16
+    pts = []
+    for i in range(N + 1):            # sample a Catmull-Rom curve through the joints
+        t = i / N * 3
+        k = min(2, int(t))
+        u = t - k
+        p0, p1, p2, p3 = path[max(0, k - 1)], path[k], path[k + 1], path[min(3, k + 2)]
+        pts.append(tuple(0.5 * ((2 * p1[j]) + (-p0[j] + p2[j]) * u + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * u * u +
+                                (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * u ** 3) for j in (0, 1)))
+    left, right = [], []
+    for i, p in enumerate(pts):
+        q0, q1 = pts[max(0, i - 1)], pts[min(N, i + 1)]
+        dx, dy = q1[0] - q0[0], q1[1] - q0[1]
+        ln = math.hypot(dx, dy) or 1
+        nx, ny = -dy / ln, dx / ln
+        t = i / N
+        wv = _lerp(w0, w1, min(1.0, t * 1.15) ** 0.75) / 2
+        wv += knob * w1 * 0.5 * math.exp(-((t - 0.62) / 0.07) ** 2)
+        left.append((p[0] + nx * wv, p[1] + ny * wv))
+        right.append((p[0] - nx * wv, p[1] - ny * wv))
+    out = _p(_sm(left + list(reversed(right)), closed=True, tension=0.7), col, 3.5)
+    hc = S.shade(col, -0.5) if hoof != "pad" else S.shade(col, -0.12)
+    fx, gy = foot_x, ground
+    if hoof == "pad":
+        out += _p(f"M{_f(fx - w1 * 0.6)},{_f(gy - hh)} Q{_f(fx - w1 * 1.25)},{_f(gy + 1)} {_f(fx - w1 * 0.2)},{_f(gy)} "
+                  f"L{_f(fx + w1 * 0.9)},{_f(gy)} Q{_f(fx + w1 * 1.45)},{_f(gy - 1)} {_f(fx + w1 * 0.6)},{_f(gy - hh)} Z",
+                  hc, 3.2)
+    else:
+        hw0, hw1 = w1 * 0.55, w1 * 0.68
+        out += _p(f"M{_f(fx - hw0)},{_f(gy - hh)} L{_f(fx + hw0)},{_f(gy - hh)} Q{_f(fx + hw1 + 2)},{_f(gy - hh * 0.4)} "
+                  f"{_f(fx + hw1)},{_f(gy)} L{_f(fx - hw1)},{_f(gy)} Q{_f(fx - hw1 - 2)},{_f(gy - hh * 0.4)} Z", hc, 3.2)
+        if hoof == "cloven":
+            out += _line(fx + 1, gy - hh * 0.5, fx + 1, gy - 1, sw=2.2, color=S.shade(hc, 0.35))
+    return out
+
+
+def _body(pts, fill, patches="", belly=None, uid="body"):
+    d = _sm(pts, closed=True)
+    inner = patches
+    if belly:
+        inner += belly
+    return _p(d, fill, 0) + (_clip(_uid(uid, len(pts), pts[0]), d, inner) if inner else "") + _p(d, sw=4)
+
+
+def _sackcloth(x0, x1, ytop, ybot, sag=14, seed=0):
+    rng = random.Random(seed)
+    col, dark = P["sackcloth"], P["sackcloth_dark"]
+    mid = (x0 + x1) / 2
+    top = [(x0, ytop + sag), (mid - (x1 - x0) * 0.25, ytop + 2), (mid, ytop), (mid + (x1 - x0) * 0.25, ytop + 2),
+           (x1, ytop + sag)]
+    bot = []
+    n = 9
+    for i in range(n + 1):
+        u = i / n
+        bot.append((_lerp(x1 + 4, x0 - 4, u), ybot + (8 if i % 2 else 0) + rng.uniform(-3, 3)))
+    d = _sm(top, closed=False) + " " + " ".join(f"L{_f(px)},{_f(py)}" for px, py in bot) + " Z"
+    inner = ""
+    for xx in range(int(x0) - 10, int(x1) + 10, 9):
+        inner += _line(xx, ytop - 10, xx + 4, ybot + 12, sw=1.6, color=dark, extra='opacity="0.35"')
+    for yy in range(int(ytop), int(ybot) + 10, 9):
+        inner += _line(x0 - 10, yy, x1 + 10, yy + 2, sw=1.6, color=dark, extra='opacity="0.3"')
+    px, py = mid + (x1 - x0) * 0.18, (ytop + ybot) / 2
+    inner += _rect(px - 10, py - 8, 20, 16, S.shade(col, 0.2), 2, extra=f'transform="rotate(8 {_f(px)} {_f(py)})"')
+    inner += _p(f"M{_f(px - 9)},{_f(py - 6)} l4,0 m4,0 l4,0 m4,0 l3,0", sw=1.8, stroke=dark)
+    out = _p(d, col, 0) + _clip(_uid("sackc", x0, x1, ytop, ybot), d, inner) + _p(d, sw=3.5)
+    out += _p(f"M{_f(mid - 2)},{_f(ytop + 2)} Q{_f(mid + 4)},{_f((ytop + ybot) / 2)} {_f(mid)},{_f(ybot + 4)}", sw=6,
+              stroke=INK) + _p(f"M{_f(mid - 2)},{_f(ytop + 2)} Q{_f(mid + 4)},{_f((ytop + ybot) / 2)} {_f(mid)},{_f(ybot + 4)}",
+                               sw=3, stroke=P["wood_light"])
+    return out
+
+
+_CAMEL_BACK = [(-122, -206), (-112, -230), (-90, -242), (-64, -246), (-48, -264), (-28, -302), (0, -316), (28, -302),
+               (48, -264), (68, -248), (96, -244)]
+
+
+def _band(center, w0, w1, fill, sw=4.0):
+    """Closed smooth shape of varying width (w0 -> w1) around an open centre line (necks, tails)."""
+    left, right = [], []
+    n = len(center)
+    for i, p in enumerate(center):
+        q0, q1 = center[max(0, i - 1)], center[min(n - 1, i + 1)]
+        dx, dy = q1[0] - q0[0], q1[1] - q0[1]
+        ln = math.hypot(dx, dy) or 1
+        w = _lerp(w0, w1, i / max(1, n - 1)) / 2
+        left.append((p[0] - dy / ln * w, p[1] + dx / ln * w))
+        right.append((p[0] + dy / ln * w, p[1] - dx / ln * w))
+    return _p(_sm(left + list(reversed(right)), closed=True, tension=0.8), fill, sw)
+
+
+def _drape(back, depth, seed=0):
+    """Burlap blanket laid over a curved back (e.g. a hump): the top edge follows `back` (left -> right, a little
+    above it), the cloth hangs `depth` px down the flank with a sagging, ragged hem and a rope tie."""
+    rng = random.Random(seed)
+    col, dark = P["sackcloth"], P["sackcloth_dark"]
+    top = [(x, y - 5) for x, y in back]
+    x0, x1 = top[0][0], top[-1][0]
+    ybase = max(y for _, y in back) + depth          # hem line under the lowest back point
+    hem = []
+    n = 10
+    for i in range(n + 1):
+        u = i / n
+        sag = 12 * math.sin(2 * math.pi * u) ** 2 - 6 * math.sin(math.pi * u) ** 8   # a sag on each flank
+        hem.append((_lerp(x1 + 6, x0 - 6, u), ybase + sag + (7 if i % 2 else 0) + rng.uniform(-3, 3)))
+    d = _sm(top, closed=False, tension=0.8) + " " + " ".join(f"L{_f(px)},{_f(py)}" for px, py in hem) + " Z"
+    inner = ""
+    for k in range(-14, 16):                          # weave follows the drape: threads hang straight down
+        xx = (x0 + x1) / 2 + k * 9
+        inner += _line(xx, min(y for _, y in back) - 20, xx + 3, ybase + 20, sw=1.6, color=dark, extra='opacity="0.35"')
+    for j in range(1, 9):
+        pts = [(x, y - 5 + j * (ybase - y + 5) / 9) for x, y in back]
+        inner += _p(_sm(pts, closed=False), sw=1.6, stroke=dark, extra='opacity="0.3"')
+    # fold shadows where the cloth falls off the hump
+    inner += _p(_sm([(back[2][0] + 6, back[2][1] + 10), (back[2][0] - 4, ybase - 10)], closed=False), sw=8,
+                stroke=S.shade(col, -0.2), extra='opacity="0.45" filter="url(#soft)"')
+    inner += _p(_sm([(back[-3][0] - 6, back[-3][1] + 10), (back[-3][0] + 4, ybase - 10)], closed=False), sw=8,
+                stroke=S.shade(col, -0.2), extra='opacity="0.45" filter="url(#soft)"')
+    px, py = (x0 + x1) / 2 + (x1 - x0) * 0.2, ybase - depth * 0.45
+    inner += _rect(px - 11, py - 9, 22, 18, S.shade(col, 0.2), 2, extra=f'transform="rotate(8 {_f(px)} {_f(py)})"')
+    inner += _p(f"M{_f(px - 10)},{_f(py - 7)} l4,0 m4,0 l4,0 m4,0 l3,0", sw=1.8, stroke=dark)
+    out = _p(d, col, 0) + _clip(_uid("drape", x0, x1, depth, seed), d, inner) + _p(d, sw=3.5)
+    # rope girth hanging straight down the flank from the top of the back
+    mid = min(back, key=lambda q: q[1])
+    rx = mid[0] + 26
+    ry = [q[1] for q in back if q[0] >= rx][:1] or [mid[1]]
+    rope = f"M{_f(rx)},{_f(ry[0] - 2)} Q{_f(rx + 6)},{_f((ry[0] + ybase) / 2)} {_f(rx + 2)},{_f(ybase + 6)}"
+    out += _p(rope, sw=6.5, stroke=INK) + _p(rope, sw=3, stroke=P["wood_light"])
+    return out
+
+
+
+def _animal(kind="sheep", sackcloth=False):
+    out = ""
+    if kind == "sheep":
+        wool, face, leg = "#f6efe0", "#dcb89c", "#6b5040"
+        for lx in (-28, 44):
+            out += _leg(lx, -46, 0, 13, S.shade(leg, -0.15))
+        circles = [(-74, -84, 16)]
+        for i in range(12):
+            a = 2 * math.pi * i / 12
+            circles.append((70 * math.cos(a) * 0.95, -80 + 38 * math.sin(a), 24))
+        circles.append((0, -80, 52))
+        for lx in (-46, 24):
+            out += _leg(lx, -46, 0, 14, leg)
+        out += _cluster(circles, wool, 3.8)
+        for cx, cy in ((-30, -96), (10, -104), (-10, -72), (30, -78), (-46, -70)):
+            out += _p(f"M{cx - 8},{cy} q4,-7 8,0 q4,7 8,0", sw=2.4, stroke=S.shade(wool, -0.2))
+        if sackcloth:
+            out += _sackcloth(-56, 50, -126, -60, 18, 1)
+        out += _ell(54, -110, 17, 8, face, 3.4, extra='transform="rotate(-24 54 -110)"')
+        out += _ell(76, -96, 25, 31, face, 3.8, extra='transform="rotate(22 76 -96)"')
+        out += _ell(104, -112, 16, 7, S.shade(face, -0.08), 3.4, extra='transform="rotate(28 104 -112)"')
+        out += _cluster([(62, -124, 12), (74, -128, 13), (86, -122, 11)], wool, 3.2)
+        out += _dot_eye(84, -100, 4.2) + _blush(88, -88, 6, 3.6)
+        out += _p("M91,-80 Q95,-76 99,-80", sw=2.6)
+        return out
+    if kind == "goat":
+        coat, patch, horn = "#ece0c8", "#a8784e", "#a8957d"
+        # short sturdy legs, round barrel, short thick neck with a gentle curve, big friendly head
+        out += _qleg((-36, -84), -40, 24, 12, coat, hind=True, far=True, hoof="cloven", bend=0.6)
+        out += _qleg((50, -84), 56, 22, 12, coat, far=True, hoof="cloven", bend=0.4)
+        out += _qleg((-54, -82), -58, 26, 13, coat, hind=True, hoof="cloven", bend=0.6)
+        out += _qleg((34, -82), 38, 24, 13, coat, hoof="cloven", bend=0.4)
+        out += _p("M-74,-118 Q-96,-138 -86,-152 Q-70,-142 -64,-120 Z", coat, 3.4)          # perky tail
+        # short thick neck with a gentle curve (drawn first: its root tucks under the shoulder)
+        out += _band([(40, -112), (62, -136), (78, -154), (90, -168)], 58, 44, coat)
+        out += _p("M70,-118 Q86,-136 96,-150", sw=3, stroke=S.shade(coat, -0.2), extra='opacity="0.45"')
+        bd = [(-84, -100), (-76, -128), (-46, -144), (0, -142), (40, -146), (70, -136), (86, -112), (80, -84),
+              (50, -66), (0, -62), (-50, -66), (-80, -80)]
+        belly = _p(_sm([(-70, -80), (0, -84), (70, -82), (70, -40), (-70, -40)]), S.shade(coat, 0.25), 0)
+        out += _body(bd, coat, _ell(-36, -116, 30, 20, patch, 0) + _ell(22, -132, 18, 10, patch, 0), belly, "goat")
+        if sackcloth:
+            out += _sackcloth(-60, 50, -142, -84, 12, 2)
+        out += _tube("M86,-194 Q74,-228 52,-234 Q36,-236 36,-220", 11, horn, 3.2)
+        out += _tube("M100,-196 Q98,-232 78,-246 Q62,-250 60,-234", 11, S.shade(horn, 0.15), 3.2)
+        for k in (0.35, 0.6):
+            out += _p(f"M{_f(80 - 30 * k)},{_f(-210 - 26 * k)} l6,8", sw=2, stroke=S.shade(horn, -0.35))
+        out += _ell(70, -180, 22, 9, coat, 3.4, extra='transform="rotate(24 70 -180)"')             # floppy ear
+        out += _ell(68, -179, 12, 4, "#d9b2a2", 0, extra='transform="rotate(24 68 -179)"')
+        head = [(80, -192), (100, -202), (120, -196), (132, -176), (136, -156), (126, -144), (106, -144), (90, -156),
+                (80, -174)]
+        out += _p(_sm(head), coat, 4)
+        out += _ell(102, -192, 13, 8, patch, 0, extra='opacity="0.8"')
+        out += _p("M122,-146 Q128,-122 116,-112 Q108,-126 108,-144 Z", S.shade(coat, -0.15), 3)      # beard
+        out += _dot_eye(110, -176, 4.8) + _blush(118, -160, 6.5, 3.8)
+        out += _circ(132, -156, 2.4, INK, 0)
+        out += _p("M121,-150 Q126,-146 131,-150", sw=2.4)
+        return out
+    if kind == "cow":
+        coat, patch, muzzle = "#f3ead8", "#9b6542", "#f0b2b0"
+        out += _qleg((-70, -100), -74, 38, 21, coat, hind=True, far=True, hoof="cloven", bend=0.5)
+        out += _qleg((74, -100), 84, 36, 20, coat, far=True, hoof="cloven", bend=0.3)
+        out += _qleg((-90, -98), -94, 40, 22, coat, hind=True, hoof="cloven", bend=0.5)
+        out += _qleg((56, -98), 62, 38, 22, coat, hoof="cloven", bend=0.3)
+        out += _p("M-118,-152 Q-136,-112 -130,-78", sw=7, stroke=INK) + _p("M-118,-152 Q-136,-112 -130,-78", sw=3,
+                                                                           stroke=coat)
+        out += _p("M-130,-86 Q-142,-68 -130,-60 Q-118,-68 -130,-86 Z", patch, 3)
+        bd = [(-124, -124), (-114, -164), (-70, -182), (-10, -178), (50, -184), (100, -174), (126, -144),
+              (120, -104), (84, -82), (20, -70), (-50, -74), (-100, -90)]
+        belly = _p(_sm([(-110, -94), (0, -100), (110, -100), (110, -50), (-110, -50)]), S.shade(coat, 0.3), 0)
+        pt = _ell(-62, -148, 42, 28, patch, 0) + _ell(46, -118, 32, 26, patch, 0) + _ell(-104, -104, 18, 16, patch, 0)
+        out += _body(bd, coat, pt, belly, "cow")
+        out += _ell(-22, -72, 14, 7, muzzle, 3)                                              # little udder
+        if sackcloth:
+            out += _sackcloth(-88, 74, -186, -104, 18, 3)
+        out += _tube("M118,-190 Q104,-206 110,-218", 8, "#efe2c0", 3) + _tube("M160,-192 Q174,-206 168,-218", 8,
+                                                                              "#efe2c0", 3)
+        out += _ell(104, -174, 19, 9, coat, 3.4, extra='transform="rotate(-20 104 -174)"')
+        out += _ell(174, -176, 19, 9, coat, 3.4, extra='transform="rotate(20 174 -176)"')
+        out += _p(_sm([(114, -188), (160, -190), (170, -154), (160, -126), (120, -126), (108, -154)]), coat, 4)
+        out += _ell(140, -178, 15, 10, patch, 0, extra='opacity="0.9"')
+        out += _ell(140, -122, 30, 19, muzzle, 3.8)
+        out += _ell(130, -122, 3.4, 4, S.shade(muzzle, -0.5), 0) + _ell(150, -122, 3.4, 4, S.shade(muzzle, -0.5), 0)
+        out += _dot_eye(127, -158, 4.6) + _dot_eye(153, -158, 4.6)
+        out += _blush(118, -142, 6, 3.5) + _blush(162, -142, 6, 3.5)
+        return out
+    if kind == "donkey":
+        coat, light, dark = "#aaa39b", "#e2d9cb", "#5e554e"
+        out += _qleg((-58, -118), -62, 30, 13, coat, hind=True, far=True, bend=0.6)
+        out += _qleg((64, -118), 74, 28, 13, coat, far=True, bend=0.4)
+        out += _qleg((-74, -116), -78, 32, 14, coat, hind=True, bend=0.6)
+        out += _qleg((50, -116), 54, 30, 14, coat, bend=0.4)
+        out += _p("M-96,-166 Q-110,-126 -106,-96", sw=7, stroke=INK) + _p("M-96,-166 Q-110,-126 -106,-96", sw=3,
+                                                                          stroke=coat)
+        out += _p("M-106,-106 Q-118,-86 -106,-76 Q-94,-86 -106,-106 Z", dark, 3)
+        bd = [(-102, -146), (-88, -178), (-40, -188), (10, -182), (60, -190), (92, -172), (102, -142), (88, -112),
+              (40, -98), (-20, -96), (-76, -106)]
+        belly = _p(_sm([(-90, -118), (0, -118), (95, -122), (95, -80), (-90, -80)]), light, 0)
+        out += _body(bd, coat, "", belly, "donk")
+        if sackcloth:
+            out += _sackcloth(-72, 62, -192, -118, 16, 4)
+        out += _p("M58,-180 Q80,-220 102,-240 L134,-214 Q106,-182 96,-132 Z", coat, 4)          # neck
+        out += _p("M66,-186 Q86,-224 106,-246", sw=12, stroke=INK) + _p("M66,-186 Q86,-224 106,-246", sw=6, stroke=dark)
+        for ex, rot in ((110, -16), (126, 12)):
+            out += _ell(ex, -268, 10, 34, coat, 3.6, extra=f'transform="rotate({rot} {ex} -240)"')
+            out += _ell(ex, -278, 4.5, 18, "#d7b2a8", 0, extra=f'transform="rotate({rot} {ex} -240)"')
+            out += _p(f"M{ex - 9},-292 Q{ex},-308 {ex + 9},-292 Z", dark, 2.5, extra=f'transform="rotate({rot} {ex} -240)"')
+        out += _ell(128, -214, 26, 30, coat, 4)
+        out += _ell(142, -186, 26, 19, light, 3.8, extra='transform="rotate(20 142 -186)"')
+        out += _circ(148, -186, 2.6, INK, 0) + _circ(158, -182, 2.6, INK, 0)
+        out += _dot_eye(136, -220, 4.4) + _blush(142, -204, 6, 3.5)
+        out += _p("M144,-174 Q150,-170 156,-174", sw=2.5)
+        return out
+    if kind == "camel":
+        coat, dark = "#d9ad72", "#b48650"
+        light = S.shade(coat, 0.3)
+        # legs set in under the barrel (hind pair back, front pair forward), knobbly knees, soft pad feet
+        out += _qleg((-62, -190), -66, 40, 15, coat, hind=True, far=True, hoof="pad", knob=1.3, bend=0.5)
+        out += _qleg((72, -190), 80, 36, 15, coat, far=True, hoof="pad", knob=1.3, bend=0.35)
+        out += _qleg((-80, -188), -84, 42, 16, coat, hind=True, hoof="pad", knob=1.3, bend=0.5)
+        out += _qleg((56, -188), 60, 38, 16, coat, hoof="pad", knob=1.3, bend=0.35)
+        out += _p("M-118,-222 Q-136,-190 -130,-160", sw=7, stroke=INK) + _p("M-118,-222 Q-136,-190 -130,-160", sw=3,
+                                                                             stroke=coat)
+        out += _ell(-130, -156, 6, 11, dark, 3)
+        # rounded barrel with ONE hump rising from the middle of the back; the back line runs on in front of
+        # and behind it
+        # neck (drawn first so its root tucks under the shoulder): forward and gently down from the chest, then
+        # up into the head
+        neck = [(92, -222), (138, -210), (172, -226), (192, -262), (202, -306)]
+        out += _band(neck, 50, 34, coat)
+        out += _p(_sm([(122, -214), (156, -214), (182, -238)], closed=False), sw=3, stroke=dark, extra='opacity="0.35"')
+        # rounded barrel with ONE hump rising from the middle of the back; the back line runs on in front of
+        # and behind it
+        bd = _CAMEL_BACK + [(118, -230), (128, -202), (116, -174), (70, -158), (0, -154), (-70, -158), (-110, -170),
+                            (-128, -184)]
+        belly = _p(_sm([(-120, -184), (0, -178), (124, -186), (124, -140), (-120, -140)]), light, 0)
+        shine = _p("M-30,-286 Q-10,-306 16,-306", sw=7, stroke=light, extra='opacity="0.75"')
+        shine += _p("M-56,-246 Q0,-232 56,-246", sw=3, stroke=dark, extra='opacity="0.3"')
+        out += _body(bd, coat, shine, belly, "camel")
+        if sackcloth:
+            out += _drape(_CAMEL_BACK[1:-1], 50, seed=5)
+        # head: round brow, long soft muzzle with a droopy lip, small ear, open dot eye with lashes
+        out += _ell(196, -342, 9, 13, coat, 3.2, extra='transform="rotate(-30 196 -342)"')
+        out += _ell(197, -341, 4, 7, "#d7a98a", 0, extra='transform="rotate(-30 197 -341)"')
+        hd = [(198, -334), (214, -352), (240, -354), (262, -342), (276, -324), (278, -306), (266, -296),
+              (240, -298), (214, -304), (200, -316)]
+        out += _p(_sm(hd), coat, 4)
+        out += _p("M262,-300 Q272,-290 282,-302", S.shade(coat, -0.06), 3)
+        out += _p("M266,-322 Q270,-326 274,-322", sw=2.6)
+        out += _dot_eye(232, -332, 4.6)
+        out += _p("M226,-338 l-4,-6 M231,-340 l-1,-7 M236,-339 l2,-6", sw=2)
+        out += _blush(240, -316, 7, 4)
+        out += _p("M258,-306 Q264,-302 270,-306", sw=2.4)
+        return out
+    raise ValueError(f"unknown animal kind {kind!r}")
+
+
+def animal(x, y, scale=1.0, facing=1, kind="sheep", sackcloth=False):
+    return _place(_animal(kind, sackcloth), x, y, scale, facing)
+
+
+# ====================================================================== 6. buildings
+
+_WALL = {"stone": P["stone"], "sand": P["sand"], "terra": S.mix(P["sand"], P["terracotta"], 0.3)}
+
+
+def _box3d(x0, x1, y0, y1, col, depth=34, sw=4.0):
+    """Front face + right side face + roof top, slight 3/4 view. y0 bottom (ground), y1 top."""
+    dx, dy = depth, -depth * 0.55
+    side = _poly([(x1, y0), (x1 + dx, y0 + dy), (x1 + dx, y1 + dy), (x1, y1)])
+    roof = _poly([(x0, y1), (x0 + dx, y1 + dy), (x1 + dx, y1 + dy), (x1, y1)])
+    front = _sm([(x0, y0), (x0 - 1, (y0 + y1) / 2), (x0, y1), ((x0 + x1) / 2, y1 - 1), (x1, y1), (x1 + 1, (y0 + y1) / 2),
+                 (x1, y0)], closed=True, tension=0.3)
+    return (_p(side, S.shade(col, -0.22), sw) + _p(roof, S.shade(col, 0.22), sw) + _p(front, col, sw))
+
+
+def _window(cx, top, w=28, h=38, col=None):
+    col = col or "#5b4232"
+    return (_p(f"M{_f(cx - w / 2)},{_f(top + h)} L{_f(cx - w / 2)},{_f(top + w / 2)} Q{_f(cx - w / 2)},{_f(top)} {_f(cx)},{_f(top)} "
+               f"Q{_f(cx + w / 2)},{_f(top)} {_f(cx + w / 2)},{_f(top + w / 2)} L{_f(cx + w / 2)},{_f(top + h)} Z", col, 3.5)
+            + _rect(cx - w / 2 - 6, top + h - 2, w + 12, 8, P["wood"], 3, rx=2))
+
+
+def _door(cx, w=70, h=150, col=None):
+    col = col or P["wood"]
+    out = _p(f"M{_f(cx - w / 2)},0 L{_f(cx - w / 2)},{_f(-h + w / 2)} Q{_f(cx - w / 2)},{_f(-h)} {_f(cx)},{_f(-h)} "
+             f"Q{_f(cx + w / 2)},{_f(-h)} {_f(cx + w / 2)},{_f(-h + w / 2)} L{_f(cx + w / 2)},0 Z", col, 4)
+    for k in (-1, 1):
+        out += _line(cx + k * w / 6, -h + 12, cx + k * w / 6, -4, sw=2.5, color=S.shade(col, -0.35))
+    out += _circ(cx + w / 2 - 12, -h * 0.45, 4, P["crown"], 2.2)
+    return out
+
+
+def _bricks(x0, x1, y0, y1, col, seed, n=6):
+    rng = random.Random(seed)
+    out = ""
+    for _ in range(n):
+        bx, by = rng.uniform(x0, x1 - 40), rng.uniform(y1 + 10, y0 - 30)
+        for r_ in range(rng.randint(2, 3)):
+            for c in range(rng.randint(1, 3)):
+                out += _rect(bx + c * 26 + (13 if r_ % 2 else 0), by + r_ * 13, 24, 11, "none", 2,
+                             stroke=S.shade(col, -0.3), extra='opacity="0.6"')
+    return out
+
+
+def _house(variant=0):
+    v = variant % 4
+    out = ""
+    if v == 0:
+        w, h, col = 280, 232, _WALL["stone"]
+        x0, x1 = -w / 2, w / 2
+        out += _box3d(x0, x1, 0, -h, col)
+        out += _p(f"M{x0 - 6},{-h} L{x1 + 6},{-h} L{x1 + 6},{-h + 16} L{x0 - 6},{-h + 16} Z", S.shade(col, 0.12), 3.5)
+        for bx in range(int(x0) + 26, int(x1), 46):
+            out += _circ(bx, -h + 30, 6, P["wood_dark"], 2.5)
+        out += _bricks(x0 + 10, x1 - 10, 0, -h, col, 1)
+        out += _door(-40, 72, 150) + _window(70, -170)
+        out += _g(_amphora(0, P["terracotta"]), f"translate({x1 - 30},{-h - 30}) scale(0.38)")
+        out += _ell(0, -6, w * 0.45, 5, S.shade(col, -0.18), 0, extra='opacity="0.5"')
+    elif v == 1:
+        w, h, col = 230, 384, _WALL["sand"]
+        x0, x1 = -w / 2, w / 2
+        out += _box3d(x0, x1, 0, -h, col)
+        out += _p(f"M{x0 - 6},{-h} L{x1 + 6},{-h} L{x1 + 6},{-h + 16} L{x0 - 6},{-h + 16} Z", S.shade(col, 0.12), 3.5)
+        out += _line(x0 + 4, -196, x1 - 4, -196, sw=3, color=S.shade(col, -0.25))
+        for bx in range(int(x0) + 24, int(x1), 44):
+            out += _circ(bx, -h + 30, 5.5, P["wood_dark"], 2.5)
+            out += _circ(bx, -184, 5.5, P["wood_dark"], 2.5)
+        out += _bricks(x0 + 10, x1 - 10, 0, -h, col, 2, 5)
+        out += _door(40, 68, 146) + _window(-50, -150) + _window(10, -320, 30, 40) + _window(70, -320, 30, 40)
+        # awning over upper window
+        out += _p("M-10,-338 L90,-338 L100,-306 L-20,-306 Z", P["jonah_sash"], 3.5)
+        for k in range(4):
+            out += _p(f"M{-14 + k * 30},-306 q15,14 30,0", P["jonah_sash"], 3)
+        # external stair on the left
+        st = [(x0, 0)]
+        for k in range(7):
+            st += [(x0 - 70 + k * 10, -k * 28), (x0 - 70 + k * 10, -(k + 1) * 28)]
+        stair = _poly([(x0 - 80, 0)] + st[1:] + [(x0, -196), (x0, 0)])
+        out += _p(stair, S.shade(col, -0.1), 3.5)
+        # the stair arrives at a small landing in front of an upper-storey door
+        out += _p(f"M{x0 - 14},-196 L{x0 + 76},-196 L{x0 + 76},-186 L{x0 - 14},-186 Z", S.shade(col, 0.15), 3)
+        out += _g(_door(x0 + 40, 50, 104, S.shade(P["wood"], -0.05)), "translate(0,-196)")
+        out += _line(x0 - 12, -196, x0 - 12, -226, sw=3, color=P["wood_dark"])
+        out += _line(x0 - 66, -10, x0 - 12, -224, sw=3, color=P["wood_dark"])                   # hand rail
+    elif v == 2:
+        w, h, col = 340, 238, _WALL["terra"]
+        x0, x1 = -w / 2, w / 2
+        # rooftop shelter behind parapet
+        for px in (x1 - 120, x1 - 20):
+            out += _tube(f"M{px},{-h - 10} L{px},{-h - 92}", 6, P["wood"], 3)
+        out += _p(f"M{x1 - 134},{-h - 92} L{x1 - 6},{-h - 92} L{x1 + 2},{-h - 70} L{x1 - 142},{-h - 70} Z",
+                  P["sail"], 3.5)
+        out += _line(x1 - 138, -h - 80, x1 - 2, -h - 80, sw=5, color=P["sail_stripe"])
+        out += _box3d(x0, x1, 0, -h, col)
+        out += _p(f"M{x0 - 6},{-h} L{x1 + 6},{-h} L{x1 + 6},{-h + 18} L{x0 - 6},{-h + 18} Z", S.shade(col, 0.12), 3.5)
+        out += _bricks(x0 + 10, x1 - 10, 0, -h, col, 3, 5)
+        out += _door(-70, 74, 152)
+        # striped awning over door
+        out += _p("M-122,-176 L-18,-176 L-4,-140 L-136,-140 Z", P["sail"], 3.5)
+        for k in range(3):
+            out += _p(f"M{-112 + k * 36},-176 L{-96 + k * 36},-176 L{-88 + k * 38},-140 L{-106 + k * 38},-140 Z",
+                      P["sail_stripe"], 0)
+        out += _p("M-122,-176 L-18,-176 L-4,-140 L-136,-140 Z", sw=3.5)
+        for px in (-130, -10):
+            out += _line(px, -140, px, 0, sw=4, color=P["wood_dark"])
+        out += _window(60, -172) + _window(120, -172)
+        for px in (40, 76):
+            out += _g(_lots_jar(0), f"translate({px},0) scale(0.45)")
+    else:
+        w, h, col = 262, 270, S.mix(_WALL["stone"], P["sand_light"], 0.4)
+        x0, x1 = -w / 2, w / 2
+        out += _box3d(x0, x1, 0, -h, col)
+        out += _p(f"M{x0 - 6},{-h} L{x1 + 6},{-h} L{x1 + 6},{-h + 16} L{x0 - 6},{-h + 16} Z", S.shade(col, 0.12), 3.5)
+        # palm-frond lean-to on the roof
+        out += _frond((x0 + 30, -h - 60), -8, 140, 22, 22, P["leaf_dark"])
+        out += _frond((x0 + 30, -h - 52), 4, 150, 26, 22, P["leaf"])
+        out += _tube(f"M{x0 + 34},{-h} L{x0 + 34},{-h - 60}", 5, P["wood"], 3)
+        out += _tube(f"M{x0 + 150},{-h} L{x0 + 150},{-h - 50}", 5, P["wood"], 3)
+        out += _bricks(x0 + 10, x1 - 10, 0, -h, col, 4, 4)
+        out += _p("M-30,0 L-30,-110 Q-30,-160 20,-160 Q70,-160 70,-110 L70,0 Z", P["wood"], 4)
+        out += _p("M20,-160 L20,0", sw=2.5, stroke=P["wood_dark"])
+        out += _window(-80, -200, 26, 34)
+        # laundry line
+        out += _p(f"M{x0 + 10},-{h - 40} Q{0},-{h - 58} {x1 - 10},-{h - 40}", sw=2.2, stroke=P["ink_soft"])
+        for px, c in ((-80, P["jonah_sash"]), (-30, P["sail_stripe"]), (40, P["headcloth"])):
+            out += _p(f"M{px - 14},{-h + 50} L{px + 14},{-h + 51} L{px + 12},{-h + 84} L{px - 12},{-h + 82} Z", c, 3)
+        out += _g(_bush(0), f"translate({x1 + 30},0) scale(0.45)")
+    return out
+
+
+HOUSE_K = 2.2
+
+
+def house(x, y, scale=1.0, variant=0, facing=1):
+    return _place(_upscale(_house(variant), HOUSE_K), x, y, scale, facing)
+
+
+def _merlons(x0, x1, ytop, col, mw=40, gap=16, mh=34, sw=4.0):
+    out = ""
+    n = max(1, int((x1 - x0 + gap) // (mw + gap)))
+    span = n * mw + (n - 1) * gap
+    sx = x0 + (x1 - x0 - span) / 2
+    s3 = mw / 5
+    for i in range(n):
+        a = sx + i * (mw + gap)
+        pts = [(a, ytop), (a, ytop - mh * 0.4), (a + s3, ytop - mh * 0.4), (a + s3, ytop - mh * 0.75),
+               (a + 2 * s3, ytop - mh * 0.75), (a + 2 * s3, ytop - mh), (a + 3 * s3, ytop - mh),
+               (a + 3 * s3, ytop - mh * 0.75), (a + 4 * s3, ytop - mh * 0.75), (a + 4 * s3, ytop - mh * 0.4),
+               (a + mw, ytop - mh * 0.4), (a + mw, ytop)]
+        out += _p(_poly(pts), col, sw)
+    return out
+
+
+def _rosette_band(x0, x1, yc, h=26):
+    out = _rect(x0, yc - h / 2, x1 - x0, h, "#4f86b0", 3.5)
+    k = h / 26
+    n = max(1, int((x1 - x0) // (34 * k)))
+    for i in range(n):
+        cx = x0 + (i + 0.5) * (x1 - x0) / n
+        for j in range(6):
+            a = j * math.pi / 3
+            out += _circ(cx + 5 * k * math.cos(a), yc + 5 * k * math.sin(a), 3.6 * k, "#f4e3b0", 0)
+        out += _circ(cx, yc, 3 * k, P["crown"], 0)
+    return out
+
+
+def _brick_rows(a, b, top, y, k, color):
+    out = ""
+    for yy in range(int(top + 26 * k), int(y - 20 * k), max(8, int(26 * k))):
+        out += _line(a + 3, yy, b - 3, yy, sw=1.8, color=color, extra='opacity="0.35"')
+    return out
+
+
+def _city_wall(x0, x1, y, height=260, gate=None, doors_open=0.0, towers=True, seed=0):
+    col = P["sand"]
+    dark = S.shade(col, -0.2)
+    k = height / 260.0
+    rng = random.Random(seed)
+    out = ""
+    top = y - height
+    gx, gw = (gate if gate else (None, 0))
+    gl, gr = (gx - gw / 2 - 120 * k, gx + gw / 2 + 120 * k) if gate else (None, None)
+    segs = [(x0, x1)] if not gate else [(x0, gl), (gr, x1)]
+    for a, b in segs:
+        if b - a < 60 * k:      # too short for a wall piece: the gate tower is the end of the wall
+            continue
+        out += _merlons(a, b, top, col, 40 * k, 16 * k, 34 * k)
+        out += _rect(a, top, b - a, height, col, 4)
+        inner = _rect(a + 2, y - 26 * k, b - a - 4, 24 * k, S.shade(col, -0.12), 0)
+        inner += _brick_rows(a, b, top, y, k, dark)
+        for _ in range(int((b - a) / (140 * k)) + 1):
+            bx = rng.uniform(a + 10, max(a + 11, b - 70 * k))
+            by = rng.uniform(top + 30 * k, y - 60 * k)
+            for r_ in range(2):
+                for c in range(2 + r_):
+                    inner += _rect(bx + (c * 28 + 14 * r_) * k, by + r_ * 13 * k, 26 * k, 12 * k, "none", 2, stroke=dark,
+                                   extra='opacity="0.55"')
+        out += _clip(_uid("wallseg", a, b, y, height, seed), _poly([(a, top), (b, top), (b, y), (a, y)]), inner)
+        out += _rect(a, top, b - a, height, "none", 4)
+        if towers:
+            n = int((b - a) // (420 * k))
+            for i in range(n):     # towers keep >= ~80k of plain wall to each end
+                tx = a + (i + 0.5) * (b - a) / n
+                tx = min(max(tx, a + 130 * k), b - 146 * k)
+                out += _tower(tx, y, 96 * k, height + 56 * k, col, k)
+    if gate:
+        th = height * 1.45
+        mid_top = y - height * 1.12
+        out += _merlons(gl + 100 * k, gr - 100 * k, mid_top, col, 40 * k, 16 * k, 34 * k)
+        out += _rect(gl + 100 * k, mid_top, gr - gl - 200 * k, y - mid_top, col, 4)
+        out += _brick_rows(gl + 100 * k, gr - 100 * k, mid_top, y, k, dark)
+        spring = y - height * 0.62
+        r = gw / 2
+        arch = f"M{gx - r},{y} L{gx - r},{spring} A{r},{r} 0 0 1 {gx + r},{spring} L{gx + r},{y} Z"
+        o = _clamp(doors_open)
+        out += _p(arch, "#4a3426", 0)
+        if o > 0.01:
+            r2 = r * 0.55
+            out += _p(f"M{gx - r2},{y} L{gx - r2},{spring + 30 * k} A{r2},{r2} 0 0 1 {gx + r2},{spring + 30 * k} "
+                      f"L{gx + r2},{y} Z", S.mix(P["sand_light"], P["sky_warm"], 0.4), 0,
+                      extra=f'opacity="{min(1, o * 1.5):.2f}"')
+        for side in (-1, 1):
+            leaf_w = r * (1 - 0.82 * o)
+            hx = gx + side * r
+            xa, xb = sorted((hx, hx - side * leaf_w))
+            leaf_ = _rect(xa, spring - r, xb - xa, y - spring + r, P["wood"], 0)
+            for j in range(1, 4):
+                px = xa + (xb - xa) * j / 4
+                leaf_ += _line(px, spring - r, px, y, sw=2.5, color=P["wood_dark"])
+            for yy in (spring - r * 0.3, (spring + y) / 2, y - 40 * k):
+                leaf_ += _rect(xa, yy - 6 * k, xb - xa, 12 * k, S.shade(P["wood_dark"], -0.1), 0)
+                for j in range(3):
+                    leaf_ += _circ(xa + (xb - xa) * (j + 0.5) / 3, yy, 3.2 * k, P["crown"], 0)
+            cid = _uid("gate", gx, gw, side, round(o, 3), y, height)
+            out += _clip(cid, arch, leaf_ + _rect(xa, spring - r, xb - xa, y - spring + r, "none", 3.5))
+        arch_o = f"M{gx - r},{y} L{gx - r},{spring} A{r},{r} 0 0 1 {gx + r},{spring} L{gx + r},{y}"
+        out += f'<path d="{arch_o}" fill="none" stroke="{INK}" stroke-width="{30 * k:.1f}" stroke-linejoin="round"/>'
+        out += (f'<path d="{arch_o}" fill="none" stroke="{S.shade(col, -0.1)}" stroke-width="{30 * k - 8:.1f}" '
+                f'stroke-linejoin="round"/>')
+        for j in range(9):
+            a = math.pi * (j + 0.5) / 9
+            out += _line(gx - (r + 4) * math.cos(a), spring - (r + 4) * math.sin(a), gx - (r + 15 * k) * math.cos(a),
+                         spring - (r + 15 * k) * math.sin(a), sw=2.5, color=dark)
+        out += _p(f"M{gx - r},{y} L{gx - r},{spring} A{r},{r} 0 0 1 {gx + r},{spring} L{gx + r},{y}", sw=4)
+        out += _rosette_band(gl + 110 * k, gr - 110 * k, mid_top + 34 * k, 24 * k)
+        out += _tower(gl + 60 * k, y, 120 * k, th, col, k, band=True)
+        out += _tower(gr - 60 * k, y, 120 * k, th, col, k, band=True)
+    return out
+
+
+def _tower(cx, y, w, h, col, k=1.0, band=False):
+    x0, x1 = cx - w / 2, cx + w / 2
+    top = y - h
+    out = _merlons(x0 - 6 * k, x1 + 6 * k, top, col, 40 * k, 16 * k, 34 * k)
+    out += _p(_poly([(x1, y), (x1 + 16 * k, y - 8 * k), (x1 + 16 * k, top - 8 * k), (x1, top)]), S.shade(col, -0.22), 4)
+    out += _rect(x0, top, w, h, S.shade(col, 0.06), 4)
+    out += _rect(x0 + 2, y - 26 * k, w - 4, 24 * k, S.shade(col, -0.12), 0)
+    out += _brick_rows(x0, x1, top, y, k, S.shade(col, -0.2))
+    out += _rect(cx - 6 * k, top + 40 * k, 12 * k, 34 * k, "#4a3426", 3, rx=6 * k)
+    if h > 260 * k:
+        out += _rect(cx - 6 * k, top + 120 * k, 12 * k, 34 * k, "#4a3426", 3, rx=6 * k)
+    if band:
+        out += _rosette_band(x0 + 6 * k, x1 - 6 * k, top + 22 * k, 22 * k)
+    out += _rect(x0, top, w, h, "none", 4)
+    return out
+
+
+def _ink(body, k):
+    """Multiply every stroke width in markup by k (thinner / heavier ink without changing geometry)."""
+    if abs(k - 1) < 1e-3:
+        return body
+    body = re.sub(r'stroke-width="([0-9.]+)"', lambda m: f'stroke-width="{float(m.group(1)) * k:.2f}"', body)
+    return re.sub(r"stroke-width='([0-9.]+)'", lambda m: f"stroke-width='{float(m.group(1)) * k:.2f}'", body)
+
+
+def city_wall(x0, x1, y, height=260, gate=None, doors_open=0.0, towers=True, seed=0, ink=1.0):
+    return _place(_ink(_city_wall(x0, x1, y, height, gate, doors_open, towers, seed), ink), 0, 0, 1.0)
+
+
+def _ziggurat():
+    tiers = [(640, 150, P["sand"]), (470, 120, S.mix(P["sand"], P["stone"], 0.5)), (310, 104, P["stone"])]
+    out = ""
+    y = 0
+    for i, (w, h, col) in enumerate(tiers):
+        x0, x1 = -w / 2, w / 2
+        inset = 14
+        face = _poly([(x0, y), (x0 + inset, y - h), (x1 - inset, y - h), (x1, y)])
+        out += _p(face, col, 4.2)
+        for k in range(1, 12):
+            px = _lerp(x0 + 20, x1 - 20, k / 12)
+            out += _line(px, y - 6, px + (inset if px < 0 else -inset) * 0.5, y - h + 8, sw=2.5,
+                         color=S.shade(col, -0.2), extra='opacity="0.55"')
+        out += _rect(x0 + inset - 4, y - h - 10, w - 2 * inset + 8, 12, S.shade(col, 0.15), 3.5)
+        y -= h
+    # shrine
+    sw_, sh_ = 150, 92
+    out += _rect(-sw_ / 2, y - sh_ - 10, sw_, sh_, P["stone_light"], 4)
+    out += _rosette_band(-sw_ / 2 + 4, sw_ / 2 - 4, y - sh_ + 6, 18)
+    out += _p(f"M-22,{y - 10} L-22,{y - 52} Q0,{y - 74} 22,{y - 52} L22,{y - 10} Z", "#4a3426", 3.5)
+    out += _merlons(-sw_ / 2 - 4, sw_ / 2 + 4, y - sh_ - 10, P["stone_light"], 22, 8, 22, 3.5)
+    # central stair
+    out += _p("M-60,0 L-34,-374 L34,-374 L60,0 Z", S.shade(P["stone"], 0.12), 4)
+    for k in range(1, 26):
+        yy = -k * 15
+        hw_ = _lerp(60, 34, k / 25)
+        out += _line(-hw_, yy, hw_, yy, sw=2.2, color=S.shade(P["stone"], -0.3))
+    return out
+
+
+ZIGGURAT_K = 2.4
+
+
+def ziggurat(x, y, scale=1.0):
+    return _place(_upscale(_ziggurat(), ZIGGURAT_K), x, y, scale)
+
+
+def _haze(markup, tint, k_fill, k_ink, sw_mul=1.0):
+    """Push every colour in markup toward tint (aerial perspective): fills by k_fill, the umber ink by k_ink;
+    stroke widths are multiplied by sw_mul."""
+    ink = INK.lower()
+
+    def col(m):
+        attr, c = m.group(1), m.group(2)
+        k = k_ink if (attr == "stroke" and c.lower() == ink) else k_fill
+        return f'{attr}="{S.mix(c, tint, _clamp(k))}"'
+    return _ink(re.sub(r'(fill|stroke|stop-color)="(#[0-9a-fA-F]{6})"', col, markup), sw_mul)
+
+
+def _sky_house(xx, ground, w, h, c, s, rng, parapet=False):
+    out = _rect(xx, ground - h, w, h, c, 2.8)
+    out += _rect(xx - 3 * s, ground - h - 6 * s, w + 6 * s, 8 * s, S.shade(c, 0.15), 2.4)
+    for _ in range(rng.randint(1, 3)):
+        wx = xx + rng.uniform(8 * s, max(9 * s, w - 18 * s))
+        wy = ground - h + rng.uniform(16 * s, max(17 * s, h - 50 * s))
+        out += _rect(wx, wy, 9 * s, 13 * s, "#5b4232", 0, rx=3 * s)
+    if parapet:
+        out += _merlons(xx, xx + w, ground - h - 6 * s, c, 16 * s, 6 * s, 12 * s, 2.4)
+    return out
+
+
+def _palace(s):
+    """A wide Assyrian palace block with two towers and a glazed band (local, bottom centre at 0,0)."""
+    col, lt = P["stone"], P["stone_light"]
+    out = ""
+    for tx in (-150, 150):
+        out += _merlons(tx - 44, tx + 44, -250, lt, 20, 8, 18, 3)
+        out += _rect(tx - 40, -250, 80, 250, lt, 3.5)
+        out += _rect(tx - 7, -210, 14, 30, "#5b4232", 0, rx=7)
+    out += _merlons(-112, 112, -190, col, 22, 9, 20, 3)
+    out += _rect(-112, -190, 224, 190, col, 3.5)
+    out += _rosette_band(-108, 108, -160, 22)
+    out += _p("M-34,0 L-34,-70 A34,34 0 0 1 34,-70 L34,0 Z", "#5b4232", 3)
+    for wx in (-80, 70):
+        out += _rect(wx, -120, 12, 24, "#5b4232", 0, rx=6)
+    return _g(out, f"scale({s:.3f})")
+
+
+def _skyline(x0, x1, y, scale=1.0, seed=0, haze=0.35, tint=None):
+    rng = random.Random(seed)
+    tint = tint or P["sky_warm"]
+    s = scale
+    swm = min(1.0, 0.45 + 0.55 * s)
+
+    def hz(markup, extra):
+        k = _clamp(haze + extra)
+        return _haze(markup, tint, k, 0.5 * k + 0.1 * extra, swm)
+    layers = []
+    # far landmarks: a ziggurat and (on wide panoramas) a palace or a smaller second ziggurat
+    lm = ""
+    zx = x0 + (x1 - x0) * rng.uniform(0.22, 0.38)
+    lm += _g(_ziggurat(), f"translate({_f(zx)},{_f(y - 105 * s)}) scale({0.8 * s:.3f})")
+    if x1 - x0 > 900 * s:
+        px = x0 + (x1 - x0) * rng.uniform(0.66, 0.8)
+        if rng.random() < 0.65:
+            lm += _g(_palace(1.0), f"translate({_f(px)},{_f(y - 105 * s)}) scale({1.2 * s:.3f})")
+        else:
+            lm += _g(_ziggurat(), f"translate({_f(px)},{_f(y - 105 * s)}) scale({0.55 * s:.3f})")
+    layers.append(hz(lm, 0.24))
+    # two or three staggered rows of flat roofs climbing the city mound, farthest first
+    for r, (hmin, hmax, ex, off) in enumerate(((150, 230, 0.17, 0), (110, 175, 0.11, 0.45), (70, 130, 0.05, 0.2))):
+        row = ""
+        xx = x0 - 30 - off * 90 * s
+        while xx < x1:
+            w = rng.uniform(58, 125) * s
+            h = rng.uniform(hmin, hmax) * s
+            c = rng.choice((P["sand"], P["stone"], P["sand_light"], _WALL["terra"]))
+            row += _sky_house(xx, y - 40 * s * (2 - r) / 2, w, h, c, s, rng, rng.random() < 0.22)
+            xx += w * rng.uniform(0.72, 1.0)
+        layers.append(hz(row, ex))
+        if r == 0:   # tall towers and palms rise between the back rows
+            tw_ = ""
+            for _ in range(int((x1 - x0) / (420 * s)) + 1):
+                tx = rng.uniform(x0 + 40 * s, x1 - 40 * s)
+                th = rng.uniform(250, 320) * s
+                tw = rng.uniform(34, 48) * s
+                tw_ += _merlons(tx - tw / 2 - 3 * s, tx + tw / 2 + 3 * s, y - th, P["stone_light"], 12 * s, 5 * s,
+                                12 * s, 2.4)
+                tw_ += _rect(tx - tw / 2, y - th, tw, th, P["stone_light"], 2.6)
+                tw_ += _rect(tx - 4 * s, y - th + 20 * s, 8 * s, 16 * s, "#5b4232", 0, rx=4 * s)
+            layers.append(hz(tw_, 0.14))
+            palms = ""
+            for _ in range(int((x1 - x0) / (240 * s)) + 1):
+                px = rng.uniform(x0, x1)
+                palms += _g(_palm(rng.uniform(-0.3, 0.3), 0, False, detail=False),
+                            f"translate({_f(px)},{_f(y - 50 * s)}) scale({0.3 * s * rng.uniform(0.85, 1.1):.3f})")
+            layers.append(hz(palms, 0.1))
+    # city wall with towers in front
+    wh = 110 * s
+    wc = P["sand"]
+    wall = _merlons(x0, x1, y - wh, wc, 22 * s, 9 * s, 18 * s, 2.8)
+    wall += _rect(x0, y - wh, x1 - x0, wh, wc, 3)
+    for yy in range(int(y - wh + 16 * s), int(y), max(6, int(16 * s))):
+        wall += _line(x0 + 3, yy, x1 - 3, yy, sw=1.4, color=S.shade(wc, -0.2), extra='opacity="0.35"')
+    tx = x0 + rng.uniform(40, 160) * s
+    while tx < x1 - 30 * s:
+        tw = 54 * s
+        wall += _merlons(tx - tw / 2, tx + tw / 2, y - wh - 34 * s, S.shade(wc, 0.05), 14 * s, 6 * s, 14 * s, 2.6)
+        wall += _rect(tx - tw / 2, y - wh - 34 * s, tw, wh + 34 * s, S.shade(wc, 0.05), 3)
+        wall += _rect(tx - 4 * s, y - wh - 14 * s, 8 * s, 20 * s, "#4a3426", 0, rx=4 * s)
+        tx += rng.uniform(220, 320) * s
+    layers.append(hz(wall, -0.08))
+    return "".join(layers)
+
+
+def nineveh_skyline(x0, x1, y, scale=1.0, seed=0, haze=0.35, tint=None):
+    return _place(_skyline(x0, x1, y, scale, seed, haze, tint), 0, 0, 1.0)
+
+
+def _dock(x0, x1, y, depth=250, bollards=True):
+    wood, wd, wl = P["wood"], P["wood_dark"], P["wood_light"]
+    out = ""
+    posts = []
+    px = x0 + 40
+    while px <= x1 - 30:
+        posts.append(px)
+        px += 150
+    for a, b in zip(posts, posts[1:]):
+        out += _tube(f"M{a},{y + 56} L{b},{y + depth * 0.7}", 9, wd, 3.2)
+        out += _tube(f"M{b},{y + 56} L{a},{y + depth * 0.7}", 9, wd, 3.2)
+    for p_ in posts:
+        out += _rect(p_ - 15, y + 16, 30, depth - 16, S.shade(wood, -0.1), 4, rx=6)
+        out += _rect(p_ - 13, y + depth * 0.55, 26, depth * 0.45 - 3, S.mix(wd, P["sea_deep"], 0.25), 0, rx=4,
+                     extra='opacity="0.8"')
+        out += _line(p_ - 6, y + 56, p_ - 6, y + depth - 20, sw=2.5, color=wd, extra='opacity="0.6"')
+    out += _rect(x0, y, x1 - x0, 18, wl, 4, rx=4)
+    out += _rect(x0, y + 16, x1 - x0, 32, wood, 4, rx=3)
+    xx = x0 + 60
+    while xx < x1:
+        out += _line(xx, y + 2, xx, y + 16, sw=2.5, color=wd)
+        xx += 60
+    xx = x0 + 30
+    while xx < x1:
+        out += _circ(xx, y + 32, 3, wd, 0)
+        xx += 75
+    if bollards:
+        for p_ in posts[1::2]:
+            out += _rect(p_ - 14, y - 42, 28, 44, S.shade(wood, -0.1), 4, rx=8)
+            out += _ell(p_, y - 42, 14, 5, wl, 3)
+            for k in range(3):
+                out += _line(p_ - 15, y - 28 + k * 9, p_ + 15, y - 24 + k * 9, sw=4, color=INK)
+                out += _line(p_ - 15, y - 28 + k * 9, p_ + 15, y - 24 + k * 9, sw=2, color=P["sackcloth"])
+    return out
+
+
+def harbor_dock(x0, x1, y, depth=250, bollards=True, scale=1.0):
+    s = max(0.05, scale)
+    body = _dock(0, (x1 - x0) / s, 0, depth / s, bollards)
+    return _place(body, x0, y, s, 1)
+
+
+def _signpost(left_text="他施", right_text="尼尼微"):
+    out = ""
+    out += _p("M-12,0 L-12,-322 L0,-340 L12,-322 L12,0 Z", P["wood"], 4)
+    out += _line(-3, -310, -3, -20, sw=2.5, color=P["wood_dark"], extra='opacity="0.6"')
+    boards = []
+    if left_text:
+        tw = 50 * len(left_text) + 40
+        boards.append((-1, -276, tw, left_text, S.mix(P["wood_light"], P["sand"], 0.3)))
+    if right_text:
+        tw = 50 * len(right_text) + 40
+        boards.append((1, -196, tw, right_text, P["wood_light"]))
+    for d, yc, tw, txt, col in boards:
+        hh = 30
+        if d < 0:
+            pts = [(26, yc - hh), (-26 - tw, yc - hh), (-26 - tw - 30, yc), (-26 - tw, yc + hh), (26, yc + hh)]
+            tx = -26 - tw / 2 - 6
+        else:
+            pts = [(-26, yc - hh), (26 + tw, yc - hh), (26 + tw + 30, yc), (26 + tw, yc + hh), (-26, yc + hh)]
+            tx = 26 + tw / 2 + 6
+        out += _p(_poly(pts), col, 4)
+        out += _line(pts[0][0] + d * 8, yc + hh - 9, pts[1][0] - d * 6, yc + hh - 9, sw=2.2, color=P["wood"],
+                     extra='opacity="0.7"')
+        out += _circ(d * -8, yc, 4, P["wood_dark"], 0)
+        out += S.text(_f(tx), _f(yc + 16), txt, size=44, fill=S.shade(INK, 0.05), weight="bold")
+    out += _ell(-18, -2, 18, 8, P["stone"], 3) + _ell(16, 0, 14, 7, P["stone_dark"], 3)
+    out += _g(_grass(0), "translate(28,0) scale(0.6)")
+    return out
+
+
+def signpost(x, y, scale=1.0, left_text="他施", right_text="尼尼微"):
+    return _place(_signpost(left_text, right_text), x, y, scale)

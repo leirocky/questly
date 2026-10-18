@@ -1,0 +1,4 @@
+# Downloaded models, raster/TTS caches and regenerated intermediates
+.cache/
+build/
+__pycache__/
