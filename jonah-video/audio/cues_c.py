@@ -1,6 +1,9 @@
 """Cues s09-s13: overboard and the calm, the great fish, inside the fish, the prayer from the deep,
 the shore."""
+import numpy as np
+
 from audio.scorelib import (
+    ChordTones,
     bassline,
     broken,
     drum,
@@ -17,51 +20,67 @@ def overboard(c):
     c.gain(-1.5)
     i_calm = c.find("海就平静了")
     t_calm = c.ls(i_calm)                         # the calm arrives exactly as this line starts
-    t_splash = (c.le(i_calm - 1) + t_calm) / 2 if i_calm > 0 else t_calm - 0.3
+    t_gap = (c.le(i_calm - 1) + t_calm) / 2 if i_calm > 0 else t_calm - 0.3
+    # the splash lands ON THE PICTURE: Jonah hitting the water (audio/picture.py, from the scene's splash cue; on
+    # '大海', ~0.45 s before the pause); the storm still rages after it and is cut dead in the pause (t_gap)
+    imp = c.picture("s09_overboard:impact")
+    t_splash = imp[0] if imp else t_gap
     t_w = c.ls(c.find("又敬又怕"))
     a = c.seg(0, t_calm, 3, "4/4", "D minor", nominal=128, label="fish-throw")
     a.duck(1.5)
     b = c.seg(t_calm, t_w, 2, "4/4", "D major", nominal=88, label="fish-calm")
     h = c.seg(t_w, c.dur, 3, "4/4", "D major", nominal=76, rit=0.3, label="fish-worship")
-    a.prog("Dm:4 | Bb:4 | Gm/Bb:2 A7:2@D-harmonic")
+    q_sp = min(a.q_of(c.t0 + t_splash), 11.75)
+    q_cut = min(max(a.q_of(c.t0 + t_gap), q_sp) + 0.25, 12.0)     # the storm stops dead here
+    if 9.0 <= q_sp <= 11.5:                       # the dominant arrives WITH the splash
+        a.prog(f"Dm:4 | Bb:4 | Gm/Bb:{q_sp - 8:.6f} A7:{12 - q_sp:.6f}@D-harmonic")
+    else:
+        a.prog("Dm:4 | Bb:4 | Gm/Bb:2 A7:2@D-harmonic")
     b.prog("D:2 G/D:2 | D:4")
     h.prog("D:1 G/D:1 D:1 A/C#:1 | Bm:1 G:1 D/A:1 A:1 | G:2 D:2")
-    q_sp = min(a.q_of(c.t0 + t_splash), 11.75)
     a.sync("Jonah thrown in (splash)", q_sp, t_splash)
     b.sync("sea calm: D major + harp glissando", 0, t_calm, kind="change")
     # the storm one last time while they lift Jonah: it grows out of the hushed prayer into the
-    # splash (bass drum and timpani, no cymbal), then stops dead so the calm is heard on '一下子'
-    a.pad(["trem_va", "trem_hi", "trem_hi"], 3, 52, 77, q1=q_sp + 0.25, vel=66, bass_ref=(28, 40))
+    # splash (bass drum and timpani, no cymbal), rages on in the tremolo, then stops dead so the calm is
+    # heard on '一下子'
+    a.pad(["trem_va", "trem_hi", "trem_hi"], 3, 52, 77, q1=q_cut, vel=66, bass_ref=(28, 40))
     for q0, q1, ch in a.chord_spans():
         r = ch.bass_note(36, 47)
         fifth = r + 7 if (r + 7) % 12 in ch.pcset else r + 12
-        for k in range(int(round((min(q1, q_sp) - q0) / 0.5))):
-            a.add("vc_fast", q0 + k * 0.5, 0.5, [r, fifth, r + 12, fifth][k % 4], 66, "bass", "s")
-        if q0 < q_sp:
-            a.add("cb", q0, min(q1, q_sp + 0.25) - q0, ch.bass_note(28, 40), 56, "bass")
-    timp_roll(a, 0, 8, midi("D2"), 40, 56)
-    timp_roll(a, 8, 10, midi("D2"), 56, 64)
-    timp_roll(a, 10, q_sp - 0.1, midi("A2"), 64, 76)
-    for q0, q1, nm in ((0, 8, "D4"), (8, 10, "D4"), (10, 12, "C#4")):
+        for k in range(int(np.ceil((min(q1, q_sp) - q0) / 0.5 - 0.4))):     # eighths, none across the hit
+            a.add("vc_fast", q0 + k * 0.5, min(0.5, q_sp - q0 - k * 0.5), [r, fifth, r + 12, fifth][k % 4], 66,
+                  "bass", "s")
+        if q0 < q_cut:
+            a.add("cb", q0, min(q1, q_cut) - q0, ch.bass_note(28, 40), 56, "bass")
+    timp_roll(a, 0, min(8, q_sp - 0.1), midi("D2"), 40, 56)
+    if q_sp - 0.1 > 8:
+        timp_roll(a, 8, q_sp - 0.1, midi("D2"), 56, 76)
+    for q0, q1, nm in ((0, 8, "D4"), (8, 12, "D4")):
         if q0 < q_sp:
             a.add("horn", q0, min(q1, q_sp) - q0, nm, 64, "melody")
     a.add("timp", q_sp, 0.5, "A2", 96, "timp", "h")
     a.add("okit", q_sp, 1, 36, 92, "perc", "h")
     a.add("pz_cb", q_sp, 0.5, "A1", 90, "bass", "h")
     a.add("pz_lo", q_sp, 0.5, "A2", 84, "bass", "h")
+    if q_cut - q_sp >= 1.0:                       # the sea still heaves under the tremolo until the cut
+        timp_roll(a, q_sp + 0.5, q_cut - 0.05, midi("A2"), 62, 54)
     q_l0 = a.q_of(c.t0 + c.ls(0))
+    # the crescendo stays under the words ('扔进了大海' runs up to the splash); after it the storm holds, a little
+    # louder in the pause, and is cut dead
+    hold = [(q_sp + 0.25, -6), (q_cut - 0.25, -6)] if q_cut - 0.25 > q_sp + 0.3 else []
     a.expr(["trem_va", "trem_hi", "vc_fast", "cb", "horn", "timp"],
-           [(0, -14), (max(0.5, q_l0), -12), (8, -11), (max(8.5, q_sp - 1), -7), (q_sp, -3),
-            (q_sp + 0.25, -30), (12, -30)])
-    # calm: D major strings + a quick rising harp glissando exactly on the line; a flute in the pause
-    gliss(b, "harp", 0, 0.45, midi("D3"), midi("D6"), v0=32, v1=45)
+           [(0, -14), (max(0.5, q_l0), -12), (8, -11), (max(8.5, q_sp - 1), -9), (q_sp, -7)] + hold
+           + [(q_cut, -30), (12, -30)])
+    # calm: D major strings + a quick rising harp glissando (pedals set to D major: chord tones only, so the new
+    # harmony is unmistakable at once) exactly on the line; a flute in the pause
+    gliss(b, "harp", 0, 0.45, midi("D3"), midi("D6"), v0=32, v1=45, scale=ChordTones(b.chord_at(0)))
     b.pad(["vla", "vln2", "vln1"], 3, 57, 78, vel=50, bass_part="vc", bass_lo=38, bass_hi=50)
     b.add("cb", 0, 8, "D2", 44, "bass")
     broken(b, "harp", 0.5, 8, (0, 2, 4, 5, 4, 2), 38, 50, vel=36, thin=True)
     p0, p1 = c.pause_after(i_calm)
     if p1 - p0 > 0.6 and b.q_of(c.t0 + p0) <= 6.6:          # the calm sea, in the long pause
         b.mel("flute", "F#5:1/2 A5:1/2 D6:1/2", q=6.5, vel=54)
-    b.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (1, -11), (8, -10)])
+    b.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -12), (1, -10.5), (8, -10)])
     b.expr(["harp", "flute"], [(0, -5), (8, -6)])
     # the sailors worship: a quiet hymn (horns and strings), a plagal 'amen'
     h.pad(["vla", "vln2", "vln1"], 3, 55, 76, vel=46, bass_part="vc", bass_lo=40, bass_hi=51)
@@ -76,10 +95,14 @@ def overboard(c):
 def swallow(c):
     i_fish = c.find("安排好了一条大鱼")
     t_fish = c.gap(i_fish)
-    t_gulp = c.at("一口就把约拿吞了下去")
+    # the gulp accent lands ON THE PICTURE: the fish's mouth snapping shut (audio/picture.py, from the scene's
+    # gulp cue), not on the narration word '一口' ~0.45 s earlier; the timpani crescendo rides the lunge into it
+    shut = c.picture("s10_swallow:mouth_shut")
+    t_shut = shut[0] if shut else c.at("一口就把约拿吞了下去") + 0.45
+    t_gulp = min(max(t_shut, t_fish + 4.0), c.dur - 1.5)
     s = c.seg(0, t_fish, 2, "3/4", "D major", nominal=84, label="fish-sink")
     f = c.seg(t_fish, t_gulp, 3, "4/4", "D major", nominal=88, label="fish-motif")
-    g = c.seg(t_gulp, c.dur, 1, "3/4", "D major", nominal=68, rit=0.35, label="fish-gulp")
+    g = c.seg(t_gulp, c.dur, 1, "3/4", "D major", nominal=76, rit=0.35, label="fish-gulp")
     s.prog("Dmaj7:3 | Bm7:3")
     f.prog("D:2 G/D:1 D:1 | D:2 G/D:1 D:1 | G:2 A:2")
     g.prog("D:1 A/C#:1 Bm:1@B-minor")
@@ -114,7 +137,7 @@ def swallow(c):
     f.expr(["pad", "vla", "vln2"], [(0, -12), (8, -12), (12, -10)])
     f.expr("tbn", [(8, -14), (12, -10)])
     # gulp: an accent, then the bass sinks D-C#-B into the dark belly
-    g.sync("gulp accent", 0, t_gulp)
+    g.sync("gulp accent (the mouth snaps shut)", 0, t_shut)
     g.mel("tuba", "D2:1:a C#2:1 B1:1", vel=80, role="bass")
     g.mel("contrab", "D2:1:a C#2:1 B1:1", vel=72, role="bass")
     g.add("timp", 0, 0.5, "D2", 84, "timp", "h")

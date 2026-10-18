@@ -411,6 +411,11 @@ class Cue:
         """Pauses between consecutive lines of this cue: [(start, end)] cue-relative."""
         return [(a[1], b[0]) for a, b in zip(self.lines, self.lines[1:]) if b[0] - a[1] >= min_len]
 
+    def picture(self, key):
+        """Cue-relative times of an on-screen action (audio/picture.py: read from the scene's own sound-effect
+        cues at build time, so hits on the picture follow scene edits).  [] when unknown."""
+        return list(self.score.picture.get(key, []))
+
     def pause_or_gap(self, i, min_len=0.25):
         """The pause before line i (cue-relative (start, end)); if it is shorter than min_len, a
         min_len window centred on it (fills then overlap the line edges slightly instead of
@@ -439,19 +444,17 @@ class Score:
         self.ducks = []            # (t0, t1, dB, parts or None): extra speech ducking (Seg.duck)
         self.cave = []             # (t0, t1, fade-out s): windows of the dark cave reverb (music.py)
         self.gains = []            # (t0, t1, dB): cue / segment faders (Cue.gain, Seg.gain)
+        self.picture = {}          # key -> [scene-relative s]: on-screen actions (audio/picture.py)
         self.speech_iv = []
         for s in timeline["scenes"]:
             for ln in s["lines"]:
                 self.speech_iv.append((s["start"] + ln["start"], s["start"] + ln["end"]))
         self.speech_iv.sort()
         # phrases: lines separated by less than MERGE_GAP s count as one stretch of speech, so the
-        # music does not pump in every short breath between lines
-        self.phrases = []
-        for a, b in self.speech_iv:
-            if self.phrases and a - self.phrases[-1][1] < self.MERGE_GAP:
-                self.phrases[-1][1] = max(self.phrases[-1][1], b)
-            else:
-                self.phrases.append([a, b])
+        # music does not pump in every short breath between lines; held: lines less than HOLD_GAP s apart
+        # (every sentence pause and scene change) -- the stretches the parts' own speech duck holds through
+        self.phrases = self._merge(self.MERGE_GAP)
+        self.held = self._merge(self.HOLD_GAP)
 
     GUIDE_ROLES = ("melody", "counter", "pad", "bass", "harmony")
 
@@ -547,15 +550,30 @@ class Score:
         return out
 
     MERGE_GAP = 0.5
+    # the parts' own speech duck (Part.duck_db) holds through pauses shorter than this, like the mix's bed duck
+    # (audio/mix.py BED_ENV['line_bridge']): half-way between the longest scene change (1.22 s) and the pause
+    # after the title (1.49 s), so the score itself no longer swells in every sentence pause; the deliberate
+    # fills (Seg.duck extras) and the melodic softening still follow the phrases (MERGE_GAP) and release there
+    HOLD_GAP = 1.35
     ATTACK = 0.35
     RELEASE = 0.7
 
-    def speech(self, t):
-        """Narration activity 0..1 over merged phrases: a smooth 0.35 s rise that reaches 1 as the
-        first line starts, a 0.7 s release after the last one (used for ducking and softening)."""
+    def _merge(self, gap):
+        out = []
+        for a, b in self.speech_iv:
+            if out and a - out[-1][1] < gap:
+                out[-1][1] = max(out[-1][1], b)
+            else:
+                out.append([a, b])
+        return out
+
+    def speech(self, t, held=False):
+        """Narration activity 0..1 over merged phrases (held=True: over the held stretches): a smooth 0.35 s
+        rise that reaches 1 as the first line starts, a 0.7 s release after the last one (used for ducking
+        and softening)."""
         t = np.asarray(t, float)
         out = np.zeros_like(t)
-        for a, b in self.phrases:
+        for a, b in (self.held if held else self.phrases):
             up = np.clip((t - (a - self.ATTACK)) / self.ATTACK, 0, 1)
             dn = np.clip(((b + self.RELEASE) - t) / self.RELEASE, 0, 1)
             x = np.minimum(up, dn)
@@ -637,7 +655,7 @@ class Score:
             extra = np.maximum(extra, d * w)
         for a, b, g in self.gains:                      # faders, 0.5 s cross-fades at the edges
             db = db + g * np.clip(np.minimum(t - (a - 0.25), (b + 0.25) - t) / 0.5, 0, 1)
-        db = db - (PARTS[part].duck_db + extra) * self.speech(t)
+        db = db - PARTS[part].duck_db * self.speech(t, held=True) - extra * self.speech(t)
         return np.minimum(db, 0.0)
 
     # --------------------------------------------------------------- MIDI

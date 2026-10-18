@@ -54,6 +54,17 @@ def drop_spoken(notes, pre=0.08):
     return [n for n in notes if id(n) not in gone]
 
 
+class ChordTones:
+    """A 'scale' of one chord's tones: gliss(..., scale=ChordTones(ch)) sweeps an arpeggio (a harp glissando
+    with the pedals set to the chord)."""
+
+    def __init__(self, ch):
+        self.pcs = frozenset(ch.pcset)
+
+    def degree_pitches(self, lo, hi):
+        return [p for p in range(lo, hi + 1) if p % 12 in self.pcs]
+
+
 def gliss(seg, part, q0, dur_s, lo, hi, up=True, v0=40, v1=70, scale=None):
     """Harp glissando over the segment scale (or an explicit Scale) taking dur_s seconds."""
     sc = scale or seg.scale

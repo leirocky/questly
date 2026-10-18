@@ -3,7 +3,10 @@
 Every cue starts exactly at its scene's global start (inside the 1 s cross-dissolve) and is
 planned in bars whose tempo is derived from the scene's real line timings.  Hit points are found
 from the narration text (`Cue.find` / `Cue.at` locate the utterance or the word inside it), never
-from fixed line indices or durations.  The cues live in audio/cues_[a-e].py; shared writing
+from fixed line indices or durations -- except where a hit illustrates an on-screen action: those
+follow the PICTURE (`Cue.picture`, audio/picture.py: read at build time from the scenes' own
+sound-effect cues), so the wave's crash, the gulp, the horn blow and Jonah's stamps stay on the
+animation when a scene is edited.  The cues live in audio/cues_[a-e].py; shared writing
 helpers in audio/scorelib.py; the framework (segments, tempo maps, voice-leading, MIDI) in
 audio/scorekit.py.
 
@@ -16,19 +19,19 @@ Tonal plan (hand-offs by common tone or dominant -> tonic):
   Jonah's theme on the horn in D major, fear, diminished stinger on a low piano stab) -> s07 waves
   6/8 over a D pedal (Dm | Eb/D | Dm | E dim7/D | Gm/D | A7: low piano rocking, low brass swelling
   per wave -- no tremolo, no timpani) -> lament -> s08 rowing strokes (D minor, Neapolitan Eb climb,
-  crash after '...回到岸边') -> hushed prayer -> s09 storm reprise growing out of the prayer, splash
+  A-chord crash on the downbeat of its own bar where the wave hits the ship on screen) -> hushed prayer -> s09 storm reprise growing out of the prayer, splash
   (bass drum + timpani), the storm cut dead, sudden D major calm, plagal hymn -> s10 sinking
   Dmaj7-Bm7 (echo drops on the shared tones D-F#-A), the great-fish motif, gulp
-  D-C#-B -> s11 B minor belly (warm G for '别怕', heartbeat, prayer) -> s12 sinking lament bass,
+  (on the mouth snapping shut) D-C#-B -> s11 B minor belly (warm G for '别怕', heartbeat, prayer) -> s12 sinking lament bass,
   deceptive V-VI turn to G on '想起了耶和华', rise, radiant D on '救恩属于耶和华' -> s13 shore G
   (fish motif in G, pop, sunny Jonah motif) -> s14 the second call (same shimmer and God's chords),
   Jonah's theme walking -> s15 Nineveh D hijaz (maqsum), 'forty days' -> s16 G minor guess, Eb
-  surprise, humble G minor -> s17 king: sarabande G-F-Eb-D, herald horn, processional decree, Bb
-  hope, half cadence -> s18 mercy G major -> s19 happy G, grumpy G minor bassoon, tender Eb, the
+  surprise, humble G minor -> s17 king: sarabande G-F-Eb-D, the messenger walks out (timpani roll; no orchestral
+  horn before the on-screen shofar), the decree's processional starts on the blow, Bb hope, half cadence -> s18 mercy G major -> s19 happy G, grumpy G minor bassoon, tender Eb, the
   flight recalled, God's question (call chords in G) -> s20 booth G (plucked) -> s21 night, plant
   grows (bVI-bVII-I), shade, waltz whose last G chord rings into the dissolve -> s22 dawn, worm
-  (chromatic pizzicato, the bite on '咬了蓖麻'), heat (open fifths, wind), hush, stubborn stomps at
-  the ends of Jonah's exclamations -> s23 lesson G 6/8 (theme on piano, ends on A7) -> s24 end:
+  (chromatic pizzicato, the bite on '咬了蓖麻'), heat (open fifths, wind), hush, stubborn stomps on
+  Jonah's stamps (the scene's thuds), G minor arriving on the last -> s23 lesson G 6/8 (theme on piano, ends on A7) -> s24 end:
   Bm7-Gmaj7-Em7-A7sus4 question with ~2 s of reflective pause, then the theme in D swelling in,
   warm and full, final D chord ringing to the end.
 
@@ -42,7 +45,7 @@ The Jonah theme (D major, 6/8, q = quarter note):
   b4 A  E5:5/2 A4:1/2                   half cadence + pickup
   b5 = b1,  b6 G  B4:1 D5:1/2 G5:1 B5:1/2,  b7 D/A|A7  A5:1 F#5:1/2 E5:1 C#5:1/2,  b8 D  D5:3
 """
-from audio import cues_a, cues_b, cues_c, cues_d, cues_e
+from audio import cues_a, cues_b, cues_c, cues_d, cues_e, picture
 from audio.scorekit import Cue, PhraseNotFound, Score
 
 SCENE_CUES = {
@@ -65,8 +68,10 @@ def build(timeline, passes=3):
     A scene this score does not know (renamed or new) gets a soft generic pad in its mood's key
     instead of breaking the build."""
     guides = None
+    pic = picture.events(timeline)          # on-screen hit points, read once from the scenes' sfx cues
     for _ in range(passes):
         sc = Score(timeline)
+        sc.picture = pic
         sc.guide_notes = guides
         scenes = timeline["scenes"]
         for i, s in enumerate(scenes):

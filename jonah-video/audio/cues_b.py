@@ -221,44 +221,57 @@ def row(c):
     t_waves = c.gap(i_waves)
     t_pray = c.gap(c.find("只好向"))
     q0_hard = c.at("他们拼命划桨")
+    # the waves win ON THE PICTURE: the huge wave slams into the bow at the scene's splash (T_HIT, under
+    # '都没有办法...'); r2 climbs to it and the A-chord crash is the downbeat of its own one-bar segment
+    # (the narration fallback is the scene's formula: start of the chunk holding '都没有办法' + 0.12)
+    hits = c.picture("s08_row:wave_hit")
+    t_hit_pic = hits[0] if hits else c.at("都没有办法") + 0.12
+    t_hit = min(max(t_hit_pic, t_waves + 2.5), t_pray - 1.0)     # room for the climb and the crash bar
     r1 = c.seg(0, t_waves, 4, "4/4", "D minor", nominal=116, label="row-strokes")
-    r2 = c.seg(t_waves, t_pray, 4, "4/4", "D minor", nominal=134, label="row-waves")
+    r2 = c.seg(t_waves, t_hit, 3, "4/4", "D minor", nominal=150, label="row-waves")
+    rc = c.seg(t_hit, t_pray, 1, "4/4", "D minor", nominal=128, label="row-crash")
     r3 = c.seg(t_pray, c.dur, 5, "4/4", "D minor", nominal=70, rit=0.12, label="row-prayer")
     r3.hush = True
-    r1.duck(3.0)
-    r2.duck(3.0)
-    r1.gain(1.8)
-    r2.gain(1.8)
+    for sg in (r1, r2, rc):
+        sg.duck(3.0)
+        sg.gain(1.8)
     r1.prog("Dm:4 | Gm/D:4 | Dm:4 | Bb/D:2 A/C#:2@D-harmonic")
-    r2.prog("Dm:4 | Eb:4@D-phrygian | Gm/Bb:4 | A:4@D-harmonic")
+    r2.prog("Dm:4 | Eb:4@D-phrygian | Gm/Bb:4")
+    rc.prog("A:4@D-harmonic")
     r3.prog("Dm:4 | Bb:2 F/A:2 | Gm:2 Dm/F:2 | Gm/Bb:2 Asus4:1 A:1@D-harmonic | Dm:2 Asus4:1 A:1@D-harmonic")
     _strokes(r1, 4, 60)
-    _strokes(r2, 4, 58)
-    # the rowing chant (horns), heave -- ho; it climbs when the waves rise higher
+    _strokes(r2, 3, 58)                     # no strokes after the hit: the sailors lose their oars
+    # the rowing chant (horns), heave -- ho; it climbs when the waves rise higher and breaks on the crash
     r1.mel("horn", "A3:3/2:a A3:1/2 D4:1 A3:1 | Bb3:3/2:a Bb3:1/2 D4:1 G3:1 | A3:3/2:a A3:1/2 F4:1 D4:1 | "
                    "Bb3:3/2:a Bb3:1/2 A3:1 E4:1", vel=62, role="counter")
-    r2.mel("horn", "A3:3/2:a A3:1/2 D4:1 F4:1 | Bb3:3/2:a Bb3:1/2 Eb4:1 G4:1 | D4:3/2:a D4:1/2 Bb4:1 G4:1 | "
-                   "A4:2 E4:1 C#4:1", vel=56, role="counter")
+    r2.mel("horn", "A3:3/2:a A3:1/2 D4:1 F4:1 | Bb3:3/2:a Bb3:1/2 Eb4:1 G4:1 | D4:3/2:a D4:1/2 Bb4:1 G4:1",
+           vel=56, role="counter")
+    rc.mel("horn", "A4:2 E4:1 C#4:1", vel=56, role="counter")
     r1.pad(["trem_va", "trem_hi", "trem_hi", "trem_hi"], 4, 53, 81, vel=54, bass_ref=(28, 40))
     r2.pad(["trem_va", "trem_hi", "trem_hi", "trem_hi"], 4, 53, 81, vel=60, bass_ref=(28, 40))
-    r2.pad(["tbn", "tbn", "brass"], 3, 50, 70, q0=12, vel=70, center=60, bass_ref=(28, 40))
-    # the waves win: a crash just after '...都没有办法回到岸边。' (the sync's target is the narration, so a
-    # clamp that moves it shows up in music_check)
-    t_crash = c.le(i_waves) + 0.03
-    q_crash = max(r2.q_of(c.t0 + t_crash), 13.0)
-    timp_roll(r2, min(12.5, q_crash - 2.5), q_crash - 0.1, midi("A2"), 40, 66)
-    r2.add("okit", q_crash, 1, 57, 62, "perc", "h")
-    r2.add("okit", q_crash, 1, 36, 72, "perc", "h")
-    r2.sync("the waves win (crash)", q_crash, t_crash)
+    rc.pad(["trem_va", "trem_hi", "trem_hi", "trem_hi"], 4, 53, 81, vel=56, bass_ref=(28, 40))
+    rc.pad(["tbn", "tbn", "brass"], 3, 50, 70, vel=70, center=60, bass_ref=(28, 40))
+    # the timpani roll on D climbs into the crash; the crash itself: bass drum, cymbal, timpani A and the
+    # low strings on A (the sync's target is the picture, so a clamp that moves it shows up in music_check)
+    timp_roll(r2, 9.5, 11.9, midi("D3"), 40, 66)
+    rc.add("okit", 0, 1, 57, 58, "perc", "h")
+    rc.add("okit", 0, 1, 36, 68, "perc", "h")
+    rc.add("timp", 0, 1, "A2", 66, "timp", "h")
+    rc.add("cb_fast", 0, 4, "A1", 60, "bass", "h")
+    rc.add("vc_fast", 0, 1, "A2", 64, "bass", "h")
+    rc.sync("the waves win (crash)", 0, t_hit_pic)
     r2.sync("the waves rise higher (stroke in the pause)", 0, t_waves)
     q_hard = r1.q_of(c.t0 + q0_hard)
-    q_le0 = r1.q_of(c.t0 + c.le(i_waves - 1))          # end of the first line: the pause surges
+    q_l0 = r1.q_of(c.t0 + c.ls(0))                     # the storm surges as the scene opens, then
+    q_le0 = r1.q_of(c.t0 + c.le(i_waves - 1))          # drops under the first line; the pause surges
     q_ls1 = r2.q_of(c.t0 + c.ls(i_waves))
-    for p in ("vc_fast", "cb_fast", "horn", "timp", "hand", "trem_va", "trem_hi"):
-        r1.expr(p, [(0, -13), (max(0.5, q_hard - 1), -12), (max(q_hard, q_le0 - 0.5), -9), (16, -5)])
-        r2.expr(p, [(0, -5), (max(0.3, q_ls1 + 0.6), -12), (12, -11), (q_crash - 0.4, -11), (q_crash, -4.5),
-                    (16, -8)])
-    r2.expr(["tbn", "brass"], [(12, -18), (q_crash - 0.3, -13), (q_crash, -5.5), (16, -8)])
+    q_le1 = rc.q_of(c.t0 + c.le(i_waves))              # the crash falls back under '...回到岸边' and swells
+    for p in ("vc_fast", "cb_fast", "horn", "timp", "hand", "trem_va", "trem_hi"):   # again after it
+        r1.expr(p, [(0, -10.5), (max(0.25, q_l0 - 0.3), -10.5), (q_l0 + 0.3, -13), (max(q_l0 + 0.6, q_hard - 1), -12),
+                    (max(q_hard, q_le0 - 0.5), -9), (16, -3.5)])
+        r2.expr(p, [(0, -3.5), (min(11.0, max(0.3, q_ls1 + 0.6)), -12), (11.75, -11)])
+        rc.expr(p, [(0, -6.5), (0.6, -12.5), (max(0.7, min(3.6, q_le1)), -12.5), (4, -8)])
+    rc.expr(["tbn", "brass"], [(0, -7.5), (0.6, -13.5), (max(0.7, min(3.6, q_le1)), -13.5), (4, -9)])
     # the hushed prayer: humming choir, soft low strings, the storm still rumbling far off
     r3.pad("ooh", 3, 55, 72, vel=56, bass_ref=(36, 50))
     r3.pad(["vla", "vln2"], 2, 53, 69, vel=42, bass_part="vc", bass_lo=40, bass_hi=51)

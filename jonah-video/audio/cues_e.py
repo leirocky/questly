@@ -1,4 +1,7 @@
 """Cues s19-s24: Jonah's anger, the booth, the plant, the worm and the heat, God's lesson, the end."""
+import math
+from fractions import Fraction
+
 from audio.cues_a import THEME
 from audio.scorelib import (
     bassline,
@@ -199,11 +202,19 @@ def worm(c):
     h = c.seg(t_heat, t_hush, 3, "4/4", "D mixolydian", nominal=60, label="worm-heat")
     q = c.seg(t_hush, t_reply, 2, "6/8", "D major", nominal=52, label="worm-hush")
     r = c.seg(t_reply, c.dur, 2, "2/4", "G minor", nominal=76, label="worm-stubborn")
+    # Jonah's stamps in '对！我就是生气！我气极了！' are on the PICTURE (audio/picture.py: the scene's thud cues;
+    # fallback = the scene's narration formula): the stubborn stomps land on them, and the dominant
+    # resolves to G minor on the last one
+    stamps = [t for t in c.picture("s22_worm:stomps") if t_reply <= t < c.dur - 0.05][:3]
+    q_st = [r.q_of(c.t0 + t) for t in stamps]
+    x = 1.0
+    if q_st and q_st[-1] > 2.25:
+        x = min(1.75, max(0.25, math.floor((q_st[-1] - 2.0) * 8) / 8))   # G minor arrives on (or just before) it
     d.prog("G:4")
     w.prog("Gm:4 | Gm:4 | D7:2@G-harmonic D:2@G-harmonic")
     h.prog("Dsus2:4 | Dsus2:4 | Bb/D:4@D-minor")
     q.prog("Bb/D:3@D-minor | C/D:3/2 D:3/2")
-    r.prog("Gm:2 | D7:1@G-harmonic Gm:1")
+    r.prog(f"Gm:2 | D7:{Fraction(x)}@G-harmonic Gm:{Fraction(2 - x)}")
     w.sync("the little worm", 0, t_worm)
     q_bite = min(max(w.q_of(c.t0 + t_bite), 1.0), 11.0)
     w.sync("the worm bites (chomp)", q_bite, t_bite)
@@ -251,26 +262,27 @@ def worm(c):
     broken(q, "harp", 0, 6, (0, 1, 2, 3, 4, 5), 50, 61, vel=36, thin=True)
     q.expr("choir", [(0, -13), (1.5, -10), (6, -10)])
     q.expr(["vc", "cb", "harp"], [(0, -10), (6, -10)])
-    # 'Yes! I am angry! I am furious!': a stubborn stomp at the end of each exclamation (from the
-    # subtitle-chunk timing), a soft low pedal in between
-    r.add("pz_cb", 0, 0.5, "G1", 56, "bass")
+    # 'Yes! I am angry! I am furious!': a stubborn stomp on each of Jonah's stamps, a soft low pedal in
+    # between (the opening pluck only when the first stamp is not right behind it)
+    if not q_st or q_st[0] >= 0.75:
+        r.add("pz_cb", 0, 0.5, "G1", 56, "bass")
     bassline(r, "cb", 28, 40, 52)
     r.expr("cb", [(0, -9), (4, -10)])
-    for k, ph in enumerate(("对！", "我就是生气！", "我气极了！")):
-        t_st = c.at(ph, end=True) + 0.03
-        q_st = r.q_of(c.t0 + t_st)
-        if not 0 <= q_st < r.n_q - 0.05:
-            continue
-        dq = min(0.5, r.n_q - q_st)                    # the last stomp may sit right at the scene end
-        ch = r.chord_at(q_st)
+    for k, (t_st, q_) in enumerate(zip(stamps, q_st)):
+        dq = min(0.5, r.n_q - q_)                     # the last stomp may sit right at the scene end
+        ch = r.chord_at(q_)
         root = ch.bass_note(43, 54)
-        r.add("bsn", q_st, dq, root, 74 + 3 * k, "melody", "s")
-        r.add("pz_cb", q_st, dq, ch.bass_note(28, 40), 72 + 2 * k, "bass", "h")
-        r.add("pz_lo", q_st, dq, root, 54, "harmony", "h")
-        r.add("pz_lo", q_st, dq, root + 7 if (root + 7) % 12 in ch.pcset else root + 12, 50, "harmony", "h")
-        drum(r, q_st, 41, 58 + 4 * k)
-        r.sync(f"stubborn stomp {k + 1}", q_st, t_st)
+        r.add("bsn", q_, dq, root, 74 + 3 * k, "melody", "s")
+        r.add("pz_cb", q_, dq, ch.bass_note(28, 40), 72 + 2 * k, "bass", "h")
+        r.add("pz_lo", q_, dq, root, 54, "harmony", "h")
+        r.add("pz_lo", q_, dq, root + 7 if (root + 7) % 12 in ch.pcset else root + 12, 50, "harmony", "h")
+        drum(r, q_, 41, 58 + 4 * k)
+        r.sync(f"stubborn stomp {k + 1} (Jonah stamps)", q_, t_st)
     r.expr(["bsn", "pz_cb", "pz_lo", "hand"], [(0, -7), (4, -6)])
+    # ...and sulks: the low strings hold the chord from the last stamp into the lesson (no dead air before s23)
+    q_s = min(q_st[-1], r.n_q - 0.5) if q_st else 2.0
+    r.pad(["vc", "vla"], 2, 43, 62, q0=q_s, vel=50, bass_ref=(28, 40))
+    r.expr(["vc", "vla"], [(q_s, -13), (min(r.n_q, q_s + 0.5), -8), (r.n_q, -7.5)])
 
 
 def lesson(c):

@@ -358,7 +358,7 @@ def _pad_family(part):
 
 def line_smr(timeline, music, sr, voice_path):
     """Speech-to-music ratio of every narration line in a simulation of audio/mix.py: music is
-    normalised to MUSIC_LUFS and ducked by MUSIC_DUCK_DB with mix.speech_envelope(voice).
+    normalised to MUSIC_LUFS and ducked by MUSIC_DUCK_DB with mix.bed_envelope(voice, timeline) (as the mix).
 
     Returns rows (scene, line index, text, broadband SMR, 1-4 kHz SMR, worst 200 ms SMR) over the
     frames where the voice is active, or None when voice.wav is missing."""
@@ -377,7 +377,7 @@ def line_smr(timeline, music, sr, voice_path):
     voice = voice[:n] if len(voice) >= n else np.concatenate([voice, np.zeros(n - len(voice))])
     lm = pyln.Meter(sr).integrated_loudness(music)
     m = music * 10 ** ((mixmod.MUSIC_LUFS - lm) / 20)
-    env = mixmod.speech_envelope(voice.astype(np.float32)).astype(np.float64)
+    env = mixmod.bed_envelope(voice.astype(np.float32), timeline).astype(np.float64)
     m = m * 10 ** (mixmod.MUSIC_DUCK_DB * env / 20)[:, None]
     sos = sg.butter(4, [1000, 4000], "bandpass", fs=sr, output="sos")
     hop = int(0.02 * sr)
@@ -586,30 +586,76 @@ def handoff_steps(mono, sr, sc, boundaries, win=HANDOFF_WIN, hop=0.05):
 #        'gap'    = middle of the pause before that utterance
 #        'phrase' = where the phrase itself is spoken (subtitle-chunk timing, interpolated by characters)
 #        'end'    = end of that utterance
+# (the s08 wave crash, the s09 splash, the s10 gulp, the s17 horn blow and Jonah's stamps in s22 illustrate
+# on-screen actions: they are PICTURE_HITS below)
 REQUIRED_HITS = [
     ("s02_call", "你起来", "gap", "change"),                  # God speaks: the choir enters
     ("s04_storm", "大浪一个接着一个", "gap", "hit"),           # storm peak
     ("s06_lots", "抽中的正是约拿", "phrase", "hit"),           # the lot falls on Jonah
-    ("s08_row", "海浪越翻越高", "end", "hit"),                 # the waves win (crash after the line)
-    ("s09_overboard", "海就平静了", "gap", "hit"),             # splash, in the pause before the calm
     ("s09_overboard", "海就平静了", "line", "change"),         # sudden calm
     ("s10_swallow", "安排好了一条大鱼", "gap", "hit"),         # the great-fish motif
-    ("s10_swallow", "一口就把约拿吞了下去", "phrase", "hit"),   # gulp
     ("s12_deep", "想起了耶和华", "phrase", "change"),          # the turning point
     ("s12_deep", "救恩属于耶和华", "phrase", "change"),        # radiant major
     ("s14_again", "你起来", "gap", "change"),                 # the second call echoes the first
     ("s15_city", "再过四十天", "gap", "hit"),                  # forty days
     ("s16_believe", "竟然都相信了上帝", "phrase", "change"),    # surprise belief
-    ("s17_king", "国王又派人在全城宣告", "gap", "hit"),         # herald horn
+    ("s17_king", "国王又派人在全城宣告", "gap", "hit"),         # the king commands: the herald section
     ("s19_angry", "只有约拿", "phrase", "hit"),                # grumpy bassoon
     ("s19_angry", "又慈爱", "gap", "change"),                  # tender under God's kindness
     ("s21_vine", "一夜之间", "phrase", "hit"),                 # the plant grows
     ("s21_vine", "非常非常高兴", "gap", "hit"),                # happy waltz
     ("s22_worm", "小虫子", "phrase", "hit"),                   # the little worm
     ("s22_worm", "咬了蓖麻", "phrase", "hit"),                 # the worm bites
-    ("s22_worm", "我气极了", "end", "hit"),                    # Jonah's last stubborn stomp
     ("s24_end", "连我们不喜欢的人", "end", "hit"),              # final cadence
 ]
+
+
+# Hit points defined by the PICTURE (an on-screen action the score illustrates; a hit there must follow the
+# animation, not the narration word).  Targets come from the scenes' own sound-effect cues, which the scene
+# authors key to the animation (engine.loader.build_scene(sid).sfx_cues), independently of the score code:
+# (scene, sfx cue name, from-line phrase or None, index, offset s, kind, what)
+#   the index counts the cues of that name in time order (from the start of the line containing the phrase,
+#   minus 0.3 s, when a phrase is given); the target is that cue's time + offset
+PICTURE_HITS = [
+    ("s08_row", "splash", None, 0, 0.0, "hit", "the wave slams into the ship (the waves win)"),
+    ("s09_overboard", "splash", None, 0, 0.02, "hit", "Jonah hits the water (the scene's splash cue is 0.02 s early)"),
+    ("s10_swallow", "gulp", None, 0, 0.32, "hit", "the fish's mouth snaps shut (half-way through the close)"),
+    ("s17_king", "horn", None, 0, 0.0, "hit", "the messenger blows the horn"),
+    ("s22_worm", "thud", "我气极了", 0, 0.0, "hit", "Jonah stamps on '对！'"),
+    ("s22_worm", "thud", "我气极了", 1, 0.0, "hit", "Jonah stamps on '我就是生气！'"),
+    ("s22_worm", "thud", "我气极了", 2, 0.0, "hit", "Jonah stamps on '我气极了！'"),
+]
+
+
+def picture_targets(timeline):
+    """[(scene, label, kind, scene-relative target s or None, note)] for PICTURE_HITS."""
+    from engine.loader import build_scene
+
+    by_id = {s_["id"]: s_ for s_ in timeline["scenes"]}
+    cues, out = {}, []
+    for sid, cue_name, phrase, k, off, kind, what in PICTURE_HITS:
+        label = f"sfx '{cue_name}' #{k}" + (f" from '{phrase}'" if phrase else "") + (f" {off:+.2f}s" if off else "")
+        if sid not in by_id:
+            continue
+        if sid not in cues:
+            try:
+                cues[sid] = build_scene(sid, timeline).sfx_cues
+            except Exception as e:
+                cues[sid] = e
+        if isinstance(cues[sid], Exception):
+            out.append((sid, label, kind, None, f"scene does not build: {cues[sid]}"))
+            continue
+        t_from = -1e9
+        if phrase:
+            ln = next((l_ for l_ in by_id[sid]["lines"] if phrase in l_["text"]), None)
+            if ln is None:
+                out.append((sid, label, kind, None, f"no line contains {phrase!r}"))
+                continue
+            t_from = ln["start"] - 0.3
+        ts = sorted(float(c_["at"]) for c_ in cues[sid] if c_["name"] == cue_name and float(c_["at"]) >= t_from)
+        out.append((sid, label, kind, ts[k] + off if k < len(ts) else None,
+                    what if k < len(ts) else f"no cue ({what})"))
+    return out
 
 
 def phrase_time(scene, phrase, mode):
@@ -635,19 +681,32 @@ def phrase_time(scene, phrase, mode):
     return ln["start"]
 
 
-def required_hits(sc, timeline, tol=0.05):
-    """[(scene, phrase, mode, kind, target abs s, (sync abs s, label) or None)]"""
+def required_hits(sc, timeline, tol=0.05, picture=True):
+    """[(scene, phrase, mode, kind, target abs s, (sync abs s, label) or None)]; picture hits (PICTURE_HITS)
+    have mode 'picture' and the sfx cue as 'phrase'.  A picture hit whose scene does not build or whose cue
+    is gone has no target to check: it is listed with got = 'n/a' instead."""
     out = []
     by_id = {s_["id"]: s_ for s_ in timeline["scenes"]}
+
+    def placed(sid, kind, target):
+        cands = [(actual, label) for cid, label, tg, actual, k in sc.syncs
+                 if cid == sid and k == kind and abs(actual - target) <= tol]
+        return min(cands, key=lambda x: abs(x[0] - target)) if cands else None
+
     for sid, ph, mode, kind in REQUIRED_HITS:
         s_ = by_id.get(sid)
         if s_ is None or not any(ph in ln["text"] for ln in s_["lines"]):
             out.append((sid, ph, mode, kind, float("nan"), None))
             continue
         target = s_["start"] + phrase_time(s_, ph, mode)
-        cands = [(actual, label) for cid, label, tg, actual, k in sc.syncs
-                 if cid == sid and k == kind and abs(actual - target) <= tol]
-        out.append((sid, ph, mode, kind, target, min(cands, key=lambda x: abs(x[0] - target)) if cands else None))
+        out.append((sid, ph, mode, kind, target, placed(sid, kind, target)))
+    if picture:
+        for sid, label, kind, t_rel, note in picture_targets(timeline):
+            if t_rel is None:
+                out.append((sid, label, "picture", kind, float("nan"), ("n/a", note)))
+                continue
+            target = by_id[sid]["start"] + t_rel
+            out.append((sid, label, "picture", kind, target, placed(sid, kind, target)))
     return out
 
 
@@ -700,13 +759,19 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
                    not probs, "; ".join(probs[:4]) or f"{len(sc.cues)} cues, {sum(len(c.segs) for c in sc.cues)} segments"))
     hits = required_hits(sc, timeline)
     miss = [f"{sid} '{ph}'" for sid, ph, mode, kind, target, got in hits if got is None]
-    w("REQUIRED HIT POINTS (target computed here from the timeline text and subtitle-chunk timings, independently of")
-    w("the score code; the score must place a sync of that kind within 50 ms of it)")
+    na = [f"{sid} {ph} ({got[1]})" for sid, ph, mode, kind, target, got in hits if got and got[0] == "n/a"]
+    w("REQUIRED HIT POINTS (target computed here, independently of the score code, from the timeline text and")
+    w("subtitle-chunk timings -- or, for 'picture' hits, from the scenes' own sound-effect cues, which follow the")
+    w("animation; the score must place a sync of that kind within 50 ms of it)")
     for sid, ph, mode, kind, target, got in hits:
+        if got and got[0] == "n/a":
+            w(f"  {sid:14s} {kind:6s} {mode:10s} {ph}  n/a: {got[1]}")
+            continue
         w(f"  {sid:14s} {kind:6s} {mode:10s} '{ph}'  target {target:8.3f}s  "
           + (f"score {got[1]!r} at {got[0]:8.3f}s ({1000 * (got[0] - target):+.0f} ms)" if got else "MISSING"))
-    checks.append(("required hit points placed from the narration text (calm, gulp, turn, salvation, herald, waltz...)",
-                   not miss, ", ".join(miss) or f"all {len(hits)}"))
+    checks.append(("required hit points placed (narration text: calm, turn, salvation, herald, waltz...; picture: "
+                   "the wave hit, the splash, the gulp, the horn blow, Jonah's stamps)", not miss,
+                   (", ".join(miss) or f"all {len(hits) - len(na)}") + (f"; not checkable: {na}" if na else "")))
     w("")
 
     # ---------------------------------------------------------------- per-scene levels

@@ -128,11 +128,16 @@ def king(c):
     c.gain(-0.5)
     i_h = c.find("全城宣告")
     t_h = c.gap(i_h)
-    t_d = c.gap(i_h + 1)
     t_hope = c.at("说不定上帝会可怜我们")
+    # the decree begins ON THE PICTURE: the messenger blows the horn on the terrace (audio/picture.py, the
+    # scene's shofar cue) -- the shofar is the herald's call, so the orchestra does not play a horn call
+    # before any horn is seen; it marks the blow with a timpani stroke and a plucked chord
+    blow = c.picture("s17_king:horn_blow")
+    t_blow_pic = blow[0] if blow else c.gap(i_h + 1)
+    t_blow = min(max(t_blow_pic, t_h + 1.5), t_hope - 8.0)
     a = c.seg(0, t_h, 4, "3/4", "G minor", nominal=62, label="king-throne")
-    h = c.seg(t_h, t_d, 2, "2/4", "G minor+", nominal=72, label="king-herald")
-    d = c.seg(t_d, t_hope, 5, "4/4", "G minor+", nominal=74, label="king-decree")
+    h = c.seg(t_h, t_blow, 2, "2/4", "G minor+", nominal=72, label="king-herald")
+    d = c.seg(t_blow, t_hope, 5, "4/4", "G minor+", nominal=74, label="king-decree")
     p = c.seg(t_hope, c.dur, 2, "4/4", "G minor+", nominal=100, rit=0.15, label="king-hope")
     a.prog("Gm:3 | F:3 | Eb:3 | D:3@G-harmonic")
     h.prog("Gm:2 | D:2")
@@ -147,26 +152,34 @@ def king(c):
     a.mel("horn", "Bb3:3 | A3:3 | G3:3 | F#3:3", vel=44, role="counter")
     a.expr(["vla", "vln2", "vc", "cb", "horn"], [(0, -13.5), (12, -12.5)])
     a.expr("vln_mel", [(0, -9.5), (12, -10.5)])
-    # herald: a horn call under '国王又派人在全城宣告', a timpani stroke and a soft drum roll
-    h.mel("horn", "D4:3/4:a D4:1/4 G4:1 | Bb4:3/4 A4:1/4 F#4:1", vel=64)
-    h.sync("herald horn", 0, t_h)
-    h.add("timp", 0, 1, "G2", 64, "timp", "h")
-    h.add("pz_cb", 0, 0.5, "G1", 60, "bass", "h")
-    h.add("pz_lo", 0, 0.5, "G2", 58, "bass", "h")
-    for nm in ("G3", "D4", "Bb4"):                     # a plucked fanfare chord under the first note
-        h.add("pz_hi" if nm != "G3" else "harp", 0, 0.5, nm, 58, "arp", "h")
+    # herald: the king commands (a timpani stroke, plucked basses) and the messenger walks out to the
+    # terrace under '国王又派人在全城宣告': the strings move to the dominant, a timpani roll grows into the blow
+    h.sync("the king's command (timpani, plucked chord)", 0, t_h)
+    h.add("timp", 0, 1, "G2", 66, "timp", "h")
+    h.add("pz_cb", 0, 0.5, "G1", 64, "bass", "h")
+    h.add("pz_lo", 0, 0.5, "G2", 60, "bass", "h")
+    for nm in ("G3", "D4", "Bb4"):
+        h.add("pz_hi" if nm != "G3" else "harp", 0, 0.5, nm, 52, "arp", "h")
     h.add("okit", 0, 1, 36, 44, "perc", "h")
-    timp_roll(h, 2, 3.75, midi("D2"), 28, 40)
+    timp_roll(h, 2, 3.85, midi("D2"), 26, 50)
     bassline(h, "cb", 28, 40, 46)
     h.pad(["vla", "vln2"], 2, 55, 70, vel=42, bass_ref=(28, 40))
-    h.expr("horn", [(0, -6), (1.2, -9), (4, -10)])
-    h.expr(["cb", "vla", "vln2"], [(0, -12), (4, -11)])
+    h.expr(["cb", "vla", "vln2"], [(0, -12), (2, -12), (4, -10)])
+    # the blow: a timpani stroke, a plucked G-minor chord and a soft bass drum on the decree's downbeat
+    d.sync("the horn is blown on screen (timpani + plucked chord)", 0, t_blow_pic)
+    d.add("timp", 0, 1, "G2", 72, "timp", "h")
+    d.add("pz_cb", 0, 1, "G1", 66, "bass", "h")
+    d.add("pz_lo", 0, 0.5, "G2", 60, "bass", "h")
+    for nm in ("G3", "D4", "Bb4"):
+        d.add("pz_hi" if nm != "G3" else "harp", 0, 0.5, nm, 58, "arp", "h")
+    d.add("okit", 0, 1, 36, 50, "perc", "h")
     # the decree: a slow processional (pizzicato and timpani on 1 and 3), humming choir
     for q0, q1, ch in d.chord_spans():
         q = q0
         while q < q1 - 1e-6:
-            d.add("timp", q, 1, ch.bass_note(38, 50), 44 if q % 4 == 0 else 36, "timp")
-            d.add("pz_cb", q, 1, ch.bass_note(28, 40), 56, "bass")
+            if q > 1e-6:                               # the downbeat is the blow (above)
+                d.add("timp", q, 1, ch.bass_note(38, 50), 44 if q % 4 == 0 else 36, "timp")
+                d.add("pz_cb", q, 1, ch.bass_note(28, 40), 56, "bass")
             q += 2
     d.pad("ooh", 3, 54, 72, vel=52, bass_ref=(36, 48))
     d.pad(["vla", "vln2"], 2, 53, 70, vel=44, bass_part="vc", bass_lo=40, bass_hi=51)

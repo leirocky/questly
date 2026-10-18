@@ -10,7 +10,9 @@ alike) and non-uniformly (every pause scaled by its own random factor 0.3-1.6, e
 0.85-1.2, several seeds) -- and checks:
   * the score builds (no crash when pauses shrink below the fill / pause helpers' minimum),
   * every cue's segments tile its window exactly and every hit point lies inside its cue,
-  * every required hit point (music_check.REQUIRED_HITS, defined by the narration text) is placed,
+  * every required hit point is placed (music_check.REQUIRED_HITS, defined by the narration text, and
+    music_check.PICTURE_HITS, read from the re-timed scenes' own sfx cues -- a scene that does not build on a
+    re-timed variant is reported as not checkable, and the score falls back to its narration formula),
   * no segment tempo strays more than 35 % from its nominal tempo,
   * harmony (incl. let-ring / echo tails): 0 violations, notes inside instrument ranges, 0 parallel
     fifths/octaves (whole score),
