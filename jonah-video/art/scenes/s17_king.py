@@ -107,8 +107,8 @@ DONKEY = dict(x=3275, y=1150, s=0.78, f=-1)  # rump ends at x ~3365, left of the
 MAN_A = dict(x=3830, y=1272, s=1.0, v=1)
 MAN_B = dict(x=4280, y=1278, s=1.0, v=3)
 SHAKE_DX = 99                        # each man steps this far toward the other to shake hands
-KID_G = dict(x=4475, y=1306, s=0.85, v=1)    # the little girl
-KID_B = dict(x=4665, y=1298, s=1.0, v=0)     # the big boy
+KID_G = dict(x=4475, y=1272, s=0.85, v=1)    # the little girl (kept above the subtitle band in the end framing)
+KID_B = dict(x=4665, y=1264, s=1.0, v=0)     # the big boy
 MOTHER = dict(x=4800, y=1212, s=0.92, v=2)
 ELDER = dict(x=5065, y=1166, s=0.82)         # the old neighbour...
 HELPER = dict(x=4915, y=1190, s=0.85)        # ...and the young man who comforts him: standing a little in front
@@ -189,13 +189,15 @@ def trap(a=0.3):
 
 
 def cam_path(keys):
-    """keys [(t, Cam, bump[, curve])]: eased moves between key cameras (each key is clamped to the stage first).
-    ``bump`` widens the view by that many stage px in the middle of the move that starts at the key (a gentle
-    pull-back that keeps long pans calm on screen); it follows sin^2, so the zoom starts and ends at zero speed.
+    """keys [(t, Cam, bump[, curve[, zoom_lag]])]: eased moves between key cameras (each key is clamped to the
+    stage first). ``bump`` widens the view by that many stage px in the middle of the move that starts at the key
+    (a gentle pull-back that keeps long pans calm on screen); it follows sin^2, so the zoom starts and ends at zero
+    speed. ``zoom_lag`` (0..1) holds the width change back until that fraction of the move, so a pan that ends in
+    a push-in zooms while it is already slowing down (keeps the on-screen speed of the fast middle part low).
     The viewport's BOTTOM edge is interpolated (not its centre) and the bump grows the view upward, so moves near
     the bottom of the stage never run into the clamp mid-move (no kinks)."""
-    keys = sorted([(k[0], clamp_cam(k[1]), k[2], k[3] if len(k) > 3 else "sine") for k in keys],
-                  key=lambda k: k[0])
+    keys = sorted([(k[0], clamp_cam(k[1]), k[2], k[3] if len(k) > 3 else "sine", k[4] if len(k) > 4 else 0.0)
+                   for k in keys], key=lambda k: k[0])
 
     def bottom(c):
         return c.y + c.w * 9 / 32
@@ -205,11 +207,12 @@ def cam_path(keys):
             return keys[0][1]
         if t >= keys[-1][0]:
             return keys[-1][1]
-        for (t0, a, bump, curve), (t1, b, _, _) in zip(keys, keys[1:]):
+        for (t0, a, bump, curve, zl), (t1, b, _, _, _) in zip(keys, keys[1:]):
             if t0 <= t <= t1:
                 u = M.progress(t, t0, t1, curve)
                 v = (t - t0) / (t1 - t0) if t1 > t0 else 1.0
-                w = M.lerp(a.w, b.w, u) + bump * math.sin(math.pi * v) ** 2
+                uw = M.progress(v, zl, 1.0, "sine") if zl > 0 else u
+                w = M.lerp(a.w, b.w, uw) + bump * math.sin(math.pi * v) ** 2
                 yb = M.lerp(bottom(a), bottom(b), u)
                 return clamp_cam(Cam(M.lerp(a.x, b.x, u), yb - w * 9 / 32, w))
         return keys[-1][1]
@@ -287,9 +290,9 @@ def clouds_svg(items, fill, shade):
 OVERCAST = {
     "back": ([(2650, 70, 900, 300, 71), (3450, 40, 960, 320, 72), (4300, 60, 1000, 330, 73),
               (5150, 40, 940, 310, 74)], ("#9b9eac", "#828495")),
-    "front": ([(3050, 210, 780, 260, 76), (3900, 200, 860, 280, 77), (4750, 220, 840, 270, 78),
-               (5450, 200, 700, 250, 79)], ("#9294a3", "#7b7d8c")),
-    "low": ([(3450, 360, 560, 170, 80), (4330, 372, 620, 180, 81), (5120, 352, 540, 165, 82)],
+    "front": ([(3050, 270, 780, 260, 76), (3900, 260, 860, 280, 77), (4750, 280, 840, 270, 78),
+               (5450, 260, 700, 250, 79)], ("#9294a3", "#7b7d8c")),
+    "low": ([(3450, 440, 560, 170, 80), (4330, 452, 620, 180, 81), (5120, 432, 540, 165, 82)],
             ("#9fa1ac", "#8c8d98")),
 }
 
@@ -364,8 +367,8 @@ def far_people_svg():
     """The whole city prays: small figures in sackcloth kneeling along the back of the street (static)."""
     rng = random.Random(12)
     body = ""
-    # (no one stands right behind the donkey: a head would peek above its back)
-    for i, x in enumerate((2060, 2330, 2520, 2760, 3060, 2915, 3700, 4020, 4480, 4880, 5120, 5300)):
+    # (no one kneels right behind the donkey — a head would peek above its back — or where the cow's "?" goes)
+    for i, x in enumerate((2060, 2330, 2635, 2760, 3060, 2915, 3700, 4020, 4480, 4880, 5120, 5300)):
         y = rng.uniform(1040, 1072)
         s = 0.42 + (y - 1000) * 0.0022
         kind = ("man", "woman", "elder", "child", "woman", "man")[i % 6]
@@ -384,10 +387,11 @@ def yard_back_svg():
         h = 92 + (i % 2) * 6
         posts += (f'<path d="M{x - 9},{y} L{x - 8},{y - h} Q{x},{y - h - 9} {x + 8},{y - h} L{x + 9},{y} Z" '
                   f'fill="{P["wood"]}" stroke="{ink}" stroke-width="3.5"/>')
-    for yy in (y - 70, y - 34):
-        rails += (f'<path d="M{x0 - 20},{yy} C{(x0 + x1) / 2},{yy + 6} {(x0 + x1) / 2},{yy - 6} {x1 + 20},{yy}" '
+    xe = x0 + 95 * ((x1 - x0) // 95) + 12        # the rails end just past the last post (nothing pokes into the
+    for yy in (y - 70, y - 34):                   # families' framing)
+        rails += (f'<path d="M{x0 - 20},{yy} C{(x0 + xe) / 2},{yy + 6} {(x0 + xe) / 2},{yy - 6} {xe},{yy}" '
                   f'stroke="{ink}" stroke-width="15" fill="none" stroke-linecap="round"/>'
-                  f'<path d="M{x0 - 20},{yy} C{(x0 + x1) / 2},{yy + 6} {(x0 + x1) / 2},{yy - 6} {x1 + 20},{yy}" '
+                  f'<path d="M{x0 - 20},{yy} C{(x0 + xe) / 2},{yy + 6} {(x0 + xe) / 2},{yy - 6} {xe},{yy}" '
                   f'stroke="{P["wood_light"]}" stroke-width="8" fill="none" stroke-linecap="round"/>')
     body = rails + posts
     # a coil of rope on a post and a little straw on the ground (no food in reach)
@@ -479,10 +483,10 @@ def dust_markup(cx, cy, w, seed=0):
     """A low puff of sandy dust (a lid / mat landing)."""
     rng = random.Random(seed)
     out = ""
-    for i in range(5):
-        px = cx + (i - 2) / 2 * w * 0.5 + rng.uniform(-8, 8)
-        py = cy - rng.uniform(0, 16)
-        sz = rng.uniform(56, 78) * w / 260
+    for i in range(3):
+        px = cx + (i - 1) * w * 0.32 + rng.uniform(-6, 6)
+        py = cy - rng.uniform(0, 12)
+        sz = rng.uniform(46, 60) * w / 120
         out += S.cloud(px, py, sz, sz * 0.58, "#efe0bf", seed=seed * 11 + i, puffs=3, sw=2.2, shade_fill="#dcc79c")
     return S.g(out, filter="wobble-fine", opacity=0.9)
 
@@ -926,8 +930,8 @@ def build(ctx):
     t_sorry = snap(within(c0c, 0.5))           # "表示真心认错": head bowed, sorry
     t_bow = snap(within(c0c, 0.56))            # messenger and scribe bow their heads
     t_speak = snap(c1.start + 0.1)             # "国王又派人…": the king speaks
-    t_attn = snap(c1.start + 0.25)             # the two straighten up (and nod)
-    t_go = snap(c1.start + 0.65)               # ...and walk out to the terrace (planted-foot steps)
+    t_attn = snap(c1.start + 0.2)              # the two straighten up (and nod)
+    t_go = snap(c1.start + 0.55)               # ...and walk out to the terrace (planted-foot steps)
     WALK_P = 0.25                              # one stride drawing per WALK_P
     m_steps = 7
     t_arrive = snap(t_go + m_steps * WALK_P)
@@ -938,7 +942,7 @@ def build(ctx):
     r_arr = snap(r_go + r_steps * WALK_P)
     t_scroll = snap(max(r_arr + 0.25, t_arrive))   # ...and unrolls the decree
     t_read = L2.start + 0.05                   # the king's words are read out
-    t_horn_down = snap(max(L2.start + 0.35, t_blow + 1.0))
+    t_horn_down = snap(max(L2.start + 0.15, t_blow + 0.9))   # the blast ends as the decree is read out
     t_lid = snap(within(c2a, 0.72))            # "都不可以吃": the farmer lifts the plank...
     t_lid_on = t_lid + 0.42                    # ...and lays it over the manger
     t_mat = snap(c2b.start + 0.12)             # "也不可以喝": the girl pulls the mat
@@ -980,7 +984,8 @@ def build(ctx):
     cyc = (0, 1, 2, 3, 4, 3, 2, 1)
     DOVES = ((1, [(12.2, 1900, 180), (15.5, 2350, 470), (21.0, 3000, 440), (25.0, 3500, 300), (27.0, 3650, 60)],
               0.5, 10.0),
-             (1, [(14.9, 1500, 330), (17.0, 1950, 520), (23.0, 2900, 470), (26.5, 3500, 380), (28.8, 3800, 60)],
+             # (dove 1 starts hidden behind the palace lintel)
+             (1, [(14.9, 1440, 350), (17.0, 1950, 520), (23.0, 2900, 470), (26.5, 3500, 380), (28.8, 3800, 60)],
               0.4, 11.0),
              (-1, [(24.6, 5450, 440), (31.0, 4500, 470), (35.0, 3900, 420), (T + 0.6, 3700, 400)], 0.48, 9.5))
     for i, (fc, pts, s, rate) in enumerate(DOVES):
@@ -1314,12 +1319,12 @@ def build(ctx):
         hop(t_lid_on, [(0, {"sy": 1, "dy": 0}), (0.06, {"sy": 0.86, "dy": 3}), (0.16, {"sy": 1.03, "dy": -11}),
                        (0.28, {"sy": 0.97, "dy": 0}), (0.36, {"sy": 1.0, "dy": -3}), (0.44, {"sy": 1, "dy": 0})],
             (lid_cx, lid_cy + LID_H / 2), ["out", "out", "in", "out", "in"])))
-    for k, dxp in enumerate((-1, 1)):
-        px_, py_ = lid_cx + dxp * (MANGER[1] - MANGER[0]) * 0.5, MANGER[2] + 4
-        sc.add(f"lid_dust{k}", doc(dust_markup(px_, py_, 170, seed=40 + k)), z=11.75, wc=0.4,
-               motion=hop(t_lid_on, [(-0.02, {"alpha": 0, "s": 0.6, "dx": 0, "dy": 0}),
-                                     (0.07, {"alpha": 0.85, "s": 0.95}),
-                                     (0.6, {"alpha": 0, "s": 1.3, "dx": dxp * 40, "dy": -30})], (px_, py_),
+    for k, dxp in enumerate((-1, 1)):       # small puffs squeezed out at both ends of the lid
+        px_, py_ = lid_cx + dxp * ((MANGER[1] - MANGER[0]) * 0.5 + 40), MANGER[2] - 4
+        sc.add(f"lid_dust{k}", doc(dust_markup(px_, py_, 100, seed=40 + k)), z=11.75, wc=0.4,
+               motion=hop(t_lid_on, [(-0.02, {"alpha": 0, "s": 0.5, "dx": 0, "dy": 0}),
+                                     (0.07, {"alpha": 0.75, "s": 0.9}),
+                                     (0.5, {"alpha": 0, "s": 1.25, "dx": dxp * 45, "dy": -22})], (px_, py_),
                           ["out", "sine"]))
 
     # the water trough (in front of the lamb), the girl behind it and the reed mat
@@ -1516,30 +1521,37 @@ def build(ctx):
           + PR.grass_tuft(4520, SH + 2, 1.1, variant=2) + PR.bush(4760, SH + 20, 1.0, variant=1))
     sc.add("foreground", doc(fg), z=20)
 
-    # ---- camera: on the king; with the heralds to the terrace; glide (with a small pull-back on the way, to keep
-    # the on-screen speed gentle) to the yard; glide on to the families; at the end tilt up with their hopeful
-    # gaze toward the warm light ----
-    A = Cam(930, 822, 1860)
+    # ---- camera: on the king; with the heralds to the terrace, where it rests on the horn and the scroll; glide
+    # (with a small pull-back on the way, to keep the on-screen speed gentle) and push in close on the yard for the
+    # two "not eat / not drink" beats; ease back out for the blankets and hold on the praying yard; glide on to the
+    # families through the pause; at the end tilt up a little with their hopeful gaze toward the grey sky ----
+    A = Cam(934, 822, 1860)
     A2 = Cam(905, 830, 1780)
-    B = Cam(1480, 870, 1950)
-    Cc = Cam(2575, 945, 1760)
-    D = Cam(4360, 900, 1900)
-    D2 = Cam(4375, 855, 2000)
-    t_bc0 = max(L2.start - 0.3, t_arrive + 0.9)
-    t_cd0 = c3b.start + 0.1
+    B = Cam(1600, 870, 1900)
+    Cy = Cam(2560, 995, 1360)
+    Cc = Cam(2820, 905, 1880)
+    D = Cam(4330, 900, 1800)
+    D2 = Cam(4410, 880, 1960)
+    t_bc0 = max(L2.start + 0.25, t_arrive + 1.05)    # ~1 s on the horn and the scroll
+    t_cy = max(t_bc0 + 2.7, t_lid + 0.3)             # (nearly) settled close on the yard as the lid is lifted
+    t_cy1 = max(c2b.end + 0.1, t_mat_on + 1.0)
+    t_cc = max(t_cloth - 0.15, t_cy1 + 1.6)
+    t_cd0 = max(c3b.start + 1.2, t_pray + 1.0)       # hold on the kneeling yard
+    t_cd1 = max(t_cd0 + 3.5, c4a.start + 1.4)
     sc.camera = cam_path([
-        (0, A, 0), (t_sit - 0.5, A, 0), (c0c.end, A2, 0), (t_go - 0.15, A2, 0), (t_arrive + 0.75, B, 0),
-        (t_bc0, B, 380), (t_bc0 + 3.0, Cc, 0), (t_cd0, Cc, 520), (t_cd0 + 4.3, D, 0), (t_hope - 0.2, D, 0),
-        (T - 1.0, D2, 0)])
+        (0, A, 0), (t_sit - 0.5, A, 0), (c0c.end, A2, 0), (t_go - 0.3, A2, 0), (t_arrive + 0.1, B, 0),
+        (t_bc0, B, 350, trap(0.3), 0.35), (t_cy, Cy, 0), (t_cy1, Cy, 0), (t_cc, Cc, 0), (t_cd0, Cc, 480, trap(0.3)),
+        (t_cd1, D, 0), (t_hope - 0.2, D, 0), (T - 1.0, D2, 0)])
 
     # ---- effects ----
+    # the cool gloom of the overcast deepens while the city prays (s18 opens in the same gloom)
+    gloom = M.keys([(t_oc0, {"alpha": 0}), (c4a.end, {"alpha": 0.55}), (c4c.start, {"alpha": 0.85})], "sine")
     sc.fx = [
         FX.motes((150, 500, 1700, 1150), count=26, t0=-1, t1=c1.end + 1.5, color=(255, 236, 196), size=(2.5, 5.5),
                  alpha=120, seed=31),
         FX.motes((ax - 200, SPOT_Y - 260, ax + 200, SPOT_Y - 40), count=10, t0=t_sit, t1=c1.end + 2,
                  color=(214, 208, 200), size=(2.5, 5), alpha=150, seed=37),
-        FX.motes((3000, 200, 4800, 1200), count=26, t0=t_hope, t1=T + 1, color=(255, 238, 196), size=(3, 7),
-                 alpha=130, seed=41),
+        gloom_fx(lambda t: gloom(t).alpha),
     ]
 
     # ---- sound ----
@@ -1547,13 +1559,15 @@ def build(ctx):
     sc.sfx("cloth", t_sack, gain_db=-8)
     sc.sfx("cloth", t_sit - 0.05, gain_db=-14)
     sc.sfx("footsteps", t_go, dur=t_arrive - t_go, gain_db=-14, fade_in=0.05, fade_out=0.2, rate=1 / WALK_P)
-    sc.sfx("horn", t_blow, dur=1.3, gain_db=-11, pan=-0.1, fade_out=0.5)
-    sc.sfx("horn", t_blow + 1.0, dur=1.4, gain_db=-22, pan=0.5, fade_out=0.5)
+    sc.sfx("horn", t_blow, dur=1.0, gain_db=-11, pan=-0.1, fade_out=0.4)    # fades before the decree's words
+    # the roof heralds answer from across the city (fainter and further right)
+    sc.sfx("horn", t_blow + 0.9, dur=1.4, gain_db=-22, pan=0.5, fade_out=0.5)
+    sc.sfx("horn", t_blow + 1.7, dur=1.4, gain_db=-24, pan=0.7, fade_out=0.5)
     sc.sfx("thud", t_lid_on, gain_db=-10)
     sc.sfx("thud", t_mat_on, gain_db=-15, pan=0.3)
     for i, (tp, *_r) in enumerate(puffs):
         sc.sfx("pop", tp, gain_db=-14, pan=-0.2 + 0.15 * i)
     sc.sfx("cloth", t_cloth, gain_db=-14)
-    sc.sfx("sheep", snap(t_cloth + 0.95), gain_db=-12, pan=0.35)
-    sc.sfx("sparkle", t_hope + 0.2, gain_db=-18)
+    # the puzzled lamb bleats in the pause after "也不可以喝" (not over the words)
+    sc.sfx("sheep", L2.end + 0.05, gain_db=-17, pan=0.35)
     return sc
