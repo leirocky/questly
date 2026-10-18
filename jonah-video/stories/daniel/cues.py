@@ -569,7 +569,7 @@ def den(c):
     e.mel("cb", "D2:2 A1:2", vel=44, role="bass")
     e.pad(["vla", "vln2"], 2, 52, 67, vel=40, bass_part="vc", bass_lo=45, bass_hi=57)
     e.expr(["tbn", "horn"], [(0, -13), (1, -15), (4, -16)])
-    e.expr(["vla", "vln2", "vc", "cb"], [(0, -13), (4, -13)])
+    e.expr(["vla", "vln2", "vc", "cb"], [(0, -13), (3, -13), (4, -16)])   # ease into the night
 
 
 def night(c):
@@ -593,7 +593,7 @@ def night(c):
     # the den's last chord fades into the night
     h.pad(["vla", "vln2"], 2, 52, 67, vel=40, bass_ref=(33, 45))
     h.add("cb", 0, 2, "A1", 40, "bass")
-    h.expr(["vla", "vln2", "cb"], [(0, -13), (2, -15)])
+    h.expr(["vla", "vln2", "cb"], [(0, -12), (2, -15)])
     # night in the palace: a dark pad, low basses, the celesta's stars (echoing)
     a.pad("pad", 3, 50, 69, vel=54, bass_ref=(38, 50))
     a.pad(["vla", "vln2"], 2, 53, 69, vel=38, bass_ref=(38, 50))
