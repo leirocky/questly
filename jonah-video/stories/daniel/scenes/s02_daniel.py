@@ -676,17 +676,20 @@ WALK_P = 0.27                   # one stride drawing per WALK_P (s)
 def actor(sc, name, z, frames, anchor, s, base, walks=(), bumps=(), breathe=(0.01, 3.0, 0.0), extra=None,
           start_off=0.0, seed=None):
     """A character layer: ``frames`` are drawings at ``anchor`` (index 0 / 1 = walk_a / walk_b); ``base`` is
-    [(t, frame index)] of hard cuts; ``walks`` [(t0, n, step)] planted-foot walks (s17 step_walk, WALK_P) that
-    add up; ``bumps`` extra motions (dips, nods, hops) about the anchor; ``start_off`` shifts the figure at t=0
-    (draw it where it ends up and start it off-stage: drawings must lie inside the stage). Returns dx(t)."""
-    ws = [step_walk(t0, n, st, WALK_P, s) for t0, n, st in walks]
+    [(t, frame index)] of hard cuts; ``walks`` [(t0, n, step[, pair[, period]])] planted-foot walks (s17's
+    step_walk) that add up, ``pair`` = index of that walk's walk_a drawing (walk_b follows it; default 0; pass None
+    placeholders for 0 / 1 when the figure never walks); ``bumps`` extra motions (dips, nods, hops) about the
+    anchor; ``start_off`` shifts the figure at t=0 (draw it where it ends up and start it off-stage: drawings must
+    lie inside the stage). Returns dx(t)."""
+    ws = [step_walk(w[0], w[1], w[2], w[4] if len(w) > 4 else WALK_P, s) for w in walks]
+    pairs = [w[3] if len(w) > 3 else 0 for w in walks]
     fb = cuts(base)
 
     def fa(t):
-        for w in ws:
+        for w, pb in zip(ws, pairs):
             v = w[0](t)
             if v is not None:
-                return v
+                return v + pb
         return fb(t)
 
     def dx(t):

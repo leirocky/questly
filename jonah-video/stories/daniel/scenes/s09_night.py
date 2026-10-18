@@ -182,7 +182,7 @@ def wall_dress_svg():
     body += (f'<path d="M{x0 - 80},{top - 30} L{x1 + 80},{top - 30}" stroke="#8d6a4a" stroke-width="14" '
              f'stroke-linecap="round"/>')
     # tapestry: a rosette and two friendly lions, hung from a rod behind the couch
-    tx0, tx1, ty0, ty1 = 1150, 1530, 300, 700
+    tx0, tx1, ty0, ty1 = 1400, 1660, 300, 660
     body += (f'<path d="M{tx0},{ty0} L{tx1},{ty0} L{tx1},{ty1} L{(tx0 + tx1) / 2 + 60},{ty1 - 10} L{(tx0 + tx1) / 2},'
              f'{ty1 + 22} L{(tx0 + tx1) / 2 - 60},{ty1 - 10} L{tx0},{ty1} Z" fill="#7a3a4a" {S.STROKE}/>')
     body += (f'<rect x="{tx0 + 22}" y="{ty0 + 22}" width="{tx1 - tx0 - 44}" height="{ty1 - ty0 - 60}" fill="none" '
@@ -193,7 +193,7 @@ def wall_dress_svg():
         body += (f'<ellipse cx="{f1(cxm + 46 * math.cos(a))}" cy="{f1(cym + 46 * math.sin(a))}" rx="22" ry="11" '
                  f'fill="#d6a65a" transform="rotate({j * 30} {f1(cxm + 46 * math.cos(a))} {f1(cym + 46 * math.sin(a))})"/>')
     body += f'<circle cx="{cxm}" cy="{cym}" r="26" fill="#3d5a7a" {S.STROKE_THIN}/>'
-    body += PR.lion(cxm - 95, ty1 - 70, 0.22, 1, pose="sit") + PR.lion(cxm + 95, ty1 - 70, 0.22, -1, pose="sit")
+    body += PR.lion(cxm - 70, ty1 - 64, 0.18, 1, pose="sit") + PR.lion(cxm + 70, ty1 - 64, 0.18, -1, pose="sit")
     body += f'<path d="M{tx0 - 30},{ty0} L{tx1 + 30},{ty0}" stroke="#8d6a4a" stroke-width="14" stroke-linecap="round"/>'
     return doc(S.g(body, filter="wobble-fine"))
 
@@ -272,11 +272,9 @@ def build(ctx):
     T = ctx.duration
     L0, L1 = ctx.line(0), ctx.line(1)
 
-    t_back = L0.start                             # '那天晚上，国王回到宫里'
     t_food = phrase_t(L0, "不吃饭")
     t_music = phrase_t(L0, "不要人奏乐")
     t_sleep = L0.at("整夜都睡不着觉")
-    t_pace = L1.start                             # '他走来走去'
     t_window = phrase_t(L1, "看看窗外")
     t_sigh = L1.at("叹一口气")
     t_think = L1.at("他一直在想")
@@ -336,7 +334,6 @@ def build(ctx):
     t_sad = snap(t_sigh + 0.35)
     t_look2 = snap(t_think)
 
-    kp_walk = (KX_SIT0, FLOOR)
     walk_in = [doc(C.king(KX_SIT0, FLOOR, KS, -1, pose=p, attire="darius", expr="sad")) for p in ("walk_a", "walk_b")]
     walk_in += [doc(C.king(KX_SIT0, FLOOR, KS, -1, pose="stand", attire="darius", expr="sad"))]
     sc.add("sh_kin", doc(C.ground_shadow(KX_SIT0, FLOOR, KS, 130, 0.3)),

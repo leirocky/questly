@@ -149,7 +149,7 @@ def clouds_svg(i):
 
 def jerusalem_local():
     """Tiny far-away Jerusalem (local, bottom centre on its hilltop): a little walled city with a temple."""
-    wall, lt, roof = "#d9cdb8", "#ece2cf", "#c9b89c"
+    wall, lt = "#d9cdb8", "#ece2cf"
     out = ""
     # houses climbing behind the wall
     for x, y, w, h in [(-62, -38, 26, 22), (-36, -44, 22, 26), (30, -40, 24, 24), (52, -34, 22, 20)]:
@@ -468,7 +468,7 @@ def sun_svg(i):
                + f'<g transform="translate({x},{y})">{num}</g>')
 
 
-def light_rays_svg(ox, oy, tx, ty, spread, length_k, pool, uid, n=5):
+def light_rays_svg(ox, oy, tx, ty, spread, length_k, pool, uid, n=5, wk=1.0):
     """Soft golden rays from a point above the frame (ox, oy) toward (tx, ty), fanning +-spread degrees, and a
     warm pool of light at the target (God's light — never a figure)."""
     ang = math.degrees(math.atan2(ty - oy, tx - ox))
@@ -479,7 +479,7 @@ def light_rays_svg(ox, oy, tx, ty, spread, length_k, pool, uid, n=5):
     body = ""
     for i in range(n):
         a = ang + spread * (2 * i / (n - 1) - 1)
-        w = 22 + 10 * (i % 2)
+        w = (22 + 10 * (i % 2)) * wk
         body += (f'<path d="M0,-6 L{f1(dist)},{-w} L{f1(dist)},{w} L0,6 Z" fill="url(#{uid})" '
                  f'transform="translate({ox},{oy}) rotate({a:.2f})"/>')
     body = f'<g filter="url(#soft)">{body}</g>'
@@ -755,12 +755,10 @@ def build(ctx):
     d_read = dan(sp, "stand", facing=-1)
     d_think = dan(sp, "listen", facing=-1)
     d_brave = dan(sp, None, ps=BRAVE, facing=1)
-    d_brave_l = dan(sp, None, ps=BRAVE, facing=-1)
     d_worry = dan(sp, "listen", facing=1)
     d_up = dan(sp, "look_up", facing=1)
     W = walk_drawings(sp, C._daniel_design(), C._DANIEL_M, K, 1, "neutral", label="dwalk")
     adv = 2 * WALK_A / WALK_N * K                      # stage px per walk drawing (planted sole stays put)
-    dist_flat = STAIR_X0 - READ_X
     slope = (GY - FLOOR_UP) / (STAIR_X1 - STAIR_X0)
     n_draw = int(math.ceil((DOOR_X - READ_X) / adv))
     rate = n_draw / (t_door - t_walk)
@@ -810,8 +808,8 @@ def build(ctx):
     beam_a = lambda t: (M.progress(t, t_light - 0.05, t_light + 0.7, "sine") *
                         (1 - M.progress(t, t_walk + 0.4, t_walk + 1.6, "sine")) *
                         (0.85 + 0.15 * math.sin(2 * math.pi * (t - t_light) / 2.4)))
-    sc.add("beam1", light_rays_svg(READ_X - 260, 300, READ_X - 10, GY - 20, 6, 1.0, (190, 46), "s5b1"), wc=0,
-           blend="screen", motion=lambda t: Tf(alpha=0.9 * beam_a(t)))
+    sc.add("beam1", light_rays_svg(READ_X - 260, 300, READ_X - 10, GY - 20, 7, 1.0, (210, 52), "s5b1", n=6, wk=1.9),
+           wc=0, blend="screen", motion=lambda t: Tf(alpha=beam_a(t)))
     win_a = lambda t: (M.progress(t, t_kneel + 0.1, t_kneel + 1.2, "sine") *
                        (0.85 + 0.15 * math.sin(2 * math.pi * (t - t_kneel) / 2.6)))
     sc.add("beam2", light_rays_svg(WIN_X - 420, 120, WIN_X - 60, WIN_Y - 60, 5, 0.92, (210, 70), "s5b2"), wc=0,

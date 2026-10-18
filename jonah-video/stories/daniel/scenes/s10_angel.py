@@ -38,11 +38,11 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 
 INK = P["ink"]
-FY = 945                    # Daniel's seat on the floor
-DX = 1050                   # Daniel (sitting, facing left, his back to the right)
-DS = 1.0
-AX, AY = 1120, 330          # the angel's light
-HOLE = (700, 46)            # the sealed mouth in the ceiling
+FY = 985                    # Daniel's seat on the floor
+DX = 1030                   # Daniel (sitting, facing left, his back to the right)
+DS = 1.25
+AX, AY = 1090, 350          # the angel's light
+HOLE = (700, 96)            # the sealed mouth in the ceiling
 
 
 def doc(body, defs=""):
@@ -60,7 +60,7 @@ def swap(t_on, t_off):
 # ============================================================================ the den
 
 
-STONE_COLS = ["#6a5e74", "#5f566e", "#726478", "#665a66", "#5a5266"]
+STONE_COLS = ["#6a5e74", "#5f566e", "#726478", "#6c5e60", "#5a5266", "#74665e", "#625a70"]
 
 
 def den_svg():
@@ -74,12 +74,14 @@ def den_svg():
     yy = -30
     row = 0
     while yy < 900:
-        h = rng.uniform(52, 70)
+        h = rng.uniform(56, 96)
         xx = -80 - rng.uniform(0, 60)
         while xx < W + 80:
-            w = rng.uniform(90, 150)
+            w = rng.uniform(80, 200)
             col = rng.choice(STONE_COLS)
-            stones += S.path(S.blob(xx + w / 2, yy + h / 2, w / 2 - 4, h / 2 - 4, 0.08, 9, seed=int(xx * 3 + yy * 7)),
+            hh = h * rng.uniform(0.8, 1.0)
+            stones += S.path(S.blob(xx + w / 2, yy + h / 2 + rng.uniform(-4, 4), w / 2 - 5, hh / 2 - 5, 0.12, 9,
+                                    seed=int(xx * 3 + yy * 7)),
                              fill=col, sw=0, extra=f'stroke="#2e2638" stroke-width="4"')
             # a soft highlight on top of each stone
             stones += (f'<path d="M{f1(xx + w * 0.25)},{f1(yy + h * 0.3)} Q{f1(xx + w / 2)},{f1(yy + h * 0.16)} '
@@ -89,6 +91,11 @@ def den_svg():
         yy += h + 4
         row += 1
     body += stones
+    # bigger rocks along the foot of the wall
+    for i, x in enumerate(range(-40, W + 80, 230)):
+        rx, ry = rng.uniform(80, 130), rng.uniform(40, 62)
+        body += S.path(S.blob(x + rng.uniform(-40, 40), 880 - ry * 0.4, rx, ry, 0.12, 10, seed=50 + i), fill="#584e60",
+                       sw=0, extra='stroke="#2e2638" stroke-width="4"')
     # vault shading toward the ceiling and the side walls curving in
     body += f'<rect x="-20" y="-20" width="{W + 40}" height="560" fill="url(#s10vault)"/>'
     body += (f'<path d="M-20,-20 L380,-20 Q120,200 90,900 L-20,900 Z" fill="#1a1424" opacity="0.55" '
@@ -112,10 +119,10 @@ def den_svg():
         col = S.mix(P["leaf_dry"], P["sand"], rng.uniform(0, 0.6))
         straw += (f'<path d="M{f1(px)},{f1(py)} L{f1(px + ln * math.cos(a))},{f1(py + ln * math.sin(a) * 0.4)}" '
                   f'stroke="{col}" stroke-width="3.2" stroke-linecap="round" opacity="0.85"/>')
-    for _ in range(40):
+    for _ in range(18):
         px, py = rng.uniform(0, W), rng.uniform(890, H)
-        r = rng.uniform(5, 12)
-        straw += (f'<ellipse cx="{f1(px)}" cy="{f1(py)}" rx="{f1(r * 1.5)}" ry="{f1(r)}" fill="#7a6a62" '
+        r = rng.uniform(6, 13)
+        straw += (f'<path d="{S.blob(px, py, r * 1.6, r, 0.15, 7, seed=int(px))}" fill="#6a5c58" '
                   f'stroke="{INK}" stroke-width="2.5"/>')
     body += straw
     return doc(S.g(body, filter="wobble"), defs)
@@ -154,21 +161,23 @@ def front_svg():
     return doc(S.g(body, filter="wobble"))
 
 
-def wing_svg(side, k=1.0):
-    """One soft wing of light: feather lobes fanning out from the shoulder at (AX + side*30, AY)."""
-    sx0 = AX + side * 26
-    body = ""
-    lobes = [(0.0, 470, 95), (0.12, 430, 85), (0.26, 380, 78), (0.42, 320, 70), (0.6, 250, 62), (0.8, 180, 54)]
-    for j, (a_, ln, wd) in enumerate(lobes):
-        ang = math.radians(-24 + 52 * a_)          # from up-out to out-down
-        ex = sx0 + side * ln * math.cos(ang) * k
-        ey = AY + ln * math.sin(ang) * k
-        cx_, cy_ = (sx0 + ex) / 2, (AY + ey) / 2
-        rot = math.degrees(math.atan2(ey - AY, (ex - sx0)))
-        body += (f'<ellipse cx="{f1(cx_)}" cy="{f1(cy_)}" rx="{f1(ln * k / 2)}" ry="{f1(wd * k / 2)}" '
-                 f'transform="rotate({f1(rot)} {f1(cx_)} {f1(cy_)})" fill="url(#s10wing)"/>')
-    defs = S.rad_grad("s10wing", [(0, "#8a6a3a", 0.9), (0.6, "#6a5030", 0.55), (1, "#3a2a18", 0)])
-    return doc(S.g(body, filter="soft"), defs)
+def wing_svg(side):
+    """One soft wing of light rising from beside the glow (no figure): a rounded leading edge, five scalloped
+    feather tips, a few feather lines. Drawn for the right wing (side=1) and mirrored for the left."""
+    sx0, sy0 = AX + side * 34, AY + 24
+    outline = ("M0,0 C40,-170 150,-330 300,-430 C340,-458 376,-420 352,-372 Q384,-330 336,-300 Q372,-250 316,-228 "
+               "Q348,-170 284,-160 Q302,-100 236,-98 Q238,-40 170,-44 Q160,10 100,4 Q70,40 30,30 Q8,22 0,0 Z")
+    lines = ("M20,-10 Q160,-200 330,-380 M30,0 Q170,-150 320,-300 M40,8 Q180,-100 296,-200 M46,16 Q160,-50 250,-120 "
+             "M46,24 Q130,-10 190,-60")
+    tf = f"translate({sx0},{sy0}) scale({side},1)"
+    body = (f'<g transform="{tf}"><path d="{outline}" fill="url(#s10wing)" filter="url(#soft)"/>'
+            f'<path d="{outline}" fill="none" stroke="#7a6038" stroke-width="5"/>'
+            f'<path d="{lines}" fill="none" stroke="#3e2e18" stroke-width="4" stroke-linecap="round" '
+            f'filter="url(#soft)"/></g>')
+    defs = (f'<radialGradient id="s10wing" gradientUnits="userSpaceOnUse" cx="40" cy="0" r="520">'
+            f'<stop offset="0" stop-color="#9a7a44"/><stop offset="0.55" stop-color="#7a5e34"/>'
+            f'<stop offset="1" stop-color="#4a3820"/></radialGradient>')
+    return doc(body, defs)
 
 
 # ============================================================================ build
@@ -179,7 +188,6 @@ def build(ctx):
     T = ctx.duration
     L0, L1, L2, L3 = (ctx.line(i) for i in range(4))
 
-    t_dark = L0.start                               # '狮子坑里黑黑的'
     t_come = L0.at("大狮子们")                       # '大狮子们慢慢地走过来'
     t_round = L0.at("围在但以理身边")
     t_angel = phrase_t(L1, "上帝派了天使来")
@@ -223,22 +231,22 @@ def build(ctx):
         lambda t: Tf(rot=3.0 * t, px=AX, py=AY)))
     # wings: unfold from folded (tips down) on the angel's coming; come down round everyone on '保护中'
     for side in (-1, 1):
-        sp = (AX + side * 26, AY)
+        sp = (AX + side * 34, AY + 24)
         sc.add(f"wing{side}", wing_svg(side), wc=0, blend="add", motion=M.combine(
             M.keys([(t_angel + 0.3, {"alpha": 0, "rot": side * 70, "s": 0.5}),
                     (t_angel + 1.8, {"alpha": 0.95, "rot": 0, "s": 1.0}),
                     (t_safe + 0.2, {"alpha": 0.95, "rot": 0, "s": 1.0, "dy": 0}),
-                    (t_safe + 2.2, {"alpha": 0.8, "rot": side * 34, "s": 1.25, "dy": 120}),
-                    (T, {"alpha": 0.65, "rot": side * 36, "s": 1.28, "dy": 128})],
+                    (t_safe + 2.6, {"alpha": 0.72, "rot": side * 76, "s": 1.32, "dy": 70, "dx": -side * 46}),
+                    (T, {"alpha": 0.64, "rot": side * 78, "s": 1.34, "dy": 74, "dx": -side * 48})],
                    ["out", "linear", "inout", "sine"], pivot=sp),
             lambda t, side=side: Tf(rot=side * 2.5 * math.sin(2 * math.pi * t / 3.6), px=sp[0], py=sp[1])))
 
     # ---------------------------------------------------------------- lions
     # name: (variant, scale, lane y, facing, x start (lying), x end, t get-up, n strides, mouth opens?)
     lions = {
-        "lioness": (1, 0.8, FY + 18, 1, 230, 676, t_come + 0.05, 10, True),
-        "lionB": (0, 0.8, FY - 42, 1, 640, 1120, t_come + 0.3, 11, False),
-        "lionA": (0, 0.88, FY + 30, -1, 1890, 1585, t_come + 0.75, 6, True),
+        "lioness": (1, 1.0, FY + 22, 1, 130, 565, t_come + 0.05, 8, True),
+        "lionB": (0, 1.0, FY - 52, 1, 520, 1110, t_come + 0.3, 11, False),
+        "lionA": (0, 1.08, FY + 36, -1, 1990, 1660, t_come + 0.75, 6, True),
     }
     shut_t = {"lionA": t_shut + 0.15, "lioness": t_shut + 0.85, "lionB": t_shut + 0.5}
     lie_t = {"lioness": t_down + 0.25, "lionA": t_down + 1.0, "lionB": t_down + 1.75}
@@ -288,8 +296,8 @@ def build(ctx):
                doc(C.daniel(DX, FY, DS, -1, pose="sit_pray")),
                doc(C.daniel(DX, FY, DS, -1, pose="sit", expr="happy")),
                doc(C.daniel(DX, FY, DS, -1, pose="sit", expr="peaceful"))]
-    dp = (DX + 40, FY)
-    lean = M.keys([(t_lean, {"rot": 0}), (t_lean + 0.5, {"rot": 9.0})], "out", pivot=dp)
+    dp = (DX + 10, FY)
+    lean = M.keys([(t_lean, {"rot": 0}), (t_lean + 0.5, {"rot": 5.0})], "out", pivot=dp)
     sc.add("sh_daniel", doc(C.ground_shadow(DX, FY, DS, 230, 0.4)))
     sc.add("daniel", dframes, frame_at=cuts([(0, 0), (t_pray, 1), (t_smile, 2), (t_lean, 3)]),
            motion=M.combine(lean, dip(t_pray, DS, dp, 7), dip(t_smile, DS, dp, 6), dip(t_lean, DS, dp, 6),
@@ -326,8 +334,8 @@ def build(ctx):
     sc.add("front", front_svg(), z=40, seed=21)
 
     # ---------------------------------------------------------------- camera: a slow, continuous push-in
-    sc.camera = M.cam_keys([(0, Cam(W / 2, H / 2, W)), (t_angel, Cam(1080, 600, 1900)),
-                            (T, Cam(1110, 640, 1660))], "sine")
+    sc.camera = M.cam_keys([(0, Cam(W / 2, H / 2, W)), (t_angel, Cam(1090, 615, 1920)),
+                            (T, Cam(1115, 640, 1800))], "sine")
 
     # ---------------------------------------------------------------- light and fx
     def dark(t):

@@ -36,7 +36,7 @@ from stories.daniel.scenes.s02_daniel import (
 INK = P["ink"]
 DX, AX, BX = OVS_END                      # Daniel, overseer A (variant 0), overseer B (variant 2): hall x
 A_PEEK, B_PEEK = 1540, 1690               # behind the front column (hall x 1400)
-C_X, A_X, B_X, D_X = 1920, 2100, 2290, 2480   # around the records table at the end
+A_X, B_X, C_X, D_X = 1920, 2100, 2290, 2480   # around the records table at the end (s04 starts here)
 BASKET = (2620, 1250)
 OS = OVS_S
 
@@ -171,7 +171,7 @@ def build(ctx):
             return Tf(rot=1.2 * math.sin(2 * math.pi * (t / 2.1 + ph))) if t < t_sad else Tf()
         actor(sc, name, z, [None, None] + fr, ap, OS, base=[(0, 2), (snap(t_sad), 3), (snap(t_sch), 4)],
               bumps=[M.with_pivot(look, ap), dip(snap(t_sad), OS, ap, 6), dip(snap(t_sch), OS, ap)],
-              breathe=(0.01, 3.0, ph))
+              breathe=(0.01, 3.0, ph + t_off / 3.0), seed=126 if v == 1 else 127)
         marks.append((x, FLOOR_Y - 400 * OS - 10, None))
 
     # ---------------- scrolls tossed out of the basket while they search

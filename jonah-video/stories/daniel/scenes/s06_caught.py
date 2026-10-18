@@ -32,7 +32,7 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.daniel.scenes import s05_prays as A
 from stories.daniel.scenes import s07_king_sad as B
-from stories.daniel.scenes.s05_prays import (GY, WALK_A, WALK_N, Perf, clamp, doc, fig, phrase_t, sprite,
+from stories.daniel.scenes.s05_prays import (GY, WALK_N, Perf, clamp, doc, fig, phrase_t, sprite,
                                              walk_pose)
 
 KO = 0.75                       # officials' scale in the street
@@ -69,7 +69,6 @@ def build(ctx):
 
     # ---------------------------------------------------------------- beats
     t_peek = [L0.start + 0.75, L0.start + 1.2, L0.start + 1.65]   # v1, v2, v0 pop up
-    t_look = L0.end - 0.4                            # sly glance
     t_point = L1.start - 0.05                        # "看！" v0 jumps up and points
     t_whisp = phrase_t(L1, "他在向", 0.25) + 0.05    # v1 and v2 whisper face to face
     t_run = L2.start - 0.15                          # "他们急忙跑去告诉国王"
@@ -171,8 +170,7 @@ def build(ctx):
            wc=0, blend="screen", motion=lambda t: Tf(alpha=win_a(t)))
 
     # ================================================================ THE PALACE (fades in over the street)
-    sc.add("palace", B.palace_flat_svg(0.08, dx=DX), wc=0.7, motion=lambda t: Tf(alpha=pal_a(t)))
-    sc.add("p_beams", B.sunbeams_svg(), wc=0, blend="screen", motion=lambda t: Tf(dx=DX, alpha=0.3 * pal_a(t)))
+    sc.add("palace", B.palace_flat_svg(0.08, dx=DX, beams_a=0.25), wc=0.7, motion=lambda t: Tf(alpha=pal_a(t)))
     PX = {1: 1330 + DX, 2: 1480 + DX, 0: 1640 + DX}
     ks = sprite(520, 480, 260, 440, seed=70)
     k_sit = B.king_fig(ks, "sit_throne", facing=-1)
@@ -228,8 +226,8 @@ def build(ctx):
         if t > t_x1:
             return frame
         return sp_fx(frame, t + toff, view)
-    sc.fx = [win_sparkles,
-             FX.motes((300, 300, 3000, 1300), count=20, color=(255, 246, 214), size=(3, 6), alpha=90)]
+    motes = FX.motes((300, 300, 3000, 1300), count=20, color=(255, 246, 214), size=(3, 6), alpha=90)
+    sc.fx = [win_sparkles, lambda frame, t, view: frame if t > t_x1 else motes(frame, t, view)]
 
     # ---------------------------------------------------------------- SOUND
     sc.sfx("birds", 0, dur=t_x1, gain_db=-17, fade_in=0.8, fade_out=0.8)

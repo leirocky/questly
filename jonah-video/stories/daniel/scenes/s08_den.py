@@ -219,9 +219,7 @@ def build(ctx):
     L0, L1, L2 = ctx.line(0), ctx.line(1), ctx.line(2)
 
     # ---------------------------------------------------------------- key times (narration)
-    t_order = L0.start                                   # '国王只好下令'
     t_put = L0.at("放进狮子坑")                           # '放进狮子坑里'
-    t_deep = L0.at("狮子坑很深")                          # camera reaches the den
     t_lions = phrase_t(L0, "好多大狮子")
     t_call = L1.start                                    # the king calls down
     t_save = phrase_t(L1, "一定会救你")

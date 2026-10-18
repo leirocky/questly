@@ -37,10 +37,11 @@ from art import style as S
 from art.style import P
 from engine import fx as FX
 from engine import motion as M
+from engine.loader import context
 from engine.motion import Cam, Tf
 from engine.scene import Scene
-from stories.daniel.scenes.s05_prays import (WALK_A, WALK_N, Perf, bubble_svg, clamp, f1, fig, phrase_t, poly,
-                                             rect, sprite, walk_pose)
+from stories.daniel.scenes.s05_prays import (WALK_A, WALK_N, Perf, bubble_svg, clamp, fig, phrase_t, rect, sprite,
+                                             walk_pose)
 
 SW, SH = 3200, 1560
 FY = 1300                      # floor line (feet)
@@ -71,7 +72,10 @@ def p_sky_svg(k):
                       ) + S.rad_grad(f"s7sg{int(k * 100)}", [(0, S.mix("#fff6dc", "#ffe08a", k), 0.85), (1, "#ffe08a", 0)])
     body = S.rect_bg(f"url(#s7sky{int(k * 100)})", SW, SH)
     body += f'<ellipse cx="{SUN_X}" cy="{HORIZON - 40}" rx="700" ry="380" fill="url(#s7sg{int(k * 100)})"/>'
-    return doc(body, defs)
+    # only the part seen through the arched openings (a much smaller layer to composite every frame)
+    holes = " ".join(arch_d(cx, w + 40, OPEN_TOP - 20, OPEN_SILL + 20) for cx, w in OPENINGS)
+    defs += f'<clipPath id="s7skyclip"><path d="{holes}"/></clipPath>'
+    return doc(f'<g clip-path="url(#s7skyclip)">{body}</g>', defs)
 
 
 def p_sun_svg():
@@ -290,12 +294,14 @@ def palace_layers(sc, warm, alpha=None, sun_y=None):
 CAM0 = Cam(1905, 935, 1580)    # the hall framing s06 ends on and s07 starts from (unshifted hall coordinates)
 
 
-def palace_flat_svg(k=0.08, sun_y=SUN_Y0, dx=0):
+def palace_flat_svg(k=0.08, sun_y=SUN_Y0, dx=0, beams_a=0.0):
     """The whole hall at a fixed time of day as ONE layer (s06 dissolves it in: one moving layer instead of ten)."""
     sky = p_sky_svg(0.0 if k < 0.25 else (0.5 if k < 0.75 else 1.0))
     sun = p_sun_svg().replace(f'cy="{SUN_Y0}"', f'cy="{sun_y}"').replace(f'cy="{SUN_Y0 - 18}"', f'cy="{sun_y - 18}"')
+    beams = sunbeams_svg()
+    beams = f'<g style="mix-blend-mode:screen" opacity="{beams_a:.3f}">{beams}</g>' if beams_a > 0 else ""
     parts = [sky, sun, p_city_svg(round(k)), hall_svg(), throne_back_svg(), floor_svg(), curtains_svg(), columns_svg(),
-             lamps_svg(), throne_svg()]
+             lamps_svg(), beams, throne_svg()]
     return doc(f'<g transform="translate({dx},0)">' + "".join(parts) + "</g>")
 
 
@@ -316,12 +322,22 @@ def official_fig(sp, v, pose=None, expr=None, facing=1, ps=None):
 
 # scene-local poses
 _PACE = C.POSES["pace_a"]
-WAG_A = C._P(h=-4, legs=((6, 2), (-6, -2)), arms=(("fk", 8, 3), ("fk", 120, 168)), hands=("fist", "point"),
+WAG_A = C._P(h=-4, legs=((6, 2), (-6, -2)), arms=(("fk", 8, 3), ("fk", 92, 150)), hands=("fist", "point"),
              expr="smug")
-WAG_B = C._P(h=-4, legs=((6, 2), (-6, -2)), arms=(("fk", 8, 3), ("fk", 132, 192)), hands=("fist", "point"),
+WAG_B = C._P(h=-4, legs=((6, 2), (-6, -2)), arms=(("fk", 8, 3), ("fk", 96, 176)), hands=("fist", "point"),
              expr="smug")
-PRESENT = C._P(h=-6, legs=((6, 2), (-6, -2)), arms=(("fk", 112, 128), ("fk", 98, 116)), hands=("fist", "fist"),
+PRESENT = C._P(h=-8, legs=((6, 2), (-6, -2)), arms=(("fk", 128, 146), ("fk", 116, 134)), hands=("fist", "fist"),
                expr="smug")
+
+
+DEC_S = 0.62                   # the decree held up by the old official
+
+
+def decree_at(v, x, y):
+    """Centre of the decree held up in both hands by official v (PRESENT pose) anchored at (x, y)."""
+    fn = lambda x_, y_, s_, f_: fig(C._official_design(v), C._OFFICIAL_M, dict(PRESENT), "smug", x_, y_, s_, f_, "q")
+    h0, h1 = C.body_points(fn, x, y, KP, 1)["hands"]
+    return (h0[0] + h1[0]) / 2 + 8, (h0[1] + h1[1]) / 2 - 20
 
 
 def heart_d(cx, cy, w):
@@ -344,15 +360,19 @@ def walk_set(sp, D, m, facing, expr, arm_ps=None, A_=WALK_A, **over):
 class Walker:
     """Planted-foot walking along x on the floor: legs [(t0, x0, x1, facing)]; between legs the figure stands."""
 
-    def __init__(self, legs, adv, rate, y, sets):
+    def __init__(self, legs, adv, rate, y, sets, rates=None):
         self.legs, self.adv, self.rate, self.y, self.sets = legs, adv, rate, y, sets
+        self.rates = rates
+
+    def r(self, i):
+        return self.rates[i] if self.rates and i < len(self.rates) else self.rate
 
     def _leg(self, t):
         for i, (t0, x0, x1, f) in enumerate(self.legs):
             n = int(abs(x1 - x0) / self.adv)
-            t1 = t0 + n / self.rate
+            t1 = t0 + n / self.r(i)
             if t0 <= t < t1:
-                return i, int((t - t0) * self.rate + 1e-6), n
+                return i, int((t - t0) * self.r(i) + 1e-6), n
         return None
 
     def frame(self, t):
@@ -364,28 +384,32 @@ class Walker:
 
     def x(self, t):
         x = self.legs[0][1]
-        for t0, x0, x1, f in self.legs:
+        for i, (t0, x0, x1, f) in enumerate(self.legs):
             n = int(abs(x1 - x0) / self.adv)
             if t < t0:
                 return x
-            k = min(n, int((t - t0) * self.rate + 1e-6))
+            k = min(n, int((t - t0) * self.r(i) + 1e-6))
             x = x0 + (1 if x1 > x0 else -1) * k * self.adv
         return x
 
     def end(self, i):
         t0, x0, x1, f = self.legs[i]
-        return t0 + int(abs(x1 - x0) / self.adv) / self.rate
+        return t0 + int(abs(x1 - x0) / self.adv) / self.r(i)
 
 
 def build(ctx):
     sc = Scene(ctx, W=SW, H=SH)
     T = ctx.duration
     L0, L1, L2 = ctx.lines[:3]
+    try:                                                # s06's clock: breathing continues through the dissolve
+        t6 = context("s06_caught").duration - 1.0
+    except Exception:
+        t6 = 17.1
 
     # ---------------------------------------------------------------- beats (all from the narration)
     t_sad = phrase_t(L0, "非常难过", 0.2) - 0.1          # chin in hand, very sad
-    t_off_up = L0.start + 0.5                           # the officials straighten up (smug) ...
-    t_off_go = L0.start + 1.1                           # ... and walk out to the left
+    t_off_up = L0.start + 0.15                          # the officials straighten up (smug) ...
+    t_off_go = L0.start + 0.5                           # ... and walk out to the left
     t_rise = L0.chunks[1].start + 0.05                  # "他很喜欢但以理" the king gets up
     t_bub = L0.chunks[1].start + 0.35                   # bubble: smiling Daniel + heart
     t_bub_out = phrase_t(L0, "想尽办法", 0.5) - 0.05
@@ -402,8 +426,10 @@ def build(ctx):
     t_hang = L2.chunks[1].start + 0.35                  # the king hangs his head
     t_calm = min(L2.end + 0.2, T - 1.3)
 
-    warm = lambda t: 0.08 + 0.92 * M.progress(t, t_rise - 0.5, t_set, "sine")
-    sun_y = lambda t: SUN_Y0 + (HORIZON + 120 - SUN_Y0) * M.progress(t, t_rise, t_set, "sine")
+    warm = lambda t: M.progress(t, t_rise - 0.5, t_set, "sine")
+    sun_y = M.keys([(t_rise - 0.5, {"dy": SUN_Y0}), (t_sun, {"dy": 835}), (t_set, {"dy": HORIZON + 110})],
+                   ["sine", "inout"])
+    sun_y = (lambda f: (lambda t: f(t).dy))(sun_y)
     palace_layers(sc, warm, sun_y=sun_y)
 
     # ---------------------------------------------------------------- the king
@@ -441,40 +467,41 @@ def build(ctx):
             return x, y
         return kw.x(t), FY
 
-    k_perf = Perf(ks, k_sched, k_pos, walk=kw.frame, breathe=0.010, bper=3.4)
+    k_perf = Perf(ks, k_sched, k_pos, walk=kw.frame, breathe=0.010, bper=3.4, phase=(t6 % 3.4) / 3.4)
     k_shadow = doc(C.ground_shadow(0, FY, KP, width=130, opacity=0.22))
     sc.add("k_shadow", k_shadow, wc=0, motion=lambda t: Tf(dx=k_pos(t)[0], alpha=1.0 if t >= t_land else 0.0))
     sc.add_dynamic("king", k_perf)
 
     # ---------------------------------------------------------------- the officials
     OX0 = {1: 1330, 2: 1480, 0: 1640}                  # bowing (s06's last frame)
-    OX1 = {1: 1060, 2: 1185, 0: 1315}                  # where they stop when they come back
+    OX1 = {1: 1000, 2: 1135, 0: 1320}                  # where they stop when they come back
     o_adv = 2 * WALK_A / WALK_N * KP
     o_rate = 17.0
-    for i, v in enumerate((1, 2, 0)):
+    o_rate_out = 30.0                                   # they bustle out quickly
+    for i, v in ((0, 1), (2, 0), (1, 2)):            # the old official (holding up the decree) drawn last
         sp = sprite(600, 500, 300, 450, seed=75 + v)
         D = C._official_design(v)
         bow = official_fig(sp, v, "bow")
-        stand_l = official_fig(sp, v, "stand", "smug", facing=-1)
         stand_r = official_fig(sp, v, "scheme", "smug")
         out = walk_set(sp, D, C._OFFICIAL_M, -1, "smug")
         back = walk_set(sp, D, C._OFFICIAL_M, 1, "sly")
-        go = t_off_go + 0.18 * (2 - i)                  # the one nearest the door goes first
+        go = t_off_go + 0.15 * i                        # the one nearest the door goes first
         come = t_in + 0.2 * (2 - i)
         dist_in = 900
-        legs_ = [(go, OX0[v], OX0[v] - 900, -1)]
+        legs_ = [(go, OX0[v], OX0[v] - 1300, -1)]
         x_start = OX1[v] - dist_in
         # come back: start off-frame on the left so the last drawing lands on OX1
         n_in = int(dist_in / o_adv)
         x_start = OX1[v] - n_in * o_adv
         legs_.append((come, x_start, OX1[v] + 0.5, 1))
-        wk = Walker(legs_, o_adv, o_rate, FY, {-1: out, 1: back})
+        wk = Walker(legs_, o_adv, o_rate, FY, {-1: out, 1: back}, rates=[o_rate_out, o_rate])
         t_arr = wk.end(1)
         sched = [(0, bow, 0), (t_off_up + 0.15 * i, stand_r, 0.7), (go - 0.1, out[0], 0.3),
                  (t_arr + 0.02, stand_r, 0.5), (t_bow + 0.1 * i, bow, 0.6)]
         if v == 2:
+            dcx, dcy = decree_at(v, sp.ax, sp.ay)
             pres = sp.add(fig(D, C._OFFICIAL_M, dict(PRESENT), "smug", sp.ax, sp.ay, KP, 1, "pres") +
-                          PR.decree(sp.ax + 118 * KP, sp.ay - 255 * KP, 0.62 * KP))
+                          PR.decree(dcx, dcy, DEC_S))
             sched += [(t_decree, pres, 0.9), (t_calm + 0.3, stand_r, 0.4)]
         if v == 0:
             wa = sp.add(fig(D, C._OFFICIAL_M, dict(WAG_A), "smug", sp.ax, sp.ay, KP, 1, "wa"))
@@ -494,8 +521,9 @@ def build(ctx):
         def alpha(t, wk=wk, go=go, come=come):
             x = wk.x(t)
             return 0.0 if (go < t < come and x < 600) else 1.0
-        sc.add_dynamic(f"off{v}", Perf(sp, sched, pos, walk=wk.frame, breathe=0.012, bper=2.8 + 0.3 * i,
-                                       phase=0.25 * i, alpha=alpha))
+        bp = 2.8 + 0.3 * i
+        sc.add_dynamic(f"off{v}", Perf(sp, sched, pos, walk=wk.frame, breathe=0.012, bper=bp,
+                                       phase=0.25 * i + (t6 % bp) / bp, alpha=alpha))
 
     # ---------------------------------------------------------------- bubble, marks, glint
     def k_head(t):
@@ -516,8 +544,9 @@ def build(ctx):
     q_svg = []
     for j in range(3):
         q_svg.append(doc(S.text(0, 0, "?", size=84, fill=P["ink_soft"]) if False else
-                         f'<text x="0" y="0" font-family="LXGW WenKai" font-weight="bold" font-size="86" '
-                         f'fill="{P["ink_soft"]}" text-anchor="middle" transform="translate({200 + j * 10},{200}) '
+                         f'<text x="0" y="0" font-family="LXGW WenKai" font-weight="bold" font-size="112" '
+                         f'fill="{S.mix(P["ink"], P["ink_soft"], 0.4)}" stroke="#fff6e0" stroke-width="5" paint-order="stroke" '
+                         f'text-anchor="middle" transform="translate({200 + j * 10},{200}) '
                          f'rotate({(-14, 6, 18)[j]})">?</text>'))
     for j in range(3):
         tj = t_q + 0.32 * j
@@ -534,7 +563,8 @@ def build(ctx):
         sc.add(f"q{j}", q_svg[j], wc=0, motion=q_m)
 
     # the seal glints on "签了名的命令"
-    gx, gy = OX1[2] + 118 * KP, FY - 255 * KP + 76 * 0.62 * KP
+    dcx, dcy = decree_at(2, OX1[2], FY)
+    gx, gy = dcx, dcy + 76 * DEC_S
     glint = doc(f'<path d="M{gx},{gy - 46} L{gx + 9},{gy - 9} L{gx + 46},{gy} L{gx + 9},{gy + 9} L{gx},{gy + 46} '
                 f'L{gx - 9},{gy + 9} L{gx - 46},{gy} L{gx - 9},{gy - 9} Z" fill="#fff4c4" stroke="#e8b63c" stroke-width="3"/>')
     sc.add("glint", glint, wc=0, motion=lambda t: _glint(t, t_glint, gx, gy))
@@ -550,8 +580,8 @@ def build(ctx):
     # ---------------------------------------------------------------- FX
     sc.fx = [
         FX.motes((300, 450, 3000, 1300), count=24, color=(255, 236, 196), size=(3, 6), alpha=90),
-        FX.tint((255, 178, 120), lambda t: 0.22 * M.progress(warm(t), 0.3, 1.0, "sine"), mode="multiply"),
-        FX.vignette(lambda t: 0.18 + 0.2 * M.progress(warm(t), 0.4, 1.0, "sine"), color=(60, 30, 30)),
+        warm_tint((255, 178, 120), lambda t: 0.22 * M.progress(warm(t), 0.3, 1.0, "sine")),
+        FX.vignette(lambda t: 0.36 * M.progress(warm(t), 0.15, 1.0, "sine"), color=(60, 30, 30)),
     ]
 
     # ---------------------------------------------------------------- SOUND
@@ -573,6 +603,23 @@ def build(ctx):
     sc.sfx("sparkle", t_glint, gain_db=-15, pan=-0.3)
     sc.sfx("cloth", t_hang, gain_db=-16)
     return sc
+
+
+def warm_tint(color, alpha_fn):
+    """Multiply the frame by a colour wash (like FX.tint(mode='multiply'), but in uint8 with OpenCV: ~10x cheaper)."""
+    import cv2
+    import numpy as np
+    from PIL import Image
+
+    def fx(frame, t, view):
+        a = float(alpha_fn(t))
+        if a <= 0.003:
+            return frame
+        arr = np.asarray(frame)
+        f = tuple(1 - a + a * c / 255.0 for c in color) + (1.0,)
+        out = cv2.multiply(arr, f, dtype=cv2.CV_8U)
+        return Image.fromarray(out, "RGBA")
+    return fx
 
 
 def _pop(t, t_in, t_out, px, py):
