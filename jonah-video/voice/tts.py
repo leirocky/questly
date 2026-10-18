@@ -342,7 +342,10 @@ def _broken_word(text, x, sr, toks, ts, min_gap=0.06):
     quiet = np.array([np.sqrt(np.mean(x[i:i + hop] ** 2)) < 0.003 for i in range(0, len(x) - hop, hop)])
     for w in words:
         for m in re.finditer(w, ref):
-            a, b = int(times[m.start()] * 100) + 5, int(times[m.end() - 1] * 100)
+            a, b = int(times[m.start()] * 100), int(times[m.end() - 1] * 100)
+            while a < b and quiet[a]:      # the recogniser can stamp a word before its onset
+                a += 1
+            a += 5
             run = best = 0
             for q in quiet[a:b]:
                 run = run + 1 if q else 0

@@ -31,7 +31,7 @@ LEXICON = {
     "大利乌王": "da4 li4 wu1 wang2",
 }
 
-NO_BREAK = ["大利乌王"]    # names read in one breath (voice/tts.py retakes a line that pauses inside one)
+NO_BREAK = ["大利乌王", "但以理", "巴比伦", "耶路撒冷", "以色列"]    # names read in one breath (voice/tts.py retakes a line that pauses inside one)
 
 # Each scene: id (stories/daniel/scenes/<id>.py), a note for illustrators and the composer, music mood,
 # optional transition into the scene (ffmpeg xfade name, default "fade"; "fadeblack", "circleopen"),
