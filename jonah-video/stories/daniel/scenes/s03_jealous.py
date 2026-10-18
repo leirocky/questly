@@ -221,9 +221,9 @@ def build(ctx):
         (c_find.start + 0.1, bcam(hx(1650), 1900), 0),
         (c_find.start + 1.9, bcam(hx(2050), 1900), 0),
         (c_faith.start - 0.1, bcam(hx(2050), 1900), 0),
-        (c_faith.start + 1.6, bcam(hx(1620), 2420), 0),
+        (c_faith.start + 2.0, bcam(hx(1620), 2420), 0),
         (L2.start - 0.4, bcam(hx(1620), 2420), 0),
-        (L2.start + 1.3, bcam(hx(2050), 1900), 0),
+        (L2.start + 1.8, bcam(hx(2050), 1900), 0),
     ])
     sc.fx = [FX.sparkles((hx(DX) - 170, 690, hx(DX) + 170, 850), count=8, t0=t_done + 0.2, t1=c_faith.end + 1.0,
                          color=(255, 240, 190), size=(8, 15), period=1.7, drift=-8, seed=31),

@@ -205,7 +205,7 @@ def build(ctx):
               off(x, FLOOR_Y, v, "bow", -1, s=OS),
               off(x, FLOOR_Y, v, "walk_a", 1, "sly", s=OS), off(x, FLOOR_Y, v, "walk_b", 1, "sly", s=OS)]
         walks = [(t1, n1, d1 / n1, 0, 0.25)]
-        bumps = [dip(snap(t1e), OS, ap, 5)]
+        bumps = [dip(snap(t1), OS, ap, 5), dip(snap(t1e), OS, ap, 5)]
         t_b = t_bow + 0.08 * k
         base = [(0, 2), (snap(t1e), 3), (snap(t_b), 4)]
         bumps.append(dip(snap(t_b), OS, ap, 8))
