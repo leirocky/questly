@@ -42,13 +42,10 @@ Tonal plan
 All the music stays under the narration (Seg.duck, low expression levels); the loud-ish moments are
 short and child-safe (no stingers, the den's suspense is soft and low).
 """
-from fractions import Fraction
-
 from audio.scorelib import (
     ChordTones,
     bassline,
     broken,
-    drop_spoken,
     drum,
     echo_drop,
     gliss,
@@ -377,16 +374,16 @@ def prays(c):
     s.mel("pz_hi", "C4:1/2:s D4:1/2:s E4:1/2:s F4:1/2:s G4:1/2:s A4:1/2:s Bb4:1/2:s C5:1/2:s", vel=58)
     s.add("cb", 0, 4, "C2", 42, "bass")
     s.pad(["vla", "vln2"], 2, 55, 70, vel=40, bass_ref=(36, 48))
-    s.expr(["pz_hi"], [(0, -8), (4, -6)])
-    s.expr(["cb", "vla", "vln2"], [(0, -12), (4, -11)])
+    s.expr(["pz_hi"], [(0, -7), (4, -5)])
+    s.expr(["cb", "vla", "vln2"], [(0, -11), (4, -9)])
     # he opens the window toward Jerusalem: light -- harp sweep on the F chord, celesta bells, strings open up
-    gliss(w, "harp", 0, 0.5, midi("F3"), midi("F6"), v0=34, v1=50, scale=ChordTones(w.chord_at(0)))
+    gliss(w, "harp", 0, 0.5, midi("F3"), midi("F6"), v0=30, v1=46, scale=ChordTones(w.chord_at(0)))
     w.pad(["vla", "vln2", "vln1"], 3, 57, 77, vel=48, bass_part="vc", bass_lo=41, bass_hi=53)
     w.add("cb", 0, 4, "F1", 44, "bass")
     w.pad("ooh", 2, 60, 77, vel=46, bass_ref=(41, 53))
     w.mel("celesta", "r:1/2 C6:1/2 F6:1/2 A6:5/2", vel=46, role="arp")
-    w.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -12), (1, -10), (4, -10.5)])
-    w.expr("ooh", [(0, -15), (1, -12), (4, -12)])
+    w.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -13), (1, -10.5), (4, -10.5)])
+    w.expr("ooh", [(0, -17), (1.5, -12), (4, -12)])
     w.expr(["celesta", "harp"], [(0, -7), (4, -8)])
     # he kneels and prays, three times a day, as always: the prayer theme (clarinet), the humming choir
     p.mel("clar", bars(PRAYER, 0, 2), vel=66)
@@ -420,9 +417,12 @@ def caught(c):
     a.mel("bsn", bars(SNEAK, 0, 2), vel=68)
     tiptoe(a, vel=56)
     a.pad(["vla", "vln2"], 2, 53, 66, vel=38, bass_ref=(28, 40))
-    a.expr(["bsn"], [(0, -8), (8, -8)])
-    a.expr(["pz_cb", "pz_hi"], [(0, -6), (8, -6)])
-    a.expr(["vla", "vln2"], [(0, -11), (2, -13), (8, -13)])
+    a.expr(["bsn"], [(0, -12), (2, -8), (8, -8)])
+    a.expr(["pz_cb", "pz_hi"], [(0, -12), (2, -6), (8, -6)])
+    a.expr(["vla", "vln2"], [(0, -9), (2, -13), (8, -13)])
+    for k_, nm in enumerate(("D3", "A3", "D4")):          # a soft harp chord bridges the scene change
+        a.add("harp", 0, 2, nm, 40, "arp", voice=f"harp.{k_}")
+    a.expr("harp", [(0, -10), (8, -10)])
     # 'Look!': a plucked stamp and a woodblock; then, softly, Daniel's prayer (celesta)
     l.sync("'看！' (plucked stamp)", 0, t_look)
     for k_, p in enumerate(l.chord_at(0).tones(62, 74)[:3]):
