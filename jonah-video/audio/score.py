@@ -35,6 +35,10 @@ Tonal plan (hand-offs by common tone or dominant -> tonic):
   Bm7-Gmaj7-Em7-A7sus4 question with ~2 s of reflective pause, then the theme in D swelling in,
   warm and full, final D chord ringing to the end.
 
+Other story projects (engine.paths.STORY != "jonah", e.g. stories/daniel/) bring their own cues in
+stories/<name>/cues.py (SCENE_CUES = {scene id: cue function}, optional REQUIRED_HITS for audio/music_check.py);
+Jonah's map below is then not used, and audio/picture.py has no Jonah events.
+
 Pads never double a seventh or a dominant's leading tone that a melodic line already sounds; the
 melodic line resolves it (theory.voice_lead: resolution and doubled-tendency costs).
 
@@ -60,6 +64,29 @@ SCENE_CUES = {
 }
 
 
+def scene_cues():
+    """{scene id: cue function} of the current story (engine.paths.STORY): Jonah's map above, or the story
+    project's own stories/<name>/cues.py (SCENE_CUES).  A story without a cues.py gets only generic cues."""
+    from engine import paths
+
+    if paths.STORY == "jonah":
+        return SCENE_CUES
+    mod = story_cues()
+    return dict(getattr(mod, "SCENE_CUES", {})) if mod is not None else {}
+
+
+def story_cues():
+    """The current story's cue module (stories/<name>/cues.py), or None (Jonah, or a story without one)."""
+    import importlib
+    import importlib.util
+
+    from engine import paths
+
+    if paths.STORY == "jonah" or not (paths.PROJECT / "cues.py").exists():
+        return None
+    return importlib.import_module(f"stories.{paths.STORY}.cues")
+
+
 def build(timeline, passes=3):
     """Compose the score.  Pads are voice-led against the complete score of the previous pass
     (melodies, counter-melodies, basses and other pads written anywhere in the cue), so they avoid
@@ -68,6 +95,7 @@ def build(timeline, passes=3):
     A scene this score does not know (renamed or new) gets a soft generic pad in its mood's key
     instead of breaking the build."""
     guides = None
+    cues = scene_cues()
     pic = picture.events(timeline)          # on-screen hit points, read once from the scenes' sfx cues
     for _ in range(passes):
         sc = Score(timeline)
@@ -76,7 +104,7 @@ def build(timeline, passes=3):
         scenes = timeline["scenes"]
         for i, s in enumerate(scenes):
             t1 = scenes[i + 1]["start"] if i + 1 < len(scenes) else timeline["duration"]
-            fn = SCENE_CUES.get(s["id"], cues_e.generic)
+            fn = cues.get(s["id"], cues_e.generic)
             cue = Cue(sc, s, t1)
             try:
                 fn(cue)
