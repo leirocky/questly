@@ -1058,14 +1058,14 @@ def build(ctx):
     # and easing to rest; the faces leave the bottom of the frame before the middle of the dissolve into s06 (a
     # location change to the deck). It is laid over the base camera, which is within 2 px of CAM_PL by then and
     # settles on it at t_pe.
-    t_e0 = t_live
+    t_e0 = t_pe       # starts as the base camera settles: the faces leave as the last subtitle fades out
     zp = [(a * CAM_END.w - b * CAM_PL.w) / (CAM_END.w - CAM_PL.w)
           for a, b in ((CAM_PL.x, CAM_END.x), (CAM_PL.y, CAM_END.y))]
 
     def camera(t):
         c = cam(t)
         if t > t_e0:
-            k = (CAM_END.w / CAM_PL.w) ** M.progress(t, t_e0, T, trapezoid(0.3))
+            k = (CAM_END.w / CAM_PL.w) ** M.progress(t, t_e0, T, trapezoid(0.2))
             c = Cam(zp[0] + (c.x - zp[0]) * k, zp[1] + (c.y - zp[1]) * k, c.w * k)
         w = s04_view_w(t) if t < XF else c.w       # the dissolve from s04: its push-in's last 4 % (centred on V0)
         return Cam(c.x, c.y, w, cam_roll(t))

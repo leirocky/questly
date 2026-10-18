@@ -897,8 +897,8 @@ def build(ctx):
     addf("crossed", jdoc(_jfig(JX, JY, JS, CROSSED, "angry", "crossed")))
     addf("crossed_b", jdoc(_jfig(JX, JY, JS, CROSSED, "s02_blink_angry", "crossed_b")))
 
-    ev = [(0.0, J["stand"]), (t_arrive + hold_j, J["stand"]), (t_arrive + 0.75, J["blink"]),
-          (t_arrive + 0.88, J["stand"])]
+    ev = [(0.0, J["stand"]), (t_arrive + hold_j, J["happy"]), (t_arrive + 0.75, J["blink"]),   # keeps the walk's smile
+          (t_arrive + 0.88, J["happy"])]
     hops = []        # (t, height) little hops that sell a switch
     squashes = []    # (t, k) landing squashes
     if t_name is not None:

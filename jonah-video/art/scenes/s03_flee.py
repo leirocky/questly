@@ -1051,6 +1051,7 @@ def build(ctx):
     # ~300 output px/s (checked at 30 fps), gentle enough for 3-8 year olds
     OPEN_CAM = (5603.0, 578.0, 1360.0)         # matches s02's last frame (Jonah at output x ~735, feet ~1000)
     T_OPEN_HOLD, T_OPEN_END = 1.05, T_TURN + 0.55
+    T_OPEN_UP = 1.9                            # the tilt / widening part of the opening move is done by here
     W_CROSS, Y_CROSS = 1600, 640
     X_CROSS = min(JX0 + 110, PAINT_R - W_CROSS / 2 - 8)
     X_PIER = 2190
@@ -1156,11 +1157,14 @@ def build(ctx):
     # the opening dissolve: s02 ends on Jonah, arms folded, at the left of its frame; this scene opens on him in
     # the same place and size (s02's end framing, in this stage's px), holds it through the dissolve, then eases
     # to the follow framing (Jonah right of centre, the road west ahead of him) by the time he turns to run.
-    # Both framings lie inside the painted stage, so every blend of them does too.
+    # The tilt and the widening go first, on a quicker ease right after the dissolve (zoom peaks at ~26 %/s), so
+    # his feet are clear of the first subtitle's box by ~1.5 s; the pan west takes until the turn.
+    # Both framings lie inside the painted stage, and the frame stays inside it in between (checked).
     g = np.array([M.progress(t, T_OPEN_HOLD, T_OPEN_END, "sine") for t in ts])
+    gy = np.array([M.progress(t, T_OPEN_HOLD - 0.05, T_OPEN_UP, "sine") for t in ts])
     xs = OPEN_CAM[0] + (xs - OPEN_CAM[0]) * g
-    ys = OPEN_CAM[1] + (ys - OPEN_CAM[1]) * g
-    ws = OPEN_CAM[2] + (ws - OPEN_CAM[2]) * g
+    ys = OPEN_CAM[1] + (ys - OPEN_CAM[1]) * gy
+    ws = OPEN_CAM[2] + (ws - OPEN_CAM[2]) * gy
 
     def cam(t):
         return Cam(float(np.interp(t, ts, xs)), float(np.interp(t, ts, ys)), float(np.interp(t, ts, ws)))
@@ -1334,11 +1338,8 @@ def build(ctx):
         return 9 * bump(t, T_CATCH, 0.25) + 16 * bump(t, T_STOW, 0.34)
 
     def mast_sailor_tf(t):
-        sy = 1.0
-        if T_SAIL <= t < T_SAIL + 0.16:
-            sy = 0.93 + 0.07 * M.progress(t, T_SAIL, T_SAIL + 0.16, "out")      # springs into the haul
-        dy = (deck_dip(t) - 6 * bump(t, T_STOW + 0.4, 0.2) - 6 * bump(t, T_ARR + 0.25, 0.2)
-              - 6 * bump(t, T_BELAY - 0.05, 0.2) + 1.3 * math.sin(2 * math.pi * t / 2.4 + 1))
+        # the same local motion as the halyard's lower end, so the rope stays in his fists on every pull
+        dy, sy = mast_sailor_local(t)
         return V.compose(ship_tf(t), d1, dy=dy, sy=sy)
 
     def mast_sailor_frame(t):
@@ -1872,8 +1873,19 @@ def build(ctx):
 
     # ---------------------------------------------------------------- added last, so that every other layer keeps
     # its default watercolour seed; their z puts them where they belong
-    sc.add("gaskets", gaskets_svg(), motion=lambda t: ship_tf(t) if t < T_SAIL else Tf(alpha=0.0), wc=0.5,
-           z=Z_ROLL + 0.1)
+    # the ties are cast off as the haul starts: they slip down off the roll (riding it once it moves) and fade
+    T_GASK0, T_GASK1 = T_SAIL - 0.08, T_SAIL + 0.1
+
+    def gaskets_tf(t):
+        if t < T_GASK0:
+            return ship_tf(t)
+        if t >= T_GASK1:
+            return Tf(alpha=0.0)
+        u = (t - T_GASK0) / (T_GASK1 - T_GASK0)
+        drop = max(16 * u * u, (sail_edge_l(t) - V.SAIL_TOP_L) * K)
+        return V.compose(ship_tf(t), ROLL_PIV, dy=drop, alpha=1 - M.progress(t, T_GASK0, T_GASK1, "sine"))
+
+    sc.add("gaskets", gaskets_svg(), motion=gaskets_tf, wc=0.5, z=Z_ROLL + 0.1)
     # the coins in his closed fist: just behind the captain, so the fist covers their lower half and only gold
     # rims show above it (once the fist is at his chest they are behind his coat: tucked away)
     def fist_coins_svg(pose):

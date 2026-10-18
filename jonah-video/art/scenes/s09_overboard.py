@@ -19,14 +19,16 @@ Two shots joined by a dip through the blank page in the pause after line 1:
 Narration (every key time comes from the chunks; a phrase inside a chunk is placed by its characters and snapped
 to a pause in the voice take, see Cues):
   line 0 '于是，'    the crew get up one after another, the lifters first, 0.17 s apart (low kneel -> upright kneel ->
-                    one knee -> standing, 4 frames per drawing, each cut eased so heads never pop and sold by a quick
-                    stretch-and-settle about the feet) while the camera holds s08's framing;
+                    one knee -> standing, 4 frames per drawing; the captain on the stern goes straight from the upright
+                    kneel to standing; each cut eased so heads never pop, then a quick stretch-and-settle about the
+                    feet as follow-through) while the camera holds s08's framing;
          '他们'     the two lifters (sailors 1 and 2, either side of Jonah) crouch and take hold of him; once all are
                     up a lightning flash (camera still), then one slow pull-out to the v1 wide shot (zoom <= ~19 %/s)
                     that has settled before the launch;
          '抬起来'   they hoist him overhead: both face the stern with their arms stretched up, s1's hands under his
-                    feet and knees, s2's under his shoulders and head, the palms drawn over his robe; he lies (hands
-                    folded on his chest) with his underside just above their heads, never behind one; the cut is sold
+                    feet and knees, both of s2's under his shoulder, the palms drawn over his robe; he lies (hands
+                    folded on his chest, head-cloth flap tucked behind his back) with his underside just above their
+                    heads, never behind one; his head reaches past s2's with sky between them; the cut is sold
                     by a push-up (the new drawings start low and rise home with a small overshoot, Jonah riding on
                     their hands); the captain points over the stern at the sea;
                     '扔进了' heave (dip, push) and launch: he flies over the stern in a high arc (computed to clear the
@@ -331,19 +333,21 @@ def kfig(kind, variant, x, y, s, ps, expr, facing=1):
 
 
 # ---- the hoist ('抬起来'): Jonah lies flat on the two lifters' raised hands with his underside just above their
-#      heads (never behind a head). Both lifters face the stern; s1 holds his feet and knees, s2 his shoulders and
-#      head. Each wrist sits just under his robe, so the palm (drawn over him) grips its edge.
+#      heads (never behind a head). Both lifters face the stern; s1 holds his feet and knees, s2 his shoulders (both
+#      hands up-left under the robe at his shoulder: his head reaches past s2's, with sky between them, and no hand
+#      sits on s2's own crown). Each wrist sits just under his robe, so the palm (drawn over him) grips its edge.
 JCAR_ARMS = (("ik", "torso", 0.35, 0.66, 1), ("ik", "torso", 0.5, 0.62, 1))   # Jonah's hands folded on his chest
-HOIST_REACH = 1.24                     # arms stretched up (the 'throw' pose uses 1.12)
+HOIST_REACH = dict(s1=1.24, s2=1.30)   # arms stretched up (the 'throw' pose uses 1.12); s2 reaches across his head
 HOIST_SHIFT = -10.0                    # Jonah carried this far toward the bow, so both lifters' hands are under him
 HOIST_CLEAR = 6.0                      # his underside this far above the lifters' head tops
 HOIST_GRIP = 4.0                       # wrists this far below his underside (the palms overlap his robe)
-HOIST_DX = dict(s1=((36, 1), (-38, -1)), s2=((4, 1), (-40, -1)))   # (far, near) wrist x from the anchor, elbow
+HOIST_DX = dict(s1=((36, 1, 0), (-38, -1, 0)), s2=((-34, 1, -2), (-58, -1, 0)))
+                                       # (far, near) wrist (x from the anchor, elbow bend, extra dy)
 
 
-def _hoist_pose(dxs, wy):
-    return dict(C.POSES["lift"], reach=HOIST_REACH, hands=("open", "open"),
-                arms=tuple(("ik", "abs", dx / SS, wy / SS, bend) for dx, bend in dxs))
+def _hoist_pose(name, wy):
+    return dict(C.POSES["lift"], reach=HOIST_REACH[name], hands=("open", "open"),
+                arms=tuple(("ik", "abs", dx / SS, (wy + dy) / SS, bend) for dx, bend, dy in HOIST_DX[name]))
 
 
 def _hoist_geometry():
@@ -351,10 +355,10 @@ def _hoist_geometry():
     tops = []
     for name, var in (("s1", 1), ("s2", 2)):
         x, y = A_POS[name]
-        kfig("s", var, x, y, SS, _hoist_pose(HOIST_DX[name], -300.0), "worried", 1)
+        kfig("s", var, x, y, SS, _hoist_pose(name, -300.0), "worried", 1)
         tops.append(y + C._LAST["head_top"][1] * SS)
     u = min(tops) - HOIST_CLEAR
-    return u, {name: _hoist_pose(HOIST_DX[name], u + HOIST_GRIP - A_POS[name][1]) for name in ("s1", "s2")}
+    return u, {name: _hoist_pose(name, u + HOIST_GRIP - A_POS[name][1]) for name in ("s1", "s2")}
 
 
 HOIST_U, HOIST_POSES = _hoist_geometry()
@@ -363,7 +367,7 @@ HOIST_U, HOIST_POSES = _hoist_geometry()
 def jonah_carried(x, y):
     """Jonah lying on his back on raised hands (the library's 'carried' pose with both hands on his chest, so no
     arm dangles down between the lifters' heads); anchor (x, y) is the middle of his underside."""
-    ps = dict(C.POSES["carried"], arms=JCAR_ARMS)
+    ps = dict(C.POSES["carried"], arms=JCAR_ARMS, tail=(80, 95))   # head-cloth flap tucked behind his back
     inner, _ = C._figure(C._jonah_design(), C._ADULT, ps, ps["expr"], -1, True)
     return C._wrap_out(inner, x, y, JS, -1, "jonah-carried")
 
@@ -1016,7 +1020,7 @@ def build(ctx):
     # 4 frames per drawing), with the camera still; once they are all up a lightning flash; then the camera pulls out
     rise_at = dict(s1=0.0, s2=0.17, s0=0.34, s3=0.51, capt=0.68)
     RISE_STEP = 0.13
-    t_risen = t_rise + rise_at["capt"] + 2 * RISE_STEP
+    t_risen = t_rise + rise_at["capt"] + RISE_STEP         # (the captain stands in one step, see rising())
     t_flash = max(t_grab, t_risen) + 0.1
     t_calm0 = L1.start                                     # '一下子'
     t_calm1 = t_calm0 + 1.1                                # '海就平静了'
@@ -1167,10 +1171,13 @@ def build(ctx):
     sc.add("a_jonah_carried", doc(jonah_carried(*JCAR)), z=10.5, motion=a_only(carried_m))
 
     # ---- the crew: one flipbook layer each (hard cuts; big head-height changes eased, small ones hopped; the rise
-    #      cuts also get a quick stretch-and-settle about the feet)
-    def rising(name):      # (the captain skips the one-knee drawing: on the curved stern its foot pokes out)
-        tr = t_rise + rise_at[name]
-        return [(0, 0), (tr, 1)] + ([] if name == "capt" else [(tr + RISE_STEP, 2)]) + [(tr + 2 * RISE_STEP, 3)]
+    #      cuts also get a quick stretch-and-settle about the feet, starting one frame after the cut so the cut frame
+    #      itself shows the new drawing half way, as cut_plan intends)
+    def rising(name):      # the captain skips the one-knee drawing (on the curved stern its foot pokes out) and
+        tr = t_rise + rise_at[name]   # stands one step after kneeling upright, 4 frames before the lifters' grab
+        if name == "capt":
+            return [(0, 0), (tr, 1), (tr + RISE_STEP, 3)]
+        return [(0, 0), (tr, 1), (tr + RISE_STEP, 2), (tr + 2 * RISE_STEP, 3)]
 
     f0 = A_F0
     a_specs = {
@@ -1213,7 +1220,7 @@ def build(ctx):
         def person_m(t, hops=hops, offs=offs, lifter=lifter, cuts=cuts, foot=(x, y)):
             s = ship_tf(t)
             dy = -6 * sum(bump(t, c) for c in hops) + offset_dy(t, offs) + (lifter_dy(t) if lifter else 0.0)
-            k = sum(stretch(t - c) for c in cuts)
+            k = sum(stretch(t - c - 1 / 30) for c in cuts)   # from the frame after the cut: follow-through
             if abs(k) < 1e-4:
                 return Tf(dx=s.dx, dy=s.dy + dy, rot=s.rot, px=SX, py=WL)
             # stretch / squash about the feet, then the ship's rocking about (SX, WL): one Tf pivoted on the feet
