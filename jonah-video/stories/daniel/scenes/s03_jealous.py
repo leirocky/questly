@@ -30,7 +30,7 @@ from engine import motion as M
 from engine.motion import Tf
 from engine.scene import Scene
 from stories.daniel.scenes.s02_daniel import (
-    FLOOR_Y, HX0, KING_OFFER, KS, OVS_END, OVS_S, SH, SW, THRONE_HX, THRONE_Y, TABLE_HX, actor, add_hall,
+    FLOOR_Y, KING_OFFER, KS, OVS_END, OVS_S, SH, SW, THRONE_HX, THRONE_Y, actor, add_hall,
     basket_markup, bcam, cam_path, chunk, dan, doc, hx, king_fig, king_ib, off, records_table_markup, scene_offset)
 
 INK = P["ink"]
@@ -67,7 +67,6 @@ def glow_svg(x, y):
 
 def build(ctx):
     sc = Scene(ctx, W=SW, H=SH)
-    T = ctx.duration
     L0, L1, L2 = ctx.lines
     t_off = scene_offset(ctx.id)
     c_jeal = chunk(L0, "嫉妒")
@@ -112,7 +111,6 @@ def build(ctx):
     # ---------------- the two jealous overseers (A: crimson, B: rust)
     t_frown = (L0.start + 0.7, L0.start + 0.85)
     t_turn = (c_jeal.start + 0.05, c_jeal.start + 0.15)
-    t_cant = c_cant.start + 0.1
     t_scheme = c_unless.start + 0.1
     sad_t = c_faith.start + 0.9
     walk2 = (c_find.start + 0.1, c_find.start + 0.2)

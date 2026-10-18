@@ -33,7 +33,7 @@ import random
 from art import characters as C
 from art import props as PR
 from art import style as S
-from art.scenes.s17_king import (arcs_markup, cuts, dip, happy_hop, hop, nod, snap, step_walk, trap)
+from art.scenes.s17_king import cuts, dip, nod, snap, step_walk, trap
 from art.scenes_v1.s10_repent import rosettes
 from art.style import P
 from engine import fx as FX
@@ -587,7 +587,7 @@ def light_rays_svg():
         d += f"M{src[0]},{src[1]} L{f1(p0[0])},{f1(p0[1])} L{f1(p1[0])},{f1(p1[1])} Z "
     glow = S.rad_grad("tglow", [(0, "#fff2c8", 0.75), (1, "#fff2c8", 0)])
     b = S.g(f'<path d="{d}" fill="url(#trays)"/>', filter="blur-md")
-    b += f'<ellipse cx="960" cy="1060" rx="300" ry="240" fill="url(#tglow)"/>'
+    b += '<ellipse cx="960" cy="1060" rx="300" ry="240" fill="url(#tglow)"/>'
     return doc(b, defs + glow)
 
 
@@ -732,7 +732,6 @@ def dove_path(x0, x1, y, t0, t1, ref, amp=18, phase=0.0):
 
 def build(ctx):
     sc = Scene(ctx, W=SW, H=SH)
-    T = ctx.duration
     L0, L1, L2, L3 = ctx.lines
     c_name = chunk(L0, "名叫")
     c_bab = chunk(L0, "巴比伦")

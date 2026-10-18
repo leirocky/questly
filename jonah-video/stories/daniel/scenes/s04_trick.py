@@ -29,7 +29,6 @@ from art.scenes.s17_king import arcs_markup, dip, nod, snap
 from art.style import P
 from engine import fx as FX
 from engine import motion as M
-from engine.motion import Tf
 from engine.scene import Scene
 from stories.daniel.scenes.s02_daniel import (
     FLOOR_Y, KS, OVS_S, SH, SW, THRONE_HX, THRONE_Y, actor, add_hall, basket_markup, bcam, cam_path, chunk, city_svg,
@@ -150,7 +149,6 @@ def bubble_svg(kind, cx, cy, tx, ty):
 
 def build(ctx):
     sc = Scene(ctx, W=SW, H=SH)
-    T = ctx.duration
     L0, L1, L2, L3 = ctx.lines
     t_off = scene_offset(ctx.id)
     c_long = chunk(L1, "万岁")
