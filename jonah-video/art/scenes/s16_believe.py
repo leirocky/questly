@@ -3,11 +3,12 @@
 "你猜怎么样？尼尼微的人听了，竟然都相信了上帝！ / 他们禁食，就是不吃饭。大人小孩都换上粗粗的麻布衣服，向上帝认错，
 表示愿意改。"
 
-One 2400 x 1350 stage: the market square of Nineveh in the late afternoon (like the square s15 ends in: Jonah on
-his stone step on the left, where s15's last frame leaves him, stern; townspeople facing him), a herald (man variant 2
-with his bronze horn at the hip, the same man and horn as s17's horn-blower) on a stone plinth at the back, a market
-stall with bread, pomegranates, dates and grapes on the right (merchant behind his table), a bread oven with soft
-smoke, a well. Featured "from the greatest to the least": an elder with a stick, the merchant, a mother (woman
+One 2400 x 1350 stage: the market street of Nineveh that s15 ends in, in the late afternoon (s15's own houses,
+palms, three striped stalls and skyline for the whole scene; Jonah on his stone step on the left, where s15's last
+frame leaves him, stern; townspeople facing him), a herald (man variant 2 with his bronze horn at the hip, the same
+man and horn as s17's horn-blower) on a stone plinth in front of the fruit stall, a market stall with bread,
+pomegranates, dates and grapes on the right (merchant behind his table), a bread oven with soft smoke by the pot
+stall, a well. Featured "from the greatest to the least": an elder with a stick, the merchant, a mother (woman
 variant 2, as in s15) and her little girl.
 
   line 0  "你猜怎么样？"          calm: the people (still in bright robes) stand worried, facing a stern Jonah; a
@@ -38,16 +39,21 @@ variant 2, as in s15) and her little girl.
                                   know whether God will relent); the camera slowly settles on the whole kneeling square.
                                   Calm hold for the dissolve.
 
-Hand-over from s15 (the 1 s cross-dissolve is the same moment in the same place): s16 opens on s15's last picture,
-placed on this stage with s15's final camera mapped onto camera A (m15): s15's golden late-afternoon sky with its
-low sun, its hazy skyline, clouds, the back row of houses with its palms and three striped stalls, its townspeople
-and sheep (one flat layer, "market15"), and - for the whole scene - s15's own stone step under Jonah, who stands
-exactly where and as big as s15 leaves him. The mother, her little girl and the elder (the same three people s15
-ends on) start in s15's places and poses: the mother and the girl take two little steps forward to their places
-here, and the elder walks over in front of the square to Jonah's step (planted-foot walk, s15's gait drawings with
-his stick) and stops on "竟然". Just after the dissolve the s15 painting fades out over this square, its crowd, the
-herald and the stall (behind the walking three, Jonah and his step); the golden sky and s15's warm light fade
-more slowly into this scene's sky before the golden patch on "相信", and s15's low sun stays at the upper right.
+Hand-over from s15 (the 1 s cross-dissolve is the same moment in the same place): everything here is placed with
+s15's final camera mapped onto camera A (m15). s15's street - its hazy skyline (far15) and its floor, back row of
+houses, palms and three striped stalls (back15) - stays for the WHOLE scene: no backdrop is ever swapped or faded.
+So do s15's clouds (they drift on gently; the right one drifts left over the low sun, where God's light later opens
+behind it), its low sun (still turning) and its stone step under Jonah, who stands exactly where and as big as s15
+leaves him. This scene's set pieces stand in front of that street and come in with the dissolve itself: the herald
+on his plinth, the merchant's stall, the bread oven and the well. After the dissolve nothing fades: s15's
+townspeople carry on by motion - the stroller and the boy at the fruit stall stay and listen (they are part of the
+crowd from here on), the vendor leaves his pots and walks over behind Jonah, with two newcomers following him in
+from the left edge, the bearded man walks off to the right with his two sheep trotting ahead, and two more groups hop
+in from the right edge beside the merchant's stall, all before "尼尼微的人听了" ends. The mother, her little girl
+and the elder (the same three people s15 ends on) start in s15's places and poses: the mother and the girl take
+little steps forward to their places here, and the elder walks over in front of the square to Jonah's step
+(planted-foot walk, s15's gait drawings with his stick) and stops on "竟然". s15's golden sky and warm light fade
+slowly into this scene's sky before the golden patch on "相信", and s15's low sun stays at the upper right.
 
 Pose changes are hard cuts (no crossfades between different drawings) hidden at the bottom of a squash-and-hop
 or under a cloth-puff; expression-only changes are cuts as well. Crowd groups bow with a small vertical squash (no
@@ -89,24 +95,34 @@ def m15(x, y):
 
 # where s15's last frame leaves the three featured townspeople (s15 stage: feet, scale; all face Jonah)
 S15_ELDER, S15_MOTHER, S15_GIRL = (2590, 1346, 0.84), (2330, 1352, 0.86), (2440, 1372, 0.86)
-# the other people and animals in s15's last frame (drawn into the "market15" picture, as s15 last shows them)
-S15_EXTRAS = [("man", 2, 1395, 1188, 0.6, 1, "listen", None),          # the vendor by his pots
-              ("man", 1, 2080, 1214, 0.62, -1, "listen", None),        # the stroller
-              ("child", 2, 2250, 1200, 0.62, -1, "stand", "surprised"),  # the boy at the fruit stall
-              ("man", 0, 2700, 1400, 0.9, -1, "listen", None)]         # the bearded man on the right
+# the other people and animals in s15's last frame (s15 stage: kind, variant, feet, scale, facing, pose, expr)
+S15_VENDOR = ("man", 2, 1395, 1188, 0.6, 1, "listen", None)            # the vendor by his pots
+S15_STROLLER = ("man", 1, 2080, 1214, 0.62, -1, "listen", None)        # the stroller
+S15_BOY = ("child", 2, 2250, 1200, 0.62, -1, "stand", "surprised")     # the boy at the fruit stall
+S15_BEARD = ("man", 0, 2700, 1400, 0.9, -1, "listen", None)            # the bearded man on the right
 S15_SHEEP = [(2760, 1420, 0.68, 160), (2960, 1430, 0.6, 140)]
+PAR15 = S15_CAM_X - 1100                     # s15's parallax layers follow its camera
+S15_CLOUD_DX = 9 * T15 + 0.6 * PAR15         # its clouds' drift + parallax at its last frame
+S15_CLOUDS = [(640, 600, 250, 70, 31), (1420, 578, 210, 60, 33), (2250, 612, 270, 76, 35)]   # (two more lie
+#                                                                                   off this stage to the right)
+CLOUD_R0 = m15(S15_CLOUDS[2][0] + S15_CLOUD_DX, S15_CLOUDS[2][1])   # its right cloud (it drifts over the sun)
+FG15_DX = -0.22 * (S15_CAM_X - (S15.STEP_X - 58 + 0.27 * 1720))   # s15's near things at its last frame
 # s15's sun at its last frame: sun_pos(T) (camera-relative arc) and its slow spin (3 deg/s)
 S15_SUN = (S15_CAM_X + 660, 981 - 1680 * 9 / 32 + 92 + 0.00017 * 660 ** 2)
 S15_SUN_ROT = 3.0 * T15
 S15_GOLD = "#fff6e6"             # s15's late-afternoon light (light_fx multiplies the frame by 255, 246, 230)
 
 # ------------------------------------------------------------------ layout (stage px)
-BACK_Y = 770                # back edge of the square (house fronts)
+# s15's street mapped here: its house fronts stand on y ~902, its stalls' fronts on ~965; the floor runs below
+SKY_BOT = 960               # the skies reach down behind the houses (narrow gaps between them show sky to ~870)
 # Jonah stands on s15's stone step (s15's step_svg placed with m15), exactly where and as big as s15 leaves him
 J_X, J_Y = m15(S15.STEP_X - 58, S15.STEP_TOP)
 J_S = S15.JS * M15_K
-PLINTH_X, PLINTH_TOP, PLINTH_BASE = 1250, 778, 846   # herald's plinth at the back of the square
-H_X, H_S = 1250, 0.66
+# the herald's plinth stands on the street in front of s15's fruit stall (drawn around (1250, 846) at scale 1 and
+# placed with PLINTH_K)
+PLINTH_X, PLINTH_BASE, PLINTH_K = 1290, 992, 1.18
+PLINTH_TOP = PLINTH_BASE - 68 * PLINTH_K
+H_X, H_S = PLINTH_X, 0.72
 # the market stall is drawn in local coordinates (designed around x 1420.., table front edge y 1110) and placed
 # with TABLE_K / TABLE_ORG
 TABLE_K = 1.08
@@ -127,24 +143,39 @@ TABLE_X0, TABLE_X1, TABLE_TOP, TABLE_BACK = 1420, 1890, 1110, 1080   # (local) t
 TABLE_FLOOR = 1215
 R_X, R_Y, R_S = tpt(1740, 1160)[0], tpt(1740, 1160)[1], 1.06   # merchant, behind his table
 E_X, E_Y, E_S = 800, 1232, 1.12    # elder
-W_X, W_Y, W_S = 1140, 1245, 1.12   # mother
+W_X, W_Y, W_S = 1000, 1245, 1.12   # mother (left of the boy at the fruit stall, clear of the herald's plinth)
 K_X, K_Y, K_S = 1392, 1240, 1.12   # her little girl
-OVEN_X, OVEN_Y = 300, 784
+# the bread oven (drawn around (300, 784) at scale 1) stands on the street in front of s15's pot stall
+OVEN_X, OVEN_Y, OVEN_K = 330, 978, 1.18
+OVEN_TOP = OVEN_Y - 80 * OVEN_K
+
+
+def s15_person(kind, v, x, y, s, fc, pose, expr):
+    """(s15 stage) -> its place here: (kind, variant, x, y, scale, facing, pose, expr)."""
+    return (kind, v) + m15(x, y) + (s * M15_K, fc, pose, expr)
+
+
+VENDOR, STROLLER, BOY, BEARD = (s15_person(*p) for p in (S15_VENDOR, S15_STROLLER, S15_BOY, S15_BEARD))
+# The vendor walks over from his pots to stand behind Jonah, two newcomers following him in from the left edge
+# (one rigid group: planted-foot walk drawings, WALK_NL drawings of WALK_ADV px each)
+WALK_NL = 42
+WALK_D = 820 - VENDOR[2]                 # he stops at x 820
+WALK_ADV = WALK_D / WALK_NL
 
 CROWD = {   # (kind, variant, x, y, scale, facing in line 0, facing when kneeling)
     # everyone faces Jonah (left) while they listen; they kneel facing right, toward God's light (upper right)
-    "back_l": [("man", 2, 690, 852, 0.56, -1, 1), ("woman", 1, 768, 858, 0.56, -1, 1),
-               ("elder", 3, 846, 850, 0.56, -1, 1), ("child", 1, 912, 860, 0.56, -1, 1),
-               ("man", 3, 982, 852, 0.56, -1, 1), ("woman", 0, 1058, 856, 0.56, -1, 1)],
-    "back_r": [("man", 0, 1996, 852, 0.56, -1, 1), ("child", 0, 2066, 860, 0.56, -1, 1),
-               ("elder", 1, 2136, 850, 0.56, -1, 1), ("woman", 3, 2210, 856, 0.56, -1, 1),
-               ("man", 1, 2290, 852, 0.56, -1, 1)],
-    "mid_l": [("woman", 3, 712, 978, 0.74, -1, 1), ("man", 1, 842, 984, 0.74, -1, 1),
-              ("child", 3, 950, 990, 0.74, -1, 1), ("man", 3, 1376, 980, 0.74, -1, 1)],
-    "mid_r": [("woman", 1, 2040, 982, 0.74, -1, 1), ("man", 3, 2168, 976, 0.74, -1, 1),
-              ("elder", 2, 2296, 986, 0.74, -1, 1)],
+    # the walkers (drawn where they stop): the vendor and the two newcomers (off the left edge when he sets off)
+    "walk_l": [("man", 3, 820 - 160, 988, 0.69, -1, 1), ("woman", 0, 820 - 80, 984, 0.69, -1, 1),
+               ("man", 2, 820, VENDOR[3], VENDOR[4], -1, 1)],
+    # s15's stroller and the boy at the fruit stall, where s15 leaves them
+    "c15": [("man", 1) + STROLLER[2:5] + (-1, 1), ("child", 2) + BOY[2:5] + (-1, 1)],
+    # newcomers hopping in from the right edge, beside the merchant's stall
+    "back_r": [("man", 0, 2076, 996, 0.7, -1, 1), ("child", 0, 2146, 1002, 0.7, -1, 1),
+               ("elder", 1, 2214, 994, 0.7, -1, 1), ("woman", 3, 2290, 998, 0.7, -1, 1)],
+    "mid_r": [("woman", 1, 2060, 1094, 0.83, -1, 1), ("man", 3, 2164, 1088, 0.83, -1, 1),
+              ("elder", 2, 2268, 1098, 0.83, -1, 1)],
 }
-GLOW_C = (1880, 330)        # God's warm light opens here (upper right, over the stall and the low sun)
+GLOW_C = (1880, 330)        # God's warm light opens here (upper right, behind s15's right cloud, over the low sun)
 
 
 def doc(body, defs=""):
@@ -195,34 +226,45 @@ def glow15_markup(cx, cy, r, blend):
     return defs, f'<circle cx="{f1(cx)}" cy="{f1(cy)}" r="{f1(r)}" fill="url(#s16g15)"{style}/>'
 
 
-def market15_svg():
-    """s15's last picture of the market (everything but Jonah, his step and the three who walk over): golden sky,
-    the low sun, clouds, the hazy skyline, the sun's glow, the street with its houses, palms and stalls, the
-    townspeople and sheep, and the near things along the bottom edge. One flat layer that fades out after the
-    dissolve."""
-    par = S15_CAM_X - 1100                       # s15's parallax layers follow its camera
-    sun = sun15_markup()
-    glow = glow15_markup(*S15_SUN, 430, True)
-    sky = split15(S15.street_sky_eve_svg())
-    clouds = split15(S15.pano_clouds_svg([(640, 600, 250, 70, 31), (1420, 578, 210, 60, 33),
-                                          (2250, 612, 270, 76, 35), (3000, 586, 220, 62, 37),
-                                          (3600, 600, 240, 66, 39)]))
-    far = split15(S15.street_far_svg())
-    back = split15(S15.street_back_svg())
-    fg = split15(S15.street_fg_svg())
-    people = ""
-    for kind, v, x, y, s, fc, pose, expr in S15_EXTRAS:
-        people += (C.ground_shadow(x, y, s, 80 if kind == "child" else 110)
-                   + C.citizen(x, y, s, fc, kind=kind, variant=v, pose=pose, expr=expr))
+def far15_svg():
+    """s15's hazy far skyline (with its parallax as its last frame shows it); s15's sun glow lies over it."""
+    return place15(f'<g transform="translate({0.4 * PAR15:.1f},0)">', S15.street_far_svg(), "</g>")
+
+
+def back15_svg():
+    """s15's street for the whole scene: its floor, the back row of flat-roofed houses, palms, doorstep props and
+    the three striped stalls (pots, fruit, cloth), as its last frame shows them."""
+    return place15(S15.street_back_svg())
+
+
+def clouds15_svg(items):
+    """Some of s15's clouds, where its last frame shows them."""
+    return place15(f'<g transform="translate({S15_CLOUD_DX:.1f},0)">', S15.pano_clouds_svg(items), "</g>")
+
+
+def fg15_markup():
+    """s15's near things along the bottom edge (the flowering bush and grass at the lower right; its jars at the
+    left lie off this stage's frames) as (defs, body) in this stage's coordinates."""
+    d, b = split15(S15.street_fg_svg())
+    return d, f'<g transform="{M15_TF}"><g transform="translate({FG15_DX:.2f},0)">{b}</g></g>'
+
+
+def s15_fig_markup(kind, v, x, y, s, fc, pose, expr, dx=0.0):
+    """A townsperson exactly as s15's last frame draws them (its own shadow and drawing, in s15 coordinates placed
+    with m15), optionally shifted by dx stage px (for a layer that is drawn where its group ends up)."""
+    x15, y15 = (x - M15_O16[0]) / M15_K + M15_O15[0], (y - M15_O16[1]) / M15_K + M15_O15[1]
+    s15 = s / M15_K
+    body = (C.ground_shadow(x15, y15, s15, 80 if kind == "child" else 110)
+            + C.citizen(x15, y15, s15, fc, kind=kind, variant=v, pose=pose, expr=expr))
+    return f'<g transform="translate({dx:.2f},0) {M15_TF}">{body}</g>'
+
+
+def sheep15_markup(facing):
+    """s15's two sheep in front of the bearded man (facing -1 as s15 leaves them, or +1 to trot off)."""
+    body = ""
     for x, y, s, w in S15_SHEEP:
-        people += C.ground_shadow(x, y, s, w) + PR.animal(x, y, s, -1, kind="sheep")
-    fg_dx = -0.22 * (S15_CAM_X - (S15.STEP_X - 58 + 0.27 * 1720))
-    body = (sky[1] + sun[1]
-            + f'<g transform="translate({9 * T15 + 0.6 * par:.1f},0)">{clouds[1]}</g>'
-            + f'<g transform="translate({0.4 * par:.1f},0)">{far[1]}</g>' + glow[1]
-            + back[1] + people + f'<g transform="translate({fg_dx:.2f},0)">{fg[1]}</g>')
-    defs = "".join(p[0] for p in (sky, sun, clouds, far, glow, back, fg))
-    return doc(f'<g transform="{M15_TF}">{body}</g>', defs)
+        body += C.ground_shadow(x, y, s, w) + PR.animal(x, y, s, facing, kind="sheep")
+    return f'<g transform="{M15_TF}">{body}</g>'
 
 
 def step15_svg():
@@ -239,7 +281,7 @@ def sky15_svg():
     st = "".join(f'<stop offset="{o}" stop-color="{c}"/>' for o, c in stops)
     defs = (f'<linearGradient id="s16sky15" gradientUnits="userSpaceOnUse" x1="0" y1="{f1(y0)}" x2="0" '
             f'y2="{f1(y1)}">{st}</linearGradient>')
-    return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{BACK_Y + 60}" fill="url(#s16sky15)"/>', defs)
+    return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SKY_BOT + 20}" fill="url(#s16sky15)"/>', defs)
 
 
 def sun15_svg():
@@ -445,69 +487,18 @@ def sky_svg():
                                   (1, "#f6c58e")]) +
             S.rad_grad("s16sun", [(0, "#fff6d6", 1), (0.18, "#ffe9b0", 0.9), (0.5, "#ffd793", 0.35),
                                   (1, "#ffcf88", 0)]))
-    body = (f'<rect x="-20" y="-20" width="{SW + 40}" height="{BACK_Y + 60}" fill="url(#s16sky)"/>'
+    body = (f'<rect x="-20" y="800" width="{SW + 40}" height="{SKY_BOT - 780}" fill="#f6c58e"/>'
+            f'<rect x="-20" y="-20" width="{SW + 40}" height="830" fill="url(#s16sky)"/>'
             f'<ellipse cx="2080" cy="560" rx="820" ry="560" fill="url(#s16sun)"/>')
     return doc(body, defs)
 
 
-def clouds_svg(items, fill="#fff3df", shade="#f2d2a6"):
-    body = ""
-    for cx, cy, w, h, seed in items:
-        body += S.cloud(cx, cy, w, h, fill, seed=seed, sw=3.2, shade_fill=shade)
-    return doc(S.g(body, filter="wobble"))
-
-
-def far_svg():
-    defs = S.lin_grad("s16haze", [(0, "#f6dfb8", 0), (1, "#f6dfb8", 0.6)])
-    body = PR.nineveh_skyline(-90, 2490, BACK_Y - 6, scale=0.86, seed=5, haze=0.46)
-    body += f'<rect x="-20" y="{BACK_Y - 230}" width="{SW + 40}" height="232" fill="url(#s16haze)"/>'
-    return doc(body, defs)
-
-
-def square_svg():
-    """Paved square, the row of houses at its back and the herald's plinth (static)."""
-    defs = (S.lin_grad("s16pave", [(0, "#e9cf9f"), (0.3, "#e6c793"), (1, "#d7b07a")]) +
-            S.lin_grad("s16stone", [(0, "#ead3a6"), (1, "#d2b07c")]) +
+def plinth_svg():
+    """The herald's plinth: a two-tier stone block with a glazed rosette band, on the street in front of s15's fruit
+    stall (drawn around (1250, 846) and placed with PLINTH_K at (PLINTH_X, PLINTH_BASE))."""
+    defs = (S.lin_grad("s16stone", [(0, "#ead3a6"), (1, "#d2b07c")]) +
             S.lin_grad("s16stonef", [(0, "#cda874"), (1, "#b48f5d")]))
-    body = ""
-    # houses along the back of the square
-    houses = ""
-    for x, v, fc in ((140, 1, 1), (420, 0, 1), (790, 3, -1), (1700, 2, -1), (2010, 0, -1), (2310, 1, -1)):
-        houses += PR.house(x, BACK_Y + 4, 0.42, variant=v, facing=fc)
-    # a clay bread oven (tannur) by the house on the left; its smoke is a separate layer
-    oven = (f'<path d="M{OVEN_X - 46},{OVEN_Y} C{OVEN_X - 50},{OVEN_Y - 50} {OVEN_X - 30},{OVEN_Y - 78} '
-            f'{OVEN_X - 14},{OVEN_Y - 80} L{OVEN_X + 14},{OVEN_Y - 80} C{OVEN_X + 30},{OVEN_Y - 78} '
-            f'{OVEN_X + 50},{OVEN_Y - 50} {OVEN_X + 46},{OVEN_Y} Z" fill="#c9845a" stroke="{INK}" '
-            f'stroke-width="3.5" stroke-linejoin="round"/>'
-            f'<ellipse cx="{OVEN_X}" cy="{OVEN_Y - 80}" rx="16" ry="5" fill="#6d4630" stroke="{INK}" '
-            f'stroke-width="3"/>'
-            f'<path d="M{OVEN_X - 18},{OVEN_Y} L{OVEN_X - 18},{OVEN_Y - 26} A18,18 0 0 1 {OVEN_X + 18},'
-            f'{OVEN_Y - 26} L{OVEN_X + 18},{OVEN_Y} Z" fill="#7a4a30" stroke="{INK}" stroke-width="3"/>'
-            f'<path d="M{OVEN_X - 12},{OVEN_Y - 4} Q{OVEN_X},{OVEN_Y - 22} {OVEN_X + 12},{OVEN_Y - 4}" '
-            f'fill="#f2a24c" opacity="0.85"/>')
-    oven += PR.jar(OVEN_X + 74, OVEN_Y - 26, 0.36) + PR.sack(OVEN_X - 80, OVEN_Y + 4, 0.34, seed=2)
-    # paved square with perspective joints
-    plaza = (f'<path d="M-30,{BACK_Y} L{SW + 30},{BACK_Y} L{SW + 30},{SH + 30} L-30,{SH + 30} Z" '
-             f'fill="url(#s16pave)" stroke="{INK}" stroke-width="3"/>')
-    joints = ""
-    vx, vy = 1250, 420
-    y, k = BACK_Y + 24, 0
-    while y < SH + 20:
-        joints += f'<path d="M-30,{f1(y)} L{SW + 30},{f1(y)}"/>'
-        k += 1
-        y += 20 + k * 9
-    for i in range(-16, 24):
-        xb = vx + i * 230
-        t0 = (BACK_Y - vy) / (SH + 40 - vy)
-        joints += f'<path d="M{f1(vx + (xb - vx) * t0)},{BACK_Y} L{f1(xb)},{SH + 40}"/>'
-    plaza += (f'<g stroke="{P["ink_soft"]}" stroke-width="2" opacity="0.2" fill="none" '
-              f'stroke-linecap="round">{joints}</g>')
-    # soft warm light pooling on the square from the low sun (right) and long shadows of the houses
-    plaza += (f'<path d="M-30,{BACK_Y + 2} L{SW + 30},{BACK_Y + 2} L{SW + 30},{BACK_Y + 40} '
-              f'C1600,{BACK_Y + 52} 800,{BACK_Y + 36} -30,{BACK_Y + 48} Z" fill="{P["ink"]}" opacity="0.07"/>')
-    # (Jonah's stone step is s15's own step, a layer of its own: step15_svg)
-    # herald's plinth: a two-tier stone block with a glazed rosette band
-    px, pt, pb = PLINTH_X, PLINTH_TOP, PLINTH_BASE
+    px, pt, pb = 1250, 778, 846
     l0, l1, u0, u1 = px - 130, px + 130, px - 92, px + 92
     pl = (f'<path d="M{l0},{pb} L{l0},{pb - 42} L{l1},{pb - 42} L{l1},{pb} Z" fill="url(#s16stonef)" '
           f'stroke="{INK}" stroke-width="3.5"/>'
@@ -520,11 +511,30 @@ def square_svg():
           f'<rect x="{l0}" y="{pb - 30}" width="{l1 - l0}" height="16" fill="#3f79a8" stroke="{INK}" '
           f'stroke-width="2.5"/>')
     pl += "".join(f'<circle cx="{xx}" cy="{pb - 22}" r="4" fill="#f3e3b8"/>' for xx in range(l0 + 14, l1, 26))
-    body += houses + S.g(oven, filter="wobble-fine") + S.g(plaza, filter="wobble")
-    body += S.g(pl, filter="wobble-fine")
-    # ground shadow of the plinth
-    body += f'<ellipse cx="{px}" cy="{pb + 4}" rx="150" ry="12" fill="{INK}" opacity="0.12" filter="url(#soft)"/>'
-    return doc(body, defs)
+    body = (f'<ellipse cx="{px + 10}" cy="{pb + 4}" rx="160" ry="13" fill="{INK}" opacity="0.14" filter="url(#soft)"/>'
+            + S.g(pl, filter="wobble-fine"))
+    return doc(f'<g transform="translate({PLINTH_X},{PLINTH_BASE}) scale({PLINTH_K}) translate({-px},{-pb})">'
+               f'{body}</g>', defs)
+
+
+def oven_svg():
+    """A clay bread oven (tannur) with a jar and a sack, on the street in front of s15's pot stall (drawn around
+    (300, 784) and placed with OVEN_K at (OVEN_X, OVEN_Y)); its smoke is a separate layer."""
+    ox, oy = 300, 784
+    oven = (f'<path d="M{ox - 46},{oy} C{ox - 50},{oy - 50} {ox - 30},{oy - 78} '
+            f'{ox - 14},{oy - 80} L{ox + 14},{oy - 80} C{ox + 30},{oy - 78} '
+            f'{ox + 50},{oy - 50} {ox + 46},{oy} Z" fill="#c9845a" stroke="{INK}" '
+            f'stroke-width="3.5" stroke-linejoin="round"/>'
+            f'<ellipse cx="{ox}" cy="{oy - 80}" rx="16" ry="5" fill="#6d4630" stroke="{INK}" '
+            f'stroke-width="3"/>'
+            f'<path d="M{ox - 18},{oy} L{ox - 18},{oy - 26} A18,18 0 0 1 {ox + 18},'
+            f'{oy - 26} L{ox + 18},{oy} Z" fill="#7a4a30" stroke="{INK}" stroke-width="3"/>'
+            f'<path d="M{ox - 12},{oy - 4} Q{ox},{oy - 22} {ox + 12},{oy - 4}" '
+            f'fill="#f2a24c" opacity="0.85"/>')
+    oven += PR.jar(ox + 74, oy - 26, 0.36) + PR.sack(ox - 80, oy + 4, 0.34, seed=2)
+    body = (f'<ellipse cx="{ox}" cy="{oy + 3}" rx="70" ry="9" fill="{INK}" opacity="0.14" filter="url(#soft)"/>'
+            + S.g(oven, filter="wobble-fine"))
+    return doc(f'<g transform="translate({OVEN_X},{OVEN_Y}) scale({OVEN_K}) translate({-ox},{-oy})">{body}</g>')
 
 
 def well_svg(cx, by):
@@ -564,10 +574,6 @@ def well_svg(cx, by):
              f'fill="none"/>')
     body += PR.rope_coil(cx - 70, ry0 + 8, 0.55)
     return S.g(body, filter="wobble-fine")
-
-
-def palm_svg(x, y, s, lean):
-    return doc(PR.palm_tree(x, y, s, lean=lean))
 
 
 # ============================================================================ the market stall
@@ -1090,33 +1096,35 @@ def build(ctx):
     t_rough = within(c1b, 0.52)              # "粗粗的麻布衣服": scratchy!
     t_kneel = c1c.start + 0.12               # "向上帝认错": kneel in a wave, toward the light
     t_hope = within(c1c, 0.54)               # "表示愿意改": a soft warm light opens at the upper right
-    # the hand-over from s15: its picture of the market fades out over this square just after the 1 s dissolve;
-    # its golden sky and warm light fade more slowly into this scene's sky, before the golden patch
-    T_SW0, T_SW1 = 0.8, 2.2
+    # the hand-over from s15: its street stays for the whole scene; its golden sky and warm light fade slowly into
+    # this scene's sky, before the golden patch
     T_SKY0, T_SKY1 = 1.0, min(4.4, t_up - 0.1)
 
     def sky15_a(t):
         return Tf(alpha=1 - M.progress(t, T_SKY0, T_SKY1, "sine"))
 
-    # ---- sky, sun, clouds, far city ----
-    # sky + far city are one static group; the clouds drift in front of it, high above the skyline, low enough to
-    # sit whole inside the opening and closing frames
+    # ---- sky, sun, clouds, s15's skyline and street ----
     sc.add("sky", sky_svg(), z=0, wc=0.6)
     sc.add("sky15", sky15_svg(), z=0.05, wc=0.6, motion=sky15_a)
-    # s15's low sun stays (they kneel toward it and God's light later); its rays turn on slowly, as in s15, once
-    # s15's picture (with the same sun drawn into it) has faded
+    # s15's low sun stays (they kneel toward it and God's light later), its rays still turning slowly as in s15
     sun_c = m15(*S15_SUN)
-    sc.add("sun15", sun15_svg(), z=0.3, wc=0,
-           motion=lambda t: Tf(rot=3.0 * max(0.0, t - T_SW1), px=sun_c[0], py=sun_c[1]))
-    sc.add("glow15", glow15_svg(), z=1.3, wc=0, blend="screen", motion=sky15_a)
-    sc.add("far", far_svg(), z=0.5)
-    cloud_drift = M.drift(vx=6)
-    sc.add("clouds_hi", clouds_svg([(430, 325, 280, 72, 3), (1150, 322, 300, 72, 4), (GLOW_C[0], 335, 320, 80, 5)]),
-           z=1, motion=cloud_drift)
-    sc.add("clouds_lo", clouds_svg([(1000, 398, 170, 46, 6), (1560, 384, 200, 50, 7)], "#fbead2", "#efc9a0"),
-           z=1.2, motion=M.drift(vx=-4))
+    sc.add("sun15", sun15_svg(), z=0.3, wc=0, motion=lambda t: Tf(rot=3.0 * t, px=sun_c[0], py=sun_c[1]))
+    # s15's clouds drift on gently; the right one drifts left over the low sun and is where God's light opens
+    # behind it ("gleam", "rays") at the end
+    vr = (CLOUD_R0[0] - GLOW_C[0]) / (t_hope + 0.8)
 
-    # doves gliding far over the roofs (sparse, slow), below the clouds
+    def cloud_r(t):
+        return Tf(dx=-vr * t)
+
+    def with_cloud(t):          # the gleam and rays (drawn round GLOW_C) ride with the right cloud
+        return Tf(dx=CLOUD_R0[0] - vr * t - GLOW_C[0])
+    sc.add("clouds15", clouds15_svg(S15_CLOUDS[:2]), z=1, motion=M.drift(vx=4))
+    sc.add("cloud15_r", clouds15_svg(S15_CLOUDS[2:]), z=1.05, motion=cloud_r)
+    sc.add("far15", far15_svg(), z=1.25, wc=0.8)
+    sc.add("glow15", glow15_svg(), z=1.3, wc=0, blend="screen", motion=sky15_a)
+    sc.add("back15", back15_svg(), z=2)
+
+    # doves gliding far over the roofs (sparse, slow; they set off outside the frame)
     fr_r, fr_l = dove_frames(1), dove_frames(-1)
     for i, (fc, x0, y0, x1, y1, ta, tb, rate, ph) in enumerate((
             (1, -80, 400, 900, 330, 0.0, 9.0, 9, 0.0),
@@ -1130,14 +1138,13 @@ def build(ctx):
         sc.add(f"dove{i}", fr_r if fc > 0 else fr_l, z=2.5 + 0.01 * i, seed=700 + i,
                frame_at=wing_cycle(rate, ph, glide=(ta + 1.5, ta + 3.2)), motion=mot)
 
-    # ---- square (static), palms (gentle sway), oven smoke (dies away at the fast) ----
-    sc.add("square", square_svg(), z=3)
-    for i, (x, s, ln) in enumerate(((640, 0.5, -0.1), (1480, 0.46, 0.08), (2170, 0.52, -0.06))):
-        sc.add(f"palm{i}", palm_svg(x, BACK_Y + 2, s, ln), z=2.8,
-               motion=M.sway(0.7, 4.2 + i * 0.6, pivot=(x, BACK_Y), phase=i * 0.3))
-
+    # ---- this scene's set on s15's street (they come in with the dissolve): the herald's plinth, the bread oven
+    # with its smoke (it dies away at the fast) ----
+    sc.add("plinth", plinth_svg(), z=3)
+    sc.add("oven", oven_svg(), z=3.05)
     smoke_stop = t_land
     n_smoke, per = 5, 4.6
+    sm_y = OVEN_TOP - 16 * OVEN_K
     for i in range(n_smoke):
         ph = i / n_smoke
 
@@ -1148,50 +1155,59 @@ def build(ctx):
                 return Tf(alpha=0)
             fade = 1 - M.progress(t, smoke_stop, smoke_stop + 1.4, "sine")    # the oven goes cold
             k = 0.7 + 1.2 * u
-            return Tf(dx=26 * u + 6 * math.sin(t * 0.9 + i), dy=-150 * u, sx=k, sy=k,
-                      alpha=0.5 * math.sin(math.pi * min(1.0, u * 1.15)) * fade, px=OVEN_X, py=OVEN_Y - 90)
-        sc.add(f"smoke{i}", smoke_svg(OVEN_X, OVEN_Y - 96, 26, 50 + i), z=3.1, wc=0.4, motion=smot)
+            return Tf(dx=30 * u + 6 * math.sin(t * 0.9 + i), dy=-170 * u, sx=k, sy=k,
+                      alpha=0.5 * math.sin(math.pi * min(1.0, u * 1.15)) * fade, px=OVEN_X, py=sm_y + 6)
+        sc.add(f"smoke{i}", smoke_svg(OVEN_X, sm_y, 26 * OVEN_K, 50 + i), z=3.1, wc=0.4, motion=smot)
 
-    # ---- crowd groups: stand worried -> listen -> sorry (believe) -> sackcloth (sad) -> kneel sorry, facing the light
+    # ---- the crowd: stand worried -> listen -> sorry (believe) -> sackcloth (sad) -> kneel sorry, facing the light.
+    # s15's townspeople carry on (nothing fades): the stroller and the boy stay where s15 leaves them; the vendor
+    # walks over behind Jonah with two newcomers following him in from the left edge; two groups hop in from the
+    # right edge beside the merchant's stall (held at alpha 0 until each sets off, outside the frame)
+    def state_fig(m, st, turned=False):
+        kind, v, x, y, s, f0, f1_ = m
+        if st == 0:
+            return person(kind, v, x, y, s, f0, "stand", expr="worried")
+        if st == 1:         # "你猜怎么样？": some turn to their neighbour
+            return person(kind, v, x, y, s, -f0 if turned else f0, "stand", expr="worried")
+        if st == 2:
+            return person(kind, v, x, y, s, f0, "listen")
+        if st == 3:
+            return person(kind, v, x, y, s, f0, "stand", expr="sorry")
+        if st == 4:
+            return person(kind, v, x, y, s, f0, "sad", "sackcloth")
+        if st == 5:
+            return person(kind, v, x, y, s, f1_, "kneel_pray", "sackcloth", "sorry")
+        # the one-knee in-between of kneeling down (already turned toward the light)
+        return person(kind, v, x, y, s, f1_, "half_kneel", "sackcloth", "sorry")
+
     def group_frames(members, turn):
-        out = []
-        for st in range(7):
-            body = ""
-            for j, (kind, v, x, y, s, f0, f1_) in enumerate(members):
-                if st == 0:
-                    body += person(kind, v, x, y, s, f0, "stand", expr="worried")
-                elif st == 1:       # "你猜怎么样？": some turn to their neighbour
-                    body += person(kind, v, x, y, s, -f0 if j % 2 == turn else f0, "stand", expr="worried")
-                elif st == 2:
-                    body += person(kind, v, x, y, s, f0, "listen")
-                elif st == 3:
-                    body += person(kind, v, x, y, s, f0, "stand", expr="sorry")
-                elif st == 4:
-                    body += person(kind, v, x, y, s, f0, "sad", "sackcloth")
-                elif st == 5:
-                    body += person(kind, v, x, y, s, f1_, "kneel_pray", "sackcloth", "sorry")
-                else:       # the one-knee in-between of kneeling down (already turned toward the light)
-                    body += person(kind, v, x, y, s, f1_, "half_kneel", "sackcloth", "sorry")
-            out.append(doc(body))
-        return out
+        return [doc("".join(state_fig(m, st, j % 2 == turn) for j, m in enumerate(members))) for st in range(7)]
 
+    # the walkers: the vendor sets off from his pots just after the dissolve and they stop, turn to Jonah and listen
+    # as "竟然" begins (planted-foot walk: s15's gait drawings, the group advancing one drawing's stride per drawing)
+    t_wl0 = snap(0.92)
+    t_wl1 = snap(c0b.start) - 0.5 / 30
+    rate_wl = WALK_NL / (t_wl1 - t_wl0)
+
+    def wl_i(t):
+        return min(WALK_NL, int((t - t_wl0) * rate_wl + 1e-6))
     gtimes = {   # (turn to the neighbour or None, listen, sorry, sackcloth, kneel)
-        "back_l": (c0a.start + 0.45, t_heard + 0.25, t_believe + 0.15, t_change + 0.66, t_kneel + 0.42),
-        "back_r": (c0a.start + 0.75, t_heard + 0.4, t_believe + 0.3, t_change + 1.1, t_kneel + 0.62),
-        "mid_l": (None, t_heard + 0.1, t_believe + 0.05, t_change + 0.46, t_kneel + 0.3),
-        "mid_r": (c0a.start + 0.6, t_heard + 0.5, t_believe + 0.35, t_change + 1.3, t_kneel + 0.78),
+        "walk_l": (None, t_wl1, t_believe + 0.1, t_change + 0.56, t_kneel + 0.22),
+        "c15": (c0a.start + 0.45, t_heard + 0.2, t_believe + 0.15, t_change + 0.66, t_kneel + 0.42),
+        "back_r": (None, t_heard + 0.4, t_believe + 0.3, t_change + 1.1, t_kneel + 0.62),
+        "mid_r": (None, t_heard + 0.5, t_believe + 0.35, t_change + 1.3, t_kneel + 0.78),
     }
-    zrow = {"back_l": 10, "back_r": 10.1, "mid_l": 12, "mid_r": 12.1}
+    zrow = {"walk_l": 10.6, "c15": 11.5, "back_r": 10.1, "mid_r": 12.1}
+    arrive = {"back_r": (snap(1.0), 300, 3), "mid_r": (snap(1.28), 330, 3)}   # (t0, from dx, hops)
     puffs_at = []
     group_puffs = []
     for name, members in CROWD.items():
-        frames = group_frames(members, 1 if name != "mid_r" else 0)
+        frames = group_frames(members, 0)
         gx = sum(m[2] for m in members) / len(members)
         gy = max(m[3] for m in members)
         s = members[0][4]
         tt, a, b, c, d = (snap(x) if x is not None else None for x in gtimes[name])
-        sched = [(0, 0)] + ([(tt, 1)] if tt is not None else []) + [(a, 2), (b, 3), (c, 4), (d, 6),
-                                                                    (d + HALF_HOLD, 5)]
+        sched = ([(tt, 1)] if tt is not None else []) + [(a, 2), (b, 3), (c, 4), (d, 6), (d + HALF_HOLD, 5)]
         lift = t_up + 0.08 * len(name) % 0.2
         hts = [kneel_heights(m[0], m[1]) for m in members]
         parts = [dip(a, s, (gx, gy), 4),
@@ -1203,17 +1219,87 @@ def build(ctx):
                  breathe_y(0.007, 3.4, (gx, gy), phase=len(name) * 0.13)]
         if tt is not None:
             parts.append(dip(tt, s, (gx, gy), 3))
-        sc.add(f"crowd_{name}", frames, z=zrow[name], frame_at=cuts(sched), motion=M.combine(*parts))
+        if name == "walk_l":
+            # [s15's vendor at his pots (newcomers off the left edge)] + 12 walk drawings + the 7 states
+            ph = (0, 6, 0)                      # gait phases: everyone sets off and arrives on a passing drawing
+            order = sorted(range(len(members)), key=lambda j: members[j][3])
+
+            def gait_body(k, members=members, ph=ph, order=order):
+                body = ""
+                for j in order:
+                    kind, v, x, y, s_, _, _ = members[j]
+                    ps = S15.walk_pose((k + ph[j]) % 12, A=WALK_ADV * S15.WALK_N / (2 * s_), lk=leg_k(kind))
+                    body += C.ground_shadow(x, y, s_, 110, opacity=0.2) + gait_fig(x, y, s_, kind, v, 1, ps)
+                return body
+            pre = ""
+            for j in order:
+                kind, v, x, y, s_, _, _ = members[j]
+                if kind == "man" and v == VENDOR[1] and abs(y - VENDOR[3]) < 1e-6:
+                    pre += s15_fig_markup(*VENDOR, dx=WALK_D)
+                else:
+                    ps = S15.walk_pose((3 + ph[j]) % 12, A=WALK_ADV * S15.WALK_N / (2 * s_), lk=leg_k(kind))
+                    pre += C.ground_shadow(x, y, s_, 110, opacity=0.2) + gait_fig(x, y, s_, kind, v, 1, ps)
+            frames = [doc(pre)] + [doc(gait_body(k)) for k in range(12)] + frames
+            cut = cuts([(0, 0)] + [(tk, 13 + i) for tk, i in sched])
+
+            def fa(t, cut=cut):
+                if t < t_wl0:
+                    return 0.0
+                if t < t_wl1:
+                    return float(1 + (3 + wl_i(t)) % 12)
+                return cut(t)
+
+            def walk_mot(t):
+                return Tf(dx=-WALK_D + (WALK_ADV * wl_i(t) if t >= t_wl0 else 0.0))
+            parts += [walk_mot, dip(t_wl0, s, (gx, gy), 3)]
+            sc.add(f"crowd_{name}", frames, z=zrow[name], frame_at=fa, motion=M.combine(*parts))
+        elif name == "c15":
+            # [s15's stroller and boy exactly as s15 leaves them] + the 7 states (the stroller turns to the boy)
+            pre = s15_fig_markup(*BOY) + s15_fig_markup(*STROLLER)
+            sc.add(f"crowd_{name}", [doc(pre)] + frames, z=zrow[name],
+                   frame_at=cuts([(0, 0)] + [(tk, 1 + i) for tk, i in sched]), motion=M.combine(*parts))
+        else:
+            t0, dx0, n = arrive[name]
+            parts.append(step_in(t0, (gx + dx0, gy, s), (gx, gy), s, n=n, dur=0.3, gap=0.05, lift=8.0))
+            parts.append(lambda t, t0=t0: Tf(alpha=1.0 if t >= t0 else 0.0))
+            sc.add(f"crowd_{name}", frames, z=zrow[name], frame_at=cuts([(0, 0)] + sched),
+                   motion=M.combine(*parts))
         body = ""
         for j, (kind, v, x, y, s_, f0, _) in enumerate(members):
             hh = {"child": 215, "elder": 320}.get(kind, 330) * s_
             body += small_puff(x, y, hh, seed=40 + j + 7 * len(name))
         group_puffs.append((name, c, body, (gx, gy - 150 * s)))
 
-    # ---- s15's last picture (market15) over this square for the dissolve, fading out just after it; Jonah, his step
-    # and the three who walk over stay on top of it (z 17.4..21) ----
-    sc.add("market15", market15_svg(), z=17, wc=0.85,
-           motion=lambda t: Tf(alpha=1 - M.progress(t, T_SW0, T_SW1, "sine")))
+    # ---- s15's bearded man walks off to the right in front of the merchant's stall, his two sheep trotting ahead
+    # (they turn round just after the dissolve; once out of the frame they are hidden) ----
+    _, _, bx, by, bs, _, _, _ = BEARD
+    A_B, N_B, RATE_B = 60.0, 26, 12.5
+    adv_b = 2 * A_B / S15.WALK_N * bs
+    t_b0 = snap(1.02)
+    bfr = [doc(s15_fig_markup(*BEARD))] + [
+        doc(C.ground_shadow(bx, by, bs, 110) + gait_fig(bx, by, bs, "man", 0, 1, S15.walk_pose(k, A=A_B)))
+        for k in range(12)]
+
+    def b_i(t):
+        return min(N_B, int((t - t_b0) * RATE_B + 1e-6))
+    sc.add("beard15", bfr, z=16.4, frame_at=lambda t: 0.0 if t < t_b0 else float(1 + (3 + b_i(t)) % 12),
+           motion=M.combine(lambda t: Tf(dx=adv_b * b_i(t) if t >= t_b0 else 0.0,
+                                         alpha=0.0 if t >= t_b0 + N_B / RATE_B else 1.0),
+                            dip(t_b0, bs, (bx, by), 4)))
+    t_s0 = snap(0.95)
+
+    def sheep_mot(t):
+        if t < t_s0:
+            return Tf()
+        u = t - t_s0
+        if u > 1.9:
+            return Tf(alpha=0)
+        w = max(0.0, u - 0.12)                         # they turn with a little hop, then trot off
+        run = 320 * (w * w / 0.4 if w < 0.2 else w - 0.1)
+        hopf = 14 * math.sin(math.pi * u / 0.24) if u < 0.24 else 9 * abs(math.sin(math.pi * 2.6 * (u - 0.24)))
+        return Tf(dx=run, dy=-hopf)
+    sc.add("sheep15", [doc(sheep15_markup(-1)), doc(sheep15_markup(1))], z=16.45,
+           frame_at=cuts([(0, 0), (t_s0 + 0.1, 1)]), motion=sheep_mot)
     sc.add("step", step15_svg(), z=17.4)
 
     # ---- Jonah on his step: stern (as s15 leaves him); surprised at "竟然"; then uneasy (foreshadows ch. 4) ----
@@ -1402,7 +1488,7 @@ def build(ctx):
     t_sigh = t_rough + 0.55
     wx0, wy0 = m15(*S15_MOTHER[:2])
     sc.add("mother", wfr, z=20.5, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(tw)]),
-           motion=M.combine(step_in(snap(1.12), (wx0, wy0, S15_MOTHER[2] * M15_K), wp, W_S),
+           motion=M.combine(step_in(snap(1.12), (wx0, wy0, S15_MOTHER[2] * M15_K), wp, W_S, n=3, dur=0.3),
                             hop(tw[1], [(0, {"dy": 0}), (0.1, {"dy": -7}), (0.22, {"dy": 0})], wp),
                             look_up(t_up + 0.06, wp, -1, hold=hold_up), dip(tw[2], W_S, wp, 4),
                             nod(tw[2] + 0.05, wp, 2.4, 2), kneel_down(tw[4], wp, kneel_heights("woman", 2), KNEEL_TILT),
@@ -1464,10 +1550,11 @@ def build(ctx):
             (0.16, {"alpha": 0.85, "s": 1.015, "dy": -9}), (0.38, {"alpha": 0, "s": 1.03, "dy": -18})], pv,
             ["out", "sine", "in"]))
 
-    # ---- foreground framing (the well in the front-left corner, clear of Jonah's step) ----
-    fg = (well_svg(236, 1318) + PR.grass_tuft(60, SH + 4, 1.1, variant=2) + PR.jar(420, SH - 26, 0.78)
-          + PR.grass_tuft(2330, SH + 6, 1.0, variant=0) + PR.bush(2410, SH + 10, 0.9, variant=1))
-    sc.add("fg", doc(fg), z=16.9)       # under market15 (not in s15's picture); nothing in front of it overlaps it
+    # ---- foreground framing: the well in the front-left corner, clear of Jonah's step, and s15's own near things
+    # (its flowering bush and grass at the lower right) ----
+    fg15_defs, fg15 = fg15_markup()
+    fg = (well_svg(236, 1318) + PR.grass_tuft(60, SH + 4, 1.1, variant=2) + PR.jar(420, SH - 26, 0.78) + fg15)
+    sc.add("fg", doc(fg, fg15_defs), z=16.9)
 
     # ---- light: a brief warm patch in the sky as they believe; the solemn dusk while they change and kneel;
     # then a soft warm glow and faint rays from behind the cloud at the upper right, where they kneel facing ----
@@ -1478,7 +1565,7 @@ def build(ctx):
            motion=M.keys([(t_change - 0.4, {"alpha": 0}), (t_kneel + 0.5, {"alpha": 1}),
                           (t_hope, {"alpha": 1}), (t_hope + 1.6, {"alpha": 0.6})], "sine"))
     sc.add("gleam", glaze_svg("gleam"), z=0.46, wc=0,
-           motion=M.combine(cloud_drift, M.keys([(t_hope - 0.3, {"alpha": 0}), (t_hope + 1.6, {"alpha": 1})], "sine"),
+           motion=M.combine(with_cloud, M.keys([(t_hope - 0.3, {"alpha": 0}), (t_hope + 1.6, {"alpha": 1})], "sine"),
                             M.pulse(0.9, 1.0, 3.6)))
     sc.add("hope", glaze_svg("hope"), z=41, wc=0, blend="screen",
            motion=M.combine(M.keys([(t_hope - 0.2, {"alpha": 0}), (t_hope + 1.5, {"alpha": 1})], "sine"),
@@ -1488,7 +1575,7 @@ def build(ctx):
            wc=0, blend="multiply", motion=sky15_a)
     ray_src = (GLOW_C[0] - 20, 345)
     sc.add("rays", rays_svg(ray_src, 118, 46, n=3), z=40.8, wc=0, blend="screen",
-           motion=M.combine(cloud_drift, M.keys([(t_hope + 0.1, {"alpha": 0}), (t_hope + 1.9, {"alpha": 0.8})],
+           motion=M.combine(with_cloud, M.keys([(t_hope + 0.1, {"alpha": 0}), (t_hope + 1.9, {"alpha": 0.8})],
                                                  "sine"), M.pulse(0.75, 1.0, 4.1, 0.3)))
 
     # ---- camera: a slow push in (line 0), a gentle widening for the horn, the fast and the sackcloth wave, a

@@ -29,9 +29,10 @@ Continuity
   face, so the opening does not cross-fade into this scene's drawings. Instead, until t_swap the picture IS s20's
   last shot: _prev_shot() builds the previous scene from the timeline and renders it on its own clock (its
   layers, fx, Jonah, lizard; no paper or subtitles), so the s20 -> s21 dissolve blends two identical pictures.
-  On "上帝安排了" God's light (light only) widens from the beam beside the booth until its warm glow fills the
-  frame for a few frames (fx 'flood', at most 96 %). Under that peak the picture cuts to this scene's own
-  drawings: its far view and clouds, Jonah tired and sweaty. Then the light gathers back into the beam. This
+  On "上帝安排了" God's light (light only) spreads out of the beam beside the booth as a soft golden bloom
+  (~0.5 s, soft-edged, never a flash) until its warm glow fills the frame for a few frames (fx 'flood', at most
+  90 %). Under that peak the picture blends over 4 frames into this scene's own drawings: its far view and
+  clouds, Jonah tired and sweaty. Then the light gathers back into the beam, clear before the sprout. This
   scene now depends on the previous scene's file. Re-render it whenever s20_booth.py changes (engine/render.py
   hashes only a scene's own file).
 * End: the last camera key equals s22's first key Cam(1070, 600, 1990) (same stage layout V.XP / GY / SP /
@@ -450,12 +451,14 @@ def build(ctx):
         XF = float(load_timeline().get("xfade", 1.0))   # cross-dissolve length (s)
     except Exception:
         XF = 1.0
-    t_f0 = max(XF, t_beam0)                         # the light starts to widen once the dissolve is over ...
-    t_full = t_f0 + 0.32                            # ... fills the frame for a few frames ...
-    t_swap = t_full + 0.03                          # ... (s20's picture -> this scene's own, a 1-frame cut) ...
-    t_f1 = t_full + 0.06                            # ... then gathers back into the beam beside the booth
-    t_fe = t_f1 + 0.55
-    prev_shot = _prev_shot(ctx, t_swap)
+    t_f0 = max(XF, t_beam0)                         # the light starts to spread out of the beam once the
+    t_full = t_f0 + 0.6                             # dissolve is over (a ~0.5 s golden bloom), fills the frame
+    t_swap = t_full + 0.03                          # ... (s20's picture -> this scene's own, a 4-frame blend) ...
+    t_f1 = t_full + 0.08                            # ... then gathers back into the beam beside the booth,
+    t_fe = min(t_f1 + 0.45, t_pop - 0.1)            # clear before the sprout pushes up
+    assert t_fe <= t_pop - 0.1 and t_fe - t_f1 >= 0.3, (t_f1, t_fe, t_pop)
+    SWAP_HALF = 2.0 / FPS                           # the blend spans 4 frames centred on t_swap
+    prev_shot = _prev_shot(ctx, t_swap + SWAP_HALF + 1.0 / FPS)
 
     # =============================================================== SKY (day / hot / gold / night / dawn)
     sky_h = 665
@@ -1191,8 +1194,10 @@ def build(ctx):
 
     def s20_shot(frame, t, view):
         """Until t_swap the picture is s20's own last shot (exactly as s20 renders it at the same moment, before
-        paper and subtitles), moved with this scene's camera once it leaves s20's final view (= CAM0)."""
-        if prev_shot is None or t >= t_swap:
+        paper and subtitles), moved with this scene's camera once it leaves s20's final view (= CAM0). Under the
+        fullest light it blends into this scene's own drawings over 4 frames centred on t_swap."""
+        w = M.progress(t, t_swap - SWAP_HALF, t_swap + SWAP_HALF, "linear")   # weight of this scene's drawings
+        if prev_shot is None or w >= 1.0:
             return frame
         r20, off = prev_shot
         arr = r20.frame_array(t + off)
@@ -1205,26 +1210,32 @@ def build(ctx):
         out = np.empty((arr.shape[0], arr.shape[1], 4), np.uint8)
         out[..., :3] = arr
         out[..., 3] = 255
+        if w > 0.0:
+            out = cv2.addWeighted(out, 1.0 - w, np.asarray(frame), w, 0.0)
         return Image.fromarray(out, "RGBA")
 
     F_CORE = np.array([255.0, 250.0, 232.0], np.float32)    # warm light: pale gold at the beam ...
     F_RIM = np.array([253.0, 226.0, 168.0], np.float32)     # ... deeper gold away from it (never pure white)
-    F_PEAK, F_R0, F_RMAX, F_SOFT = 0.96, 80.0, 1600.0, 280.0
+    F_PEAK, F_R0, F_RMAX, F_SOFT = 0.9, 80.0, 1600.0, 450.0
+    F_LAG = 0.08                    # the beam brightens a moment before it starts to spread
 
     def flood_amt(t):
-        return M.progress(t, t_f0, t_f0 + 0.2, "sine") * (1 - M.progress(t, t_f1 + 0.05, t_fe, "sine"))
+        return M.progress(t, t_f0, t_f0 + 0.5, "sine") * (1 - M.progress(t, t_f1, t_fe, "sine"))
 
     def flood(frame, t, view):
-        """God's light (light only): the beam beside the booth widens until its warm glow fills the whole frame
-        (at most F_PEAK), holds for a few frames, then narrows back into the beam (half-width in output px)."""
+        """God's light (light only): the beam beside the booth spreads out, a soft golden glow, until it fills the
+        whole frame (at most F_PEAK), holds for a few frames, then gathers back into the beam (r = half-width in
+        output px; the soft edge reads as glow, not a wipe)."""
         k = flood_amt(t)
         if k <= 0.002:
             return frame
-        r = F_R0 + (F_RMAX - F_R0) * (M.progress(t, t_f0, t_full, "inout") -
-                                      M.progress(t, t_f1, t_f1 + 0.5, "out"))
+        r = F_R0 + (F_RMAX - F_R0) * (M.progress(t, t_f0 + F_LAG, t_full, "sine") -
+                                      M.progress(t, t_f1, t_fe, "sine"))
         xb = view.to_out(XP, GY - 400)[0]
         d = np.abs(np.arange(frame.size[0], dtype=np.float32) - xb)
-        a = (F_PEAK * k * np.clip((r - d) / F_SOFT + 0.5, 0.0, 1.0))[None, :, None]
+        # a beam while narrow, a soft glow (F_SOFT) as it widens
+        e = np.clip((r - d) / min(F_SOFT, 160.0 + 0.6 * r) + 0.5, 0.0, 1.0)
+        a = (F_PEAK * k * e * e * (3.0 - 2.0 * e))[None, :, None]
         # the gold deepens away from the beam and toward the ground, so it reads as light (not a blank page)
         fy = np.linspace(0.0, 1.0, frame.size[1], dtype=np.float32)[:, None, None]
         col = F_CORE + (F_RIM - F_CORE) * np.clip(0.75 * d[None, :, None] / 1000.0 + 0.45 * fy, 0.0, 1.0)

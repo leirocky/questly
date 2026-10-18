@@ -5,9 +5,11 @@ and gnarled stone "roots" of undersea mountains down the sides, and a quiet sand
 shown inside a big thought bubble (memory_frame, output space, drawn like s19's flashback bubble: a puffy
 cream cloud ring with an ink outline round the picture, the dark of the belly outside it) with a soft dark
 indigo multiply vignette inside, so a small child sees at once that this is Jonah remembering. The bubble
-enters through the opening dissolve: three little thought puffs rise from where s11's last frame shows Jonah
-kneeling (his head ~ (840, 460) output px; move TRAIL / MEM_C0 if s11's end framing changes), the bubble pops
-up beside them with the picture in it and grows to fill the frame (0.24-1.7 s) before he plunges in. It leaves
+enters at the end of the opening dissolve (never as a see-through ghost over s11): three little thought puffs
+rise from where s11's last frame shows Jonah kneeling (0.55-0.95 s; his head ~ (840, 460) output px; move
+TRAIL / MEM_C0 if s11's end framing changes), the bubble pops up beside them with the picture in it (0.8 s,
+s12 80% in) and grows to fill the frame (1.0-2.1 s) before he plunges in. The cloud ring is drawn on a canvas
+padded past the frame edges, so its outer puffs stay round while the bubble is small. It leaves
 when the golden light fills the page: the cloud ring swells out past the frame edges and fades into the
 white-out, and we are back inside the great fish with no frame (v1 / s11 belly, drawn in the stage's top
 2112 x 1188 region).
@@ -721,6 +723,10 @@ MEM_MUL = (46, 50, 108)                      # vignette multiply colour (dark in
 # facing right) to where the bubble pops up; the bubble then grows to fill the frame
 TRAIL = [(905, 352, 11), (948, 318, 16), (1002, 278, 22)]
 MEM_C0, MEM_K0 = (1300.0, 205.0), 0.3        # the bubble's centre and scale when it pops up
+# the cloud ring is drawn on a canvas this much bigger than the frame on every side: its outer puffs reach
+# ~58 px past the frame edges (+ the 6.5 px ink stroke and the wobble), and while the bubble is small (the
+# entrance) they must stay round instead of being cut flat by the frame-sized canvas
+MEM_PAD = 110
 
 
 def _superellipse(a, b, cx, cy, count=240):
@@ -752,8 +758,9 @@ def _puff_ring(a, b, cx, cy, spacing, rmin, rmax, seed):
     return out
 
 
-def memory_ring_svg():
-    """The cloud ring (window cut out by an even-odd clip) + the window's glow and ink rims, output px."""
+def memory_ring_svg(pad=MEM_PAD):
+    """The cloud ring (window cut out by an even-odd clip) + the window's glow and ink rims, in output px on a
+    canvas padded by ``pad`` px on every side (output pixel (x, y) is canvas pixel (x + pad, y + pad))."""
     cx, cy = MEM_C
     ink = P["ink"]
     win = _superellipse(MEM_A, MEM_B, cx, cy)
@@ -767,13 +774,15 @@ def memory_ring_svg():
         ring += f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rr - 1:.1f}" fill="{fill}"/>'
     body = _superellipse(MEM_A + 26, MEM_B + 24, cx, cy)
     ring += S.path("M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in body) + " Z", fill=MEM_CREAM, stroke=False)
-    defs = (f'<clipPath id="memout"><path clip-rule="evenodd" d="M-10,-10 H{OUT_W + 10} V{OUT_H + 10} H-10 Z '
+    e0, ex, ey = -pad - 10, OUT_W + pad + 10, OUT_H + pad + 10
+    defs = (f'<clipPath id="memout"><path clip-rule="evenodd" d="M{e0},{e0} H{ex} V{ey} H{e0} Z '
             f'{win_d}"/></clipPath>')
     out = f'<g clip-path="url(#memout)">{S.g(ring, filter="wobble")}</g>'
     out += (f'<path d="{win_d}" fill="none" stroke="{MEM_GLOW}" stroke-width="8" opacity="0.4" '
             f'filter="url(#soft)"/>')
     out += S.g(f'<path d="{win_d}" fill="none" stroke="{ink}" stroke-width="4.5"/>', filter="wobble")
-    return S.svg_doc(out, defs=defs, w=OUT_W, h=OUT_H)
+    return S.svg_doc(f'<g transform="translate({pad},{pad})">{out}</g>', defs=defs,
+                     w=OUT_W + 2 * pad, h=OUT_H + 2 * pad)
 
 
 def memory_trail_svg():
@@ -790,18 +799,32 @@ def memory_frame(level, bubble, trail, step=0.04):
       level(t)  vignette strength 0..1 (<= 0: no bubble at all)
       bubble(t) (k, cx, cy, f): the bubble scaled by k about MEM_C and moved to centre (cx, cy) (the outside
                 stays dark), and its opacity f (ring, dark outside and vignette fade together)
-      trail(t)  [(scale, alpha)] for the TRAIL puffs (drawn over the dark outside)"""
+      trail(t)  [(scale, alpha)] for the TRAIL puffs (drawn over the dark outside)
+    The ring is rasterised on a canvas padded by MEM_PAD px on every side, because its outer puffs reach past
+    the frame edges. Held (k = 1) and opening out (k > 1), only its frame-sized centre crop is used (in M / P).
+    While the bubble is smaller than the frame (the entrance), the picture and the dark outside (M0 / P0, no
+    ring) are scaled with the bubble and the whole padded ring is composited over them, so its outer puffs stay
+    round instead of being cut flat by the frame edges. Both are area-filtered to the bubble's size first."""
     from engine import raster
     from engine import watercolor as WC
     import cv2
-    ring = WC.watercolor(raster.rasterize(memory_ring_svg(), OUT_W, OUT_H), seed=12, strength=0.5)
+    pad = MEM_PAD
+    PW, PH = OUT_W + 2 * pad, OUT_H + 2 * pad
+    ring = WC.watercolor(raster.rasterize(memory_ring_svg(pad), PW, PH), seed=12, strength=0.5)
     ring = np.asarray(ring, np.float32) / 255.0
-    a_r = ring[..., 3:4]
-    ring_pm = ring[..., :3] * a_r
-    yy, xx = np.mgrid[0:OUT_H, 0:OUT_W].astype(np.float32)
-    ux, uy = np.abs(xx - MEM_C[0]) / MEM_A, np.abs(yy - MEM_C[1]) / MEM_B
+    a_rp = ring[..., 3:4]
+    ring_pm = ring[..., :3] * a_rp
+    # the whole padded ring, premultiplied (rgb * a, a), for the entrance
+    RP = np.dstack([(ring_pm * 255 + 0.5).astype(np.uint8), (a_rp[..., 0] * 255 + 0.5).astype(np.uint8)])
+    yy, xx = np.mgrid[0:PH, 0:PW].astype(np.float32)
+    ux, uy = np.abs(xx - pad - MEM_C[0]) / MEM_A, np.abs(yy - pad - MEM_C[1]) / MEM_B
     rho = (ux ** MEM_N + uy ** MEM_N) ** (1 / MEM_N)        # 1 on the window rim
-    a_out = np.clip((rho - 1.0) * 400 + 0.5, 0, 1)[..., None]   # outside the window (under the ring)
+    a_op = np.clip((rho - 1.0) * 400 + 0.5, 0, 1)[..., None]   # outside the window (under the ring)
+    # the dark outside, past the ring (padded canvas): where the trail puffs may show
+    clear = (a_op[..., 0] * (1 - a_rp[..., 0]) * 255 + 0.5).astype(np.uint8)
+    crop = (slice(pad, pad + OUT_H), slice(pad, pad + OUT_W))
+    a_r, ring_pm, a_out = a_rp[crop], ring_pm[crop], a_op[crop]
+    ux, uy, rho = ux[crop], uy[crop], rho[crop]
     # vignette: soft toward the rim, deepest in the window's corners
     vb = 0.65 * np.clip((rho - 0.5) / 0.5, 0, 1) ** 1.7 + 0.35 * np.clip((np.hypot(ux, uy) - 0.55) / 0.75, 0, 1) ** 1.4
     vb = np.clip(vb, 0, 1)[..., None]
@@ -810,17 +833,31 @@ def memory_frame(level, bubble, trail, step=0.04):
     keep = (1 - a_out) * (1 - a_r)
     P_rgb = navy * a_out * (1 - a_r) + ring_pm
     P_u8 = np.dstack([(P_rgb * 255 + 0.5).astype(np.uint8), np.zeros((OUT_H, OUT_W), np.uint8)])
-    clear = (a_out[..., 0] * (1 - a_r[..., 0]) * 255 + 0.5).astype(np.uint8)   # the dark outside, past the ring
-    del ring, ring_pm, yy, xx, ux, uy, rho
+    keep0 = 1 - a_out                                       # the same without the ring (the entrance)
+    P0_u8 = np.dstack([(navy * a_out * 255 + 0.5).astype(np.uint8), np.zeros((OUT_H, OUT_W), np.uint8)])
+    del ring, a_rp, a_op, a_r, ring_pm, a_out, P_rgb, yy, xx, ux, uy, rho
     one = np.full((OUT_H, OUT_W, 4), 255, np.uint8)
+    opaque = np.full((OUT_H, OUT_W), 255, np.uint8)
     cache = {}
 
-    def mult(q):
-        if q not in cache:
+    def mult(q, ring_on=True):
+        if (q, ring_on) not in cache:
             s = q * step
-            m = (1.0 - s * vb * mul) * keep
-            cache[q] = np.dstack([(m * 255 + 0.5).astype(np.uint8), np.full((OUT_H, OUT_W), 255, np.uint8)])
-        return cache[q]
+            m = (1.0 - s * vb * mul) * (keep if ring_on else keep0)
+            cache[q, ring_on] = np.dstack([(m * 255 + 0.5).astype(np.uint8), opaque])
+        return cache[q, ring_on]
+
+    def shrink(img, k, ox, oy, cx, cy, border):
+        """img scaled by k < 1 (area-filtered) so that its pixel (ox, oy) lands on (cx, cy), in a frame."""
+        h, w = img.shape[:2]
+        nw, nh = max(2, int(round(w * k))), max(2, int(round(h * k)))
+        lx, ly = nw / w, nh / h
+        small = cv2.resize(img, (nw, nh), interpolation=cv2.INTER_AREA)
+        # small pixel (i, j) is img pixel ((i + .5) / lx - .5, (j + .5) / ly - .5)
+        A = np.array([[k / lx, 0, cx + k * (0.5 / lx - 0.5 - ox)],
+                      [0, k / ly, cy + k * (0.5 / ly - 0.5 - oy)]], np.float32)
+        return cv2.warpAffine(small, A, (OUT_W, OUT_H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT,
+                              borderValue=border)
 
     tr = raster.rasterize(memory_trail_svg(), OUT_W, OUT_H)
     puffs = []
@@ -833,26 +870,40 @@ def memory_frame(level, bubble, trail, step=0.04):
         if s <= 0.003:
             return frame
         k, cx, cy, f = bubble(t)
-        M, Pa = mult(int(round(s / step))), P_u8
-        A = np.array([[k, 0, cx - k * MEM_C[0]], [0, k, cy - k * MEM_C[1]]], np.float32)
-        if k > 1.001:
-            # opening out (the exit): only the ring and the dark outside grow past the frame edges
-            M = cv2.warpAffine(M, A, (OUT_W, OUT_H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT,
-                               borderValue=(255, 255, 255, 255))
-            Pa = cv2.warpAffine(Pa, A, (OUT_W, OUT_H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT,
-                                borderValue=(0, 0, 0, 0))
-        if f < 0.999:
-            M = cv2.addWeighted(M, f, one, 1 - f, 0)
-            Pa = cv2.convertScaleAbs(Pa, alpha=f)
+        q = int(round(s / step))
+        moved = abs(cx - MEM_C[0]) > 0.05 or abs(cy - MEM_C[1]) > 0.05
         if k <= 0.01:
             arr = np.empty((OUT_H, OUT_W, 4), np.uint8)
             arr[:] = (*MEM_NAVY, 255)
-        else:
+        elif k > 1.001 or (k >= 0.999 and not moved):
+            # held, or opening out (the exit): only the ring and the dark outside grow past the frame edges
+            M, Pa = mult(q), P_u8
+            if k > 1.001:
+                A = np.array([[k, 0, cx - k * MEM_C[0]], [0, k, cy - k * MEM_C[1]]], np.float32)
+                M = cv2.warpAffine(M, A, (OUT_W, OUT_H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT,
+                                   borderValue=(255, 255, 255, 255))
+                Pa = cv2.warpAffine(Pa, A, (OUT_W, OUT_H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT,
+                                    borderValue=(0, 0, 0, 0))
+            if f < 0.999:
+                M = cv2.addWeighted(M, f, one, 1 - f, 0)
+                Pa = cv2.convertScaleAbs(Pa, alpha=f)
             arr = cv2.add(cv2.multiply(np.asarray(frame), M, scale=1 / 255.0), Pa)
-            if k < 0.999 or abs(cx - MEM_C[0]) > 0.05 or abs(cy - MEM_C[1]) > 0.05:
-                # popping up / growing (the entrance): the whole remembered picture is scaled with its bubble
-                arr = cv2.warpAffine(arr, A, (OUT_W, OUT_H), flags=cv2.INTER_LINEAR,
-                                     borderMode=cv2.BORDER_CONSTANT, borderValue=(*MEM_NAVY, 255))
+        else:
+            # popping up / growing (the entrance): the remembered picture and the dark round it are scaled
+            # with the bubble, then the whole (padded) cloud ring goes over them
+            M0, P0 = mult(q, False), P0_u8
+            if f < 0.999:
+                M0 = cv2.addWeighted(M0, f, one, 1 - f, 0)
+                P0 = cv2.convertScaleAbs(P0, alpha=f)
+            arr = cv2.add(cv2.multiply(np.asarray(frame), M0, scale=1 / 255.0), P0)
+            arr = shrink(arr, k, MEM_C[0], MEM_C[1], cx, cy, (*MEM_NAVY, 255))
+            rw = shrink(RP, k, MEM_C[0] + pad, MEM_C[1] + pad, cx, cy, (0, 0, 0, 0))
+            if f < 0.999:
+                rw = cv2.convertScaleAbs(rw, alpha=f)
+            inv = cv2.subtract(opaque, rw[..., 3])
+            arr = cv2.multiply(arr, cv2.merge([inv, inv, inv, opaque]), scale=1 / 255.0)
+            rw[..., 3] = 0
+            arr = cv2.add(arr, rw)
         im = Image.fromarray(arr, "RGBA")
         for (pim, (x, y)), (ks, al) in zip(puffs, trail(t)):
             if ks <= 0.02 or al <= 0.01:
@@ -866,8 +917,8 @@ def memory_frame(level, bubble, trail, step=0.04):
             if k > 0.01:
                 gx, gy = np.meshgrid(np.arange(x0, x0 + nw, dtype=np.float32),
                                      np.arange(y0, y0 + nh, dtype=np.float32))
-                vis *= cv2.remap(clear, MEM_C[0] + (gx - cx) / k, MEM_C[1] + (gy - cy) / k, cv2.INTER_LINEAR,
-                                 borderMode=cv2.BORDER_CONSTANT, borderValue=255) / 255.0
+                vis *= cv2.remap(clear, MEM_C[0] + pad + (gx - cx) / k, MEM_C[1] + pad + (gy - cy) / k,
+                                 cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=255) / 255.0
             p[..., 3] = (p[..., 3] * vis).astype(np.uint8)
             im.alpha_composite(Image.fromarray(p, "RGBA"), (x0, y0))
         return im
@@ -931,6 +982,10 @@ def build(ctx):
     t_vow = chunk_t(L4, "答应", 0.3) + 0.05              # '我答应你的事，一定会做到' — hands folded, a vow
     t_nod = phrase_t(L4, "一定会做到", fallback=0.55)
     t_sal = chunk_t(L4, "救恩", 0.7)                     # '救恩属于耶和华！' — praise, glow fullest
+    # the memory bubble's entrance, kept late in (and mostly after) the 1.0 s opening cross-dissolve so it is
+    # never a see-through ghost over s11: the thought puffs rise from s11's fading Jonah from T_TRAIL (s12 >= 55%
+    # in), the bubble pops up at T_POP (s12 >= 80% in) and grows to fill the frame once the dissolve is over
+    T_TRAIL, T_POP, T_GROW0, T_GROW1 = 0.55, 0.8, 1.0, 2.1
 
     def don(t):
         return t < T_SW
@@ -1252,9 +1307,10 @@ def build(ctx):
         return x - JB0[0], y - JB0[1], rot
 
     # he is kept above the frame through the opening cross-dissolve (so s11's kneeling Jonah never
-    # double-exposes with this one) and plunges in from the top on '你把我丢进深海' (L0 starts ~0.9 s),
-    # slowing as the water takes him; only his own layers follow (the swirls stay put: he falls into them)
-    ENTER0, ENTER1, ENTER_DY = 0.95, 2.3, 760.0
+    # double-exposes with this one) and plunges in from the top of the growing bubble's window on '丢进深海'
+    # (~1.6-2.4 s), slowing as the water takes him; only his own layers follow (the swirls stay put: he
+    # falls into them)
+    ENTER0, ENTER1, ENTER_DY = T_GROW0 + 0.35, T_GROW1 + 0.6, 760.0
 
     def float_m(t):
         dx, dy, rot = float_pos(t)
@@ -1465,28 +1521,27 @@ def build(ctx):
             return 0.0
         return 0.5 + 0.18 * progress(t, t_land, t_faint + 0.8, "sine") * (1 - progress(t, t_kneel, t_pr + 1.0))
 
-    # the memory bubble: the trail puffs pop up from where s11's Jonah kneels (through the opening dissolve),
+    # the memory bubble: the trail puffs pop up from where s11's Jonah kneels (late in the opening dissolve),
     # the bubble pops up beside them with the remembered picture in it and grows to fill the frame before he
     # plunges in; when the golden light fills the page the cloud ring opens out past the frame edges and fades
     # into the white-out, and the belly (the present) comes back without a frame
-    T_POP, T_GROW0, T_GROW1 = 0.24, 0.6, 1.7
     t_mx0 = t_wo0 - 0.45
 
     def mem_bubble(t):
-        if t < T_GROW0:
-            if t < T_POP:
-                return 0.0, MEM_C0[0], MEM_C0[1], 1.0
-            return MEM_K0 * (0.15 + 0.85 * progress(t, T_POP, T_POP + 0.34, "back")), MEM_C0[0], MEM_C0[1], 1.0
+        if t < T_POP:
+            return 0.0, MEM_C0[0], MEM_C0[1], 1.0
         if t < T_GROW1:
+            # the pop (a little overshoot) runs on into the growth, which eases in from rest: no kink
+            kp = MEM_K0 * (0.15 + 0.85 * progress(t, T_POP, T_POP + 0.34, "back"))
             u = progress(t, T_GROW0, T_GROW1, "sine")
-            return lerp(MEM_K0, 1.0, u), lerp(MEM_C0[0], MEM_C[0], u), lerp(MEM_C0[1], MEM_C[1], u), 1.0
+            return lerp(kp, 1.0, u), lerp(MEM_C0[0], MEM_C[0], u), lerp(MEM_C0[1], MEM_C[1], u), 1.0
         u = progress(t, t_mx0, t_wf0, "inout")        # swells past the frame corners before it turns see-through
         return 1.0 + 0.7 * u, MEM_C[0], MEM_C[1], 1.0 - progress(t, t_wo0 + 0.05, t_wf0, "sine")
 
     def mem_trail(t):
         out = []
         for i in range(len(TRAIL)):
-            ti, to = 0.02 + 0.1 * i, 1.0 + 0.05 * i
+            ti, to = T_TRAIL + 0.08 * i, T_GROW0 + 0.4 + 0.05 * i
             k = (0.2 + 0.8 * progress(t, ti, ti + 0.24, "back")) if t >= ti else 0.0
             k *= 1 - 0.8 * progress(t, to, to + 0.26, "in")
             out.append((k, 1 - progress(t, to + 0.12, to + 0.26, "sine")))

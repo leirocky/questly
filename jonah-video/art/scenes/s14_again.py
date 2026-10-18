@@ -132,6 +132,9 @@ RISE = C._P(t=8, h=-6, drop=70, legs=(("ik", 60, 1), (0, -92)),
             arms=(("fk", -24, -10), ("ik", "knee", 0, 0.22, 1)),
             hands=("fist", "open"), feet=(None, 100))
 STAND = C._P(t=2, h=-3, arms=(("fk", 12, 6), ("fk", -10, -4)))     # standing ready, looking east
+# where the walk stops: standing still, upright, in the pose and with the soft smile s15 opens on (its STAND), so
+# one standing Jonah dissolves into the other
+STAND_END = dict(C.POSES["stand"])
 
 
 def walk_pose(k, A=None, N=None, lift=26.0, rise=None):
@@ -179,8 +182,10 @@ INNER = [(-60, 1120), (200, 990), (430, 870), (640, 782), (820, 708), (960, 646)
 CREST = [(980, 592), (1100, 622), (1400, 658), (1800, 700), (2200, 690), (2680, 680)]
 
 # walk rig: ankle travel (figure px) per half step, drawings per step, s per drawing (exactly 3 frames at 30 fps,
-# 0.7 s per step: a longer stride than a shuffle, at the same ground speed as before, ~13.4 figure px a drawing)
-A_W, N_W, HOLD_W = 47.0, 7, 0.1
+# 0.6 s per step, the cadence of s15's walk: a longer stride than a shuffle, ~15.7 figure px a drawing; brisk
+# enough that he is past the palms when he stops ~1.2 s before the end)
+A_W, N_W, HOLD_W = 47.0, 6, 0.1
+STOP_LEAD = 1.15                          # the walk's last contact lands at least this long before the scene ends
 WALK_M = C._metrics(C._ADULT, sw=12)       # side-on walk: the shoulder joints close together (robe unchanged)
 
 PUNCT = "，、。：；！？,.!?:;"
@@ -215,8 +220,9 @@ RISE_W = (road_y(JX) - road_y(JX + 640)) / 640 * 2 * A_W
 
 
 def walk_scale(x):
-    """Jonah gets a little smaller as the road leads away toward the east."""
-    return JS * (1.0 - 0.18 * max(0.0, x - JX) / 860.0)
+    """Jonah gets smaller as the road leads away toward the east (the road narrows to ~0.73 of its width by where
+    he stops; he to ~0.85 of his kneeling size, so s15 can open on him at that size without a tighter zoom)."""
+    return JS * (1.0 - 0.30 * max(0.0, x - JX) / 860.0)
 
 
 # ====================================================================== timing helpers (as in s02 v2)
@@ -978,6 +984,7 @@ def build(ctx):
     addf("rise", jd(jonah_fig(JX, JY, JS, RISE, "happy", patches=False), 170))
     addf("stand", jd(jonah_fig(JX, JY, JS, STAND, "happy")))
     addf("stand_b", jd(jonah_fig(JX, JY, JS, STAND, "peaceful")))
+    addf("stand_end", jd(jonah_fig(JX, JY, JS, STAND_END, "neutral")))
     w0 = len(jdocs)
     for k in range(2 * N_W):
         addf(f"w{k}", jd(jonah_fig(JX, JY, JS, walk_pose(k), "happy", m=WALK_M)))
@@ -993,14 +1000,21 @@ def build(ctx):
           (min(t_obey + 0.82, t_rise - 0.12), J["chest"]),
           (t_rise, J["rise"]), (t_stand, J["stand"]), (t_stand + 0.35, J["stand_b"]),
           (t_stand + 0.35 + blink, J["stand"])]
-    hops = [(t_call, 8), (t_rise, 10), (t_stand, 14), (t_walk, 7)]
-    squashes = [(t_open, 0.02), (t_look, 0.02), (t_word, 0.025), (t_tell, 0.02), (t_stand + 0.28, 0.04),
-                (t_walk, 0.03)]
-    nods = [t_obey, t_obey + 0.52]
-    n_draw = int(math.ceil((T + 0.2 - t_walk) / HOLD_W))
     # walk drawing i (from t_walk, HOLD_W s each) is cycle drawing k = i + K0: the walk starts on the passing
     # drawing of a step (the planted foot under him, the other just lifting), the closest one to the stand
     K0 = N_W // 2
+    # ... and it ends on the contact drawing of step j_end (both soles down, the front one just landed) about 1.2 s
+    # before the end: held for one drawing, then a cut to STAND (sold by a small squash), so he stands still and
+    # settles through the closing dissolve (s15 opens on him standing in the same spot of the frame)
+    j_end = max(1, int((T - STOP_LEAD - t_walk) / HOLD_W + K0) // N_W)
+    i_end = j_end * N_W - K0                      # walk drawing of that last contact
+    t_land = t_walk + i_end * HOLD_W              # the last foot lands
+    t_halt = t_land + HOLD_W                      # he stands
+    hops = [(t_call, 8), (t_rise, 10), (t_stand, 14), (t_walk, 7)]
+    squashes = [(t_open, 0.02), (t_look, 0.02), (t_word, 0.025), (t_tell, 0.02), (t_stand + 0.28, 0.04),
+                (t_walk, 0.03), (t_halt, 0.035)]
+    nods = [t_obey, t_obey + 0.52]
+    n_draw = i_end + N_W                          # (a step's worth past the stop, for the contact points)
     xs = [JX]                                     # anchor x of walk drawing i
     for i in range(n_draw + 1):
         xs.append(xs[-1] + 2 * A_W * walk_scale(xs[-1]) / N_W)
@@ -1019,10 +1033,8 @@ def build(ctx):
 
     # "still a bit wet": damp sandal prints where his planted feet stood, and a damp patch where he knelt
     prints = []                                   # (x, y, scale, t_down, t_up)
-    for j in range(len(contact)):
+    for j in range(j_end):                        # (no print for the last contact: he stands up over it)
         i0 = j * N_W - K0                         # walk drawing at which this foot comes down
-        if i0 >= len(xs):
-            break
         s_ = walk_scale(anchor(j * N_W))
         xf, yf = contact[j]
         prints.append((xf + 8 * s_, yf + (-3 if j % 2 == 0 else 3) * s_, s_,
@@ -1049,10 +1061,14 @@ def build(ctx):
     sc.add_dynamic("damp", damp_fn, z=4.95)
 
     def j_fa(t):
+        if t >= t_halt:
+            return float(J["stand_end"])
         if t >= t_walk:
-            i = int((t - t_walk) / HOLD_W)
+            i = min(int((t - t_walk) / HOLD_W), i_end)
             return float(w0 + ((i + K0) % (2 * N_W)))
         return stand_fa(t)
+
+    x_end = xs[i_end]
 
     def j_m(t):
         sx = sy = 1.0
@@ -1060,16 +1076,20 @@ def build(ctx):
             a, b = _squash(t, ts, k)
             sx, sy = sx * a, sy * b
         dy = sum(_hop(t, th, h) for th, h in hops)
+        br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)
+        if t >= t_halt:
+            # standing still where the walk stopped (feet together under him on the road), breathing
+            s_ = walk_scale(x_end) / JS
+            return Tf(dx=x_end - JX, dy=road_y(x_end) - JY, sx=s_ * sx, sy=s_ * sy * br, px=JX, py=JY)
         if t >= t_walk:
             # the first walk drawing (a passing position) is a hard cut from the stand, sold by a squash and a
             # small hop like the other pose cuts; the body is raised one road step at each new contact (see
             # walk_pose)
-            i = min(int((t - t_walk) / HOLD_W), len(xs) - 1)
+            i = min(int((t - t_walk) / HOLD_W), i_end)
             x = xs[i]
             s_ = walk_scale(x) / JS
             yc = contact[min((i + K0) // N_W, len(contact) - 1)][1]
             return Tf(dx=x - JX, dy=yc - JY + dy, sx=s_ * sx, sy=s_ * sy, px=JX, py=JY)
-        br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)
         nod = sum(5 * math.sin(math.pi * _clamp((t - tn) / 0.3)) for tn in nods if tn <= t <= tn + 0.3)
         return Tf(dy=dy + nod, sx=sx, sy=sy * br, px=JX, py=JY)
     sc.add("jonah", jdocs, z=5, frame_at=j_fa, motion=j_m, seed=141)
@@ -1156,9 +1176,8 @@ def build(ctx):
     sc.sfx("cloth", t_rise, gain_db=-13)
     # one footstep per planted-foot contact (the 'footsteps' loop picks a random phase within its period, so a
     # long loop would not land on the drawings; a 0.3 s loop holds a single step ~0.04 s after the cue start)
-    k = 1                                         # (the first foot is already down when he sets off)
-    while t_walk + (k * N_W - K0) * HOLD_W < T - 0.2:
+    # the first foot is already down when he sets off; the last step is the contact he stops on (none after it)
+    for k in range(1, j_end + 1):
         sc.sfx("footsteps", t_walk + (k * N_W - K0) * HOLD_W - 0.04, dur=0.3, gain_db=-13, fade_in=0.01,
                fade_out=0.06, pan=0.08 if k % 2 else -0.04, rate=0.5)
-        k += 1
     return sc

@@ -828,8 +828,9 @@ def build(ctx):
     # planted-foot walk: 7 drawings per step (14 per cycle), each held exactly 2 frames (even timing at 30 fps),
     # so the leg spread, robe hem and head bob change in small even steps. The drawings sit half a drawing off
     # the contacts, so the middle drawing of every step is the passing position (feet together under the body,
-    # swing foot lifted): the walk starts on it out of the doorway stand and ends on it at his spot, whole steps
-    # later, so neither end jumps between a wide stride and the stand.
+    # swing foot lifted): the walk starts on it out of the doorway stand and would end on it at his spot, whole
+    # steps later, so neither end jumps between a wide stride and the stand. At his spot that last passing
+    # drawing is replaced by a stop drawing (see STOP below) that eases him into the front-facing stand.
     A_J, N_J = 40.0, 7
     NW_J = 2 * N_J                                                       # walk drawings per cycle
     K0_J = (N_J - 1) // 2                                                # the passing drawing of the first step
@@ -839,11 +840,19 @@ def build(ctx):
     fall_j = (JY - DOOR[1]) / (n_draw / N_J) / JS                        # the path runs a little downstage
     hold_j = 2.0 / ctx.fps
     t_arrive = t_walk0 + n_draw * hold_j
+    # he stops on an in-between drawing at his spot (in place of the last passing drawing, held 3 frames): feet
+    # almost together and down, torso tilt halved, hips nearly at stand height, arms nearly at his sides. It
+    # splits the step from the narrow, forward-tilted walk to the wide front-facing stand (head, robe outline)
+    # into two small ones; the jonah layer's stand takes over at t_stop.
+    t_stop = t_arrive + 3.0 / ctx.fps
     walk_frames = [_doc(_shadow(DOOR[0], DOOR[1], JS) +
                         _jfig(DOOR[0], DOOR[1], JS, _walk_pose(k, A_J, N_J, off=0.5, fall=fall_j), "happy", f"jw{k}"))
                    for k in range(NW_J)]
     walk_frames.append(_doc(_shadow(DOOR[0], DOOR[1], JS) + C.jonah(DOOR[0], DOOR[1], JS, 1, expr="happy")))
     walk_frames.append(_doc(_shadow(DOOR[0], DOOR[1], JS) + C.jonah(DOOR[0], DOOR[1], JS, 1, expr="peaceful")))
+    STOP = C._P(t=1.5, h=-1, drop=2, legs=(("ik", 0.15 * A_J, 1), ("ik", -0.15 * A_J, 1)),
+                arms=(("fk", -6, 10), ("fk", 6, 22)))
+    walk_frames.append(_doc(_shadow(DOOR[0], DOOR[1], JS) + _jfig(DOOR[0], DOOR[1], JS, STOP, "happy", "jstop")))
 
     def jw_i(t):
         return int(math.floor((t - t_walk0) / hold_j + 1e-6))
@@ -851,10 +860,12 @@ def build(ctx):
     def jw_fa(t):
         if t < t_walk0:
             return float(NW_J + 1) if 0.55 <= t <= 0.68 else float(NW_J)     # a blink in the doorway
+        if t >= t_arrive - 1e-6:
+            return float(NW_J + 2)                                           # the stop drawing
         return float((K0_J + min(jw_i(t), n_draw)) % NW_J)
 
     def jw_m(t):
-        if t >= t_arrive + hold_j:
+        if t >= t_stop - 1e-6:
             return Tf(alpha=0.0)
         br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)
         if t < t_walk0:
@@ -897,7 +908,7 @@ def build(ctx):
     addf("crossed", jdoc(_jfig(JX, JY, JS, CROSSED, "angry", "crossed")))
     addf("crossed_b", jdoc(_jfig(JX, JY, JS, CROSSED, "s02_blink_angry", "crossed_b")))
 
-    ev = [(0.0, J["stand"]), (t_arrive + hold_j, J["happy"]), (t_arrive + 0.75, J["blink"]),   # keeps the walk's smile
+    ev = [(0.0, J["stand"]), (t_stop - 1e-6, J["happy"]), (t_arrive + 0.75, J["blink"]),   # keeps the walk's smile
           (t_arrive + 0.88, J["happy"])]
     hops = []        # (t, height) little hops that sell a switch
     squashes = []    # (t, k) landing squashes
@@ -944,14 +955,14 @@ def build(ctx):
     j_fa = _sched(ev)
 
     def j_m(t):
-        if t < t_arrive + hold_j:
+        if t < t_stop - 1e-6:
             return Tf(alpha=0.0)
         sx = sy = 1.0
         for ts, k in squashes:
             a, b = _squash(t, ts, k)
             sx, sy = sx * a, sy * b
-        if t_arrive <= t <= t_arrive + 0.5:          # settle after the walk
-            a, b = _squash(t, t_arrive + hold_j, 0.03)
+        if t_stop - 1e-6 <= t <= t_stop + 0.5:      # settle after the walk
+            a, b = _squash(t, t_stop - 1e-6, 0.03)
             sx, sy = sx * a, sy * b
         dy = sum(_hop(t, th, h) for th, h in hops)
         br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)

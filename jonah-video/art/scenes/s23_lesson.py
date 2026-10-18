@@ -32,9 +32,10 @@ Timing (every time comes from the narration: ctx chunk starts, or _at_in() for a
            the morning sun rises low on the right (east). "一夜又枯死了，" — night again, the plant droops and
            withers. "你都这么心疼它。" — the bubble shrinks back into the trail (3-frame alpha cut), the puffs pop out;
            Jonah turns tender and sorry (blink cut). The camera starts a slow pull-back, and God's light swells
-           over the land behind Jonah, booth and plant (a warm card): s22's backdrop is switched off while the card
-           is opaque, and the light melts away onto this knoll, the plain and the near city - one background at a
-           time, never two blended.
+           over the sky and far land behind Jonah, booth and plant (a warm card): s22's backdrop is switched off
+           while the card is opaque, and the light melts away onto the plain and the near city - one background
+           at a time, never two blended. The group never floats: this knoll (crest, pebbles, stones) rises with the
+           light over s22's sand and stays under them while the card is up.
   line 2   "尼尼微这座大城里，有十二万多人，" — a held wide view: the city, the plain, the pasture and Jonah under his
            booth (doves fly over). The townspeople are the city that repented: the grown-ups (and some children)
            still wear their sackcloth with happy faces, as in s19 / s20; the children at play keep bright tunics. "就像分不清左右手的小孩子，" — a slow glide down to the children: two little ones
@@ -64,6 +65,9 @@ Notes for maintainers
 * s22's backdrop and the light card sit at z 9.4 - 9.45, above every figure on the plain and the knoll and below
   the booth (9.6), the doves (9.47 / 9.48), the plant, the light and Jonah; the backdrop must fill the view until
   it is switched off (t_edge, asserted). _s22_backdrop() copies s22_worm.build()'s markup: keep it in sync.
+  "knoll_lit" (z 9.455, just above the card) is the "knoll" layer again (same markup and watercolour seed, so
+  it matches it exactly); it is on only while the card is up and goes off before the animals grazing on the
+  knoll's lower slope (which it would hide) come into view (asserted).
 * The sparkles round Jonah keep the column over his face clear (they drift upward).
 """
 import math
@@ -719,9 +723,10 @@ def build(ctx):
     for (x, y, s_) in [(2600, 880, 0.7), (3150, 845, 0.6), (2430, 1080, 0.75), (3330, 1000, 0.7), (2880, 1200, 0.8),
                        (3700, 1180, 0.9)]:
         knoll += PR.grass_tuft(*kmap(x, y), s_, variant=1)
-    sc.add("knoll", doc(S.g(knoll, filter="wobble"),
-                        S.lin_grad("kn", [(0, "#ebc68a"), (0.3, "#e2b679"), (1, "#d09c62")]) +
-                        S.lin_grad("kn2", [(0, "#d3a065"), (1, "#bb8652")])), z=5, wc=0.9)
+    knoll_doc = doc(S.g(knoll, filter="wobble"),
+                    S.lin_grad("kn", [(0, "#ebc68a"), (0.3, "#e2b679"), (1, "#d09c62")]) +
+                    S.lin_grad("kn2", [(0, "#d3a065"), (1, "#bb8652")]))
+    sc.add("knoll", knoll_doc, z=5, wc=0.9)       # (drawn again over the light card at the swap: "knoll_lit")
 
     booth = (f'<ellipse cx="{XB + 60}" cy="{GY + 8}" rx="{340 * SP}" ry="30" fill="{INK}" opacity="0.16" '
              f'filter="url(#soft)"/>' + PR.booth(XB, GY, SP, facing=1))
@@ -1489,6 +1494,19 @@ def build(ctx):
                f'<stop offset="0" stop-color="#fff6d8"/><stop offset="0.45" stop-color="#fde6ad"/>'
                f'<stop offset="1" stop-color="#f3cf8f"/></radialGradient>')
     sc.add("dip_light", card, z=9.45, wc=0, motion=lambda t: Tf(alpha=a_dip(t)))
+    # The card swaps only the sky and the far land: Jonah, the booth and the plant keep their ground. This knoll
+    # (its crest, pebbles and stones round the booth; the booth's and the plant's contact shadows lie on it from
+    # their own layers above) rises with the light over s22's sand and stays while the card is up. It is the
+    # "knoll" layer's own drawing with its watercolour seed, so it matches the knoll below exactly once the card has
+    # melted away; it is switched off then (unseen), before the goat and sheep grazing on its lower slope, which
+    # it would hide, come into view (asserted).
+    t_kn_off = t_cut + 0.8                                     # the card is gone (a_dip = 0)
+    kn_seed = next(l_.seed for l_ in sc.layers if l_.name == "knoll")
+    kn_top = min(b[1] for n, b, _ in FIGS if n in ("goat2", "sheep5", "sheep6"))
+    c_off = camera(t_kn_off)
+    assert c_off.y + c_off.w * 9 / 32 < kn_top - 6, "knoll_lit would hide the animals on the knoll's slope"
+    sc.add("knoll_lit", knoll_doc, z=9.455, wc=0.9, seed=kn_seed, motion=lambda t: Tf(
+        alpha=M.progress(t, t_cut - 0.5, t_cut - 0.05, "sine") if t < t_kn_off else 0.0))
 
     k22 = lambda t: 1 - M.progress(t, t_still, t_trail - 0.3, "sine")
 

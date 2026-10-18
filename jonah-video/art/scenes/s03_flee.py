@@ -1049,7 +1049,10 @@ def build(ctx):
     # ---------------------------------------------------------------- camera
     # every move uses 'sine' easing (peak speed 1.57x the average): zoom stays under ~30 %/s and pans under
     # ~300 output px/s (checked at 30 fps), gentle enough for 3-8 year olds
-    OPEN_CAM = (5603.0, 578.0, 1360.0)         # matches s02's last frame (Jonah at output x ~735, feet ~1000)
+    # matches s02's last frame, Cam(1200, 752.5, 2040) on its 2400 x 1350 stage (Jonah, arms folded, at output
+    # x ~735 with his feet at y ~914, clear of the subtitle box that fades in at ~0.8 s). Keep the two in step:
+    # s02 y = 1150 - (GY - this y) * 2040 / 1360
+    OPEN_CAM = (5603.0, 645.0, 1360.0)
     T_OPEN_HOLD, T_OPEN_END = 1.05, T_TURN + 0.55
     T_OPEN_UP = 1.9                            # the tilt / widening part of the opening move is done by here
     W_CROSS, Y_CROSS = 1600, 640

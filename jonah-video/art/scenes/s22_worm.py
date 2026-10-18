@@ -928,14 +928,21 @@ def build(ctx):
     ldx, ldy = LIZ_TO[0] - LIZ[0], LIZ_TO[1] - LIZ[1]
     LIZ_HIDE = 154                                    # its dash ends centred behind liz_rock2 (and the grass)
 
+    LIZ_TURN = 0.12       # it turns round in place (squeezes through edge-on) before scurrying home
+
     def liz_frame(t):
-        if t < t_lizret:
+        if t < t_lizret - LIZ_TURN / 2:
             return F_LIZ_LEFT
+        if t < t_lizret:
+            return 0.0
         if t < t_lizret + LIZ_RET:
             return float(int((t - t_lizret) * 16) % 2)
         return 0.0 if t < t_liz else float(int((t - t_liz) * 16) % 2)
 
     def liz_motion(t):
+        if t_lizret - LIZ_TURN <= t < t_lizret:
+            w = (t - (t_lizret - LIZ_TURN)) / LIZ_TURN
+            return Tf(dx=ldx, dy=ldy, sx=max(0.08, abs(math.cos(math.pi * w))), px=LIZ[0], py=LIZ[1])
         if t < t_lizret + LIZ_RET:
             u = _clamp((t - t_lizret) / LIZ_RET)
             return Tf(dx=ldx * (1 - M.ease("out")(u)), dy=ldy * (1 - u) - 14 * math.sin(math.pi * u))
@@ -945,7 +952,7 @@ def build(ctx):
             return Tf(sx=1 - 0.03 * b, sy=1 + 0.13 * b, px=LIZ[0], py=LIZ[1] + 2)
         v = t - t_liz
         return Tf(dx=LIZ_HIDE * M.ease("out")(min(1.0, v / 0.5)), dy=38 * M.progress(v, 0.08, 0.4, "sine"),
-                  alpha=1 - M.progress(v, 0.32, 0.48, "sine"))   # gone as soon as it is behind the stone
+                  alpha=1 - M.progress(v, 0.22, 0.36, "sine"))   # gone while it slips behind the stone
 
     sc.add("lizard", liz_frames, frame_at=liz_frame, motion=liz_motion, wc=0.5)
     liz_layers = [sc.layers[-1]]
@@ -1239,7 +1246,8 @@ def build(ctx):
     for ev in EV:
         assert ev[2] != "fade" or abs(ev[1] - prev) == 1, ev
         prev = ev[1]
-    blinks = [t_listen + 1.7, t_plant - 0.9, t_plant_back + 0.9]
+    # blink cuts: his eyes close just before the look-at-the-plant cut and right after the look-back cut
+    blinks = [t_listen + 1.7, t_plant - 0.9, t_plant_back + 0.9, t_plant + 0.1 - 0.067, t_plant_back]
 
     def jonah_frame(t):
         f, prev = 0.0, 0

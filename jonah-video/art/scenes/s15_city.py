@@ -1111,7 +1111,7 @@ def build(ctx):
     t_calloff = k_time(k_dn)
 
     # ------------------------------------------------------------ camera
-    CAM0 = Cam(635, 1194, 1200)                        # close on little Jonah on the road, the west gate in the
+    CAM0 = Cam(630, 1218, 1051)                       # close on little Jonah on the road, the west gate in the
     #                                                    middle (he stands near where s14's Jonah walks: one
     #                                                    Jonah through the dissolve, not two)
     CAMW = Cam(1650, 935, 2760)                        # the city from the gate to the river; it runs off both edges
