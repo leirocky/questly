@@ -30,8 +30,8 @@ import soundfile as sf
 from scipy import ndimage, signal
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
-import story  # noqa: E402
-from engine.paths import BUILD, CACHE, FPS, MODELS, SR, ensure_dirs  # noqa: E402
+from engine.paths import BUILD, CACHE, FPS, MODELS, SR, STORY, TAKES, ensure_dirs, load_story  # noqa: E402
+story = load_story()
 
 MALE_ENGINE = "zipvoice"   # "zipvoice" or "kokoro" for the male speakers
 
@@ -57,9 +57,15 @@ VOICES = {
     "K": {"engine": MALE_ENGINE, "sid": 100, "speed": 0.9, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
           "prompt": {"engine": "kokoro", "sid": 100, "speed": 0.9, "text": "我是尼尼微的国王，我住在一座很大很大的城里。"}},
 }
-PROMPTS = {k: v["prompt"]["text"] for k, v in VOICES.items() if "prompt" in v}
 # Per-scene overrides of a speaker's effect (Jonah praying inside the fish).
-SCENE_FX = {("s11_belly", "J"): "cave", ("s12_deep", "J"): "cave"}
+SCENE_FX = {("s11_belly", "J"): "cave", ("s12_deep", "J"): "cave"} if STORY == "jonah" else {}
+# a story may add speakers (story.VOICES, same format) and per-scene effects (story.SCENE_FX)
+VOICES.update(getattr(story, "VOICES", {}))
+SCENE_FX.update(getattr(story, "SCENE_FX", {}))
+if getattr(story, "LEXICON", None):                # the story's own pronunciation fixes
+    from voice import lexicons as _LX
+    _LX.ZV_FIX.update(story.LEXICON)
+PROMPTS = {k: v["prompt"]["text"] for k, v in VOICES.items() if "prompt" in v}
 CER_OK = 0.06      # re-synthesise an utterance until ASR agrees at least this well (best take kept)
 NARRATOR_CER_OK = CER_OK
 
@@ -199,7 +205,6 @@ def _prompt(voice):
     return np.asarray(x, np.float32), sr, p["text"]
 
 
-TAKES = __import__("pathlib").Path(__file__).resolve().parent / "takes"
 USED_TAKES = set()   # cache keys synth_raw served during this run (prompts included)
 
 

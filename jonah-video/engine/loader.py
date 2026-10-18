@@ -2,14 +2,14 @@
 import importlib
 import json
 
-from engine.paths import BUILD
+from engine.paths import BUILD, SCENES_PKG
 from engine.scene import SceneContext
 
 
 def load_timeline():
     path = BUILD / "timeline.json"
     if not path.exists():
-        raise SystemExit("build/timeline.json missing — run: python3 build.py voice")
+        raise SystemExit(f"{path} missing — run: python3 build.py voice")
     return json.loads(path.read_text())
 
 
@@ -27,6 +27,6 @@ def context(scene_id, timeline=None):
 
 
 def build_scene(scene_id, timeline=None):
-    mod = importlib.import_module(f"art.scenes.{scene_id}")
+    mod = importlib.import_module(f"{SCENES_PKG}.{scene_id}")
     importlib.reload(mod)
     return mod.build(context(scene_id, timeline))

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from engine import compositor, raster
 from engine.loader import build_scene, load_timeline, scene_ids
-from engine.paths import BUILD, ROOT
+from engine.paths import BUILD, ROOT, SCENES_DIR
 
 # Files whose changes invalidate every rendered scene.
 _SHARED = ["engine/compositor.py", "engine/motion.py", "engine/fx.py", "engine/scene.py", "engine/watercolor.py",
@@ -15,9 +15,9 @@ _SHARED = ["engine/compositor.py", "engine/motion.py", "engine/fx.py", "engine/s
 
 
 def _imports(sid):
-    src = (ROOT / "art" / "scenes" / f"{sid}.py").read_text()
-    deps = set(re.findall(r"art\.scenes\.(s\d\d_\w+)", src))
-    deps |= {m for line in re.findall(r"from art\.scenes import ([^\n]+)", src) for m in re.findall(r"s\d\d_\w+", line)}
+    src = (SCENES_DIR / f"{sid}.py").read_text()
+    deps = set(re.findall(r"(?:art|stories\.\w+)\.scenes\.(s\d\d_\w+)", src))
+    deps |= {m for line in re.findall(r"from (?:art|stories\.\w+)\.scenes import ([^\n]+)", src) for m in re.findall(r"s\d\d_\w+", line)}
     return deps
 
 
@@ -29,7 +29,7 @@ def _scene_deps(sid, tl):
     deps, todo = set(), list(ids[max(0, k - 1):k + 2]) + sorted(_imports(sid))
     while todo:
         d = todo.pop()
-        if d not in deps and (ROOT / "art" / "scenes" / f"{d}.py").exists():
+        if d not in deps and (SCENES_DIR / f"{d}.py").exists():
             deps.add(d)
             todo += sorted(_imports(d))
     return sorted(deps)
@@ -38,7 +38,7 @@ def _scene_deps(sid, tl):
 def _scene_hash(sid, tl):
     h = hashlib.sha1()
     v1 = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "art" / "scenes_v1").glob("*.py"))
-    deps = [f"art/scenes/{d}.py" for d in _scene_deps(sid, tl)]
+    deps = [str((SCENES_DIR / f"{d}.py").relative_to(ROOT)) for d in _scene_deps(sid, tl)]
     for rel in _SHARED + ["art/props.py", "art/characters.py"] + v1 + deps:
         p = ROOT / rel
         if p.exists():

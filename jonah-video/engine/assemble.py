@@ -7,7 +7,7 @@ then a two-pass H.264 encode at a target bitrate for a phone-friendly file
 import subprocess
 
 from engine.loader import load_timeline
-from engine.paths import BUILD, FPS, OUTPUT
+from engine.paths import BUILD, FPS, OUT_NAME, OUTPUT
 
 # Symmetric dip to black for "fadeblack": ffmpeg's built-in one spends only the first 20% of the
 # transition fading out, which reads as a snap. P runs 1 -> 0; 16/128 are limited-range black (Y/UV).
@@ -50,7 +50,7 @@ def master():
     return out
 
 
-def assemble(out_name="jonah_story.mp4", video_kbps=VIDEO_KBPS):
+def assemble(out_name=OUT_NAME, video_kbps=VIDEO_KBPS):
     tl = load_timeline()
     total = tl["duration"]
     src = master()

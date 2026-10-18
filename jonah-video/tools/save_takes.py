@@ -7,16 +7,19 @@ voice/takes/ before synthesising, so with these files `python3 build.py voice` r
 approved narration anywhere. Run after `python3 build.py voice` + `check` look right.
 Usage: python3 tools/save_takes.py
 """
+import os
 import sys
 from pathlib import Path
+
+if "--story" in sys.argv:                      # python3 tools/save_takes.py --story daniel
+    os.environ["PB_STORY"] = sys.argv[sys.argv.index("--story") + 1]
 
 import soundfile as sf
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from engine.paths import BUILD, CACHE  # noqa: E402
+from engine.paths import BUILD, CACHE, TAKES  # noqa: E402
 
-TAKES = ROOT / "voice" / "takes"
 
 
 def main():
@@ -24,7 +27,7 @@ def main():
     if not listing.exists():
         raise SystemExit("run `python3 build.py voice` first")
     keys = [k for k in listing.read_text().split() if k]
-    TAKES.mkdir(exist_ok=True)
+    TAKES.mkdir(parents=True, exist_ok=True)
     added = 0
     for k in keys:
         out = TAKES / f"{k}.flac"
