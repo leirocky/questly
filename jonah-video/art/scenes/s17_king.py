@@ -109,9 +109,10 @@ MAN_B = dict(x=4280, y=1278, s=1.0, v=3)
 SHAKE_DX = 99                        # each man steps this far toward the other to shake hands
 KID_G = dict(x=4475, y=1306, s=0.85, v=1)    # the little girl
 KID_B = dict(x=4665, y=1298, s=1.0, v=0)     # the big boy
-MOTHER = dict(x=4830, y=1212, s=0.92, v=2)
-ELDER = dict(x=5040, y=1166, s=0.82)         # the old neighbour...
-HELPER = dict(x=4890, y=1190, s=0.85)        # ...and the young man who comforts him (hand on his shoulder)
+MOTHER = dict(x=4800, y=1212, s=0.92, v=2)
+ELDER = dict(x=5065, y=1166, s=0.82)         # the old neighbour...
+HELPER = dict(x=4915, y=1190, s=0.85)        # ...and the young man who comforts him: standing a little in front
+#                                              and back from the elder, so his hand lands on the elder's shoulder
 
 HOUSES = ((1180, 0, 1), (1620, 2, -1), (2190, 1, 1), (2600, 3, -1), (3080, 0, 1), (3420, 2, 1), (3880, 1, -1),
           (4260, 3, 1), (4720, 0, -1), (5150, 2, 1))
@@ -281,11 +282,43 @@ def clouds_svg(items, fill, shade):
     return doc(S.g(body, filter="wobble"))
 
 
-def hope_svg():
-    """A soft warm light seeping through the clouds at the very end (God's full mercy comes in s18)."""
-    defs = S.rad_grad("s17hope", [(0, "#fff6d8", 1), (0.3, "#ffe9b0", 0.7), (0.65, "#ffd88c", 0.25),
-                                  (1, "#ffd88c", 0)])
-    return doc(f'<ellipse cx="4700" cy="360" rx="1250" ry="560" fill="url(#s17hope)"/>', defs)
+# the low grey overcast that rolls in over the street while the city prays (it continues into s18, which opens
+# under the same cloud banks and gloom; the colours are s18's overcast greys). (cx, cy, w, h, seed) per bank.
+OVERCAST = {
+    "back": ([(2650, 70, 900, 300, 71), (3450, 40, 960, 320, 72), (4300, 60, 1000, 330, 73),
+              (5150, 40, 940, 310, 74)], ("#9b9eac", "#828495")),
+    "front": ([(3050, 210, 780, 260, 76), (3900, 200, 860, 280, 77), (4750, 220, 840, 270, 78),
+               (5450, 200, 700, 250, 79)], ("#9294a3", "#7b7d8c")),
+    "low": ([(3450, 360, 560, 170, 80), (4330, 372, 620, 180, 81), (5120, 352, 540, 165, 82)],
+            ("#9fa1ac", "#8c8d98")),
+}
+
+
+def overcast_svg(kind):
+    items, (fill, shade) = OVERCAST[kind]
+    body = "".join(S.cloud(cx, cy, w, h, fill, seed=sd, puffs=6, sw=3.5, shade_fill=shade)
+                   for cx, cy, w, h, sd in items)
+    return doc(S.g(body, filter="wobble"))
+
+
+def gloom_fx(alpha_fn):
+    """Cool multiply glaze, strongest at the top of the frame — the same profile and colours as s18's opening
+    gloom under the overcast, so the s17 -> s18 dissolve stays in one light. alpha_fn(t) -> 0..1."""
+    ys = (np.arange(OUT_H) + 0.5) / OUT_H
+    gstr = np.interp(ys, [0, 0.4, 0.7, 1.0], [0.32, 0.27, 0.17, 0.1])[:, None]
+    top, bot = np.array([0x8d, 0x90, 0xad]) / 255.0, np.array([0xb4, 0xb1, 0xc0]) / 255.0
+    v = ys[:, None]
+    gdark = gstr * (1 - (top * (1 - v) + bot * v))          # (OUT_H, 3) darkening at full strength
+
+    def fx(frame, t, view):
+        a = float(alpha_fn(t))
+        if a <= 0.003:
+            return frame
+        m4 = np.full((OUT_H, OUT_W, 4), 255, np.uint8)
+        m4[..., :3] = np.clip((1 - gdark * a) * 255 + 0.5, 0, 255).astype(np.uint8)[:, None, :]
+        arr = cv2.multiply(np.asarray(frame), m4, scale=1 / 255.0)
+        return Image.fromarray(arr, "RGBA")
+    return fx
 
 
 def far_svg():
@@ -312,7 +345,8 @@ def far_svg():
     body += S.g(ground, filter="wobble")
     # houses along the back of the street, palms between them
     deco = ""
-    for x, s, ln in ((1985, 0.46, -0.1), (2850, 0.5, 0.12), (3640, 0.48, -0.08), (4490, 0.5, 0.1),
+    # (the first palm stands right of the terrace corner, clear of the horn's bell and blast against the sky)
+    for x, s, ln in ((2150, 0.46, 0.08), (2850, 0.5, 0.12), (3640, 0.48, -0.08), (4490, 0.5, 0.1),
                      (5330, 0.46, -0.1)):
         deco += PR.palm_tree(x, BACK_Y - 4, s, lean=ln)
     houses = ""
@@ -330,7 +364,8 @@ def far_people_svg():
     """The whole city prays: small figures in sackcloth kneeling along the back of the street (static)."""
     rng = random.Random(12)
     body = ""
-    for i, x in enumerate((2060, 2330, 2520, 2760, 3060, 3250, 3700, 4020, 4480, 4880, 5120, 5300)):
+    # (no one stands right behind the donkey: a head would peek above its back)
+    for i, x in enumerate((2060, 2330, 2520, 2760, 3060, 2915, 3700, 4020, 4480, 4880, 5120, 5300)):
         y = rng.uniform(1040, 1072)
         s = 0.42 + (y - 1000) * 0.0022
         kind = ("man", "woman", "elder", "child", "woman", "man")[i % 6]
@@ -417,16 +452,39 @@ def trough_markup():
     return S.g(body, filter="wobble-fine")
 
 
+LID_H = 44                           # the plank lid's thickness (it covers the whole hay heap when it lands)
+
+
 def plank_markup(cx, cy, s=1.0):
-    """The wooden lid for the manger, centred at (cx, cy) (two boards and a batten)."""
-    w, h = (MANGER[1] - MANGER[0] + 24) * s, 22 * s
-    out = (f'<rect x="{f1(cx - w / 2)}" y="{f1(cy - h / 2)}" width="{f1(w)}" height="{f1(h)}" rx="{4 * s}" '
-           f'fill="{P["wood_light"]}" stroke="{INK}" stroke-width="{4 * s:.1f}"/>'
-           f'<path d="M{f1(cx - w / 2 + 6)},{f1(cy)} L{f1(cx + w / 2 - 6)},{f1(cy)}" stroke="{P["wood_dark"]}" '
-           f'stroke-width="{2.5 * s:.1f}"/>'
-           f'<rect x="{f1(cx - 9 * s)}" y="{f1(cy - h / 2 - 3 * s)}" width="{18 * s}" height="{f1(h + 6 * s)}" '
-           f'fill="{P["wood"]}" stroke="{INK}" stroke-width="{3 * s:.1f}"/>')
+    """The wooden lid for the manger, centred at (cx, cy): a big pale board of three planks with two battens."""
+    w, h = (MANGER[1] - MANGER[0] + 44) * s, LID_H * s
+    x0, y0 = cx - w / 2, cy - h / 2
+    out = (f'<rect x="{f1(x0)}" y="{f1(y0)}" width="{f1(w)}" height="{f1(h)}" rx="{6 * s}" fill="#efd7a4" '
+           f'stroke="{INK}" stroke-width="{4.5 * s:.1f}"/>'
+           f'<rect x="{f1(x0 + 6 * s)}" y="{f1(y0 + 5 * s)}" width="{f1(w - 12 * s)}" height="{f1(7 * s)}" '
+           f'rx="{3 * s}" fill="#f8e6bf" opacity="0.9"/>')
+    for k in (1, 2):
+        yy = y0 + h * k / 3
+        out += (f'<path d="M{f1(x0 + 5 * s)},{f1(yy)} L{f1(x0 + w - 5 * s)},{f1(yy)}" stroke="{P["wood_dark"]}" '
+                f'stroke-width="{2.6 * s:.1f}" opacity="0.8"/>')
+    for bx in (x0 + w * 0.22, x0 + w * 0.78):
+        out += (f'<rect x="{f1(bx - 11 * s)}" y="{f1(y0 - 3 * s)}" width="{22 * s}" height="{f1(h + 6 * s)}" '
+                f'rx="{3 * s}" fill="{P["wood"]}" stroke="{INK}" stroke-width="{3.5 * s:.1f}"/>'
+                f'<circle cx="{f1(bx)}" cy="{f1(y0 + 8 * s)}" r="{2.6 * s:.1f}" fill="{INK}"/>'
+                f'<circle cx="{f1(bx)}" cy="{f1(y0 + h - 8 * s)}" r="{2.6 * s:.1f}" fill="{INK}"/>')
     return S.g(out, filter="wobble-fine")
+
+
+def dust_markup(cx, cy, w, seed=0):
+    """A low puff of sandy dust (a lid / mat landing)."""
+    rng = random.Random(seed)
+    out = ""
+    for i in range(5):
+        px = cx + (i - 2) / 2 * w * 0.5 + rng.uniform(-8, 8)
+        py = cy - rng.uniform(0, 16)
+        sz = rng.uniform(56, 78) * w / 260
+        out += S.cloud(px, py, sz, sz * 0.58, "#efe0bf", seed=seed * 11 + i, puffs=3, sw=2.2, shade_fill="#dcc79c")
+    return S.g(out, filter="wobble-fine", opacity=0.9)
 
 
 def mat_markup(cx, cy, s=1.0):
@@ -648,18 +706,23 @@ def arcs_markup(x, y, facing, k, s=1.0):
     return S.g(out, filter="wobble-fine")
 
 
-def blast_markup(x, y, facing, k, s=1.0, ang=-42):
-    """Horn blast: three wide arcs and a few short dashes from the bell, tilted up along the horn."""
-    out = ""
+def blast_markup(x, y, facing, k, s=1.0, ang=-42, sw=5.5, halo=False):
+    """Horn blast: three wide arcs from the bell, tilted up along the horn (``halo``: over a faint cream halo so
+    they read against any background)."""
+    out, under = "", ""
     for i in range(3):
         r = (30 + 26 * i + (k - 2) * 4) * s
         a0, a1 = math.radians(ang - 32), math.radians(ang + 32)
         p0 = (x + facing * r * math.cos(a0), y + r * math.sin(a0))
         p1 = (x + facing * r * 1.12 * math.cos(math.radians(ang)), y + r * 1.12 * math.sin(math.radians(ang)))
         p2 = (x + facing * r * math.cos(a1), y + r * math.sin(a1))
-        out += (f'<path d="M{f1(p0[0])},{f1(p0[1])} Q{f1(p1[0])},{f1(p1[1])} {f1(p2[0])},{f1(p2[1])}" fill="none" '
-                f'stroke="{INK}" stroke-width="{5.5 * s:.1f}" stroke-linecap="round" opacity="0.85"/>')
-    return S.g(out, filter="wobble-fine")
+        d = f'M{f1(p0[0])},{f1(p0[1])} Q{f1(p1[0])},{f1(p1[1])} {f1(p2[0])},{f1(p2[1])}'
+        if halo:
+            under += (f'<path d="{d}" fill="none" stroke="#fff6e2" stroke-width="{(sw + 11) * s:.1f}" '
+                      f'stroke-linecap="round" opacity="0.6"/>')
+        out += (f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="{sw * s:.1f}" stroke-linecap="round" '
+                f'opacity="0.88"/>')
+    return S.g(under + out, filter="wobble-fine")
 
 
 def exclaim_markup(x, y, s=1.0):
@@ -681,23 +744,39 @@ def question_markup(x, y, s=1.0):
     d = (f"M{f1(x - 16 * s)},{f1(y - 52 * s)} C{f1(x - 16 * s)},{f1(y - 78 * s)} {f1(x + 20 * s)},{f1(y - 80 * s)} "
          f"{f1(x + 20 * s)},{f1(y - 54 * s)} C{f1(x + 20 * s)},{f1(y - 36 * s)} {f1(x)},{f1(y - 36 * s)} "
          f"{f1(x)},{f1(y - 18 * s)}")
-    return S.g(f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="{13 * s:.1f}" stroke-linecap="round"/>'
+    halo = (f'<ellipse cx="{f1(x + 2 * s)}" cy="{f1(y - 42 * s)}" rx="{40 * s:.1f}" ry="{54 * s:.1f}" '
+            f'fill="#fbf1dc" opacity="0.7" filter="url(#soft)"/>')
+    return halo + S.g(f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="{13 * s:.1f}" stroke-linecap="round"/>'
                f'<path d="{d}" fill="none" stroke="#e8b63c" stroke-width="{6.5 * s:.1f}" stroke-linecap="round"/>'
                f'<circle cx="{f1(x)}" cy="{f1(y - 2 * s)}" r="{7 * s:.1f}" fill="#e8b63c" stroke="{INK}" '
                f'stroke-width="{3.5 * s:.1f}"/>', filter="wobble-fine")
 
 
 def grumble_markup(x, y, s=1.0, seed=0):
-    """An angry scribble cloud above a head."""
+    """An angry little storm cloud centred at (x, y) over a head: a dark jagged puff on a soft light backing, with
+    three short yellow lightning ticks under it (k-variants via ``seed`` flicker the zig-zags)."""
     rng = random.Random(seed)
+    n = 18
     pts = []
-    for i in range(26):
-        a = i * 1.9
-        r = (18 + 6 * math.sin(i * 1.3)) * s
-        pts.append((x + r * 1.5 * math.cos(a) + rng.uniform(-3, 3), y + r * 0.8 * math.sin(a) + rng.uniform(-3, 3)))
-    d = S.smooth_path(pts, closed=False)
-    return S.g(f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="{4.5 * s:.1f}" stroke-linecap="round" '
-               f'opacity="0.9"/>', filter="wobble-fine")
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        r = (1.0 if i % 2 == 0 else 0.72) + rng.uniform(-0.06, 0.06)
+        pts.append((x + 62 * s * r * math.cos(a), y + 36 * s * r * math.sin(a)))
+    jag = "M" + " L".join(f"{f1(px)},{f1(py)}" for px, py in pts) + " Z"
+    backing = (f'<ellipse cx="{f1(x)}" cy="{f1(y + 8 * s)}" rx="{86 * s:.1f}" ry="{66 * s:.1f}" fill="#fbf1dc" '
+               f'opacity="0.75" filter="url(#soft)"/>')
+    puff = (f'<path d="{jag}" fill="#5f5b6e" stroke="{INK}" stroke-width="{4.5 * s:.1f}" stroke-linejoin="round"/>'
+            f'<path d="M{f1(x - 34 * s)},{f1(y - 8 * s)} q{18 * s:.1f},{-12 * s:.1f} {36 * s:.1f},0" fill="none" '
+            f'stroke="#8a869a" stroke-width="{4 * s:.1f}" stroke-linecap="round"/>')
+    bolts = ""
+    for bx, ln in ((-30, 30), (2, 38), (32, 28)):
+        x0, y0 = x + bx * s + rng.uniform(-3, 3) * s, y + 30 * s
+        d = (f"M{f1(x0)},{f1(y0)} l{-7 * s:.1f},{ln * 0.45 * s:.1f} l{12 * s:.1f},{-3 * s:.1f} "
+             f"l{-8 * s:.1f},{ln * 0.55 * s:.1f}")
+        bolts += (f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="{9 * s:.1f}" stroke-linecap="round" '
+                  f'stroke-linejoin="round"/><path d="{d}" fill="none" stroke="#f2c84a" stroke-width="{4.5 * s:.1f}" '
+                  f'stroke-linecap="round" stroke-linejoin="round"/>')
+    return backing + S.g(bolts + puff, filter="wobble-fine")
 
 
 def tear_markup(x, y, s=1.0):
@@ -847,46 +926,65 @@ def build(ctx):
     t_sorry = snap(within(c0c, 0.5))           # "表示真心认错": head bowed, sorry
     t_bow = snap(within(c0c, 0.56))            # messenger and scribe bow their heads
     t_speak = snap(c1.start + 0.1)             # "国王又派人…": the king speaks
-    t_attn = snap(c1.start + 0.3)              # the two straighten up
-    t_go = snap(c1.start + 0.85)               # ...and walk out to the terrace
-    t_arrive = t_go + 1.35
+    t_attn = snap(c1.start + 0.25)             # the two straighten up (and nod)
+    t_go = snap(c1.start + 0.65)               # ...and walk out to the terrace (planted-foot steps)
+    WALK_P = 0.25                              # one stride drawing per WALK_P
+    m_steps = 7
+    t_arrive = snap(t_go + m_steps * WALK_P)
     t_horn = snap(t_arrive + 0.12)             # the messenger lifts the horn
     t_blow = t_horn + 0.18
-    t_scroll = snap(t_go + 1.65)               # the scribe (who followed) unrolls the decree
+    r_go = snap(t_go + 0.3)                    # the scribe follows
+    r_steps = 5
+    r_arr = snap(r_go + r_steps * WALK_P)
+    t_scroll = snap(max(r_arr + 0.25, t_arrive))   # ...and unrolls the decree
     t_read = L2.start + 0.05                   # the king's words are read out
-    t_horn_down = snap(L2.start + 0.35)
-    t_lid = snap(within(c2a, 0.68))            # "都不可以吃": the farmer lifts the plank...
+    t_horn_down = snap(max(L2.start + 0.35, t_blow + 1.0))
+    t_lid = snap(within(c2a, 0.72))            # "都不可以吃": the farmer lifts the plank...
     t_lid_on = t_lid + 0.42                    # ...and lays it over the manger
     t_mat = snap(c2b.start + 0.12)             # "也不可以喝": the girl pulls the mat
     t_mat_on = t_mat + 0.38
     t_cloth = within(c3a, 0.4)                 # "都要穿上麻布衣服": blankets, pop pop pop
     t_pray = snap(c3b.start + 0.2)             # "诚心向上帝呼求": kneel and pray
-    t_stop = snap(c4a.start + 0.5)             # "每个人都要改掉坏行为": the two men stop
-    t_hang = snap(within(c4a, 0.3))            # ...hang their heads
-    t_turnb = snap(within(c4a, 0.47))          # "不再欺负别人": the boy turns back
-    t_give = snap(within(c4a, 0.6))            # holds out the toy
-    t_take = snap(within(c4a, 0.72))           # she takes it, both smile
-    t_step = within(c4a, 0.7)                  # the men step together...
-    t_shake = snap(within(c4a, 0.8))           # ...and shake hands
+    t_stop = snap(c4a.start + 1.1)             # "每个人都要改掉坏行为": the two men stop (first seen quarrelling)
+    t_hang = snap(max(within(c4a, 0.3), t_stop + 0.4))   # ...hang their heads
+    t_turnb = snap(max(within(c4a, 0.47), t_hang + 0.4))  # "不再欺负别人": the boy turns back
+    t_give = snap(max(within(c4a, 0.6), t_turnb + 0.4))   # holds out the toy
+    t_take = snap(max(within(c4a, 0.72), t_give + 0.4))   # she takes it, both smile
+    t_step = max(within(c4a, 0.7), t_hang + 0.5)          # the men step together...
+    t_shake = snap(max(within(c4a, 0.8), t_step + 0.35))  # ...and shake hands
     t_kneel = snap(c4b.start + 0.25)           # "说不定上帝会可怜我们": kneel, look up hopefully
-    t_hope = snap(c4c.start + 0.2)             # "我们就能活下来": hopeful smiles, warm light
+    t_hope = snap(c4c.start + 0.2)             # "我们就能活下来": hopeful smiles (no light yet: that is s18)
 
     # ---- sky ----
     sc.add("sky", sky_svg(), z=0, wc=0.5)
-    sc.add("clouds_back", clouds_svg(CLOUDS_BACK, "#d7cfd6", "#bab0c0"), z=1, wc=0.7, motion=M.drift(vx=5))
-    sc.add("hope", hope_svg(), z=1.5, wc=0,
-           motion=M.combine(M.keys([(t_hope - 0.3, {"alpha": 0}), (t_hope + 1.6, {"alpha": 1})], "sine"),
-                            M.pulse(0.85, 1.0, 3.0)))
-    sc.add("clouds_front", clouds_svg(CLOUDS_FRONT, "#e2d9da", "#c6bcc4"), z=1.6, wc=0.7, motion=M.drift(vx=9))
+    # the white clouds grey over while the city prays (a crossfade of the same drawing), and a low grey overcast
+    # rolls in over the street from the top of the sky — the gloom s18 opens under (its warm light is s18's)
+    t_oc0 = c3b.start
+    t_grey = (t_oc0 + 0.5, c4b.start + 1.0)
+    grey_at = lambda t: M.progress(t, t_grey[0], t_grey[1], "sine")
+    sc.add("clouds_back", [clouds_svg(CLOUDS_BACK, "#d7cfd6", "#bab0c0"), clouds_svg(CLOUDS_BACK, "#aeadba", "#94939f")],
+           z=1, wc=0.7, frame_at=grey_at, motion=M.drift(vx=5))
+    sc.add("clouds_front", [clouds_svg(CLOUDS_FRONT, "#e2d9da", "#c6bcc4"),
+                            clouds_svg(CLOUDS_FRONT, "#b9b7c1", "#9e9caa")],
+           z=1.6, wc=0.7, frame_at=grey_at, motion=M.drift(vx=9))
+    for k, (kind, ddy, ddx, dur, vx) in enumerate((("back", -300, 260, 9.0, -3), ("front", -360, 340, 8.0, -5),
+                                                   ("low", -420, 420, 7.0, -7))):
+        sc.add(f"overcast_{kind}", overcast_svg(kind), z=1.65 + 0.01 * k, wc=0.7, motion=M.combine(
+            M.keys([(t_oc0 + 0.3 * k, {"dx": ddx, "dy": ddy}), (t_oc0 + 0.3 * k + dur, {"dx": 0, "dy": 0})], "out"),
+            M.drift(vx=vx, t0=t_oc0 + 0.3 * k + dur),
+            lambda t, k=k: Tf(dy=5 * math.sin(2 * math.pi * t / 9.0 + k))))
 
-    # a few far doves drift across the sky over the street (life in the quiet, fasting city)
+    # a few far doves drift across the sky over the street (life in the quiet, fasting city). Each path starts
+    # and ends outside the frame the camera has at that moment (with a soft fade as a backstop).
     wings = (1.0, 0.5, 0.0, -0.5, -1.0)
     cyc = (0, 1, 2, 3, 4, 3, 2, 1)
-    for i, (fc, x0, y0, x1, y1, ta, tb, s, rate) in enumerate((
-            (1, 1700, 560, 3500, 470, L1.end - 1.0, c3b.end, 0.5, 10.0),
-            (1, 1900, 470, 3400, 420, L2.start + 0.5, c3b.end + 1.0, 0.4, 11.0),
-            (-1, 5400, 520, 3500, 430, c3b.start, T + 0.5, 0.48, 9.5))):
-        ref = (x0, y0)
+    DOVES = ((1, [(12.2, 1900, 180), (15.5, 2350, 470), (21.0, 3000, 440), (25.0, 3500, 300), (27.0, 3650, 60)],
+              0.5, 10.0),
+             (1, [(14.9, 1500, 330), (17.0, 1950, 520), (23.0, 2900, 470), (26.5, 3500, 380), (28.8, 3800, 60)],
+              0.4, 11.0),
+             (-1, [(24.6, 5450, 440), (31.0, 4500, 470), (35.0, 3900, 420), (T + 0.6, 3700, 400)], 0.48, 9.5))
+    for i, (fc, pts, s, rate) in enumerate(DOVES):
+        x0, y0 = pts[0][1], pts[0][2]
         fr = [doc(PR.dove(x0, y0, s, fc, wing=w)) for w in wings]
 
         def fa(t, rate=rate, i=i):
@@ -894,10 +992,17 @@ def build(ctx):
                 return 2.0
             return float(cyc[int(t * rate + i * 3) % 8])
 
-        def mv(t, x0=x0, y0=y0, x1=x1, y1=y1, ta=ta, tb=tb, i=i):
-            u = min(1.0, max(0.0, (t - ta) / (tb - ta)))
-            return Tf(dx=(x1 - x0) * u, dy=(y1 - y0) * u + 10 * math.sin(2 * math.pi * t / 1.7 + i),
-                      alpha=1.0 if ta <= t <= tb else 0.0)
+        def mv(t, pts=pts, i=i):
+            ta, tb = pts[0][0], pts[-1][0]
+            if t <= ta or t >= tb:
+                return Tf(alpha=0.0)
+            for (t0, xa, ya), (t1, xb, yb) in zip(pts, pts[1:]):
+                if t0 <= t <= t1:
+                    u = (t - t0) / (t1 - t0)
+                    x, y = M.lerp(xa, xb, u), M.lerp(ya, yb, u)
+                    break
+            a = min(1.0, (t - ta) / 0.4, (tb - t) / 0.4)
+            return Tf(dx=x - pts[0][1], dy=y - pts[0][2] + 10 * math.sin(2 * math.pi * t / 1.7 + i), alpha=a)
         sc.add(f"dove{i}", fr, z=1.8, frame_at=fa, motion=mv, seed=950 + i)
 
     # ---- city, street, yard backdrop (static) ----
@@ -930,14 +1035,18 @@ def build(ctx):
     cx_, cy_, cs = 4720, ROOF_Y[v], 0.42
     ch = bp("man", 2, cx_, cy_, cs, -1, "point")
     cscroll = PR.scroll(ch["hands"][0][0] - 18 * cs, ch["hands"][0][1] - 30 * cs, 0.62 * cs, opened=True)
-    sc.add("roof_crier", doc(C.citizen(cx_, cy_, cs, -1, kind="man", variant=2, pose="point", attire="sackcloth",
-                                       expr="call") + cscroll), z=2.2,
-           motion=M.combine(M.breathe(0.012, 2.6, pivot=(cx_, cy_)),
-                            lambda t: Tf(rot=1.5 * math.sin(2 * math.pi * t / 2.3), px=cx_, py=cy_)))
+    t_ck = snap(t_hope + 0.4)              # at the end he kneels too (pose cut hidden in a dip)
+    sc.add("roof_crier", [doc(C.citizen(cx_, cy_, cs, -1, kind="man", variant=2, pose="point", attire="sackcloth",
+                                        expr="call") + cscroll),
+                          doc(C.citizen(cx_, cy_, cs, -1, kind="man", variant=2, pose="kneel_pray",
+                                        attire="sackcloth"))], z=2.2, frame_at=cuts([(0, 0), (t_ck, 1)]),
+           motion=M.combine(M.breathe(0.012, 2.6, pivot=(cx_, cy_)), dip(t_ck, cs, (cx_, cy_), 6),
+                            lambda t: Tf(rot=1.5 * math.sin(2 * math.pi * t / 2.3)
+                                         * (1 - M.progress(t, t_ck - 0.7, t_ck - 0.2, "sine")), px=cx_, py=cy_)))
     sc.add("roof_crier_arcs", [doc(arcs_markup(ch["head"][0] - 40 * cs, ch["head"][1] + 22 * cs, -1, k, cs * 1.3))
                                for k in (1, 2, 3)], z=2.25, wc=0, frame_at=lambda t: float(int(t * 7) % 3),
-           motion=M.keys([(L2.start, {"alpha": 0}), (L2.start + 0.2, {"alpha": 1}), (L4.end - 0.2, {"alpha": 1}),
-                          (L4.end, {"alpha": 0})], "sine"))
+           motion=M.keys([(L2.start, {"alpha": 0}), (L2.start + 0.2, {"alpha": 1}), (t_ck - 0.45, {"alpha": 1}),
+                          (t_ck - 0.2, {"alpha": 0})], "sine"))
 
     # ---- the palace ----
     sc.add("palace", palace_svg(), z=5)
@@ -1061,30 +1170,17 @@ def build(ctx):
                mfr(1, "stand", "neutral"),                                               # 8
                doc(person("man", mv, mx, my, ms, 1, "listen", "neutral", extra=horn_m)),  # 9 blowing the horn
                mfr(1, "stand", "sad")]                                                   # 10
-    WALK_P = 0.34
     m_dist = HORN_X - mx
-
-    def walk_sched(t_go_, t_arr, first):
-        def fa(t):
-            if t < t_go_ or t >= t_arr:
-                return None
-            return float(first + int((t - t_go_) / WALK_P) % 2)
-        return fa
-
-    m_walk = walk_sched(t_go, t_arrive, 6)
+    m_fa, m_dx, m_dy, _ = step_walk(t_go, m_steps, m_dist / m_steps, WALK_P, ms)
     m_base = cuts([(0, 0), (t_tell, 1), (t_point, 2), (t_msg_back, 3), (t_bow, 4), (t_attn, 5), (t_arrive, 8),
                    (t_horn, 9), (t_horn_down, 10)])
     mp = (mx, my)
-    walk_x = lambda d: M.keys([(t_go, {"dx": 0}), (t_go + 0.2, {"dx": d * 0.12}), (t_arrive - 0.2, {"dx": d * 0.88}),
-                               (t_arrive, {"dx": d})], ["in", "linear", "out"], pivot=None)
-    walk_bob = lambda t0, t1, s: (lambda t: Tf(dy=-5 * s * abs(math.sin(math.pi * (t - t0) / WALK_P)))
-                                  if t0 <= t < t1 else Tf())
     sc.add("messenger", mframes, z=8.5,
-           frame_at=lambda t: m_walk(t) if m_walk(t) is not None else m_base(t),
+           frame_at=lambda t: 6 + m_fa(t) if m_fa(t) is not None else m_base(t),
            motion=M.combine(
-               M.with_pivot(walk_x(m_dist), mp), walk_bob(t_go, t_arrive, ms),
+               M.with_pivot(lambda t: Tf(dx=m_dx(t), dy=m_dy(t)), mp),
                dip(t_tell, ms, mp, 4), dip(t_point, ms, mp), dip(t_msg_back, ms, mp), dip(t_bow, ms, mp, 6),
-               dip(t_attn, ms, mp, 5), nod(t_attn + 0.3, mp, -3), dip(t_go, ms, mp, 5), dip(t_arrive, ms, mp, 5),
+               dip(t_attn, ms, mp, 5), nod(t_attn + 0.1, mp, -3, 0.4), dip(t_arrive, ms, mp, 5),
                dip(t_horn, ms, mp), hop(t_blow, [(0, {"rot": 0}), (0.35, {"rot": -2.5}), (1.2, {"rot": -2.5}),
                                                  (1.45, {"rot": 0})], mp),
                dip(t_horn_down, ms, mp, 5),
@@ -1094,7 +1190,8 @@ def build(ctx):
            wc=0, frame_at=lambda t: float(int(t * 7) % 3),
            motion=M.keys([(t_tell, {"alpha": 0}), (t_tell + 0.12, {"alpha": 1}), (t_point - 0.12, {"alpha": 1}),
                           (t_point, {"alpha": 0})], "sine"))
-    sc.add("horn_blast", [doc(blast_markup(bell_m[0] + m_dist, bell_m[1], 1, k, ms)) for k in (1, 2, 3)], z=9,
+    sc.add("horn_blast", [doc(blast_markup(bell_m[0] + m_dist, bell_m[1], 1, k, ms, sw=7.5, halo=True))
+                          for k in (1, 2, 3)], z=9,
            wc=0, frame_at=lambda t: float(int(t * 8) % 3),
            motion=M.keys([(t_blow, {"alpha": 0}), (t_blow + 0.12, {"alpha": 1}), (t_horn_down - 0.25, {"alpha": 1}),
                           (t_horn_down - 0.05, {"alpha": 0})], "sine"))
@@ -1120,19 +1217,15 @@ def build(ctx):
                rfr(1, "stand", "neutral"),           # 5
                rfr(1, "point", "call", open_scroll)]  # 6 reading the decree
     r_dist = READ_X - rx_
-    r_go = t_go + 0.3
-    r_arr = r_go + 1.0
-    r_walk = walk_sched(r_go, r_arr, 3)
+    r_fa, r_dx, r_dy, _ = step_walk(r_go, r_steps, r_dist / r_steps, WALK_P, rs)
     r_base = cuts([(0, 0), (t_bow + 0.1, 1), (t_attn, 2), (r_arr, 5), (t_scroll, 6)])
     rp = (rx_, ry_)
     sc.add("scribe", rframes, z=8.2,
-           frame_at=lambda t: r_walk(t) if r_walk(t) is not None else r_base(t),
+           frame_at=lambda t: 3 + r_fa(t) if r_fa(t) is not None else r_base(t),
            motion=M.combine(
-               M.with_pivot(M.keys([(r_go, {"dx": 0}), (r_go + 0.2, {"dx": r_dist * 0.08}),
-                                    (r_arr - 0.2, {"dx": r_dist * 0.92}), (r_arr, {"dx": r_dist})],
-                                   ["in", "linear", "out"]), rp),
-               walk_bob(r_go, r_arr, rs),
-               dip(t_bow + 0.1, rs, rp, 6), dip(t_attn, rs, rp, 5), nod(t_attn + 0.2, rp, -3), dip(r_arr, rs, rp, 5),
+               M.with_pivot(lambda t: Tf(dx=r_dx(t), dy=r_dy(t)), rp),
+               dip(t_bow + 0.1, rs, rp, 6), dip(t_attn, rs, rp, 5), nod(t_attn + 0.15, rp, -3, 0.4),
+               dip(r_arr, rs, rp, 5),
                dip(t_scroll, rs, rp),
                lambda t: Tf(rot=1.2 * math.sin(2 * math.pi * (t - t_read) / 2.2)) if t > t_read else Tf(),
                M.breathe(0.01, 3.1, pivot=rp, phase=0.1)))
@@ -1206,17 +1299,28 @@ def build(ctx):
            motion=M.combine(dip(t_lid, fs, fp), dip(t_f_after, fs, fp, 5), dip(t_pray, fs, fp),
                             dip(t_kneel, fs, fp, 4), dip(t_hope, fs, fp, 4), M.breathe(0.01, 3.0, pivot=fp, phase=0.2)))
     # the manger (in front of the farmer and the animals' muzzles), its hay and the plank lid
-    sc.add("hay", doc(hay_markup()), z=10.2)
+    # the hay is hidden under the lid the moment it lands (the lid is taller than the heap)
+    sc.add("hay", doc(hay_markup()), z=10.2,
+           motion=M.keys([(t_lid_on - 0.01, {"alpha": 1}), (t_lid_on + 0.01, {"alpha": 0})], "linear"))
     sc.add("manger", doc(manger_markup()), z=11.6)
     lid_cx = (MANGER[0] + MANGER[1]) / 2
-    lid_cy = MANGER[2] - 6
+    lid_cy = MANGER[2] - 14
     lp = (lid_cx, lid_cy)
     ldx, ldy = fhand[0] - lid_cx + 40, fhand[1] - lid_cy + 6
     sc.add("lid", doc(plank_markup(lid_cx, lid_cy)), z=11.7, motion=M.combine(
         M.keys([(t_lid - 0.01, {"alpha": 0}), (t_lid + 0.01, {"alpha": 1})], "linear", pivot=lp),
         M.keys([(t_lid, {"dx": ldx, "dy": ldy, "rot": -14}), (t_lid + 0.12, {"dx": ldx, "dy": ldy - 6, "rot": -12}),
                 (t_lid_on, {"dx": 0, "dy": 0, "rot": 0})], ["sine", "in"], pivot=lp),
-        hop(t_lid_on, [(0, {"sy": 1}), (0.06, {"sy": 0.86, "dy": 2}), (0.18, {"sy": 1, "dy": 0})], lp)))
+        hop(t_lid_on, [(0, {"sy": 1, "dy": 0}), (0.06, {"sy": 0.86, "dy": 3}), (0.16, {"sy": 1.03, "dy": -11}),
+                       (0.28, {"sy": 0.97, "dy": 0}), (0.36, {"sy": 1.0, "dy": -3}), (0.44, {"sy": 1, "dy": 0})],
+            (lid_cx, lid_cy + LID_H / 2), ["out", "out", "in", "out", "in"])))
+    for k, dxp in enumerate((-1, 1)):
+        px_, py_ = lid_cx + dxp * (MANGER[1] - MANGER[0]) * 0.5, MANGER[2] + 4
+        sc.add(f"lid_dust{k}", doc(dust_markup(px_, py_, 170, seed=40 + k)), z=11.75, wc=0.4,
+               motion=hop(t_lid_on, [(-0.02, {"alpha": 0, "s": 0.6, "dx": 0, "dy": 0}),
+                                     (0.07, {"alpha": 0.85, "s": 0.95}),
+                                     (0.6, {"alpha": 0, "s": 1.3, "dx": dxp * 40, "dy": -30})], (px_, py_),
+                          ["out", "sine"]))
 
     # the water trough (in front of the lamb), the girl behind it and the reed mat
     gx, gy, gs, gv = GIRL_Y["x"], GIRL_Y["y"], GIRL_Y["s"], GIRL_Y["v"]
@@ -1246,7 +1350,7 @@ def build(ctx):
         hop(t_mat_on, [(0, {"sy": 1}), (0.06, {"sy": 0.88, "dy": 2}), (0.18, {"sy": 1, "dy": 0})], mtp)))
 
     # "?" over the cow and the lamb
-    cow_head = (COW["x"] - 150 * COW["s"], COW["y"] - 215 * COW["s"])
+    cow_head = (COW["x"] - 122 * COW["s"], COW["y"] - 292 * COW["s"])   # right above the cow, clear of the farmer
     lamb_head = (LAMB["x"] - 70 * LAMB["s"], LAMB["y"] - 150 * LAMB["s"])
     for nm, (qx, qy), t0 in (("q_cow", cow_head, t_cow_up + 0.1), ("q_lamb", lamb_head, t_lamb_up + 0.1)):
         sc.add(nm, doc(question_markup(qx, qy, 1.0)), z=14, wc=0,
@@ -1264,8 +1368,8 @@ def build(ctx):
                motion=puff_motion(tp, (x, cy0)))
 
     # ---- neighbours in the middle of the street: listen to the decree, kneel to pray ----
-    mids = [("woman", 0, 3440, 1192, 0.88, -1, 0.0), ("child", 2, 3525, 1222, 0.86, -1, 0.15),
-            ("elder", 1, 3610, 1168, 0.83, -1, 0.3)]
+    mids = [("woman", 0, 3482, 1192, 0.88, -1, 0.0), ("child", 2, 3562, 1222, 0.86, -1, 0.15),
+            ("elder", 1, 3642, 1168, 0.83, -1, 0.3)]
     for i, (kind, v, x, y, s, f, dt) in enumerate(mids):
         fr = [doc(person(kind, v, x, y, s, f, "listen")),
               doc(person(kind, v, x, y, s, f, "kneel_pray", "peaceful")),
@@ -1278,7 +1382,7 @@ def build(ctx):
 
     # ---- the families ----
     # background prayers (already kneeling)
-    backs = [("woman", 3, 3720, 1150, 0.78, 1)]
+    backs = [("woman", 3, 3722, 1150, 0.78, 1)]
     for i, (kind, v, x, y, s, f) in enumerate(backs):
         fr = [doc(person(kind, v, x, y, s, f, "kneel_pray", "peaceful")),
               doc(person(kind, v, x, y, s, f, "kneel_pray", "worried")),
@@ -1307,7 +1411,9 @@ def build(ctx):
         sc.add(nm, man_frames(a, f), z=13 + y / 1000,
                frame_at=cuts([(0, 0), (t1, 1), (t2, 2), (t3, 3), (t4, 4), (t5, 5), (t6, 6)]),
                motion=M.combine(
-                   M.with_pivot(M.keys([(t3, {"dx": 0}), (t4 - 0.02, {"dx": f * SHAKE_DX})], "inout"), pv),
+                   # one quick planted-foot step toward the other as the walk_b drawing cuts in (no glide)
+                   M.with_pivot(M.keys([(t3 - 0.06, {"dx": 0}), (t3 + 0.12, {"dx": f * SHAKE_DX})], "sine"), pv),
+                   hop(t3 - 0.06, [(0, {"dy": 0}), (0.09, {"dy": -7 * s}), (0.18, {"dy": 0})], pv),
                    M.with_pivot(shout, pv),
                    dip(t1, s, pv, 6), dip(t2, s, pv, 5), dip(t3, s, pv, 4), dip(t4, s, pv, 5), dip(t5, s, pv),
                    dip(t6, s, pv, 4),
@@ -1315,7 +1421,7 @@ def build(ctx):
                                    (0.48, {"dy": 0})], pv),
                    M.breathe(0.01, 2.7, pivot=pv, phase=0.5 + dt)))
         hdp = bp("man", a["v"], x, y, s, f, "point")["head_top"]
-        sc.add(nm + "_grr", [doc(grumble_markup(hdp[0] - f * 10, hdp[1] - 40, 1.0, seed=k + (3 if f < 0 else 0)))
+        sc.add(nm + "_grr", [doc(grumble_markup(hdp[0], hdp[1] - 72, 1.0, seed=k + (3 if f < 0 else 0)))
                              for k in range(3)], z=14, wc=0, frame_at=lambda t: float(int(t * 6) % 3),
                motion=M.keys([(0, {"alpha": 1}), (t1 - 0.25, {"alpha": 1}), (t1, {"alpha": 0})], "sine"))
 
@@ -1345,11 +1451,12 @@ def build(ctx):
     ghd = bp("child", gv2, gx2, gy2, gs2, 1, "sad")["head"]
     tears = tear_markup(ghd[0] + 12 * gs2, ghd[1] + 6 * gs2, gs2) + tear_markup(ghd[0] - 4 * gs2, ghd[1] + 10 * gs2,
                                                                                 gs2 * 0.8)
-    toy_ground = toy_markup(gx2 + 70 * gs2, gy2 + 4, TS)
+    toy_ground = toy_markup(gx2 + 50 * gs2, gy2 - 16, TS)      # by her knee, above the subtitle band
+    toy_hug = (gh_listen[0] + 18, gh_listen[1] + 60 * TS)       # hugged to her chest, under her hand (face clear)
     g2fr = [doc(person("child", gv2, gx2, gy2, gs2, 1, "sad", "sad", extra=tears)),                       # 0
             doc(person("child", gv2, gx2, gy2, gs2, 1, "stand", "surprised")),                            # 1
             doc(person("child", gv2, gx2, gy2, gs2, 1, "listen", "happy",
-                       extra=toy_markup(gh_listen[0] + 10, gh_listen[1] + 30 * TS, TS))),                   # 2
+                       extra=toy_markup(*toy_hug, TS))),                                                    # 2
             doc(person("child", gv2, gx2, gy2, gs2, 1, "kneel_pray", "worried", extra=toy_ground)),       # 3
             doc(person("child", gv2, gx2, gy2, gs2, 1, "kneel_pray", "happy", extra=toy_ground))]         # 4
     g2p = (gx2, gy2)
@@ -1363,7 +1470,7 @@ def build(ctx):
                             M.breathe(0.012, 2.3, pivot=g2p, phase=0.7)))
     # the toy hops from his hand into hers
     ty0 = (bh_point[0], bh_point[1] + 26 * TS)
-    ty1 = (gh_listen[0] + 10, gh_listen[1] + 30 * TS)
+    ty1 = toy_hug
     sc.add("toy_fly", doc(toy_markup(ty0[0], ty0[1], TS)), z=13.7, motion=M.combine(
         M.keys([(t_take - 0.01, {"alpha": 0}), (t_take + 0.01, {"alpha": 1}), (t_take + 0.28, {"alpha": 1}),
                 (t_take + 0.3, {"alpha": 0})], "linear", pivot=ty0),
@@ -1372,8 +1479,8 @@ def build(ctx):
                ["out", "in"], pivot=ty0)))
 
     # behind them a young man comforts an old neighbour (a hand on his shoulder), then they kneel together
-    ex_, ey_, es_ = 5236, 1166, 0.82
-    yx_, yy_, ys_ = 5112, 1170, 0.85
+    ex_, ey_, es_ = ELDER["x"], ELDER["y"], ELDER["s"]
+    yx_, yy_, ys_ = HELPER["x"], HELPER["y"], HELPER["s"]
     t_help = snap(within(c4a, 0.33))
     efr = [doc(person("elder", 0, ex_, ey_, es_, -1, "sad", "sad")),
            doc(person("elder", 0, ex_, ey_, es_, -1, "stand", "happy")),

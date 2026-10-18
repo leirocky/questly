@@ -29,7 +29,7 @@ Line 4 (S) '因为这一切，' arms raised once more, eyes closed, mouths a sma
         frame (rain and rocking eased).
 End frame (for s09): ship at SX0 + 262, no oars; kneeling, arms raised, eyes closed (expr 'sleepy'): sailor 0 at
         lx 274, sailor 1 at 132, Jonah standing at -4 (hand on chest), sailor 2 at -116, sailor 3 at -250, the
-        captain at -382 (the stern lantern hangs behind his back); camera (1682, 670, 1600).
+        captain at -362 (the stern lantern hangs behind his back); camera (1682, 670, 1600).
 
 Every key time comes from the narration chunks (a phrase inside a chunk is placed by its character position).
 Pose changes are hard cuts sold by a squash / hop (never crossfaded); each pose is held >= 0.5 s.
@@ -83,7 +83,7 @@ PIV = (SX0, SY + 40.0)        # pitch pivot
 ROWERS = [("A", 0, 300.0), ("B", 1, 158.0), ("C", 2, -142.0), ("D", 3, -276.0)]
 JON_LX = -4.0                 # Jonah in front of the mast
 CAPT_LX = -418.0              # the captain on the raised stern deck
-CAPT_KNEEL_LX = -382.0        # where he kneels to pray
+CAPT_KNEEL_LX = -362.0        # where he kneels to pray
 OAR_DX = 104.0                # oarlock this far (local px) toward the stern from each rower's feet
 
 # rowing stroke (rower-local px, scale 1, facing right = toward the stern)
