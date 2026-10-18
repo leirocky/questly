@@ -4,6 +4,7 @@
 成片：[`output/jonah_story.mp4`](output/jonah_story.mp4)（仓库里是 1280×720 版本，约 90 MB，因为 GitHub 单个文件
 上限 100 MB；1920×1080 完整画质版约 175 MB，运行 `python3 build.py all` 会生成到同一路径，不要提交它）。
 第一版（2 分 19 秒）的剧本保留在 `story_v1.py`，场景在 `art/scenes_v1/`。
+网页版：仓库根目录的 [`stories/`](../stories/index.html)（GitHub Pages 上的"圣经绘本故事"页面）播放这个 720p 文件。
 
 这个文件夹完全独立，和 Questly 应用的代码无关。画面、配音、配乐、音效都由代码生成，没有使用外部素材。
 
