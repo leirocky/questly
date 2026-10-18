@@ -758,7 +758,7 @@ def memory_ring_svg():
     ink = P["ink"]
     win = _superellipse(MEM_A, MEM_B, cx, cy)
     win_d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in win) + " Z"
-    puffs = _puff_ring(MEM_A + 26, MEM_B + 24, cx, cy, 62, 36, 50, 12)
+    puffs = _puff_ring(MEM_A + 30, MEM_B + 28, cx, cy, 110, 48, 80, 12)   # big uneven bumps, like s19's bubble
     ring = ""
     for x, y, rr in puffs:
         ring += f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rr:.1f}" fill="{MEM_CREAM}" stroke="{ink}" stroke-width="6.5"/>'
@@ -1480,8 +1480,8 @@ def build(ctx):
         if t < T_GROW1:
             u = progress(t, T_GROW0, T_GROW1, "sine")
             return lerp(MEM_K0, 1.0, u), lerp(MEM_C0[0], MEM_C[0], u), lerp(MEM_C0[1], MEM_C[1], u), 1.0
-        u = progress(t, t_mx0, t_wf0, "in")
-        return 1.0 + 0.7 * u, MEM_C[0], MEM_C[1], 1.0 - progress(t, t_wo0 - 0.15, t_wf0, "sine")
+        u = progress(t, t_mx0, t_wf0, "inout")        # swells past the frame corners before it turns see-through
+        return 1.0 + 0.7 * u, MEM_C[0], MEM_C[1], 1.0 - progress(t, t_wo0 + 0.05, t_wf0, "sine")
 
     def mem_trail(t):
         out = []

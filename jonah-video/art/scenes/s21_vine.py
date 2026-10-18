@@ -439,7 +439,8 @@ def build(ctx):
     # dissolve (mostly while the sky is still light, so the fading disc never turns into a grey ring over the
     # violet), and s22's pre-dawn sky has closed over the sky by the dissolve's midpoint
     sun_out = lambda t: M.progress(t, T - 1.7, T - 1.0, "sine")
-    disc_out = lambda t: M.progress(t, T - 1.6, T - 1.0, "sine")
+    rays_out = lambda t: M.progress(t, T - 1.7, T - 1.4, "sine")   # rays gone before the disc turns see-through
+    disc_out = lambda t: M.progress(t, T - 1.4, T - 1.0, "sine")
     a_dusk = lambda t: M.progress(t, T - 1.5, T - 0.5, "sine")
 
     # --- opening: s20's last shot continues through the dissolve; on "上帝安排了" God's light floods the frame
@@ -532,9 +533,9 @@ def build(ctx):
         climb, lambda t: Tf(alpha=_env(t, t_d0, t_d0 + 0.3, t_hot0 + 0.45, t_hot0 + 0.75)))))
 
     def rays_tf(t):     # bursts out of the disc at noon; at the end shrinks back into it and fades
-        s = S_H * (0.45 + 0.55 * M.progress(t, t_hot0 + 0.05, t_hot0 + 0.6, "back")) * (1 - 0.55 * sun_out(t))
+        s = S_H * (0.45 + 0.55 * M.progress(t, t_hot0 + 0.05, t_hot0 + 0.6, "back")) * (1 - 0.55 * rays_out(t))
         return Tf(sx=s, sy=s, px=CX, py=CY,
-                  alpha=M.progress(t, t_hot0 + 0.05, t_hot0 + 0.35, "sine") * (1 - sun_out(t)))
+                  alpha=M.progress(t, t_hot0 + 0.05, t_hot0 + 0.35, "sine") * (1 - rays_out(t)))
 
     sc.add("sun_rays", rays, wc=0.3, motion=at(SUN_HOT, M.combine(
         lambda t: Tf(rot=8 * t, px=CX, py=CY), M.breathe(0.03, 0.9, pivot=(CX, CY)), rays_tf)))
@@ -1281,7 +1282,8 @@ def build(ctx):
     sc.sfx("snore", t_sleep + 0.4, dur=t_wake - t_sleep - 0.4, gain_db=-18, fade_in=0.3, fade_out=0.3)
     # the rooster crows softly as the dawn sky begins, under "又高又大", and is done before line 1
     sc.sfx("rooster", t_d0 + 0.1, dur=1.0, gain_db=-16, fade_out=0.3, pan=-0.5)
-    sc.sfx("birds", t_d1, dur=T - t_d1 + 0.8, gain_db=-16, fade_in=0.6, fade_out=0.8, pan=-0.2)
-    sc.sfx("heat", t_hot0, dur=T - t_hot0 + 0.8, gain_db=-15, fade_in=0.8, fade_out=0.8)
+    # the day sounds end with the sun (picture goes pre-dawn from T-1.7; s22's night crickets fade in)
+    sc.sfx("birds", t_d1, dur=T - 0.5 - t_d1, gain_db=-16, fade_in=0.6, fade_out=1.0, pan=-0.2)
+    sc.sfx("heat", t_hot0, dur=T - 0.9 - t_hot0, gain_db=-15, fade_in=0.8, fade_out=0.8)
     sc.sfx("sparkle", t_happy, gain_db=-12)
     return sc

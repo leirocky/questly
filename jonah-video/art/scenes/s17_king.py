@@ -1677,7 +1677,7 @@ def build(ctx):
     # over the rooftops (D3: no figure in frame), where s18 opens ----
     S0 = Cam(1160, 387, 1360)                        # lintel, merlons, column tops and sky; heads all below it
     t_s1 = 0.35                                      # the descent starts in the dissolve (s16's last frame holds)
-    t_land = max(snap(t_wow) + 0.3, t_rise - 0.3)    # settled before the seated lean of the rise
+    t_cam_land = max(snap(t_wow) + 0.3, t_rise - 0.3)    # settled before the seated lean of the rise
     A = Cam(934, 822, 1860)
     A2 = Cam(905, 830, 1780)
     B = Cam(1600, 870, 1900)
@@ -1694,7 +1694,7 @@ def build(ctx):
     t_up0 = max(t_hope + 0.4, T - 2.5)              # the hopeful smiles first, then up with their gaze...
     t_up1 = T - 0.9                                  # ...settled on the overcast for the dissolve
     sc.camera = cam_path([
-        (0, S0, 0), (t_s1, S0, 0, trap(0.35)), (t_land, A, 0), (t_sit - 0.5, A, 0), (c0c.end, A2, 0),
+        (0, S0, 0), (t_s1, S0, 0, trap(0.35)), (t_cam_land, A, 0), (t_sit - 0.5, A, 0), (c0c.end, A2, 0),
         (t_go - 0.3, A2, 0), (t_arrive + 0.1, B, 0),
         (t_bc0, B, 350, trap(0.3), 0.35), (t_cy, Cy, 0), (t_cy1, Cy, 0), (t_cc, Cc, 0), (t_cd0, Cc, 480, trap(0.3)),
         (t_cd1, D, 0), (t_up0, D, 0, trap(0.35)), (t_up1, D3, 0)])

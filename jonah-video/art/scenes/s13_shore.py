@@ -1129,8 +1129,10 @@ def build(ctx):
             return Tf(alpha=0.0)
         rise = progress(t, t_turn0 - 0.03, t_swap - 0.04, "out")
         melt = progress(t, t_fall1 - 0.15, t_fall1 + 0.35, "sine")
-        return Tf(sx=lerp(0.7, 1.0, rise) * (1 + 0.08 * melt), sy=lerp(0.3, 1.0, rise) * (1 - 0.6 * melt),
-                  alpha=1 - melt, px=TS_CX, py=TS_Y + 6)
+        # collapses opaquely onto the water (like the splash) and fades only once it is a thin sliver,
+        # so it is never a see-through veil over the turned fish
+        return Tf(sx=lerp(0.7, 1.0, rise) * (1 + 0.08 * melt), sy=max(0.002, lerp(0.3, 1.0, rise) * (1 - melt)),
+                  alpha=1 - progress(melt, 0.85, 1.0, "linear"), px=TS_CX, py=TS_Y + 6)
     sc.add("splash_foam", turn_foam(), z=14.65, wc=0.3, motion=foam_m)
 
     # sand puffs on landing (+ smaller ones on the bounce)

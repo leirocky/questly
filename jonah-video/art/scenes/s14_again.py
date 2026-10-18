@@ -918,7 +918,7 @@ def build(ctx):
     # palms along the coast road (the near pair stands on the verge west of where he finishes walking, so in the
     # closing seconds he is seen against open meadow and sky with the sign and the city ahead of him)
     palms = [(250, 905, 1.0, -0.3, 4.6), (915, 810, 0.46, 0.18, 5.0), (978, 804, 0.4, -0.3, 4.2),
-             (2080, 760, 0.52, 0.1, 4.8), (2180, 752, 0.45, -0.2, 5.2), (2440, 742, 0.48, 0.15, 4.4)]
+             (2200, 754, 0.52, 0.1, 4.8), (2295, 748, 0.45, -0.2, 5.2), (2440, 742, 0.48, 0.15, 4.4)]
     for i, (x, y, s_, ln, per) in enumerate(palms):
         sc.add(f"palm{i}", palm_svg(x, y, s_, ln), z=3.5 + i * 0.01,
                motion=M.sway(0.8, per, (x, y), phase=i * 0.21))

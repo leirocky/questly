@@ -1230,8 +1230,8 @@ def build(ctx):
           (t_sad, 7, "cut", 0.6, False, False),
           (t_ang, 8, "cut", 1.0, True, True),
           (t_listen, 9, "cut", 0.7, True, False),
-          (t_plant + 0.1, 10, "fade", 0.3, False, False),
-          (t_plant_back, 9, "fade", 0.3, False, False),
+          (t_plant + 0.1, 10, "cut", 0.3, False, False),     # cuts: a crossfade doubled his eyes and brows
+          (t_plant_back, 9, "cut", 0.3, False, False),
           (t_shout, 12, "cut", 1.4, True, True),
           (t_hmph, 13, "cut", 0.8, True, True),
           (t_settle, 8, "cut", 0.45, False, False)]   # slumps back, sulking (= s23's first pose)
