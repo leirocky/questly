@@ -149,6 +149,29 @@ def bump(t, t0, t1):
     return math.sin(math.pi * (t - t0) / (t1 - t0))
 
 
+def hermite_cam(keys):
+    """keys [(t, Cam, (vx, vy, vw))]: piecewise cubic Hermite through the keys with the given velocities (stage
+    px/s), so consecutive moves join into one smooth path with no dead stop at the key between them."""
+    keys = sorted(keys, key=lambda k: k[0])
+
+    def c(t):
+        if t <= keys[0][0]:
+            return keys[0][1]
+        if t >= keys[-1][0]:
+            return keys[-1][1]
+        for (t0, a, va), (t1, b, vb) in zip(keys, keys[1:]):
+            if t0 <= t <= t1:
+                d = t1 - t0
+                u = (t - t0) / d
+                h00, h10 = 2 * u ** 3 - 3 * u ** 2 + 1, u ** 3 - 2 * u ** 2 + u
+                h01, h11 = -2 * u ** 3 + 3 * u ** 2, u ** 3 - u ** 2
+                pa, pb = (a.x, a.y, a.w), (b.x, b.y, b.w)
+                x, y, w = (h00 * pa[i] + h10 * d * va[i] + h01 * pb[i] + h11 * d * vb[i] for i in range(3))
+                return Cam(x, y, w)
+        return keys[-1][1]
+    return c
+
+
 # ============================================================================ painting
 
 
@@ -1257,18 +1280,27 @@ def build(ctx):
     # ---- camera: on the fish out at sea (the iris opens from the frame centre on its sleeping face, the bow
     # wave just right of it; the frame eases back a little while God speaks), pans with it to the shore, holds
     # wide for the spit, then moves in on Jonah for the second line and settles before the dissolve.
+    # The opening ease-back and the pan to the shore are ONE smooth path (cubic Hermite): it starts as a slow
+    # drift while the iris opens, gathers speed through t_swim0 (still moving in the pan direction there, no dead
+    # stop between the two moves), peaks at ~310 px/s and settles at the shore.
     # The push-in happens BEFORE the wet-puppy shake (it is over by t_shake - 0.05) and the frame holds still
     # (a few px of drift) through the shake, so the shake reads clearly; the fish's turn and splash stay on its
     # left side.
     t_push0 = t_land + 0.5
     t_push1 = max(t_push0 + 0.8, t_shake - 0.05)
     t_hold1 = max(t_push1 + 0.3, t_sun0)
-    cam = M.cam_keys([(0, Cam(925, 548, 1840)), (t_swim0, Cam(1010, 592, 1920)),
-                      (t_arrive + 0.4, Cam(1450, 600, 1960)), (t_spit - 0.3, Cam(1468, 598, 1990)),
-                      (t_land + 0.3, Cam(1480, 600, 1985)), (t_push0, Cam(1483, 601, 1981)),
-                      (t_push1, Cam(1680, 700, 1680)), (t_hold1, Cam(1686, 702, 1670)),
-                      (t_sunword + 0.2, Cam(1642, 606, 1860)), (T, Cam(1638, 603, 1870))],
-                     ["sine", "sine", "sine", "sine", "sine", "sine", "linear", "sine", "linear"])
+    t_cam1 = t_arrive + 0.4
+    # the extra key 0.5 s after t_swim0 lets the camera follow the fish's slow start before it pans hard
+    # (otherwise the fish slides backwards in frame as it sets off)
+    cam_in = hermite_cam([(0, Cam(925, 548, 1840), (10, 5, 9)), (t_swim0, Cam(1010, 592, 1920), (60, 10, 25)),
+                          (t_swim0 + 0.5, Cam(1060, 596, 1932), (180, 7, 25)),
+                          (t_cam1, Cam(1450, 600, 1960), (0, 0, 0))])
+    cam_rest = M.cam_keys([(t_cam1, Cam(1450, 600, 1960)), (t_spit - 0.3, Cam(1468, 598, 1990)),
+                           (t_land + 0.3, Cam(1480, 600, 1985)), (t_push0, Cam(1483, 601, 1981)),
+                           (t_push1, Cam(1680, 700, 1680)), (t_hold1, Cam(1686, 702, 1670)),
+                           (t_sunword + 0.2, Cam(1642, 606, 1860)), (T, Cam(1638, 603, 1870))],
+                          ["sine", "sine", "sine", "sine", "linear", "sine", "linear"])
+    cam = lambda t: cam_in(t) if t < t_cam1 else cam_rest(t)    # noqa: E731
     sc.camera = M.cam_shake(cam, amp=7, t0=t_land, t1=t_land + 0.35, freq=14, seed=5)
 
     # ---- particles (output space): bow spray, arrival drops, spit spray, turn spray, shake drops, speed

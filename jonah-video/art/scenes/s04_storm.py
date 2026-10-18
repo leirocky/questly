@@ -553,11 +553,18 @@ def build(ctx):
             return {"mode": "right", "frac": 1.0}
         return {"mode": "radial", "frac": r / sw_maxd, "soft": SW_SOFT, "cx": W + SW_D, "cy": SW_CY}
 
-    def calm_reveal(t):
-        r = sweep_e(t) + SW_LAG + SW_D                  # visible within r of a centre far to the left
-        if r - SW_SOFT / 2 >= sw_maxd:
+    def calm_reveal(t, lag=SW_LAG, soft=SW_SOFT):
+        r = sweep_e(t) + lag + SW_D                     # visible within r of a centre far to the left
+        if r - soft / 2 >= sw_maxd:
             return {"mode": "left", "frac": 1.0}
-        return {"mode": "radial", "frac": max(0.0, r) / sw_maxd, "soft": SW_SOFT, "cx": -SW_D, "cy": SW_CY}
+        return {"mode": "radial", "frac": max(0.0, r) / sw_maxd, "soft": soft, "cx": -SW_D, "cy": SW_CY}
+
+    # the calm near-sea in front of the ship overlaps the hull bottom (its waterline sits higher than the storm
+    # water's), so a slow see-through fade shows the old waterline and foam streaks over the keel. It goes with a
+    # shorter lag and a much narrower front (~0.15 s per point instead of ~0.4 s): still opaque until the storm water
+    # there is half in, gone before the calm sea behind and by the time the storm water is ~0.85 opaque.
+    SWN_LAG, SWN_SOFT = 250.0, 500.0
+    calm_near_reveal = lambda t: calm_reveal(t, SWN_LAG, SWN_SOFT)   # noqa: E731
 
     # --------------------------------------------------- sky: storm (beneath), calm (fades away)
     sky_defs = (S.lin_grad("sky", [(0, P["storm_sky_top"]), (0.5, P["storm_sky"]),
@@ -1103,7 +1110,7 @@ def build(ctx):
     f_cnear = V.wave_fn(985, 8, 470, 0.3, p=1.6, lean=0.25)
     sc.add("calm_near", doc(calm_sea_svg(f_cnear, S.mix(P["sea"], P["sea_deep"], 0.15), P["sea_light"],
                                          P["sea_deep"], 470, 8, 22)),
-           wc=0.9, motion=calm_motion(4, 14, 3.6, 0.35), reveal=calm_reveal)
+           wc=0.9, motion=calm_motion(4, 14, 3.6, 0.35), reveal=calm_near_reveal)
     sc.add("wake", wake_svg(), wc=0.5, boil=4,
            motion=lambda t: Tf(dx=ship_tf(t).dx, dy=0.7 * ship_tf(t).dy,
                                alpha=1 - M.progress(t, WIPE[0] + 0.4, WIPE[0] + 1.2, "sine")))
@@ -1409,7 +1416,7 @@ def build(ctx):
     sc.sfx("thunder", T_HATCH[0], gain_db=-14, pan=0.3)
     sc.sfx("thunder", T_HATCH[1], gain_db=-17, pan=0.3)
     for th, side, sz in HITS:
-        sc.sfx("splash", th, gain_db=-8, pan=0.45 if side == "stern" else -0.45)
+        sc.sfx("splash", th, gain_db=-6, pan=0.45 if side == "stern" else -0.45, duck_db=-5)
     sc.sfx("cloth", T_TEAR, gain_db=-12, pan=-0.3)
     sc.sfx("splash", T_CRASH + 0.05, gain_db=-7, pan=-0.4)
     for ts, x, _, _ in splashes:

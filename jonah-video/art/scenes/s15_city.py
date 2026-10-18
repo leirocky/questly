@@ -24,7 +24,7 @@ One 3200 x 1800 stage, two paintings on it, joined by a camera fly-through of th
     start of the fly (no stop-and-whoosh); the shade in the passage lifts softly as the push begins. Each person in
     the street is drawn only once the scaled-up threshold has passed below their feet (before that it would cut
     them off at the knees: giants standing in a pit) and fades in over 9 frames while the opening grows (back
-    row first, Jonah last).
+    row first, Jonah last; Jonah, big and mid-opening, fades in over ~3 frames so he never reads as a ghost).
   * INSIDE — a long street that opens onto the market square (line 1, line 2).
       "走了一天的路，一边走，" — Jonah walks east (planted-foot walk cycle: the drawing follows the distance
           walked), the camera tracking him past houses, palms, laundry, children playing and passers-by (who walk
@@ -1048,10 +1048,12 @@ def build(ctx):
     cB = L0.at("要走")                                 # "要走整整三天，才能走遍整座城。"
     cB_end = next(c.end for c in L0.chunks if "要走" in c.text)
     dB = cB_end - cB
-    t_wide = cB + 0.5                                 # the wide view of the city has settled
+    t_push0 = L0.end - 1.0                            # the camera heads for the west gate (trail fades at the end)
+    # the wide view of the city has settled (a 2.6x pull-back: it needs ~4.7 s to stay under ~0.9 %/frame of zoom
+    # and ~20 px/frame at the corners; the suns pop while it decelerates)
+    t_wide = min(t_pull0 + 4.7, t_push0 - 0.5)
     t_trail0, t_trail1 = cB + 0.08, cB + 0.40 * dB    # the footprint trail walks across the city
     sun_fr = (1 / 3, 2 / 3, 1.0)                      # suns at each third of the way
-    t_push0 = L0.end - 1.0                            # the camera heads for the west gate (trail fades at the end)
     t_fly0 = L1.start + 0.12                          # "约拿进了城": fly through the gate
     t_fly1 = t_fly0 + 0.78
     t_st = t_fly0 + 0.62                              # the camera's push-in has settled into the street
@@ -1116,8 +1118,7 @@ def build(ctx):
     #                                                    the end of his walk, ~298 px tall, head at x ~555): his
     #                                                    head and feet land within ~2 px of s14's, so one
     #                                                    standing Jonah dissolves into the other, not two
-    CAMW = Cam(1650, 935, 2760)                        # the city from the gate to the river; it runs off both edges
-    CAM_HOLD = Cam(1620, 945, 2720)
+    CAM_HOLD = Cam(1620, 945, 2720)                    # the city from the gate to the river; it runs off both edges
     CAM_ST0 = Cam(1000, 1000, 1800)                    # (y, w of) the street framing after the fly-through
     D1, D2 = t_fly0 - t_push0, t_st - t_fly0
     WG = CAM_HOLD.w + (CAM_ST0.w - CAM_HOLD.w) * D1 / (D1 + D2)   # zoom keeps going through the fly (no stall)
@@ -1129,7 +1130,30 @@ def build(ctx):
     t_endcam = L2.start + 0.9
     t_dec = T_CL
 
-    out_cam = M.cam_keys([(0, CAM0), (t_pull0, CAM0), (t_wide, CAMW), (t_push0, CAM_HOLD)], "sine")
+    # The pull-back is one similarity (a zoom about the point that keeps its place on screen, just off the left
+    # edge near little Jonah): the zoom runs in log space, so it reads as an even pace, and the centre is linear in
+    # w, so every frame edge moves monotonically between two valid framings. Its pace follows a trapezoid (sine
+    # ramp in, steady, long sine ramp out), which keeps the peak rate as low as the window allows.
+    R_IN, R_OUT = 0.6, 1.5
+    PULL_A = (t_wide - t_pull0) - (R_IN + R_OUT) / 2
+
+    def pull_s(t):
+        """Progress 0..1 of the pull-back (the integral of the trapezoid pace)."""
+        tau, D = min(max(t - t_pull0, 0.0), t_wide - t_pull0), t_wide - t_pull0
+        a = min(tau, R_IN)
+        s = a / 2 - R_IN / (2 * math.pi) * math.sin(math.pi * a / R_IN)
+        s += max(0.0, min(tau, D - R_OUT) - R_IN)
+        b = max(0.0, tau - (D - R_OUT))
+        s += b / 2 + R_OUT / (2 * math.pi) * math.sin(math.pi * b / R_OUT)
+        return s / PULL_A
+    def out_cam(t):     # pulls straight out to the wide view and holds it still until the push-in
+        if t <= t_pull0:
+            return CAM0
+        if t >= t_wide:
+            return CAM_HOLD
+        w = CAM0.w * (CAM_HOLD.w / CAM0.w) ** pull_s(t)
+        k = (w - CAM0.w) / (CAM_HOLD.w - CAM0.w)
+        return Cam(M.lerp(CAM0.x, CAM_HOLD.x, k), M.lerp(CAM0.y, CAM_HOLD.y, k), w)
 
     def left_edge(t):
         """The frame's left edge from the push-in on: it eases to rest at the far left of the stage as the zoom
@@ -1219,9 +1243,9 @@ def build(ctx):
             kk += 1
         return t_cut
 
-    def fade_in(t0):
+    def fade_in(t0, dur=FADE_IN):
         """(drawn?, alpha) functions for a figure that appears at t0."""
-        return (lambda t: t >= t0), (lambda t: part(t, t0, t0 + FADE_IN, "sine"))
+        return (lambda t: t >= t0), (lambda t: part(t, t0, t0 + dur, "sine"))
     # things along the bottom edge wait until the opening's bottom edge has left the frame
     t_show = min(t_cut, first_time(FLY_C, bottom_only=True))
     shown, shown_a = fade_in(t_show)
@@ -1449,7 +1473,9 @@ def build(ctx):
             sy *= 1 + 0.01 * math.sin(2 * math.pi * (t - t_stop) / 3.0)
         return sy, dy
 
-    j_on, j_a = fade_in(t_sill_below(GY))
+    # Jonah is big and right in the middle of the opening: a 0.30 s fade would show him as a see-through ghost
+    # (doors and passers-by through his robe) for ~9 frames, so he comes in over ~3 frames
+    j_on, j_a = fade_in(t_sill_below(GY), dur=0.1)
 
     def j_fn(t):
         if not j_on(t):

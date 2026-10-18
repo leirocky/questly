@@ -843,8 +843,8 @@ def build(ctx):
     # he stops on an in-between drawing at his spot (in place of the last passing drawing, held 3 frames), half
     # way from the last walk drawing to the front-facing stand: the swing (near) foot comes down where the
     # stand has it, the planted (far) foot eases half way to its stand spot, torso tilt and hip drop are small,
-    # the arms hang nearly at his sides. It splits the head move (~7 px forward, then ~3 px back, ~4 px up each
-    # time) and the growth of the robe outline into two small steps; the jonah layer's stand takes over at t_stop.
+    # the arms hang nearly at his sides. The head carries on ~7 px forward (and ~4 px up) into it; the jonah
+    # layer's stand takes over at t_stop with its head lined up on this drawing's (the settle, see j_m below).
     t_stop = t_arrive + 3.0 / ctx.fps
     walk_frames = [_doc(_shadow(DOOR[0], DOOR[1], JS) +
                         _jfig(DOOR[0], DOOR[1], JS, _walk_pose(k, A_J, N_J, off=0.5, fall=fall_j), "happy", f"jw{k}"))
@@ -955,6 +955,18 @@ def build(ctx):
             ev += [(tb, J[key + "_b"]), (tb + 0.13, J[key])]
     j_fa = _sched(ev)
 
+    # the settle after the walk: on the cut from the stop drawing the stand comes in with its head exactly where
+    # the stop drawing has it (squashed a touch and leaning a touch forward about the planted feet, which stay
+    # put), so only the robe, arms and legs change on that frame; then he straightens up into the stand
+    # (~4 px up, ~3 px back over T_SETTLE), with no dip
+    h_stop = C.body_points(lambda x, y, s, f: _jfig(x, y, s, STOP, "happy", "jstop"), JX, JY, JS, 1)["head"]
+    h_std = C.body_points(C.jonah, JX, JY, JS, 1)["head"]
+    e_std, H_std = h_std[0] - JX, JY - h_std[1]
+    e_stop, H_stop = h_stop[0] - JX, JY - h_stop[1]
+    SET_SY = math.sqrt(e_stop ** 2 + H_stop ** 2 - e_std ** 2) / H_std        # head at the stop drawing's radius
+    SET_ROT = math.degrees(math.atan2(e_stop, H_stop) - math.atan2(e_std, SET_SY * H_std))   # ... and angle
+    T_SETTLE = 0.4
+
     def j_m(t):
         if t < t_stop - 1e-6:
             return Tf(alpha=0.0)
@@ -962,13 +974,12 @@ def build(ctx):
         for ts, k in squashes:
             a, b = _squash(t, ts, k)
             sx, sy = sx * a, sy * b
-        if t_stop - 1e-6 <= t <= t_stop + 0.5:      # settle after the walk (light: the stop drawing has eased
-            a, b = _squash(t, t_stop - 1e-6, 0.015)   # him in, so a deeper dip would read as a rise-and-dip bob)
-            sx, sy = sx * a, sy * b
+        st = 1 - M.progress(t, t_stop, t_stop + T_SETTLE, "sine")
+        sy *= 1 + (SET_SY - 1) * st
         dy = sum(_hop(t, th, h) for th, h in hops)
         # breathing eases in after the walk (the walk drawings do not breathe), so it adds no jump on the switch
         br = 1 + 0.008 * M.progress(t, t_stop, t_stop + 0.8, "sine") * math.sin(2 * math.pi * t / 3.2)
-        return Tf(dy=dy, sx=sx, sy=sy * br, px=JX, py=JY)
+        return Tf(dy=dy, rot=SET_ROT * st, sx=sx, sy=sy * br, px=JX, py=JY)
     sc.add("jonah", jf, frame_at=j_fa, motion=j_m, seed=213)
 
     # ---------------------------------------------------------------- the speech bubble with God's golden word
@@ -1033,9 +1044,13 @@ def build(ctx):
              (t_vis + 1.4, Cam(1165, 650, 1930)),
              (max(t_vis + 1.5, (t_east0 or T) - 0.6), Cam(1158, 652, 1890))]
     if t_east0 is not None:
+        t_k = max(t_east0 + 2.5, (t_fierce or T) + 0.4)
         keys_ += [(t_east0 + 2.4, Cam(1220, 660, 2120)),
-                  (max(t_east0 + 2.5, (t_fierce or T) + 0.4), Cam(1218, 659, 2112)),
-                  (T, Cam(1200, 652, 2040))]
+                  (t_k, Cam(1218, 659, 2112)),
+                  # the end framing: tilted down so Jonah's feet are at output y ~914, above the subtitle band,
+                  # reached as the last subtitle goes (T - 1) and held through the dissolve into s03, which opens on
+                  # exactly this picture of him (s03_flee OPEN_CAM; keep the two in step)
+                  (max(t_k + 1.2, T - 1.0), Cam(1200, 752.5, 2040))]
     else:
         keys_ += [(T, Cam(1160, 646, 1900))]
     sc.camera = M.cam_keys(keys_, "sine")

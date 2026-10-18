@@ -35,12 +35,12 @@ are imported from art.scenes_v1.s03_flee):
     pulls of the mast sailor on the halyard it unrolls down from the yard and fills with wind; the captain faces
     the sea, the bow sailor points the way and the ship leaves the pier westward (bow wave, foam), gathering way.
     '躲开上帝。' — Jonah glances back at the shore and ducks behind the stern rail by the cargo, peeking; the
-    camera follows the departing ship, leans in a little on him as he ducks, then pulls back (the receding pier
-    behind) while the ship slows to a gentle drift, and ends on s04's opening picture of the ship: same size and
-    place, rocking in step with s04's ship. Through the closing dissolve the ship, crew, Jonah and the cargo on
-    deck (s04's opening layout of it all through this scene: see deck_cargo_svg) stay put and only the background
-    changes from the harbour to the open sea (the sun settles onto s04's sun; the distant ship of line 2 has
-    sailed on over the horizon).
+    camera follows the departing ship, leans in a little on him as he glances back, pulls back as he ducks (the
+    receding pier behind) while the ship slows to a gentle drift, and ends on s04's opening picture of the ship
+    (there before the dissolve starts): same size and place, rocking in step with s04's ship. Through the closing
+    dissolve the ship, crew, Jonah and the cargo on deck (s04's opening layout of it all through this scene: see
+    deck_cargo_svg) stay put and only the background changes from the harbour to the open sea (the sun settles
+    onto s04's sun; the distant ship of line 2 has sailed on over the horizon).
 
 Pose changes are hard cuts hidden by a small hop / squash or an in-between (no crossfades between poses). The crew is
 the s04-s09 crew: the captain, sailor variant 1 (by the mast) and variant 0 (at the bow), same props.ship
@@ -1024,9 +1024,11 @@ def build(ctx):
     V_END = 0.08                         # drift speed at the end, as a fraction of the cruising speed
     RISE = 36                            # sailing away it shrinks 10 % and its waterline rises toward the horizon
     #                                      (perspective; this also keeps the closing framing inside the stage)
-    T_IN = T_DUCK + 0.2                  # the camera has leaned in on Jonah as he ducks ...
-    T_OUT = T - 0.65                     # ... and is back at s04's framing early in the dissolve (s04 at ~35 %);
-    #                                      meanwhile the ship's rocking turns into s04's, so they rock as one
+    T_IN = T_DUCK - 0.25                 # the camera has leaned in on Jonah as he glances back, and pulls back as
+    T_OUT = T - XF - 0.1                 # he ducks: it is on s04's framing 0.1 s before the dissolve starts, so
+    #                                      the ship never doubles in it (the pull-back keeps its 1.44 s and its
+    #                                      ~30 %/s peak zoom); meanwhile the ship's rocking turns into s04's, so
+    #                                      they rock as one
     _st = np.arange(T_DEPART, T + 1.01, 1 / 240)
     _sv = np.array([M.progress(t, T_DEPART, T_DEPART + 0.9, "sine")
                     * (1 - (1 - V_END) * M.progress(t, T_SLOW0, T_PUSH1, "sine")) for t in _st])
@@ -1070,8 +1072,9 @@ def build(ctx):
     # ---------------------------------------------------------------- camera
     # every move uses 'sine' easing (peak speed 1.57x the average): zoom stays under ~30 %/s and pans under
     # ~300 output px/s (checked at 30 fps), gentle enough for 3-8 year olds
-    # matches s02's last frame, Cam(1200, 752.5, 2040) on its 2400 x 1350 stage (Jonah, arms folded, at output
-    # x ~735 with his feet at y ~914, clear of the subtitle box that fades in at ~0.8 s). Keep the two in step:
+    # matches s02's last frame, Cam(1200, 752.5, 2040) on its 2400 x 1350 stage, which s02 holds from T - 1 on
+    # (Jonah, arms folded, at output x ~735 with his feet at y ~914, clear of the subtitle box that fades in at
+    # ~0.8 s), so the dissolve shows one Jonah. Keep the two in step:
     # s02 y = 1150 - (GY - this y) * 2040 / 1360
     OPEN_CAM = (5603.0, 645.0, 1360.0)
     T_OPEN_HOLD, T_OPEN_END = 1.05, T_TURN + 0.55
@@ -1090,12 +1093,12 @@ def build(ctx):
     X_SAIL = SHIP_X + 60 - ship_d(T_BACK1)
     # '躲开上帝' and the closing dissolve. s04 opens on a static wide shot of this ship at sea, so this scene ends
     # on exactly that picture of the ship (s04's opening camera, ship anchor and scale: art.scenes_v1.s04_storm):
-    # from the sail shot the camera picks up the departing ship and follows it (a follow pan of up to ~530 output
+    # from the sail shot the camera picks up the departing ship and follows it (a follow pan of up to ~570 output
     # px/s, like the run-follows above: the ship stays steady on screen while the pier slides away), tilts down
-    # and leans in a little on Jonah as he ducks behind the stern rail, then pulls back until the ship has s04's
-    # size and place, and tracks the drifting ship through the dissolve. Ship, sail, crew, Jonah, deck cargo, stern
-    # scroll and lantern stay put through the dissolve; only the backgrounds (the pier and Joppa -> the open sea)
-    # and the clouds cross-fade.
+    # and leans in a little on Jonah as he glances back, then pulls back as he ducks behind the stern rail until
+    # the ship has s04's size and place (0.1 s before the dissolve starts), and tracks the drifting ship through
+    # the dissolve. Ship, sail, crew, Jonah, deck cargo, stern scroll and lantern stay put through the dissolve;
+    # only the backgrounds (the pier and Joppa -> the open sea) and the clouds cross-fade.
     W_IN = 1290                             # leaned in on Jonah at T_IN, back at s04's framing by T_OUT
     LEAD = 0.13
 
@@ -1951,7 +1954,7 @@ def build(ctx):
     sc.sfx("ship_creak", L2.start + 1.0, dur=T - L2.start - 0.2, gain_db=-17, fade_in=1.0, fade_out=0.8)
     sc.sfx("gull", T_WEST + 0.3, gain_db=-17, pan=-0.5)
     sc.sfx("coins", T_COIN_LAND - 0.02, gain_db=-6)
-    sc.sfx("thud", T_CRATE + 0.24, gain_db=-19, pan=0.3)
+    sc.sfx("thud", T_CRATE + 0.24, gain_db=-19, pan=0.3, duck_db=-5)     # on picture: heard over the waves bed
     sc.sfx("whoosh", T_LEAP, gain_db=-13, pan=-0.1)
     sc.sfx("thud", T_LAND, gain_db=-13)
     sc.sfx("cloth", T_SAIL, gain_db=-13)

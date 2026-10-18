@@ -32,12 +32,16 @@ Line 2: he points up through the hatch to the deck ('快起来' — Jonah gets u
 hand pushing on the sacks, then his feet), looks up ('求你的神'), raises both hands to heaven ('救救我们吧' — a second
 flash), then clasps his hands and pleads (a nod on '可怜', a lean-in on '让我们活下来'); Jonah lowers his eyes, sorry
 (he knows the storm is his doing), then tilts his head right back to the hatch as a faint far flash and a soft rumble
-come from above. On '让我们活下来' the camera starts to rise to the hatch with his gaze: one even push up the ladder to
-the open hatch, easing to rest on the last frame, so both faces have left the bottom of the frame by the middle of the
-dissolve into s06 (the deck), where nothing of them lies over the crew.
+come from above. On '让我们活下来' the camera starts to rise to the hatch with his gaze (a gentle push up toward it),
+and 0.6 s after he has looked up it cuts in to what he sees: the open hatch close up (storm sky, rain pouring in, a
+drip from the beam; the people are below the frame), pushing in very slowly to the last frame while the captain's
+'...活下来' finishes over it. So no face is left to ghost over s06's deck crew in the dissolve and nobody fades on
+their own. (Rising all the way instead would need a 2.2x push in under two seconds, about 3x this scene's other
+moves, and would drag both faces down behind the still-visible subtitle: the heads sit at painting y >= 470 and
+the painting ends at y ~70, so only a view <= ~690 px wide leaves them out.)
 Camera: s04's framing while the captain climbs, then a slow drift (< 80 px/s) to a closer two-shot for line 1, up a
-little so the hatch is in frame while he points, a push-in during the plea and the push up to the hatch at the end
-(the one brisk move: about 370 output px/s at the frame centre at its peak).
+little so the hatch is in frame while he points, a push-in during the plea, the start of the push up to the hatch
+(< 170 output px/s at the frame centre) and the eyeline cut-in to the hatch (its slow push < 60 px/s at the edges).
 Every pose change is a hard cut sold by a small squash-and-hop (no crossfades between poses); every main pose is
 held for at least half a second; all key times come from the narration (sub-phrases are timed from the punctuation
 pauses in the voice files, with a proportional fallback); the hard cuts of the fast sequences sit on the frame grid.
@@ -703,12 +707,7 @@ def build(ctx):
     t_jlook = t_live + 0.35                                     # Jonah looks up toward the storm above
     t_flash2 = t_pray + 0.08
     t_flash3 = t_jlook + 0.1                                    # a faint far flash in the hatch as he looks up
-
-    def people_a(t):
-        """The captain and Jonah fade out in the first half of the dissolve into s06 (the deck): the end move keeps
-        them above the last subtitle, so they cannot also leave the frame by then; gone 0.1 s before its middle, so
-        their faces (which sit where s06's crew stands) do not ghost over the crew."""
-        return 1 - M.progress(t, T - XF, T - XF / 2 - 0.1, "sine")
+    t_cut = snap(t_jlook + 0.6)                                 # cut in to the hatch: what Jonah is looking at
 
     # ---------------------------------------------------------------- the ship's gentle roll (camera) and a lurch
     def lurch(t):
@@ -883,8 +882,7 @@ def build(ctx):
         rot = -2.2 * M.progress(t, t_live - 0.1, t_live + 0.5, "sine")       # held to the end (calm last frames)
         if t_pity <= t <= t_pity + 0.7:
             rot -= 1.8 * math.sin(math.pi * (t - t_pity) / 0.7)
-        return Tf(dy=dy, rot=rot, sx=sx, sy=sy * (br if t >= t_cstand else 1.0), alpha=people_a(t), px=CAP_X,
-                  py=FLOOR_Y)
+        return Tf(dy=dy, rot=rot, sx=sx, sy=sy * (br if t >= t_cstand else 1.0), px=CAP_X, py=FLOOR_Y)
     flipbook(sc, "cap_main", main, z=cap_layers_z + 0.05, motion=cap_m)
 
     # ---------------------------------------------------------------- Jonah
@@ -969,7 +967,7 @@ def build(ctx):
         sy *= 1 + 0.010 * math.sin(2 * math.pi * (t / 3.4 + 0.6))
         u = M.progress(t, t_stand2, t_stand2 + 0.2, "linear")
         dy = -26 * math.sin(math.pi * u) - 6 * bump(t, t_sorry) - 6 * bump(t, t_jlook)
-        return Tf(0, dy, 0, sx, sy, people_a(t), J_STAND_X, FLOOR_Y)
+        return Tf(0, dy, 0, sx, sy, 1.0, J_STAND_X, FLOOR_Y)
     flipbook(sc, "jonah_stand", standing, z=3.2, motion=jstand_m)
 
     # Z z z drifting up from the sleeper (continues s04), fading as the captain arrives
@@ -1049,9 +1047,7 @@ def build(ctx):
     CAM_L1 = Cam(1420, 660, 1650)        # the captain is down: a closer two-shot for line 1
     CAM_PT = Cam(1420, 622, 1650)        # pointing up to the deck: up a little so the hatch is in frame
     CAM_PL = Cam(1440, 626, 1500)        # pushed in on the two during the plea
-    CAM_END = Cam(1540, 430, 1200)       # up with Jonah's gaze to the open hatch (storm light, rain), both heads low
-    #                                      in the frame but above the subtitle box (the top edge stays 92 px inside
-    #                                      the painting, below its soft rim)
+    CAM_END = Cam(1540, 430, 1200)       # where the push up toward the hatch is headed (it is cut away from first)
     t_c0 = t_slide0 + 0.1
     t_c1 = max(t_c0 + 5.2, t_cstand + 1.0)
     t_p0 = lc[0].end + 0.1
@@ -1060,18 +1056,27 @@ def build(ctx):
     cam = M.cam_keys([(0, CAM0), (t_c0, CAM0), (t_c1, CAM_L1), (t_p0, CAM_L1), (t_p1, CAM_PT),
                       (t_plead, CAM_PT), (t_pe, CAM_PL)],
                      ["sine", trapezoid(0.25), "sine", "sine", "sine", "sine"])
-    # the end move, on "让我们活下来" (the captain's plea to heaven; Jonah looks up with it 0.35 s later): one gentle
+    # the end move, on "让我们活下来" (the captain's plea to heaven; Jonah looks up with it 0.35 s later): a gentle
     # even push (a log zoom about the move's fixed point zp above the hatch, so nothing swings sideways; <= 0.4 %
-    # zoom and ~8 px per frame at the heads) rising toward the hatch and easing to rest at the middle of the dissolve
-    # into s06, then held. Both heads sink toward the bottom but stay above the last subtitle box until it has faded
-    # (their bottoms <= ~915 px of 1080 at T - XF); people_a fades them out by the dissolve's middle. It is laid over
-    # the base camera, which is within ~5 px of CAM_PL when it starts and settles on it at t_pe.
+    # zoom and ~8 px per frame at the heads) rising toward the hatch, laid over the base camera, which is within ~5 px
+    # of CAM_PL when it starts and settles on it at t_pe. Both heads stay well above the subtitle box.
     t_e0 = t_pe - 0.4
     t_e1 = T - XF / 2
     zp = [(a * CAM_END.w - b * CAM_PL.w) / (CAM_END.w - CAM_PL.w)
           for a, b in ((CAM_PL.x, CAM_END.x), (CAM_PL.y, CAM_END.y))]
+    # ... then, on a frame boundary 0.6 s after Jonah has looked up, the eyeline cut-in to the open hatch, which the
+    # push was heading for: storm sky and rain in the opening, the cold light and a drip below it, the foreground post
+    # on the right. The people are below the frame (bottom edge <= y 458 with the roll; the captain's cap top is at
+    # y >= 474, Jonah's head-cloth lower), the top edge stays >= 72 px inside the painting (below its soft rim).
+    # It goes on pushing in very slowly toward the hatch (log zoom about the opening's centre) through the dissolve.
+    CAM_H0 = Cam(1840, 455 - 676 * 9 / 32, 676)
+    CAM_H1_W = 636
+    zh = ((HX0 + HX1) / 2, (HY0 + OPEN_Y1) / 2)
 
     def camera(t):
+        if t >= t_cut:
+            k = (CAM_H1_W / CAM_H0.w) ** ((t - t_cut) / (T - t_cut))
+            return Cam(zh[0] + (CAM_H0.x - zh[0]) * k, zh[1] + (CAM_H0.y - zh[1]) * k, CAM_H0.w * k, cam_roll(t))
         c = cam(t)
         if t > t_e0:
             k = (CAM_END.w / CAM_PL.w) ** M.progress(t, t_e0, t_e1, trapezoid(0.2))
@@ -1094,7 +1099,7 @@ def build(ctx):
     sc.sfx("drip", 0, dur=D, gain_db=-17, fade_in=0.8, fade_out=0.8, pan=0.4)
     sc.sfx("snore", snore_at, dur=snore_dur, gain_db=-12, fade_in=0.6, fade_out=0.3)
     sc.sfx("thud", t_open, gain_db=-9, pan=0.45)
-    sc.sfx("thunder", t_open + 0.06, gain_db=-14, pan=0.35)
+    sc.sfx("thunder", t_open + 0.06, gain_db=-11, pan=0.35)
     for tk in CL_T[1:]:                                         # a wooden knock as his sandals hit the rungs
         sc.sfx("thud", tk + 0.08, gain_db=-17, pan=0.5)
     sc.sfx("thud", t_land, gain_db=-7, pan=0.5)
@@ -1115,7 +1120,7 @@ def build(ctx):
                    t_wake=t_wake, t_wake2=t_wake2, t_urge=t_urge, t_storm=t_storm, t_startle=t_startle,
                    t_why=t_why, t_jworry=t_jworry, t_up=t_up, t_stand=t_stand, t_stand2=t_stand2, t_look=t_look,
                    t_pray=t_pray, t_plead=t_plead, t_sorry=t_sorry, t_live=t_live, t_pity=t_pity, t_jlook=t_jlook,
-                   t_flash3=t_flash3, CL_T=CL_T, n_walk=n_walk, X_START=X_START, cam_keys=(t_c0, t_c1, t_p0, t_p1,
-                                                                                        t_plead, t_pe, t_e0, t_e1),
+                   t_flash3=t_flash3, t_cut=t_cut, CL_T=CL_T, n_walk=n_walk, X_START=X_START,
+                   cam_keys=(t_c0, t_c1, t_p0, t_p1, t_plead, t_pe, t_e0, t_e1),
                    phrases=ph.items)
     return sc

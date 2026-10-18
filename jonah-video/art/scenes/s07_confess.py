@@ -73,6 +73,9 @@ OFF_DEFAULT = 44.833                # s06's local time at this scene's t = 0 (s0
 SV3_ASK_X = 1336                   # the ginger sailor steps up to Jonah at '水手们问约拿' (plea ends ~65 px short)
 SV0_HOP = (1928, 930, 0.86)        # sailor 0 hops away from the rail at the crash
 POINT_X = 1792                     # the breaker that answers Jonah's pointing finger ('扔进海里')
+# the breaker rears up during the closing rise (extra scale about a point on the sea line left of its foot): its curl
+# ends over s08's sky right of the stern (output ~(1600, 500)), not over s08's stern crew, in the dissolve's middle
+REAR_K, REAR_FOOT = 0.35, (950, 880)
 
 PUNCT = "，。！？：；、,.!?:;"
 
@@ -718,6 +721,12 @@ def build(ctx):
     t_strike = p0b - 0.03
     t_far_strike = p3b + 0.08
     t_point_splash = p2b + 0.17              # the breaker answers right on '海里'
+    # the closing rise over the bowed heads to the storm (camera below) ends by the middle of the dissolve into s08,
+    # so from there on only sky and breaker show under s08's crew (a rise still running at the midpoint left the
+    # tops of our crew's heads along the bottom of the frame). 1.75 s keeps its peak speed at ~550 px/s.
+    t_rise1 = T - xfade_len() / 2 - 0.05
+    t_rise0 = t_rise1 - 1.75
+    rear = lambda t: M.progress(t, t_rise0, t_rise1, "sine")      # noqa: E731  (the breaker rears up meanwhile)
 
     # storm growth 0..1: s06's sea at the start, rising through '海浪越来越大', full at '越来越凶'
     grow = V4.keyc([(p0, 0.0), (p0b, 0.62), (p0b + 0.9, 1.0)], ["inout", "out"])
@@ -784,10 +793,13 @@ def build(ctx):
     lift_pt = lambda t: 50 * math.sin(math.pi * M.progress(t, p2b - 0.1, p2b + 1.6, "linear"))   # noqa: E731
 
     def bigwave_m(t):                # s06's bob continued (tau), then the breaker towers higher
-        g, tau = grow(t), t + OFF
-        return Tf(dx=18 * math.sin(2 * math.pi * tau / 6.8) - 30 * g,
-                  dy=-70 * g + (26 + 6 * g) * math.sin(2 * math.pi * (tau / 3.4 + 0.1)) - lift_pt(t),
-                  sx=1 + 0.12 * g, sy=1 + 0.12 * g, px=1760, py=880)
+        g, tau, u = grow(t), t + OFF, rear(t)
+        k = 1 + REAR_K * u           # ...and rears up while the camera rises to it (its heave settles)
+        dx = 18 * math.sin(2 * math.pi * tau / 6.8) - 30 * g
+        dy = -70 * g + (26 + 6 * g) * math.sin(2 * math.pi * (tau / 3.4 + 0.1)) * (1 - u) - lift_pt(t)
+        s = (1 + 0.12 * g) * k
+        return Tf(dx=dx * k + (REAR_FOOT[0] - 1760) * (1 - k), dy=dy * k + (REAR_FOOT[1] - 880) * (1 - k),
+                  sx=s, sy=s, px=1760, py=880)
     sc.add("big_wave", V5.big_wave_layer(), z=3, motion=tilted(bigwave_m))
     sc.add("sea_mid", V5.sea_mid_layer(), z=4, motion=tilted(
         lambda t: Tf(dx=(46 + 20 * grow(t)) * math.sin(2 * math.pi * (t + OFF) / 6.0),
@@ -968,14 +980,13 @@ def build(ctx):
     keys = [(0.0, A), (p0, A), (p0b + 0.9, B), (p0c + 0.5, B), (p1 + 0.6, Cc), (p2 - 0.3, D),
             (p2b - 0.25, D), (p2b + 0.3, E), (p2c + 0.8, E), (p3 + 0.2, F), (T, G)]
     push = M.cam_keys(keys, "sine")
-    # ...then, once the crew have bowed their heads, the camera rises over them to the towering storm. s08 opens
+    # ...then, as the crew bow their heads, the camera rises over them to the towering storm (t_rise0..t_rise1,
+    # done by the dissolve's midpoint; the breaker rears up meanwhile, see bigwave_m). s08 opens
     # on a wide shot of the whole ship in that storm (its crew in a different order, about 0.8x the size), so a
     # dissolve from the deck group would pile two crews and two Jonahs on top of each other; this way our crew
     # slide out at the bottom of the frame while s08's fade in at mid-height. R shows no heads at all (its bottom
     # edge, y + w * 9/32, stays above the tallest cap) and sits at the clamp's top edge (y = w * 9/32 + 6).
     R = Cam(1520, 324, 1130)
-    t_rise0 = min(max(p3c + 0.28, T - 1.9), T - 1.2)
-    t_rise1 = T - 0.1
 
     def base(t):
         c, u = push(t), M.progress(t, t_rise0, t_rise1, "sine")

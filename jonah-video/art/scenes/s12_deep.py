@@ -722,7 +722,10 @@ MEM_MUL = (46, 50, 108)                      # vignette multiply colour (dark in
 # the opening thought trail: little puffs rising from s11's last frame's Jonah (his head ~ (840, 460) out px,
 # facing right) to where the bubble pops up; the bubble then grows to fill the frame
 TRAIL = [(905, 352, 11), (948, 318, 16), (1002, 278, 22)]
-MEM_C0, MEM_K0 = (1300.0, 205.0), 0.3        # the bubble's centre and scale when it pops up
+# the bubble's centre and scale when it pops up: far enough right that even at its pop overshoot (k ~0.325)
+# its puffs keep a trail-sized gap (~28 px) from the last trail puff instead of half-burying it (the growing
+# bubble then passes over the trail, nearest puff first, one or two frames each, at ~1.17-1.3 s)
+MEM_C0, MEM_K0 = (1370.0, 205.0), 0.3
 # the cloud ring is drawn on a canvas this much bigger than the frame on every side: its outer puffs reach
 # ~58 px past the frame edges (+ the 6.5 px ink stroke and the wobble), and while the bubble is small (the
 # entrance) they must stay round instead of being cut flat by the frame-sized canvas
@@ -804,7 +807,7 @@ def memory_frame(level, bubble, trail, step=0.04):
     the frame edges. Held (k = 1) and opening out (k > 1), only its frame-sized centre crop is used (in M / P).
     While the bubble is smaller than the frame (the entrance), the picture and the dark outside (M0 / P0, no
     ring) are scaled with the bubble and the whole padded ring is composited over them, so its outer puffs stay
-    round instead of being cut flat by the frame edges. Both are area-filtered to the bubble's size first."""
+    round instead of being cut flat by the frame edges. Both are resampled once, anti-aliased (see shrink)."""
     from engine import raster
     from engine import watercolor as WC
     import cv2
@@ -848,15 +851,24 @@ def memory_frame(level, bubble, trail, step=0.04):
         return cache[q, ring_on]
 
     def shrink(img, k, ox, oy, cx, cy, border):
-        """img scaled by k < 1 (area-filtered) so that its pixel (ox, oy) lands on (cx, cy), in a frame."""
-        h, w = img.shape[:2]
-        nw, nh = max(2, int(round(w * k))), max(2, int(round(h * k)))
-        lx, ly = nw / w, nh / h
-        small = cv2.resize(img, (nw, nh), interpolation=cv2.INTER_AREA)
-        # small pixel (i, j) is img pixel ((i + .5) / lx - .5, (j + .5) / ly - .5)
-        A = np.array([[k / lx, 0, cx + k * (0.5 / lx - 0.5 - ox)],
-                      [0, k / ly, cy + k * (0.5 / ly - 0.5 - oy)]], np.float32)
-        return cv2.warpAffine(small, A, (OUT_W, OUT_H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT,
+        """img scaled by k < 1 so that its pixel (ox, oy) lands on (cx, cy), in a frame. One bicubic resample,
+        anti-aliased by a light Gaussian prefilter (sigma (1/k - 1) / 2) that fades out as k -> 1, so the
+        picture stays as crisp as the held frame it settles into at T_GROW1 (an area resize followed by a
+        bilinear warp blurred it to ~half its fine detail and it snapped into focus when the growth ended);
+        while it is tiny (k < 0.2, the first frames of the pop) it is area-filtered to its size first."""
+        if k >= 0.2:
+            sg = 0.5 * (1.0 / k - 1.0)
+            src = cv2.GaussianBlur(img, (0, 0), sg) if sg > 0.05 else img
+            A = np.array([[k, 0, cx - k * ox], [0, k, cy - k * oy]], np.float32)
+        else:
+            h, w = img.shape[:2]
+            nw, nh = max(2, int(round(w * k))), max(2, int(round(h * k)))
+            lx, ly = nw / w, nh / h
+            src = cv2.resize(img, (nw, nh), interpolation=cv2.INTER_AREA)
+            # src pixel (i, j) is img pixel ((i + .5) / lx - .5, (j + .5) / ly - .5)
+            A = np.array([[k / lx, 0, cx + k * (0.5 / lx - 0.5 - ox)],
+                          [0, k / ly, cy + k * (0.5 / ly - 0.5 - oy)]], np.float32)
+        return cv2.warpAffine(src, A, (OUT_W, OUT_H), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT,
                               borderValue=border)
 
     tr = raster.rasterize(memory_trail_svg(), OUT_W, OUT_H)
@@ -1596,7 +1608,7 @@ def build(ctx):
     sc.sfx("bubbles", 0.3, dur=t_land - 0.3, gain_db=-20, fade_in=0.8, fade_out=0.8)
     sc.sfx("cloth", t_weed + 0.15, gain_db=-19)
     sc.sfx("whoosh", t_sink0 + 0.2, gain_db=-20, pan=0.0)
-    sc.sfx("thud", t_land, gain_db=-19)
+    sc.sfx("thud", t_land, gain_db=-19, duck_db=-5)     # on-picture landing: ducked less, so it is heard
     sc.sfx("bubbles", t_land, dur=1.0, gain_db=-17, fade_out=0.5)
     sc.sfx("cloth", t_kneel - 0.05, gain_db=-17)
     sc.sfx("chime", t_pr, gain_db=-11)

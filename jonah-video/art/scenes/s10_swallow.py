@@ -556,8 +556,10 @@ def build(ctx):
     # The first second overlaps s09's busy deck (kneeling crew, altar fire, the golden cloud break) in the
     # cross-dissolve: Jonah, the drifting creatures and his bubbles only come in once the frame is mostly water,
     # so nothing of this scene sits on the crew, the deck or the sky (no 'ghost' Jonah rising into the light).
-    def fade_in(t0, t1):
-        return lambda t: Tf(alpha=progress(t, t0, t1, "sine"))
+    # Jonah stays hidden until s09 is almost gone and appears out of a short bubble burst (ARRIVE) that hides
+    # his fade, fully there by the time the narrator says '约拿'; the creatures swim / drift in from off-frame.
+    ARRIVE = 0.85                 # the burst's bubbles are born from ~0.84 on
+    JONAH_IN = (0.90, 1.03)
 
     # ---- camera: sinks with Jonah (continuous velocity) and a little ahead of him, so the deep below is in
     # view when the fish rises; pushes in gently while the mouth opens; eases back out with the glide
@@ -611,12 +613,22 @@ def build(ctx):
                       sx=1 + 0.07 * push, sy=1 - 0.09 * push, px=x, py=y)
         return m
 
+    # They come ON with motion once the dissolve is over (never an in-place fade): jelly1/jelly2 drift in from
+    # off the left edge like school_a, leaning a little into the drift; jelly3 rises into frame from below
+    # the bottom edge. Until t0 they wait out of view (left edge x ~198, bottom edge y > 1055 for t <= 1).
+    def drift_in(dx0, dy0, t0, t1, lean=0.0):
+        def m(t):
+            k = 1 - progress(t, t0, t1, "sine")
+            u = min(1.0, max(0.0, (t - t0) / (t1 - t0)))
+            return Tf(dx=-dx0 * k, dy=dy0 * k, rot=lean * math.sin(math.pi * u))
+        return m
+
     sc.add("jelly1", doc(jelly(470, 560, 1.0, "#f0a8c0", seed=1)), z=6,
-           motion=M.combine(jelly_m(470, 560, 2.4, 0.0, 9), fade_in(1.0, 1.6)))
+           motion=M.combine(jelly_m(470, 560, 2.4, 0.0, 9), drift_in(520, 0, 0.9, 2.7, lean=7)))
     sc.add("jelly2", doc(jelly(640, 700, 0.7, "#c8a8e8", seed=2)), z=6.1,
-           motion=M.combine(jelly_m(640, 700, 2.0, 0.4, 7), fade_in(1.0, 1.6)))
+           motion=M.combine(jelly_m(640, 700, 2.0, 0.4, 7), drift_in(560, 0, 1.0, 2.9, lean=7)))
     sc.add("jelly3", doc(jelly(1760, 900, 0.8, "#f4b8a0", seed=3)), z=6.2,
-           motion=M.combine(jelly_m(1760, 900, 2.6, 0.7, 6), fade_in(1.0, 1.6)))
+           motion=M.combine(jelly_m(1760, 900, 2.6, 0.7, 6), drift_in(0, 300, 0.9, 2.8)))
 
     # little fish: a school in the open water (swims in from the left once the dissolve is over, darts away
     # when the great fish rises), another near the reef
@@ -759,7 +771,7 @@ def build(ctx):
         sq = 1 - 0.16 * bump(t, t_notice - 0.03)
         hop = -10 * bump(t, t_notice - 0.03)
         return Tf(dx=cx - JB[0], dy=cy - JB[1] + hop, rot=rot, sx=s * (2 - sq), sy=s * sq,
-                  alpha=float(t < t_close0) * progress(t, 0.55, 1.1, "sine"), px=JB[0], py=JB[1])
+                  alpha=float(t < t_close0) * progress(t, *JONAH_IN, "sine"), px=JB[0], py=JB[1])
 
     def jonah_idx(t):
         if t < t_notice:
@@ -815,6 +827,21 @@ def build(ctx):
     def fish_snout(t):
         return fish_pt(t, 600, 18)
 
+    def arrival_cloud(t):
+        """Birth points of the bubble burst Jonah appears out of: two plumes hugging his sides and a puff over
+        his head-cloth, never in the column under / on his face (bubbles rise straight up, so they stay off
+        it). The birth time picks the spot (a hash, so it is deterministic and independent of call order)."""
+        cx, cy = jonah_path(t)[:2]
+        h1, h2, h3 = (math.sin(t * k) * 43758.5453 % 1.0 for k in (12.9898, 78.233, 37.719))
+        r, a = math.sqrt(h2), 2 * math.pi * h3
+        if h1 < 0.4:                      # left of him (over his reaching arm and robe edge)
+            ox, oy = -114 + 44 * r * math.cos(a), 10 + 120 * r * math.sin(a)
+        elif h1 < 0.8:                    # right of him (past the head-cloth knot)
+            ox, oy = 102 + 46 * r * math.cos(a), 10 + 120 * r * math.sin(a)
+        else:                             # a puff just above his head
+            ox, oy = -10 + 80 * r * math.cos(a), -182 + 16 * r * math.sin(a)
+        return cx + ox, cy + oy
+
     sc.fx = [
         FX.motes((0, WL + 40, W, H), count=55, color=(214, 242, 236), size=(3, 6), alpha=85, seed=17),
         # God's providence: warm golden glints along the beam and round the rising fish
@@ -827,6 +854,10 @@ def build(ctx):
             (lambda t: jonah_path(t)[:2], -1.5, 2.2, 6.0, 140, (5, 15), 70, 190),
             (fish_snout, t_close0 + 0.02, t_close1 + 0.35, 42, 200, (7, 22), 34, 225),
             (fish_snout, t_close1 + 1.1, T + 1, 2.0, 105, (5, 11), 8, 170),
+            # Jonah's arrival: a quick burst round him, then a short tail (appended last: the draws above are
+            # unchanged)
+            (arrival_cloud, ARRIVE - 0.01, ARRIVE + 0.07, 300, 200, (7, 21), 8, 225),
+            (arrival_cloud, ARRIVE + 0.07, ARRIVE + 0.4, 30, 170, (5, 14), 8, 205),
         ], born_after=0.6),     # none in s09's sky during the dissolve (same random draws as before)
     ]
 
