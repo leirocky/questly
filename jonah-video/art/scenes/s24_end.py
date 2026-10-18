@@ -973,25 +973,28 @@ LEAP_U_END = 1.16
 SNOUT = (590, 20)
 
 
-def leap_pose(u, xa, xb, fc):
+LEAP_TILT = (-40, 46)    # body tilt (deg, nose up -> nose down) over a leap of normal length
+
+
+def leap_pose(u, xa, xb, fc, tilt=LEAP_TILT):
     x = xa + (xb - xa) * u
     y = MID_WL + LEAP_RISE - (LEAP_RISE + LEAP_DROP) * 4 * u * (1 - u)
-    rot = fc * (-40 + 86 * M.ease("sine")(min(1.0, max(0.0, u))))
+    rot = fc * (tilt[0] + (tilt[1] - tilt[0]) * M.ease("sine")(min(1.0, max(0.0, u))))
     return x, y, rot
 
 
-def leap_snout(u, xa, xb, fc):
-    x, y, rot = leap_pose(u, xa, xb, fc)
+def leap_snout(u, xa, xb, fc, tilt=LEAP_TILT):
+    x, y, rot = leap_pose(u, xa, xb, fc, tilt)
     lx, ly = SNOUT[0] * FISH_S * fc, SNOUT[1] * FISH_S
     r = math.radians(rot)
     return x + lx * math.cos(r) - ly * math.sin(r), y + lx * math.sin(r) + ly * math.cos(r)
 
 
-def leap_crossings(xa, xb, fc):
+def leap_crossings(xa, xb, fc, tilt=LEAP_TILT):
     out, above = [], False
     for i in range(int(LEAP_U_END * 500) + 1):
         u = i / 500
-        sx, sy = leap_snout(u, xa, xb, fc)
+        sx, sy = leap_snout(u, xa, xb, fc, tilt)
         if not above and sy < MID_WL:
             out.append((u, sx - fc * 30))
             above = True
@@ -1426,24 +1429,29 @@ def build(ctx):
     sc.add("glitter_far", glit + [glit[0]], wc=0.3, frame_at=lambda t: (t * 2.6) % 3.0,
            motion=M.pulse(0.75, 1.0, 2.3))
 
-    # both leaps pass well west of the ship (its bow is at ~SHIP_X - 100 + SHIP_VX * t)
-    leaps = [(t_sea - 0.12, 1.35, 1245, 1005, -1), (t_new - 0.25, 1.35, 850, 1180, 1)]
+    # both leaps pass well west of the ship (its bow is at ~SHIP_X - 100 + SHIP_VX * t). The second one (wide
+    # framing) stays over the open bay between Israel's headland (its slope meets the mid waterline at x ~868)
+    # and the ship's bow wake (x ~1420): the fish (~470 px long with its tail fin) only just fits there, so it
+    # leaps short and steep, porpoise-style, its tilt steepened to follow the steeper arc. Every visible part of
+    # it keeps >= 25 px of open water from the headland's slope and >= 40 px from the ship, and its dive splash
+    # lands clear of the bow
+    leaps = [(t_sea - 0.12, 1.35, 1245, 1005, -1, LEAP_TILT), (t_new - 0.25, 1.35, 1140, 1240, 1, (-60, 76))]
     splash_events = []
-    for i, (ls, ld, xa, xb, fc) in enumerate(leaps):
+    for i, (ls, ld, xa, xb, fc, tilt) in enumerate(leaps):
         fx0, fy0 = (xa + xb) / 2, MID_WL
         frames = [doc(PR.fish(fx0, fy0, FISH_S, facing=fc, eye="happy", mouth=0.12, tail=tv))
                   for tv in (0.65, 0.0, -0.65)]
 
-        def fish_motion(t, ls=ls, ld=ld, xa=xa, xb=xb, fc=fc, fx0=fx0, fy0=fy0):
+        def fish_motion(t, ls=ls, ld=ld, xa=xa, xb=xb, fc=fc, tilt=tilt, fx0=fx0, fy0=fy0):
             u = (t - ls) / ld
             if u <= 0 or u >= LEAP_U_END:
                 return Tf(alpha=0.0)
-            x, y, rot = leap_pose(u, xa, xb, fc)
+            x, y, rot = leap_pose(u, xa, xb, fc, tilt)
             return Tf(dx=x - fx0, dy=y - fy0, rot=rot, px=fx0, py=fy0)
 
         sc.add(f"fish{i}", frames, motion=fish_motion, seed=90 + i,
                frame_at=lambda t: float((0, 1, 2, 1)[int(t * 9) % 4]))
-        for u, xs in leap_crossings(xa, xb, fc):
+        for u, xs in leap_crossings(xa, xb, fc, tilt):
             splash_events.append((ls + u * ld, xs))
 
     sc.add("sea_mid", sea_mid_svg())

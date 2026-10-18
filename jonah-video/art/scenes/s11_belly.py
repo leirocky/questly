@@ -12,16 +12,19 @@ Story beats (all keyed to the narration chunks, never to fixed times):
   L1 '…过了三天三夜。'          he sits hugging his knees, sad and soaked; a soft glow opens at the top of the
                                  belly and three suns and three moons pop up one by one (day, night, day, ...),
                                  each sun warming and each moon cooling the light a little. He stays wet.
-     '他在那里，向上帝祷告：'   the full row of days holds through '他在那里'; on '向上帝祷告' he kneels with
-                                 folded hands — a hard pose cut sold by a squash-and-hop, which also hides the
-                                 wet -> dry costume change (he kneels on v1's spot, dry, as in s12) — and the
-                                 row drifts away.
+     '他在那里，向上帝祷告：'   the full row of days holds through '他在那里'; on '向上帝祷告' he gathers himself
+                                 (squash) and pops up onto his knees with folded hands — a hard pose cut sold by a
+                                 clear squash-hop-land, on v1's spot. He is still soaked (seaweed on his
+                                 head-cloth): he is still inside the fish. The row drifts away.
   L2 '我遇到危险，向你求救，你就回答了我。'   earnest prayer (worried face, gentle rocking); a small warm ember
                                  glows at his hands, a few single sparkles drift up from them on '向你求救', and on
                                  '你就回答了我' a faint warm glow blooms around him.
   L3 '我从很深很深的地方呼喊，'  golden sparkles rise from him up through the dark (his prayer rising).
      '你就听见了我的声音。'     God hears: a soft golden beam comes down from above, the glow grows, the walls
                                  near him warm up, and Jonah opens his eyes and lifts his face, hopeful.
+                                 Then the warm light washes down over him from head to knees and leaves him dry
+                                 (seaweed and drops gone, cream head-cloth, as in s12): a soft top-down wipe of the
+                                 dry figure over the identical wet one, led by a band of warm light.
                                  The glow is deliberately capped at about half of s12's finale
                                  ('救恩属于耶和华', glow fullest) so the story's light keeps building there.
 The last second is a calm hold (Jonah kneeling in the glow) that dissolves into s12.
@@ -340,28 +343,63 @@ def build(ctx):
                     (t_glad + 0.68 * wg, {"rot": 1.0}), (t_glad + wg, {"rot": 0}),
                     # a little sigh as he settles in for the long wait
                     (t_sit, {"sy": 0.96, "dy": 0}), (t_sit + 0.35, {"sy": 1.0}),
-                    (t_pray - 0.15, {"sy": 1.0, "dy": 0}), (t_pray, {"sy": 0.95, "dy": 4})],
+                    # he gathers himself (anticipation squash) before popping up onto his knees
+                    (t_pray - 0.3, {"sy": 1.0, "sx": 1.0, "dy": 0}), (t_pray, {"sy": 0.88, "sx": 1.05, "dy": 5})],
                    ["out", "inout", "linear", "sine", "sine", "sine", "inout", "back", "linear", "inout"], pivot=SPV)
     sc.add("jonah_sit", sit, frame_at=lambda t: 0.0 if t < t_glad else (1.0 if t < t_sit else 2.0),
            motion=M.combine(swap(t_alive, t_pray), sit_m, M.breathe(0.012, 3.4, pivot=SPV)))
 
-    # three days later he kneels, dry again (the costume change hides in this squash-and-hop cut); worried while
-    # he cries out -> peaceful when God answers -> eyes open, hopeful, when God hears him (expression swaps are
-    # hard cuts, like a blink)
-    kneel = [S.svg_doc(C.jonah(JX, JY, JS, 1, pose="kneel_pray", expr=e))
-             for e in ("worried", "peaceful", "happy")]
+    # three days later he kneels to pray, still soaked (he is still inside the fish): the same wet costume as the
+    # sitting pose, so the cut only changes the pose — sold by a clear squash -> hop -> land. Worried while he
+    # cries out -> peaceful when God answers -> eyes open, hopeful, when God hears him (expression swaps are
+    # hard cuts, like a blink). Only then does God's warm light wash down over him and leave him dry (as in s12):
+    # the dry figure (same pose, expression and motion) is revealed top-down over the wet one, never crossfaded.
+    exprs = ("worried", "peaceful", "happy")
+    kneel = [S.svg_doc(C.jonah(JX, JY, JS, 1, pose="kneel_pray", expr=e)) for e in exprs]
+    kneel_wet = [S.svg_doc(C.jonah(JX, JY, JS, 1, pose="kneel_pray", expr=e, wet=True)) for e in exprs]
+    # Both kneel layers carry one extra, never-shown frame: two dots at the corners of BOX, so the two layers get
+    # the same crop box (with room above and below the figure for the soft wipe edge) and the wipe lines up.
+    BOX = (JX - 125 * JS, JY - 345 * JS, JX + 85 * JS, JY + 62 * JS)
+    box_frame = S.svg_doc("".join(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2" fill="{P["foam"]}"/>'
+                                  for x, y in ((BOX[0], BOX[1]), (BOX[2], BOX[3]))))
     t_e1, t_e2 = t_answer + 0.25, t_heard + 0.45
     lift0, lift1 = t_heard + 0.2, t_heard + 1.0
 
     def rock(t):
         a = M.progress(t, L2.start - 0.3, L2.start + 0.6, "sine") * (1 - 0.6 * M.progress(t, lift0, lift1, "sine"))
         return Tf(rot=1.1 * a * math.sin(2 * math.pi * (t - L2.start) / 3.4))
-    kneel_m = M.keys([(t_pray, {"sy": 0.92, "sx": 1.03, "dy": 8}), (t_pray + 0.32, {"sy": 1.0, "sx": 1.0, "dy": 0}),
+    # the cut lands on a deep squash (keeps the head close to the gathered sitting head; held ~2 frames so it is
+    # always on screen), then he springs up (stretch + hop), lands on his knees (small squash) and settles
+    kneel_m = M.keys([(t_pray, {"sy": 0.8, "sx": 1.08, "dy": 4}), (t_pray + 0.06, {"sy": 0.8, "sx": 1.08, "dy": 4}),
+                      (t_pray + 0.2, {"sy": 1.05, "sx": 0.97, "dy": -18}),
+                      (t_pray + 0.36, {"sy": 0.94, "sx": 1.04, "dy": 2}),
+                      (t_pray + 0.56, {"sy": 1.0, "sx": 1.0, "dy": 0}),
                       (lift0, {"rot": 0, "dy": 0}), (lift1, {"rot": -2.0, "dy": 0})],
-                     ["back", "linear", "out"], pivot=(JX, JY))
-    sc.add("jonah_kneel", kneel, frame_at=lambda t: 0.0 if t < t_e1 else (1.0 if t < t_e2 else 2.0),
-           motion=M.combine(swap(t_pray, 1e9), kneel_m, M.with_pivot(rock, (JX, JY)),
-                            M.breathe(0.01, 3.0, pivot=(JX, JY), phase=0.3)))
+                     ["linear", "out", "in", "inout", "linear", "out"], pivot=(JX, JY))
+    kneel_motion = M.combine(kneel_m, M.with_pivot(rock, (JX, JY)), M.breathe(0.01, 3.0, pivot=(JX, JY), phase=0.3))
+    kneel_frame = lambda t: 0.0 if t < t_e1 else (1.0 if t < t_e2 else 2.0)  # noqa: E731
+
+    # the drying wipe (stage y, in the figures' own frame): the dry figure's soft edge runs from above the head-cloth
+    # to below the knees; the wet figure is erased LAG px behind it, so the figure is never see-through
+    W_SOFT, LAG = 90.0, 104.0
+    w_y0 = JY - 305 * JS - W_SOFT / 2 - 4              # edge above the (wet) head-cloth
+    w_y1 = JY + 20 * JS + W_SOFT / 2 + 4               # edge below the knees / toes (and drops)
+    crop_t, crop_h = BOX[1] - 3, BOX[3] - BOX[1] + 6   # the shared crop box (dots of r=2, anti-aliased)
+    t_w0, t_w1 = t_heard + 0.3, t_heard + 2.0          # while '你就听见了我的声音' and the beam comes down
+
+    def wipe_y(t):
+        return w_y0 + (w_y1 + LAG - w_y0) * M.progress(t, t_w0, t_w1, "sine")
+
+    def dry_reveal(t):
+        y = wipe_y(t)
+        return dict(mode="down", frac=1.0 if y >= w_y1 else (y - crop_t) / crop_h, soft=W_SOFT)
+
+    def wet_reveal(t):
+        y = wipe_y(t) - LAG
+        return dict(mode="up", frac=1.0 if y <= w_y0 else 1 - (y - crop_t) / crop_h, soft=W_SOFT)
+    sc.add("jonah_kneel", kneel + [box_frame], frame_at=kneel_frame, reveal=dry_reveal,
+           motion=M.combine(swap(t_w0, 1e9), kneel_motion))
+    kneel_layer = sc.layers[-1]
 
     # ---------------------------------------------------------- swallowed things on the floor (v1)
     stuff = PR.seaweed(1425, 868, 0.42, variant=2)
@@ -556,6 +594,22 @@ def build(ctx):
         V.twinkles((GX - 330, GY - 330, GX + 330, GY + 180), count=18, t0=t_heard + 0.2,
                    color=(255, 240, 190), size=(8, 18), drift=-8, seed=17, face=face),
     ]
+
+    # ---------------------------------------------------------- Jonah kneeling, wet (until the light dries him)
+    # Added last with an explicit z just under the dry kneeling layer (and its watercolour seed, so the paper
+    # texture matches across the wipe): adding it in place would shift every later layer's default seed.
+    sc.add("jonah_kneel_wet", kneel_wet + [box_frame], frame_at=kneel_frame, reveal=wet_reveal,
+           z=kneel_layer.z - 0.5, seed=kneel_layer.seed, motion=M.combine(swap(t_pray, t_w1), kneel_motion))
+    # ... and the soft band of warm light that leads the wipe down over him (it is the light that dries him)
+    BLX, BLY = JX - 22, w_y0
+    band = S.svg_doc(f'<ellipse cx="{BLX:.0f}" cy="{BLY:.0f}" rx="215" ry="62" fill="url(#dryl)"/>',
+                     defs=S.rad_grad("dryl", [(0, "#7a5a2c", 1), (0.5, "#6a4a22", 0.55), (1, "#4a3418", 0)]))
+
+    def band_m(t):
+        y = wipe_y(t) - 0.25 * W_SOFT
+        u = min(1.0, max(0.0, (y - w_y0) / (w_y1 - w_y0)))
+        return Tf(dy=y - BLY, alpha=0.5 * math.sin(math.pi * u) ** 0.8 if t_w0 < t < t_w1 else 0.0)
+    sc.add("dry_light", band, wc=0, blend="add", z=kneel_layer.z + 0.5, seed=kneel_layer.seed, motion=band_m)
 
     # ---------------------------------------------------------- sound
     sc.sfx("underwater", 0, dur=T + 0.1, gain_db=-12, fade_in=0.8, fade_out=0.9)

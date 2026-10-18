@@ -35,7 +35,13 @@ Continuity
   scene now depends on the previous scene's file. Re-render it whenever s20_booth.py changes (engine/render.py
   hashes only a scene's own file).
 * End: the last camera key equals s22's first key Cam(1070, 600, 1990) (same stage layout V.XP / GY / SP /
-  XB); Jonah ends sitting with closed eyes like s22's dozing Jonah; the noon sun is at s22's SUN_HOT.
+  XB); Jonah ends sitting with closed eyes like s22's dozing Jonah, his breathing settled to exactly scale 1
+  (s22's Jonah is still through the dissolve). s22 opens in the PRE-DAWN of the next day, so over the last
+  ~1.7 s the day ends: the noon sun's flame rays shrink into the disc and fade, the disc fades, its shafts and
+  the heat shimmer fade, the warm grade lifts and the land dims a little toward s22's pre-dawn grade (DUSK_MUL),
+  while s22's pre-dawn sky ('sky_pre': its gradient and eastern glow as s22's grade shows them, without moon
+  and stars, which come in with s22) closes over the sky, the clouds and the sun; it is complete before the
+  dissolve's midpoint, so the two skies match.
 
 Notes for maintainers
 * Reuses the approved v1 s11_vine techniques (helpers imported from art.scenes_v1.s11_vine): the castor plant
@@ -89,9 +95,26 @@ LIZ_TO = (1395, 976)  # ... its spot in the canopy's shade (an open patch in fro
 SUN_A = (330, 300)      # hot afternoon sun (west, over the city)
 SUN_SET = (300, 790)    # where it sinks (behind the city)
 SUN_E = (1890, 790)     # dawn sun start (east, hidden behind the hills)
-SUN_HOT = (1490, 225)   # noon sun, just behind the right half of the leaf umbrella (= s22's)
+SUN_HOT = (1490, 225)   # noon sun, just behind the right half of the leaf umbrella (= s22's later blazing sun)
 S_H = 0.74              # noon sun scale (rays reach ~250 px)
 MOON = (1765, 300)
+
+# End (day -> s22's pre-dawn): s22's opening pre-dawn sky (its 'sky_pre' gradient and eastern glow, less moon
+# and stars, plus the halo of its dawn sun waiting below the crest) as s22 shows it during the dissolve, i.e.
+# multiplied by the sky factor of s22's pre-dawn grade ((205, 200, 235) x 0.55). The whole frame gets K_DUSK of
+# s22's land factor ((112, 120, 186) x 0.82) as a uniform multiply (the rest of the land's change happens in
+# the dissolve) and the sky is painted pre-compensated for it (a larger K_DUSK would clip the brightest glow).
+SKY_PRE_F = 1 - (1 - np.array([205.0, 200.0, 235.0]) / 255.0) * 0.55
+K_DUSK = 0.3
+DUSK_MUL = 1 - (1 - np.array([112.0, 120.0, 186.0]) / 255.0) * 0.82 * K_DUSK
+SKY_PRE_GLOW = (1830, 640)      # s22's SUN_E x, its HORIZON
+SKY_PRE_HALO = (1830, 659)      # the halo of s22's dawn sun, waiting just below the eastern crest
+
+
+def _pre_col(c):
+    r, g_, b = S.hex_rgb(c)
+    return S.rgb_hex(*np.clip(np.array([r, g_, b], float) * SKY_PRE_F / DUSK_MUL, 0, 255))
+
 
 # night grade: frame * NIGHT_MUL + NIGHT_ADD (uniform over the frame)
 NIGHT_MUL = np.array([0.50, 0.56, 0.88])
@@ -412,6 +435,12 @@ def build(ctx):
     t_happy = max(l2.start + 0.45, t_relief + 1.0)  # "这下，约拿非常非常高兴！"
     t_settle = min(l2.end + 0.1, T - 1.2)           # settles back to a calm eyes-closed rest (hop-cut) ...
     t_cam1 = min(T - 1.2, l2.end + 0.2)             # ... as the camera arrives on s22's opening framing
+    # the day ends for s22's pre-dawn opening (see the docstring, "End"): the sun goes out by the start of the
+    # dissolve (mostly while the sky is still light, so the fading disc never turns into a grey ring over the
+    # violet), and s22's pre-dawn sky has closed over the sky by the dissolve's midpoint
+    sun_out = lambda t: M.progress(t, T - 1.7, T - 1.0, "sine")
+    disc_out = lambda t: M.progress(t, T - 1.6, T - 1.0, "sine")
+    a_dusk = lambda t: M.progress(t, T - 1.5, T - 0.5, "sine")
 
     # --- opening: s20's last shot continues through the dissolve; on "上帝安排了" God's light floods the frame
     # and, under its fullest moment, the picture becomes this scene's own (see the docstring, "Start")
@@ -438,15 +467,19 @@ def build(ctx):
     def covered(t):
         return max(min(1.0, a_hot(t)), a_gold(t), a_tw(t), a_night(t), a_dawn(t)) >= 0.999
 
+    def pre_covered(t):     # s22's pre-dawn sky (in front of the other skies, the suns and the clouds) is opaque
+        return a_dusk(t) >= 0.999
+
     sc.add("sky_day", S.svg_doc(
         f'<rect x="-20" y="-20" width="{W + 40}" height="{sky_h + 20}" fill="url(#g)"/>',
         defs=S.lin_grad("g", [(0, "#8fc4dc"), (0.5, "#c9e3df"), (0.82, "#f4e2b8"), (1, "#f6dcab")])),
-        wc=0.5, motion=lambda t: Tf(alpha=0.0 if covered(t) else 1.0))
+        wc=0.5, motion=lambda t: Tf(alpha=0.0 if covered(t) or pre_covered(t) else 1.0))
     sc.add("sky_hot", S.svg_doc(
         f'<rect x="-20" y="-20" width="{W + 40}" height="{sky_h + 20}" fill="url(#g)"/>',
         defs=S.lin_grad("g", [(0, "#8cc4ea"), (0.36, "#cbe3f0"), (0.62, "#f6e4c4"), (0.86, "#fbdfa4"),
                               (1, "#fbd99e")])),
-        wc=0.5, motion=lambda t: Tf(alpha=min(1.0, a_hot(t)) * (0.0 if max(a_gold(t), a_tw(t), a_night(t)) >= 0.999 else 1.0)))
+        wc=0.5, motion=lambda t: Tf(alpha=min(1.0, a_hot(t)) * (0.0 if max(a_gold(t), a_tw(t), a_night(t)) >= 0.999 or
+                                                                  pre_covered(t) else 1.0)))
     sc.add("sky_gold", S.svg_doc(
         f'<rect x="-20" y="-20" width="{W + 40}" height="{sky_h + 20}" fill="url(#g)"/>'
         f'<ellipse cx="{SUN_SET[0]}" cy="{HORIZON}" rx="900" ry="330" fill="url(#r)"/>',
@@ -497,21 +530,41 @@ def build(ctx):
                    ["out", "sine"], pivot=(CX, CY))
     sc.add("sun_dawn", _sun_svg(82, "#f8c070", "#ffe0b0", 330), wc=0.5, motion=at(SUN_E, M.combine(
         climb, lambda t: Tf(alpha=_env(t, t_d0, t_d0 + 0.3, t_hot0 + 0.45, t_hot0 + 0.75)))))
+
+    def rays_tf(t):     # bursts out of the disc at noon; at the end shrinks back into it and fades
+        s = S_H * (0.45 + 0.55 * M.progress(t, t_hot0 + 0.05, t_hot0 + 0.6, "back")) * (1 - 0.55 * sun_out(t))
+        return Tf(sx=s, sy=s, px=CX, py=CY,
+                  alpha=M.progress(t, t_hot0 + 0.05, t_hot0 + 0.35, "sine") * (1 - sun_out(t)))
+
     sc.add("sun_rays", rays, wc=0.3, motion=at(SUN_HOT, M.combine(
-        lambda t: Tf(rot=8 * t, px=CX, py=CY), M.breathe(0.03, 0.9, pivot=(CX, CY)),
-        lambda t: Tf(sx=S_H * (0.45 + 0.55 * M.progress(t, t_hot0 + 0.05, t_hot0 + 0.6, "back")),
-                     sy=S_H * (0.45 + 0.55 * M.progress(t, t_hot0 + 0.05, t_hot0 + 0.6, "back")),
-                     px=CX, py=CY, alpha=M.progress(t, t_hot0 + 0.05, t_hot0 + 0.35, "sine")))))
+        lambda t: Tf(rot=8 * t, px=CX, py=CY), M.breathe(0.03, 0.9, pivot=(CX, CY)), rays_tf)))
     sc.add("sun_hot", hot, wc=0.4, motion=at(SUN_HOT, M.combine(
         M.breathe(0.035, 1.3, pivot=(CX, CY)),
-        lambda t: Tf(sx=S_H, sy=S_H, px=CX, py=CY, alpha=M.progress(t, t_hot0 + 0.25, t_hot0 + 0.65, "sine")))))
+        lambda t: Tf(sx=S_H, sy=S_H, px=CX, py=CY, alpha=M.progress(t, t_hot0 + 0.25, t_hot0 + 0.65, "sine") *
+                     (1 - disc_out(t))))))
 
     # --- clouds: drift; they fade into the dark at night (stars are drawn only in clear sky) ----------
     clouds = S.svg_doc(S.g(
         S.cloud(640, 108, 250, 78, "#fdf3e4", seed=3, sw=3, shade_fill="#f0d6c4") +
         S.cloud(1250, 92, 250, 76, "#fdf1e2", seed=5, sw=3, shade_fill="#f0d6c4"), filter="wobble"))
     sc.add("clouds", clouds, wc=0.7, motion=M.combine(
-        M.drift(vx=-6), lambda t: Tf(alpha=1 - _env(t, t_n0 + 0.1, t_n1 - 0.1, t_d0, t_d1 + 0.3))))
+        M.drift(vx=-6), lambda t: Tf(alpha=0.0 if pre_covered(t) else
+                                     1 - _env(t, t_n0 + 0.1, t_n1 - 0.1, t_d0, t_d1 + 0.3))))
+
+    # --- end: s22's pre-dawn sky closes over the sky, the clouds and the fading sun (in front of them, behind
+    # the hills; see the docstring, "End"); s22's moon, stars and clouds come in with the dissolve. It is added
+    # after the last layer (z puts it here), so the other layers keep their default z and watercolour seeds.
+    sky_pre = S.svg_doc(
+        f'<rect x="-20" y="-20" width="{W + 40}" height="{sky_h + 20}" fill="url(#g)"/>'
+        f'<ellipse cx="{SKY_PRE_GLOW[0]}" cy="{SKY_PRE_GLOW[1]}" rx="760" ry="250" fill="url(#r)"/>'
+        f'<circle cx="{SKY_PRE_HALO[0]}" cy="{SKY_PRE_HALO[1]}" r="330" fill="url(#h)"/>',
+        defs=S.lin_grad("g", [(0, _pre_col("#46507e")), (0.5, _pre_col("#6f6c9c")), (0.85, _pre_col("#b49ab4")),
+                              (1, _pre_col("#d6b1b4"))]) +
+        S.rad_grad("r", [(0, _pre_col("#f2c2a8"), 0.75), (0.55, _pre_col("#d9a6b0"), 0.3),
+                         (1, _pre_col("#b49ab4"), 0)]) +
+        S.rad_grad("h", [(0, _pre_col("#ffe0b0"), 0.85), (0.35, _pre_col("#ffe0b0"), 0.35),
+                         (1, _pre_col("#ffe0b0"), 0)]))
+    z_pre = sc.layers[-1].z + 0.5
 
     # =============================================================== LAND (static, flattened) — v1 layout
     far = ""
@@ -696,7 +749,7 @@ def build(ctx):
     # warm sun shafts landing on the open sand right of the shade (the light the leaves keep off Jonah)
     sc.add("sun_shafts", _shafts_svg(SUN_HOT[0], SUN_HOT[1], [(1628, 992), (1815, 978), (2000, 950)]), wc=0,
            blend="screen", motion=lambda t: Tf(alpha=M.progress(t, t_hot0 + 0.3, t_hot0 + 1.2, "sine") *
-                                               (0.9 + 0.1 * math.sin(t * 2.3))))
+                                               (0.9 + 0.1 * math.sin(t * 2.3)) * (1 - sun_out(t))))
 
     # =============================================================== CASTOR PLANT (one exact drawing per video frame)
     def gcurve(u):
@@ -806,7 +859,8 @@ def build(ctx):
         return sy, dy
 
     def jonah_motion(t):
-        s = 1 + 0.012 * math.sin(2 * math.pi * t / 3.0)
+        # breathing; it settles to exactly 1 before the dissolve (s22's Jonah is still through it)
+        s = 1 + 0.012 * math.sin(2 * math.pi * t / 3.0) * (1 - M.progress(t, T - 1.8, T - 1.0, "sine"))
         sy, rot, dy = s, 0.0, 0.0
         px = XJ
         if t < t_notice:                       # hot: quick shallow panting
@@ -930,6 +984,8 @@ def build(ctx):
                   for sw_ in (0.5, 0.0, -0.5, -1.0)]
         sc.add(f"grass{gi}", frames, frame_at=grass_frame_fn(gi * 0.23), wc=0.7)
 
+    sc.add("sky_pre", sky_pre, wc=0.4, z=z_pre, motion=lambda t: Tf(alpha=a_dusk(t)))   # (see "end:" above)
+
     # =============================================================== CAMERA
     CAM0 = Cam(1075, 600, 1960)                     # = s20's final view (held through the dissolve)
     sc.camera = M.cam_keys([
@@ -957,13 +1013,14 @@ def build(ctx):
         add = np.zeros(3)
         # light warm grade only: the warmth is painted into the hot sky, so the blues stay clean
         k_hot = 0.26 * (1 - M.progress(t, t_n0, t_n0 + 0.5, "sine")) + \
-            0.28 * M.progress(t, t_hot0 + 0.1, t_hot0 + 0.9, "sine")
+            0.28 * M.progress(t, t_hot0 + 0.1, t_hot0 + 0.9, "sine") * (1 - a_dusk(t))   # lifts as the day ends
         for col, k in [((255, 224, 184), k_hot),
                        ((255, 206, 160), _env(t, t_n0 - 0.05, t_n0 + 0.35, t_n0 + 0.45, t_tw + 0.1)),
                        ((236, 204, 226), 0.6 * _env(t, t_n0 + 0.3, t_tw, t_tw + 0.1, t_n1)),
                        ((246, 220, 230), 0.8 * _env(t, t_d0, t_d1, t_d1 + 0.5, t_morning))]:
             if k > 0:
                 mul *= 1 - (1 - np.array(col, float) / 255.0) * k
+        mul *= 1 - (1 - DUSK_MUL) * a_dusk(t)      # the day ends (see SKY_PRE_F)
         kn = k_night(t)
         if kn > 0:
             mul *= 1 - (1 - NIGHT_MUL) * kn
@@ -1177,7 +1234,7 @@ def build(ctx):
 
     def shimmer(frame, t, view):
         k = 0.7 * (1 - M.progress(t, t_n0 - 0.2, t_n0 + 0.3, "sine")) + \
-            M.progress(t, t_hot0 + 0.3, t_hot0 + 1.1, "sine")
+            M.progress(t, t_hot0 + 0.3, t_hot0 + 1.1, "sine") * (1 - sun_out(t))
         k *= 0.0 if t < t_swap else 1 - flood_amt(t)     # s20's own heat shimmer shows before the swap
         if k <= 0.01:
             return frame

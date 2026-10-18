@@ -6,11 +6,14 @@ Line 2 (C)  快起来，求你的神救救我们吧！也许你的神会可怜�
 
 The scene opens on exactly the picture s04 ends on: v1 s04's lantern-lit hold painting (V4.hold_svg, same watercolour
 seed), Jonah asleep on the grain sacks breathing in time with the snore, 'Z z z', the swinging lantern, rain through
-the grated hatch, and s04's final camera (V4.V0, 0.96 x V4.VIEW_W_INT painting px wide). The hold keeps rocking
-gently with the ship and the storm stays audible.
+the grated hatch, and s04's final camera (V4.V0, 0.96 x V4.VIEW_W_INT painting px wide). Through the 1 s dissolve the
+camera continues s04's hold motion exactly (its roll, the end of its push-in and the lantern's swing; see s04_roll),
+then eases into this scene's own gentle rocking, so nothing doubles in the dissolve; the storm stays audible.
 
 As the narrator names the captain the hatch grating is flung open (cold storm light and rain pour in), his legs
-appear in the opening and he climbs down the ladder, back to it, in three readable moves of three rungs each (two
+appear in the opening and he climbs down the ladder, back to it, in three readable moves of three rungs each (he
+comes down through the opening and passes in front of the beam the ladder leans on; the deck round the opening hides
+what is above the beam; the cold light and the blown-in rain fall behind him, so he stays in full colour; two
 alternating climb drawings, both fists gripping the rails at shoulder / chest height: a short piece of rail is drawn
 over each fist with the fingers curled round it, so the grip reads even where his coat hides the painted rails).
 The last move lands him on the floor in a squash, and he hurries to Jonah at once with a planted-foot walk (the
@@ -23,15 +26,18 @@ Jonah props himself up on his elbows two frames into the captain's landing, once
 space above the pillow (a 3-frame in-between), then sits up rubbing his eye one frame after the captain stands
 (on '说：').
 Line 1: the captain urges him ('快醒醒！'); in the pause before '风浪这么大' thunder cracks through the hatch and the
-ship lurches — he clutches his cap and Jonah turns round with a start; then he spreads his palms
-('你怎么还在睡觉？').
+ship lurches — he clutches his cap and Jonah turns round with a start (a 2-frame startled in-between drawn at the
+same scale, on a little hop); then he spreads his palms ('你怎么还在睡觉？').
 Line 2: he points up through the hatch to the deck ('快起来' — Jonah gets up: a 3-frame half-risen in-between with a
 hand pushing on the sacks, then his feet), looks up ('求你的神'), raises both hands to heaven ('救救我们吧' — a second
 flash), then clasps his hands and pleads (a nod on '可怜', a lean-in on '让我们活下来'); Jonah lowers his eyes, sorry
 (he knows the storm is his doing), then tilts his head right back to the hatch as a faint far flash and a soft rumble
-come from above, and the camera tilts up with his gaze — calm for the last 1.2 s.
+come from above. On '让我们活下来' the camera starts to rise to the hatch with his gaze: one even push up the ladder to
+the open hatch, easing to rest on the last frame, so both faces have left the bottom of the frame by the middle of the
+dissolve into s06 (the deck), where nothing of them lies over the crew.
 Camera: s04's framing while the captain climbs, then a slow drift (< 80 px/s) to a closer two-shot for line 1, up a
-little so the hatch is in frame while he points, a push-in during the plea and a gentle tilt up to the hatch at the end.
+little so the hatch is in frame while he points, a push-in during the plea and the push up to the hatch at the end
+(the one brisk move: about 370 output px/s at the frame centre at its peak).
 Every pose change is a hard cut sold by a small squash-and-hop (no crossfades between poses); every main pose is
 held for at least half a second; all key times come from the narration (sub-phrases are timed from the punctuation
 pauses in the voice files, with a proportional fallback); the hard cuts of the fast sequences sit on the frame grid.
@@ -68,6 +74,36 @@ OPEN_Y1 = 256                        # the hatch opening shows between HY0 and t
 FLOOR_Y = 1116                       # people standing on the hold floor (just in front of the back wall)
 CAM0 = Cam(V4.V0[0], V4.V0[1], V4.VIEW_W_INT * 0.96)   # s04's final framing
 
+# s04's hold camera over its last second, continued here through the dissolve (s05 starts XF s before s04 ends).
+# s04 (art/scenes/s04_storm.py) ends inside this same painting, which rides the ship's roll st.rot, and its camera
+# follows the painting point V0 with 0.7 * st.rot: in painting px its view is centred on V0 and rolls by -0.3 * st.rot,
+# while the dive's 4 % push-in eases out (w = VIEW_W_INT * (1 - 0.04 * p)). st.rot = pitch_amp * sin(2 pi phase):
+# over s04's last S4_DIVE_TAIL s pitch_amp eases 3.2 -> 2.8 and over its last S4_FREQ_TAIL s the roll frequency eases
+# 1/3.4 -> 1/3.8 Hz (both 'sine'); S4_PHASE_END is the phase (cycles) on s04's last frame. Measured from the current
+# s04; s04_roll reproduces its ship_tf(t).rot to < 1e-6 deg over its last 1.2 s.
+XF = 1.0
+S4_DIVE_TAIL = 3.52                  # s04: T - T_DIVE1
+S4_FREQ_TAIL = 6.57                  # s04: T - T_CUT[0]
+S4_PHASE_END = 0.2813981
+S4_HANDOFF = (XF, XF + 1.4)          # after s04 has gone its roll eases (sine) into this scene's own rocking
+
+
+def s04_roll(t):
+    """s04's ship roll st.rot (deg) at s05 time t (= s04 time T4 - XF + t), continued past s04's end."""
+    e = t - XF
+    f0, f1, D = 1 / 3.4, 1 / 3.8, S4_FREQ_TAIL
+    if e >= 0:
+        back = -f1 * e                   # cycles from s04's last frame back to e
+    else:
+        back = -e * f0 + (f1 - f0) * (-0.5 * e - D / (2 * math.pi) * math.sin(math.pi * e / D))
+    amp = 3.2 - 0.4 * M.progress(e, -S4_DIVE_TAIL, 0.0, "sine")
+    return amp * math.sin(2 * math.pi * (S4_PHASE_END - back))
+
+
+def s04_view_w(t):
+    """Width (painting px) of s04's final view at s05 time t (its push-in ends on s04's last frame at CAM0.w)."""
+    return V4.VIEW_W_INT * (1 - 0.04 * M.progress(t - XF, -S4_DIVE_TAIL, 0.0, "sine"))
+
 # ladder (painted by V4.hold_svg): rails from (HX0+50, 300) / (HX1-60, 300) down to (HX0+200, 1112) / (HX1+90, 1112)
 LAD_K = 150 / 812
 RUNGS = [300 + 812 * k / 9 for k in range(10)]          # rung k centre line (0 = top end of the rails, 9 = floor)
@@ -86,6 +122,7 @@ J_WAKE_X = 1262                      # Jonah sitting up (facing left, legs along
 J_WAKE_IB_X = 1125                   # Jonah propped up on his hands (in-between of sitting up): head halfway
 #                                      between the pillow and the sitting head
 J_SIT_X = 1212                       # Jonah sitting, turned toward the captain
+J_TURN_X = 1284                      # Jonah's turn in-between (leaning back: head halfway between the two heads)
 J_STAND_X = 1274                     # Jonah on his feet in front of the bed (clear of the swinging lantern)
 J_IB_X = (J_SIT_X + J_STAND_X) / 2   # Jonah half-risen (in-between of getting up)
 
@@ -441,6 +478,10 @@ def jonah_poses():
         # near hand still pushing on the sacks behind him, the far arm forward for balance
         "rise_ib": C._P(t=14, h=-4, drop=78, reach=1.12, legs=(("ik", 36, 1), ("ik", -34, 1)),
                         arms=(("fk", 34, 58), ("ik", "abs", -62, -62, 1)), hands=("open", "open")),
+        # turning round with a start at the thunderclap (2-frame in-between, facing the captain, drawn at the same
+        # scale as the poses either side): leaning back, knees snatched up mid-swing, both open hands flung up
+        "turn_ib": C._P(t=-10, h=-14, legs=(("ik", 40, 1), ("ik", 52, 1)), arms=(("fk", 96, 150), ("fk", 40, 120)),
+                        hands=("open", "open"), **C._SEATED),
         # head tipped right back, eyes up to the hatch and the storm above (he knows it is his doing)
         "stand_up": C._P(t=-3, h=-26, arms=(("fk", 12, 8), ("fk", -6, -2)), look=(0.05, -0.13)),
         "stand_sorry": C._P(t=3, h=16, arms=(("ik", "torso", 0.9, 0.24, 1), ("ik", "torso", 0.95, 0.2, 1)),
@@ -480,14 +521,23 @@ def grate_svg():
 SHAFT_TOP = BEAM_BOT + 16            # the cold light starts below the beam (blurred), so the beam stays dark wood
 
 
-def shaft_svg():
-    """Cold storm light falling through the open hatch onto the floor."""
+POST_PATH = "M2145,-40 Q2050,700 2125,1390"   # centre line of the painting's right-hand foreground post
+POST_W = 152                                   # ... and its width (with the ink)
+
+
+def shaft_svg(post_only=False):
+    """Cold storm light falling through the open hatch onto the floor. post_only: just the part of it that falls on
+    the foreground post (laid back over the post cut-out, so the post looks the same with or without it)."""
     defs = S.lin_grad("cshaft", [(0, "#d6e4f2", 0.5), (0.55, "#b9cde0", 0.2), (1, "#b9cde0", 0.0)])
     d = (f"M{HX0 + 10},{SHAFT_TOP} L{HX1 - 10},{SHAFT_TOP} L{HX1 + 190},{FLOOR_Y + 40} "
          f"L{HX0 + 10},{FLOOR_Y + 40} Z")
     body = f'<path d="{d}" fill="url(#cshaft)" filter="url(#blur-md)"/>'
     body += (f'<ellipse cx="{HX0 + 190}" cy="{FLOOR_Y + 30}" rx="230" ry="34" fill="#cfdeea" opacity="0.35" '
              f'filter="url(#blur-md)"/>')
+    if post_only:
+        defs += (f'<mask id="postm" maskUnits="userSpaceOnUse" x="0" y="0" width="{W}" height="{H}">'
+                 f'<path d="{POST_PATH}" fill="none" stroke="#fff" stroke-width="{POST_W}"/></mask>')
+        body = f'<g mask="url(#postm)">{body}</g>'
     return doc(body, defs)
 
 
@@ -635,7 +685,8 @@ def build(ctx):
     t_storm = max(ph.end("快醒醒", c_start + 0.8) + 0.05,       # thunder in the pause after "快醒醒！"
                   ph.start("风浪", c_start + 0.3 * (lc[0].end - c_start)) - 0.4)
     t_cworry = t_storm + 0.05
-    t_startle = t_storm + 0.14                                  # Jonah turns round with a start
+    t_startle = t_storm + 0.14                                  # Jonah turns round with a start (2-frame
+    t_startle2 = t_startle + 2 * FR                             # in-between), then sits facing the captain
     t_why = ph.start("怎么还在睡", t_storm + 1.0) - 0.06
     t_jworry = t_why + 0.75
     # line 2
@@ -652,7 +703,6 @@ def build(ctx):
     t_jlook = t_live + 0.35                                     # Jonah looks up toward the storm above
     t_flash2 = t_pray + 0.08
     t_flash3 = t_jlook + 0.1                                    # a faint far flash in the hatch as he looks up
-    END_CALM = T - 1.2
 
     # ---------------------------------------------------------------- the ship's gentle roll (camera) and a lurch
     def lurch(t):
@@ -664,6 +714,19 @@ def build(ctx):
     def roll(t):
         a = 0.42 * M.progress(t, 0.0, 1.6, "sine")
         return a * math.sin(2 * math.pi * t / 4.6) + lurch(t)
+
+    def handoff(t):
+        return M.progress(t, *S4_HANDOFF, "sine")
+
+    def cam_roll(t):
+        """Camera roll: s04's hold roll (-0.3 * st.rot) through the dissolve, then this scene's own rocking."""
+        h = handoff(t)
+        return roll(t) if h >= 1 else (1 - h) * -0.3 * s04_roll(t) + h * roll(t)
+
+    def ship_roll(t):
+        """The roll the lantern answers to: s04's st.rot through the dissolve (as s04's lantern does), then roll."""
+        h = handoff(t)
+        return roll(t) if h >= 1 else (1 - h) * s04_roll(t) + h * roll(t)
 
     # ---------------------------------------------------------------- hold painting (s04's, same seed)
     sc.add("hold", V4.hold_svg(), z=0, wc=1.0, seed=101)
@@ -864,26 +927,23 @@ def build(ctx):
     seated = [
         (t_wake, jonah_fig(J_WAKE_IB_X, JY, JP["wake_ib"], -1, expr="sleepy", label="wake_ib")),
         (t_wake2, C.jonah(J_WAKE_X, JY, JS, -1, pose="wake", expr="sleepy")),
-        (t_startle, C.jonah(J_SIT_X, JY, JS, 1, pose="sit", expr="surprised")),
+        (t_startle, jonah_fig(J_TURN_X, JY, JP["turn_ib"], 1, expr="surprised", label="turn_ib")),
+        (t_startle2, C.jonah(J_SIT_X, JY, JS, 1, pose="sit", expr="surprised")),
         (t_jworry, C.jonah(J_SIT_X, JY, JS, 1, pose="sit", expr="worried")),
     ]
 
     def jseat_m(t):
         if t < t_wake or t >= t_stand:
             return Tf(alpha=0.0)
-        px = J_WAKE_IB_X if t < t_wake2 else J_WAKE_X if t < t_startle else J_SIT_X
+        px = (J_WAKE_IB_X if t < t_wake2 else J_WAKE_X if t < t_startle else J_TURN_X if t < t_startle2
+              else J_SIT_X)
         sx, sy = pop(t, [t_wake, t_wake2, t_startle, t_jworry], 0.09)
         sy *= 1 + 0.009 * math.sin(2 * math.pi * (t / 3.3 + 0.1))
-        dy = -14 * bump(t, t_wake2) - 20 * bump(t, t_startle, 0.09)
+        dy = -14 * bump(t, t_wake2) - 20 * bump(t, t_startle, 0.09)    # the turn is a little hop
         rot = 0.0
         if t_wake2 <= t < t_startle:      # sleepy sway while rubbing the eye
             rot = 2.2 * math.sin(2 * math.pi * (t - t_wake2) / 2.6) * M.progress(t, t_wake2 + 0.2, t_wake2 + 0.8)
-        # paper cut-out turn round the facing flip
-        k = 1.0
-        u = abs(t - t_startle) / 0.09
-        if u < 1:
-            k = 1 - 0.7 * (1 - u)
-        return Tf(0, dy, rot, sx * k, sy, 1.0, px, JY)
+        return Tf(0, dy, rot, sx, sy, 1.0, px, JY)
     flipbook(sc, "jonah_seated", [(k[0], doc(k[1])) for k in seated], z=3.1, motion=jseat_m)
 
     shadow = C.ground_shadow(J_STAND_X, FLOOR_Y + 2, JS, width=120)
@@ -922,21 +982,25 @@ def build(ctx):
         sc.add(f"z{i}", zsvg, wc=0, z=2.8, motion=zm)
 
     # ---------------------------------------------------------------- occluders over the captain on the ladder
+    # The deck round the hatch hides him only above the beam's top edge (outside the opening): the ladder leans on
+    # the beam and he climbs down in front of the ladder, so he comes down through the opening and passes IN FRONT
+    # of the beam (never sliced by it).
+    yb = OPEN_Y1 + 1
     cut_ceiling = Cutout(hold_layer,
-                         f'<path d="M-40,-80 L{W + 40},-80 L{W + 40},{BEAM_BOT + 3} L-40,{BEAM_BOT + 3} Z '
-                         f'M{HX0 + 3},{HY0 + 3} L{HX0 + 3},{OPEN_Y1} L{HX1 - 3},{OPEN_Y1} L{HX1 - 3},{HY0 + 3} Z" '
-                         f'fill="#000" fill-rule="evenodd"/>',
-                         (HX0 - 140, 0, HX1 + 150, BEAM_BOT + 6))
+                         f'<path d="M-40,-80 L{W + 40},-80 L{W + 40},{yb} L{HX1 - 3},{yb} L{HX1 - 3},{HY0 + 3} '
+                         f'L{HX0 + 3},{HY0 + 3} L{HX0 + 3},{yb} L-40,{yb} Z" fill="#000"/>',
+                         (HX0 - 140, 0, HX1 + 150, yb + 4))
     cut_post = Cutout(hold_layer,
-                      '<path d="M2145,-40 Q2050,700 2125,1390" fill="none" stroke="#000" stroke-width="152"/>',
+                      f'<path d="{POST_PATH}" fill="none" stroke="#000" stroke-width="{POST_W}"/>',
                       (1990, 260, 2240, 1250))
     cut_ceiling.get()
     cut_post.get()
+    post_on = lambda t: t_slide0 <= t < t_walk0 + 0.4      # noqa: E731
     sc.add_dynamic("cut_ceiling", lambda t: cut_ceiling.get() if t_slide0 - 0.1 <= t < t_land else None, z=6)
-    sc.add_dynamic("cut_post", lambda t: cut_post.get() if t_slide0 <= t < t_walk0 + 0.4 else None, z=6.1)
+    sc.add_dynamic("cut_post", lambda t: cut_post.get() if post_on(t) else None, z=6.1)
 
     # ---------------------------------------------------------------- light: lantern, storm light, flashes
-    swing = lambda t: 8 * math.sin(2 * math.pi * t / 3.1 + 0.6) - 0.6 * roll(t) + 5 * lurch(t)   # noqa: E731
+    swing = lambda t: 8 * math.sin(2 * math.pi * t / 3.1 + 0.6) - 0.6 * ship_roll(t) + 5 * lurch(t)   # noqa: E731
     glow = f'<ellipse cx="{LHX + 60}" cy="{LHY + 400}" rx="600" ry="520" fill="url(#lg2)"/>'
     sc.add("lamp_glow", doc(glow, S.rad_grad("lg2", [(0, "#ffd890", 0.5), (0.35, "#ffc870", 0.22), (1, "#ffc060", 0)])),
            wc=0, blend="add", z=8,
@@ -946,10 +1010,14 @@ def build(ctx):
                           + PR.lantern(LHX, LHY + 34, 1.5)), z=9,
            motion=lambda t: Tf(0, 0, swing(t), 1, 1, 1, LHX, LHY))
 
+    # the cold light and the rain blowing in fall behind the people (z below the captain), so the captain coming
+    # down the ladder through them stays in full colour instead of being washed out
     open_a = lambda t: M.progress(t, grate_t[0] + 0.05, grate_t[1] + 0.25, "sine")   # noqa: E731
-    sc.add("shaft", shaft_svg(), z=7, wc=0, blend="screen",
-           motion=lambda t: Tf(alpha=open_a(t) * (0.82 + 0.08 * math.sin(t * 1.7))))
-    sc.add("shaft_rain", [shaft_rain_svg(s) for s in (7, 8, 9)], z=7.1, wc=0,
+    shaft_a = lambda t: open_a(t) * (0.82 + 0.08 * math.sin(t * 1.7))   # noqa: E731
+    sc.add("shaft", shaft_svg(), z=2.76, wc=0, blend="screen", motion=lambda t: Tf(alpha=shaft_a(t)))
+    sc.add("shaft_post", shaft_svg(post_only=True), z=6.15, wc=0, blend="screen",
+           motion=lambda t: Tf(alpha=shaft_a(t) if post_on(t) else 0.0))
+    sc.add("shaft_rain", [shaft_rain_svg(s) for s in (7, 8, 9)], z=2.77, wc=0,
            motion=lambda t: Tf(alpha=open_a(t)), frame_at=lambda t: float(int(t * 11) % 3))
 
     flashes = [(t_open + 0.06, 0.55), (t_storm, 1.0), (t_flash2, 0.6), (t_flash3, 0.5)]
@@ -969,23 +1037,38 @@ def build(ctx):
         sc.add(f"drip{i}", doc(drop), wc=0, z=2.7, motion=dm)     # behind the climbing captain
 
     # ---------------------------------------------------------------- camera
-    # (centre speeds stay below ~75 stage px/s; viewport inside the painting: x 2*34..W-2*34, y 34..H-34)
+    # (centre speeds stay below ~75 stage px/s except in the end move; viewport inside the painting: x 2*34..W-2*34,
+    # y 34..H-34, and below y ~68 at the top, where the painting's wobbled rim is still soft)
     CAM_L1 = Cam(1420, 660, 1650)        # the captain is down: a closer two-shot for line 1
     CAM_PT = Cam(1420, 622, 1650)        # pointing up to the deck: up a little so the hatch is in frame
     CAM_PL = Cam(1440, 626, 1500)        # pushed in on the two during the plea
-    CAM_END = Cam(1440, 596, 1540)       # tilting up with Jonah's gaze: the hatch above both heads
+    CAM_END = Cam(1690, 304, 823)        # up with Jonah's gaze to the open hatch (storm light, rain) over both heads:
+    #                                      both faces below the bottom edge (the top edge stays 72 px inside the
+    #                                      painting, below its soft rim)
     t_c0 = t_slide0 + 0.1
     t_c1 = max(t_c0 + 5.2, t_cstand + 1.0)
     t_p0 = lc[0].end + 0.1
     t_p1 = max(t_p0 + 1.1, t_up + 0.6)
-    t_e0 = t_jlook - 0.12
+    t_pe = t_jlook - 0.12
     cam = M.cam_keys([(0, CAM0), (t_c0, CAM0), (t_c1, CAM_L1), (t_p0, CAM_L1), (t_p1, CAM_PT),
-                      (t_plead, CAM_PT), (t_e0, CAM_PL), (END_CALM, CAM_END)],
-                     ["sine", trapezoid(0.25), "sine", "sine", "sine", "sine", "sine"])
+                      (t_plead, CAM_PT), (t_pe, CAM_PL)],
+                     ["sine", trapezoid(0.25), "sine", "sine", "sine", "sine"])
+    # the end move, from "让我们活下来" (the captain's plea to heaven; Jonah looks up with it 0.35 s later) to the last
+    # frame: one even push (a log zoom about the move's fixed point zp, so nothing swings sideways) rising to the hatch
+    # and easing to rest; the faces leave the bottom of the frame before the middle of the dissolve into s06 (a
+    # location change to the deck). It is laid over the base camera, which is within 2 px of CAM_PL by then and
+    # settles on it at t_pe.
+    t_e0 = t_live
+    zp = [(a * CAM_END.w - b * CAM_PL.w) / (CAM_END.w - CAM_PL.w)
+          for a, b in ((CAM_PL.x, CAM_END.x), (CAM_PL.y, CAM_END.y))]
 
     def camera(t):
         c = cam(t)
-        return Cam(c.x, c.y, c.w, roll(t))
+        if t > t_e0:
+            k = (CAM_END.w / CAM_PL.w) ** M.progress(t, t_e0, T, trapezoid(0.3))
+            c = Cam(zp[0] + (c.x - zp[0]) * k, zp[1] + (c.y - zp[1]) * k, c.w * k)
+        w = s04_view_w(t) if t < XF else c.w       # the dissolve from s04: its push-in's last 4 % (centred on V0)
+        return Cam(c.x, c.y, w, cam_roll(t))
     sc.camera = camera
 
     # ---------------------------------------------------------------- frame effects
@@ -1024,6 +1107,6 @@ def build(ctx):
                    t_why=t_why, t_jworry=t_jworry, t_up=t_up, t_stand=t_stand, t_stand2=t_stand2, t_look=t_look,
                    t_pray=t_pray, t_plead=t_plead, t_sorry=t_sorry, t_live=t_live, t_pity=t_pity, t_jlook=t_jlook,
                    t_flash3=t_flash3, CL_T=CL_T, n_walk=n_walk, X_START=X_START, cam_keys=(t_c0, t_c1, t_p0, t_p1,
-                                                                                        t_plead, t_e0, END_CALM),
+                                                                                        t_plead, t_pe, t_e0, T),
                    phrases=ph.items)
     return sc

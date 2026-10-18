@@ -4,7 +4,8 @@ Adapted from the approved v1 shore scene (art/scenes_v1/s08_shore.py): the same 
 spit arc, landing, gull, crab and particles, on a wider stage (the v1 shore painting is shifted DX px to the
 right and open sea is added on the left) so the fish can swim in to the shore first.
 
-Iris-open into the scene: the centre of the first frame is the fish's head and bow wave out at sea.
+Iris-open into the scene: the centre of the first frame is the far fish's sleeping face (closed eye, pink
+cheek), its bow wave just right of it, so the growing circle shows the face from its first frames.
 
   start           the great fish drifts out at sea, back and head above the water (the rest of its body is a
                   teal shape under the surface), eye closed, tail wagging lazily.
@@ -19,7 +20,8 @@ Iris-open into the scene: the centre of the first frame is the fish's head and b
   '把约拿吐'       a big heave... and on '吐' it spits him out in a spray of water: he somersaults through the air
   '陆地上'         and lands on his bottom on the sand (puff of sand, bounce), dizzy, stars circling his head; the
                   standing gull takes off. The fish closes its mouth with a happy smile, watches him a moment,
-                  turns round behind a splash and swims away out to sea.
+                  then ducks under as a big opaque splash erupts; behind it (hard cut, no in-betweens) it is
+                  swapped for the turned drawing, which bobs up as the water falls and swims away out to sea.
   '约拿浑身湿漉漉的' the camera moves in first and holds still; he shakes himself like a wet puppy (drops flung off
                   his silhouette, shake arcs by his head) and looks at himself, dripping all over.
   '可是他又看见了太阳' sunlight streams down onto him; on '看见' he opens his arms to the warm sun (hop cut); faint
@@ -64,6 +66,7 @@ FAR = (700.0, 560.0, 0.5)                  # the fish out at sea at the start: a
 YW_SWIM = 10.0                             # waterline (fish-local px) while swimming: the mouth at the surface
 YW_REST = (WATER_Y - FY0) / FS             # ~207: the near water band's top when resting at the shore
 VEIL_BOX = (236, 170, 1604, 994)           # pinned crop of the underwater veil layer (reference placement)
+FISH_BOX = (240, 160, 1610, 990)           # pinned crop of the fish_back layer (encloses every fish frame)
 SEAT_IN = (400.0, 186.0)                   # Jonah's seat inside the open mouth, on the tongue (fish-local px)
 JS_SIT_IN = 0.8                            # ... and his scale there
 HEAD_L = (330.0, -150.0)                   # the fish's head / eye region (fish-local px)
@@ -76,6 +79,8 @@ PART_L, PART_R = -80.0, 105.0              # how far each cloud moves aside when
 GAP = (910.0, 150.0)                       # middle of the gap once parted (at rest, before the drift)
 RAY_SRC = (GAP[0], GAP[1] - 40)            # the rays start just inside the gap (behind the cloud edges)
 RAY_TGT = (885.0, 485.0)                   # ...and end on the far fish's head (rays layer drifts with the clouds)
+TURN_DIP = 300.0                           # how far the fish ducks under behind the turn splash (stage px)
+TURN_BACK, TURN_OUT = 120.0, 60.0          # ...backing off from the shore as it ducks; the turned one further out
 
 # In-between drawings for springing up from sitting (sit_happy -> arms_up) on '他得救了': he rocks forward
 # drawing his feet in (lean_a, lean_b), rises onto them in a deep squat (squat_up) and a forward-leaning
@@ -479,6 +484,122 @@ def tongue_mound(seat):
     return S.g(b, filter="wobble-fine")
 
 
+TS_Y = WATER_Y + 10                        # base line of the turn splash
+TS_CX = 910.0                              # ...and its middle (pivot), over the ducked fish's dorsal fin
+# The turn splash: a dome of water (the core, shaped to hide all of the ducked fish the camera sees at the swap,
+# both drawings) with two lobed sheets of thrown-up water in front of it, lobes fanning outward (x, top y, lean)
+TS_CORE = [(486, TS_Y + 4), (522, 700), (600, 652), (690, 602), (760, 512), (830, 462), (905, 438), (985, 446),
+           (1050, 482), (1115, 535), (1200, 568), (1300, 578), (1385, 600), (1450, 668), (1490, TS_Y + 4)]
+TS_BACK = [(566, 636, -44), (668, 566, -38), (772, 462, -26), (875, 384, -10), (978, 392, 10), (1082, 462, 26),
+           (1188, 524, 36), (1292, 536, 42), (1394, 582, 44), (1462, 672, 36)]
+TS_FRONT = [(604, 692, -42), (718, 616, -32), (842, 546, -14), (962, 548, 4), (1082, 596, 22), (1206, 636, 34),
+            (1330, 652, 40), (1430, 708, 36)]
+
+
+def _sheet(lobes, y0, k_valley):
+    """A water sheet: rounded lobes (leaning outward) joined by valleys at k_valley of the lower neighbour's
+    height, tapering down to the base line at both ends. Returns (closed fill path, open outline path: the
+    outline has no ink along the base)."""
+    x0, top0, lean0 = lobes[0]
+    w0 = 26 + 0.07 * (y0 - top0)
+    pts = [(x0 + lean0 - w0 * 1.7, y0 + 2)]
+    for i, (x, top, lean) in enumerate(lobes):
+        h = y0 - top
+        w = 26 + 0.07 * h                       # rounded crown: two shoulders either side of the tip
+        tx = x + lean
+        pts += [(tx - w * 1.05, top + w * 0.55), (tx - w * 0.2, top + 1), (tx + w * 0.55, top + w * 0.3),
+                (tx + w * 1.0, top + w * 0.95)]
+        if i + 1 < len(lobes):
+            x2, top2, lean2 = lobes[i + 1]
+            pts.append(((tx + x2 + lean2) / 2, y0 - min(h, y0 - top2) * k_valley))
+    x1, top1, lean1 = lobes[-1]
+    pts.append((x1 + lean1 + (26 + 0.07 * (y0 - top1)) * 1.7, y0 + 2))
+    line = S.smooth_path(pts, closed=False)
+    return line + " Z", line
+
+
+def _drop(x, y, r, ang):
+    """A plump water drop of radius r at (x, y), its short tail trailing opposite the flight angle (deg)."""
+    a = math.radians(ang)
+    ux, uy = math.cos(a), math.sin(a)
+    px, py = -uy, ux
+    tx, ty = x - ux * r * 1.9, y - uy * r * 1.9
+    return (f"M{tx:.1f},{ty:.1f} Q{x - ux * r * 0.2 + px * r * 1.45:.1f},{y - uy * r * 0.2 + py * r * 1.45:.1f} "
+            f"{x + ux * r:.1f},{y + uy * r:.1f} Q{x - ux * r * 0.2 - px * r * 1.45:.1f},"
+            f"{y - uy * r * 0.2 - py * r * 1.45:.1f} {tx:.1f},{ty:.1f} Z")
+
+
+def turn_splash():
+    """The big splash the fish turns behind: a dome of water with two sheets of thrown-up water in front (white
+    crests, sea-teal below), lobes fanning outward, white streaks up each lobe and plump drops flying off the
+    crests. Opaque everywhere, so it hides the hard cut to the turned fish drawing."""
+    y0 = TS_Y
+
+    def vgrad(id_, stops, y1):
+        st = "".join(f'<stop offset="{o}" stop-color="{c}"/>' for o, c in stops)
+        return (f'<linearGradient id="{id_}" gradientUnits="userSpaceOnUse" x1="0" y1="{y1}" x2="0" y2="{y0}">'
+                f'{st}</linearGradient>')
+
+    def shape(fill_d, line_d, fill, sw):
+        return (f'<path d="{fill_d}" fill="{fill}"/>'
+                f'<path d="{line_d}" fill="none" stroke="{S.INK}" stroke-width="{sw}" stroke-linecap="round" '
+                f'stroke-linejoin="round"/>')
+    defs = (vgrad("s13tsc", [(0, "#e6f6f2"), (0.35, "#b4e0df"), (1, "#7cc3cc")], 430) +
+            vgrad("s13tsb", [(0, "#f4fbf7"), (0.16, "#d3efeb"), (0.5, "#a3d9db"), (1, "#74bfca")], 370) +
+            vgrad("s13tsf", [(0, P["foam"]), (0.22, "#e4f5f1"), (0.6, "#b9e3e2"), (1, "#93cfd4")], 530))
+    core = S.smooth_path(TS_CORE, closed=False)
+    b = shape(core + " Z", core, "url(#s13tsc)", 4)
+    b += shape(*_sheet(TS_BACK, y0, 0.74), "url(#s13tsb)", 4.5)
+    # streaks of white water up the lobes
+    for x, top, lean in TS_BACK:
+        h = y0 - top
+        b += (f'<path d="M{x - 6:.1f},{y0 - h * 0.3:.1f} Q{x + lean * 0.35 - 14:.1f},{y0 - h * 0.62:.1f} '
+              f'{x + lean * 0.8 - 8:.1f},{top + 34 + 0.05 * h:.1f}" stroke="#fbfdf8" stroke-width="{7 + h / 80:.1f}" '
+              f'fill="none" stroke-linecap="round" opacity="0.8"/>')
+    b += shape(*_sheet(TS_FRONT, y0, 0.7), "url(#s13tsf)", 4)
+    for x, top, lean in TS_FRONT[1:-1]:
+        h = y0 - top
+        b += (f'<path d="M{x + 4:.1f},{y0 - h * 0.18:.1f} Q{x + lean * 0.4:.1f},{y0 - h * 0.55:.1f} '
+              f'{x + lean * 0.8 - 4:.1f},{top + 28:.1f}" stroke="#ffffff" stroke-width="7" fill="none" '
+              f'stroke-linecap="round" opacity="0.85"/>')
+    # plump drops thrown up and outward off the crests
+    for k, (x, top, lean) in enumerate(TS_BACK[1:-1]):
+        side = -1 if x < TS_CX else 1
+        for j, (ox, oy, r) in enumerate(((26, -42, 9), (60, -14, 7))):
+            if (k + j) % 2 == 1:
+                continue
+            x_, y_ = x + lean + side * ox, top + oy
+            ang = math.degrees(math.atan2(-1.4, side * (0.35 + abs(x - TS_CX) / 400)))
+            b += S.path(_drop(x_, y_, r, ang), fill="#e4f5f2", sw=2.6)
+    return doc(S.g(b, filter="wobble"), defs)
+
+
+def turn_foam():
+    """Heaped foam on the water at the foot of the turn splash: ink-edged clumps of puffs, big heaps in the middle
+    breaking up into smaller clumps with gaps toward the ends (covers the sheets' feet)."""
+    rng = np.random.default_rng(37)
+    y0 = TS_Y
+    blobs = []
+    x = 452.0
+    while x < 1556:
+        near = max(0.0, 1 - abs(x - TS_CX) / 620)
+        n = int(rng.integers(3, 6)) + int(3 * near)
+        big = 13 + 26 * near ** 0.7
+        for j in range(n):
+            u = (j + 0.5) / n
+            r = big * (0.55 + 0.6 * math.sin(math.pi * u)) * rng.uniform(0.8, 1.15)
+            blobs.append((x, y0 - r * rng.uniform(0.2, 0.75) + rng.uniform(-3, 6), r))
+            if j % 2 == 1:                       # a smaller puff in front, lower down
+                blobs.append((x - r * 0.5, y0 + 10 + rng.uniform(-3, 3), r * 0.62))
+            x += r * rng.uniform(0.75, 1.1)
+        x += rng.uniform(4, 10) + 34 * (1 - near) ** 2 * rng.uniform(0.4, 1.0)     # gaps toward the ends
+    c = "".join(f'<circle cx="{a:.1f}" cy="{b_:.1f}" r="{r:.1f}"/>' for a, b_, r in blobs)
+    b = f'<g fill="{P["foam"]}" stroke="{S.INK}" stroke-width="7">{c}</g><g fill="{P["foam"]}">{c}</g>'
+    b += "".join(f'<circle cx="{a - r * 0.3:.1f}" cy="{b_ - r * 0.35:.1f}" r="{r * 0.28:.1f}" fill="#ffffff" '
+                 f'opacity="0.65"/>' for a, b_, r in blobs[::3])
+    return doc(S.g(b, filter="wobble-fine"))
+
+
 def tail_wave(tail):
     """Far out at sea the fish's tail sticks up out of the water and waves goodbye (small; clipped at the
     waterline, with a foam ring)."""
@@ -543,6 +664,8 @@ def build(ctx):
     t_close1 = t_close0 + 7 / FPS
     t_turn0 = max(t_land + 0.8, L0.end + 0.08)            # the fish turns round (behind a splash)...
     t_turn1 = t_turn0 + 0.26
+    t_swap = t_turn0 + 0.13                               # hard cut to the turned drawing, at the splash's peak
+    t_fall0, t_fall1 = t_swap + 0.04, t_swap + 0.44       # the splash falls back into the water
     t_away = t_turn1 - 0.04                               # ...and swims away
     t_out = t_spit + 0.15                                 # Jonah has cleared the lips
     t_shake = word_t(L1, "浑身") + 0.08                   # 浑身湿漉漉的: shakes himself
@@ -676,13 +799,22 @@ def build(ctx):
         if t > t_close1:
             w = math.exp(-(t - t_close1) / 0.4) * (1 - progress(t, t_turn0 - 0.1, t_turn0))
             rot += 2.5 * w * math.sin(2 * math.pi * 3.0 * (t - t_close1))
-        # cartoon turn behind a splash (comes out mirrored, a little smaller), then swims away left, sinking
-        th = progress(t, t_turn0, t_turn1, "inout")
-        k_s = lerp(1.0, V.AWAY_S, th)
-        mid = math.sin(math.pi * th)
-        sx *= math.cos(math.pi * th) * k_s
-        sy *= k_s * (1 + 0.07 * mid)
-        ay -= 26 * mid
+        # the turn: the fish ducks under (squash), backing off from the shore, as a big splash erupts in front of
+        # it; behind the splash at its peak (opaque, hiding all of the fish the camera sees) the drawing is
+        # swapped for the turned one (mirrored, a little smaller, a little further out): a hard cut, no
+        # in-betweens. It bobs part way up as the water falls (stretch), then swims away left, sinking
+        if t > t_turn0 - 0.08:
+            back = progress(t, t_turn0 - 0.06, t_swap, "inout")
+            dip = back * (1 - 0.55 * progress(t, t_fall0 - 0.03, t_fall0 + 0.45, "inout"))
+            ay += TURN_DIP * dip
+            ax -= TURN_BACK * back + TURN_OUT * float(t >= t_swap)
+            q = bump(t, t_turn0 - 0.06, t_swap + 0.01)                  # squash while ducking
+            st = bump(t, t_fall0, t_fall0 + 0.5)                        # stretch as it bobs up
+            sx *= (1 + 0.05 * q) * (1 - 0.025 * st)
+            sy *= (1 - 0.07 * q) * (1 + 0.04 * st)
+        if t >= t_swap:
+            sx *= -V.AWAY_S
+            sy *= V.AWAY_S
         v = max(0.0, t - t_away)
         ax -= 60 * v + 700 * v * v
         ay += 50 * v + 230 * v * v
@@ -694,25 +826,37 @@ def build(ctx):
         ax, ay, sx, sy, rot = fish_pose(t)
         if t > t_away + 1.6:
             return Tf(alpha=0.0)
-        # mid-turn (nearly edge-on) the fish would be a tall thin sliver poking out of the splash crown: hide it
-        # for those 1-2 frames, the crown covers the cut
-        th = progress(t, t_turn0, t_turn1, "inout")
-        a = 0.0 if 0.0 < th < 1.0 and abs(math.cos(math.pi * th)) < 0.22 else 1.0
-        return Tf(dx=ax - FX0, dy=ay - FY0, rot=rot, sx=sx / FS, sy=sy / FS, alpha=a, px=FX0, py=FY0)
+        return Tf(dx=ax - FX0, dy=ay - FY0, rot=rot, sx=sx / FS, sy=sy / FS, px=FX0, py=FY0)
 
     def yw_local(t):
         """Waterline on the fish (local px): at the mouth while swimming, down to the near band on arrival."""
         return lerp(YW_SWIM, YW_REST + 4, progress(t, t_arrive - 0.42, t_arrive + 0.22, "inout"))
 
+    # pins: fix fish_back's crop box (FISH_BOX) so its waterline clip maps to a known reveal fraction
+    x0_, y0_, x1_, y1_ = FISH_BOX
+    pins = (f'<rect x="{x0_}" y="{y0_}" width="2" height="2" fill="#4f8fb0" opacity="0.03"/>'
+            f'<rect x="{x1_ - 2}" y="{y1_ - 2}" width="2" height="2" fill="#4f8fb0" opacity="0.03"/>')
     back, front = [], []
     for i, (mo, ey, tl) in enumerate(frames):
         if i in open_set:
-            back.append(doc(PR.fish(FX0, FY0, FS, 1, mouth=mo, eye=ey, tail=tl, part="back")))
+            back.append(doc(PR.fish(FX0, FY0, FS, 1, mouth=mo, eye=ey, tail=tl, part="back") + pins))
             front.append(doc(PR.fish(FX0, FY0, FS, 1, mouth=mo, eye=ey, tail=tl, part="front")))
         else:
-            back.append(doc(PR.fish(FX0, FY0, FS, 1, mouth=mo, eye=ey, tail=tl)))
+            back.append(doc(PR.fish(FX0, FY0, FS, 1, mouth=mo, eye=ey, tail=tl) + pins))
             front.append(doc(""))
-    sc.add("fish_back", back, z=10, motion=fish_tf, frame_at=fish_idx)
+
+    def fish_clip(t):
+        """From the turn on, the fish is cut off a little below the waterline (the line rises from below the
+        fish as it ducks), so its ducked body never shows through the water band: no see-through outlines that
+        change at the swap."""
+        if t < t_turn0 - 0.08:
+            return {"mode": "down", "frac": 1.0}
+        f = fish_tf(t)
+        y_clip = lerp(FISH_BOX[3] + 40, WATER_Y + 40 + 9 * abs(f.rot), progress(t, t_turn0 - 0.08, t_turn0 + 0.06,
+                                                                               "sine"))
+        ly = FY0 + (y_clip - FY0 - f.dy) / f.sy
+        return {"mode": "down", "frac": (ly - FISH_BOX[1]) / (FISH_BOX[3] - FISH_BOX[1]), "soft": 16}
+    sc.add("fish_back", back, z=10, motion=fish_tf, frame_at=fish_idx, reveal=fish_clip)
 
     # the submerged part of the swimming fish (veil, revealed below the waterline) and its foam
     veils = [veil(tl) for tl in CALM + SWIM]
@@ -964,18 +1108,30 @@ def build(ctx):
     rip = shifted(V.ripples())
     sc.add("ripple0", rip, z=14.9, wc=0, motion=ring(t_arrive - 0.05, 1.2, 170, -6))
     sc.add("ripple1", rip, z=15, wc=0, motion=ring(t_spit + 0.02, 1.0, fish_tf(t_spit + 0.02).dx))
-    sc.add("ripple2", rip, z=15.05, wc=0, motion=ring(t_turn0 + 0.1, 1.35, FX0 - RIPPLE[0]))
+    sc.add("ripple2", rip, z=15.05, wc=0, motion=ring(t_turn0 + 0.1, 1.35, TS_CX - RIPPLE[0]))
 
+    # the turn splash: erupts as the fish ducks, is fully up (opaque) a frame before the swap and stays up a few
+    # frames after it, then falls back into the water (squashing down onto its foot, never fading while it
+    # still stands in front of the fish); the foam at its foot lingers and melts away
     def splash_m(t):
-        if t < t_turn0 - 0.03 or t > t_turn1 + 0.24:
+        if t < t_turn0 - 0.03 or t > t_fall1:
             return Tf(alpha=0.0)
-        rise = progress(t, t_turn0 - 0.03, t_turn0 + 0.12, "out")
-        fall = progress(t, t_turn0 + 0.16, t_turn1 + 0.24, "in")
-        mid = math.sin(math.pi * progress(t, t_turn0, t_turn1, "inout"))    # bigger crown while the fish is edge-on
-        return Tf(sx=lerp(0.6, 1.08, rise) * (1 + 0.15 * fall) * (1 + 0.18 * mid),
-                  sy=lerp(0.15, 1.0, rise) * (1 - 0.85 * fall) * (1 + 0.32 * mid),
-                  alpha=1 - progress(t, t_turn1, t_turn1 + 0.24, "sine"), px=FX0, py=WATER_Y + 8)
-    sc.add("splash", shifted(V.splash_crown()), z=14.6, wc=0.5, motion=splash_m)
+        rise = progress(t, t_turn0 - 0.03, t_swap - 0.025, "out")
+        fall = progress(t, t_fall0, t_fall1, lambda u: u ** 1.6)
+        over = bump(t, t_swap - 0.06, t_fall0 + 0.06)
+        return Tf(sx=lerp(0.8, 1.0, rise) * (1 + 0.01 * over) * (1 + 0.1 * fall),
+                  sy=max(0.002, lerp(0.1, 1.0, rise) * (1 + 0.03 * over) * (1 - fall)),
+                  alpha=1 - progress(fall, 0.85, 1.0, "linear"), px=TS_CX, py=TS_Y)
+    sc.add("splash", turn_splash(), z=14.6, wc=0.5, motion=splash_m)
+
+    def foam_m(t):
+        if t < t_turn0 - 0.03 or t > t_fall1 + 0.35:
+            return Tf(alpha=0.0)
+        rise = progress(t, t_turn0 - 0.03, t_swap - 0.04, "out")
+        melt = progress(t, t_fall1 - 0.15, t_fall1 + 0.35, "sine")
+        return Tf(sx=lerp(0.7, 1.0, rise) * (1 + 0.08 * melt), sy=lerp(0.3, 1.0, rise) * (1 - 0.6 * melt),
+                  alpha=1 - melt, px=TS_CX, py=TS_Y + 6)
+    sc.add("splash_foam", turn_foam(), z=14.65, wc=0.3, motion=foam_m)
 
     # sand puffs on landing (+ smaller ones on the bounce)
     def puff(tc, big, side):
@@ -1096,20 +1252,21 @@ def build(ctx):
     sc.add("gull_stand", g_fr, z=18.5, motion=gull_tf, frame_at=gull_idx)
     sc.add("foreground", shifted(V.foreground()), z=19)
 
-    # ---- camera: on the fish out at sea (iris opens on its head), pans with it to the shore, holds wide for
-    # the spit, then moves in on Jonah for the second line and settles before the dissolve.
+    # ---- camera: on the fish out at sea (the iris opens from the frame centre on its sleeping face, the bow
+    # wave just right of it; the frame eases back a little while God speaks), pans with it to the shore, holds
+    # wide for the spit, then moves in on Jonah for the second line and settles before the dissolve.
     # The push-in happens BEFORE the wet-puppy shake (it is over by t_shake - 0.05) and the frame holds still
     # (a few px of drift) through the shake, so the shake reads clearly; the fish's turn and splash stay on its
     # left side.
     t_push0 = t_land + 0.5
     t_push1 = max(t_push0 + 0.8, t_shake - 0.05)
     t_hold1 = max(t_push1 + 0.3, t_sun0)
-    cam = M.cam_keys([(0, Cam(990, 590, 1920)), (t_swim0, Cam(1010, 592, 1920)),
+    cam = M.cam_keys([(0, Cam(925, 548, 1840)), (t_swim0, Cam(1010, 592, 1920)),
                       (t_arrive + 0.4, Cam(1450, 600, 1960)), (t_spit - 0.3, Cam(1468, 598, 1990)),
                       (t_land + 0.3, Cam(1480, 600, 1985)), (t_push0, Cam(1483, 601, 1981)),
                       (t_push1, Cam(1680, 700, 1680)), (t_hold1, Cam(1686, 702, 1670)),
                       (t_sunword + 0.2, Cam(1642, 606, 1860)), (T, Cam(1638, 603, 1870))],
-                     ["linear", "sine", "sine", "sine", "sine", "sine", "linear", "sine", "linear"])
+                     ["sine", "sine", "sine", "sine", "sine", "sine", "linear", "sine", "linear"])
     sc.camera = M.cam_shake(cam, amp=7, t0=t_land, t1=t_land + 0.35, freq=14, seed=5)
 
     # ---- particles (output space): bow spray, arrival drops, spit spray, turn spray, shake drops, speed
@@ -1135,12 +1292,17 @@ def build(ctx):
                   for u in np.linspace(0.12, 0.7, 9)]
     spray = V.ballistic(mouth_line, t_spit - 0.03, 40, (-55, -5), (380, 950), (2.2, 6.0), (0.3, 0.5), 1900, 81,
                         spread=(10, 10))
-    turn_line = [(FX0 + dx, WATER_Y - 6) for dx in np.linspace(-260, 260, 9)]
+    turn_line = [(TS_CX + dx, WATER_Y - 6) for dx in np.linspace(-300, 300, 9)]
     turn_spray = V.ballistic(turn_line, t_turn0 + 0.02, 34, (-125, -55), (300, 760), (2.2, 5.5), (0.35, 0.55),
                              1900, 83, spread=(16, 6))
+    # drops thrown off the splash's crests at its peak, raining down as it falls
+    crest = [(x + lean, top + 24) for x, top, lean in TS_BACK[2:7]]
+    crest_drops = V.ballistic(crest, t_swap - 0.03, 24, (-128, -52), (200, 470), (3.0, 6.0), (0.5, 0.8), 1900, 84,
+                              spread=(40, 10))
     sets = [(s_, False, WATER_Y + 12) for s_ in bow_sets] + [(arrive_drops, False, WATER_Y + 12),
                                                             (spray, True, WATER_Y + 12),
-                                                            (turn_spray, False, WATER_Y + 12)]
+                                                            (turn_spray, False, WATER_Y + 12),
+                                                            (crest_drops, False, WATER_Y + 12)]
 
     # the wet-puppy shake flings drops off his silhouette edge (head-cloth sides and top, arms, back, hem),
     # outward, in time with the swings (a swing to the right throws drops right, then left...). Drawn as
@@ -1348,7 +1510,7 @@ def build(ctx):
     sc.sfx("thud", t_land - 0.01, gain_db=-8, pan=0.3)
     sc.sfx("thud", t_hop - 0.01, gain_db=-13, pan=0.3)
     sc.sfx("gull", t_g + 0.6, gain_db=-15, pan=0.6)
-    sc.sfx("splash_small", t_turn0 + 0.02, gain_db=-13, pan=-0.45)
+    sc.sfx("splash", t_turn0 + 0.02, gain_db=-12, pan=-0.45)
     sc.sfx("cloth", t_shake + 0.05, gain_db=-12, pan=0.3)
     sc.sfx("splash_small", t_shake + 0.12, gain_db=-19, pan=0.3)
     sc.sfx("drip", t_land + 0.6, dur=t_look - t_land, gain_db=-20, pan=0.3, fade_in=0.4, fade_out=0.8)

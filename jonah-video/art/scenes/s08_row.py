@@ -741,6 +741,38 @@ def hop_tf(t, events, pivot):
     return Tf(dx, dy, 0, 1.0 + (1 - sy) * 0.5, sy, 1.0, pivot[0], pivot[1])
 
 
+class _SubView:
+    """A camera view shifted into a crop of the output frame (what an fx needs: to_out, scale, t)."""
+
+    def __init__(self, view, x0, y0):
+        self.view, self.x0, self.y0, self.scale, self.t = view, x0, y0, view.scale, view.t
+
+    def to_out(self, x, y):
+        ox, oy = self.view.to_out(x, y)
+        return ox - self.x0, oy - self.y0
+
+
+def fx_in_box(fxs, rect, t0=0.0, pad=40):
+    """Run stage-space overlay fx (sparkles) on just the part of the output frame that can hold them (``rect`` in
+    stage px, padded by ``pad`` output px), not on full-frame overlays: same pixels, a fraction of the cost."""
+    def f(frame, t, view):
+        if t < t0:
+            return frame
+        pts = [view.to_out(x, y) for x in (rect[0], rect[2]) for y in (rect[1], rect[3])]
+        x0, y0 = max(0, int(min(p[0] for p in pts) - pad)), max(0, int(min(p[1] for p in pts) - pad))
+        x1 = min(frame.size[0], int(max(p[0] for p in pts) + pad) + 1)
+        y1 = min(frame.size[1], int(max(p[1] for p in pts) + pad) + 1)
+        if x0 >= x1 or y0 >= y1:
+            return frame
+        sub = frame.crop((x0, y0, x1, y1))
+        sv = _SubView(view, x0, y0)
+        for fx in fxs:
+            sub = fx(sub, t, sv) or sub
+        frame.paste(sub, (x0, y0))
+        return frame
+    return f
+
+
 # ---------------------------------------------------------------- build
 
 def build(ctx):
@@ -1359,11 +1391,19 @@ def build(ctx):
     sc.camera = camera
 
     # --------------------------------------------------- effects
+    # Sparkles hang in the light between the cloud break and the kneeling crew: three small sets stepping down the
+    # fan of shafts (stage px; they do not ride the ship). Every rect's bottom stays >= ~30 px above the highest
+    # head / raised hand under it over the whole prayer, rocking and the captain's hop included (Jonah's head ~667
+    # at x 1520-1640, sailor D's and the captain's raised hands ~692 at x 1820-2120, sailor C's head ~740 at
+    # x 1680-1800), and they only drift up, so no sparkle ever lands on a face or a hand.
+    spark = dict(t0=t_lord + 1.2, t1=T + 2, period=2.2, drift=-6)
     sc.fx = [V.rain_fx(0.0, t_lord + 1.5, density=0.85, angle=-16),
              V.rain_fx(t_lord + 0.3, T + 1.0, density=0.45, angle=-12, alpha=60, seed=9),
              V.flash_fx([(ts, st) for ts, st, _ in STRIKES]),
-             FX.sparkles((GX - 560, GY + 160, GX + 120, deck_mid - 140), count=14, t0=t_lord + 1.2, t1=T + 2,
-                         period=2.2, drift=-6, seed=21)]
+             fx_in_box([FX.sparkles((GX - 200, GY + 110, GX + 40, GY + 210), count=5, seed=50, **spark),   # by the
+                        FX.sparkles((GX - 400, GY + 200, GX - 40, GY + 285), count=6, seed=60, **spark),   # break,
+                        FX.sparkles((GX - 360, GY + 285, GX - 240, GY + 345), count=2, seed=61, **spark)], # shafts,
+                       (GX - 400, GY + 110 - 6 * (T + 2 - spark["t0"]), GX + 40, GY + 345), t0=spark["t0"])]  # over C
     sc.meta = dict(catches=catches, oar_cues=oar_cues, T_HIT=T_HIT, T_LOSE=T_LOSE, t_fast_set=t_fast_set)
 
     # --------------------------------------------------- sound

@@ -18,18 +18,26 @@ Two shots joined by a dip through the blank page in the pause after line 1:
 
 Narration (every key time comes from the chunks; a phrase inside a chunk is placed by its characters and snapped
 to a pause in the voice take, see Cues):
-  line 0 '于是，'    the crew get up (low kneel -> upright kneel -> one knee -> standing, each cut eased so heads never
-                    pop) while the camera eases out to the v1 wide shot;
-         '他们'     the two lifters (sailors 1 and 2, either side of Jonah) crouch and take hold of him;
-         '抬起来'   they hoist him overhead ('carried' on their hands; the cut is sold by a squash-hop and he rises
-                    onto their hands); '扔进了' heave (dip, push) and launch: he flies over the stern in a high arc
-                    (computed to clear the heads of sailor 3 and the captain);
+  line 0 '于是，'    the crew get up one after another, the lifters first, 0.17 s apart (low kneel -> upright kneel ->
+                    one knee -> standing, 4 frames per drawing, each cut eased so heads never pop and sold by a quick
+                    stretch-and-settle about the feet) while the camera holds s08's framing;
+         '他们'     the two lifters (sailors 1 and 2, either side of Jonah) crouch and take hold of him; once all are
+                    up a lightning flash (camera still), then one slow pull-out to the v1 wide shot (zoom <= ~19 %/s)
+                    that has settled before the launch;
+         '抬起来'   they hoist him overhead: both face the stern with their arms stretched up, s1's hands under his
+                    feet and knees, s2's under his shoulders and head, the palms drawn over his robe; he lies (hands
+                    folded on his chest) with his underside just above their heads, never behind one; the cut is sold
+                    by a push-up (the new drawings start low and rise home with a small overshoot, Jonah riding on
+                    their hands); the captain points over the stern at the sea;
+                    '扔进了' heave (dip, push) and launch: he flies over the stern in a high arc (computed to clear the
+                    heads of sailor 3 and the captain);
          '大海'     splash crown, drops, ripples, a burst of bubbles; the captain (on the stern, nearest the splash)
                     leans over the rail pointing DOWN at the ripples, sailors 2 and 3 lean over and look down.
   line 1 '一下子，'  the rain stops at once, the storm banks slide away, the sky turns blue;
-         '海就平静了' the storm crests sink and the sea flattens; the sun (its own layers: the glow fades in, the
-                    disc pops in opaque once the storm sky is nearly gone) and a golden sunbeam; the crew (pose cut)
-                    lift their hands in awe, sailor 3 raises an arm toward the light;
+         '海就平静了' the storm crests sink and the sea flattens; the sun emerges at full size from behind a
+                    clearing cloud that drifts off to the right once the storm sky is nearly gone (its glow fades in
+                    round the cloud), and a golden sunbeam; the crew (pose cut) lift their hands in awe, sailor 3
+                    raises an arm toward the light;
          '风停了，'  the curly wind marks fade away and the pennant sags (12 / 25 / 45 deg in-betweens) to hang slack
                     behind the yard, swaying slowly; gulls glide in;
          '浪也静了。' the last swell settles, the ship lies still, glints sparkle on the water.
@@ -97,12 +105,7 @@ A_POS = {k: (ship_x(lx), deck_y(-400 if k == "capt" else lx)) for k, lx in A_LX.
 A_F0 = dict(s0=1, s1=1, s2=-1, s3=-1, capt=-1)          # facings at the start (toward Jonah, as in s08)
 DECK = A_POS["s1"][1]
 L1X, L2X = A_POS["s1"][0], A_POS["s2"][0]                # the two lifters
-HAND_Y = (A_POS["s1"][1] + A_POS["s2"][1]) / 2 - 316.5 * SS   # 'lift' hand line
-JCAR_C = ((L1X + L2X) / 2, HAND_Y + 6 * SS - 39.5 * JS)      # carried Jonah: bbox centre
-JCAR = (JCAR_C[0] - 20 * JS, HAND_Y + 6 * SS)                 # ...and anchor (facing -1, head to the stern)
 JAIR_ROT = V.JAIR_ROT
-JAIR_C = JCAR_C
-JAIR = (JAIR_C[0] + 1 * JS, JAIR_C[1] + 135.5 * JS)          # 'fall' anchor
 PEN = PR.local_to_stage(SX, WL, SS, SF, -10, -930)           # masthead (pennant root)
 SUN_A = (1700, 215)                                          # v1 sun (removed from V.background, own layer)
 
@@ -234,6 +237,14 @@ def bump(t, ts, w=0.07):
     return max(0.0, 1 - abs(t - ts - 0.03) / w)
 
 
+def stretch(u, amp=0.045):
+    """Stretch-and-settle after a pose cut at u = 0 (s): +amp (taller) on the cut frame, a small squash ~0.1 s later,
+    gone by 0.25 s. Used as sy = 1 + k, sx = 1 - k / 2 about the feet."""
+    if u < 0 or u >= 0.25:
+        return 0.0
+    return amp * math.exp(-u / 0.07) * math.cos(2 * math.pi * u / 0.2)
+
+
 def steps(keys):
     """Hard-cut flipbook index: keys = [(t, idx), ...]."""
     keys = sorted(keys)
@@ -290,6 +301,8 @@ LEAN_POINT = dict(STAND, t=12, h=18, arms=(("fk", 60, 52), ("fk", 20, 30)), hand
                   look=(0.05, 0.06))                                   # leaning over, pointing DOWN at the water
 LEAN_LOOK = dict(STAND, t=14, h=20, arms=(("fk", 30, 40), ("fk", 10, 30)), hands=("open", "open"),
                  look=(0.05, 0.07))                                    # leaning over, looking down
+CAPT_SEA = dict(C.POSES["point"], t=4, h=6, arms=(("fk", 74, 80), ("fk", -10, -4)), look=(0.05, 0.03))
+                                                                       # the captain points over the stern: there!
 PRAY = C.POSES["pray"]
 P_BOW = dict(KNEEL, t=6, h=16)                                         # palms together, head bowed
 P_UP = dict(KNEEL)                                                     # palms together, head tilted up
@@ -317,6 +330,50 @@ def kfig(kind, variant, x, y, s, ps, expr, facing=1):
     return C._wrap_out(inner, x, y, s, f, f"{kind}{variant}"), hands, head
 
 
+# ---- the hoist ('抬起来'): Jonah lies flat on the two lifters' raised hands with his underside just above their
+#      heads (never behind a head). Both lifters face the stern; s1 holds his feet and knees, s2 his shoulders and
+#      head. Each wrist sits just under his robe, so the palm (drawn over him) grips its edge.
+JCAR_ARMS = (("ik", "torso", 0.35, 0.66, 1), ("ik", "torso", 0.5, 0.62, 1))   # Jonah's hands folded on his chest
+HOIST_REACH = 1.24                     # arms stretched up (the 'throw' pose uses 1.12)
+HOIST_SHIFT = -10.0                    # Jonah carried this far toward the bow, so both lifters' hands are under him
+HOIST_CLEAR = 6.0                      # his underside this far above the lifters' head tops
+HOIST_GRIP = 4.0                       # wrists this far below his underside (the palms overlap his robe)
+HOIST_DX = dict(s1=((36, 1), (-38, -1)), s2=((4, 1), (-40, -1)))   # (far, near) wrist x from the anchor, elbow
+
+
+def _hoist_pose(dxs, wy):
+    return dict(C.POSES["lift"], reach=HOIST_REACH, hands=("open", "open"),
+                arms=tuple(("ik", "abs", dx / SS, wy / SS, bend) for dx, bend in dxs))
+
+
+def _hoist_geometry():
+    """(underside y of carried Jonah, {lifter: pose}) for the hoist, from the lifters' head tops."""
+    tops = []
+    for name, var in (("s1", 1), ("s2", 2)):
+        x, y = A_POS[name]
+        kfig("s", var, x, y, SS, _hoist_pose(HOIST_DX[name], -300.0), "worried", 1)
+        tops.append(y + C._LAST["head_top"][1] * SS)
+    u = min(tops) - HOIST_CLEAR
+    return u, {name: _hoist_pose(HOIST_DX[name], u + HOIST_GRIP - A_POS[name][1]) for name in ("s1", "s2")}
+
+
+HOIST_U, HOIST_POSES = _hoist_geometry()
+
+
+def jonah_carried(x, y):
+    """Jonah lying on his back on raised hands (the library's 'carried' pose with both hands on his chest, so no
+    arm dangles down between the lifters' heads); anchor (x, y) is the middle of his underside."""
+    ps = dict(C.POSES["carried"], arms=JCAR_ARMS)
+    inner, _ = C._figure(C._jonah_design(), C._ADULT, ps, ps["expr"], -1, True)
+    return C._wrap_out(inner, x, y, JS, -1, "jonah-carried")
+
+
+JCAR = ((L1X + L2X) / 2 - 20 * JS + HOIST_SHIFT, HOIST_U)    # carried Jonah: anchor (facing -1, head to the stern)
+JCAR_C = (JCAR[0] + 20 * JS, JCAR[1] - 39.5 * JS)            # ...and his centre
+JAIR_C = JCAR_C
+JAIR = (JAIR_C[0] + 1 * JS, JAIR_C[1] + 135.5 * JS)          # 'fall' anchor
+
+
 # ============================================================================ shot A painting
 
 
@@ -331,14 +388,26 @@ def a_background():
 
 
 def a_sun(part):
-    """The v1 sun as two layers: its glow (fades in) and its disc (pops in opaque, so a half-faded yellow disc is
-    never seen over the blue / storm sky as an olive smudge)."""
+    """The v1 sun as two layers: its glow (fades in round the veil cloud) and its disc (always full size and opaque,
+    hidden behind the storm sky and then the veil cloud, so a half-faded yellow disc is never seen over the blue /
+    storm sky as an olive smudge)."""
     x, y = SUN_A
     if part == "glow":
         defs = S.rad_grad("s9sun", [(0, "#fff6d6", 0.95), (0.3, "#fff0c0", 0.6), (1, "#ffe9b0", 0)])
         return doc(f'<circle cx="{x}" cy="{y}" r="360" fill="url(#s9sun)"/>', defs)
     return doc(S.g(f'<circle cx="{x}" cy="{y}" r="88" fill="{P["sun"]}" stroke="{S.shade(P["sun_hot"], -0.1)}" '
                    f'stroke-width="4"/>', filter="wobble"))
+
+
+SUN_VEIL = (1715, 262, 220, 150, 1)   # the clearing cloud in front of the sun: centre, size, seed (its silhouette
+                                     # covers the disc + 4 px; it uncovers the disc between 24 and 236 px to the right)
+VEIL_DX = 280.0                      # how far it drifts off to the right as the sky clears
+
+
+def a_sun_veil():
+    """The cloud the sun emerges from behind: a calm-weather cloud like V.clouds_clear's."""
+    cx, cy, w, h, seed = SUN_VEIL
+    return doc(S.g(S.cloud(cx, cy, w, h, "#fbf6ec", seed=seed, sw=3, shade_fill="#d8e6ea"), filter="wobble"))
 
 
 def a_prayer_light(part):
@@ -943,7 +1012,12 @@ def build(ctx):
     t_launch = t_heave0 + 0.52                             # ...and heave him over the stern
     t_watch = t_launch + 0.42
     t_impact = t_launch + 0.72                             # '大海'
-    t_flash = L0.start + 0.45
+    # '于是': the crew get up one after another, lifters first (each: upright kneel -> one knee -> standing, held
+    # 4 frames per drawing), with the camera still; once they are all up a lightning flash; then the camera pulls out
+    rise_at = dict(s1=0.0, s2=0.17, s0=0.34, s3=0.51, capt=0.68)
+    RISE_STEP = 0.13
+    t_risen = t_rise + rise_at["capt"] + 2 * RISE_STEP
+    t_flash = max(t_grab, t_risen) + 0.1
     t_calm0 = L1.start                                     # '一下子'
     t_calm1 = t_calm0 + 1.1                                # '海就平静了'
     t_awe = max(cue.at("海就", t_calm0 + 0.6) + 0.15, t_watch + 0.6)
@@ -998,29 +1072,32 @@ def build(ctx):
                     (t_launch + 0.35, {"dy": 0})], ["inout", "out", "inout"])
 
     def lifter_dy(t):
-        return 0.45 * heave(t).dy - 7 * 1.4 * bump(t, t_lift)
+        return 0.45 * heave(t).dy
 
-    rise = 104.0
+    # the hoist is a hard cut (crouched grip -> arms up, Jonah on their hands) sold by a push-up: the lifters' new
+    # drawings start 24 px low and rise home with a little overshoot, Jonah riding on their hands (same offset; their
+    # feet are hidden behind the bulwark)
+    hoist_offs = [(t_lift, 24.0, 0.24, "back")]
 
-    def carried_m(t):      # hoisted onto the lifters' hands, then rides on them; pushed higher by the heave
+    def carried_m(t):      # rides on the lifters' hands; pushed off them by the heave
         s = ship_tf(t)
-        r = rise * (1 - progress(t, t_lift, t_up, "back"))
-        return Tf(dx=s.dx, dy=s.dy + lifter_dy(t) + r + 0.55 * min(0.0, heave(t).dy), rot=s.rot,
-                  alpha=float(t_lift <= t < t_launch), px=SX, py=WL)
+        return Tf(dx=s.dx, dy=s.dy + lifter_dy(t) + offset_dy(t, hoist_offs) + 0.55 * min(0.0, heave(t).dy),
+                  rot=s.rot, alpha=float(t_lift <= t < t_launch), px=SX, py=WL)
 
     # the calm-weather background is completely covered by the storm overlays until the calm: skip it till then
     def under_storm(t):
         return Tf(alpha=progress(t, t_calm0 - 0.9, t_calm0, "sine"))
     sc.add("a_background", a_background(), z=0, wc=0.8, motion=a_only(under_storm))
-    # the sun only once the storm sky is nearly gone (storm < ~0.3), together with the sunbeams
-    t_sun = t_calm0 + 0.72
+    # the sun emerges at full size from behind the clearing cloud: its disc sits (opaque, never scaled) behind the
+    # storm sky and the veil cloud from the calm on; the glow fades in round the cloud, and once the storm sky is
+    # nearly gone (storm < ~0.1) the cloud drifts off to the right, uncovering the disc (~6.2 -> 7.0 s)
+    t_v0, t_v1 = t_calm0 + 0.5, t_calm0 + 1.9
     sc.add("a_sun_glow", a_sun("glow"), z=0.5, wc=0,
            motion=a_only(lambda t: Tf(alpha=progress(t, t_calm0 + 0.45, t_calm0 + 1.4, "sine"))))
-    sc.add("a_sun", a_sun("disc"), z=0.6, wc=0.8,
-           motion=a_only(lambda t: Tf(alpha=float(t >= t_sun),
-                                      sx=0.25 + 0.75 * progress(t, t_sun, t_sun + 0.45, "back"),
-                                      sy=0.25 + 0.75 * progress(t, t_sun, t_sun + 0.45, "back"),
-                                      px=SUN_A[0], py=SUN_A[1])))
+    sc.add("a_sun", a_sun("disc"), z=0.6, wc=0.8, motion=a_only(lambda t: Tf(alpha=float(t >= t_calm0 - 0.1))))
+
+    def veil_m(t):         # (its layer is added last, after shot B, so every other layer keeps its watercolour seed)
+        return Tf(dx=VEIL_DX * progress(t, t_v0, t_v1, "sine") + 6 * (t - t_calm0), alpha=float(t >= t_calm0 - 0.1))
     sc.add("a_shafts", V.light_shafts(), z=1, wc=0, motion=a_only(under_storm))
     sc.add("a_clouds", V.clouds_clear(), z=2,
            motion=a_only(M.combine(M.visible(t_calm0 + 0.55, fade=0.45), M.drift(vx=6, t0=t_calm0))))
@@ -1087,15 +1164,13 @@ def build(ctx):
 
     sc.add("a_ship_back", doc(PR.ship(SX, WL, SS, SF, sail="torn", part="back", flag=False)), z=10,
            motion=a_only(ship_tf))
-    sc.add("a_jonah_carried", doc(C.jonah(JCAR[0], JCAR[1], JS, -1, pose="carried")), z=10.5,
-           motion=a_only(carried_m))
+    sc.add("a_jonah_carried", doc(jonah_carried(*JCAR)), z=10.5, motion=a_only(carried_m))
 
-    # ---- the crew: one flipbook layer each (hard cuts; big head-height changes eased, small ones hopped)
-    rise_at = dict(s1=0.0, s2=0.07, s0=0.17, s3=0.24, capt=0.31)
-
+    # ---- the crew: one flipbook layer each (hard cuts; big head-height changes eased, small ones hopped; the rise
+    #      cuts also get a quick stretch-and-settle about the feet)
     def rising(name):      # (the captain skips the one-knee drawing: on the curved stern its foot pokes out)
         tr = t_rise + rise_at[name]
-        return [(0, 0), (tr, 1)] + ([] if name == "capt" else [(tr + 0.1, 2)]) + [(tr + 0.2, 3)]
+        return [(0, 0), (tr, 1)] + ([] if name == "capt" else [(tr + RISE_STEP, 2)]) + [(tr + 2 * RISE_STEP, 3)]
 
     f0 = A_F0
     a_specs = {
@@ -1104,11 +1179,11 @@ def build(ctx):
                         (PRAY, "surprised", 1)],
                rising("s0") + [(t_lift, 4), (t_watch, 5), (t_awe, 6)]),
         "s1": ("s", 1, [(K_LOWUP, S08_EXPR, f0["s1"]), (K_UPR, "worried", 1), (HALF, "worried", 1),
-                        (STAND, "worried", 1), (C.POSES["carry"], "worried", 1), (C.POSES["lift"], "worried", 1),
+                        (STAND, "worried", 1), (C.POSES["carry"], "worried", 1), (HOIST_POSES["s1"], "worried", 1),
                         (dict(STAND, h=8), "worried", 1), (PRAY, "surprised", 1)],
                rising("s1") + [(t_grab, 4), (t_lift, 5), (t_watch, 6), (t_awe, 7)]),
         "s2": ("s", 2, [(K_LOWUP, S08_EXPR, f0["s2"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
-                        (STAND, "worried", -1), (C.POSES["carry"], "worried", -1), (C.POSES["lift"], "worried", 1),
+                        (STAND, "worried", -1), (C.POSES["carry"], "worried", -1), (HOIST_POSES["s2"], "worried", 1),
                         (LEAN_LOOK, "worried", 1), (PRAY, "surprised", 1)],
                rising("s2") + [(t_grab, 4), (t_lift, 5), (t_watch, 6), (t_awe, 7)]),
         "s3": ("s", 3, [(K_LOWUP, S08_EXPR, f0["s3"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
@@ -1116,7 +1191,7 @@ def build(ctx):
                         (DIAG_UP, "surprised", 1)],
                rising("s3") + [(t_lift, 4), (t_watch, 5), (t_awe + 0.08, 6)]),
         "capt": ("capt", None, [(K_LOWUP, S08_EXPR, f0["capt"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
-                                (STAND, "worried", -1), (C.POSES["worried"], "worried", -1),
+                                (STAND, "worried", -1), (CAPT_SEA, "worried", 1),
                                 (LEAN_POINT, "worried", 1), (GAZE, "surprised", 1)],
                  rising("capt") + [(t_lift + 0.06, 4), (t_watch + 0.05, 5), (t_awe + 0.14, 6)]),
     }
@@ -1131,11 +1206,22 @@ def build(ctx):
         a_heads[name] = heads
         hops, offs = cut_plan(heads, sched, min_dy=10.0)
         lifter = name in ("s1", "s2")
+        if lifter:
+            offs = [o for o in offs if abs(o[0] - t_lift) > 1e-6] + hoist_offs
+        cuts = [tk for tk, _ in rising(name)[1:]]           # the rise cuts stretch and settle
 
-        def person_m(t, hops=hops, offs=offs, lifter=lifter):
+        def person_m(t, hops=hops, offs=offs, lifter=lifter, cuts=cuts, foot=(x, y)):
             s = ship_tf(t)
             dy = -6 * sum(bump(t, c) for c in hops) + offset_dy(t, offs) + (lifter_dy(t) if lifter else 0.0)
-            return Tf(dx=s.dx, dy=s.dy + dy, rot=s.rot, px=SX, py=WL)
+            k = sum(stretch(t - c) for c in cuts)
+            if abs(k) < 1e-4:
+                return Tf(dx=s.dx, dy=s.dy + dy, rot=s.rot, px=SX, py=WL)
+            # stretch / squash about the feet, then the ship's rocking about (SX, WL): one Tf pivoted on the feet
+            th = math.radians(s.rot)
+            qx, qy = foot[0] - SX, foot[1] - WL
+            ex = SX + qx * math.cos(th) - qy * math.sin(th) - foot[0]
+            ey = WL + qx * math.sin(th) + qy * math.cos(th) - foot[1]
+            return Tf(dx=s.dx + ex, dy=s.dy + dy + ey, rot=s.rot, sx=1 - 0.5 * k, sy=1 + k, px=foot[0], py=foot[1])
         sc.add(f"a_{name}", docs, z=11 + 0.01 * i, motion=a_only(person_m), frame_at=steps(sched))
 
     jx, jy = A_POS["jon"]
@@ -1330,15 +1416,19 @@ def build(ctx):
                                  (P_BOW, "sorry", None), (P_UP, "peaceful", None), (P_VOW, "peaceful", None)],
           [(0, 0), (t_see2 + 0.35, 1), (kn[3], 2), (kn[3] + HOLD_HALF, 3), (lk[2], 4), (vw[3], 5)], 121, 0.6)
     sc.add("b_fore", b_foreground(), z=130, motion=b_only())
+    sc.add("a_sun_veil", a_sun_veil(), z=2.5, motion=a_only(veil_m))     # shot A: the cloud in front of the sun
 
     # ================================================================ camera
-    # A: s08's end framing -> eases out to the v1 wide shot before '他们' -> holds -> pushes in on the ship and
-    #    keeps pushing while the page covers it.  B: starts moving, drifts right / in, stops before the dissolve.
+    # A: s08's end framing -> (after the rise and the lightning) eases out to the v1 wide shot before the launch ->
+    #    holds -> pushes in on the ship and keeps pushing while the page covers it.
+    # B: starts moving, drifts right / in, stops before the dissolve.
     A0 = (1000.0, 590.0, 1700.0)
     A1 = (945.0, 634.0, 1560.0)
     C08 = (CAM_S08.x, CAM_S08.y, CAM_S08.w)
-    t_ca0 = max(1.0, t_rise - 0.15)     # held on s08's end framing all through the 1.0 s incoming dissolve
-    t_ca1 = max(t_ca0 + 0.9, t_grab - 0.05)
+    # held on s08's end framing all through the 1.0 s incoming dissolve, the crew's rise and the lightning; then
+    # one slow pull-out (zoom ~19 %/s at its peak) that has settled before the launch
+    t_ca0 = max(1.0, t_flash + 0.3)
+    t_ca1 = max(t_ca0 + 1.5, t_launch - 0.05)
     t_p0 = t_still - 0.2
     vd = [1.4 * (A1[i] - A0[i]) / max(0.5, t_d0 - t_p0) for i in range(3)]
     cam_a = [hermite([(0.0, C08[i], 0.0), (t_ca0, C08[i], 0.0), (t_ca1, A0[i], 0.0), (t_p0, A0[i], 0.0),
@@ -1394,7 +1484,9 @@ def build(ctx):
     sc.sfx("cloth", t_grab - 0.05, gain_db=-15, pan=0.0)
     sc.sfx("cloth", t_lift - 0.05, gain_db=-12, pan=0.05)
     sc.sfx("whoosh", t_launch + 0.02, gain_db=-11, pan=0.3)
-    sc.sfx("splash", t_impact - 0.02, gain_db=-8, pan=0.4)
+    # the impact: 0.02 s before t_impact, i.e. on the frame where he hits the water (audio/picture.py reads the
+    # score's hit point back as this cue + 0.02 s); ducked only 3 dB under the narration so it lands
+    sc.sfx("splash", t_impact - 0.02, gain_db=-8, pan=0.4, duck_db=-3)
     sc.sfx("bubbles", t_impact + 0.08, dur=0.9, gain_db=-17, pan=0.4, fade_out=0.4)
     sc.sfx("waves_calm", t_calm0 - 0.2, dur=T - t_calm0 + 1.0, gain_db=-14, fade_in=0.9, fade_out=0.8)
     sc.sfx("chime", t_calm0 + 0.3, gain_db=-15)

@@ -168,14 +168,20 @@ def _jfig(x, y, s, ps, expr, label, facing=1, marks=True):
     return _fig(C._jonah_design(), C._ADULT, x, y, s, facing, ps, expr, label, marks)
 
 
-def _walk_pose(k, A, N, t=4, swing=36, lift=20, drop=10):
+def _walk_pose(k, A, N, t=4, swing=36, lift=20, drop=10, off=0.0, fall=0.0):
     """Planted-foot walk drawing k (N drawings per step, two steps per cycle): the planted ankle goes from +A to
     -A figure px while the other foot swings through, so advancing the anchor 2*A*scale/N per drawing keeps the
-    planted sole on one spot of the ground (same rig as the v1 captain walk)."""
-    ph = (k % (2 * N)) / N
+    planted sole on one spot of the ground (same rig as the v1 captain walk). ``off`` shifts the drawings along
+    the cycle by that fraction of a drawing (0.5 with an odd N: the middle drawing of each step is the passing
+    position, feet together under the body). ``fall``: figure px the anchor moves DOWN per step (walking a
+    little downstage); the planted foot is raised by what the anchor has dropped since mid-step (lowered before
+    it), so its sole stays on its spot in y too and is on the anchor's ground line in the passing position,
+    and the swing foot comes down onto the lower spot."""
+    ph = ((k + off) % (2 * N)) / N
     step, u = divmod(ph, 1.0)
-    plant = ("ik", A * (1 - 2 * u), 1)
-    swing_leg = ("ik", -A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u)), 1, lift * math.sin(math.pi * u))
+    plant = ("ik", A * (1 - 2 * u), 1, fall * (u - 0.5)) if fall else ("ik", A * (1 - 2 * u), 1)
+    swing_leg = ("ik", -A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u)), 1,
+                 lift * math.sin(math.pi * u) + fall * (u - 0.5 + math.cos(math.pi * u)))
     sw = swing * math.cos(math.pi * ph)
     return C._P(t=t, h=-3, legs=(plant, swing_leg) if step == 0 else (swing_leg, plant),
                 arms=(("fk", -sw, -sw + 16), ("fk", sw, sw + 16)),
@@ -819,24 +825,33 @@ def build(ctx):
     # ---------------------------------------------------------------- neighbours in front of the ridge
 
     # ---------------------------------------------------------------- Jonah walking out of his door
-    A_J, N_J = 40.0, 5
+    # planted-foot walk: 7 drawings per step (14 per cycle), each held exactly 2 frames (even timing at 30 fps),
+    # so the leg spread, robe hem and head bob change in small even steps. The drawings sit half a drawing off
+    # the contacts, so the middle drawing of every step is the passing position (feet together under the body,
+    # swing foot lifted): the walk starts on it out of the doorway stand and ends on it at his spot, whole steps
+    # later, so neither end jumps between a wide stride and the stand.
+    A_J, N_J = 40.0, 7
+    NW_J = 2 * N_J                                                       # walk drawings per cycle
+    K0_J = (N_J - 1) // 2                                                # the passing drawing of the first step
     dist = math.hypot(JX - DOOR[0], JY - DOOR[1])
-    n_draw = int(round(dist / (2 * A_J * JS / N_J) / N_J)) * N_J        # whole steps, ends on a contact
-    A_J = dist * N_J / (2 * JS * n_draw)
-    hold_j = 0.095
+    n_draw = int(round(dist / (2 * A_J * JS / N_J) / N_J)) * N_J        # whole steps, passing to passing
+    A_J = (JX - DOOR[0]) * N_J / (2 * JS * n_draw)                      # ankle travel is horizontal
+    fall_j = (JY - DOOR[1]) / (n_draw / N_J) / JS                        # the path runs a little downstage
+    hold_j = 2.0 / ctx.fps
     t_arrive = t_walk0 + n_draw * hold_j
-    walk_frames = [_doc(_shadow(DOOR[0], DOOR[1], JS) + _jfig(DOOR[0], DOOR[1], JS, _walk_pose(k, A_J, N_J),
-                                                              "happy", f"jw{k}")) for k in range(2 * N_J)]
+    walk_frames = [_doc(_shadow(DOOR[0], DOOR[1], JS) +
+                        _jfig(DOOR[0], DOOR[1], JS, _walk_pose(k, A_J, N_J, off=0.5, fall=fall_j), "happy", f"jw{k}"))
+                   for k in range(NW_J)]
     walk_frames.append(_doc(_shadow(DOOR[0], DOOR[1], JS) + C.jonah(DOOR[0], DOOR[1], JS, 1, expr="happy")))
     walk_frames.append(_doc(_shadow(DOOR[0], DOOR[1], JS) + C.jonah(DOOR[0], DOOR[1], JS, 1, expr="peaceful")))
 
     def jw_i(t):
-        return int(math.floor((t - t_walk0) / hold_j))
+        return int(math.floor((t - t_walk0) / hold_j + 1e-6))
 
     def jw_fa(t):
         if t < t_walk0:
-            return 11.0 if 0.55 <= t <= 0.68 else 10.0       # a blink in the doorway
-        return float(min(jw_i(t), n_draw) % (2 * N_J))
+            return float(NW_J + 1) if 0.55 <= t <= 0.68 else float(NW_J)     # a blink in the doorway
+        return float((K0_J + min(jw_i(t), n_draw)) % NW_J)
 
     def jw_m(t):
         if t >= t_arrive + hold_j:

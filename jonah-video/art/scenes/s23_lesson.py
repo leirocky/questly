@@ -23,8 +23,9 @@ Timing (every time comes from the narration: ctx chunk starts, or _at_in() for a
   line 0   "约拿，" — he hears his name: a squash-and-hop cut to sitting up, looking up toward the light and the
            voice (up and to the right, under the veil cloud); the clouds part a little. "这棵蓖麻" — a pale, sun-
            bleached dry leaf wobbles on a broken leaf stub of the arching branch (the booth's pale back cloth behind
-           it), swings out, sweeps left in front of his chest and drops into his open hand from above; his eyes
-           follow it (blink cut), he bends his head over it and lifts it. "也不是你让它长大的" — he turns it.
+           it), swings out, falls past the back of his head-cloth, sweeps left in front of his chest BELOW his beard
+           (stalk trailing, never across his face) and drops into his open hand; his eyes follow it (blink cut), he
+           bends his head over it and lifts it. "也不是你让它长大的" — he turns it.
   line 1   "它一夜长起来，" — a thought bubble scale-pops (opaque within 2 frames) out of a trail of puffs into the
            open sky up-left: a memory picture of the same spot at night (moon and stars) where the castor sprout
            springs up, step by step, into a tall green plant beside the booth; the moon sets at the upper left and
@@ -35,24 +36,29 @@ Timing (every time comes from the narration: ctx chunk starts, or _at_in() for a
            is opaque, and the light melts away onto this knoll, the plain and the near city - one background at a
            time, never two blended.
   line 2   "尼尼微这座大城里，有十二万多人，" — a held wide view: the city, the plain, the pasture and Jonah under his
-           booth (doves fly over). "就像分不清左右手的小孩子，" — a slow glide down to the children: two little ones
+           booth (doves fly over). The townspeople are the city that repented: the grown-ups (and some children)
+           still wear their sackcloth with happy faces, as in s19 / s20; the children at play keep bright tunics. "就像分不清左右手的小孩子，" — a slow glide down to the children: two little ones
            point left and right with a '?' over each head and keep swapping sides (hops); two more play face to face
            behind them (clear of the ball game's arc). "不知道什么是对，什么是错。" — hearts rise over the people; the
            two children stop, hop, smile and get their hearts too.
   line 3   "还有许多牛羊。" — the camera glides over to the pasture and RESTS on it while the animals are named: a
            sheep bleats with a happy hop, hearts over the animals (all above the subtitle band).
-           "我怎么能不心疼他们呢？" — the camera rises up the knoll and arrives on Jonah just before "心疼他们";
+           "我怎么能不心疼他们呢？" — the camera rises up the knoll (slowing as it reaches Jonah just before
+           "心疼他们") and glides on, without stopping, into the slow push-in;
            his face softens through a blink into a thoughtful look down toward the city (raised brows, no smile,
            no blush — the Bible ends on God's question and s24 asks the child how Jonah answered); the warm light
-           returns on him, a chime; slow push-in to a calm last frame.
+           returns on him, a chime; the push-in settles on a calm last frame.
 
 Notes for maintainers
 * Pose changes are hard cuts hidden by a squash-and-hop; every expression change goes through a closed-eye frame
   (blink -> new face, hard cuts), so two faces are never blended.
 * The memory plant is one exact castor drawing per step (leaf spins pinned to the full-grown drawing, as in
   v1 s11), shown as a stepped time-lapse flipbook (whole indices only, never two plants blended).
-* Camera: every move is re-parametrised by output-space arc length with soft ramps (v1 _cam_path / _glide);
-  glide durations come from _cam_dur so the peak stays under ~19 output px / frame.
+* Camera: one smooth path - the sum of overlapping moves, each re-parametrised by output-space arc length with
+  raised-cosine ramps (v1 _cam_path / _glide), so velocity and acceleration are continuous across every view;
+  peak ~14 output px / frame at the frame centre, gentle acceleration (< ~0.7 px / frame^2).
+* Hearts never cross the faces of the townspeople walking behind the families (_hearts_fx: such a birth rises
+  a little to the side or is left out; the schedule is otherwise v1's hearts_fx).
 * The light on Jonah is clipped to his silhouette (two drawings: sulking / sitting); its rim is a thin, faint
   edge toward the light so his umber ink outline stays dark.
 * s22's backdrop and the light card sit at z 9.4 - 9.45, above every figure on the plain and the knoll and below
@@ -249,25 +255,97 @@ def _qmark(x, y, s=1.0):
     return S.g(body, filter="wobble-fine")
 
 
-def _place_hearts(names, rise=72, half=27, extra_obstacles=()):
+def _column_hit(name, x, y0, obstacles, rise=72, half=27):
+    """Would a heart rising from (x, y0) cross a figure other than ``name`` (obstacles: [(name, bbox)])?"""
+    col = (x - half, y0 - rise - half, x + half, y0 + 20)
+    return any(n != name and col[0] < b[2] - 4 and col[2] > b[0] + 4 and col[1] < b[3] - 4 and col[3] > b[1] + 4
+               for n, b in obstacles)
+
+
+def _place_hearts(names, rise=72, half=27, extra_obstacles=(), owners=None):
     """Heart spot above each named figure; nudged sideways (or dropped) if its rising column would cross
-    another figure (hearts are drawn over everything). Same rule as v1."""
-    boxes = {n: b for n, b, _ in FIGS}
-    obstacles = [(n, b) for n, b in boxes.items()] + list(extra_obstacles)
+    another figure (hearts are drawn over everything). Same rule as v1. ``owners``: a list that gets each
+    spot's figure name."""
+    obstacles = [(n, b) for n, b, _ in FIGS] + list(extra_obstacles)
     out = []
     for name, _, spot in FIGS:
         if name not in names or spot is None:
             continue
         x0, y0 = spot
         for dx in (0, -16, 16, -32, 32, -48, 48):
-            x = x0 + dx
-            col = (x - half, y0 - rise - half, x + half, y0 + 20)
-            hit = any(n != name and col[0] < b[2] - 4 and col[2] > b[0] + 4 and col[1] < b[3] - 4 and col[3] > b[1] + 4
-                      for n, b in obstacles)
-            if not hit:
-                out.append((x, y0))
+            if not _column_hit(name, x0 + dx, y0, obstacles, rise, half):
+                out.append((x0 + dx, y0))
+                if owners is not None:
+                    owners.append(name)
                 break
     return out
+
+
+def _hearts_fx(spots, t0, t1, rise=72, life=2.6, period=3.5, size=42, seed=3, faces=None, owners=None,
+               extra_obstacles=()):
+    """V.hearts_fx with the same schedule (the same seed gives the same births, sways and sizes), except that no
+    heart crosses a face that moves (``faces(t) -> [(x, y, r)]`` in stage px: the townspeople walking behind the
+    families): such a birth rises a little to the side instead (up to 48 px, never into another figure - the
+    _place_hearts rule), or is left out."""
+    rng = np.random.default_rng(seed)
+    win = max(0.05, min(period, t1 - t0))
+    order = rng.permutation(len(spots))
+    slots = []
+    for i, (x, y) in enumerate(spots):
+        off = (order[i] + rng.uniform(0.1, 0.9)) / len(spots) * win
+        slots.append((x, y, off, rng.uniform(0, 6.28), rng.uniform(0.92, 1.08)))
+
+    def at(x, y, age, ph):
+        return x + 9 * math.sin(2 * math.pi * age / 2.1 + ph), y - rise * (1 - (1 - age / life) ** 1.6)
+
+    def clear(x, y, ph, k, birth):
+        for j in range(int(life * 15) + 1):
+            age = j / 15
+            hx, hy = at(x, y, age, ph)
+            hr = 0.5 * size * k * (0.55 + 0.45 * min(1.0, age / 0.5))
+            if any(math.hypot(hx - fx_, hy - fy_) < hr + fr + 4 for fx_, fy_, fr in faces(birth + age)):
+                return False
+        return True
+
+    xs = {}                          # (slot, birth number) -> x, or None (left out)
+    if faces:
+        obstacles = [(n, b) for n, b, _ in FIGS] + list(extra_obstacles)
+        for i, (x, y, off, ph, k) in enumerate(slots):
+            n = 0
+            while t0 + off + n * period <= t1:
+                birth = t0 + off + n * period
+                if not clear(x, y, ph, k, birth):
+                    xs[(i, n)] = next((x + dx for dx in (-16, 16, -32, 32, -48, 48)
+                                       if not _column_hit(owners[i], x + dx, y, obstacles, rise)
+                                       and clear(x + dx, y, ph, k, birth)), None)
+                n += 1
+
+    def fx(frame, t, view):
+        if t < t0 or t > t1 + life:
+            return frame
+        for i, (x, y, off, ph, k) in enumerate(slots):
+            if t < t0 + off:
+                continue
+            age = (t - t0 - off) % period
+            birth = t - age
+            if birth > t1 or age > life:
+                continue
+            x = xs.get((i, int(round((birth - t0 - off) / period))), x)
+            if x is None:
+                continue
+            sx, sy = at(x, y, age, ph)
+            ox, oy = view.to_out(sx, sy)
+            if not (-80 < ox < frame.width + 80 and -80 < oy < frame.height + 80):
+                continue
+            grow = 0.55 + 0.45 * min(1.0, age / 0.5)
+            a = min(1.0, age / 0.35) * min(1.0, (life - age) / 0.8)
+            spr = V._heart_sprite(round(size * k * grow * view.scale / 2) * 2)
+            if a < 0.999:
+                spr = spr.copy()
+                spr.putalpha(spr.getchannel("A").point(lambda v, a=a: int(v * a)))
+            frame.alpha_composite(spr, (int(ox - spr.width / 2), int(oy - spr.height / 2)))
+        return frame
+    return fx
 
 
 def _rot_pt(p, c, deg):
@@ -455,25 +533,21 @@ def build(ctx):
     lr_hops = [t_q0 - 0.12 + 0.95 * k for k in range(4)]        # into pointing, then swaps
     t_lr_end = max(lr_hops[-1] + 0.95, t_wrong - 0.6)          # hop back to standing, smiling
 
-    # camera (views; every glide's duration is checked against the speed limit with _cam_dur)
+    # camera views (the moves and their times: see CAMERA below)
     C0 = C_S22                          # as s22 leaves him: same scale, same place in the frame
     C0b = Cam(XJ - 14, 556, 1410)       # slow push-in on Jonah and the leaf while God speaks
     Cb = Cam(BC[0] + 290, 452, 1520)    # room for the memory bubble on the left
     Cb2 = Cam(BC[0] + 302, 458, 1494)
     Cw = Cam(1880, 840, 2800)           # held wide view: the city, the plain, the pasture, Jonah under his booth
-    Cw2 = Cam(1856, 852, 2760)
     C1 = Cam(820, 1100, 1440)           # the children
-    C1b = Cam(930, 1092, 1440)
     C2 = Cam(1650, 1080, 2000)          # the pasture (the children still at its left edge)
-    C2h = Cam(1690, 1070, 1984)         # a slow drift while the animals are named
+    C2h = Cam(1690, 1070, 1984)         # (the old drift's end: only times the hearts, doves and crowd below)
     C3 = Cam(2560, 770, 2160)           # Jonah under his booth, looking down at the city and the pasture
     Cf = Cam(XJ - 10, 600, 1430)        # slow push-in: a calm last frame on Jonah's face
-    t_pull0 = t_bout + 0.25
-    t_pull1 = max(t_city + 1.7, t_pull0 + 3.6)                 # settled on the wide city
-    t_down0 = max(t_pull1 + 0.9, t_many + 0.1)                 # glide down to the people and the children
-    t_down1 = max(t_down0 + 3.5, t_lr + 0.9)
-    t_c2 = t_beasts + 0.15                                     # settled on the animals as they are named
-    t_go = max(t_down1 + 0.5, min(t_c2 - _cam_dur([C1b, C2], 0.3), t_lr_end + 0.1))   # leave the children
+    t_pull0 = t_bout + 0.25                                    # the pull-back to the wide city starts
+    t_pull1 = max(t_city + 1.7, t_pull0 + 3.6)
+    t_down0 = max(t_pull1 + 0.9, t_many + 0.1)                 # (the first doves' timing)
+    t_c2 = t_beasts + 0.15
     t_baa = t_beasts + 0.5                                     # a sheep bleats (camera at rest)
     dur_rise = _cam_dur([C2h, C3], 0.3)
     t_back = max(t_care - 0.1, t_c2 + 1.0 + dur_rise)          # arrive on Jonah just before "心疼他们"
@@ -578,6 +652,10 @@ def build(ctx):
         fields += V._field(x0, x1, WALL_Y + 10, WALL_Y + 58 + 20 * (i % 3), field_cols[i % len(field_cols)], seed=40 + i)
     sc.add("plain", doc(S.g(pl, filter="wobble") + S.g(fields, filter="wobble-strong"), plain_defs), z=4, wc=0.8)
 
+    # The townspeople are the city that repented (s18 - s20): the grown-ups (and some children) still wear their
+    # sackcloth, with happy faces as in s19 / s20 - the people on the wall walk and in the gate, the families,
+    # the elders and the walkers; the children at play keep their bright tunics, so the plain stays full of life.
+    SACK = "sackcloth"
     WALL_TOP = WALL_Y - 170
     walkers_top = ""
     for i, (x, kind, pose) in enumerate([(390, "man", "stand"), (420, "woman", "stand"), (720, "child", "cheer"),
@@ -586,11 +664,13 @@ def build(ctx):
                                          (1840, "elder", "stand"), (2060, "man", "stand"), (2085, "woman", "cheer")]):
         sc_ = 0.15 if kind != "child" else 0.17
         walkers_top += CH.citizen(x, WALL_TOP + (22 if kind != "child" else 8), sc_, 1 if i % 2 else -1, kind=kind,
-                                  variant=i % 4, pose=pose, expr="happy")
+                                  variant=i % 4, pose=pose, attire=SACK, expr="happy")
     wall = PR.city_wall(-60, 2320, WALL_Y, height=170, gate=(GATE_X, 140), doors_open=1.0, seed=2, ink=0.55)
     wall += V._end_tower(2320, WALL_Y, 170 / 260, ink=0.55)
-    gateway = (CH.citizen(GATE_X - 40, WALL_Y - 2, 0.28, 1, kind="woman", variant=3, pose="stand", expr="happy") +
-               CH.citizen(GATE_X + 42, WALL_Y - 2, 0.25, -1, kind="child", variant=1, pose="stand", expr="happy"))
+    gateway = (CH.citizen(GATE_X - 40, WALL_Y - 2, 0.28, 1, kind="woman", variant=3, pose="stand", attire=SACK,
+                          expr="happy") +
+               CH.citizen(GATE_X + 42, WALL_Y - 2, 0.25, -1, kind="child", variant=1, pose="stand", attire=SACK,
+                          expr="happy"))
     haze = ('<filter id="hz" x="-2%" y="-8%" width="104%" height="116%" color-interpolation-filters="sRGB">'
             '<feColorMatrix type="saturate" values="0.72"/>'
             '<feColorMatrix type="matrix" values="0.74 0 0 0 0.251  0 0.74 0 0 0.229  0 0 0.74 0 0.195  0 0 0 1 0"/>'
@@ -656,13 +736,14 @@ def build(ctx):
         FIGS.append((name, bbox, heart))
 
     def person(name, x, y, kind, variant, pose="stand", facing=1, expr="happy", motion=None, frames=None,
-               frame_at=None, s=None, hops=None, H=0):
+               frame_at=None, s=None, hops=None, H=0, attire="normal"):
         """frames: [(pose, expr)] or [(pose, expr, facing)] for a flipbook."""
         s = s or plain_scale(y)
         if frames is None:
             frames = [(pose, expr, facing)]
         frames = [f if len(f) == 3 else (f[0], f[1], facing) for f in frames]
-        svg = [doc(CH.citizen(x, y, s, fc, kind=kind, variant=variant, pose=p, expr=e)) for p, e, fc in frames]
+        svg = [doc(CH.citizen(x, y, s, fc, kind=kind, variant=variant, pose=p, attire=attire, expr=e))
+               for p, e, fc in frames]
         sc.add(name, svg if len(svg) > 1 else svg[0], z=6 + y / 1000, wc=0.6, motion=motion, frame_at=frame_at)
         width, height = (90, 224) if kind == "child" else (120, 330)
         sh = long_shadow(x, y, s, width, height)
@@ -670,7 +751,8 @@ def build(ctx):
             sc.add(name + "_sh", shdoc(sh), z=5.95 + y / 100000, wc=0, motion=shadow_motion(x, y, hops))
         else:
             ground_sh.append(sh)
-        bbs = [CH.body_points(CH.citizen, x, y, s, fc, kind=kind, variant=variant, pose=p) for p, _, fc in frames]
+        bbs = [CH.body_points(CH.citizen, x, y, s, fc, kind=kind, variant=variant, pose=p, attire=attire)
+               for p, _, fc in frames]
         bb = (min(b["bbox"][0] for b in bbs), min(b["bbox"][1] for b in bbs) - H,
               max(b["bbox"][2] for b in bbs), y + 4)
         top = bbs[0]["head_top"]
@@ -684,26 +766,27 @@ def build(ctx):
         return M.sway(deg, per, pivot=(x, y), phase=ph)
 
     # elders by the well, talking across it
-    person("elder0", 380, 1010, "elder", 0, "stand", 1, "happy", motion=M.combine(nod(380, 1010, 0.1), breathe(380, 1010, 0.3)))
-    person("elder1", 600, 990, "elder", 1, "stand", -1, "peaceful", motion=M.combine(nod(600, 990, 0.6, 1.0, 3.1),
-                                                                                    breathe(600, 990, 0.7)))
+    person("elder0", 380, 1010, "elder", 0, "stand", 1, "happy", attire=SACK,
+           motion=M.combine(nod(380, 1010, 0.1), breathe(380, 1010, 0.3)))
+    person("elder1", 600, 990, "elder", 1, "stand", -1, "peaceful", attire=SACK,
+           motion=M.combine(nod(600, 990, 0.6, 1.0, 3.1), breathe(600, 990, 0.7)))
     # families: father, mother and child together
-    person("father0", 650, 1060, "man", 2, "stand", 1, "happy", motion=M.combine(nod(650, 1060, 0.35, 1.0, 3.3),
-                                                                                breathe(650, 1060, 0.6)))
-    person("mother0", 700, 1072, "woman", 1, "stand", 1, "happy", motion=M.combine(nod(700, 1072, 0.2, 1.5, 3.0),
-                                                                                  breathe(700, 1072, 0.1)))
-    person("girl0", 736, 1088, "child", 1, "stand", -1, "happy", motion=M.combine(M.bob(2.5, 1.7, 0.2),
-                                                                                  breathe(736, 1088, 0.5)))
-    person("mother1", 1180, 940, "woman", 3, "stand", -1, "happy", motion=M.combine(nod(1180, 940, 0.4, 1.2, 2.7),
-                                                                                    breathe(1180, 940, 0.9)))
-    person("father1", 1226, 934, "man", 1, "stand", -1, "happy", motion=M.combine(nod(1226, 934, 0.75, 1.0, 3.4),
-                                                                                  breathe(1226, 934, 0.4)))
-    person("child_g", 1157, 952, "child", 2, "stand", 1, "happy", motion=M.combine(M.bob(2.5, 1.5, 0.3),
-                                                                                   breathe(1157, 952, 0.2)))
-    person("grandpa", 300, 1290, "elder", 2, "stand", 1, "happy", motion=M.combine(nod(300, 1290, 0.15, 1.2, 2.8),
-                                                                                   breathe(300, 1290, 0.4)))
-    person("mother2", 430, 1322, "woman", 2, "stand", 1, "happy", motion=M.combine(nod(430, 1322, 0.55, 1.4, 3.2),
-                                                                                   breathe(430, 1322, 0.2)))
+    person("father0", 650, 1060, "man", 2, "stand", 1, "happy", attire=SACK,
+           motion=M.combine(nod(650, 1060, 0.35, 1.0, 3.3), breathe(650, 1060, 0.6)))
+    person("mother0", 700, 1072, "woman", 1, "stand", 1, "happy", attire=SACK,
+           motion=M.combine(nod(700, 1072, 0.2, 1.5, 3.0), breathe(700, 1072, 0.1)))
+    person("girl0", 736, 1088, "child", 1, "stand", -1, "happy", attire=SACK,
+           motion=M.combine(M.bob(2.5, 1.7, 0.2), breathe(736, 1088, 0.5)))
+    person("mother1", 1180, 940, "woman", 3, "stand", -1, "happy", attire=SACK,
+           motion=M.combine(nod(1180, 940, 0.4, 1.2, 2.7), breathe(1180, 940, 0.9)))
+    person("father1", 1226, 934, "man", 1, "stand", -1, "happy", attire=SACK,
+           motion=M.combine(nod(1226, 934, 0.75, 1.0, 3.4), breathe(1226, 934, 0.4)))
+    person("child_g", 1157, 952, "child", 2, "stand", 1, "happy", attire=SACK,
+           motion=M.combine(M.bob(2.5, 1.5, 0.3), breathe(1157, 952, 0.2)))
+    person("grandpa", 300, 1290, "elder", 2, "stand", 1, "happy", attire=SACK,
+           motion=M.combine(nod(300, 1290, 0.15, 1.2, 2.8), breathe(300, 1290, 0.4)))
+    person("mother2", 430, 1322, "woman", 2, "stand", 1, "happy", attire=SACK,
+           motion=M.combine(nod(430, 1322, 0.55, 1.4, 3.2), breathe(430, 1322, 0.2)))
 
     # children playing (hops with rests: stand <-> cheer)
     for (nm, x, y, v, fc, seed, H, s_) in [("kid2", 1005, 1295, 3, 1, 5, 22, None), ("kid3", 560, 1185, 1, 1, 6, 18, None),
@@ -787,21 +870,26 @@ def build(ctx):
             alpha=_env(t, tq, tq + 0.12, t_lr_end - 0.15, t_lr_end + 0.15), px=qx, py=qy + 30))
 
     # men and women near the gate and along the wall (far, small)
-    person("man0", GATE_X - 140, 838, "man", 0, "stand", 1, "happy", motion=breathe(GATE_X - 140, 838, 0.2))
-    person("woman0", GATE_X + 120, 842, "woman", 0, "stand", -1, "happy", motion=breathe(GATE_X + 120, 842, 0.6))
-    person("man1", GATE_X + 210, 852, "man", 2, "cheer", -1, "happy",
+    person("man0", GATE_X - 140, 838, "man", 0, "stand", 1, "happy", attire=SACK,
+           motion=breathe(GATE_X - 140, 838, 0.2))
+    person("woman0", GATE_X + 120, 842, "woman", 0, "stand", -1, "happy", attire=SACK,
+           motion=breathe(GATE_X + 120, 842, 0.6))
+    person("man1", GATE_X + 210, 852, "man", 2, "cheer", -1, "happy", attire=SACK,
            motion=M.combine(nod(GATE_X + 210, 852, 0.3, 2.0, 1.6), breathe(GATE_X + 210, 852, 0.1)))
-    person("man2", 250, 868, "man", 1, "stand", 1, "happy", motion=breathe(250, 868, 0.4))
-    person("woman1", 940, 880, "woman", 2, "cheer", 1, "happy",
+    person("man2", 250, 868, "man", 1, "stand", 1, "happy", attire=SACK, motion=breathe(250, 868, 0.4))
+    person("woman1", 940, 880, "woman", 2, "cheer", 1, "happy", attire=SACK,
            motion=M.combine(nod(940, 880, 0.1, 2.0, 1.8), breathe(940, 880, 0.3)))
 
     # people walking in and out of the gate (2-frame walk flipbook while x / y move)
+    walk_faces = []                  # [(motion, head x, head y, head radius)] - the hearts keep off these faces
+
     def walker(name, kind, variant, p0, p1, facing, step=0.36, phase=0.0):
         (x0, y0), (x1, y1) = p0, p1
         s0 = plain_scale(y0)
         w_, h_ = (90, 224) if kind == "child" else (120, 330)
         frames = [shdoc(long_shadow(x0, y0, s0, w_, h_) +
-                        CH.citizen(x0, y0, s0, facing, kind=kind, variant=variant, pose=p, expr="happy"))
+                        CH.citizen(x0, y0, s0, facing, kind=kind, variant=variant, pose=p, attire=SACK,
+                                   expr="happy"))
                   for p in ("walk_a", "walk_b")]
         ta, tb = -1.0, T + 1.0
 
@@ -812,6 +900,16 @@ def build(ctx):
             return Tf(dx=x - x0, dy=y - y0, sx=k, sy=k, px=x0, py=y0)
         sc.add(name, frames, z=6 + (y0 + y1) / 2000, wc=0.6, motion=m,
                frame_at=lambda t: float(int(t / step + phase) % 2))
+        bp = CH.body_points(CH.citizen, x0, y0, s0, facing, kind=kind, variant=variant, pose="walk_a", attire=SACK)
+        walk_faces.append((m, bp["head"][0], bp["head"][1], 1.2 * (bp["head"][1] - bp["head_top"][1])))
+
+    def faces_at(t):
+        """The walkers' faces at time t: [(x, y, r)] in stage px (they pass behind the people on the plain)."""
+        out = []
+        for m, hx, hy, hr in walk_faces:
+            tf = m(t)
+            out.append((tf.px + tf.dx + (hx - tf.px) * tf.sx, tf.py + tf.dy + (hy - tf.py) * tf.sy, hr * tf.sx))
+        return out
 
     walker("walk0", "man", 3, (GATE_X + 12, WALL_Y + 6), (GATE_X - 170, 1070), -1, 0.38)
     walker("walk0c", "child", 0, (GATE_X + 60, WALL_Y + 14), (GATE_X - 96, 1062), -1, 0.3, 0.5)
@@ -885,9 +983,10 @@ def build(ctx):
               "woman1"}
     beasts = {n for n, _, _ in FIGS if n.startswith(("sheep", "lamb", "goat", "cow", "donkey"))} | {"shepherd"}
     q_zone = [("q", (qx - 40, qy - 50, qx + 40, qy + 50)) for qx, qy, _ in q_spots]
-    HEARTS["people"] = _place_hearts(people, extra_obstacles=ball_zone + q_zone)
-    HEARTS["animals"] = _place_hearts(beasts)
-    HEARTS["lr"] = _place_hearts({"lr_b"}, extra_obstacles=ball_zone)
+    HEART_OWNERS = {k: [] for k in ("people", "animals", "lr")}
+    HEARTS["people"] = _place_hearts(people, extra_obstacles=ball_zone + q_zone, owners=HEART_OWNERS["people"])
+    HEARTS["animals"] = _place_hearts(beasts, owners=HEART_OWNERS["animals"])
+    HEARTS["lr"] = _place_hearts({"lr_b"}, extra_obstacles=ball_zone, owners=HEART_OWNERS["lr"])
     # lr_a's column above the head is blocked by the family behind him: his heart starts beside his head, on the
     # open side, and rises less
     top_a = next(sp for n, _, sp in FIGS if n == "lr_a")
@@ -1057,13 +1156,19 @@ def build(ctx):
     HC = held_tf(t_catch)
     p_end = map_pt(HC, (LCX, LCY))
     hx0, hy0 = hand
+    # It never crosses his face (skin and beard: x ~2825 - 2930, y ~565 - 668): it falls on the far side of his
+    # head-cloth, comes round in front of his chest BELOW his beard with its stalk trailing behind it (to the
+    # right), swings up a little left of his face and drops into his hand. LEAF_DIRS: the stalk's direction (deg,
+    # 0 = right, 90 = down) at each knot - pointing up only while the leaf is still beside the back of his head.
     path = [p_start,
-            (p_start[0] + 24, p_start[1] + 46),          # drops off the stub, swinging out to the right
-            (p_start[0] + 6, p_start[1] + 90),           # turns back
-            (XJ + 24, hy0 - 78),                         # sweeps left in front of his chest
-            (hx0 - 72, hy0 - 112),                       # rises a little at the end of the swing
-            (p_end[0] + 6, p_end[1] - 44),               # and drops into his hand from above
-            p_end]
+            (p_start[0] + 22, p_start[1] + 52),          # drops off the stub, swinging out to the right
+            (p_start[0] + 14, p_start[1] + 118),         # falls past the back of his head-cloth
+            (XJ + 62, hy0 - 12),                         # comes round in front of his chest, under his beard
+            (XJ - 40, hy0 - 6),                          # sweeps left in front of his chest
+            (hx0 - 96, hy0 - 34),                        # rises a little at the end of the swing (left of his face)
+            p_end]                                       # and drops into his open hand
+    stalk0 = math.degrees(math.atan2(SE[1] - LCY, SE[0] - LCX))         # the stalk's direction in the drawing
+    LEAF_DIRS = [H0.rot + stalk0, -100.0, -40.0, 0.0, 14.0, 16.0, HC.rot + stalk0]
     # arc-length table of the Catmull-Rom path, so the leaf's speed follows the easing, not the knot spacing
     samp = [_catmull(path, k / 240) for k in range(241)]
     acc = [0.0]
@@ -1071,18 +1176,29 @@ def build(ctx):
         acc.append(acc[-1] + math.hypot(b_[0] - a_[0], b_[1] - a_[1]))
 
     def path_at(f):
+        """(x, y, k): the point at arc-length fraction f and its curve parameter in knot units (0 .. 6)."""
         d = _clamp(f) * acc[-1]
         i = min(239, max(0, next((k for k in range(1, 241) if acc[k] >= d), 240) - 1))
         seg = acc[i + 1] - acc[i]
         v = (d - acc[i]) / seg if seg > 0 else 0.0
-        return (samp[i][0] + (samp[i + 1][0] - samp[i][0]) * v, samp[i][1] + (samp[i + 1][1] - samp[i][1]) * v)
+        return (samp[i][0] + (samp[i + 1][0] - samp[i][0]) * v, samp[i][1] + (samp[i + 1][1] - samp[i][1]) * v,
+                (i + v) / 240 * (len(path) - 1))
+
+    def leaf_dir(k):
+        """The stalk's direction at knot position k: a Catmull-Rom curve through LEAF_DIRS."""
+        n = len(LEAF_DIRS) - 1
+        i = min(n - 1, int(k))
+        v = k - i
+        a0, a1, a2, a3 = LEAF_DIRS[max(0, i - 1)], LEAF_DIRS[i], LEAF_DIRS[i + 1], LEAF_DIRS[min(n, i + 2)]
+        return 0.5 * (2 * a1 + (a2 - a0) * v + (2 * a0 - 5 * a1 + 4 * a2 - a3) * v * v +
+                      (3 * a1 - a0 - 3 * a2 + a3) * v ** 3)
 
     def fall_tf(t):
         u = M.progress(t, t_fall0, t_catch, "linear")
         e = 0.62 * (0.5 - 0.5 * math.cos(math.pi * u)) + 0.38 * u    # starts from rest, slows into his hand
-        x, y = path_at(e)
+        x, y, k = path_at(e)
         swing = math.sin(2 * math.pi * 1.25 * u) * (1 - u) * min(1.0, u / 0.1)
-        rot = H0.rot + (HC.rot - H0.rot) * (0.5 - 0.5 * math.cos(math.pi * u)) + 28 * swing
+        rot = leaf_dir(k) - stalk0 + 10 * swing                       # (a little flutter)
         flip = abs(math.cos(math.pi * u * 2.2))
         sy = 1 - 0.5 * (1 - flip) * (1 - u) ** 0.6
         return Tf(dx=x - LCX, dy=y - LCY, rot=rot, sx=HC.sx, sy=HC.sy * sy, px=LCX, py=LCY)
@@ -1249,30 +1365,43 @@ def build(ctx):
     sc.add("fg", doc(S.g(fg)), z=20, wc=0.9)
 
     # =============================================================== CAMERA
-    # (views and key times are set with the narration timing above)
-    t_tob = t_bin - 0.3 - max(1.6, _cam_dur([C0b, Cb], 0.5))   # make room for the bubble before it pops
-    moves = []
-    for (ta, tb, cams, r) in [(t_still, t_tob, [C0, C0b], 0.45),
-                              (t_tob, t_bin + 0.3, [C0b, Cb], 0.5),
-                              (t_bin + 0.3, t_pull0, [Cb, Cb2], 0.5),
-                              (t_pull0, t_pull1, [Cb2, Cw], 0.3),
-                              (t_pull1, t_down0, [Cw, Cw2], 0.5),
-                              (t_down0, t_down1, [Cw2, C1], 0.32),
-                              (t_down1, t_go, [C1, C1b], 0.5),
-                              (t_go, t_c2, [C1b, C2], 0.3),          # over to the pasture ...
-                              (t_c2, t_rise, [C2, C2h], 0.5),        # ... a slow drift while the animals are named
-                              (t_rise, t_back, [C2h, C3], 0.3),      # up the knoll to Jonah
-                              (t_back, T - 0.35, [C3, Cf], 0.45)]:   # slow push-in to the last frame
-        fn, _, knots = _cam_path(cams)
-        moves.append((ta, tb, fn, r, knots))
+    # One smooth path. Each move eases from the previous view to the next (straight in x, y, ln w, re-timed by
+    # output-space arc length, raised-cosine ramps: velocity AND acceleration are continuous) and the camera is the
+    # sum of the moves' displacements, so where two moves overlap the camera turns from one into the next without
+    # stopping or kinking. Long ramps keep the acceleration gentle; durations keep the peak at ~14 output px / frame
+    # (the zoom adds a little more at the frame corners). The drifts of the old held views are folded into the
+    # neighbouring moves. Before t_still the camera is exactly C0 (s22's END_CAM), after the last move exactly Cf.
+    t_cam_bub = 5.0                                              # room for the bubble: there by the pop (t_bin)
+    t_cam_pull1 = t_pull0 + 4.1                                  # the pull-back to the wide city (starts as before)
+    t_cam_kids0 = t_cam_pull1 + 0.3                              # the wide view rests ~1 s, then down to the children
+    t_cam_kids1 = max(t_cam_kids0 + 5.0, t_lr + 1.5)
+    t_cam_past0 = t_cam_kids1 + 0.4                              # over to the pasture, the children still in view
+    t_cam_past1 = max(t_cam_past0 + 3.9, t_beasts + 0.3)         # settled on the animals as they are named
+    t_cam_rise0 = t_cam_past1 + 0.3                              # (its slow start: a rest while they are named)
+    t_cam_rise1 = t_care + 0.35                                  # up the knoll: Jonah in the frame by "心疼他们" ...
+    t_cam_push0 = t_cam_rise1 - 0.85                             # ... gliding on into the slow push-in
+    assert t_cam_bub > t_grow_line and t_cam_rise0 > t_baa
+    cam_moves = [(t_still, t_cam_bub + 0.2, C0b, 0.45),         # slow push-in on Jonah and the leaf
+                 (t_cam_bub, t_bin + 0.5, Cb, 0.45),             # room for the memory bubble on the left
+                 (t_bin + 0.3, t_pull0 + 0.4, Cb2, 0.5),         # a slow drift while the bubble plays
+                 (t_pull0, t_cam_pull1, Cw, 0.35),               # pull back to the wide city
+                 (t_cam_kids0, t_cam_kids1, C1, 0.35),           # glide down to the children
+                 (t_cam_past0, t_cam_past1, C2, 0.35),           # over to the pasture
+                 (t_cam_rise0, t_cam_rise1, C3, 0.38),           # up the knoll to Jonah ...
+                 (t_cam_push0, T - 0.35, Cf, 0.45)]              # ... and on into the slow push-in to the last frame
+    cam_segs = []
+    c_prev = C0
+    for (ta, tb, c_to, r) in cam_moves:
+        cam_segs.append((ta, tb, _cam_path([c_prev, c_to])[0], r, c_prev))
+        c_prev = c_to
 
     def camera(t):
-        for (ta, tb, fn, r, _) in moves:
-            if t < ta:
-                return fn(0.0)
-            if t <= tb:
-                return fn(_glide((t - ta) / (tb - ta), r))
-        return moves[-1][2](1.0)
+        x, y, lw = C0.x, C0.y, math.log(C0.w)
+        for (ta, tb, fn, r, c_from) in cam_segs:
+            if t > ta:
+                c = fn(_glide((t - ta) / (tb - ta), r))
+                x, y, lw = x + c.x - c_from.x, y + c.y - c_from.y, lw + math.log(c.w / c_from.w)
+        return Cam(x, y, math.exp(lw))
 
     sc.camera = camera
 
@@ -1294,10 +1423,14 @@ def build(ctx):
                     color=(255, 244, 200), size=(5, 10), drift=0, period=1.2, seed=26),
         FX.sparkles((200, 700, 2300, 1150), count=34, t0=t_city, t1=t_care, color=(255, 238, 175),
                     size=(8, 18), drift=-8, seed=23),
-        V.hearts_fx(HEARTS["people"], t_hearts_p0, t_hearts_p1, seed=31),
-        V.hearts_fx(HEARTS["lr"], t_lr_end + 0.35, t_hearts_p1 + 0.3, period=3.0, seed=33),
+        # (hearts keep off the faces of the townspeople walking behind the families: see _hearts_fx)
+        _hearts_fx(HEARTS["people"], t_hearts_p0, t_hearts_p1, seed=31, faces=faces_at, owners=HEART_OWNERS["people"],
+                   extra_obstacles=ball_zone + q_zone),
+        _hearts_fx(HEARTS["lr"], t_lr_end + 0.35, t_hearts_p1 + 0.3, period=3.0, seed=33, faces=faces_at,
+                   owners=HEART_OWNERS["lr"], extra_obstacles=ball_zone),
         V.hearts_fx(HEARTS["lr_a"], t_lr_end + 0.5, t_hearts_p1 + 0.3, rise=40, period=3.0, seed=34),
-        V.hearts_fx(HEARTS["animals"], t_hearts_a0, t_hearts_a1, life=2.4, seed=32),
+        _hearts_fx(HEARTS["animals"], t_hearts_a0, t_hearts_a1, life=2.4, seed=32, faces=faces_at,
+                   owners=HEART_OWNERS["animals"]),
         FX.sparkles((XJ - 300, GY - 420, XJ - 100, GY - 60), count=9, t0=t_soft, t1=T + 1, color=(255, 240, 190),
                     size=(8, 16), drift=-6, seed=24),           # (the same face column kept clear)
         FX.sparkles((XJ - 100, GY - 480, XJ + 170, GY - 340), count=5, t0=t_soft, t1=T + 1, color=(255, 240, 190),

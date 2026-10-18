@@ -2,9 +2,11 @@
 
 One picture-book page on a 2600 x 1188 stage, read left to right: the sea he came out of (the beach of s13) ->
 Jonah kneeling on the coast road under the parting clouds -> the s03 signpost (他施 west, 尼尼微 east) -> the great
-city of Nineveh far away on the eastern horizon. Echoes the first call (s02): kneeling, clouds part, golden light.
-God is never drawn: only light, sparkles and his voice. Jonah is 'still a bit wet' (robe a little darker, soaked
-hem patches, a few drops, no seaweed) and leaves damp sandal prints on the road.
+city of Nineveh far inland to the east: the sea ends at the coast, and the city stands beyond rows of hazy hills in
+a river valley (its river winding toward us), up-right of the signpost's Nineveh arm. Echoes the first call
+(s02): kneeling, clouds part, golden light. God is never drawn: only light, sparkles and his voice. Jonah is
+'still a bit wet' (robe a little darker, soaked hem patches, a few drops, no seaweed) and leaves damp sandal prints
+on the road.
 
   open       a page of soft cream clouds, gold light glowing through a seam above Jonah, fills the frame through the
              1 s dissolve from s13, so s13's standing Jonah never shares the screen with this one (a new page,
@@ -22,11 +24,13 @@ hem patches, a few drops, no seaweed) and leaves damp sandal prints on the road.
              closed (soft smile), so only God's voice is 'speaking'.
   L2 '这一次，约拿听话了。' — the light softens; on '听话' he nods twice (now with a happy grin).
              '他起来，' — he rises (half-kneel in-between, hand pushing on the knee, hop) and stands ready;
-             '照着上帝的吩咐，往尼尼微去。' — he walks east along the road toward the signpost and the city
-             (planted-foot walk with free arm swing as in s02 / s15: the drawing follows the distance walked; the
-             planted sole stays fixed on the rising road, the swing foot lands on the higher road ahead), the
-             camera following. He ends in open meadow with the sign and the far city ahead of him; calm, slowly
-             settling last second for the dissolve into s15.
+             '照着上帝的吩咐，往尼尼微去。' — he walks east along the road toward the signpost and the city,
+             turned side-on (eyes ahead, arms swinging fore and aft beside him; planted-foot walk starting from a
+             passing drawing: the drawing follows the distance walked; the planted sole stays fixed on the rising
+             road, the swing foot lands on the higher road ahead), the camera following and widening to s15's
+             framing (he ends left of centre, about as big as s15's Jonah at its gate). He ends in open meadow
+             with the sign and the far city ahead of him; calm, slowly settling last second for the dissolve into
+             s15.
 
 Pose changes are hard cuts sold by small hops / squashes, blinks are expression cuts; no crossfades between
 poses. Every beat comes from ctx.lines / chunks (phrase position inside a chunk), nothing is hard-coded to the
@@ -98,11 +102,12 @@ def _damp_design(patches=True):
     return D
 
 
-def jonah_fig(x, y, s, ps, expr=None, facing=1, marks=True, patches=True, label="j"):
-    """Damp Jonah in pose dict ``ps`` (or a POSES name), empty-handed as in s13 and s15."""
+def jonah_fig(x, y, s, ps, expr=None, facing=1, marks=True, patches=True, label="j", m=None):
+    """Damp Jonah in pose dict ``ps`` (or a POSES name), empty-handed as in s13 and s15. ``m``: figure metrics
+    (default the adult's; the walk uses WALK_M)."""
     ps = dict(C.POSES[ps]) if isinstance(ps, str) else dict(ps)
     e = expr or ps["expr"]
-    inner, _ = C._figure(_damp_design(patches), C._ADULT, ps, e, C._fsign(facing), marks)
+    inner, _ = C._figure(_damp_design(patches), m or C._ADULT, ps, e, C._fsign(facing), marks)
     return C._wrap_out(inner, x, y, s, facing, label)
 
 
@@ -129,12 +134,17 @@ RISE = C._P(t=8, h=-6, drop=70, legs=(("ik", 60, 1), (0, -92)),
 STAND = C._P(t=2, h=-3, arms=(("fk", 12, 6), ("fk", -10, -4)))     # standing ready, looking east
 
 
-def walk_pose(k, A=None, N=None, lift=20.0, rise=None):
-    """Planted-foot walk drawing k (N drawings per step, two steps per cycle; the s02 / s15 rig with both arms
-    swinging freely): the planted ankle goes from +A to -A figure px while the other foot swings through, so
-    advancing the anchor 2*A/N figure px per drawing keeps the planted sole on one spot. The road climbs toward
-    the east, so the swing foot lands ``rise`` figure px above the planted one (the body is then raised by that
-    much at the next contact instead of creeping up while a foot is planted)."""
+def walk_pose(k, A=None, N=None, lift=26.0, rise=None):
+    """Planted-foot walk drawing k (N drawings per step, two steps per cycle), turned side-on to the road: he walks
+    east, so he is drawn walking sideways, not facing us. The planted ankle goes from +A to -A figure px while
+    the other foot swings through, so advancing the anchor 2*A/N figure px per drawing keeps the planted sole on
+    one spot. The road climbs toward the east, so the swing foot lands ``rise`` figure px above the planted one
+    (the body is then raised by that much at the next contact instead of creeping up while a foot is planted).
+
+    Side-on: drawn with WALK_M (shoulder joints close together, as seen from the side), eyes looking ahead along
+    the road, a little more forward lean and bob, and the arms swinging fore and aft beside the body: the near
+    arm swings well forward and only a little back, the far arm well back (behind him) and only a little forward,
+    so the two arms never splay out to both sides like a front view."""
     A = A_W if A is None else A
     N = N_W if N is None else N
     rise = RISE_W if rise is None else rise
@@ -143,18 +153,23 @@ def walk_pose(k, A=None, N=None, lift=20.0, rise=None):
     plant = ("ik", A * (1 - 2 * u), 1)
     swing = ("ik", -A + 2 * A * (0.5 - 0.5 * math.cos(math.pi * u)), 1,
              lift * math.sin(math.pi * u) + rise * (0.5 - 0.5 * math.cos(math.pi * u)))
-    sw = 34 * math.cos(math.pi * ph)
-    return C._P(t=4, h=-3, legs=(plant, swing) if step == 0 else (swing, plant),
-                arms=(("fk", -sw, -sw + 14), ("fk", sw, sw + 14)), hands=("fist", "fist"),
-                drop=12 + 4 * math.cos(2 * math.pi * u))
+    c = math.cos(math.pi * ph)
+    near, far = 8 + 28 * c, -8 - 28 * c
+    return C._P(t=7, h=-2, look=(0.09, 0.0), legs=(plant, swing) if step == 0 else (swing, plant),
+                arms=(("fk", far, far + 18), ("fk", near, near + 22)), hands=("fist", "fist"),
+                drop=12 + 6 * math.cos(2 * math.pi * u))
 
 
 # ====================================================================== layout (stage px)
 HORIZON = 590
 JX, JS = 640.0, 1.15                      # Jonah's kneeling spot on the coast road (y = road centre)
 GAP = (690, 170)                          # where the clouds part (God's light comes from here)
-CITY = (1440, 1880, 598, 0.26)            # the distant Nineveh skyline (far away: Jonah 3:3): x0, x1, ground y, scale
-CITY_C = (1660, 540)                      # its middle (glow / trail target)
+# Nineveh lies far inland to the EAST (Jonah 3:3; s15 draws it on its river): the sea ends at the coast (x < 980),
+# inland hills rise beyond the coast, and the city stands far away in a river valley beyond them, up-right of the
+# signpost's Nineveh arm, with pale mountains behind it (far layer, stage px before parallax)
+CITY = (1615, 1915, 600, 0.22)            # the distant Nineveh skyline: x0, x1, ground y, scale
+CITY_C = (1765, 546)                      # its middle (glow / trail target)
+RIVER = [(1768, 601), (1747, 609), (1767, 621), (1823, 636), (1838, 654), (1774, 672), (1762, 700), (1792, 742)]
 SIGN = (1572, 812, 0.7)                   # the signpost of s03 (他施 west, 尼尼微 east) on the far verge
 ROAD_X = [-60, 300, 640, 1000, 1300, 1550, 1700, 1800]
 ROAD_TOP = [990, 955, 932, 905, 872, 828, 770, 708]
@@ -164,8 +179,9 @@ INNER = [(-60, 1120), (200, 990), (430, 870), (640, 782), (820, 708), (960, 646)
 CREST = [(980, 592), (1100, 622), (1400, 658), (1800, 700), (2200, 690), (2680, 680)]
 
 # walk rig: ankle travel (figure px) per half step, drawings per step, s per drawing (exactly 3 frames at 30 fps,
-# 0.6 s per step)
-A_W, N_W, HOLD_W = 40.0, 6, 0.1
+# 0.7 s per step: a longer stride than a shuffle, at the same ground speed as before, ~13.4 figure px a drawing)
+A_W, N_W, HOLD_W = 47.0, 7, 0.1
+WALK_M = C._metrics(C._ADULT, sw=12)       # side-on walk: the shoulder joints close together (robe unchanged)
 
 PUNCT = "，、。：；！？,.!?:;"
 
@@ -381,48 +397,102 @@ def warm_svg():
 
 
 def far_svg():
-    """Hazy hills on the eastern horizon, the far plain and the great city of Nineveh far away."""
-    haze = S.mix(P["stone"], P["sky_day"], 0.55)
-    haze2 = S.mix(P["stone"], P["sky_day"], 0.42)
-    defs = S.lin_grad("s14plain", [(0, S.mix(P["sand_light"], P["sky_warm"], 0.5)), (1, P["sand_light"])])
-    hills = (S.path(S.hill(820, 1420, HORIZON + 8, 40, seed=3, bumps=2, bottom=800), fill=haze, sw=2.4)
-             + S.path(S.hill(1900, 2900, HORIZON + 8, 70, seed=8, bumps=3, bottom=800), fill=haze, sw=2.4)
-             + S.path(S.hill(1250, 2050, HORIZON + 10, 30, seed=5, bumps=2, bottom=800), fill=haze2, sw=2.4))
+    """The far east beyond the coast: pale mountains on the horizon, the river plain, the great city of Nineveh far
+    away on its river (in a valley between two rows of hazy inland hills, which hide the outer ends of its base),
+    and nearer rolling hills between the coast and the city."""
+    ink = P["ink"]
+    mtn = S.mix(S.mix(P["sky_day"], P["sky_dawn_top"], 0.5), P["sky_warm"], 0.3)
+    far_row = S.mix(S.mix(P["olive"], P["sky_day"], 0.55), P["sky_warm"], 0.35)
+    near_row = S.mix(S.mix(P["olive"], P["grass"], 0.5), P["sky_warm"], 0.42)
+    defs = (S.lin_grad("s14plain", [(0, S.mix(S.mix(P["grass"], P["sand_light"], 0.6), P["sky_warm"], 0.45)),
+                                    (1, S.mix(P["grass"], P["sand_light"], 0.62))])
+            + S.lin_grad("s14riv", [(0, S.mix(P["sea_pale"], P["sky_warm"], 0.35)), (1, P["sea_light"])],
+                         y1=0.0, y2=1.0))
+    mountains = (S.path(S.hill(1480, 2300, HORIZON + 8, 46, seed=8, bumps=3, bottom=800), fill=mtn, sw=2.2,
+                        extra='stroke-opacity="0.6"')
+                 + S.path(S.hill(2120, 2960, HORIZON + 8, 62, seed=3, bumps=3, bottom=800), fill=mtn, sw=2.2,
+                          extra='stroke-opacity="0.6"'))
     plain = (f'<path d="M600,{HORIZON + 4} C900,{HORIZON + 2} 1400,{HORIZON + 6} 1800,{HORIZON + 8} '
              f'S2600,{HORIZON + 8} 2950,{HORIZON + 6} L2950,860 L600,860 Z" '
-             f'fill="url(#s14plain)" stroke="{P["ink"]}" stroke-width="2.2"/>')
+             f'fill="url(#s14plain)" stroke="{ink}" stroke-width="2.2"/>')
+    fields = ""
+    for x, yy, w_, h_ in ((1702, 632, 70, 9), (1846, 616, 64, 7), (1866, 676, 90, 12), (1724, 692, 80, 12)):
+        fields += (f'<ellipse cx="{x}" cy="{yy}" rx="{w_ / 2}" ry="{h_ / 2}" '
+                   f'fill="{S.mix(P["grass"], P["grass_dark"], 0.3)}" opacity="0.45"/>')
+    # hazy green land on the horizon where the coast ends (seen in the dip of the meadow's crest east of the beach),
+    # so the beach does not seem to run on along the horizon toward the city
+    far_land = (f'<path d="M560,{HORIZON + 3} L1180,{HORIZON + 4} L1180,780 L560,780 Z" '
+                f'fill="{S.mix(far_row, near_row, 0.5)}"/>'
+                f'<path d="M560,{HORIZON + 3} L1180,{HORIZON + 4}" stroke="{ink}" stroke-width="2.2" fill="none"/>')
     x0, x1, y, sc_ = CITY
     city = PR.nineveh_skyline(x0, x1, y, scale=sc_, seed=21, haze=0.5)
-    # a band of pale hazy hills in front of the city's base: it lies far beyond the plain (a long journey)
-    # (both ends dip below the meadow's crest, so no end edge ever shows, parallax included)
-    haze3 = S.mix(P["stone"], P["sky_warm"], 0.68)
-    city += S.g(_haze_band(x0 - 170, x1 + 150, HORIZON + 12, 22, 12, haze3)
-                + _haze_band(x0 + 110, x1 + 280, HORIZON + 17, 14, 14, S.mix(haze3, P["sand_light"], 0.3)),
-                filter="wobble")
+    # two rows of hazy hills on each side of the river valley (the far rows hide the city's outer base)
+    rows = (_band([(1000, _land_top(1000) + 46), (1060, 596), (1170, 579), (1300, 586), (1430, 573), (1550, 582),
+                   (1625, 589), (1675, 616), (1703, _land_top(1703) + 46)], far_row)
+            + _band([(1850, _land_top(1850) + 46), (1877, 618), (1902, 594), (2000, 582), (2150, 590), (2290, 576),
+                     (2450, 587), (2620, 579), (2800, 588), (2960, _land_top(2960) + 46)], far_row))
+    rows2 = (_band([(995, _land_top(995) + 46), (1040, 607), (1130, 598), (1240, 609), (1340, 600), (1460, 613),
+                    (1550, 607), (1625, 628), (1667, _land_top(1667) + 46)], near_row)
+             + _band([(1880, _land_top(1880) + 46), (1912, 646), (1968, 628), (2100, 634), (2250, 619), (2400, 631),
+                      (2600, 622), (2800, 630), (2960, _land_top(2960) + 46)], near_row))
     palms = ""
-    for x, yy, s_, ln in ((1330, 616, 0.17, 0.2), (1372, 622, 0.14, -0.2), (1930, 618, 0.18, -0.1),
-                          (1985, 626, 0.15, 0.25), (2350, 630, 0.16, 0.1), (1100, 612, 0.13, 0.0)):
+    for x, yy, s_, ln in ((1740, 648, 0.055, 0.1), (1870, 664, 0.06, -0.15), (1790, 613, 0.042, 0.0),
+                          (1716, 678, 0.065, -0.1)):
         palms += PR.palm_tree(x, yy, s_, lean=ln, dates=False)
-    fields = ""
-    for x, yy, w_, h_ in ((1240, 640, 220, 20), (2100, 650, 300, 26), (2500, 640, 220, 20), (1700, 660, 260, 22)):
-        fields += (f'<ellipse cx="{x}" cy="{yy}" rx="{w_ / 2}" ry="{h_ / 2}" '
-                   f'fill="{S.mix(P["grass"], P["sand_light"], 0.5)}" opacity="0.8"/>')
-    body = S.g(hills, filter="wobble") + S.g(plain + fields, filter="wobble") + city + \
-        f'<g opacity="0.85">{palms}</g>'
+    body = (S.g(mountains, filter="wobble") + S.g(plain + fields + far_land, filter="wobble") + city
+            + S.g(rows, filter="wobble") + S.g(_river(), filter="wobble") + S.g(rows2, filter="wobble")
+            + f'<g opacity="0.9">{palms}</g>')
     return doc(body, defs)
 
 
-def _haze_band(x0, x1, y, peak, seed, fill):
-    """A long low hazy ridge on the horizon whose two ends sink below the land's crest (path markup)."""
-    rng = random.Random(seed)
-    n = 8
-    pts = [(x0, _land_top(x0) + 46)]
-    for i in range(1, n):
-        u = i / n
-        pts.append((x0 + (x1 - x0) * u, y - peak * math.sin(math.pi * u) ** 0.5 * rng.uniform(0.7, 1.1)))
-    pts.append((x1, _land_top(x1) + 46))
-    d = S.smooth_path(pts, closed=False) + f" L{x1},{_land_top(x1) + 120} L{x0},{_land_top(x0) + 120} Z"
-    return S.path(d, fill=fill, sw=1.8, extra='stroke-opacity="0.55"')
+def _band(pts, fill):
+    """A low hazy ridge through the top points ``pts`` (the first and last lie well below the meadow's crest, so
+    no end edge ever shows, parallax included), closed far below the crest (path markup)."""
+    xa, xb = pts[0][0], pts[-1][0]
+    d = S.smooth_path(pts, closed=False, tension=0.8) + \
+        f" L{xb},{f1(_land_top(xb) + 140)} L{xa},{f1(_land_top(xa) + 140)} Z"
+    return S.path(d, fill=fill, sw=2.0, extra='stroke-opacity="0.6"')
+
+
+def _river_pts(n=40):
+    """Centre line of the river (Catmull-Rom through RIVER) as (x, y) samples, far end first."""
+    pts = RIVER
+    out = []
+    for i in range(len(pts) - 1):
+        p0, p1, p2 = pts[max(0, i - 1)], pts[i], pts[i + 1]
+        p3 = pts[min(len(pts) - 1, i + 2)]
+        for j in range(n // (len(pts) - 1)):
+            u = j / (n // (len(pts) - 1))
+            out.append(tuple(0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * u
+                                    + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * u * u
+                                    + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * u ** 3) for k in (0, 1)))
+    out.append(pts[-1])
+    return out
+
+
+def _river():
+    """The river (the Tigris) winding out of the valley at the city's foot toward us across the plain, widening as it
+    comes nearer, then lost behind the meadow's crest (path markup)."""
+    c = _river_pts()
+    y0, y1 = c[0][1], c[-1][1]
+    left, right = [], []
+    for i, (x, y) in enumerate(c):
+        a, b = c[max(0, i - 1)], c[min(len(c) - 1, i + 1)]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        ln = math.hypot(dx, dy) or 1.0
+        nx, ny = -dy / ln, dx / ln
+        hw_ = 0.5 * (3.5 + 38 * ((y - y0) / (y1 - y0)) ** 1.25)
+        # seen at a low angle, the width across the view is foreshortened where the river runs sideways
+        left.append((x + nx * hw_, y + ny * hw_ * 0.45))
+        right.append((x - nx * hw_, y - ny * hw_ * 0.45))
+    d = _pts_path(left + list(reversed(right))) + " Z"
+    body = f'<path d="{d}" fill="url(#s14riv)" stroke="{P["ink"]}" stroke-width="2" stroke-linejoin="round"/>'
+    for f in (0.4, 0.6, 0.78, 0.92):
+        x, y = c[int(f * (len(c) - 1))]
+        w_ = 4 + 0.16 * (y - y0)
+        body += (f'<path d="M{f1(x - w_ / 2)},{f1(y)} l{f1(w_)},0" stroke="{P["foam"]}" stroke-width="2.2" '
+                 f'stroke-linecap="round" opacity="0.85"/>')
+    return body
 
 
 def city_glow_svg():
@@ -457,8 +527,10 @@ def land_svg():
                          y1=0.0, y2=1.0)
             + S.lin_grad("s14road", [(0, "#f8ecd2"), (1, S.mix(P["sand_light"], "#fffaf0", 0.35))])
             + S.lin_grad("s14beach", [(0, S.mix(P["sand"], P["sky_warm"], 0.3)), (1, P["sand"])]))
-    sea = (f'<rect x="-40" y="{HORIZON}" width="1120" height="{SH - HORIZON + 40}" fill="url(#s14sea)"/>'
-           f'<path d="M-40,{HORIZON} L1060,{HORIZON}" stroke="{ink}" stroke-width="2.6"/>')
+    # the sea ends where the coast meets the horizon (x 980): east of it is land all the way (no bay behind the
+    # meadow, so the far city reads as inland, not on the coast)
+    sea = (f'<rect x="-40" y="{HORIZON}" width="1020" height="{SH - HORIZON + 40}" fill="url(#s14sea)"/>'
+           f'<path d="M-40,{HORIZON} L980,{HORIZON}" stroke="{ink}" stroke-width="2.6"/>')
     rng = random.Random(7)
     dashes = ""
     for _ in range(70):
@@ -689,7 +761,7 @@ def _bez(p0, p1, p2, u):
             (1 - u) ** 2 * p0[1] + 2 * (1 - u) * u * p1[1] + u * u * p2[1])
 
 
-TRAIL = ((JX + 60, JY - 245), (1150, 230), (CITY_C[0] - 30, CITY_C[1] - 30))
+TRAIL = ((JX + 60, JY - 245), (1230, 220), (CITY_C[0] - 30, CITY_C[1] - 30))
 
 
 def trail_svg():
@@ -764,15 +836,19 @@ def build(ctx):
     CAM0 = Cam(1000, 600, 2000)
     CAM_L1 = Cam(1010, 608, 1900)
     CAM_W = Cam(940, 640, 1780)            # low enough that his feet stay above the subtitle band
+    # the closing glide follows him east and widens to s15's framing (s15 opens on a smaller Jonah left of centre at
+    # its gate: here he ends left of centre at ~300 output px tall). It starts on the nods, so the slow 'inout' start
+    # still frames the rise as CAM_W, and its peak (mid-walk) stays at ~10 output px / frame (pan) / ~13 at the
+    # frame corners (with the zoom-out)
+    t_glide = max(t_quiet + 0.6, t_obey)
     cam = M.cam_keys([
         (0.0, CAM0),
         (t_call - 0.2, Cam(990, 604, 1940)),
         (t_word, CAM_L1),
         (t_quiet + 0.4, Cam(1000, 612, 1860)),
-        (t_rise - 0.2, CAM_W),
-        (t_walk + 0.3, Cam(960, 636, 1780)),
-        (T, Cam(1250, 604, 1860)),
-    ], ["sine", "sine", "sine", "sine", "sine", "inout"])
+        (t_glide, CAM_W),
+        (T, Cam(1530, 592, 2100)),
+    ], ["sine", "sine", "sine", "sine", "inout"])
     sc.camera = cam
     cam_x0 = CAM_L1.x
 
@@ -904,7 +980,7 @@ def build(ctx):
     addf("stand_b", jd(jonah_fig(JX, JY, JS, STAND, "peaceful")))
     w0 = len(jdocs)
     for k in range(2 * N_W):
-        addf(f"w{k}", jd(jonah_fig(JX, JY, JS, walk_pose(k), "happy")))
+        addf(f"w{k}", jd(jonah_fig(JX, JY, JS, walk_pose(k), "happy", m=WALK_M)))
 
     blink = 0.13
     ev = [(0.0, J["pray"]), (t_open, J["up"]), (t_call, J["listen"]),
@@ -922,27 +998,35 @@ def build(ctx):
                 (t_walk, 0.03)]
     nods = [t_obey, t_obey + 0.52]
     n_draw = int(math.ceil((T + 0.2 - t_walk) / HOLD_W))
-    xs = [JX]
+    # walk drawing i (from t_walk, HOLD_W s each) is cycle drawing k = i + K0: the walk starts on the passing
+    # drawing of a step (the planted foot under him, the other just lifting), the closest one to the stand
+    K0 = N_W // 2
+    xs = [JX]                                     # anchor x of walk drawing i
     for i in range(n_draw + 1):
         xs.append(xs[-1] + 2 * A_W * walk_scale(xs[-1]) / N_W)
+
+    def anchor(k):
+        """Anchor x at cycle drawing k (before the start: where it would have been at the same pace)."""
+        i = k - K0
+        return xs[min(i, len(xs) - 1)] if i >= 0 else JX + i * 2 * A_W * walk_scale(JX) / N_W
     # the planted sole of step j stays on the road at its contact point for all N_W drawings of the step
     contact = []                                  # (x, road y) of the planted foot of each step
-    for j in range(len(xs) // N_W + 1):
-        x0 = xs[min(j * N_W, len(xs) - 1)]
+    for j in range((len(xs) + K0) // N_W + 1):
+        x0 = anchor(j * N_W)
         xc = x0 + A_W * walk_scale(x0)
         contact.append((xc, road_y(xc)))
     stand_fa = _sched(ev)
 
     # "still a bit wet": damp sandal prints where his planted feet stood, and a damp patch where he knelt
     prints = []                                   # (x, y, scale, t_down, t_up)
-    for j in range(n_draw // N_W + 1):
-        i0 = j * N_W
+    for j in range(len(contact)):
+        i0 = j * N_W - K0                         # walk drawing at which this foot comes down
         if i0 >= len(xs):
             break
-        s_ = walk_scale(xs[i0])
+        s_ = walk_scale(anchor(j * N_W))
         xf, yf = contact[j]
         prints.append((xf + 8 * s_, yf + (-3 if j % 2 == 0 else 3) * s_, s_,
-                       t_walk + i0 * HOLD_W, t_walk + (i0 + N_W) * HOLD_W))
+                       t_walk + max(0, i0) * HOLD_W, t_walk + (i0 + N_W) * HOLD_W))
     pb = (int(JX - 120), int(min(p_[1] for p_ in prints) - 40), int(xs[-1] + 120), int(JY + 40))
 
     def damp_fn(t):
@@ -967,7 +1051,7 @@ def build(ctx):
     def j_fa(t):
         if t >= t_walk:
             i = int((t - t_walk) / HOLD_W)
-            return float(w0 + (i % (2 * N_W)))
+            return float(w0 + ((i + K0) % (2 * N_W)))
         return stand_fa(t)
 
     def j_m(t):
@@ -977,12 +1061,13 @@ def build(ctx):
             sx, sy = sx * a, sy * b
         dy = sum(_hop(t, th, h) for th, h in hops)
         if t >= t_walk:
-            # the first walk drawing is a hard cut from the stand, sold by a squash and a small hop like the
-            # other pose cuts; the body is raised one road step at each new contact (see walk_pose)
+            # the first walk drawing (a passing position) is a hard cut from the stand, sold by a squash and a
+            # small hop like the other pose cuts; the body is raised one road step at each new contact (see
+            # walk_pose)
             i = min(int((t - t_walk) / HOLD_W), len(xs) - 1)
             x = xs[i]
             s_ = walk_scale(x) / JS
-            yc = contact[min(i // N_W, len(contact) - 1)][1]
+            yc = contact[min((i + K0) // N_W, len(contact) - 1)][1]
             return Tf(dx=x - JX, dy=yc - JY + dy, sx=s_ * sx, sy=s_ * sy, px=JX, py=JY)
         br = 1 + 0.008 * math.sin(2 * math.pi * t / 3.2)
         nod = sum(5 * math.sin(math.pi * _clamp((t - tn) / 0.3)) for tn in nods if tn <= t <= tn + 0.3)
@@ -1071,9 +1156,9 @@ def build(ctx):
     sc.sfx("cloth", t_rise, gain_db=-13)
     # one footstep per planted-foot contact (the 'footsteps' loop picks a random phase within its period, so a
     # long loop would not land on the drawings; a 0.3 s loop holds a single step ~0.04 s after the cue start)
-    k = 0
-    while t_walk + k * N_W * HOLD_W < T - 0.2:
-        sc.sfx("footsteps", t_walk + k * N_W * HOLD_W - 0.04, dur=0.3, gain_db=-13, fade_in=0.01, fade_out=0.06,
-               pan=0.08 if k % 2 else -0.04, rate=0.5)
+    k = 1                                         # (the first foot is already down when he sets off)
+    while t_walk + (k * N_W - K0) * HOLD_W < T - 0.2:
+        sc.sfx("footsteps", t_walk + (k * N_W - K0) * HOLD_W - 0.04, dur=0.3, gain_db=-13, fade_in=0.01,
+               fade_out=0.06, pan=0.08 if k % 2 else -0.04, rate=0.5)
         k += 1
     return sc

@@ -23,7 +23,8 @@ overcast cloud hangs low over the whole city (adapted from the approved v1 s10 e
           "就可怜他们，"                    the middle cloud splits into two halves that slide apart (chime),
                                           golden light pours down in rays over the square, the homes and our
                                           roof, the gloom lifts; the family tilts up to look into the light.
-          "没有毁灭这座城。"                the cloud banks drift apart and dissolve, the sky turns gold, the warm
+          "没有毁灭这座城。"                the cloud banks, opaque, are pushed aside by the light: they slide outward
+                                          and roll up and away off the frame; the sky turns gold, the warm
                                           light spreads over all the roofs; faces turn to relief and joy, the
                                           neighbours on the roofs, in the square and in the street smile up;
                                           doves take off from the roofs.
@@ -93,11 +94,6 @@ def phrase_t(line, phrases, default):
 def cut_at(t, fps=30):
     """Snap a hard cut to the middle of a frame interval (no frame shows a half-way blend)."""
     return (math.floor(t * fps) + 0.5) / fps
-
-
-def out2(u):
-    """Quadratic ease-out: starts moving at once (no dead stop at a key), settles gently."""
-    return 1 - (1 - u) ** 2
 
 
 # ============================================================================ sky & far city
@@ -557,6 +553,76 @@ def rim_svg(items, rid, y0, y1, col="#ffe6a0", r_out=12, r_in=9):
     return doc(body, defs)
 
 
+def behind_overcast(fxs, motions, t_on, margin=10, q=2):
+    """Output-space fx (sparkles, motes; they are drawn after every layer) seen as if in the air BEHIND the
+    overcast: while a cloud bank is in frame their drawing is masked by the banks' silhouettes - the base
+    ellipses, puff circles and top rects that cloud_bank_svg draws, moved by each bank's motion and the camera,
+    grown by ``margin`` stage px for the ink line and the wobble, softened a little - so nothing twinkles on a
+    cloud face and the opening sky shows them as the banks roll away. The mask is drawn at 1/q resolution.
+    Before ``t_on`` (none of them shows yet) and once every bank has left the frame they draw directly, exactly
+    as unwrapped."""
+    banks = []          # (motion, ellipses (n, 4) [cx, cy, rx, ry], rects [(x0, y0, x1, y1)]) in stage px
+    for name, mo in motions.items():
+        items, _, rect = BANKS[name]
+        ells = []
+        for cx, cy, w, h, seed in items:
+            circles, base = cloud_geom(cx, cy, w, h, seed)
+            ells += [base] + [(x, y, r, r) for x, y, r in circles]
+        banks.append((mo, np.array(ells, np.float64), [(rect[0], -40, rect[1], rect[2])] if rect else []))
+    mw, mh = OUT_W // q, OUT_H // q
+    sub = 16                                   # cv2 fixed-point sub-pixel factor (shift=4)
+
+    def keep_mask(t, view):
+        M = view.M
+        k = M[0, 0] / q                        # mask px per stage px (the camera never rotates)
+        cov = None
+        for mo, ells, rects in banks:
+            tf = mo(t)
+            # stage -> mask px for this bank: x -> ax * x + bx (scale tf.sx about the pivot, then move)
+            ax, ay = k * tf.sx, k * tf.sy
+            bx = M[0, 2] / q + k * (tf.px + tf.dx - tf.sx * tf.px)
+            by = M[1, 2] / q + k * (tf.py + tf.dy - tf.sy * tf.py)
+            ex, ey = ells[:, 0] * ax + bx, ells[:, 1] * ay + by
+            rx, ry = ells[:, 2] * ax + margin * k, ells[:, 3] * ay + margin * k
+            rr = [(x0 * ax + bx - margin * k, y0 * ay + by - margin * k, x1 * ax + bx + margin * k,
+                   y1 * ay + by + margin * k) for x0, y0, x1, y1 in rects]
+            lo_x = min([(ex - rx).min()] + [r[0] for r in rr])
+            hi_x = max([(ex + rx).max()] + [r[2] for r in rr])
+            lo_y = min([(ey - ry).min()] + [r[1] for r in rr])
+            hi_y = max([(ey + ry).max()] + [r[3] for r in rr])
+            if hi_x < -2 or lo_x > mw + 2 or hi_y < -2 or lo_y > mh + 2:
+                continue                       # this bank is out of frame
+            if cov is None:
+                cov = np.zeros((mh, mw), np.uint8)
+            for x, y, a, b in zip(ex, ey, rx, ry):
+                cv2.ellipse(cov, (round(x * sub), round(y * sub)), (round(a * sub), round(b * sub)), 0, 0, 360,
+                            255, -1, cv2.LINE_AA, 4)
+            for x0, y0, x1, y1 in rr:
+                cv2.rectangle(cov, (round(x0 * sub), round(y0 * sub)), (round(x1 * sub), round(y1 * sub)), 255, -1,
+                              cv2.LINE_AA, 4)
+        if cov is None:
+            return None
+        cov = cv2.GaussianBlur(cov, (0, 0), 0.75)
+        return cv2.resize(255 - cov, (OUT_W, OUT_H), interpolation=cv2.INTER_LINEAR)
+
+    def fx(frame, t, view):
+        keep = keep_mask(t, view) if t >= t_on else None
+        if keep is None:
+            for f in fxs:
+                res = f(frame, t, view)
+                frame = frame if res is None else res
+            return frame
+        layer = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+        for f in fxs:
+            res = f(layer, t, view)
+            layer = layer if res is None else res
+        arr = np.array(layer)
+        arr[..., 3] = cv2.multiply(np.ascontiguousarray(arr[..., 3]), keep, scale=1 / 255.0)
+        frame.alpha_composite(Image.fromarray(arr, "RGBA"))
+        return frame
+    return fx
+
+
 # ============================================================================ doves
 
 
@@ -789,40 +855,51 @@ def build(ctx):
                ["sine", "sine", "out", "sine", "sine"], pivot=(GAP_X, 200)),
         M.pulse(0.88, 1.0, 2.6)))
 
-    # ---- the overcast: churns, catches the light, splits at the gap, drifts apart and dissolves ----
+    # ---- the overcast: churns, catches the light, splits at the gap, then rolls away off the frame ----
     lit_c = lambda t: M.progress(t, t_see + 0.3, t_mercy, "sine")        # the middle warms while God sees
     lit = lambda t: M.progress(t, t_mercy - 0.6, t_mercy + 1.4, "sine")
 
-    def cloud_motion(go_dx, go_dy, t_go1, fade0, fade1, drift, pivot, s1=1.06, churn=0.0):
-        # one eased-out move from the moment of mercy: the banks start at once, keep going, settle; opaque
-        # until fade0 (the middle halves are well clear of the gap by then)
+    def roll(u, a):
+        """Pushed-aside path, 0 -> 1 over u 0 -> 1: starts at once with speed a (0..1), speeds up to 2 - a,
+        then keeps that speed (the bank is already off-frame) for half the move more and stops."""
+        if u <= 0:
+            return 0.0
+        if u <= 1:
+            return a * u + (1 - a) * u * u
+        return 1 + (2 - a) * (min(u, 1.5) - 1)
+
+    def cloud_motion(go_dx, go_dy, go_t, drift, pivot, s1=1.06, churn=0.0, ax=0.6, ay=0.1):
+        # from the moment of mercy the light pushes the bank aside, fully opaque: it slides outward at once
+        # (the middle halves part at the gap), then curves up and away, speeding up until it has left the
+        # frame (the camera is widening, so each move ends well outside the final framing of the whole city)
+        def go(t):
+            u = (t - t_mercy) / go_t
+            fx, fy = roll(u, ax), roll(u, ay)
+            s = 1 + (s1 - 1) * min(1.0, fx)
+            return Tf(dx=go_dx * fx, dy=go_dy * fy, sx=s, sy=s, px=pivot[0], py=pivot[1])
         return M.combine(
-            M.keys([(t_mercy, {"dx": 0, "dy": 0, "s": 1.0}), (t_go1, {"dx": go_dx, "dy": go_dy, "s": s1})],
-                   out2, pivot=pivot),
-            M.keys([(fade0, {"alpha": 1}), (fade1, {"alpha": 0})], "sine"),
+            go,
             M.drift(vx=drift),
             M.bob(churn, 5.5, phase=pivot[0] / 977.0, axis="y") if churn else None,
             M.bob(churn * 2.2, 7.5, phase=pivot[0] / 1311.0, axis="x") if churn else None)
 
-    dur = max(1.6, l0.end - t_mercy)                     # the cloud dissolves over the whole phrase
-    plan = {  # name: (z, go_dx, go_dy, go_end, fade0, fade1, drift, pivot, s1)
-        "back_l": (40.2, -460, -180, 0.62, 0.42, 0.66, -3, (560, 80), 1.06),
-        "back_r": (40.21, 460, -170, 0.62, 0.42, 0.66, 3, (2500, 80), 1.06),
-        "back_cl": (40.22, -640, -160, 0.66, 0.34, 0.6, -3, (GAP_X - 215, 120), 1.08),
-        "back_cr": (40.23, 640, -150, 0.66, 0.34, 0.6, 3, (GAP_X + 215, 120), 1.08),
-        "low_l": (40.3, -360, -170, 0.7, 0.36, 0.7, -2, (760, 560), 1.04),
-        "low_r": (40.31, 360, -160, 0.7, 0.36, 0.7, 2, (2400, 560), 1.04),
-        "low_cl": (40.32, -560, -190, 0.62, 0.32, 0.58, -2, (GAP_X - 150, 530), 1.06),
-        "low_cr": (40.33, 560, -190, 0.62, 0.32, 0.58, 2, (GAP_X + 155, 530), 1.06),
-        "front_l": (40.4, -660, -220, 0.85, 0.5, 0.82, -3, (1080, 250), 1.06),
-        "front_r": (40.41, 660, -200, 0.85, 0.5, 0.82, 3, (2230, 260), 1.06),
+    plan = {  # name: (z, go_dx, go_dy, go_t (s after the moment of mercy), drift, pivot, s1, ax)
+        "back_l": (40.2, -650, -560, 2.8, -3, (560, 80), 1.06, 0.5),
+        "back_r": (40.21, 650, -550, 2.8, 3, (2500, 80), 1.06, 0.5),
+        "back_cl": (40.22, -700, -430, 2.6, -3, (GAP_X - 215, 120), 1.08, 0.8),
+        "back_cr": (40.23, 700, -420, 2.6, 3, (GAP_X + 215, 120), 1.08, 0.8),
+        "low_l": (40.3, -900, -780, 2.9, -2, (760, 560), 1.04, 0.5),
+        "low_r": (40.31, 900, -780, 2.9, 2, (2400, 560), 1.04, 0.5),
+        "low_cl": (40.32, -800, -740, 2.7, -2, (GAP_X - 150, 530), 1.06, 0.8),
+        "low_cr": (40.33, 800, -730, 2.7, 2, (GAP_X + 155, 530), 1.06, 0.8),
+        "front_l": (40.4, -800, -540, 3.0, -3, (1080, 250), 1.06, 0.5),
+        "front_r": (40.41, 800, -560, 3.0, 3, (2230, 260), 1.06, 0.5),
     }
     motions = {}
-    for name, (z, gdx, gdy, ge, f0, f1_, dr, pv, s1) in plan.items():
+    for name, (z, gdx, gdy, gt, dr, pv, s1, ax) in plan.items():
         items, kind, rect = BANKS[name]
         centre = name.startswith(("back_c", "low_c"))
-        mo = cloud_motion(gdx, gdy, t_mercy + ge * dur, t_mercy + f0 * dur, t_mercy + f1_ * dur, dr, pv, s1,
-                          churn=5.0)
+        mo = cloud_motion(gdx, gdy, gt, dr, pv, s1, churn=5.0, ax=ax)
         motions[name] = mo
         sc.add(f"cloud_{name}", bank_frames(items, kind, rect, "centre" if centre else None), z=z,
                frame_at=lit_c if centre else lit, motion=mo)
@@ -837,8 +914,10 @@ def build(ctx):
                motion=M.combine(motions[f"low_c{side}"], seam_a, M.pulse(0.85, 1.0, 1.9)))
 
     # ---- God's mercy: golden rays pour down through the gap over the square, the homes and our roof ----
+    # z 40.15: above the gleam and every other layer, but BELOW every cloud bank (40.2+), so the opaque halves
+    # parting at the gap hide the ray fan until they have slid clear (no rays painted on the cloud faces)
     rsrc = (GAP_X, 330)
-    sc.add("rays", V.rays_svg(rsrc, 92, 97, n=11, length=1600, seed=6), z=41, wc=0, blend="add",
+    sc.add("rays", V.rays_svg(rsrc, 92, 97, n=11, length=1600, seed=6), z=40.15, wc=0, blend="add",
            motion=M.combine(M.keys([(t_mercy + 0.05, {"alpha": 0, "sx": 0.4, "sy": 0.3}), (t_mercy + 0.75, {"alpha": 1}),
                                     (t_spared + 0.8, {"sx": 1.0, "sy": 1.0}), (t_whole + 1.5, {"alpha": 0.4})],
                                    ["sine", "out", "sine"], pivot=rsrc),
@@ -884,20 +963,24 @@ def build(ctx):
         # God sees: a few slow sparkles drift down from the seam toward the praying square
         FX.sparkles((GAP_X - 250, 600, GAP_X + 250, 700), count=10, t0=t_see + 0.5, t1=t_mercy + 1.8,
                     color=(255, 234, 164), size=(6, 13), period=2.4, drift=28, seed=29),
-        # sparkles over the city: in the air above the skyline and over the homes, kept off every temple
-        # (the great ziggurat on the far left and the two small ones in the far skyline) and off every face:
-        # no rect reaches stage y >= 1060 in x 300-1100, where our family's heads are (the children's rise to
-        # y ~1190 when they stand to cheer); on the left they twinkle in the sky above the skyline instead
-        *[FX.sparkles(r, count=n, t0=t_gold0 + 0.6, t1=T + 1, color=(255, 238, 172), size=(9, 20), drift=-10,
-                      seed=31 + i)
-          for i, (r, n) in enumerate((((700, 240, 2600, 560), 14), ((990, 900, 2060, 1160), 12),
-                                      ((2340, 900, 2650, 1160), 4), ((120, 280, 700, 540), 4)))],
-        *[FX.sparkles(r, count=n, t0=t_peace - 0.2, t1=T + 1, color=(255, 230, 150), size=(8, 17), drift=-14,
-                      seed=41 + i, period=1.3)
-          for i, (r, n) in enumerate((((990, 990, 2060, 1250), 14), ((2340, 990, 2600, 1250), 4),
-                                      ((120, 300, 700, 540), 3)))],
-        FX.motes((100, 150, 2700, 1400), count=40, t0=t_gold0 + 0.4, t1=T + 1, color=(255, 240, 200),
-                 size=(3, 7), alpha=140, seed=41),
+        # sparkles over the city and light motes: in the air BEHIND the overcast - the banks still leaving
+        # the frame hide them (they start while the opaque banks roll away), the opening sky shows them
+        behind_overcast([
+            # in the air above the skyline and over the homes, kept off every temple (the great ziggurat on
+            # the far left and the two small ones in the far skyline) and off every face: no rect reaches
+            # stage y >= 1060 in x 300-1100, where our family's heads are (the children's rise to y ~1190 when
+            # they stand to cheer); on the left they twinkle in the sky above the skyline instead
+            *[FX.sparkles(r, count=n, t0=t_gold0 + 0.6, t1=T + 1, color=(255, 238, 172), size=(9, 20),
+                          drift=-10, seed=31 + i)
+              for i, (r, n) in enumerate((((700, 240, 2600, 560), 14), ((990, 900, 2060, 1160), 12),
+                                          ((2340, 900, 2650, 1160), 4), ((120, 280, 700, 540), 4)))],
+            *[FX.sparkles(r, count=n, t0=t_peace - 0.2, t1=T + 1, color=(255, 230, 150), size=(8, 17),
+                          drift=-14, seed=41 + i, period=1.3)
+              for i, (r, n) in enumerate((((990, 990, 2060, 1250), 14), ((2340, 990, 2600, 1250), 4),
+                                          ((120, 300, 700, 540), 3)))],
+            FX.motes((100, 150, 2700, 1400), count=40, t0=t_gold0 + 0.4, t1=T + 1, color=(255, 240, 200),
+                     size=(3, 7), alpha=140, seed=41),
+        ], motions, t_gold0 + 0.4),
     ]
 
     # ---- sound ----

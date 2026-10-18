@@ -28,7 +28,9 @@ variant 2, as in s15) and her little girl.
                                   camera eases in a little; the girl wriggles and shrugs in the scratchy cloth (itch
                                   marks), her mother sighs.
           "向上帝认错，"          they kneel in a wave, palms together, eyes downcast, all turned to the right, toward the
-                                  low sun and God's light (the elder leans his stick against his back); Jonah stands
+                                  low sun and God's light (each goes down through a 4-frame one-knee in-between, the
+                                  elder leaning on his stick, then leans it against his back; the five featured
+                                  ones land tipped toward the light and rock back onto their heels); Jonah stands
                                   alone behind them;
           "表示愿意改。"          the solemn rosy dusk eases and a soft golden light with faint rays opens behind the
                                   cloud at the upper right, where they kneel facing (modest: s18's mercy is the big one);
@@ -283,9 +285,44 @@ def dip(tc, s, pv, depth=8, squash=0.955):
                     (0.13, {"dy": -3 * s, "sy": 1.015}), (0.28, {"dy": 0, "sy": 1})], pv, ["in", "out", "sine"])
 
 
-def sink(tc, s, pv):
-    """Kneeling down: a deeper squash (the standing figure sinks toward the kneeling height before the cut)."""
-    return dip(tc, s, pv, depth=16, squash=0.92)
+HALF_HOLD = 4 / 30          # the one-knee in-between of kneeling down is held 4 frames (as s09's sailors)
+KNEEL_TILT = 5.5            # the kneel starts tipped this far toward the light, then rocks upright (kneel_down)
+
+
+def kneel_down(ta, pv, heights, tilt=0.0, vertical_only=False):
+    """Kneeling down through the one-knee in-between (cuts at ta and ta + HALF_HOLD), a squash about the ground
+    line, so feet and knees stay planted: the standing figure sinks until its head top is where the half-kneel's
+    is; the half-kneel sinks on a little for its few frames; the kneeling drawing starts with its head where the
+    half-kneel's ended and settles onto its knees with a soft landing squash.
+    heights: head-top heights above the ground of the (standing, half-kneel, kneeling) drawings.
+    tilt: degrees (+ = toward facing +1) the kneeling drawing starts tipped forward about the ground pivot, rocking
+    upright over its first 0.24 s: the half-kneel leans its head well forward of where the kneel's sits, so the
+    kneel picks the head up part of the way forward and the rest is a rock back onto the heels, not a snap (the
+    knees, at the pivot, stay put). For one figure on its own layer, with the pivot under its knees.
+    vertical_only: no widening with the squash (crowd layers: members far from the group pivot would slide)."""
+    hs, hh, hk = heights
+    tb = ta + HALF_HOLD
+    r1 = hh / hs                                 # standing, squashed down to the half-kneel's head height
+    r2 = 1 - 0.35 * (1 - hk / hh)                # the half-kneel sinks a third of the way toward the kneel
+    r3 = hh * r2 / hk                            # the kneel starts where the half-kneel ended ...
+    settle = 0.985                               # ... and lands with a small squash
+    e_in, e_out, e_sine = M.ease("in"), M.ease("out"), M.ease("sine")
+    ROCK = 0.24
+
+    def m(t):
+        if ta - 0.18 <= t < ta:
+            sy = 1 + (r1 - 1) * e_in((t - ta + 0.18) / 0.18)
+        elif ta <= t < tb:
+            sy = 1 + (r2 - 1) * e_sine((t - ta) / HALF_HOLD)
+        elif tb <= t < tb + 0.12:
+            sy = r3 + (settle - r3) * e_out((t - tb) / 0.12)
+        elif tb + 0.12 <= t < tb + 0.32:
+            sy = settle + (1 - settle) * e_sine((t - tb - 0.12) / 0.2)
+        else:
+            sy = 1.0
+        rot = tilt * (1 - e_sine((t - tb) / ROCK)) if tb <= t < tb + ROCK else 0.0
+        return Tf(sx=1.0 if vertical_only else 1 + 0.35 * (1 - sy), sy=sy, rot=rot, px=pv[0], py=pv[1])
+    return m
 
 
 def nod(t0, pv, deg=3.0, n=2, period=0.42, facing=-1):
@@ -364,6 +401,40 @@ def leg_k(kind):
     m = {"child": C._CHILD, "woman": C._metrics(C._ADULT, 0.96, 0.92),
          "elder": C._metrics(C._ADULT, 0.97, 1.0)}.get(kind, C._ADULT)
     return (m["th"] + m["sh"]) / (C._ADULT["th"] + C._ADULT["sh"])
+
+
+# the in-between of kneeling down (s09's one-knee drawing): the near knee on the ground, the far foot planted in
+# front, the hands open on their way from hanging at the sides to the palms-together of the kneel, head bowed
+HALF_KNEEL = dict(C.POSES["kneel_pray"], t=6, h=12, legs=((70, 8), (2, -90)), arms=(("fk", 20, 40), ("fk", 10, 30)),
+                  hands=("open", "open"))
+
+
+def half_kneel_fig(x, y, s, kind, variant, facing, attire="sackcloth", expr="sorry"):
+    """A townsperson (same design as C.citizen) in the half-kneel in-between, anchored like the kneel (under the
+    hips); an elder lowers himself leaning on his stick, gripped in his trailing near hand so that it stands where
+    his standing drawing holds it (x about -45 from the anchor, toward his heels) and the kneel then only tips it
+    back against his shoulder. Returns (markup, {'head_top', 'pelvis'} in stage px)."""
+    D = C._citizen_design(kind, variant, attire)
+    m = {"child": C._CHILD, "woman": C._metrics(C._ADULT, 0.96, 0.92),
+         "elder": C._metrics(C._ADULT, 0.97, 1.0)}.get(kind, C._ADULT)
+    ps = dict(HALF_KNEEL)
+    if kind == "elder":
+        ps["arms"] = (ps["arms"][0], ("fk", -25, -15))
+        ps["hands"] = (ps["hands"][0], "fist")
+        D["front"] = C._cane
+    f = C._fsign(facing)
+    inner, _ = C._figure(D, m, ps, expr, f, True)
+    pts = {k: (x + C._LAST[k][0] * s * f, y + C._LAST[k][1] * s) for k in ("head_top", "pelvis")}
+    return C._wrap_out(inner, x, y, s, facing, f"{kind}{variant}-half16"), pts
+
+
+def kneel_heights(kind, variant):
+    """Head-top heights above the ground (scale 1) of a townsperson's standing 'sad' sackcloth drawing, the
+    half-kneel and the kneel (for kneel_down)."""
+    def top(pose):
+        return -C.body_points(C.citizen, 0, 0, 1.0, 1, kind=kind, variant=variant, pose=pose,
+                              attire="sackcloth")["head_top"][1]
+    return top("sad"), -half_kneel_fig(0, 0, 1.0, kind, variant, 1)[1]["head_top"][1], top("kneel_pray")
 
 
 # ============================================================================ backgrounds
@@ -757,10 +828,12 @@ def held_stick(x, y, s, facing, pose):
 
 
 def person(kind, variant, x, y, s, facing, pose, attire="normal", expr=None, shadow=True):
-    sw = {"kneel_pray": 170}.get(pose, 110)
+    sw = {"kneel_pray": 170, "half_kneel": 140}.get(pose, 110)
     if kind == "child":
-        sw = 120 if pose == "kneel_pray" else 86
+        sw = {"kneel_pray": 120, "half_kneel": 104}.get(pose, 86)
     out = C.ground_shadow(x, y, s, sw, opacity=0.2) if shadow else ""
+    if pose == "half_kneel":
+        return out + half_kneel_fig(x, y, s, kind, variant, facing, attire, expr or "sorry")[0]
     if kind == "elder" and pose == "listen":
         out += held_stick(x, y, s, facing, pose)
     return out + C.citizen(x, y, s, facing, kind=kind, variant=variant, pose=pose, attire=attire, expr=expr)
@@ -1082,7 +1155,7 @@ def build(ctx):
     # ---- crowd groups: stand worried -> listen -> sorry (believe) -> sackcloth (sad) -> kneel sorry, facing the light
     def group_frames(members, turn):
         out = []
-        for st in range(6):
+        for st in range(7):
             body = ""
             for j, (kind, v, x, y, s, f0, f1_) in enumerate(members):
                 if st == 0:
@@ -1095,8 +1168,10 @@ def build(ctx):
                     body += person(kind, v, x, y, s, f0, "stand", expr="sorry")
                 elif st == 4:
                     body += person(kind, v, x, y, s, f0, "sad", "sackcloth")
-                else:
+                elif st == 5:
                     body += person(kind, v, x, y, s, f1_, "kneel_pray", "sackcloth", "sorry")
+                else:       # the one-knee in-between of kneeling down (already turned toward the light)
+                    body += person(kind, v, x, y, s, f1_, "half_kneel", "sackcloth", "sorry")
             out.append(doc(body))
         return out
 
@@ -1115,12 +1190,16 @@ def build(ctx):
         gy = max(m[3] for m in members)
         s = members[0][4]
         tt, a, b, c, d = (snap(x) if x is not None else None for x in gtimes[name])
-        sched = [(0, 0)] + ([(tt, 1)] if tt is not None else []) + [(a, 2), (b, 3), (c, 4), (d, 5)]
+        sched = [(0, 0)] + ([(tt, 1)] if tt is not None else []) + [(a, 2), (b, 3), (c, 4), (d, 6),
+                                                                    (d + HALF_HOLD, 5)]
         lift = t_up + 0.08 * len(name) % 0.2
+        hts = [kneel_heights(m[0], m[1]) for m in members]
         parts = [dip(a, s, (gx, gy), 4),
                  hop(lift, [(0, {"dy": 0}), (0.25, {"dy": -4 * s}), (0.6, {"dy": -3 * s}), (0.85, {"dy": 0})],
                      (gx, gy)),
-                 bow(b + 0.05, (gx, gy), 0.016, 2), dip(d, s, (gx, gy)),
+                 bow(b + 0.05, (gx, gy), 0.016, 2),
+                 kneel_down(d, (gx, gy), [sum(h[k] for h in hts) / len(hts) for k in range(3)],
+                            vertical_only=True),
                  breathe_y(0.007, 3.4, (gx, gy), phase=len(name) * 0.13)]
         if tt is not None:
             parts.append(dip(tt, s, (gx, gy), 3))
@@ -1159,20 +1238,25 @@ def build(ctx):
     HV = 2
 
     def herald(facing, pose, attire="normal", expr=None, horn_at_hip=True, extra=""):
-        if horn_at_hip:
+        if pose == "half_kneel":            # the in-between of kneeling down
+            fig, pts = half_kneel_fig(H_X, PLINTH_TOP, H_S, "man", HV, facing, attire, expr)
+            pel = pts["pelvis"]
+        else:
+            fig = C.citizen(H_X, PLINTH_TOP, H_S, facing, kind="man", variant=HV, pose=pose, attire=attire, expr=expr)
             pel = C.body_points(C.citizen, H_X, PLINTH_TOP, H_S, facing, kind="man", variant=HV, pose=pose,
                                 attire=attire)["pelvis"]
+        if horn_at_hip:
             extra += hip_horn_markup(pel[0] - facing * 6 * H_S, pel[1] + 4 * H_S, H_S, -facing)
-        return doc(hsh + C.citizen(H_X, PLINTH_TOP, H_S, facing, kind="man", variant=HV, pose=pose, attire=attire,
-                                   expr=expr) + extra)
+        return doc(hsh + fig + extra)
     hhead = C.body_points(C.citizen, H_X, PLINTH_TOP, H_S, 1, kind="man", variant=HV, pose="listen")["head"]
     horn = horn_svg(hhead[0] + 15 * H_S, hhead[1] + 20 * H_S, H_S, 1)
     hfr = [herald(-1, "stand", expr="worried"), herald(-1, "listen"), herald(-1, "listen", expr="surprised"),
            herald(-1, "stand", expr="sorry"), herald(1, "listen", expr="neutral", horn_at_hip=False, extra=horn),
            herald(1, "point", expr="call"), herald(1, "sad", "sackcloth"),
-           herald(1, "kneel_pray", "sackcloth", "sorry")]
+           herald(1, "half_kneel", "sackcloth", "sorry"), herald(1, "kneel_pray", "sackcloth", "sorry")]
     th = [snap(t_heard + 0.3), snap(t_wow + 0.1), snap(t_believe + 0.2), t_horn, t_call, snap(t_change + 0.36),
           snap(t_kneel + 0.52)]
+    th.append(th[6] + HALF_HOLD)
     sc.add("herald", hfr, z=11, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(th)]),
            motion=M.combine(dip(th[0], H_S, hp, 4), hop(th[1], [(0, {"dy": 0}), (0.1, {"dy": -5}), (0.22, {"dy": 0})],
                                                          hp),
@@ -1180,7 +1264,7 @@ def build(ctx):
                             dip(th[2], H_S, hp, 4), nod(th[2] + 0.05, hp, 1.5, 2), dip(t_horn, H_S, hp),
                             hop(t_horn + 0.3, [(0, {"rot": 0}), (0.4, {"rot": -2.5}), (0.9, {"rot": -2.5}),
                                                (1.1, {"rot": 0})], hp),
-                            dip(t_call, H_S, hp), dip(th[6], H_S, hp),
+                            dip(t_call, H_S, hp), kneel_down(th[6], hp, kneel_heights("man", HV), KNEEL_TILT),
                             M.breathe(0.009, 2.9, pivot=hp, phase=0.4)))
     bell = (hhead[0] + 15 * H_S + 146 * H_S + 26 * H_S, hhead[1] + 20 * H_S - 78 * H_S - 22 * H_S)
     sc.add("horn_toot", [toot_svg(bell[0], bell[1], k) for k in (0, 1, 2)], z=30, wc=0,
@@ -1207,14 +1291,17 @@ def build(ctx):
            merchant("cheer", expr="neutral", under=held_sheet_markup(rhands[0], rhands[1], R_S)),   # lifts the cloth
            merchant("cheer", expr="neutral"),                                                 # ... throws it
            merchant("stand", expr="sorry"), merchant("sad", "sackcloth"),
+           doc(half_kneel_fig(R_X, R_Y, R_S, "man", 1, 1)[0]),            # kneeling down (in-between)
            merchant("kneel_pray", "sackcloth", "sorry", facing=1)]
     tr = [snap(t_heard + 0.05), snap(t_wow + 0.05), snap(t_believe), t_hold, t_rel, snap(t_land + 0.12),
           snap(t_change + 0.9), snap(t_kneel + 0.36)]
+    tr.append(tr[7] + HALF_HOLD)
     m_motion = M.combine(dip(tr[0], R_S, rp, 4), look_up(t_up + 0.04, rp, -1, 4.0, 6, hold_up),
                          dip(tr[2], R_S, rp, 4), nod(tr[2] + 0.05, rp, 2.0, 2), dip(t_hold, R_S, rp, 6),
                          hop(t_rel - 0.06, [(0, {"dy": 0, "rot": 0}), (0.08, {"dy": -6, "rot": -1.5}),
                                             (0.26, {"dy": 0, "rot": 0})], rp),
-                         dip(tr[5], R_S, rp, 4), sink(tr[7], R_S, rp), M.breathe(0.008, 3.3, pivot=rp, phase=0.7))
+                         dip(tr[5], R_S, rp, 4), kneel_down(tr[7], rp, kneel_heights("man", 1), KNEEL_TILT),
+                         M.breathe(0.008, 3.3, pivot=rp, phase=0.7))
     sc.add("merchant", rfr, z=14, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(tr)]),
            motion=m_motion)
     puffs_at.append((tr[6], R_X, R_Y - 200, 120, 150, R_S))
@@ -1246,8 +1333,10 @@ def build(ctx):
         return doc(st + person("elder", 0, E_X, E_Y, E_S, facing, pose, attire, expr))
     efr = [elder("stand", expr="worried"), elder("listen"), elder("listen", expr="surprised"),
            elder("stand", expr="sorry"), elder("sad", "sackcloth"),
+           elder("half_kneel", "sackcloth", "sorry", facing=1),          # kneeling down, leaning on his stick
            elder("kneel_pray", "sackcloth", "sorry", facing=1, stick=True)]
     te = [snap(t_heard - 0.1), snap(t_wow), snap(t_believe - 0.05), snap(t_change), snap(t_kneel)]
+    te.append(te[4] + HALF_HOLD)
     e_cut = cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(te)])
     # his walk (s15's planted-foot gait: one drawing advances 2 A / WALK_N figure px, so the planted sole stays put;
     # he sets off from and arrives at a passing drawing, feet together like his standing drawing)
@@ -1296,7 +1385,7 @@ def build(ctx):
            motion=M.combine(e_path, dip(t_ea, E_S, ep, 3),
                             hop(te[1], [(0, {"dy": 0}), (0.1, {"dy": -7}), (0.22, {"dy": 0})], ep),
                             look_up(t_up, ep, -1, hold=hold_up), dip(te[2], E_S, ep, 4),
-                            nod(te[2] + 0.05, ep, 2.4, 2), sink(te[4], E_S, ep),
+                            nod(te[2] + 0.05, ep, 2.4, 2), kneel_down(te[4], ep, kneel_heights("elder", 0), KNEEL_TILT),
                             M.breathe(0.008, 3.6, pivot=ep, phase=0.1)))
     puffs_at.append((te[3], E_X, E_Y - 160, 130, 180, E_S))
 
@@ -1305,16 +1394,18 @@ def build(ctx):
     def mother(pose, attire="normal", expr=None, facing=-1):
         return doc(person("woman", 2, W_X, W_Y, W_S, facing, pose, attire, expr))
     wfr = [mother("listen"), mother("listen"), mother("listen", expr="surprised"),      # listening, as s15 ends
-           mother("stand", expr="sorry"), mother("sad", "sackcloth"), mother("kneel_pray", "sackcloth", "sorry", 1)]
+           mother("stand", expr="sorry"), mother("sad", "sackcloth"), mother("half_kneel", "sackcloth", "sorry", 1),
+           mother("kneel_pray", "sackcloth", "sorry", 1)]
     tw = [snap(t_heard + 0.15), snap(t_wow + 0.08), snap(t_believe + 0.1), snap(t_change + 0.23),
           snap(t_kneel + 0.2)]
+    tw.append(tw[4] + HALF_HOLD)
     t_sigh = t_rough + 0.55
     wx0, wy0 = m15(*S15_MOTHER[:2])
     sc.add("mother", wfr, z=20.5, frame_at=cuts([(0, 0)] + [(tt, i + 1) for i, tt in enumerate(tw)]),
            motion=M.combine(step_in(snap(1.12), (wx0, wy0, S15_MOTHER[2] * M15_K), wp, W_S),
                             hop(tw[1], [(0, {"dy": 0}), (0.1, {"dy": -7}), (0.22, {"dy": 0})], wp),
                             look_up(t_up + 0.06, wp, -1, hold=hold_up), dip(tw[2], W_S, wp, 4),
-                            nod(tw[2] + 0.05, wp, 2.4, 2), sink(tw[4], W_S, wp),
+                            nod(tw[2] + 0.05, wp, 2.4, 2), kneel_down(tw[4], wp, kneel_heights("woman", 2), KNEEL_TILT),
                             # a sigh: the chest rises, then the shoulders drop and the head dips
                             hop(t_sigh, [(0, {"sy": 1, "dy": 0}), (0.45, {"sy": 1.03, "dy": 0}),
                                          (0.95, {"sy": 0.978, "dy": 2}), (1.4, {"sy": 1, "dy": 0})], wp),
@@ -1328,10 +1419,11 @@ def build(ctx):
     kfr = [kid("sad"),                                                    # sad, as s15 leaves her
            kid("listen"), kid("listen", expr="surprised"), kid("stand", expr="sorry"),
            kid("point", 1, expr="happy"), kid("stand", 1, expr="surprised"), kid("stand", 1, expr="sorry"),
-           kid("sad", -1, "sackcloth"), kid("kneel_pray", 1, "sackcloth", "sorry"),
-           kid("kneel_pray", 1, "sackcloth", "peaceful")]
+           kid("sad", -1, "sackcloth"), kid("half_kneel", 1, "sackcloth", "sorry"),
+           kid("kneel_pray", 1, "sackcloth", "sorry"), kid("kneel_pray", 1, "sackcloth", "peaceful")]
     tk = [snap(t_heard + 0.3), snap(t_wow + 0.15), snap(t_believe + 0.2), t_reach, t_back, t_okay, snap(t_kid),
-          snap(t_kneel + 0.28), snap(t_hope + 0.12)]
+          snap(t_kneel + 0.28)]
+    tk += [tk[7] + HALF_HOLD, snap(t_hope + 0.12)]
     t_wrig = t_rough + 0.02
     wrig = [(0, {"rot": 0, "sy": 1})]
     for j, r in enumerate((6, -6, 5, -5, 3)):
@@ -1350,7 +1442,8 @@ def build(ctx):
                             nod(t_okay + 0.05, kp, 4, 2, 0.34, facing=1),
                             # scratchy sackcloth: a wriggle with shrugging shoulders
                             hop(t_wrig, wrig, kp),
-                            sink(tk[7], K_S, kp), M.breathe(0.012, 2.6, pivot=kp, phase=0.3)))
+                            kneel_down(tk[7], kp, kneel_heights("child", 1), KNEEL_TILT),
+                            M.breathe(0.012, 2.6, pivot=kp, phase=0.3)))
     puffs_at.append((tk[6], K_X, K_Y - 110, 90, 120, K_S))
     ksh = C.body_points(C.citizen, K_X, K_Y, K_S, -1, kind="child", variant=1, pose="sad", attire="sackcloth")
     kb = ksh["bbox"]

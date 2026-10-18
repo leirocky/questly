@@ -50,6 +50,9 @@ import math
 import random
 import re
 
+import numpy as np
+from PIL import Image, ImageDraw
+
 from art import characters as CH
 from art import props as PR
 from art import style as S
@@ -797,6 +800,50 @@ def warm_svg():
     return doc(f'<ellipse cx="{GAP[0] - 200}" cy="700" rx="800" ry="700" fill="url(#warm)"/>', defs)
 
 
+# Jonah's head and head-cloth in all his seated drawings (sit_sulk either way, sulk_up; hops and sway included):
+# the light's sparkles keep out of this ellipse (cx, cy, rx, ry), so none ever twinkles on his face or head
+HEAD_CLEAR = (JX, 985, 115, 105)
+
+
+def light_sparkles(rect, clear, t_end, count=24, t0=0.0, t1=1e9, color=(255, 236, 170), size=(8, 20), period=1.6,
+                   drift=-12, seed=11):
+    """FX.sparkles (same random draws and drawing, so the same sparkles in the same places), minus every sparkle
+    whose drifting path from t0 to ``t_end`` comes into the ellipse ``clear`` grown by the sparkle's size. Whole
+    sparkles are left out, so none pops on or off at the ellipse's edge."""
+    rng = np.random.default_rng(seed)
+    x0, y0, x1, y1 = rect
+    px = rng.uniform(x0, x1, count)
+    py = rng.uniform(y0, y1, count)
+    ph = rng.uniform(0, 1, count)
+    sz = rng.uniform(*size, count)
+    cx, cy, rx, ry = clear
+    ys = np.linspace(0.0, drift * (t_end - t0), 64)
+    keep = [i for i in range(count)
+            if np.min(((px[i] - cx) / (rx + sz[i])) ** 2 + ((py[i] + ys - cy) / (ry + sz[i])) ** 2) >= 1]
+
+    def fx(frame, t, view):
+        k = FX._env(t, t0, t1, 0.6)
+        if k <= 0:
+            return frame
+        ov = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(ov)
+        for i in keep:
+            tw = 0.5 + 0.5 * math.sin(2 * math.pi * (t / period + ph[i]))
+            if tw < 0.15:
+                continue
+            ox, oy = view.to_out(px[i], py[i] + drift * (t - t0))
+            r = sz[i] * view.scale * (0.5 + 0.5 * tw)
+            a = int(230 * k * tw)
+            w = r * 0.22
+            g = r * 0.55
+            d.ellipse([ox - g, oy - g, ox + g, oy + g], fill=(*color, a // 4))
+            d.polygon([(ox, oy - r), (ox + w, oy - w), (ox + r, oy), (ox + w, oy + w), (ox, oy + r),
+                       (ox - w, oy + w), (ox - r, oy), (ox - w, oy - w)], fill=(*color, a))
+        frame.alpha_composite(ov)
+        return frame
+    return fx
+
+
 # ------------------------------------------------------------------ people & creatures
 WALL_TOP = WY - WH
 WALK_PEOPLE = [  # (x, feet y, kind, variant, facing) on the wall walk / tower tops (feet behind the parapet)
@@ -1369,8 +1416,8 @@ def _build(ctx):
         FX.motes((0, 300, SW, 1300), count=28, color=(255, 246, 214), size=(3, 6), alpha=110),
         FX.sparkles((200, 420, 1600, 900), count=22, t0=0, t1=L0.chunks[1].start + 1.2, color=(255, 238, 170),
                     size=(8, 18), period=1.5, drift=-8, seed=5),
-        FX.sparkles((1620, 380, 2420, 1150), count=30, t0=t_light + 0.3, color=(255, 238, 170), size=(8, 20),
-                    period=1.6, drift=-6, seed=21),
+        light_sparkles((1620, 380, 2420, 1150), HEAD_CLEAR, T, count=30, t0=t_light + 0.3, color=(255, 238, 170),
+                       size=(8, 20), period=1.6, drift=-6, seed=21),
     ]
 
     # ---------------------------------------------------------------- SOUND

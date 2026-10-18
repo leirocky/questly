@@ -7,15 +7,15 @@ Opening = s03's last picture of the people, in the same ship-local spots: v0 poi
         by the mast, the captain just aft of it, Jonah crouches behind the stern rail by the cargo, looking back at
         Joppa (s04's own t=0 framing is unchanged: hull x~615-1470, waterline y~800, sun upper right).
 Line 0  '但是，人怎么能躲开上帝呢？' a calm, sunny sea, the ship sails west (left) with a full sail, a wake, gulls,
-        the hazy coast of Joppa behind. Jonah gives up looking back, yawns and stretches, and climbs down the
-        stern hatch one rung at a time (plants Jonah 1:5b); the captain turns and walks aft to the helm, v1 follows
-        him aft to his place (legs hidden by the rail, a bob per step, soft footsteps). '船开出去不久' v2 and v3
-        climb up from below deck (head and shoulders, chest, then a hop); the coast drifts away and the first dark
-        clouds creep in. '上帝就让海上刮起了狂风' the storm rises: the storm clouds roll in, the sky darkens, a squall
-        line of dark crested sea sweeps in from the east (right), curly gusts, rain, the gulls flee, the crew start
-        (hard pose cuts hidden by squash-and-hop; every pose exists in both colour grades and only the grade of
-        the same drawing crossfades, with the ship's) and, after '狂风', the first lightning bolt (open sky, far
-        left, clear of the sail and the crew).
+        the hazy coast of Joppa behind. Jonah gives up looking back, yawns and stretches, gets up and climbs
+        down the stern hatch one rung at a time (plants Jonah 1:5b); the captain turns and walks aft to the helm,
+        v1 follows him aft to his place (legs hidden by the rail, a bob per step, soft footsteps). '船开出去不久'
+        v2 and v3 climb up from below deck (head and shoulders, chest, then a hop); the coast drifts away and the
+        first dark clouds creep in. '上帝就让海上刮起了狂风' the storm rises: the storm clouds roll in, the sky
+        darkens, the dark crested storm sea sweeps in from the east (right) as one broad soft front, curly gusts,
+        rain, the gulls flee, the crew start (hard pose cuts hidden by squash-and-hop; every pose exists in both
+        colour grades and only the grade of the same drawing crossfades, with the ship's) and, after '狂风', the
+        first lightning bolt (open sky, far left, clear of the sail and the crew).
 Line 1  '大浪一个接着一个打过来' three breakers rise and crash one after another (stern, bow, stern): each jolts
         the ship and staggers the crew (two of them crouch and brace); '船摇来摇去' the ship pitches about
         +-12 deg; '好像就要被打碎了' a flash, the sail tears, a wave bursts over the bow, the hull creaks, the
@@ -470,12 +470,16 @@ def build(ctx):
     # no dip at the end: s05 opens on this very picture of the hold (same painting, seed and final camera)
 
     # opening, continuing s03's last picture; '但是，人怎么能躲开上帝呢？' Jonah gives up looking back at Joppa,
-    # yawns and stretches, and climbs down the stern hatch one rung at a time (Jonah 1:5b); the captain walks
+    # yawns and stretches, gets up and climbs down the stern hatch one rung at a time (Jonah 1:5b); the captain walks
     # aft to the helm and v1 follows him to his place; '船开出去不久' v2 and v3 climb up from below deck
     T_JYAWN = c_ask[0] + 0.35
-    T_JDOWN = T_JYAWN + 1.0
-    J_STEPS = [T_JDOWN + 0.38 * (k + 1) for k in range(3)]
-    T_JGONE = J_STEPS[-1] + 0.25
+    T_JDOWN = T_JYAWN + 1.0                          # (the captain's cue) Jonah is on his way down
+    T_JUP = T_JYAWN + 0.8                            # Jonah gets up: hop-cut from the seated stretch, then rises
+    J_RISE = 0.22
+    J_STEPS = [T_JUP + 0.4 + 0.26 * k for k in range(4)]   # one rung each: a pose cut and an eased drop
+    J_DROP = 0.17
+    J_DEPTHS = (80.0, 160.0, 240.0, 325.0)           # below standing height after each rung (325: out of sight)
+    T_JGONE = J_STEPS[-1] + J_DROP + 0.15
     T_CTURN = T_JDOWN + 0.15
     CW = (T_CTURN + 0.12, T_CTURN + 1.75)            # the captain's walk aft
     BW = (CW[0] + 0.5, CW[0] + 2.0)                  # v1's walk aft
@@ -484,7 +488,6 @@ def build(ctx):
 
     # --------------------------------------------------- ship motion
     grade = lambda t: M.progress(t, T_REACT - 0.9, T_REACT + 0.9, "sine")       # noqa: E731  calm -> storm light
-    wipe = lambda t: M.progress(t, *WIPE, "inout")                              # noqa: E731
     pitch_amp = keyc([(0, 1.3), (T_WIND, 1.5), (T_WIND + 1.6, 4.5), (l0.end, 8.0), (l1.start + 0.2, 9.0),
                       (c_waves[0] + 0.7 * wv, 12.0), (l1.end, 11.0), (l2.start + 0.9, 6.0), (c_throw[0], 5.5),
                       (T_CUT[0], 5.0), (T_DIVE1, 3.2), (T, 2.8)])
@@ -534,8 +537,27 @@ def build(ctx):
             return Tf(dx=sx_ * math.sin(0.5 * u), dy=by * math.sin(u), alpha=calm_vis(t))
         return m
 
-    storm_reveal = lambda t: {"mode": "right", "frac": wipe(t), "soft": 340}           # noqa: E731
-    calm_reveal = lambda t: {"mode": "left", "frac": min(1.0, 1.04 - wipe(t)), "soft": 340}   # noqa: E731
+    # the storm sea sweeps in from the east (right) as one very broad soft front (SW_SOFT px from clear to fully
+    # stormy, wider than half the view), so there is no visible edge to wipe across the water: every point of
+    # the sea crossfades in 0.5-0.8 s, the right-hand side first. The calm sea under it fades SW_LAG px behind the
+    # front (no dark gap between the two). Radial masks centred SW_D px off-stage give practically straight fronts
+    # and, unlike the left/right modes, can run past frac 1 without snapping at the layer's far edge.
+    SW_SOFT, SW_LAG, SW_D, SW_CY = 1500.0, 450.0, 6000.0, 1065.0
+    sw_maxd = math.hypot(W + SW_D, SW_CY - 780.0)       # farthest layer corner from either centre (the sea bands)
+    sweep = lambda t: M.progress(t, *WIPE, "sine")      # noqa: E731
+    sweep_e = lambda t: (W + SW_SOFT / 2) - (W + SW_SOFT + SW_LAG) * sweep(t)   # noqa: E731  storm half-way x
+
+    def storm_reveal(t):
+        r = (W + SW_D) - sweep_e(t)                     # visible within r of a centre far to the right
+        if r - SW_SOFT / 2 >= sw_maxd:
+            return {"mode": "right", "frac": 1.0}
+        return {"mode": "radial", "frac": r / sw_maxd, "soft": SW_SOFT, "cx": W + SW_D, "cy": SW_CY}
+
+    def calm_reveal(t):
+        r = sweep_e(t) + SW_LAG + SW_D                  # visible within r of a centre far to the left
+        if r - SW_SOFT / 2 >= sw_maxd:
+            return {"mode": "left", "frac": 1.0}
+        return {"mode": "radial", "frac": max(0.0, r) / sw_maxd, "soft": SW_SOFT, "cx": -SW_D, "cy": SW_CY}
 
     # --------------------------------------------------- sky: storm (beneath), calm (fades away)
     sky_defs = (S.lin_grad("sky", [(0, P["storm_sky_top"]), (0.5, P["storm_sky"]),
@@ -892,24 +914,44 @@ def build(ctx):
 
     z_crew = len(sc.layers) + len(sc.dynamics)
 
-    # Jonah on deck (as s03 leaves him), behind the cargo: yawns and stretches, then climbs down the stern hatch
-    jev = [(0, "stand", "scared", 1, False, J_PEEK), (T_JYAWN, "wake", "sleepy", -1, True, 0),
-           (T_JDOWN, "stand", "sleepy", -1, True, J_PEEK)]
-    jev += [(ts, "stand", "sleepy", -1, False, J_PEEK + d) for ts, d in zip(J_STEPS, (72, 146, 230))]
+    # Jonah on deck (as s03 leaves him), behind the cargo: yawns and stretches (seated) ...
+    jev = [(0, "stand", "scared", 1, False, J_PEEK), (T_JYAWN, "wake", "sleepy", -1, True, 0)]
     jframes, jfa = pose_frames(jev, lambda x_, p, e, f: C.jonah(x_, DECK, SS, f, pose=p, expr=e), JDX, "jd",
                                grades=False)
-    jhop = hop_fn([T_JYAWN, T_JDOWN])
+    jhop = hop_fn([T_JYAWN, T_JUP])
 
     def jdeck_m(t):
         hdy, hsy = jhop(t)
-        dy = hdy
-        for ts in J_STEPS:                  # each rung: a small drop and settle
-            if ts <= t < ts + 0.22:
-                dy += 6 * math.sin(math.pi * (t - ts) / 0.22)
-        stretch = 0.03 * math.sin(math.pi * M.progress(t, T_JYAWN + 0.2, T_JDOWN - 0.15, "linear"))
+        stretch = 0.03 * math.sin(math.pi * M.progress(t, T_JYAWN + 0.2, T_JUP - 0.15, "linear"))
         sy = hsy * (1 + stretch + 0.008 * math.sin(2 * math.pi * t / 2.7))
-        return Tf(0, dy, 0, 1 + 0.4 * (1 - sy), sy, float(t < T_JGONE), JDX, DECK)
+        return Tf(0, hdy, 0, 1 + 0.4 * (1 - sy), sy, float(t < T_JUP), JDX, DECK)
     sc.add("jonah_deck", jframes, motion=on_ship(jdeck_m), frame_at=jfa, z=z_crew - 0.8)
+
+    # ... then gets up and climbs down the stern hatch rung by rung. This copy of him is drawn just behind the
+    # hull (ship_back), whose side hides whatever of him is below the sheer line, so he can sink continuously
+    # (eased in-betweens) instead of jumping between clipped depths. Hop-cut from the seated stretch to standing
+    # with his head at the same height (J_SIT down), he straightens up, then each rung is a step-pose cut
+    # (walk_a / walk_b, legs hidden by the hull) on the start of an eased drop with a small landing squash.
+    # Added as the last layer (below) so every other layer keeps its watercolour seed.
+    J_SIT = 97.0
+    jd_frames = [doc(C.jonah(JDX, DECK, SS, -1, pose=p, expr="sleepy")) for p in ("stand", "walk_a", "walk_b")]
+
+    def jdown_fa(t):
+        k = sum(t >= ts for ts in J_STEPS)
+        return 0.0 if k == 0 else float(1 + (k - 1) % 2)
+
+    def jdown_m(t):
+        u = M.progress(t, T_JUP, T_JUP + J_RISE, "out")
+        depth, prev = J_SIT * (1 - u), 0.0
+        sy = 1 + 0.04 * math.sin(math.pi * u)            # stretches as he straightens up
+        for k, ts in enumerate(J_STEPS):
+            depth += (J_DEPTHS[k] - prev) * M.progress(t, ts, ts + J_DROP, "sine")
+            prev = J_DEPTHS[k]
+            tl = t - ts - J_DROP
+            if 0 <= tl < 0.16:                            # lands on the rung
+                sy *= 1 - 0.035 * math.sin(math.pi * tl / 0.16)
+        sy *= 1 + 0.008 * math.sin(2 * math.pi * t / 2.7)
+        return Tf(0, depth, 0, 1 + 0.4 * (1 - sy), sy, float(T_JUP <= t < T_JGONE), JDX, DECK)
 
     # the captain (behind the crew): clipped at the sheer line so the high stern bulwark hides his legs at the helm
     kev = sorted(EV["K"], key=lambda e: e[0])
@@ -1315,6 +1357,11 @@ def build(ctx):
             def gone(t, m0=lay.motion, tg=l0.end + 0.6):
                 return Tf(alpha=0.0) if t > tg else m0(t)
             lay.motion = gone
+
+    # Jonah getting up and climbing down the hatch, just behind the hull (see jdown_m); added last so the other
+    # layers keep their seeds
+    sc.add("jonah_down", jd_frames, motion=on_ship(jdown_m), frame_at=jdown_fa,
+           z=next(lay.z for lay in sc.layers if lay.name == "ship_back") - 0.5)
 
     # --------------------------------------------------- effects
     def hold_region(t):

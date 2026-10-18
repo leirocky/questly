@@ -204,6 +204,15 @@ def prev_offset(ctx):
         return OFF_DEFAULT
 
 
+def xfade_len():
+    """The cross-dissolve length (build/timeline.json 'xfade')."""
+    try:
+        from engine.loader import load_timeline
+        return float(load_timeline().get("xfade", 1.0))
+    except Exception:
+        return 1.0
+
+
 # ============================================================== painting
 
 def s06_sky_dx(tau):
@@ -733,8 +742,15 @@ def build(ctx):
 
     # ---------------------------------------------------------------- outboard world
     dx0 = s06_sky_dx(OFF)
-    sc.add("sky", sky_layer(True, dx0), z=0, wc=0.7)
-    sc.add("sky_light", sky_layer(False, dx0), z=0.2, wc=0.7, motion=lambda t: Tf(alpha=calm(t)))
+    # s06's sky (with its cloud bank along the top of the frame) keeps drifting under the cross-dissolve: follow it
+    # exactly while s06 is still showing, then settle back to the painted position during the pull-back (so the
+    # rest of the scene is unchanged). Without this the cloud-bank outline over the breaker doubles by 2-4 px.
+    xf = xfade_len()
+
+    def sky_drift(t):
+        return (s06_sky_dx(t + OFF) - dx0) * (1 - M.progress(t, xf, xf + 2.4, "sine"))
+    sc.add("sky", sky_layer(True, dx0), z=0, wc=0.7, motion=lambda t: Tf(dx=sky_drift(t)))
+    sc.add("sky_light", sky_layer(False, dx0), z=0.2, wc=0.7, motion=lambda t: Tf(dx=sky_drift(t), alpha=calm(t)))
     # lightning: one bold bolt at '越来越凶', a smaller far one at '这场大风浪'
     sc.add("bolt0", doc(V4.bolt_svg(1170, 130, 600, seed=17, sway=1, w0=34), V4.BOLT_DEFS), z=0.3, wc=0,
            motion=lambda t: Tf(alpha=V4.bolt_alpha(t - t_strike)))

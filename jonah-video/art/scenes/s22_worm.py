@@ -63,6 +63,12 @@ Notes for maintainers
   or local glows (hot spot on his head-cloth, glow on his silhouette, glow on the plant at "这棵蓖麻") are on top.
 * The cloud only ever overlaps the sun disc at full opacity, and only after the flame rays have shrunk into
   the disc; the wind swirls stop before it appears.
+* The roof cloth's lift and landing are one drawing per video frame (_roof_cloth: lying cloth m=0 <-> the
+  streaming flap m=1, turned about the ridge), never a swap or a blend of the two: top-face in-betweens are
+  booth flipbook frames (cloth in its place under the rafters - over the back rafters once it has swung up),
+  underside ones are booth_flap frames over the open booth.
+* The particles of God's light are drawn on their own canvas and faded out of a fixed zone round Jonah's head
+  (off_face), so sparkles and motes never sit on his face or head-cloth in any of his poses.
 * Closures read build()-level names at call time: never reuse a name that a motion function reads (the swirl
   loop once overwrote the sunbeam's length).
 * Camera: few long sine-eased moves: s21's last framing held through the opening dissolve, push-in to the stem
@@ -379,6 +385,194 @@ def _booth_flap(phase):
     inner += PR._p(S.smooth_path([PR._lerp2(fr[j], bk[j], 0.15) for j in range(8)], closed=False), sw=14,
                    stroke=S.shade(under, -0.12), extra='opacity="0.35" filter="url(#soft)"')
     return PR._p(d, under, 0) + PR._clip(PR._uid("flap22", round(phase * 100)), d, inner) + PR._p(d, sw=4)
+
+
+# ------------------------------------------------------------------ the roof cloth lifting off / flopping back
+# In-betweens of the right roof slope's cloth (booth-local coords) between lying on the rafters exactly as
+# PR._booth draws it (m=0) and _booth_flap's blown-up cloth (m=1), so the gust and the landing are animated
+# drawings instead of a one-frame swap. The cloth is hinged on the ridge FA-BA; the booth is drawn in an oblique
+# view whose depth axis is the ridge, so turning the cloth about the ridge turns its cross-section in the picture
+# plane: each of the seven steps of its front / back edge turns (and changes length) from the lying cloth's
+# to the flap's, and the cloth swings up over the ridge, shows its edge and then its underside.
+_CL_FA, _CL_BA = (0.0, -374.0), (54.0, -402.0)          # front / back apex (PR._booth)
+_CL_FR, _CL_BR = (178.0, -240.0), (232.0, -268.0)       # front / back right eave
+_CL_STEP = (184.0 / 6, 138.0 / 6)                       # lying: six steps from the apex to the eave corner +(6,4)
+_CL_DRAPE = ((8.0, 26.0), (4.0, 22.0))                  # ... then the hem hanging over the eave (front, back)
+_CL_FLAP = ((150.0, 0.0, -10.0), (141.0, 0.6, 16.0))    # _booth_flap: edge length, ripple phase, spread
+_CL_HEM0 = 90.0 - math.degrees(math.atan2(26.0, 8.0))   # lying: hem scallops point straight down
+_CL_BRANCH = '<g transform="translate(60,-360) rotate(28)"'
+
+
+def _cl_solve(p):
+    """Lying-cloth coordinates (j = steps along the edge, s = 0 front .. 1 back) of booth-local point p."""
+    (ax, ay), (bx, by) = _CL_STEP, (_CL_BA[0] - _CL_FA[0], _CL_BA[1] - _CL_FA[1])
+    px, py = p[0] - _CL_FA[0], p[1] - _CL_FA[1]
+    det = ax * by - ay * bx
+    return (px * by - py * bx) / det, (ax * py - ay * px) / det
+
+
+def _cl_edges(m, ph=0.0, rip=0.0, sw=0.0, bend=0.0):
+    """Front and back edge (8 points each, ridge -> free edge) of the right roof cloth. m=0 (rip=sw=bend=0):
+    lying on the right slope as PR._booth draws it; m=1 (rip=1, sw=bend=0): exactly _booth_flap(ph). ``sw``
+    turns the whole cloth about the ridge (deg, - = up / over to the left), ``bend`` turns its free part
+    (deg at the free edge, growing along the cloth)."""
+    rest = [(math.degrees(math.atan2(_CL_STEP[1], _CL_STEP[0])), math.hypot(*_CL_STEP))] * 6
+    edges = []
+    for p0, drape, (ln, ph_e, spread) in zip((_CL_FA, _CL_BA), _CL_DRAPE, _CL_FLAP):
+        steps = rest + [(math.degrees(math.atan2(drape[1], drape[0])), math.hypot(*drape))]
+        x, y = p0
+        pts = [p0]
+        for j in range(1, 8):
+            u = j / 7
+            ra, rl = steps[j - 1]
+            fa = -106 - 26 * u
+            ang = ((1 - m) * ra + m * fa + rip * 9 * math.sin(2 * math.pi * (0.8 * u - ph) + ph_e) + sw +
+                   bend * u ** 1.5)
+            ll = (1 - m) * rl + m * ln / 7
+            x, y = x + math.cos(math.radians(ang)) * ll, y + math.sin(math.radians(ang)) * ll
+            pts.append((x + m * spread * u, y + 0.3 * m * spread * u))
+        edges.append(pts)
+    return edges
+
+
+def _cl_at(edge, j):
+    j = min(max(j, 0.0), 7.0)
+    i = min(int(j), 6)
+    return PR._lerp2(edge[i], edge[i + 1], j - i)
+
+
+def _roof_cloth(m, ph=0.0, rip=0.0, sw=0.0, bend=0.0, branch=""):
+    """The right roof cloth in an in-between state (see _cl_edges) -> (panel, front hem, branch, top face?):
+    booth-local markup of the cloth, of its front edge folded down over the front rafter (only while it is
+    still close to the rafters; '' after) and of the leafy branch ``branch`` lying on its top face, carried
+    along ('' once the underside shows: it is round the back). m=0 reproduces PR._booth's right slope, front
+    hem and branch exactly; m=1 (rip=1) _booth_flap."""
+    cloth = S.mix(P["headcloth"], P["sand"], 0.3)
+    cloth_d = S.shade(cloth, -0.18)
+    under = S.shade(cloth, -0.06)
+    stripe = P["sail_stripe"]
+    fr, bk = _cl_edges(m, ph, rip, sw, bend)
+
+    def at(j, s):
+        return PR._lerp2(_cl_at(fr, j), _cl_at(bk, j), s)
+
+    def mp(p):
+        return at(*_cl_solve(p))
+
+    # free edge: ragged, scalloped (lying: the scallops hang straight down)
+    ex, ey = fr[7][0] - fr[6][0], fr[7][1] - fr[6][1]
+    a = math.atan2(ey, ex) + math.radians((1 - m) * _CL_HEM0)
+    el = (1 - m) * 10 + m * 9
+    hem = []
+    for i in range(1, 6):
+        p = PR._lerp2(fr[7], bk[7], i / 6)
+        k_ = el if i % 2 else 0.0
+        hem.append((p[0] + math.cos(a) * k_, p[1] + math.sin(a) * k_))
+    outline = fr + hem + bk[::-1]
+    d = S.smooth_path(outline, closed=True, tension=0.6 * m)
+    # which face shows: the lying cloth's cross product (step x ridge) is negative
+    dj = (at(4, 0.5)[0] - at(3, 0.5)[0], at(4, 0.5)[1] - at(3, 0.5)[1])
+    ds = (at(3.5, 1)[0] - at(3.5, 0)[0], at(3.5, 1)[1] - at(3.5, 0)[1])
+    top = dj[0] * ds[1] - dj[1] * ds[0] < 0
+    k_top = 1 - PR._smooth(m / 0.4)
+    k_under = PR._smooth((m - 0.45) / 0.4)
+    FA, BA, FR, BR = _CL_FA, _CL_BA, _CL_FR, _CL_BR
+    inner = ""
+    if top and k_top > 0.01:      # PR._booth's soft highlight of the sagging cloth
+        sag = PR._lerp2(PR._lerp2(FA, BA, 0.5), PR._lerp2(FR, BR, 0.5), 0.55)
+        sag = (sag[0], sag[1] + 12)
+        hl = [PR._lerp2(FR, FA, 0.6), sag, PR._lerp2(BR, BA, 0.6), BA, FA]
+        inner += PR._p(PR._poly([mp(p) for p in hl]), S.shade(cloth, 0.12), 0,
+                       extra=f'opacity="{0.6 * k_top:.3f}" filter="url(#soft)"')
+    for k, jf in ((0.18, 6), (0.3, 5)):       # the two terracotta stripes (lying: along the hem)
+        (ja, sa), (jb, sb) = (_cl_solve((p[0], p[1] + 8)) for p in (PR._lerp2(FR, FA, k), PR._lerp2(BR, BA, k)))
+        a_ = at(ja + (jf - ja) * m, sa * (1 - m))
+        b_ = at(jb + (jf - jb) * m, sb + (1 - sb) * m)
+        inner += PR._line(a_[0], a_[1], b_[0], b_[1], sw=7, color=stripe, extra='opacity="0.85"')
+    if top and k_top > 0.01:      # PR._booth's sag line
+        q0, q1, q2 = mp(FA), mp(sag), mp(BR)
+        inner += PR._p(f"M{q0[0]:.1f},{q0[1]:.1f} Q{q1[0]:.1f},{q1[1]:.1f} {q2[0]:.1f},{q2[1]:.1f}", sw=3,
+                       stroke=cloth_d, extra=f'opacity="{0.6 * k_top:.3f}"')
+    if not top and k_under > 0.01:     # _booth_flap's fold lines on the underside
+        inner += PR._p(S.smooth_path([PR._lerp2(fr[j], bk[j], 0.5) for j in range(8)], closed=False), sw=3,
+                       stroke=S.shade(under, -0.15), extra=f'opacity="{0.45 * k_under:.3f}"')
+        inner += PR._p(S.smooth_path([PR._lerp2(fr[j], bk[j], 0.15) for j in range(8)], closed=False), sw=14,
+                       stroke=S.shade(under, -0.12), extra=f'opacity="{0.35 * k_under:.3f}" filter="url(#soft)"')
+    uid = PR._uid("cloth22", round(m, 4), round(ph, 3), round(rip, 3), round(sw, 2), round(bend, 2))
+    panel = PR._p(d, cloth if top else under, 0) + PR._clip(uid, d, inner) + PR._p(d, sw=4)
+    on = ""
+    if top and branch:            # the leafy branch on its top face, carried along (affine about its middle)
+        c = (60 + 64 * math.cos(math.radians(28)) + 4 * math.sin(math.radians(28)),
+             -360 + 64 * math.sin(math.radians(28)) - 4 * math.cos(math.radians(28)))
+        jc, sc_ = _cl_solve(c)
+        o, pj, ps = at(jc, sc_), at(jc + 0.5, sc_), at(jc, sc_ + 0.5)
+        (ax, ay), (bx, by) = _CL_STEP, (BA[0] - FA[0], BA[1] - FA[1])
+        cj, cs = ((pj[0] - o[0]) * 2, (pj[1] - o[1]) * 2), ((ps[0] - o[0]) * 2, (ps[1] - o[1]) * 2)
+        det = ax * by - ay * bx                            # M = [cj cs] @ inv([step ridge])
+        ia, ib, ic, id_ = by / det, -bx / det, -ay / det, ax / det
+        ma, mb = cj[0] * ia + cs[0] * ic, cj[1] * ia + cs[1] * ic
+        mc, md = cj[0] * ib + cs[0] * id_, cj[1] * ib + cs[1] * id_
+        me, mf = o[0] - (ma * c[0] + mc * c[1]), o[1] - (mb * c[0] + md * c[1])
+        if abs(ma - 1) + abs(mb) + abs(mc) + abs(md - 1) + abs(me) + abs(mf) < 1e-6:
+            on = branch
+        else:
+            on = f'<g transform="matrix({ma:.5f},{mb:.5f},{mc:.5f},{md:.5f},{me:.3f},{mf:.3f})">{branch}</g>'
+    # the front edge folded down over the front rafter: it turns with the cloth and is pulled straight
+    fold = 1 - PR._smooth(m / 0.22)
+    if fold <= 0.01:
+        return panel, "", on, top
+    jfr = (FR[0] - FA[0]) / _CL_STEP[0]               # the eave lies (almost) on the lying edge's line
+
+    def hang(u, off):
+        """lerp(FA, FR, u) + off of the lying cloth, carried along by the front edge (turning with its step
+        there); ``off`` (the fold hanging below the edge) is pulled straight where the edge has lifted off the
+        rafter, and everywhere as the cloth swings up."""
+        j = u * jfr
+        base = _cl_at(fr, j)
+        i = min(max(int(math.ceil(j)), 1), 6)
+        rot = (math.atan2(fr[i][1] - fr[i - 1][1], fr[i][0] - fr[i - 1][0]) -
+               math.atan2(_CL_STEP[1], _CL_STEP[0]))
+        f = fold * (1 - PR._smooth(abs(rot) / math.radians(20)))
+        vx = u * (FR[0] - FA[0]) - j * _CL_STEP[0] + f * off[0]      # (the eave is 0.5 px off the step line)
+        vy = u * (FR[1] - FA[1]) - j * _CL_STEP[1] + f * off[1]
+        cr, sr = math.cos(rot), math.sin(rot)
+        return base[0] + cr * vx - sr * vy, base[1] + sr * vx + cr * vy
+
+    h9 = [hang(i / 8, (0.0, 14 + (8 if i % 2 else 0) + 6 * (i / 8))) for i in range(9)]
+    hd = PR._poly([hang(0, (0.0, 0.0)), hang(1, (8.0, 2.0))] + h9[::-1])
+    s0, s1 = hang(0, (0.0, 10.0)), hang(1, (0.0, 12.0))
+    strip = (PR._p(hd, cloth_d, 0) +
+             PR._clip(PR._uid("clothhem22", uid), hd,
+                      PR._line(s0[0], s0[1], s1[0], s1[1], sw=6, color=stripe, extra='opacity="0.8"')) +
+             PR._p(hd, sw=3.5))
+    return panel, strip, on, top
+
+
+def _booth_cloth(x, y, scale, m, ph=0.0, rip=0.0, sw=0.0, bend=0.0):
+    """PR.booth(x, y, scale, facing=1) with its right roof cloth in an in-between state, drawn in its own place
+    in the booth (under the ridge pole, rafters and lashings), with its front hem and the branch lying on it in
+    theirs - or, once it has swung up off the rafters (m >= 0.1), over the ridge pole and the back rafters it
+    has lifted off (still under the front rafters and lashings). Returns (markup, top face?)."""
+    m0 = PR.booth(x, y, scale, facing=1)
+    i = m0.index(_CL_BRANCH)
+    j = m0.index("</g>", i) + 4
+    panel, strip, on, top = _roof_cloth(m, ph, rip, sw, bend, m0[i:j])
+    m0 = m0[:i] + on + m0[j:]            # the branch is drawn last (over the back rafter), as in PR._booth
+    if m >= 0.1:
+        dd = PR._poly([(_CL_BR[0] - 4, _CL_BR[1]), (_CL_BA[0] - 22, _CL_BA[1] - 20)], closed=False)
+        k = m0.index(f'<path d="{dd}"')
+        k = m0.index("/>", m0.index(f'<path d="{dd}"', k + 1)) + 2       # after the back-right rafter
+        m0, panel = m0[:k] + panel + m0[k:], ""
+    for prefix, end, new in (("boothsl", "/>", panel), ("boothhem", "/>", strip)):
+        cid = PR._uid(prefix, 1)
+        key = f'<clipPath id="{cid}"><path d="'
+        d = m0[m0.index(key) + len(key):]
+        d = d[:d.index('"')]
+        a = m0.index(f'<path d="{d}"')
+        b = m0.index(f'<path d="{d}" fill="none"', m0.index(f'<clipPath id="{cid}">'))
+        b = m0.index(end, b) + len(end)
+        m0 = m0[:a] + new + m0[b:]
+    return m0, top
 
 
 FLAT_DEFS = V.FLAT_DEFS
@@ -763,26 +957,96 @@ def build(ctx):
     booth_shadow = (f'<ellipse cx="{XB + 60}" cy="{GY + 8}" rx="{340 * SP}" ry="30" fill="{INK}" '
                     f'opacity="0.16" filter="url(#soft)"/>')
     booth_svg = S.svg_doc(booth_shadow + PR.booth(XB, GY, SP, facing=1))
-    # a gust of the hot east wind blows the cloth of the right roof slope up off the rafters just before the
-    # sun beats on Jonah's head (so the sunbeam comes in through the open roof); it streams and flaps from the
-    # ridge pole until the wind drops, then flops back down (1-frame swaps hidden by the fast swing)
-    t_rip = t_beam - 0.55
-    t_shut = t_rays1 - 0.1
-    sc.add("booth", [booth_svg, S.svg_doc(booth_shadow + _booth_open(XB, GY, SP))], wc=0.8,
-           frame_at=lambda t: 1.0 if t_rip <= t < t_shut + 0.16 else 0.0)
-    hinge = (XB + 27 * SP, GY - 388 * SP)            # middle of the ridge pole (stage px)
+    # a gust of the hot east wind lifts the cloth of the right roof slope off the rafters just before the sun
+    # beats on Jonah's head (so the sunbeam comes in through the open roof): air gets under it (its free edge
+    # puffs up twice), then it whips up over the ridge pole (its free part trailing), overshoots and settles
+    # into streaming and flapping from the ridge; when the wind drops it tips back over the ridge, falls faster
+    # and faster, lands on the rafters and its free edge bounces once. Every in-between is its own drawing
+    # (_roof_cloth, one per video frame): while its top face shows it is drawn in its place inside the booth
+    # (under the rafters, with its front fold and the branch lying on it), once its underside shows it is the
+    # flap layer over the open booth, like the streaming flap (_booth_flap) it turns into.
+    t_rip = t_beam - 0.55                 # the cloth whips up
+    t_shut = t_rays1 - 0.1                # the wind has dropped: it tips back over
+    CL_A, CL_UP = 0.40, 0.80              # puffs before t_rip; whip + overshoot + settle after it
+    CL_FALL, CL_LAND = 0.38, 0.30         # fall from t_shut; landing bounce after it
+    CL_SWING, CL_LAG = 143.0, 0.03        # deg from lying to streaming; trailing of its free part (s)
+    ZETA, OMEGA = 0.62, 11.0              # the whip: a damped swing (overshoot ~8 %)
+
+    def flap_ph(t):
+        return (0.0, 0.33, 0.67)[int(t * 9) % 3]
+
+    def cloth_state(t):
+        """(m, ph, rip, sw, bend) of the roof cloth's in-between at t (see _roof_cloth)."""
+        u = t - t_rip
+        if u < 0:                                  # air gets under it: the free edge puffs up twice
+            bil = (14 * math.sin(math.pi * _clamp((u + CL_A) / 0.24)) if u < -0.16 else
+                   24 * PR._smooth((u + 0.16) / 0.16))
+            return 0.0, 0.0, 0.0, 0.0, -bil
+        if u < CL_UP:                              # whips up over the ridge: damped swing to the flap
+            wd = OMEGA * math.sqrt(1 - ZETA * ZETA)
+            e = math.exp(-ZETA * OMEGA * u)
+            th = 1 - e * (math.cos(wd * u) + ZETA * OMEGA / wd * math.sin(wd * u))
+            dth = OMEGA * OMEGA / wd * e * math.sin(wd * u)
+            w = 1 - PR._smooth((u - 0.5) / 0.3)    # (settled exactly by CL_UP)
+            th, dth = 1 + (th - 1) * w, dth * w
+            m = min(th, 1.0)
+            return (m, flap_ph(t), m, -CL_SWING * max(th - 1, 0.0),
+                    -24 * (1 - PR._smooth(u / 0.15)) + CL_LAG * CL_SWING * dth)
+        s = t - t_shut
+        if s < CL_FALL:                            # tips back over the ridge and falls, free part trailing
+            q = max(s, 0.0) / CL_FALL
+            m = 1 - q * q
+            return m, flap_ph(t), m, 0.0, -CL_LAG * CL_SWING * 2 * q / CL_FALL
+        s -= CL_FALL                               # lands; its free edge flops down past and settles
+        b0 = -CL_LAG * CL_SWING * 2 / CL_FALL
+        return (0.0, 0.0, 0.0, 0.0,
+                b0 * math.exp(-s / 0.08) * math.cos(2 * math.pi * s / 0.3) * (1 - PR._smooth((s - 0.18) / 0.12)))
+
+    booth_frames = [booth_svg, S.svg_doc(booth_shadow + _booth_open(XB, GY, SP))]
     flap_docs = [S.svg_doc(PR._place(_booth_flap(ph), XB, GY, SP, 1)) for ph in (0.0, 0.33, 0.67)]
+    cl_seen = {}
+
+    def cl_frame(t):
+        st = cloth_state(t)
+        mk, top = _booth_cloth(XB, GY, SP, *st)
+        if top:
+            doc, frames = S.svg_doc(booth_shadow + mk), booth_frames
+        else:
+            doc, frames = S.svg_doc(PR._place(_roof_cloth(*st)[0], XB, GY, SP, 1)), flap_docs
+        if doc not in cl_seen:
+            cl_seen[doc] = len(frames)
+            frames.append(doc)
+        return (cl_seen[doc], None) if top else (1, cl_seen[doc])
+
+    cl_win = []                                    # (first video frame, [(booth frame, flap frame)])
+    for w0, w1 in ((t_rip - CL_A, t_rip + CL_UP), (t_shut, t_shut + CL_FALL + CL_LAND)):
+        k0, k1 = math.ceil(w0 * FPS - 1e-6), math.ceil(w1 * FPS - 1e-6)
+        cl_win.append((k0, [cl_frame(k / FPS) for k in range(k0, k1)]))
+    k_open, k_shut = cl_win[0][0] + len(cl_win[0][1]), cl_win[1][0]
+
+    def cl_lookup(t):
+        k = round(t * FPS)
+        for k0, ids in cl_win:
+            if k0 <= k < k0 + len(ids):
+                return ids[k - k0]
+        return (1, -1) if k_open <= k < k_shut else (0, None)     # -1: the streaming flap
+
+    sc.add("booth", booth_frames, wc=0.8, frame_at=lambda t: float(cl_lookup(t)[0]))
+    hinge = (XB + 27 * SP, GY - 388 * SP)            # middle of the ridge pole (stage px)
 
     def flap_frame(t):
-        return float((0, 1, 2)[int(t * 9) % 3])
+        f = cl_lookup(t)[1]
+        return float((0, 1, 2)[int(t * 9) % 3] if f in (None, -1) else f)
 
     def flap_motion(t):
-        if not t_rip <= t < t_shut + 0.16:
+        f = cl_lookup(t)[1]
+        if f is None:
             return Tf(alpha=0.0)
-        up = M.ease("out")(min(1.0, (t - t_rip) / 0.2))           # swings up from the right slope ...
-        down = M.progress(t, t_shut, t_shut + 0.16, "in")          # ... and drops back onto it
-        rot = 118 * (1 - up) + 118 * down + 5 * math.sin(2 * math.pi * t / 0.55) * wind(t)
-        return Tf(rot=rot, px=hinge[0], py=hinge[1])
+        if f >= 0:                                 # an in-between drawing (already in place)
+            return Tf()
+        k = M.progress(t, t_rip + CL_UP, t_rip + CL_UP + 0.5, "sine") * (1 - M.progress(t, t_shut - 0.4, t_shut,
+                                                                                         "sine"))
+        return Tf(rot=5 * math.sin(2 * math.pi * t / 0.55) * wind(t) * k, px=hinge[0], py=hinge[1])
 
     sc.add("booth_flap", flap_docs, frame_at=flap_frame, motion=flap_motion, wc=0.6)
     # the lizard (and the stone it hides behind) are drawn in front of the booth, as in s21, so it is in front
@@ -1557,6 +1821,38 @@ def build(ctx):
         frame.alpha_composite(ov)
         return frame
 
+    # the particles of God's light (sparkles, the plant's burst, motes) never sit on Jonah's face or head: drawn
+    # on their own canvas, they fade out inside a soft capsule round his head that covers it in every pose (and
+    # hop) he takes in the light - one fixed zone, so nothing pops when his pose changes
+    HZ_A, HZ_B = jpts[8]["head"], jpts[9]["head"]                    # sulk / sulk_up (shout, hmph lie between)
+    HZ_A, HZ_B = (HZ_A[0] - 4, HZ_A[1] - 12), (HZ_B[0] + 4, HZ_B[1] - 12)
+    HZ_R, HZ_SOFT = 80.0, 40.0                                       # clear inside, faded in over (stage px)
+
+    def off_face(*fxs):
+        def fx(frame, t, view):
+            ov = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+            for f in fxs:
+                ov = f(ov, t, view)
+            if ov.getchannel("A").getbbox() is None:
+                return frame
+            (ax_, ay_), (bx_, by_) = view.to_out(*HZ_A), view.to_out(*HZ_B)
+            r0, r1 = HZ_R * view.scale, (HZ_R + HZ_SOFT) * view.scale
+            x0, y0 = max(0, int(min(ax_, bx_) - r1)), max(0, int(min(ay_, by_) - r1))
+            x1, y1 = min(ov.width, int(max(ax_, bx_) + r1) + 1), min(ov.height, int(max(ay_, by_) + r1) + 1)
+            if x1 > x0 and y1 > y0:
+                arr = np.array(ov)
+                yy, xx = np.mgrid[y0:y1, x0:x1].astype(np.float32)
+                vx, vy = bx_ - ax_, by_ - ay_
+                u = np.clip(((xx - ax_) * vx + (yy - ay_) * vy) / max(vx * vx + vy * vy, 1e-6), 0, 1)
+                dist = np.hypot(xx - ax_ - u * vx, yy - ay_ - u * vy)
+                k = np.clip((dist - r0) / (r1 - r0), 0, 1)
+                k = k * k * (3 - 2 * k)
+                arr[y0:y1, x0:x1, 3] = (arr[y0:y1, x0:x1, 3] * k + 0.5).astype(np.uint8)
+                ov = Image.fromarray(arr, "RGBA")
+            frame.alpha_composite(ov)
+            return frame
+        return fx
+
     sc.fx = [
         grade,
         FX.sparkles((XW - 330, GY - 210, XW + 40, GY - 10), count=12, t0=t_godw - 0.1, t1=t_worm1 + 0.3,
@@ -1567,12 +1863,14 @@ def build(ctx):
         streaks,
         FX.vignette(lambda t: (0.27 * M.progress(t, t_sun1, t_dizzy, "sine") * (1 - 0.6 * a_gold(t))) *
                     (0.85 + 0.15 * math.sin(t * 3.2)), color=(150, 72, 24)),
-        FX.sparkles((XJ - 520, GY - 760, XJ + 160, GY - 60), count=26, t0=t_light0 + 0.2, t1=T + 1,
-                    color=(255, 238, 170), size=(9, 20), period=1.5, drift=-8, seed=8),
-        FX.sparkles((XP - 60, GY - 620, XP + 520, GY - 60), count=16, t0=t_plant - 0.1, t1=t_plant_back + 1.0,
-                    color=(255, 238, 168), size=(10, 20), period=1.2, drift=-6, seed=9),
-        burst,
-        FX.motes((300, 0, 1700, 900), count=28, t0=t_light0, t1=T + 1, color=(255, 244, 205), alpha=120, seed=22),
+        off_face(
+            FX.sparkles((XJ - 520, GY - 760, XJ + 160, GY - 60), count=26, t0=t_light0 + 0.2, t1=T + 1,
+                        color=(255, 238, 170), size=(9, 20), period=1.5, drift=-8, seed=8),
+            FX.sparkles((XP - 60, GY - 620, XP + 520, GY - 60), count=16, t0=t_plant - 0.1, t1=t_plant_back + 1.0,
+                        color=(255, 238, 168), size=(10, 20), period=1.2, drift=-6, seed=9),
+            burst,
+            FX.motes((300, 0, 1700, 900), count=28, t0=t_light0, t1=T + 1, color=(255, 244, 205), alpha=120,
+                     seed=22)),
     ]
 
     # =============================================================== SOUND
@@ -1588,7 +1886,7 @@ def build(ctx):
     sc.sfx("heat", t_sun0 + 0.3, dur=t_calm0 + 1.5 - (t_sun0 + 0.3), gain_db=-14, fade_in=0.8, fade_out=1.5)
     sc.sfx("whoosh", t_wind - 0.2, gain_db=-11, pan=0.6)
     sc.sfx("cloth", t_rip, gain_db=-10, pan=0.25)
-    sc.sfx("cloth", t_shut, gain_db=-14, pan=0.25)
+    sc.sfx("cloth", t_shut + CL_FALL - 0.05, gain_db=-14, pan=0.25)     # it lands back on the rafters
     sc.sfx("wind_hot", t_wind - 0.4, dur=t_light0 + 1.2 - (t_wind - 0.4), gain_db=-11, fade_in=0.6, fade_out=1.6)
     sc.sfx("wind_soft", t_light0 + 0.4, dur=T - t_light0 + 0.4, gain_db=-18, fade_in=1.0, fade_out=0.8)
     sc.sfx("pop", t_hot, gain_db=-15)

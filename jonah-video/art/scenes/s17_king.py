@@ -2,8 +2,10 @@
 
 One wide 5400 x 1440 stage, no cuts: the palace throne room on the left (the same purple-curtained portico,
 throne and king as v1 s10), its terrace and steps, then the street outside — a little animal yard with a feed
-manger and a stone water trough, and a street where families live. The camera starts close on the king and
-travels right with the heralds and the decree.
+manger and a stone water trough, and a street where families live. The camera opens on the palace roof-line
+and a warm sky (no figure in frame: s16 ends on a square full of kneeling people, with Jonah standing just where
+the king sits here, and in s16's late-afternoon light), comes down and back onto the king as the news is told
+(settled before he rises; the sky cools to lilac), and travels right with the heralds and the decree.
 
   line 0  "国王听说了，"            a messenger in sackcloth tells the seated king the news (sound arcs) and points
                                     out to the city; the king is startled ("!").
@@ -38,9 +40,11 @@ travels right with the heralds and the decree.
                                     to her chest); the two men step together and shake hands.
           "说不定上帝会可怜我们，"  everyone kneels and looks up hopefully;
           "我们就能活下来！"        peaceful, hopeful faces (the children smile) under the grey, quiet overcast; the
-                                    crier on the roof kneels too; the camera tilts up a little with their gaze.
-                                    No light yet: God's answer (the cloud parting, warm light) belongs to s18, which
-                                    opens under the same grey cloud banks and gloom. Calm hold for the dissolve.
+                                    crier on the roof kneels too; the camera tilts up with their gaze to the low
+                                    grey overcast over the rooftops (no family in frame: s18 opens on its own
+                                    overcast over its roofs). No light yet: God's answer (the cloud parting, warm
+                                    light) belongs to s18, which opens under the same grey cloud banks and gloom.
+                                    Calm hold for the dissolve.
 
 Camera: every pan stays under ~20 output px per frame (long pans widen the view a little in the middle, with
 zero zoom speed at both ends, and the viewport's bottom edge is interpolated so the stage clamp never kinks a
@@ -275,6 +279,19 @@ def step_walk(t0, n, step, period, s, move=0.15):
 def sky_svg():
     defs = S.lin_grad("s17sky", [(0, "#a7a7bf"), (0.35, "#c3bfcb"), (0.68, "#e0d3c6"), (1, "#eedfc2")])
     return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="1120" fill="url(#s17sky)"/>', defs)
+
+
+def sky_warm_svg():
+    """s16's warm late-afternoon light (cream-peach sky, golden glow at the upper right of the opening framing)
+    over this sky for the first second, so the s16 -> s17 dissolve stays in one light; it fades to s17's cool
+    lilac once the camera has come down into the throne room."""
+    defs = (S.lin_grad("s17skyw", [(0, "#c4bcb6"), (0.1, "#e6d6c2"), (0.3, "#efdcbf"), (0.55, "#f4d9ae"),
+                                   (0.8, "#f6d3a0"), (1, "#f6cd94")]) +
+            S.rad_grad("s17sunw", [(0, "#fff3cf", 0.95), (0.3, "#ffe6ad", 0.7), (0.65, "#ffd793", 0.3),
+                                   (1, "#ffcf88", 0)]))
+    # (only the palace end of the stage: the camera stays left of x ~1870 while this shows)
+    return doc(f'<rect x="-20" y="-20" width="2120" height="1120" fill="url(#s17skyw)"/>'
+               f'<ellipse cx="1950" cy="120" rx="760" ry="600" fill="url(#s17sunw)"/>', defs)
 
 
 CLOUDS_BACK = [(1500, 175, 520, 150, 1), (2350, 120, 420, 120, 2), (3150, 205, 560, 160, 3), (4000, 130, 460, 130, 4),
@@ -1038,16 +1055,21 @@ def build(ctx):
 
     # ---- sky ----
     sc.add("sky", sky_svg(), z=0, wc=0.5)
+    # s16's warm light lingers over the sky and the clouds through the dissolve, then cools to this scene's lilac
+    # (a crossfade of the same sky / cloud drawings) once the camera has come down into the throne room (the warm
+    # sky layer itself is added last, so the other layers keep their watercolour seeds)
+    warm_at = lambda t: 1 - M.progress(t, 1.0, 3.0, "sine")
     # the white clouds grey over while the city prays (a crossfade of the same drawing), and a low grey overcast
     # rolls in over the street from the top of the sky — the gloom s18 opens under (its warm light is s18's)
     t_oc0 = c3b.start
     t_grey = (t_oc0 + 0.5, c4b.start + 1.0)
-    grey_at = lambda t: M.progress(t, t_grey[0], t_grey[1], "sine")
-    sc.add("clouds_back", [clouds_svg(CLOUDS_BACK, "#d7cfd6", "#bab0c0"), clouds_svg(CLOUDS_BACK, "#aeadba", "#94939f")],
-           z=1, wc=0.7, frame_at=grey_at, motion=M.drift(vx=5))
-    sc.add("clouds_front", [clouds_svg(CLOUDS_FRONT, "#e2d9da", "#c6bcc4"),
+    cloud_at = lambda t: 1 - warm_at(t) + M.progress(t, t_grey[0], t_grey[1], "sine")   # warm -> white -> grey
+    sc.add("clouds_back", [clouds_svg(CLOUDS_BACK, "#fff3df", "#f2d2a6"), clouds_svg(CLOUDS_BACK, "#d7cfd6", "#bab0c0"),
+                           clouds_svg(CLOUDS_BACK, "#aeadba", "#94939f")],
+           z=1, wc=0.7, frame_at=cloud_at, motion=M.drift(vx=5))
+    sc.add("clouds_front", [clouds_svg(CLOUDS_FRONT, "#fff3df", "#f2d2a6"), clouds_svg(CLOUDS_FRONT, "#e2d9da", "#c6bcc4"),
                             clouds_svg(CLOUDS_FRONT, "#b9b7c1", "#9e9caa")],
-           z=1.6, wc=0.7, frame_at=grey_at, motion=M.drift(vx=9))
+           z=1.6, wc=0.7, frame_at=cloud_at, motion=M.drift(vx=9))
     for k, (kind, ddy, ddx, dur, vx) in enumerate((("back", -300, 260, 9.0, -3), ("front", -360, 340, 8.0, -5),
                                                    ("low", -420, 420, 7.0, -7))):
         sc.add(f"overcast_{kind}", overcast_svg(kind), z=1.65 + 0.01 * k, wc=0.7, motion=M.combine(
@@ -1644,28 +1666,38 @@ def build(ctx):
           + PR.jar(4300, SH - 44, 0.85, color="#b86a46") + PR.jar(4372, SH - 24, 0.6)
           + PR.grass_tuft(4520, SH + 2, 1.1, variant=2) + PR.bush(4760, SH + 20, 1.0, variant=1))
     sc.add("foreground", doc(fg), z=20)
+    sc.add("sky_warm", sky_warm_svg(), z=0.5, wc=0.5, motion=lambda t: Tf(alpha=warm_at(t)))
 
-    # ---- camera: on the king; with the heralds to the terrace, where it rests on the horn and the scroll; glide
-    # (with a small pull-back on the way, to keep the on-screen speed gentle) and push in close on the yard for the
-    # two "not eat / not drink" beats; ease back out for the blankets and hold on the praying yard; glide on to the
-    # families through the pause; at the end tilt up a little with their hopeful gaze toward the grey sky ----
+    # ---- camera: opens on the palace roof-line and the sky (no figure in frame: s16 ends on a square full of
+    # kneeling people with Jonah standing just where the king sits here), comes down and back onto the king as the
+    # news is told (settled before he rises); with the heralds to the terrace, where it rests on the horn and the
+    # scroll; glide (with a small pull-back on the way, to keep the on-screen speed gentle) and push in close on the
+    # yard for the two "not eat / not drink" beats; ease back out for the blankets and hold on the praying yard;
+    # glide on to the families through the pause; at the end tilt up with their hopeful gaze to the grey overcast
+    # over the rooftops (D3: no figure in frame), where s18 opens ----
+    S0 = Cam(1160, 387, 1360)                        # lintel, merlons, column tops and sky; heads all below it
+    t_s1 = 0.35                                      # the descent starts in the dissolve (s16's last frame holds)
+    t_land = max(snap(t_wow) + 0.3, t_rise - 0.3)    # settled before the seated lean of the rise
     A = Cam(934, 822, 1860)
     A2 = Cam(905, 830, 1780)
     B = Cam(1600, 870, 1900)
     Cy = Cam(2560, 995, 1360)
     Cc = Cam(2820, 905, 1880)
     D = Cam(4330, 900, 1800)
-    D2 = Cam(4410, 880, 1960)
+    D3 = Cam(4410, 458, 1600)                        # the overcast over the rooftops (s18 opens on it)
     t_bc0 = max(L2.start + 0.25, t_arrive + 1.05)    # ~1 s on the horn and the scroll
     t_cy = max(t_bc0 + 2.7, t_lid + 0.3)             # (nearly) settled close on the yard as the lid is lifted
     t_cy1 = max(c2b.end + 0.1, t_mat_on + 1.0)
     t_cc = max(t_cloth - 0.15, t_cy1 + 1.6)
     t_cd0 = max(c3b.start + 1.2, t_pray + 1.0)       # hold on the kneeling yard
     t_cd1 = max(t_cd0 + 3.5, c4a.start + 1.4)
+    t_up0 = max(t_hope + 0.4, T - 2.5)              # the hopeful smiles first, then up with their gaze...
+    t_up1 = T - 0.9                                  # ...settled on the overcast for the dissolve
     sc.camera = cam_path([
-        (0, A, 0), (t_sit - 0.5, A, 0), (c0c.end, A2, 0), (t_go - 0.3, A2, 0), (t_arrive + 0.1, B, 0),
+        (0, S0, 0), (t_s1, S0, 0, trap(0.35)), (t_land, A, 0), (t_sit - 0.5, A, 0), (c0c.end, A2, 0),
+        (t_go - 0.3, A2, 0), (t_arrive + 0.1, B, 0),
         (t_bc0, B, 350, trap(0.3), 0.35), (t_cy, Cy, 0), (t_cy1, Cy, 0), (t_cc, Cc, 0), (t_cd0, Cc, 480, trap(0.3)),
-        (t_cd1, D, 0), (t_hope - 0.2, D, 0), (T - 1.0, D2, 0)])
+        (t_cd1, D, 0), (t_up0, D, 0, trap(0.35)), (t_up1, D3, 0)])
 
     # ---- effects ----
     # the cool gloom of the overcast deepens while the city prays (s18 opens in the same gloom)
