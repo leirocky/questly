@@ -62,9 +62,9 @@ SCENE_FX = {("s11_belly", "J"): "cave", ("s12_deep", "J"): "cave"} if STORY == "
 # a story may add speakers (story.VOICES, same format) and per-scene effects (story.SCENE_FX)
 VOICES.update(getattr(story, "VOICES", {}))
 SCENE_FX.update(getattr(story, "SCENE_FX", {}))
-if getattr(story, "LEXICON", None):                # the story's own pronunciation fixes
-    from voice import lexicons as _LX
-    _LX.ZV_FIX.update(story.LEXICON)
+from voice import lexicons as _LX  # noqa: E402
+_LX.SANDHI_PAIRS = STORY != "jonah"
+_LX.ZV_FIX.update(getattr(story, "LEXICON", {}))   # the story's own pronunciation fixes
 PROMPTS = {k: v["prompt"]["text"] for k, v in VOICES.items() if "prompt" in v}
 CER_OK = 0.06      # re-synthesise an utterance until ASR agrees at least this well (best take kept)
 NARRATOR_CER_OK = CER_OK
@@ -310,12 +310,56 @@ def _edge_junk(ref, hyp):
     return any(op == "insert" and (i1 == 0 or i1 == len(ref)) for op, i1, _, _, _ in ops)
 
 
+NO_BREAK = tuple(getattr(story, "NO_BREAK", ()))   # names that must be read without a pause inside
+
+
+def _ref_times(text, toks, ts):
+    """Time of each character of _norm(text), from aligned ASR tokens (interpolated where they differ)."""
+    import difflib
+
+    ref, pos, hyp_time = _norm(text), 0, {}
+    for t, tm in zip(toks, ts):
+        hyp_time[pos] = tm
+        pos += len(t)
+    anchors = {}
+    for a, b, size in difflib.SequenceMatcher(None, "".join(toks), ref, autojunk=False).get_matching_blocks():
+        for k in range(size):
+            if a + k in hyp_time:
+                anchors[b + k] = hyp_time[a + k]
+    xs = sorted(anchors)
+    if len(xs) < 2:
+        return None
+    return np.interp(np.arange(len(ref) + 1), xs, [anchors[k] for k in xs])
+
+
+def _broken_word(text, x, sr, toks, ts, min_gap=0.06):
+    """True when a NO_BREAK word is read with a pause inside it (e.g. 大利 … 乌王)."""
+    ref = _norm(text)
+    words = [w for w in NO_BREAK if w in ref]
+    times = _ref_times(text, toks, ts) if words else None
+    if times is None:
+        return False
+    hop = int(0.01 * sr)
+    quiet = np.array([np.sqrt(np.mean(x[i:i + hop] ** 2)) < 0.003 for i in range(0, len(x) - hop, hop)])
+    for w in words:
+        for m in re.finditer(w, ref):
+            a, b = int(times[m.start()] * 100) + 5, int(times[m.end() - 1] * 100)
+            run = best = 0
+            for q in quiet[a:b]:
+                run = run + 1 if q else 0
+                best = max(best, run)
+            if best * 0.01 >= min_gap:
+                return True
+    return False
+
+
 def _take_score(text, x, sr):
     """(rejected, CER) of one take; ASR gets 0.3 s of padding (it is unreliable on a word at sample 0)."""
     pad = np.zeros(int(0.3 * sr), np.float32)
-    hyp = asr(np.concatenate([pad, x, pad]), sr)[0]
+    xp = np.concatenate([pad, x, pad])
+    hyp, toks, ts = asr(xp, sr)
     err = _cer(text, hyp)
-    return (err > CER_OK or _edge_junk(text, hyp)), err
+    return (err > CER_OK or _edge_junk(text, hyp) or _broken_word(text, xp, sr, toks, ts)), err
 
 
 PAUSE_AFTER = {"，": 0.30, "、": 0.22, "：": 0.36, "；": 0.36, "。": 0.50, "！": 0.50, "？": 0.50}

@@ -28,7 +28,10 @@ LEXICON = {
     "但以理": "dan4 yi2 li3", "总管": "zong2 guan3", "耶路撒冷": "ye1 lu4 sa1 leng3", "错处": "cuo4 chu4",
     "睡不着觉": "shui4 bu5 zhao2 jiao4", "乖乖地": "guai1 guai1 de5", "平平安安地": "ping2 ping2 an1 an1 de5",
     "慢慢地": "man4 man4 de5", "都会": "dou1 hui4", "一道": "yi2 dao4",
+    "大利乌王": "da4 li4 wu1 wang2",
 }
+
+NO_BREAK = ["大利乌王"]    # names read in one breath (voice/tts.py retakes a line that pauses inside one)
 
 # Each scene: id (stories/daniel/scenes/<id>.py), a note for illustrators and the composer, music mood,
 # optional transition into the scene (ffmpeg xfade name, default "fade"; "fadeblack", "circleopen"),

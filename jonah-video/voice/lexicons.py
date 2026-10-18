@@ -25,6 +25,11 @@ from pypinyin.style._utils import get_finals, get_initials
 
 from engine.paths import CACHE, MODELS
 
+# 一/不 + the next character get their own ZipVoice entries with the sandhi reading (一天 yi4 tian1),
+# since a lone 一/不 entry has a single reading for the whole script. Off for jonah, whose approved
+# takes were made without it (turning it on re-synthesises its lines with 一/不).
+SANDHI_PAIRS = True
+
 # word -> pinyin syllables (tone digits; 5 or none = neutral)
 ZV_FIX = {
     "长大": "zhang3 da4", "还活着": "hai2 huo2 zhe5",
@@ -115,11 +120,17 @@ def _zv_tokens(syl):
 def zipvoice_content(texts):
     counts, words = {}, {}
     for t in texts:
-        for w, ws in contextual(t):
+        ctx = contextual(t)
+        for w, ws in ctx:
             for ch, s in zip(w, ws):
                 counts.setdefault(ch, Counter())[s] += 1
             if len(w) > 1:
                 words.setdefault(w, ws)
+        if SANDHI_PAIRS:
+            flat = [(ch, s) for w, ws in ctx for ch, s in zip(w, ws)]
+            for (ch, s), (nc, ns) in zip(flat, flat[1:]):
+                if ch in "一不":
+                    words.setdefault(ch + nc, [s, ns])
     entries = {ch: c.most_common(1)[0][0].split() for ch, c in counts.items()}
     entries.update({w: ws for w, ws in words.items()})
     entries.update({w: s.split() for w, s in ZV_FIX.items()})
