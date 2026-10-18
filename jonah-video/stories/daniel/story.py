@@ -72,7 +72,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s05_prays", "mood": "repent",
+        "id": "s05_prays", "transition": "dippaper", "mood": "repent",
         "note": "Daniel 6:10. Daniel reads the decree on the city wall, goes home, climbs to his upstairs room, opens "
                 "the window toward Jerusalem (west, far away) and kneels to pray and give thanks, as always.",
         "lines": [
@@ -104,7 +104,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s08_den", "mood": "storm",
+        "id": "s08_den", "transition": "dippaper", "mood": "storm",
         "note": "Daniel 6:16-17. Evening: soldiers lead Daniel (calm, not hurt) to the den and lower him in; the king "
                 "speaks to him; a big round stone rolled over the opening and sealed with the king's seal.",
         "lines": [
@@ -114,7 +114,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s09_night", "mood": "belly",
+        "id": "s09_night", "transition": "dippaper", "mood": "belly",
         "note": "Daniel 6:18. Night in the palace: the king alone in his bedroom, food untouched, musicians sent away, "
                 "awake by the window looking at the moon toward the den.",
         "lines": [
@@ -123,7 +123,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s10_angel", "mood": "fish",
+        "id": "s10_angel", "transition": "fadeblack", "mood": "fish",
         "note": "Daniel 6:22. Inside the dim den: big lions circle; then God's angel comes as bright warm light (no "
                 "human figure needed: light with soft wing shapes); the lions lie down gently like big sleepy cats; "
                 "Daniel sits safe among them.",
@@ -135,7 +135,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s11_morning", "mood": "call",
+        "id": "s11_morning", "transition": "fadeblack", "mood": "call",
         "note": "Daniel 6:19-22. Dawn: the king runs to the den, the stone is moved aside a little, he calls down "
                 "anxiously; Daniel's voice answers from below (we see his happy face looking up from the den).",
         "lines": [
@@ -147,7 +147,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s12_rescue", "mood": "shore",
+        "id": "s12_rescue", "transition": "dippaper", "mood": "shore",
         "note": "Daniel 6:23-24. Ropes pull Daniel up into the sunshine; the king hugs him; not a scratch on him. One "
                 "gentle line: the bad officials were punished (show them led away by guards, nothing scary).",
         "lines": [
@@ -167,7 +167,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s14_end", "mood": "end",
+        "id": "s14_end", "transition": "dippaper", "mood": "end",
         "note": "Ending: evening, Daniel kneels at his open window again, the friendly lion from the title dozing in a "
                 "picture-book corner; warm closing message to children.",
         "lines": [

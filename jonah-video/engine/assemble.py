@@ -20,7 +20,11 @@ DIP_BLACK = ("if(gt(P,0.5),"
 # are normalised to a 16:9 box so the chroma planes get the same circle; the radius eases in and out.
 IRIS_OPEN = ("A+(B-A)*clip((9.3*(1-P)*(1-P)*(1+2*P)-hypot((X/W-0.5)*16,(Y/H-0.5)*9))/0.06+0.5,0,1)")
 # (no st()/ld() variables: xfade evaluates slices in parallel threads that would share them)
-CUSTOM = {"fadeblack": DIP_BLACK, "circleopen": IRIS_OPEN}
+# "dippaper": the same symmetric dip, through the cream page colour (247,240,226 -> Y 223, U 121, V 132): a page
+# turn for a change of place, so the people of two different shots never overlap in a dissolve
+_PAPER = "if(eq(PLANE,0),223,if(eq(PLANE,1),121,132))"
+DIP_PAPER = (f"if(gt(P,0.5),{_PAPER}+(A-{_PAPER})*(2*P-1),{_PAPER}+(B-{_PAPER})*(1-2*P))")
+CUSTOM = {"fadeblack": DIP_BLACK, "circleopen": IRIS_OPEN, "dippaper": DIP_PAPER}
 
 VIDEO_KBPS = 2200
 AUDIO_KBPS = 160

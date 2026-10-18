@@ -44,7 +44,8 @@ def _scene_hash(sid, tl):
         if p.exists():
             h.update(p.read_bytes())
     entry = next(s for s in tl["scenes"] if s["id"] == sid)
-    h.update(repr(sorted((k, str(v)) for k, v in entry.items())).encode())
+    # the transition into a scene is applied when the film is assembled, not when the scene is drawn
+    h.update(repr(sorted((k, str(v)) for k, v in entry.items() if k != "transition")).encode())
     return h.hexdigest()
 
 
