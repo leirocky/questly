@@ -168,22 +168,49 @@ def happy_hop(t0, s, pivot, h=18.0):
                ["in", "out", "in", "sine"])
 
 
+def trap(a=0.3):
+    """Ease with a smooth trapezoid velocity profile: sine ramps over the first and last ``a`` of the move and a
+    constant cruise between (peak speed 1/(1-a) x the average, vs 1.57 x for a plain sine ease)."""
+    def f(u):
+        if u <= 0:
+            return 0.0
+        if u >= 1:
+            return 1.0
+        if u < a:
+            s = u / 2 - a / (2 * math.pi) * math.sin(math.pi * u / a)
+        elif u <= 1 - a:
+            s = a / 2 + (u - a)
+        else:
+            w = 1 - u
+            s = (1 - a) - (w / 2 - a / (2 * math.pi) * math.sin(math.pi * w / a))
+        return s / (1 - a)
+    return f
+
+
 def cam_path(keys):
-    """keys [(t, Cam, bump)]: sine-eased moves between key cameras; ``bump`` widens the view by that many stage px
-    in the middle of the move that starts at the key (a gentle pull-back that keeps long pans calm on screen)."""
-    keys = sorted(keys, key=lambda k: k[0])
+    """keys [(t, Cam, bump[, curve])]: eased moves between key cameras (each key is clamped to the stage first).
+    ``bump`` widens the view by that many stage px in the middle of the move that starts at the key (a gentle
+    pull-back that keeps long pans calm on screen); it follows sin^2, so the zoom starts and ends at zero speed.
+    The viewport's BOTTOM edge is interpolated (not its centre) and the bump grows the view upward, so moves near
+    the bottom of the stage never run into the clamp mid-move (no kinks)."""
+    keys = sorted([(k[0], clamp_cam(k[1]), k[2], k[3] if len(k) > 3 else "sine") for k in keys],
+                  key=lambda k: k[0])
+
+    def bottom(c):
+        return c.y + c.w * 9 / 32
 
     def c(t):
         if t <= keys[0][0]:
             return keys[0][1]
         if t >= keys[-1][0]:
             return keys[-1][1]
-        for (t0, a, bump), (t1, b, _) in zip(keys, keys[1:]):
+        for (t0, a, bump, curve), (t1, b, _, _) in zip(keys, keys[1:]):
             if t0 <= t <= t1:
-                u = M.progress(t, t0, t1, "sine")
+                u = M.progress(t, t0, t1, curve)
                 v = (t - t0) / (t1 - t0) if t1 > t0 else 1.0
-                w = M.lerp(a.w, b.w, u) + bump * math.sin(math.pi * v)
-                return clamp_cam(Cam(M.lerp(a.x, b.x, u), M.lerp(a.y, b.y, u), w))
+                w = M.lerp(a.w, b.w, u) + bump * math.sin(math.pi * v) ** 2
+                yb = M.lerp(bottom(a), bottom(b), u)
+                return clamp_cam(Cam(M.lerp(a.x, b.x, u), yb - w * 9 / 32, w))
         return keys[-1][1]
     return c
 
@@ -202,6 +229,37 @@ def chunk(line, phrase):
 
 def within(c, u):
     return c.start + (c.end - c.start) * u
+
+
+def step_walk(t0, n, step, period, s, move=0.15):
+    """Planted-foot walk with only two stride drawings (walk_a / walk_b): the drawing follows the distance, not
+    the clock. Each stride drawing holds its anchor still (its planted foot stays on one floor spot); as the next
+    drawing cuts in, the anchor advances one stride (``step`` px, ~85 figure px x scale: walk_a's planted front
+    foot at +45 becomes walk_b's pushing back foot at -40) with a short ease and a little lift.
+    Returns (frame_at(t) -> 0/1 for a/b or None when not walking, dx(t), dy(t), t_end)."""
+    cut_t = [snap(t0 + k * period) for k in range(n)]     # drawing k (k even: walk_a) cuts in here
+    t_end = snap(t0 + n * period)
+
+    def fa(t):
+        if t < cut_t[0] or t >= t_end:
+            return None
+        k = min(n - 1, int((t - t0) / period))
+        return float(k % 2)
+
+    def dx(t):
+        x = 0.0
+        for k in range(n):
+            x += step * M.progress(t, cut_t[k] - move * 0.45, cut_t[k] + move * 0.55, "sine")
+        return x
+
+    def dy(t):
+        y = 0.0
+        for k in range(n):
+            tk = cut_t[k]
+            if tk - move * 0.45 <= t <= tk + move * 0.55:
+                y -= 6 * s * math.sin(math.pi * (t - tk + move * 0.45) / move)
+        return y
+    return fa, dx, dy, t_end
 
 
 # ============================================================================ sky & city (static backdrops)
