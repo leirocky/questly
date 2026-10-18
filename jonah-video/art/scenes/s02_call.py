@@ -751,7 +751,14 @@ def build(ctx):
     # soldiers all ride on ``vis`` and close with it)
     t_vis_c0 = max(t_vis + 2.0, min(L[-1].end, T - 1.4))
     t_vis_c1 = max(t_vis_c0 + 0.3, T - 0.8)
+    # the end tilt (camera keys below) moves down 93.5 stage px; the bubble rides with it so its top stays in frame
+    if t_east0 is not None:
+        t_tilt0 = max(t_east0 + 2.5, (t_fierce or T) + 0.4)
+        follow = M.keys([(t_tilt0, {"dy": 0}), (max(t_tilt0 + 1.2, T - 1.0), {"dy": 752.5 - 659})], "sine")
+    else:
+        follow = lambda t: Tf()      # noqa: E731
     vis = M.combine(
+        follow,
         M.keys([(t_vis, {"s": 0.18, "dx": -330, "dy": 60}), (t_vis + 0.95, {"s": 1.0, "dx": 0, "dy": 0})], "back",
                pivot=(BX, BY)),
         M.keys([(t_vis, {"alpha": 0}), (t_vis + 0.45, {"alpha": 1})], "sine"),
@@ -1044,7 +1051,7 @@ def build(ctx):
              (t_vis + 1.4, Cam(1165, 650, 1930)),
              (max(t_vis + 1.5, (t_east0 or T) - 0.6), Cam(1158, 652, 1890))]
     if t_east0 is not None:
-        t_k = max(t_east0 + 2.5, (t_fierce or T) + 0.4)
+        t_k = max(t_east0 + 2.5, (t_fierce or T) + 0.4)       # = t_tilt0 (the vision bubble follows the tilt)
         keys_ += [(t_east0 + 2.4, Cam(1220, 660, 2120)),
                   (t_k, Cam(1218, 659, 2112)),
                   # the end framing: tilted down so Jonah's feet are at output y ~914, above the subtitle band,

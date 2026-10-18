@@ -1954,7 +1954,7 @@ def build(ctx):
     sc.sfx("ship_creak", L2.start + 1.0, dur=T - L2.start - 0.2, gain_db=-17, fade_in=1.0, fade_out=0.8)
     sc.sfx("gull", T_WEST + 0.3, gain_db=-17, pan=-0.5)
     sc.sfx("coins", T_COIN_LAND - 0.02, gain_db=-6)
-    sc.sfx("thud", T_CRATE + 0.24, gain_db=-19, pan=0.3, duck_db=-5)     # on picture: heard over the waves bed
+    sc.sfx("thud", T_CRATE + 0.24, gain_db=-16, pan=0.3, duck_db=-5)     # on picture: heard over waves + score
     sc.sfx("whoosh", T_LEAP, gain_db=-13, pan=-0.1)
     sc.sfx("thud", T_LAND, gain_db=-13)
     sc.sfx("cloth", T_SAIL, gain_db=-13)

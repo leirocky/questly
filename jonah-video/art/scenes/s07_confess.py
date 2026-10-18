@@ -723,9 +723,9 @@ def build(ctx):
     t_point_splash = p2b + 0.17              # the breaker answers right on '海里'
     # the closing rise over the bowed heads to the storm (camera below) ends by the middle of the dissolve into s08,
     # so from there on only sky and breaker show under s08's crew (a rise still running at the midpoint left the
-    # tops of our crew's heads along the bottom of the frame). 1.75 s keeps its peak speed at ~550 px/s.
-    t_rise1 = T - xfade_len() / 2 - 0.05
-    t_rise0 = t_rise1 - 1.75
+    # tops of our crew's heads along the bottom of the frame). 1.5 s peaks at ~23 px/frame.
+    t_rise1 = T - xfade_len() / 2 + 0.05
+    t_rise0 = t_rise1 - 1.5       # starts after the bow, once the faces are clear of the last subtitle
     rear = lambda t: M.progress(t, t_rise0, t_rise1, "sine")      # noqa: E731  (the breaker rears up meanwhile)
 
     # storm growth 0..1: s06's sea at the start, rising through '海浪越来越大', full at '越来越凶'
