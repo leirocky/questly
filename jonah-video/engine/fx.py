@@ -137,7 +137,8 @@ def bubbles(rect, count=18, t0=0.0, t1=1e9, rise=90, size=(6, 22), color=(235, 2
 
 def sparkles(rect, count=24, t0=0.0, t1=1e9, color=(255, 236, 170), size=(8, 20), period=1.6, drift=-12,
              seed=11):
-    """Twinkling four-point stars inside a stage-space rect (divine light, magic)."""
+    """Twinkling four-point stars inside a stage-space rect (divine light, magic). They drift ``drift`` px/s
+    from the moment they appear (t0), so a late set still starts inside its rect."""
     rng = np.random.default_rng(seed)
     x0, y0, x1, y1 = rect
     px = rng.uniform(x0, x1, count)
@@ -155,7 +156,7 @@ def sparkles(rect, count=24, t0=0.0, t1=1e9, color=(255, 236, 170), size=(8, 20)
             tw = 0.5 + 0.5 * math.sin(2 * math.pi * (t / period + ph[i]))
             if tw < 0.15:
                 continue
-            ox, oy = view.to_out(px[i], py[i] + drift * t)
+            ox, oy = view.to_out(px[i], py[i] + drift * (t - t0))
             r = sz[i] * view.scale * (0.5 + 0.5 * tw)
             a = int(230 * k * tw)
             w = r * 0.22

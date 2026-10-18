@@ -46,8 +46,7 @@ Cost: the sunset rays are painted into the sky layer (a 4-drawing flipbook: thei
 rays at half strength as evening falls) and the sky stops at the horizon; the near sea is static and flattened with
 the land.
 Library gaps worked around here: characters.py has no per-expression blink (local eyes-closed copies of 'happy' and
-'neutral' are registered in C.EXPRS), and fx.sparkles measures its drift from the scene start, not from t0
-(sparkles_from() shifts the rect to compensate).
+'neutral' are registered in C.EXPRS).
 """
 import bisect
 import math
@@ -1295,11 +1294,8 @@ def burst_fx(cx, cy, t0, n=14, dist=(90, 200), dur=1.0, size=(9, 18), color=(255
 
 
 def sparkles_from(rect, t0, drift, **kw):
-    """FX.sparkles, but drifting from t0: FX.sparkles places each sparkle at py + drift * t with t counted from
-    the scene start, so a late, drifting set would appear far from its rect. Shift the rect to compensate."""
-    x0, y0, x1, y1 = rect
-    off = -drift * t0
-    return FX.sparkles((x0, y0 + off, x1, y1 + off), t0=t0, drift=drift, **kw)
+    """FX.sparkles drifting from t0 (engine/fx.py now counts the drift from t0 itself)."""
+    return FX.sparkles(rect, t0=t0, drift=drift, **kw)
 
 
 def star_points(rect, n, seed):
