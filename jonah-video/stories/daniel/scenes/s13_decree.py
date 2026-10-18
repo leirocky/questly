@@ -184,6 +184,46 @@ def cam_path(keys):
     return cam
 
 
+def trap(a=0.3):
+    """Ease with a trapezoid velocity profile (sine ramps over the first and last ``a``, cruise between)."""
+    def f(u):
+        if u <= 0:
+            return 0.0
+        if u >= 1:
+            return 1.0
+        if u < a:
+            s = u / 2 - a / (2 * math.pi) * math.sin(math.pi * u / a)
+        elif u <= 1 - a:
+            s = a / 2 + (u - a)
+        else:
+            w = 1 - u
+            s = (1 - a) - (w / 2 - a / (2 * math.pi) * math.sin(math.pi * w / a))
+        return s / (1 - a)
+    return f
+
+
+def cam_path2(keys):
+    """[(t, Cam[, curve])]: eased moves (bottom edge interpolated, clamped to the stage)."""
+    keys = [(k[0], clamp_cam(k[1]), k[2] if len(k) > 2 else "sine") for k in sorted(keys, key=lambda k: k[0])]
+
+    def bottom(c):
+        return c.y + c.w * 9 / 32
+
+    def cam(t):
+        if t <= keys[0][0]:
+            return keys[0][1]
+        if t >= keys[-1][0]:
+            return keys[-1][1]
+        for (t0, a, cv), (t1, b, _) in zip(keys, keys[1:]):
+            if t0 <= t <= t1:
+                u = M.progress(t, t0, t1, cv)
+                w = M.lerp(a.w, b.w, u)
+                yb = M.lerp(bottom(a), bottom(b), u)
+                return clamp_cam(Cam(M.lerp(a.x, b.x, u), yb - w * 9 / 32, w))
+        return keys[-1][1]
+    return cam
+
+
 # blink drawings (eyes-closed copies of the expressions that blink); setdefault keeps the shared table intact
 for _e in ("happy", "neutral", "worried", "surprised", "call"):
     C.EXPRS.setdefault(f"d11_blink_{_e}", dict(C.EXPRS[_e], eyes="closed"))
@@ -443,17 +483,15 @@ def build(ctx):
     L0, L1, L2 = ctx.lines[:3]
 
     # ---- key times ----
-    t_write = snap(L0.start + 0.4)                       # the king writes / seals ("写信")
     t_seal = snap(when(ctx, "写信") + 0.3)
     t_go = snap(when(ctx, "全国各地") - 0.1)              # the messengers turn and set off
     WALK_P = 0.3
     t_horn = t_go + 0.2
-    t_panB0, t_panB1 = L0.end - 0.4, L1.start + 2.6
-    t_panC0, t_panC1 = L1.at("他是永远") + 1.6, L1.at("他会拯救人") + 2.2
+    t_panB0, t_panB1 = t_go + 0.8, L1.start + 3.3
+    t_panC0, t_panC1 = L1.at("他是永远") + 1.0, L1.at("他会拯救人") + 2.4
     t_nod = snap(L1.at("他会拯救人") + 2.4)                # people nod as they read
     t_cheer = snap(L1.at("脱离") + 0.1)                   # "脱离狮子的口": cheers
     t_page0, t_page1 = L1.end + 0.25, L2.start + 0.1      # page turn to the palace garden
-    t_read = snap(L2.start + 0.2)
     t_turn = snap(L2.at("做事") + 0.05)                   # "做事都很顺利": Daniel turns and talks to the king
     t_kn = snap(t_turn + 0.6)
 
@@ -462,8 +500,8 @@ def build(ctx):
     CB = Cam(2850, 690, 2100)
     CC = Cam(4500, 700, 2000)
     CD = Cam(4470, 795, 1500)
-    sc.camera = cam_path([(0, CA), (t_panB0, CA), (t_panB1, CB), (t_panC0, CB), (t_panC1, CC), (t_page1, CC),
-                          (T, CD)])
+    sc.camera = cam_path2([(0, CA), (t_panB0, CA), (t_panB1, CB, trap(0.3)), (t_panC0, CB), (t_panC1, CC, trap(0.3)),
+                           (t_page1, CC), (T, CD)])
 
     # ---- backdrop ----
     sc.add("sky", sky_svg(), z=0, wc=0.5)

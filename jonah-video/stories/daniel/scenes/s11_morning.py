@@ -366,7 +366,6 @@ def build(ctx):
     L0, L1, L2, L3, L4 = ctx.lines[:5]
 
     # ---- key times (from the narration) ----
-    t_dawn = L0.start                                   # "第二天天刚亮"
     t_rooster = L0.start + 0.25
     t_wake = snap(L0.start + 1.05)                      # guards wake with a start
     t_run = when(ctx, "国王就急忙") + 0.05               # the king hurries in
@@ -381,7 +380,6 @@ def build(ctx):
     t_call = snap(max(L1.start - 0.3, t_open + 0.05))    # the king leans over the hole and calls
     t_worry = snap(L1.at("你的上帝") + 0.1)              # "你的上帝救了你吗？" anxious
     t_down0, t_down1 = L1.start + 3.3, L2.start + 0.4   # camera tilts down to both levels
-    t_voice = L2.start                                  # "坑里传来但以理的声音"
     t_kneel = snap(L2.start + 0.15)                     # Daniel gets up on his knees, arms lifted...
     t_dan_up = snap(L2.start + 0.85)                    # ...stands and looks up
     t_king_wow = snap(L2.start + 0.9)                   # the king hears him (surprised)
@@ -562,7 +560,7 @@ def build(ctx):
             # lean back on each heave
             lambda t: Tf(rot=sum(4 * math.sin(math.pi * M.progress(t, tk - 0.05, tk + 0.35, "linear"))
                                  for tk in tug_t), px=gx, py=G)))
-    sc.add("zz", [doc(f'<g opacity="0.8">' + "".join(
+    sc.add("zz", [doc('<g opacity="0.8">' + "".join(
         f'<text x="{gx - 60 + k * 6}" y="{G - 380 - k * 8}" font-family="LXGW WenKai" font-size="{34 + 4 * k}" '
         f'fill="{P["ink_soft"]}">z</text>' for gx in gxs) + '</g>') for k in range(3)], z=5.4, wc=0,
            frame_at=lambda t: float(int(t * 2.5) % 3),
@@ -633,7 +631,7 @@ def build(ctx):
     # ---- fx: dust motes high in the beam (above every head), a few gold sparkles at the shaft for the angel ----
     sc.fx.append(FX.motes((DX - 120, G + 110, DX + 120, G + 290), count=14, t0=t_light0, color=(255, 240, 200),
                           alpha=120, seed=21))
-    sc.fx.append(FX.sparkles((DX - 150, G + 100, DX + 150, G + 260), count=10, t0=t_angel - 0.1,
+    sc.fx.append(FX.sparkles((DX - 150, G + 100, DX + 150, G + 215), count=10, t0=t_angel - 0.1,
                              t1=t_nohurt + 1.2, color=(255, 230, 150), size=(9, 18), drift=10, seed=31))
 
     # ---- sound ----

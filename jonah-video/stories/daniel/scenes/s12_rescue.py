@@ -191,6 +191,46 @@ def cam_path(keys):
     return cam
 
 
+def trap(a=0.3):
+    """Ease with a trapezoid velocity profile (sine ramps over the first and last ``a``, cruise between)."""
+    def f(u):
+        if u <= 0:
+            return 0.0
+        if u >= 1:
+            return 1.0
+        if u < a:
+            s = u / 2 - a / (2 * math.pi) * math.sin(math.pi * u / a)
+        elif u <= 1 - a:
+            s = a / 2 + (u - a)
+        else:
+            w = 1 - u
+            s = (1 - a) - (w / 2 - a / (2 * math.pi) * math.sin(math.pi * w / a))
+        return s / (1 - a)
+    return f
+
+
+def cam_path2(keys):
+    """[(t, Cam[, curve])]: eased moves (bottom edge interpolated, clamped to the stage)."""
+    keys = [(k[0], clamp_cam(k[1]), k[2] if len(k) > 2 else "sine") for k in sorted(keys, key=lambda k: k[0])]
+
+    def bottom(c):
+        return c.y + c.w * 9 / 32
+
+    def cam(t):
+        if t <= keys[0][0]:
+            return keys[0][1]
+        if t >= keys[-1][0]:
+            return keys[-1][1]
+        for (t0, a, cv), (t1, b, _) in zip(keys, keys[1:]):
+            if t0 <= t <= t1:
+                u = M.progress(t, t0, t1, cv)
+                w = M.lerp(a.w, b.w, u)
+                yb = M.lerp(bottom(a), bottom(b), u)
+                return clamp_cam(Cam(M.lerp(a.x, b.x, u), yb - w * 9 / 32, w))
+        return keys[-1][1]
+    return cam
+
+
 # blink drawings (eyes-closed copies of the expressions that blink); setdefault keeps the shared table intact
 for _e in ("happy", "neutral", "worried", "surprised", "call"):
     C.EXPRS.setdefault(f"d11_blink_{_e}", dict(C.EXPRS[_e], eyes="closed"))
@@ -341,18 +381,17 @@ def build(ctx):
     t_turn2 = snap(L1.start + 1.15)                    # ...and back
     t_safe = snap(L1.at("但以理身上") + 0.1)            # "但以理身上一点伤也没有": arms up, sparkles
     t_trust = snap(L1.at("因为他") + 0.05)              # "因为他信靠他的上帝": kneels, thanks, God's light
-    t_off = snap(L2.start + 0.1)                       # "那些想害但以理的官员" (camera already there)
     t_sad = snap(L2.start + 0.5)                       # they hang their heads
     t_lead = snap(L2.at("后来") + 0.05)                 # "后来自己受到了惩罚": led away
-    t_pan0, t_pan1 = L1.end + 0.05, L2.start + 1.7
+    t_pan0, t_pan1 = L1.end - 1.1, L2.start + 2.6
 
     # ---- camera ----
     C0 = Cam(1300, 610, 1800)
-    C1 = Cam(1080, 676, 1400)
-    C2 = Cam(2560, 560, 1720)
-    C3 = Cam(2700, 560, 1720)
-    sc.camera = cam_path([(0, C0), (t_top - 0.4, C0), (t_look + 0.6, C1), (t_pan0, C1), (t_pan1, C2),
-                          (t_lead + 0.3, C2), (T, C3)])
+    C1 = Cam(1130, 676, 1400)
+    C2 = Cam(2420, 560, 1720)
+    C3 = Cam(2560, 560, 1720)
+    sc.camera = cam_path2([(0, C0), (t_top - 0.4, C0), (t_look + 0.6, C1), (t_pan0, C1), (t_pan1, C2, trap(0.3)),
+                           (t_pan1 + 0.01, C2), (T, C3)])
 
     # ---- backdrop ----
     sc.add("sky", sky_svg(), z=0, wc=0.5)
@@ -480,7 +519,8 @@ def build(ctx):
             ue = M.ease("inout")(u)
             return Tf(dx=jx * ue, dy=jy * u - 110 * math.sin(math.pi * u), rot=-6 * math.sin(math.pi * u),
                       px=DAN_X, py=DAN_Y1)
-        return Tf(dx=SHOW_DX * M.progress(t, t_look - 0.05, t_look + 0.3, "inout"),
+        return Tf(dx=SHOW_DX * M.progress(t, t_look - 0.05, t_look + 0.3, "inout")
+                  - 55 * M.progress(t, t_trust - 0.12, t_trust + 0.1, "inout"),      # (kneels clear of the pit)
                   dy=-26 * math.sin(math.pi * M.progress(t, t_look - 0.05, t_look + 0.3, "linear")))
     pvd = (dx_ + SHOW_DX, G)
     d_entries = [(0, 0), (t_land, 1), (t_turn1, 2), (t_turn2, 1), (t_safe, 3), (snap(t_safe + 1.6), 1), (t_trust, 4)]
@@ -527,8 +567,8 @@ def build(ctx):
            motion=lambda t: Tf(alpha=M.progress(t, t_safe, t_safe + 0.25) * (1 - M.progress(t, t_safe + 1.6, t_safe + 2.0))))
 
     # ---- the officials, and the guards who lead them away ----
-    OF = [(0, 2330), (1, 2490), (2, 2650)]
-    ESC = [(1, 2170), (3, 2830)]
+    OF = [(0, 2230), (1, 2390), (2, 2550)]
+    ESC = [(1, 2070), (3, 2730)]
     t_seen = snap(t_safe + 0.3)
     WALK_P = 0.36
     n_steps = int((T - t_lead) / WALK_P) + 2
