@@ -407,14 +407,14 @@ def page_d_front_svg():
         out += PR.persian_column(x, y0 + 826, 0.42, height=1050)
     out += PR.bush(x0 + 640, y0 + 830, 0.5, variant=1) + PR.bush(x1 - 330, y0 + 830, 0.45, variant=3)
     # a striped rug, potted flowers and a little stack of scrolls on the terrace
-    out += S.path(f"M{x0 + 700},{y0 + 1010} L{x0 + 1300},{y0 + 1010} L{x0 + 1360},{y0 + 1110} L{x0 + 640},{y0 + 1110} Z",
+    out += S.path(f"M{x0 + 700},{y0 + 925} L{x0 + 1260},{y0 + 925} L{x0 + 1310},{y0 + 1000} L{x0 + 650},{y0 + 1000} Z",
                   "#b5523b", sw=3.5)
-    out += S.path(f"M{x0 + 690},{y0 + 1030} L{x0 + 1310},{y0 + 1030} M{x0 + 660},{y0 + 1088} L{x0 + 1340},{y0 + 1088}",
+    out += S.path(f"M{x0 + 692},{y0 + 940} L{x0 + 1270},{y0 + 940} M{x0 + 664},{y0 + 984} L{x0 + 1298},{y0 + 984}",
                   sw=3, extra=f'stroke="{P["gold"]}"')
-    for px_, py_ in ((x0 + 590, y0 + 930), (x1 - 420, y0 + 935)):
+    for px_, py_ in ((x0 + 560, y0 + 930), (x1 - 180, y0 + 935)):
         out += PR.bush(px_, py_ - 90, 0.38, variant=1) + PR.jar(px_, py_ - 40, 0.6)
     for k in range(3):
-        out += PR.scroll(x0 + 1440 + 18 * k, y0 + 930 - 26 * k, 0.45, rot=-6 + 6 * k)
+        out += PR.scroll(x0 + 610 + 18 * k, y0 + 975 - 26 * k, 0.45, rot=-6 + 6 * k)
     return doc(out)
 
 
