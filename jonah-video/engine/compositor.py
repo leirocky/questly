@@ -305,7 +305,14 @@ class Subtitles:
         pieces = []
         for ln in ctx.lines:
             for c in (ln.chunks or [ln]):
-                pieces.append((c.text, ln.speaker, c.start, c.end, ln.end))
+                # a very short chunk ('可是，') would flash for ~0.4 s: show it together with the next one
+                if (pieces and pieces[-1][5] is ln and c.start - pieces[-1][2] < 0.9
+                        and len(pieces[-1][0]) + len(c.text) <= 24):
+                    text, spk, start, _, line_end, _ = pieces.pop()
+                    pieces.append((text + c.text, spk, start, c.end, line_end, ln))
+                else:
+                    pieces.append((c.text, ln.speaker, c.start, c.end, ln.end, ln))
+        pieces = [p[:5] for p in pieces]
         for i, (text, spk, start, end, line_end) in enumerate(pieces):
             t0 = max(0.0, start - 0.08)
             t1 = min(end, line_end) + 0.3

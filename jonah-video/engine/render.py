@@ -1,5 +1,6 @@
 """Render every scene to build/video/<id>.mp4 in parallel, skipping unchanged scenes."""
 import hashlib
+import re
 import multiprocessing as mp
 import time
 from pathlib import Path
@@ -13,10 +14,32 @@ _SHARED = ["engine/compositor.py", "engine/motion.py", "engine/fx.py", "engine/s
            "engine/raster.py", "art/style.py", "art/characters.py"]
 
 
+def _imports(sid):
+    src = (ROOT / "art" / "scenes" / f"{sid}.py").read_text()
+    deps = set(re.findall(r"art\.scenes\.(s\d\d_\w+)", src))
+    deps |= {m for line in re.findall(r"from art\.scenes import ([^\n]+)", src) for m in re.findall(r"s\d\d_\w+", line)}
+    return deps
+
+
+def _scene_deps(sid, tl):
+    """v2 scene files a scene depends on: its neighbours, whose first/last frames it matches across the
+    dissolves (often by copying their constants or building them), and every scene those import."""
+    ids = [s["id"] for s in tl["scenes"]]
+    k = ids.index(sid)
+    deps, todo = set(), list(ids[max(0, k - 1):k + 2]) + sorted(_imports(sid))
+    while todo:
+        d = todo.pop()
+        if d not in deps and (ROOT / "art" / "scenes" / f"{d}.py").exists():
+            deps.add(d)
+            todo += sorted(_imports(d))
+    return sorted(deps)
+
+
 def _scene_hash(sid, tl):
     h = hashlib.sha1()
     v1 = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "art" / "scenes_v1").glob("*.py"))
-    for rel in _SHARED + ["art/props.py", "art/characters.py"] + v1 + [f"art/scenes/{sid}.py"]:
+    deps = [f"art/scenes/{d}.py" for d in _scene_deps(sid, tl)]
+    for rel in _SHARED + ["art/props.py", "art/characters.py"] + v1 + deps:
         p = ROOT / rel
         if p.exists():
             h.update(p.read_bytes())

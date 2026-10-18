@@ -380,10 +380,20 @@ def stretch_pauses(x, sr, text, targets=PAUSE_AFTER):
         if extra > 0.02:
             inserts.append((((f0 + g) // 2) * hop, extra))
     out, last = [], 0
+    nf = int(0.008 * sr)                    # 8 ms fades into/out of each inserted silence (no tick)
+    ramp = 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, nf, dtype=np.float32))
     for at, extra in sorted(inserts):
-        out += [x[last:at], np.zeros(int(extra * sr), np.float32)]
+        seg = x[last:at].copy()
+        if last > 0 and len(seg) > 2 * nf:
+            seg[:nf] *= ramp
+        if len(seg) > 2 * nf:
+            seg[-nf:] *= ramp[::-1]
+        out += [seg, np.zeros(int(extra * sr), np.float32)]
         last = at
-    out.append(x[last:])
+    tail = x[last:].copy()
+    if last > 0 and len(tail) > nf:
+        tail[:nf] *= ramp
+    out.append(tail)
     return np.concatenate(out).astype(np.float32)
 
 

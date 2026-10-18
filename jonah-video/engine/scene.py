@@ -153,8 +153,9 @@ class Scene:
         return self
 
     # ----------------------------------------------------------- sound
-    def sfx(self, name, at, dur=None, gain_db=0.0, pan=0.0, fade_in=0.02, fade_out=0.3, **params):
-        """Cue a sound effect from audio/sfx.py at ``at`` seconds after scene start."""
+    def sfx(self, name, at, dur=None, gain_db=0.0, pan=0.0, fade_in=0.02, fade_out=0.3, duck_db=None, **params):
+        """Cue a sound effect from audio/sfx.py at ``at`` seconds after scene start. ``duck_db`` overrides
+        how far audio/mix.py ducks this cue under narration (e.g. -3 for a key impact; None = bus default)."""
         self.sfx_cues.append(dict(name=name, at=float(at), dur=dur, gain_db=gain_db, pan=pan,
-                                  fade_in=fade_in, fade_out=fade_out, params=params))
+                                  fade_in=fade_in, fade_out=fade_out, duck_db=duck_db, params=params))
         return self

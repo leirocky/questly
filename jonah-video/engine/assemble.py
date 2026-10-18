@@ -15,6 +15,13 @@ DIP_BLACK = ("if(gt(P,0.5),"
              "if(PLANE,128,16)+(A-if(PLANE,128,16))*(2*P-1),"
              "if(PLANE,128,16)+(B-if(PLANE,128,16))*(1-2*P))")
 
+# Iris open for "circleopen": the new scene grows in a circle from the frame centre with a ~7 px soft
+# edge (ffmpeg's built-in circle is so soft that the old picture ghosts over the new one). Coordinates
+# are normalised to a 16:9 box so the chroma planes get the same circle; the radius eases in and out.
+IRIS_OPEN = ("A+(B-A)*clip((9.3*(1-P)*(1-P)*(1+2*P)-hypot((X/W-0.5)*16,(Y/H-0.5)*9))/0.06+0.5,0,1)")
+# (no st()/ld() variables: xfade evaluates slices in parallel threads that would share them)
+CUSTOM = {"fadeblack": DIP_BLACK, "circleopen": IRIS_OPEN}
+
 VIDEO_KBPS = 2200
 AUDIO_KBPS = 160
 
@@ -32,7 +39,7 @@ def master():
     for k in range(1, len(scenes)):
         tr = scenes[k].get("transition", "fade")
         lab = f"[v{k}]"
-        xf = f"xfade=transition=custom:expr='{DIP_BLACK}'" if tr == "fadeblack" else f"xfade=transition={tr}"
+        xf = f"xfade=transition=custom:expr='{CUSTOM[tr]}'" if tr in CUSTOM else f"xfade=transition={tr}"
         parts.append(f"{prev}[{k}:v]{xf}:duration={X}:offset={scenes[k]['start']:.4f}{lab}")
         prev = lab
     parts.append(f"{prev}fade=t=in:st=0:d=0.6,fade=t=out:st={total - 1.6:.3f}:d=1.6,format=yuv420p[vout]")
