@@ -835,8 +835,8 @@ def build(ctx):
     camB = Cam(1800, 878, 1800)
     camD0, camD1 = Cam(2330, 742, 1500), Cam(2338, 738, 1460)
     sc.camera = M.cam_keys([
-        (0.0, camA0), (t_walk - 0.2, camA1), (t_door - 0.1, camB), (t_trail_end + 0.25, Cam(1795, 874, 1800)),
-        (t_suns - 0.1, camD0), (T, camD1)], "sine")
+        (0.0, camA0), (t_walk - 0.2, camA1), (t_door - 0.1, camB), (t_trail_end - 0.35, Cam(1797, 875, 1800)),
+        (t_suns + 0.35, camD0), (T, camD1)], "sine")
 
     # ---------------------------------------------------------------- FX
     sc.fx = [

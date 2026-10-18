@@ -406,6 +406,15 @@ def page_d_front_svg():
     for x in (x0 + 470, x1 - 140):
         out += PR.persian_column(x, y0 + 826, 0.42, height=1050)
     out += PR.bush(x0 + 640, y0 + 830, 0.5, variant=1) + PR.bush(x1 - 330, y0 + 830, 0.45, variant=3)
+    # a striped rug, potted flowers and a little stack of scrolls on the terrace
+    out += S.path(f"M{x0 + 700},{y0 + 1010} L{x0 + 1300},{y0 + 1010} L{x0 + 1360},{y0 + 1110} L{x0 + 640},{y0 + 1110} Z",
+                  "#b5523b", sw=3.5)
+    out += S.path(f"M{x0 + 690},{y0 + 1030} L{x0 + 1310},{y0 + 1030} M{x0 + 660},{y0 + 1088} L{x0 + 1340},{y0 + 1088}",
+                  sw=3, extra=f'stroke="{P["gold"]}"')
+    for px_, py_ in ((x0 + 590, y0 + 930), (x1 - 420, y0 + 935)):
+        out += PR.bush(px_, py_ - 90, 0.38, variant=1) + PR.jar(px_, py_ - 40, 0.6)
+    for k in range(3):
+        out += PR.scroll(x0 + 1440 + 18 * k, y0 + 930 - 26 * k, 0.45, rot=-6 + 6 * k)
     return doc(out)
 
 
@@ -490,7 +499,7 @@ def build(ctx):
            motion=M.combine(M.breathe(0.01, 3.0, pivot=(DX_, GA)), dip(snap(t_seal + 0.1), 1.0, (DX_, GA), 6),
                             dip(snap(t_seal + 1.2), 1.0, (DX_, GA), 5)))
     for i, (v, x) in enumerate(MSG):
-        n = 34
+        n = 22 - 2 * i
         fa_w, dxw, dyw, t_end = step_walk(t_go + 0.25 + 0.12 * i, n, 85 * GS, WALK_P, GS)
         fr = [doc(C.ground_shadow(x, GA, GS, 120) + C.guard(x, GA, GS, -1, variant=v) +
                   scroll_in_hand(C.guard, x, GA, GS, -1, variant=v, pose="stand")),
