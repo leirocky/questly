@@ -15,7 +15,11 @@ camera glides and drawing helpers are reused), re-laid out on the right to conti
 
 Timing (every time comes from the narration: ctx chunk starts, or _at_in() for a phrase inside a chunk):
   opening  a match dissolve from s22: same framing relative to Jonah (s22's END_CAM), same pose (sit_sulk,
-           angry), same booth, plant and veil cloud; the plant's sway is at rest through the dissolve.
+           angry), same booth and plant; the plant's sway is at rest through the dissolve. Behind them the close-up
+           keeps s22's last backdrop (its golden sky, softened sun, glory and veil cloud, the small far city on the
+           flat sand, its stones and grass - s22's own markup, see _s22_backdrop) and s22's warm grade and vignette
+           (they relax before the bubble), so the dissolve changes nothing behind Jonah. No jar or sack by the
+           booth (s20-s22 have none); the dry leaf on the stub shows just after the dissolve.
   line 0   "约拿，" — he hears his name: a squash-and-hop cut to sitting up, looking up toward the light and the
            voice (up and to the right, under the veil cloud); the clouds part a little. "这棵蓖麻" — a pale, sun-
            bleached dry leaf wobbles on a broken leaf stub of the arching branch (the booth's pale back cloth behind
@@ -26,7 +30,10 @@ Timing (every time comes from the narration: ctx chunk starts, or _at_in() for a
            springs up, step by step, into a tall green plant beside the booth; the moon sets at the upper left and
            the morning sun rises low on the right (east). "一夜又枯死了，" — night again, the plant droops and
            withers. "你都这么心疼它。" — the bubble shrinks back into the trail (3-frame alpha cut), the puffs pop out;
-           Jonah turns tender and sorry (blink cut). The camera starts a slow pull-back.
+           Jonah turns tender and sorry (blink cut). The camera starts a slow pull-back, and God's light swells
+           over the land behind Jonah, booth and plant (a warm card): s22's backdrop is switched off while the card
+           is opaque, and the light melts away onto this knoll, the plain and the near city - one background at a
+           time, never two blended.
   line 2   "尼尼微这座大城里，有十二万多人，" — a held wide view: the city, the plain, the pasture and Jonah under his
            booth (doves fly over). "就像分不清左右手的小孩子，" — a slow glide down to the children: two little ones
            point left and right with a '?' over each head and keep swapping sides (hops); two more play face to face
@@ -48,20 +55,30 @@ Notes for maintainers
   glide durations come from _cam_dur so the peak stays under ~19 output px / frame.
 * The light on Jonah is clipped to his silhouette (two drawings: sulking / sitting); its rim is a thin, faint
   edge toward the light so his umber ink outline stays dark.
+* s22's backdrop and the light card sit at z 9.4 - 9.45, above every figure on the plain and the knoll and below
+  the booth (9.6), the doves (9.47 / 9.48), the plant, the light and Jonah; the backdrop must fill the view until
+  it is switched off (t_edge, asserted). _s22_backdrop() copies s22_worm.build()'s markup: keep it in sync.
+* The sparkles round Jonah keep the column over his face clear (they drift upward).
 """
 import math
 import random
 from contextlib import contextmanager
+from dataclasses import replace
 
+import cv2
 import numpy as np
+from PIL import Image
 
 from art import characters as CH
 from art import props as PR
 from art import style as S
+from art.scenes import s22_worm as W22
+from art.scenes_v1 import s11_vine as V11
 from art.scenes_v1 import s12_lesson as V
 from art.style import P
 from engine import fx as FX
 from engine import motion as M
+from engine.loader import load_timeline
 from engine.motion import Cam, Tf
 from engine.scene import Scene
 
@@ -100,6 +117,11 @@ KNOLL = [(1900, SH + 80), (2010, 1421), (2140, 1157), (2255, 985), (2335, 893), 
 # s22 ends on END_CAM = Cam(1169, 704, 1600) with Jonah (sit_sulk, angry) at (1209, 962) under the same booth and
 # plant: the same framing relative to Jonah here, so Jonah, plant and booth lie on top of each other in the dissolve
 C_S22 = Cam(XJ - 40, GY - 258, 1600)
+# s22's stage drawn into this one (same scale): s22 point p lands at p + (DX22, DY22); END_CAM lands on C_S22
+DX22, DY22 = XJ - W22.XJ, GY - W22.GY
+assert (C_S22.x, C_S22.y, C_S22.w) == (W22.END_CAM.x + DX22, W22.END_CAM.y + DY22, W22.END_CAM.w)
+# s22's final colour grade (its fx 'grade' once God's light is on: warm, k_hot 0.35 x gold 0.6)
+GRADE22 = tuple((1 - (1 - a / 255) * 0.35) * (1 - (1 - b / 255) * 0.6) for a, b in zip((255, 224, 184), (255, 236, 204)))
 
 FIGS = []                # [(name, bbox, heart_spot)]
 HEARTS = {}
@@ -264,6 +286,127 @@ def _catmull(pts, u):
     v2, v3 = v * v, v * v * v
     return tuple(0.5 * (2 * p1[j] + (p2[j] - p0[j]) * v + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * v2 +
                         (3 * p1[j] - p0[j] - 3 * p2[j] + p3[j]) * v3) for j in range(2))
+
+
+# ------------------------------------------------------------------ s22's backdrop (the opening match dissolve)
+def _s22_clock(ctx):
+    """(s22's local time at this scene's t = 0, s22's t_cl2 - when its veil cloud settled and began its 3 px/s
+    drift) from the timeline; the fallback is the current timing."""
+    try:
+        scenes = load_timeline()["scenes"]
+        i = [s["id"] for s in scenes].index(ctx.id)
+        prev = scenes[i - 1]
+        if prev["id"] == "s22_worm":
+            return ctx.start - prev["start"], prev["lines"][2]["start"] + 3.7     # s22: t_cl2 = L2.start + 3.7
+    except (SystemExit, OSError, ValueError, KeyError, IndexError):
+        pass
+    return 33.467, 25.77
+
+
+def _s22_backdrop():
+    """Everything behind Jonah, his booth and the withered plant in s22's last frame (its end state: sky_gold +
+    sun_soft, glory, the veil cumulus, the land - far hills, the small far city, flat sand, stones, pebbles,
+    foreground rocks, the lizard's stones, the worm's pebble - and the four grass groups), in s22 stage px.
+    The same markup as s22_worm.build() draws it - keep the two in sync. Returns a dict of (body, defs) pairs
+    and, for 'grass', four lists of sway frames (s22's sways 0.5, 0, -0.5, -1)."""
+    W2 = S.W
+    HZ, GY2, LIZ2 = W22.HORIZON, W22.GY, W22.LIZ
+    SUN2, GAP2, hx, hy = W22.SUN_HOT, W22.GAP, W22.CX, W22.CY
+    at_sun = f"translate({SUN2[0] - hx},{SUN2[1] - hy})"        # s22 draws its suns and glory at the centre
+    sky_h = 665
+    sky = (f'<rect x="-20" y="-20" width="{W2 + 40}" height="{sky_h + 20}" fill="url(#g)"/>'
+           f'<circle cx="{SUN2[0]}" cy="{SUN2[1]}" r="620" fill="url(#c)"/>'
+           f'<ellipse cx="{GAP2[0] - 200}" cy="{GAP2[1] + 260}" rx="760" ry="330" fill="url(#r)"/>')
+    sky += S.g(f'<circle cx="{hx}" cy="{hy}" r="300" fill="url(#sg)"/>' +
+               S.g(f'<circle cx="{hx}" cy="{hy}" r="118" fill="url(#sd)" stroke="#d99a40" stroke-width="5"/>'
+                   f'<circle cx="{hx - 36}" cy="{hy - 36}" r="40" fill="#fffef8" opacity="0.5"/>', filter="wobble"),
+               transform=at_sun)
+    sky_defs = (S.lin_grad("g", [(0, "#e5a64c"), (0.5, "#f1cd86"), (1, "#f7e0ae")]) +
+                S.rad_grad("r", [(0, "#fffaea", 0.95), (0.4, "#fff3cf", 0.55), (1, "#ffeab8", 0)]) +
+                S.rad_grad("c", [(0, "#fffcf0", 0.55), (0.4, "#fff4d0", 0.3), (1, "#ffefc0", 0)]) +
+                S.rad_grad("sg", [(0, "#fffbea", 1.0), (0.42, "#fff1c0", 0.85), (0.7, "#ffe6a0", 0.35),
+                                  (1, "#ffe09a", 0)]) +
+                S.rad_grad("sd", [(0, "#fffef4"), (0.55, "#fff3c0"), (1, "#ffd970")], cx=0.45, cy=0.45))
+    glory = S.g(S.g(f'<path d="{S.rays(hx, hy, 130, 700, n=12, width_deg=11)}" fill="url(#gr)"/>', filter="soft") +
+                f'<circle cx="{hx}" cy="{hy}" r="360" fill="url(#gg)"/>', transform=at_sun)
+    glory_defs = (f'<radialGradient id="gr" gradientUnits="userSpaceOnUse" cx="{hx}" cy="{hy}" r="700">'
+                  f'<stop offset="0" stop-color="#fffbe8" stop-opacity="0.9"/>'
+                  f'<stop offset="0.2" stop-color="#fffbe8" stop-opacity="0.9"/>'
+                  f'<stop offset="0.5" stop-color="#fff6d8" stop-opacity="0.5"/>'
+                  f'<stop offset="0.85" stop-color="#fff2c8" stop-opacity="0"/></radialGradient>' +
+                  S.rad_grad("gg", [(0, "#fffbea", 0.8), (0.5, "#fff2c8", 0.4), (1, "#ffe9b0", 0)]))
+    cu_glow, cu_body, cu_defs = W22._cumulus(W22.VEIL[0], W22.VEIL[1], 1.0, SUN2, uid="veil")
+
+    # LAND (s22's static land layers, in its order)
+    far = S.path(S.smooth_path([(-80, HZ + 8), (150, 600), (420, 585), (700, 610), (950, 590),
+                                (1250, 560), (1550, 585), (1850, 570), (2200, 600)], closed=False) +
+                 f" L{W2 + 80},{HZ + 30} L-80,{HZ + 30} Z", fill="#e3d3c0", sw=3)
+    far += S.path(S.smooth_path([(1000, HZ + 6), (1300, 612), (1600, 598), (1900, 615), (2200, 605)],
+                                closed=False) + f" L{W2 + 80},{HZ + 30} L1000,{HZ + 30} Z", fill="#dfcbb0", sw=3)
+    land = S.g(far, filter="wobble")
+    land += PR.nineveh_skyline(20, 560, HZ + 4, scale=0.42, seed=2, haze=0.42, tint="#efdcbc")
+    plain = S.path(f"M-80,{HZ} L{W2 + 80},{HZ} L{W2 + 80},{S.H + 80} L-80,{S.H + 80} Z", fill="url(#pl)", sw=0)
+    plain += f'<path d="M-80,{HZ + 2} L{W2 + 80},{HZ + 2}" stroke="{INK}" stroke-width="3" opacity="0.55"/>'
+    for i in range(26):
+        x = (i * 263) % 2100 + 20
+        y = HZ + 14 + (i * 37) % 60
+        plain += f'<ellipse cx="{x}" cy="{y}" rx="{9 + i % 4}" ry="5" fill="#b7a274" opacity="0.6"/>'
+    plain += V11._dune([(-80, 742), (200, 718), (480, 734), (760, 786), (980, 856), (1150, 932), (1270, 1010)], "da",
+                       rim="#f6e2b4")
+    path_d = S.smooth_path([(470, 724), (520, 760), (470, 812), (600, 880), (720, 960), (640, 960), (520, 885),
+                            (410, 812), (468, 760), (440, 726)])
+    plain += f'<path d="{path_d}" fill="#f5e2b6" opacity="0.85"/>'
+    plain += V11._dune([(960, 1020), (1100, 930), (1300, 836), (1550, 760), (1800, 726), (2000, 718), (2200, 732)],
+                       "db", rim="#f6e0ae")
+    land += S.g(plain, filter="wobble")
+    for (x, y, s, v) in [(260, 740, 0.4, 2), (640, 772, 0.42, 2), (1600, 768, 0.45, 2), (1880, 742, 0.4, 2),
+                         (130, 760, 0.32, 2), (1010, 884, 0.38, 2)]:
+        land += PR.bush(x, y, s, variant=v)
+    for (x, y, s) in [(1950, 728, 0.3), (2050, 734, 0.24)]:
+        land += PR.palm_tree(x, y, s, lean=-0.2)
+    for (x, y, s) in [(318, 796, 0.42), (1668, 866, 0.5), (1452, 905, 0.42), (950, 838, 0.36)]:
+        land += PR.grass_tuft(x, y, s, variant=1)
+    for (x, y, w_, h_, sd) in [(1712, 866, 128, 64, 3), (1792, 872, 62, 34, 13), (1650, 874, 30, 16, 23),
+                               (370, 794, 86, 42, 6), (424, 800, 40, 22, 16),
+                               (1380, 906, 70, 36, 4), (1426, 910, 34, 17, 14),
+                               (905, 842, 46, 24, 7)]:
+        land += V11._stone(x, y, w_, h_, seed=sd, sw=3, crack=(w_ > 100))
+    knoll_pts = [(-80, 1035), (200, 1010), (480, 980), (760, 964), (1100, 959), (1450, 962), (1700, 954),
+                 (1920, 930), (2200, 905)]
+    kd = S.smooth_path(knoll_pts, closed=False) + f" L{W2 + 80},{S.H + 80} L-80,{S.H + 80} Z"
+    knoll = S.path(kd, fill="url(#kn)", sw=4)
+    rp = [(x, y + 16) for x, y in knoll_pts[1:-1]]
+    knoll += f'<path d="{S.smooth_path(rp, closed=False)}" fill="none" stroke="#f0cf95" stroke-width="14" opacity="0.5"/>'
+    for (x, y) in [(260, 1050), (1660, 1040), (1960, 1000), (1000, 1035), (760, 1080)]:
+        knoll += (f'<path d="M{x - 70},{y} q70,-16 140,0" fill="none" stroke="#c4935a" stroke-width="4" '
+                  f'opacity="0.45" stroke-linecap="round"/>')
+    for (x, y, s_, sd) in [(400, 1012, 70, 1), (640, 990, 50, 2), (1520, 1012, 60, 3), (1870, 990, 55, 4),
+                           (1090, 1040, 46, 5)]:
+        knoll += V11._cracks(x, y, s_, seed=sd)
+    land += S.g(knoll, filter="wobble")
+    land += S.g(V11._pebbles(470, 1000, 1.0, seed=3) + V11._pebbles(1790, 996, 1.1, seed=4, n=2) +
+                V11._pebbles(640, 986, 0.8, seed=5, n=2) + V11._pebbles(1460, 1016, 0.9, seed=6, n=2),
+                filter="wobble-fine")
+    fg = V11._rock(150, 1160, 290, 130, seed=31) + V11._rock(360, 1180, 160, 72, seed=32)
+    fg += V11._rock(1960, 1165, 250, 115, seed=33) + V11._rock(1790, 1185, 140, 64, seed=34)
+    fg += V11._stone(40, 925, 150, 84, seed=35, sw=4) + PR.bush(92, 912, 1.2, variant=2)
+    fg += PR.bush(2072, 1062, 1.05, variant=2)
+    land += S.g(fg, filter="wobble")
+    land += S.g(V11._stone(LIZ2[0] - 4, 994, 138, 50, seed=41, sw=4, crack=True), filter="wobble-fine")   # liz_rock
+    land += S.g(V11._stone(LIZ2[0] + 150, 1002, 104, 58, seed=43, sw=4), filter="wobble-fine")            # liz_rock2
+    land += S.g(V11._rock(W22.XW - 190, GY2 + 16, 130, 62, seed=21, sw=4), filter="wobble-fine")          # pebble
+    land_defs = (S.lin_grad("pl", [(0, "#efdfb6"), (0.3, "#ead19f"), (1, "#e0bb82")]) +
+                 S.lin_grad("da", [(0, "#eed4a0"), (0.4, "#e6c48c"), (1, "#d8ad72")]) +
+                 S.lin_grad("db", [(0, "#ecd09a"), (0.4, "#e3bf86"), (1, "#d4a86c")]) +
+                 S.lin_grad("kn", [(0, "#e6bc7c"), (0.3, "#dcab69"), (1, "#c38c55")]))
+    grass = [["".join(PR.grass_tuft(x, y, s_, variant=v, sway=sw_) for x, y, s_, v in tufts)
+              for sw_ in (0.5, 0.0, -0.5, -1.0)]
+             for tufts in [[(40, 1115, 1.15, 1), (265, 1105, 0.95, 1), (450, 1160, 1.0, 0)],
+                           [(1720, 1140, 1.0, 1), (1870, 1108, 0.95, 1)],
+                           [(560, 1000, 0.65, 1), (196, 928, 0.8, 1)],
+                           [(1520, 990, 0.65, 1), (1700, 985, 0.6, 1)]]]
+    return dict(sky=(sky, sky_defs), glory=(glory, glory_defs), veil=(cu_glow + S.g(cu_body, filter="wobble"), cu_defs),
+                land=(land, land_defs), grass=grass)
 
 
 # ------------------------------------------------------------------ scene
@@ -502,8 +645,9 @@ def build(ctx):
 
     booth = (f'<ellipse cx="{XB + 60}" cy="{GY + 8}" rx="{340 * SP}" ry="30" fill="{INK}" opacity="0.16" '
              f'filter="url(#soft)"/>' + PR.booth(XB, GY, SP, facing=1))
-    booth += PR.jar(XB + 372, GY - 50, 0.6) + PR.sack(XB + 444, GY + 3, 0.62, seed=3)    # beside the booth
-    sc.add("booth", doc(booth), z=5.6, wc=0.8)
+    # (no jar or sack: s20-s22 have none by the booth.) z 9.6: above every figure on the plain and the knoll (it
+    # overlaps none of them) and above the opening's s22 backdrop and its light card (z 9.4 - 9.45, see below)
+    sc.add("booth", doc(booth), z=9.6, wc=0.8)
 
     # =============================================================== PEOPLE on the plain
     ground_sh = []
@@ -945,7 +1089,8 @@ def build(ctx):
 
     def leaf_tf(t):
         if t < t_fall0:
-            return hang_tf(t)
+            # (s22's plant has no leaf on this stub: it shows only after the dissolve, as Jonah hops at his name)
+            return replace(hang_tf(t), alpha=M.progress(t, t_still, t_still + 0.45, "sine"))
         if t < t_catch:
             return fall_tf(t)
         return held_tf(t)
@@ -1091,9 +1236,9 @@ def build(ctx):
                                 M.bob(6, 0.9), lambda t: Tf(alpha=_env(t, t0, t0 + fade_in, t1 - 0.3, t1))))
 
     flock("doves_a", [(3300, 300, 0.42), (3390, 266, 0.36), (3430, 330, 0.34)], t_pull0 - 0.4, t_down0 + 1.0,
-          -2300, -240, 5.4)
+          -2300, -240, 9.47)              # (in the sky; above the light card of the opening, below the booth)
     flock("doves_b", [(3250, 300, 0.42), (3340, 260, 0.36), (3390, 335, 0.34)], t_back - 2.2, T + 2.5, -1100, -40,
-          5.45)
+          9.48)
 
     # =============================================================== FOREGROUND (static)
     fg = ""
@@ -1133,8 +1278,15 @@ def build(ctx):
 
     # =============================================================== FX
     sc.fx = [
-        FX.sparkles((XJ - 330, GY - 520, XJ + 150, GY - 40), count=22, t0=t_name, t1=t_pull0 + 1.6,
+        # (the sparkles rise, so the whole column over Jonah's face, XJ - 100 .. XJ + 110 below GY - 340, is kept
+        # clear: left of him round the falling leaf, above his head in the light shaft, on the booth cloth right of
+        # his head-cloth)
+        FX.sparkles((XJ - 330, GY - 520, XJ - 100, GY - 40), count=13, t0=t_name, t1=t_pull0 + 1.6,
                     color=(255, 238, 175), size=(9, 20), drift=-10, seed=21),
+        FX.sparkles((XJ - 100, GY - 560, XJ + 170, GY - 340), count=6, t0=t_name, t1=t_pull0 + 1.6,
+                    color=(255, 238, 175), size=(9, 20), drift=-10, seed=27),
+        FX.sparkles((XJ + 110, GY - 340, XJ + 170, GY - 40), count=3, t0=t_name, t1=t_pull0 + 1.6,
+                    color=(255, 238, 175), size=(9, 20), drift=-10, seed=28),
         FX.motes((XJ - 500, 0, XJ + 300, GY), count=30, t0=0.0, t1=t_pull0 + 2.0, color=(255, 244, 205), seed=22),
         FX.sparkles((BC[0] - 220, BC[1] - 150, BC[0] + 220, BC[1] - 10), count=8, t0=t_bin + 0.3, t1=t_g1,
                     color=(255, 244, 200), size=(5, 10), drift=0, period=1.2, seed=25),
@@ -1146,9 +1298,77 @@ def build(ctx):
         V.hearts_fx(HEARTS["lr"], t_lr_end + 0.35, t_hearts_p1 + 0.3, period=3.0, seed=33),
         V.hearts_fx(HEARTS["lr_a"], t_lr_end + 0.5, t_hearts_p1 + 0.3, rise=40, period=3.0, seed=34),
         V.hearts_fx(HEARTS["animals"], t_hearts_a0, t_hearts_a1, life=2.4, seed=32),
-        FX.sparkles((XJ - 300, GY - 420, XJ + 150, GY - 60), count=16, t0=t_soft, t1=T + 1, color=(255, 240, 190),
-                    size=(8, 16), drift=-6, seed=24),
+        FX.sparkles((XJ - 300, GY - 420, XJ - 100, GY - 60), count=9, t0=t_soft, t1=T + 1, color=(255, 240, 190),
+                    size=(8, 16), drift=-6, seed=24),           # (the same face column kept clear)
+        FX.sparkles((XJ - 100, GY - 480, XJ + 170, GY - 340), count=5, t0=t_soft, t1=T + 1, color=(255, 240, 190),
+                    size=(8, 16), drift=-6, seed=29),
+        FX.sparkles((XJ + 110, GY - 340, XJ + 170, GY - 60), count=2, t0=t_soft, t1=T + 1, color=(255, 240, 190),
+                    size=(8, 16), drift=-6, seed=30),
     ]
+
+    # =============================================================== s22's BACKDROP -> this stage, through God's light
+    # The opening is a match dissolve from s22 (its END_CAM is C0 here). Behind Jonah, his booth and the plant the
+    # close-up shows s22's last backdrop (golden sky, softened sun, glory, veil cloud, the small far city and the
+    # flat sand: s22's own markup drawn into this stage) under s22's warm grade, so the dissolve changes nothing
+    # behind them. As the camera starts to pull back, God's light swells over the land behind Jonah, booth and
+    # plant (a warm card just under the booth), the backdrop is switched off while the card is opaque, and the light
+    # melts away onto this knoll, the plain and the near city: one background at a time, never two blended.
+    # (These layers are added last, so the earlier layers keep their watercolour seeds.)
+    D22, T_CL2 = _s22_clock(ctx)            # s22's local time = t + D22
+    bd = _s22_backdrop()
+
+    def at22(body):
+        return S.g(body, transform=f"translate({DX22},{DY22})")
+
+    def inside22(t):
+        """The viewport lies inside s22's painted stage (sky x -20 .. W + 20, y from -20; land down to H + 80)."""
+        c = camera(t)
+        hh = c.w * 9 / 32
+        return (c.x - c.w / 2 >= DX22 - 8 and c.x + c.w / 2 <= DX22 + S.W + 8 and
+                c.y - hh >= DY22 - 8 and c.y + hh <= DY22 + S.H + 68)
+
+    t_edge = next((k / 30 for k in range(int(T * 30)) if not inside22(k / 30)), T)
+    assert t_edge > t_pull0, "s22's backdrop must fill the view until the pull-back"
+    t_cut = min(t_pull0 + 0.65, t_edge - 0.1)                 # the backdrop is switched off under the opaque card
+    on22 = lambda t: 1.0 if t < t_cut else 0.0
+    a_dip = lambda t: (M.progress(t, t_cut - 0.5, t_cut - 0.05, "sine") *
+                       (1 - M.progress(t, t_cut + 0.05, t_cut + 0.8, "sine")))
+
+    sc.add("s22_sky", doc(at22(bd["sky"][0]), bd["sky"][1]), z=9.4, wc=0.5, motion=lambda t: Tf(alpha=on22(t)))
+    gpx, gpy = W22.SUN_HOT[0] + DX22, W22.SUN_HOT[1] + DY22
+    sc.add("s22_glory", doc(at22(bd["glory"][0]), bd["glory"][1]), z=9.41, wc=0, motion=lambda t: Tf(
+        rot=2.5 * (t + D22), alpha=on22(t) * (0.85 + 0.15 * math.sin(1.7 * (t + D22))), px=gpx, py=gpy))
+    # the veil keeps s22's slow drift and, like this scene's clouds, parts a little at "约拿，"
+    sc.add("s22_veil", doc(at22(bd["veil"][0]), bd["veil"][1]), z=9.42, wc=0.5, motion=lambda t: Tf(
+        dx=-3.0 * max(0.0, t + D22 - T_CL2) + 70 * part(t), dy=4 * math.sin(2 * math.pi * (t + D22) / 4.4),
+        alpha=on22(t)))
+    sc.add("s22_land", doc(at22(bd["land"][0]), bd["land"][1]), z=9.43, wc=0.8, motion=lambda t: Tf(alpha=on22(t)))
+    for gi, frames in enumerate(bd["grass"]):
+        def grass_frame(t, ph=gi * 0.23):
+            u = t + D22                                        # s22's sway, in its light breeze (wind 0.2)
+            return (0.8 * (1 + 0.7 * math.sin(2 * math.pi * (u / 2.6 + ph))) +
+                    0.2 * (2.4 + 0.6 * math.sin(2 * math.pi * (u / 0.8 + ph))))
+        sc.add(f"s22_grass{gi}", [doc(at22(f)) for f in frames], z=9.435 + 0.001 * gi, wc=0.7, frame_at=grass_frame,
+               motion=lambda t: Tf(alpha=on22(t)))
+    LC = (GAP[0] - 120, GAP[1] + 160)                          # the light swells from God's light, over Jonah
+    card = doc(f'<rect x="-40" y="-40" width="{SW + 80}" height="{SH + 80}" fill="url(#dip)"/>',
+               f'<radialGradient id="dip" gradientUnits="userSpaceOnUse" cx="{LC[0]}" cy="{LC[1]}" r="1450">'
+               f'<stop offset="0" stop-color="#fff6d8"/><stop offset="0.45" stop-color="#fde6ad"/>'
+               f'<stop offset="1" stop-color="#f3cf8f"/></radialGradient>')
+    sc.add("dip_light", card, z=9.45, wc=0, motion=lambda t: Tf(alpha=a_dip(t)))
+
+    k22 = lambda t: 1 - M.progress(t, t_still, t_trail - 0.3, "sine")
+
+    def warm22(frame, t, view):
+        """s22's final warm grade at the dissolve; it relaxes slowly during the close-up, before the bubble."""
+        k = k22(t)
+        if k <= 0.003:
+            return frame
+        mul = [1 - (1 - g_) * k for g_ in GRADE22]
+        return Image.fromarray(cv2.multiply(np.asarray(frame), (mul[0], mul[1], mul[2], 1.0)), "RGBA")
+    # (first, as in s22: the grade and s22's faint warm vignette lie under the sparkles and motes)
+    sc.fx[:0] = [warm22, FX.vignette(lambda t: 0.108 * (0.85 + 0.15 * math.sin(3.2 * (t + D22))) * k22(t),
+                                     color=(150, 72, 24))]
 
     # =============================================================== SOUND
     sc.sfx("wind_soft", 0, dur=T + 0.6, gain_db=-18, fade_in=0.8, fade_out=0.8)

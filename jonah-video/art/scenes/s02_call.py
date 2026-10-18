@@ -22,8 +22,9 @@ the ridge to the village on the hill and on to the east (right).
     Jonah points up at the vision; "那里的人很凶" — stern Assyrian soldiers, spear in fist and shield on arm,
     rise into the vision and the gloom over the city deepens; Jonah drops his arm, uneasy (worried, no fear);
     "是以色列人的敌人" — he folds his arms, grumpy brow, chin down, eyes away from the vision: displeased, not
-    afraid (his real reason is told later in the story, Jonah 4:2; s03 opens on his angry refusal). Calm hold
-    to the end.
+    afraid (his real reason is told later in the story, Jonah 4:2; s03 opens on his angry refusal). As the
+    line ends the vision closes gently (fade + slight shrink, gone before mid-dissolve, so it never ghosts over
+    s03); calm hold to the end. The God-light sparkles keep out of Jonah's head column (never on his face).
 
 Pose / face changes are HARD switches (never crossfaded doubles), each sold by a small squash or hop and held
 >= 0.5 s. Every beat is keyed to the subtitle chunk that contains its phrase (``_when``), never to fixed times.
@@ -739,10 +740,16 @@ def build(ctx):
     sc.add("house", _house_svg())
 
     # ---------------------------------------------------------------- the vision in the eastern sky (v1 art)
+    # it closes gently (fade + slight shrink) once the last line is spoken, so it is nearly gone when the
+    # 1.0 s dissolve into s03 begins and never ghosts over s03's signposts and sky (gloom, grey cloud and
+    # soldiers all ride on ``vis`` and close with it)
+    t_vis_c0 = max(t_vis + 2.0, min(L[-1].end, T - 1.4))
+    t_vis_c1 = max(t_vis_c0 + 0.3, T - 0.8)
     vis = M.combine(
         M.keys([(t_vis, {"s": 0.18, "dx": -330, "dy": 60}), (t_vis + 0.95, {"s": 1.0, "dx": 0, "dy": 0})], "back",
                pivot=(BX, BY)),
         M.keys([(t_vis, {"alpha": 0}), (t_vis + 0.45, {"alpha": 1})], "sine"),
+        M.keys([(t_vis_c0, {"alpha": 1, "s": 1.0}), (t_vis_c1, {"alpha": 0, "s": 0.9})], "sine"),
         lambda t: Tf(dy=5 * math.sin(2 * math.pi * (t - t_vis - 0.95) / 4.6)) if t > t_vis + 0.95 else Tf())
     sc.add("vision", V._bubble_svg(), motion=vis, wc=0.7)
     darker = (lambda t: 1.0 + 0.36 * M.progress(t, t_soldiers, t_soldiers + 1.0, "sine")) if t_soldiers else (lambda t: 1.0)  # noqa
@@ -1011,8 +1018,17 @@ def build(ctx):
         _orb_trail(t_orb0, t_orb1, orb_ease),
         FX.sparkles((ORB1[0] - 90, ORB1[1] - 80, ORB1[0] + 90, ORB1[1] + 60), count=10, t0=t_orb1 - 0.1,
                     t1=t_orb1 + 0.9, color=(255, 238, 170), size=(7, 14), period=0.9, drift=-10, seed=17),
-        FX.sparkles((GAP[0] - 300, GAP[1] + 150, GAP[0] + 330, JY - 60), count=26, t0=t_light + 0.3,
+        # God-light sparkles in the beam: never over Jonah's head (head box x 850-1060, y 715-935 incl. the
+        # kneel, the hops and the hand-to-ear pose; a star reaches 18 stage px; the drift is upward), so they
+        # fill the beam above him and beside his body. Keep the head column x 825-1085 free and the top set's
+        # lower edge at or above y 690 if Jonah's poses or spot change. The right set's seed is one whose stars
+        # also stay off his raised pointing hand (checked against his drawn figure at every frame).
+        FX.sparkles((825, GAP[1] + 150, 1085, 690), count=6, t0=t_light + 0.3,              # above his head
                     color=(255, 238, 170), size=(8, 18), period=1.7, drift=-6, seed=21),
+        FX.sparkles((GAP[0] - 300, GAP[1] + 150, 825, JY - 60), count=7, t0=t_light + 0.3,   # left of him
+                    color=(255, 238, 170), size=(8, 18), period=1.7, drift=-6, seed=22),
+        FX.sparkles((1085, GAP[1] + 150, GAP[0] + 330, JY - 60), count=13, t0=t_light + 0.3,  # right of him
+                    color=(255, 238, 170), size=(8, 18), period=1.7, drift=-6, seed=37),
         FX.sparkles((BX - RX - 80, BY - RY - 60, BX + RX + 80, BY + RY + 60), count=16, t0=t_vis + 0.3,
                     t1=t_vis + 2.6, color=(255, 240, 180), size=(9, 20), period=1.2, drift=0, seed=31),
     ]

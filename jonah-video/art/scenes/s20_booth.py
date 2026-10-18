@@ -1,40 +1,56 @@
 """Scene 20 — the booth (Jonah 4:5).
 
-One wide 3100 x 1300 stage on a hot afternoon. Left: Nineveh's east wall with its open gate (mid-distance, hazy),
-saved and joyful as in s18 / s19: townspeople in their own colourful clothes on the wall walk and in the
-gateway (two children hop and cheer), banners, bunting and fluttering pennants on the gate towers, sheep
-grazing by the watered fields; a road runs from the gate across the plain onto a dry ochre ridge. Right of
-the gate the ridge rises into a low knoll where Jonah builds his booth (the same props.booth drawing as
-s21 / v1 s11, split into its building stages). A blazing sun (s21's flame sun) hangs over the city.
+One wide 3100 x 1300 stage on a hot afternoon: the dry plain east of Nineveh, the city small and hazy on the
+western horizon (s21's far skyline, same drawing and place), a road from it across the plain onto a dry ochre
+ridge that rises into a low knoll, where Jonah builds his booth (the same props.booth drawing as s21 / v1 s11,
+split into its building stages). A blazing sun (s21's flame sun) hangs over the city.
+
+The scene OPENS ON S19'S WORLD: an opening plate draws s19's own sky, clouds, city (wall, gate, corner tower,
+skyline), green plain and rocky knoll through the matched opening view (m19), with s19's townspeople still in
+their sackcloth on the wall walk and in front of the gate, cheering on s19's clock (no festival decorations),
+the golden cloud gap and God's light (s19's own light drawings). So the s19 -> s20 dissolve changes nothing but
+time. As Jonah walks out east ("他出了城") the plate fades away and the hot desert, the far city and the sun
+come out behind it, while the camera follows him.
 
 Line 0 "约拿没有回答。" — opens exactly where s19 ends: Jonah sits on the ground, arms crossed, scowling at the
         city, his back to the soft golden light of God's question (light only, never a figure, from the
         upper right as in s19), his bundle of sticks and rolled cloth lying beside him. The light fades as
-        he answers nothing: a grumpy "hmph" (eyes shut, chin up, steam puffs above and behind his head).
+        he answers nothing (the gold leaves the clouds, which drift a little closer together): a grumpy
+        "hmph" (eyes shut, chin up, steam puffs above and behind his head).
         He hops up, then swings the bundle up over his head onto his back.
         "他出了城，坐在城的东边，" — he trudges east along the ridge (a planted-foot walk cycle: the drawing
-        follows the distance walked; a footstep sound on every footfall), the camera following; he plants
-        both feet on the knoll and, with a shrug of the shoulder, tosses the bundle down beside him (thud).
+        follows the distance walked; a footstep sound on every footfall), the camera following, and s19's
+        green fields and big near city give way to the dry plain with the city far behind on the horizon; the
+        little lizard (on s19's big stone beside the bundle) scurries out of his way, hops down and runs over
+        to its own stone further east. He plants both feet on the knoll and, with a shrug of the shoulder,
+        tosses the bundle down beside him (thud).
         "为自己搭了一座小棚子。" — with a stone he knocks the front post in, the other posts go up on the next
         knocks of the 'hammer' sound (the cue time is chosen so the sound has 4 knocks and the knock onsets are
-        read from it); he lifts the frame (tie bar, rafters, ridge) above his head and it drops onto the posts;
-        he throws the striped cloth over the ridge (it unrolls downward and settles); leafy branches pop on
-        top. The bundle on the ground shrinks as he uses it. He stands under the roof, hot and panting.
+        read from it); he raises his arms and the frame goes up piece by piece — tie bar, front-left rafter,
+        front-right rafter, then the ridge with the back rafters — each dropping into place (a soft knock) as
+        the sticks leave the bundle; he throws the striped cloth over the ridge (it unrolls downward and
+        settles); leafy branches pop on top. The bundle on the ground shrinks as he uses it. He stands under
+        the roof, hot and panting.
 Line 1 "他坐在棚子下面的阴凉里，" — he sits down in the booth's thin shade (hop + dust), a cool tint settles on him,
         eyes closed with relief and a big sigh; the camera pushes in a little.
         "要看看这座城到底会怎么样。" — chin on fist, a sulky eye on the city; two doves flutter up from a bush
-        and fly off toward the gate as the camera pulls back to reveal the city he is watching. He drops his
+        and fly off toward the city as the camera pulls back to reveal the city he is watching. He drops his
         hands to his knees (plain seated pose, facing the city) and the scene settles on s21's opening framing.
 
 Continuity (1.0 s cross-dissolves)
 * Start = s19's last frame: s19 ends with Jonah (sit_sulk, facing left) anchored at output (1060, 926) at
   1.2 * 1920/2066 scale, God's light coming down from its cloud gap at output (1414, 66). The opening camera
-  is computed so that Jonah's anchor and size match, the light is mapped through the same transform, and his
-  grumpy fidget / breathing run on s19's clock (read from the timeline) so the two drawings coincide.
+  is computed so that Jonah's anchor and size match; s19's background, people, lizard and light are drawn
+  through the same transform (m19 / at19, from s19_angry's own drawing functions), and his grumpy fidget /
+  breathing, the people's hops, the clouds, the lizard's push-ups and the light's shimmer run on s19's clock
+  (read from the timeline) so the two scenes coincide. Nothing of s20's own world (sun, desert, foreground
+  rocks and grass, heat shimmer, vignette) shows before the plate fades (t_far0 .. t_far1).
 * End = s21's first frame: s21 opens with its booth anchor at output (1064, 895), booth scale 1.3 * 1920/1960,
-  Jonah sitting ('sit', facing left) 28 px right of it, and its afternoon flame sun at output (230, 246). The
-  final camera puts this booth on exactly that spot at the same size, the sun (same drawing, scale, turning
-  and breathing phase) on s21's, and Jonah ends in the plain 'sit' pose at the same place.
+  Jonah sitting ('sit', facing left) 28 px right of it, its lizard on its stone, its afternoon flame sun at
+  output (230, 246) and its far city nineveh_skyline(20, 560, 644, 0.42, seed 2) on the horizon at the left.
+  The final camera puts this booth on exactly that spot at the same size, the sun (same drawing, scale,
+  turning and breathing phase) on s21's, the far city through KF / TXF / TYF on s21's, and Jonah ends in the
+  plain 'sit' pose at the same place.
 
 Notes for maintainers
 * Every time comes from ctx.lines[i].at(phrase) / .start / .end (never fixed numbers).
@@ -46,10 +62,17 @@ Notes for maintainers
 * Booth parts stay separate layers for the whole scene (no swap to a combined drawing, so nothing pops). Each
   part carries an invisible spacer the size of the whole booth: the 'wobble-fine' filter region is the
   objectBoundingBox +-10 %, which would otherwise crop a lone, nearly straight stick to a sliver.
-* Sky, sun, clouds and far dunes have a little parallax against the camera (zero at the final view).
+* Sky, sun, clouds, far dunes and the far city have a little parallax against the camera (zero at the final
+  view). The opening plate has none (s19's background is static on its stage); its right edge is feathered
+  (mask m19) where s19's stage ends, which only comes into view once the plate is fading.
+* The plate reuses s19_angry's functions and constants (far_svg, wall_svg, plain_svg, knoll_svg, sky_svg,
+  bank_svg, heaven_glow_svg, light_pool_svg, rays_svg, warm_svg, WALK_PEOPLE, CROWD, thin_hops, knoll_y), so
+  it follows s19's drawings; the few motion clocks copied from s19's build (people's hop schedules, clouds,
+  cloud banks, light shimmer, lizard) are marked "as s19" and must change with it.
 """
 import math
 import random
+import re
 from contextlib import contextmanager
 
 from art import characters as C
@@ -222,6 +245,8 @@ POSE = {
                  arms=(("ik", "abs", 6, -372, 1), ("ik", "abs", -14, -366, -1)), hands=("fist", "fist")),
     "throw": C._P(t=-12, h=-14, legs=(("ik", 30, 1), ("ik", -30, 1)), near_back=True,
                   arms=(("fk", 168, 196), ("fk", 158, 186)), hands=("open", "open")),
+    # in-between from the throw (arms up) to standing tired (arms down): arms forward, coming down
+    "throw_down": C._P(t=-5, h=-6, arms=(("fk", 90, 100), ("fk", 80, 92)), hands=("open", "open")),
     "sit": dict(C.POSES["sit"]),
     "sit_chin": C._P(t=8, h=-4, legs=(("ik", 70, 1), ("ik", 80, 1)),
                      arms=(("ik", "head", 0.15, 1.12, 1), ("ik", "head", 0.35, 1.12, 1)), hands=("fist", "fist"),
@@ -247,7 +272,9 @@ def walk_pose(k):
 def booth_parts():
     """props.booth (Jonah 4:5) split into its building stages, as local markup (anchor = bottom centre between
     the front posts, scale 1, facing right). Same drawing as props._booth when every part is shown.
-    Keys in back-to-front order: post_bl, post_br, under, post_fl, post_fr, tiebar, cloth, frame, lash, branches."""
+    Keys in back-to-front order: post_bl, post_br, under, post_fl, post_fr, tiebar, cloth, frame, lash, branches.
+    'frame' (ridge + rafters) is also split into the pieces Jonah puts up one by one: frame_back (the ridge and
+    the two back rafters), rafter_fl, rafter_fr (frame = frame_back + rafter_fl + rafter_fr)."""
     _stick, _lashing, _p, _poly, _ell, _line, _lerp2, _clip, _uid, _g, _f = (
         PR._stick, PR._lashing, PR._p, PR._poly, PR._ell, PR._line, PR._lerp2, PR._clip, PR._uid, PR._g, PR._f)
     wood, wd = P["wood"], P["wood_dark"]
@@ -317,9 +344,10 @@ def booth_parts():
     fr = _stick([(BA[0] - 2, BA[1] - 4), (FA[0] + 2, FA[1] - 2)], 9, wd, 3.2)
     fr += _stick([(BL[0] + 4, BL[1]), (BA[0] + 26, BA[1] - 22)], 8, S.shade(wd, 0.05), 3)
     fr += _stick([(BR[0] - 4, BR[1]), (BA[0] - 22, BA[1] - 20)], 8, S.shade(wd, 0.05), 3)
-    fr += _stick([(-176, -228), (-80, -300), (30, -400)], 10, wd, 3.5)
-    fr += _stick([(174, -232), (84, -298), (-26, -394)], 10, wd, 3.5)
-    parts["frame"] = fr
+    parts["frame_back"] = fr
+    parts["rafter_fl"] = _stick([(-176, -228), (-80, -300), (30, -400)], 10, wd, 3.5)
+    parts["rafter_fr"] = _stick([(174, -232), (84, -298), (-26, -394)], 10, wd, 3.5)
+    parts["frame"] = fr + parts["rafter_fl"] + parts["rafter_fr"]
     parts["lash"] = (_lashing(0, -372) + _lashing(BA[0], BA[1] + 2, 0.8) + _lashing(-158, -262, 0.85) +
                      _lashing(148, -260, 0.85))
     br = ""
@@ -344,12 +372,6 @@ ADV = 2 * WALK_A / WALK_N * SJ    # stage px the anchor advances per walk drawin
 NWALK = WALK_STEPS * WALK_N       # walk drawings from where s19 left him to the booth site
 XJ0 = X_C - NWALK * ADV           # where he sits at the start (east of the gate, on the ridge)
 AX = 1500                         # every Jonah drawing is made at (AX, GY) and moved by its layer motion
-WALL_Y, WALL_H = 790, 250         # Nineveh's east wall (mid-distance)
-GATE_X, GATE_W = 780, 150
-WALL_X1 = 1180                    # corner tower closing the wall
-KW = WALL_H / 260                 # city_wall detail scale
-GATE_TOWERS = (GATE_X - GATE_W / 2 - 60 * KW, GATE_X + GATE_W / 2 + 60 * KW)
-GT_TOP = WALL_Y - 1.45 * WALL_H - 34 * KW
 XBS, YBS = XJ0 + 210, GY - 22     # the bundle lying beside him at the start (centre of the lying bundle)
 XBUN, YBUN = XB - 265, GY + 6     # where he tosses it down at the booth site
 LIZ = (1992.8, 1028.5)            # lizard anchor (on screen where s21 draws its lizard at the end)
@@ -369,6 +391,17 @@ S21_SUN = (230.2, 246.1)          # s21's afternoon sun on screen (flame sun at 
 SUN = (CAM_END.x - WF / 2 + S21_SUN[0] * WF / 1920, CAM_END.y - WF * 9 / 32 + S21_SUN[1] * WF / 1920)
 SUN_S = 0.62 * (1920 / 1960) * WF / 1920
 CAM_REF = (CAM_END.x, CAM_END.y)  # sky parallax offsets are zero at the final view
+# s21's stage (2112 x 1188) -> this stage, through the matched final view (s21's opening Cam(1075, 600, 1960))
+KF = WF / 1960
+TXF = CAM_END.x - WF / 2 - (1075 - 1960 / 2) * KF
+TYF = CAM_END.y - WF * 9 / 32 - (600 - 1960 * 9 / 32) * KF
+# s19's stage -> this stage, through the matched opening view (anchored on Jonah): p20 = (TX19, TY19) + R19 * p19
+R19 = SJ / 1.2
+TX19, TY19 = XJ0 - S19_JX * R19, GY - S19_JY * R19
+# the plate's feathered right edge: just outside the opening view, and fully faded before s19's far ridges and
+# plain end (their outlines close at s19 x 2860, here about x 2288)
+X19_FADE = (CAM_START.x + CAM_START.w / 2 + 6, CAM_START.x + CAM_START.w / 2 + 64)
+LIZ_S = 0.82 * (1920 / 1960) * WF / 1920                  # the lizard's scale here (s21's at its opening view)
 
 POST_BASE = {"post_fl": (-158, 2), "post_fr": (146, 2), "post_bl": (-112 + PR.BOOTH_DEPTH[0] * 0.9, -16),
              "post_br": (146 + PR.BOOTH_DEPTH[0] * 0.9, -18)}
@@ -386,8 +419,33 @@ def bstage(lx, ly):
 
 def m19(x, y):
     """A point of s19's stage -> this stage, through the matched opening view (anchored on Jonah)."""
-    r = SJ / 1.2
-    return (XJ0 + (x - S19_JX) * r, GY + (y - S19_JY) * r)
+    return (TX19 + x * R19, TY19 + y * R19)
+
+
+def at19(markup):
+    """Markup drawn in s19's stage coordinates, placed on this stage through the matched opening view."""
+    return f'<g transform="translate({TX19:.3f},{TY19:.3f}) scale({R19:.6f})">{markup}</g>'
+
+
+def _svg_inner(d):
+    """The content of a full s19 <svg> document (its own <defs> included), without the outer element."""
+    return d[d.index(">") + 1: d.rindex("</svg>")]
+
+
+# feathered right edge of the opening plate (s19's stage ends at about x 2310 here; only seen while it fades)
+M19_DEFS = (f'<linearGradient id="m19g" gradientUnits="userSpaceOnUse" x1="{X19_FADE[0]:.0f}" y1="0" '
+            f'x2="{X19_FADE[1]:.0f}" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/>'
+            f'</linearGradient><mask id="m19" maskUnits="userSpaceOnUse" x="-1500" y="-800" width="{SW + 3000}" '
+            f'height="{SH + 1600}"><rect x="-1500" y="-800" width="{SW + 3000}" height="{SH + 1600}" '
+            f'fill="url(#m19g)"/></mask>')
+
+
+def doc19(*docs, feather=True):
+    """One layer document holding s19 drawings (full s19 documents) mapped onto this stage."""
+    body = "".join(at19(_svg_inner(d)) for d in docs)
+    if feather:
+        return doc(f'<g mask="url(#m19)">{body}</g>', M19_DEFS)
+    return doc(body)
 
 
 def _ease_walk(u, a=0.18):
@@ -423,17 +481,22 @@ def _env(t, a, b, c, d):
     return 1 - M.progress(t, c, d, "sine")
 
 
-def _prev_clock(ctx):
-    """The previous scene's (s19's) clock at this scene's t = 0 (its last cross-dissolve second), so the
-    opening fidget and breathing run in step with s19's last frames. 0 if the timeline can't be read."""
+def _prev_scene(ctx):
+    """The previous scene (s19): its clock at this scene's t = 0 (its last cross-dissolve second), its duration
+    and its narration-keyed times this scene replays (crowd 'quiet' window, God's light), so the opening runs in
+    step with s19's last frames. Falls back to the values of the current script if the timeline can't be read."""
     try:
         from engine.loader import load_timeline
+        from engine.scene import SceneContext
         tl = load_timeline()
         ids = [s["id"] for s in tl["scenes"]]
         prev = tl["scenes"][ids.index(ctx.id) - 1]
-        return float(ctx.start - prev["start"])
+        c19 = SceneContext.from_timeline(prev)
+        L = c19.lines
+        return dict(T19=float(ctx.start - prev["start"]), D19=float(c19.duration),
+                    quiet=(L[1].start - 0.3, L[2].end + 0.4), t_light=L[4].start - 0.1)
     except Exception:
-        return 0.0
+        return dict(T19=42.733, D19=43.733, quiet=(7.9, 26.097), t_light=36.767)
 
 
 def _hammer_knocks(t_cue, scene_id):
@@ -503,10 +566,6 @@ def _dust(cx, cy, k=1.0, n=4, seed=0):
     return S.g(out, filter="wobble-fine")
 
 
-def _palm(x, y, s, lean=0.0):
-    return PR.palm_tree(x, y, s, lean=lean)
-
-
 # --- s21's afternoon sun (v1 hot sun: wavy flame rays + short wedges, bright disc), drawn at the doc centre
 def flame_rays_svg():
     ray_d = ""
@@ -539,81 +598,20 @@ def hot_disc_svg():
         S.rad_grad("hg", [(0, "#fffef4", 1), (0.6, "#fff6cf", 0.85), (0.8, "#ffeaa0", 0.4), (1, "#ffe08a", 0)]))
 
 
-# --- the joyful city's decorations (as s19's, scaled to this wall)
-BUNT_COLS = ("#e45e52", "#f2c14e", "#3f78b5", "#f3a0a8", "#3b8b89", "#fff3d6")
-
-
-def _banner(cx, top, w, h, col):
-    """Long festive banner hanging on a tower: swallow-tail end, gold sun disc (s19)."""
-    x0, x1 = cx - w / 2, cx + w / 2
-    d = f"M{x0:.1f},{top:.1f} L{x1:.1f},{top:.1f} L{x1:.1f},{top + h:.1f} L{cx:.1f},{top + h - 0.15 * h:.1f} L{x0:.1f},{top + h:.1f} Z"
-    out = (f'<rect x="{x0 - 6:.1f}" y="{top - 6:.1f}" width="{w + 12:.1f}" height="8" rx="3" fill="{P["wood"]}" '
-           f'stroke="{INK}" stroke-width="2.5"/>')
-    out += S.path(d, fill=col, sw=3)
-    out += (f'<circle cx="{cx:.1f}" cy="{top + h * 0.38:.1f}" r="{w * 0.26:.1f}" fill="{P["gold"]}" stroke="{INK}" '
-            f'stroke-width="2"/>')
-    out += f'<path d="M{x0:.1f},{top + 12:.1f} L{x1:.1f},{top + 12:.1f}" stroke="{P["gold"]}" stroke-width="3"/>'
-    return out
-
-
-def _bunting(spans, k=1.0):
-    out = ""
-    n_ = 0
-    for (x0, x1, y0, sag) in spans:
-        n = max(4, int((x1 - x0) / (30 * k)))
-        pts = [(x0 + (x1 - x0) * i / 30, y0 + sag * math.sin(math.pi * i / 30)) for i in range(31)]
-        out += S.path(S.smooth_path(pts, closed=False), sw=2.2)
-        for i in range(n):
-            u = (i + 0.5) / n
-            x = x0 + (x1 - x0) * u
-            y = y0 + sag * math.sin(math.pi * u)
-            c = BUNT_COLS[n_ % len(BUNT_COLS)]
-            n_ += 1
-            out += (f'<path d="M{x - 9 * k:.1f},{y:.1f} L{x + 9 * k:.1f},{y:.1f} L{x + 1:.1f},{y + 22 * k:.1f} Z" '
-                    f'fill="{c}" stroke="{INK}" stroke-width="2" stroke-linejoin="round"/>')
-    return out
-
-
-def _pennants(phase, tops, k=1.0):
-    """Little flags on poles on the gate towers (s19); ``phase`` flutters them."""
-    out = ""
-    for i, (x, y, col) in enumerate(tops):
-        out += (f'<path d="M{x:.1f},{y + 30 * k:.1f} L{x:.1f},{y - 62 * k:.1f}" stroke="{INK}" stroke-width="6" '
-                f'stroke-linecap="round"/><path d="M{x:.1f},{y + 30 * k:.1f} L{x:.1f},{y - 62 * k:.1f}" '
-                f'stroke="{P["wood"]}" stroke-width="3" stroke-linecap="round"/>')
-        ph = phase + i * 0.9
-        L = 68 * k
-        top = [(x + L * j / 4, y - 58 * k + 5 * k * math.sin(ph + j * 1.3) * j / 4) for j in range(5)]
-        bot = [(x + L * j / 4, y - 26 * k - 12 * k * j / 4 + 5 * k * math.sin(ph + j * 1.3 + 0.4) * j / 4)
-               for j in range(5)]
-        tip = (x + L + 5 * k, y - 46 * k + 6 * k * math.sin(ph + 5.5))
-        out += S.path(S.smooth_path(top + [tip] + bot[::-1], tension=0.6), fill=col, sw=2.6)
-    return out
-
-
-HAZE = ('<filter id="hz" x="-2%" y="-8%" width="104%" height="116%" color-interpolation-filters="sRGB">'
-        '<feColorMatrix type="saturate" values="0.75"/>'
-        '<feColorMatrix type="matrix" values="0.78 0 0 0 0.2  0 0.78 0 0 0.183  0 0 0.78 0 0.15  0 0 0 1 0"/>'
-        '</filter>')
-
-
-def hazed(body):
-    """A document whose body is hazed like the distant city (colour-only filter, so layers can be split)."""
-    return doc(f'<g filter="url(#hz)">{body}</g>', HAZE)
-
-
 # ================================================================== build
 def build(ctx):
     from PIL import Image, ImageDraw
 
-    from art.scenes_v1 import s02_call as V2
+    from art.scenes import s19_angry as S19
     from art.scenes_v1 import s11_vine as V11
     from art.scenes_v1 import s12_lesson as V12
 
     sc = Scene(ctx, W=SW, H=SH)
     T = ctx.duration
     L0, L1 = ctx.lines[0], ctx.lines[1]
-    T19 = _prev_clock(ctx)                     # s19's clock at t = 0
+    prev = _prev_scene(ctx)
+    T19 = prev["T19"]                          # s19's clock at t = 0
+    D19, quiet19, t_light19 = prev["D19"], prev["quiet"], prev["t_light"]
 
     # ------------------------------------------------------------ key times (from the narration chunks)
     t_fade = L0.at("没有回答")                    # God's light fades: no answer...
@@ -628,9 +626,11 @@ def build(ctx):
     t_toss, t_land = t_arr, t_arr + 0.34          # ...shrugs the bundle off: it lands beside him
     t_down = t_arr + 0.3                          # back to standing
     hammer_at, knocks = _hammer_knocks(t_ham + 0.13, ctx.id)
-    t_lift = knocks[-1] + 0.3                     # ...the frame lifted above his head...
-    t_frame_on = t_lift + 0.36                    # ...drops onto the posts
-    t_throw = t_lift + 0.62                       # ...the cloth thrown over the ridge
+    t_lift = knocks[-1] + 0.16                    # ...arms up: the frame goes up piece by piece...
+    PIECES = (("tiebar", 0.0), ("rafter_fl", 0.11), ("rafter_fr", 0.22), ("frame_back", 0.33))
+    PIECE_DROP = 0.17                             # each piece comes down this long, then settles
+    t_frame_on = t_lift + 0.50                    # ...the last one (ridge + back rafters) lands on the posts
+    t_throw = t_lift + 0.76                       # ...the cloth thrown over the ridge
     t_cloth0, t_cloth1 = t_throw + 0.05, t_throw + 0.42
     t_branch = t_throw + 0.55
     t_tired = t_throw + 0.62                      # phew, hot! (sweat)
@@ -639,6 +639,12 @@ def build(ctx):
     t_dove = t_chin + 0.1                         # doves fly off toward the city
     t_rest = min(L1.end + 0.05, T - 1.35)         # hands back on the knees: s21's opening pose
     blinks = [t_chin + 1.0, t_chin + 2.0]
+    # s19's world (the opening plate) gives way to the desert while he walks out east
+    t_far0, t_far1 = t_walk0 + 0.2, t_ham
+    plate = lambda t: 1 - M.progress(t, t_far0, t_far1, "sine")
+    a_fade = lambda t: 1 - M.progress(t, t_fade, t_fade + 1.1, "sine")    # God's light fades: no answer
+    t_liz0 = t_walk0 + 0.55                       # the lizard scurries out of his way...
+    LIZ_RUN = 0.82                                # ...hop down, run, hop up onto its own stone
 
     def walk_k(t):
         if t <= t_walk0:
@@ -675,15 +681,20 @@ def build(ctx):
     sky = doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="820" fill="url(#g)"/>',
               S.lin_grad("g", [(0, "#8cc4d9"), (0.4, "#bfdfdc"), (0.72, "#f0deb4"), (1, "#f6d49d")]))
     sc.add("sky", sky, wc=0.5)
-    # the sun: s21's flame sun, turning and breathing on s21's clock so the end dissolve matches
+    # the sun: s21's flame sun, turning and breathing on s21's clock so the end dissolve matches. It is not there
+    # in the s19 dissolve: it comes out (rays unfurling) as God's light has faded and s19's world (the opening
+    # plate, which also covers it) gives way to the hot desert; full long before the s21 dissolve.
     tz = T - 1.0                                   # s21's t = 0
     at_sun = lambda t: Tf(dx=SUN[0] - CX, dy=SUN[1] - CY)
+    t_sun0 = t_far0 + 0.45 * (t_far1 - t_far0)     # (late enough that it never shines through s19's towers)
+    a_sun = lambda t: M.progress(t, t_sun0, t_far1 + 0.5, "sine")
+    g_sun = lambda t: 0.7 + 0.3 * M.progress(t, t_sun0, t_far1 + 0.9, "out")
     sc.add("sun_rays", flame_rays_svg(), wc=0.3, motion=par(0.6, M.combine(
         at_sun, lambda t: Tf(rot=7 * (t - tz), px=CX, py=CY), M.breathe(0.03, 1.1, pivot=(CX, CY), phase=-tz / 1.1),
-        lambda t: Tf(sx=SUN_S, sy=SUN_S, px=CX, py=CY))))
+        lambda t: Tf(sx=SUN_S * g_sun(t), sy=SUN_S * g_sun(t), px=CX, py=CY, alpha=a_sun(t)))))
     sc.add("sun_disc", hot_disc_svg(), wc=0.4, motion=par(0.6, M.combine(
         at_sun, M.breathe(0.03, 1.4, pivot=(CX, CY), phase=-tz / 1.4),
-        lambda t: Tf(sx=SUN_S, sy=SUN_S, px=CX, py=CY))))
+        lambda t: Tf(sx=SUN_S, sy=SUN_S, px=CX, py=CY, alpha=a_sun(t)))))
     clouds = doc(S.g(S.cloud(260, 150, 230, 70, "#fdf3e4", seed=3, sw=3, shade_fill="#f0d6c4") +
                      S.cloud(1330, 170, 210, 64, "#fdf1e2", seed=6, sw=3, shade_fill="#f0d6c4") +
                      S.cloud(2240, 250, 260, 80, "#fdf3e4", seed=8, sw=3, shade_fill="#f0d6c4") +
@@ -700,14 +711,25 @@ def build(ctx):
     for (x, y, s_) in [(1640, 690, 0.1), (1680, 694, 0.08), (2560, 682, 0.1), (2960, 668, 0.09)]:
         far += PR.palm_tree(x, y, s_, lean=0.1)
     sc.add("far_dunes", doc(S.g(far, filter="wobble")), wc=0.6, motion=par(0.25))
+    # Nineveh, small and hazy on the western horizon: s21's far city (same drawing, s21's HORIZON + 4), mapped
+    # from s21's opening view so it is exactly s21's at the end; it moves with the far dunes
+    sc.add("city_far", doc(PR._place(PR.nineveh_skyline(20, 560, 644, scale=0.42, seed=2, haze=0.42,
+                                                        tint="#efdcbc"), TXF, TYF, KF, filt=None)),
+           wc=0.6, motion=par(0.25))
 
-    # =========================================================== PLAIN, CITY (static, flattened)
+    # =========================================================== PLAIN (static, flattened)
     pl = (f'<rect x="-40" y="722" width="{SW + 80}" height="{SH - 700}" fill="url(#pl)"/>'
           f'<path d="M-40,722 L{SW + 40},722" stroke="{INK}" stroke-width="3" opacity="0.45"/>')
     rnd = random.Random(7)
     for i in range(40):        # far shrubs dotting the dry plain east of the city
         x = rnd.uniform(1150, SW)
         y = rnd.uniform(734, 900)
+        k = 0.6 + (y - 730) / 260
+        pl += f'<ellipse cx="{x:.0f}" cy="{y:.0f}" rx="{9 * k:.1f}" ry="{4.5 * k:.1f}" fill="#b7a274" opacity="0.6"/>'
+    rnd = random.Random(17)
+    for i in range(16):        # ...and the plain between the city and the ridge
+        x = rnd.uniform(-40, 1150)
+        y = rnd.uniform(740, 900)
         k = 0.6 + (y - 730) / 260
         pl += f'<ellipse cx="{x:.0f}" cy="{y:.0f}" rx="{9 * k:.1f}" ry="{4.5 * k:.1f}" fill="#b7a274" opacity="0.6"/>'
     for (x, y, w_) in [(1500, 860, 160), (2100, 820, 200), (2700, 880, 180), (1320, 930, 140), (2500, 930, 160)]:
@@ -728,67 +750,17 @@ def build(ctx):
                                             (2200, 3180, 880, 46, 12, "#d8b47e", 0.32, 4),
                                             (1500, 2600, 940, 34, 8, "#f3e0b6", 0.5, 5)]:
         pl += f'<path d="{band(x0, x1, y, h, amp, sd)}" fill="{col}" opacity="{op}"/>'
-    # green, watered fields along the wall (the city side) fading into the dry desert to the east
-    pl += '<rect x="-40" y="790" width="1500" height="200" fill="url(#gf)"/>'
-    xs = [-60, 200, 430, 640, 900, 1110, 1330]
-    cols = ["#c9cc7e", "#b5c271", "#dcc47c", "#c3cf86", "#b9c777", "#d8c986"]
-    for i in range(len(xs) - 1):
-        pl += V12._field(xs[i] + 10, xs[i + 1] - 10, WALL_Y + 14, WALL_Y + 56 + 18 * (i % 3), cols[i], seed=40 + i)
-    # the road out of the gate, across the plain to the ridge
-    road = S.smooth_path([(GATE_X - 46, WALL_Y + 2), (GATE_X - 30, 850), (900, 930), (1040, 1000),
-                          (1210, 1000), (1060, 930), (GATE_X + 70, 852), (GATE_X + 46, WALL_Y + 2)],
-                         closed=True, tension=0.8)
-    pl += f'<path d="{road}" fill="#f3e2b6" stroke="{INK}" stroke-width="3" opacity="0.95"/>'
-    pl += (f'<path d="M{GATE_X},{WALL_Y + 20} Q{GATE_X + 60},900 1110,995" fill="none" stroke="#dcc28c" '
-           f'stroke-width="5" stroke-dasharray="2 24" stroke-linecap="round"/>')
-    # a distant oasis to the east; sheep grazing by the fields (the fast is over: no sackcloth any more)
+    # the road from the far city across the plain to the ridge (s21's road, mapped like the city); on the ridge
+    # it becomes Jonah's footpath east
+    road = S.smooth_path([(470, 724), (520, 760), (470, 812), (600, 880), (720, 960), (640, 960), (520, 885),
+                          (410, 812), (468, 760), (440, 726)])
+    pl += PR._place(f'<path d="{road}" fill="#f5e2b6" opacity="0.85"/>', TXF, TYF, KF, filt=None)
+    # a distant oasis to the east
     for (x, y, s_, ln) in [(2620, 742, 0.16, 0.1), (2668, 746, 0.13, -0.1), (2715, 744, 0.15, 0.05)]:
         pl += PR.palm_tree(x, y, s_, lean=ln)
     pl += PR.bush(2560, 750, 0.22, variant=0) + PR.bush(2760, 752, 0.2, variant=0)
-    for (x, y, s_, f_) in [(470, 900, 0.3, 1), (560, 912, 0.27, -1), (1030, 905, 0.26, -1)]:
-        pl += PR.animal(x, y, s_, f_, kind="sheep")
-    plain_defs = (S.lin_grad("pl", [(0, "#efdcb2"), (0.3, "#ead1a0"), (1, "#dcb57c")]) +
-                  S.lin_grad("gf", [(0, "#c9cf86", 0.55), (0.6, "#d6cf8c", 0.3), (1, "#e0d29a", 0)], x2=1, y2=0))
+    plain_defs = S.lin_grad("pl", [(0, "#efdcb2"), (0.3, "#ead1a0"), (1, "#dcb57c")])
     sc.add("plain", doc(S.g(pl, filter="wobble"), plain_defs), wc=0.8)
-
-    # Nineveh, saved and glad: skyline behind the east wall, people in their own clothes on the wall walk
-    # (two children hop and cheer), the open gate with banners, bunting and pennants (hazy with distance)
-    walk_y = WALL_Y - WALL_H + 28
-    walkers = ""
-    for i, (x, kind, pose, expr) in enumerate([(120, "man", "stand", "happy"), (150, "woman", "cheer", None),
-                                               (520, "man", "stand", None), (545, "woman", "stand", "happy"),
-                                               (980, "elder", "stand", "happy")]):
-        walkers += C.citizen(x, walk_y, 0.2, 1 if i % 2 else -1, kind=kind, variant=i % 4, pose=pose, expr=expr)
-    city = PR.nineveh_skyline(-80, 1140, WALL_Y - 18, scale=0.72, seed=2, haze=0.35, tint="#f3dcb4")
-    sc.add("city_back", hazed(city + walkers), wc=0.7)
-    # cheering children: on the wall walk and in the gateway (hop-and-wave flipbooks, as s19's crowd)
-    cheer = [(330, walk_y - 16, 0.22, 1, 2, 70, 12), (1010, walk_y - 16, 0.22, -1, 3, 71, 12)]
-    for i, (x, y, s_, f_, var, seed, hh) in enumerate(cheer):
-        frames = [hazed(C.citizen(x, y, s_, f_, kind="child", variant=var, pose=p)) for p in ("stand", "cheer")]
-        hops = V12.hop_sched(seed, T, n=(2, 3), dur=(0.4, 0.52), rest=(0.5, 1.2))
-        sc.add(f"wall_child{i}", frames, frame_at=V12.hop_frame(hops), motion=V12.hop_motion(x, y, hops, hh), wc=0.5)
-    wall = PR.city_wall(-80, WALL_X1, WALL_Y, WALL_H, gate=(GATE_X, GATE_W), doors_open=1.0, seed=4, ink=0.7)
-    wall += V12._end_tower(WALL_X1, WALL_Y, WALL_H / 260, ink=0.7)
-    deco = ""
-    for i, cx in enumerate(GATE_TOWERS):
-        deco += _banner(cx, GT_TOP + 140 * KW, 50 * KW, 136 * KW, ("#c0533a", "#3f78b5")[i])
-    deco += _bunting([(GATE_TOWERS[0] + 36 * KW, GATE_TOWERS[1] - 36 * KW, GT_TOP + 112 * KW, 44 * KW),
-                      (60, 470, WALL_Y - WALL_H + 20, 34), (1000, WALL_X1 - 20, WALL_Y - WALL_H + 20, 26)], KW)
-    gateway = C.citizen(GATE_X - 30, WALL_Y - 2, 0.36, 1, kind="woman", variant=3, pose="stand", expr="happy")
-    trees = ""
-    for (x, y, s_, ln) in [(60, WALL_Y + 12, 0.36, 0.1), (410, WALL_Y + 14, 0.34, -0.1), (1010, WALL_Y + 10, 0.38, 0.15),
-                           (1290, WALL_Y + 22, 0.42, -0.12), (1385, WALL_Y + 30, 0.34, 0.1)]:
-        trees += _palm(x, y, s_, ln)
-    trees += PR.olive_tree(1160, WALL_Y + 40, 0.3, seed=1) + PR.olive_tree(560, WALL_Y + 36, 0.28, seed=2)
-    sc.add("city_wall", hazed(wall + S.g(deco, filter="wobble-fine") + gateway), wc=0.7)
-    gx_, gy_ = GATE_X + 28, WALL_Y - 2
-    frames = [hazed(C.citizen(gx_, gy_, 0.32, -1, kind="child", variant=1, pose=p)) for p in ("stand", "cheer")]
-    hops = V12.hop_sched(77, T, n=(2, 3), dur=(0.42, 0.54), rest=(0.6, 1.3))
-    sc.add("gate_child", frames, frame_at=V12.hop_frame(hops), motion=V12.hop_motion(gx_, gy_, hops, 16), wc=0.5)
-    tops = [(GATE_TOWERS[0], GT_TOP - 26 * KW, "#e45e52"), (GATE_TOWERS[1], GT_TOP - 26 * KW, "#f2c14e")]
-    sc.add("pennants", [hazed(S.g(_pennants(ph, tops, KW), filter="wobble-fine")) for ph in (0.0, 2.1, 4.2)],
-           frame_at=lambda t: float(int(t * 5) % 3), wc=0.5)
-    sc.add("city_trees", hazed(trees), wc=0.7)
 
     # mid-plain: bushes and stones on the dry ground east of the city
     mid = ""
@@ -832,36 +804,68 @@ def build(ctx):
     rocks += V11._stone(*LIZ_STONE, seed=41, sw=4, crack=True)
     sc.add("ridge_rocks", doc(S.g(rocks, filter="wobble-fine")), wc=0.8)
 
-    # God's question still hangs in the air at the start: the soft golden light of s19's last frame, coming
-    # down from the upper right onto Jonah (mapped from s19's stage); it fades as he answers nothing.
-    gx, gy = m19(2230, 262)
-    tx, ty = m19(S19_JX + 20, S19_JY + 30)
-    r19 = SJ / 1.2
-    main = math.degrees(math.atan2(ty - gy, tx - gx))
-    length = math.hypot(tx - gx, ty - gy) + 160 * r19
-    hx, hy = m19(S19_JX + 20, S19_JY - 125 * 1.2)
-    gdef = (f'<linearGradient id="rayg" gradientUnits="userSpaceOnUse" x1="0" y1="{gy:.0f}" x2="0" y2="{ty + 100:.0f}">'
-            f'<stop offset="0" stop-color="#fff6d2" stop-opacity="0.85"/>'
-            f'<stop offset="0.6" stop-color="#ffeaa8" stop-opacity="0.5"/>'
-            f'<stop offset="1" stop-color="#ffe08e" stop-opacity="0.12"/></linearGradient>'
-            f'<linearGradient id="coneg" gradientUnits="userSpaceOnUse" x1="0" y1="{gy:.0f}" x2="0" y2="{ty + 100:.0f}">'
-            f'<stop offset="0" stop-color="#fff2c4" stop-opacity="0.55"/>'
-            f'<stop offset="1" stop-color="#ffe39a" stop-opacity="0.2"/></linearGradient>' +
-            S.rad_grad("hg", [(0, "#fffbec", 0.95), (0.25, "#fff0c0", 0.7), (0.6, "#ffd98a", 0.28), (1, "#ffd27a", 0)]) +
-            S.rad_grad("pool", [(0, "#fff1c0", 0.85), (0.6, "#ffe39a", 0.35), (1, "#ffd77e", 0)]) +
-            S.rad_grad("halo", [(0, "#fff6d6", 0.75), (0.6, "#ffe7a4", 0.32), (1, "#ffe0a0", 0)]))
-    offs = [(-15, 2.6), (-9, 3.4), (-3.5, 2.2), (2, 3.8), (7.5, 2.4), (13, 3.0),
-            (-12, 2.0), (-6.2, 2.6), (-0.5, 1.8), (4.8, 2.2), (10.2, 2.0), (16, 1.8)]
-    light = (f'<ellipse cx="{gx:.0f}" cy="{gy + 30 * r19:.0f}" rx="{560 * r19:.0f}" ry="{330 * r19:.0f}" fill="url(#hg)"/>'
-             f'<path d="{V2._fan(gx, gy + 10, length, [main], [20])}" fill="url(#coneg)" filter="url(#blur-lg)"/>'
-             f'<path d="{V2._fan(gx, gy + 8, length, [main + o for o, _w in offs], [w for _o, w in offs])}" '
-             f'fill="url(#rayg)" opacity="0.8" filter="url(#soft)"/>'
-             f'<ellipse cx="{hx:.0f}" cy="{hy:.0f}" rx="{200 * 1.2 * r19:.0f}" ry="{190 * 1.2 * r19:.0f}" fill="url(#halo)"/>'
-             f'<ellipse cx="{tx:.0f}" cy="{GY + 2:.0f}" rx="{260 * 1.2 * r19:.0f}" ry="{58 * 1.2 * r19:.0f}" '
-             f'fill="url(#pool)"/>')
-    a_light = lambda t: 0.85 * (1 - M.progress(t, t_fade, t_fade + 1.1, "sine"))
-    sc.add("god_light", doc(light, gdef), wc=0,
-           motion=lambda t: Tf(alpha=a_light(t) * (0.92 + 0.08 * math.sin(2 * math.pi * (t + T19) / 2.6))))
+    # =========================================================== THE OPENING PLATE: s19's world
+    # s19's own sky, clouds, cloud gap, city, people, green plain and knoll, drawn through the matched opening view
+    # above this scene's sky and land (which it hides), so the s19 dissolve changes nothing but time. Everything
+    # moving in it runs on s19's clock (t + T19). It fades away (t_far0 .. t_far1) while Jonah walks out east and
+    # the camera follows him: the hot desert, the far city and the sun come out behind it.
+    def mot19(fn19, alpha=plate):
+        """A motion of s19's stage on s19's clock, mapped onto this stage, times ``alpha(t)``."""
+        def m(t):
+            v = fn19(t + T19) if fn19 else Tf()
+            px, py = m19(v.px, v.py) if v.px is not None else (None, None)
+            return Tf(dx=v.dx * R19, dy=v.dy * R19, rot=v.rot, sx=v.sx, sy=v.sy, alpha=v.alpha * alpha(t),
+                      px=px, py=py)
+        return m
+
+    def on19(f):
+        return lambda t: f(t + T19)
+
+    sky19 = re.sub(r'<rect x="[-\d.]+" y="([-\d.]+)" width="[\d.]+" height="([\d.]+)" fill="url\(#sky\)"/>',
+                   lambda mm: f'<rect x="-1600" y="{mm.group(1)}" width="6000" height="{mm.group(2)}" '
+                              f'fill="url(#sky)"/>', S19.sky_svg(), count=1)   # widened (its gradient is vertical)
+    sc.add("p19_sky", doc19(sky19, feather=False), wc=0.45, motion=mot19(None))
+    for i, (cx_, cy_, w_, h_, sd, v) in enumerate([(640, 150, 300, 90, 3, 6), (1210, 300, 220, 70, 5, 4.5),
+                                                   (60, 420, 200, 62, 9, 5), (1620, 450, 170, 54, 8, 3.5)]):
+        sc.add(f"p19_cloud{i}", doc19(S19.cloud_svg(cx_, cy_, w_, h_, sd), feather=False), wc=0.7,   # as s19
+               motion=mot19(M.combine(M.drift(vx=v), M.bob(3, 7 + i, i * 0.3))))
+    # God's question still hangs in the air at the start: the heavenly glow in the parted cloud gap (as s19),
+    # fading as he answers nothing; the gold leaves the cloud banks and they drift a little closer together
+    glow19 = lambda t19: (M.progress(t19, t_light19, t_light19 + 0.9, "sine") *
+                          (0.86 + 0.14 * math.sin(2 * math.pi * (t19 - t_light19) / 2.3)))
+    sc.add("p19_heaven_glow", doc19(S19.heaven_glow_svg(), feather=False), wc=0,
+           motion=mot19(lambda t19: Tf(alpha=glow19(t19)), lambda t: plate(t) * a_fade(t)))
+    for name, rel, d0, d1 in [("bankL", S19.LEFT_BANK, 70, -170), ("bankR", S19.RIGHT_BANK, -66, 150)]:   # as s19
+        frames = [doc19(S19.bank_svg(rel, g_, name), feather=False) for g_ in (0.0, 1.0)]
+        close = lambda t, d0=d0, d1=d1: Tf(dx=R19 * (d1 + (d0 - d1) * 0.3 * M.progress(t, t_fade, t_far1, "inout")))
+        sc.add(f"p19_{name}", frames, wc=0.7, frame_at=a_fade,
+               motion=M.combine(close, mot19(M.bob(4, 6.0, 0.3 if d1 > 0 else 0.0))))
+    sc.add("p19_far", doc19(S19.far_svg()), wc=0.7, motion=mot19(None))
+    # s19's townspeople on the wall walk: still in their sackcloth, cheering now and then (as s19)
+    for i, (x, fy, kind, var, fc) in enumerate(S19.WALK_PEOPLE):
+        frames = [doc(at19(C.citizen(x, fy, 0.42, fc, kind=kind, variant=var, pose=p, attire="sackcloth",
+                                     expr="happy" if p == "stand" else None))) for p in ("stand", "cheer")]
+        hops = S19.thin_hops(V12.hop_sched(70 + i, D19, n=(1, 2), dur=(0.5, 0.8), rest=(1.0, 2.6)), *quiet19, 5.0)
+        sc.add(f"p19_walk{i}", frames, frame_at=on19(V12.hop_frame(hops, 0.12, 0.25)), wc=0.5,
+               motion=mot19(V12.hop_motion(x, fy, hops, 9)))
+    sc.add("p19_ground", doc19(S19.wall_svg(), S19.plain_svg()), wc=0.8, motion=mot19(None))
+    # the cheering crowd in front of the gate, in sackcloth with happy faces (as s19)
+    sh = "".join(C.ground_shadow(x, y, s_, width=110 if kind == "child" else 120, opacity=0.2)
+                 for (x, y, kind, var, fc, s_, style) in S19.CROWD)
+    sc.add("p19_crowd_sh", doc(at19(sh)), wc=0, motion=mot19(None))
+    for i, (x, y, kind, var, fc, s_, style) in enumerate(S19.CROWD):
+        frames = [doc(at19(C.citizen(x, y, s_, fc, kind=kind, variant=var, pose=p, attire="sackcloth",
+                                     expr="happy" if p == "stand" else None))) for p in ("stand", "cheer")]
+        if style == "hop":
+            hops = S19.thin_hops(V12.hop_sched(10 + i, D19, n=(2, 3), dur=(0.4, 0.52), rest=(0.6, 1.3)), *quiet19, 6.0)
+            sc.add(f"p19_crowd{i}", frames, frame_at=on19(V12.hop_frame(hops)), wc=0.5,
+                   motion=mot19(V12.hop_motion(x, y, hops, 26 * s_ / 0.6)))
+        else:
+            hops = S19.thin_hops(V12.hop_sched(30 + i, D19, n=(1, 1), dur=(0.9, 1.4), rest=(0.7, 1.6)), *quiet19, 7.0)
+            sc.add(f"p19_crowd{i}", frames, frame_at=on19(V12.hop_frame(hops, 0.0, 0.0)), wc=0.5,
+                   motion=mot19(M.combine(V12.hop_motion(x, y, hops, 5),
+                                          M.breathe(0.01, 2.8, pivot=(x, y), phase=i * 0.2))))
+    sc.add("p19_knoll", doc19(S19.knoll_svg()), wc=0.85, motion=mot19(None))
 
     # =========================================================== THE BOOTH (built in stages)
     parts = booth_parts()
@@ -898,20 +902,23 @@ def build(ctx):
             return Tf(sx=sx, sy=sy, alpha=a, px=bx, py=by)
         return m
 
-    def frame_motion(t):
-        """Appears in his raised hands on the lift cut, goes up a little more, then drops onto the posts."""
-        if t < t_lift - 0.01:
-            return Tf(alpha=0.0)
-        u = t - t_lift
-        a = 1.0                                    # appears in his hands on the (hop-hidden) pose cut
-        if u < 0.16:
-            dy = -26 - 30 * M.ease("out")(u / 0.16)
-        elif t < t_frame_on:
-            dy = -56 * (1 - M.ease("in")(M.progress(t, t_lift + 0.16, t_frame_on, "linear")))
-        else:
-            v = t - t_frame_on
-            dy = -10 * math.sin(math.pi * min(1.0, v / 0.16)) if v < 0.16 else 0.0
-        return Tf(dy=dy, alpha=a)
+    def piece_motion(t0):
+        """One piece of the frame, put up by his raised hands: it fades in over 4 frames 50 px above its place,
+        comes down onto the posts and settles with a little bounce (the pieces follow each other 0.11 s apart,
+        so no frame adds more than one stick)."""
+        t1 = t0 + PIECE_DROP
+
+        def m(t):
+            if t < t0:
+                return Tf(alpha=0.0)
+            a = M.progress(t, t0, t0 + 0.12, "sine")
+            if t < t1:
+                dy = -50 * (1 - M.ease("in")(M.progress(t, t0, t1, "linear")))
+            else:
+                v = t - t1
+                dy = -6 * math.sin(math.pi * v / 0.12) if v < 0.12 else 0.0
+            return Tf(dy=dy, alpha=a)
+        return m
 
     def lash_motion(t):
         if t < t_frame_on + 0.08:
@@ -947,9 +954,11 @@ def build(ctx):
            reveal=cloth_reveal(0.04), wc=0.8)
     sc.add("post_fl", bdoc(["post_fl"]), motion=post_motion("post_fl"), wc=0.8)
     sc.add("post_fr", bdoc(["post_fr"]), motion=post_motion("post_fr"), wc=0.8)
-    sc.add("tiebar", bdoc(["tiebar"]), motion=frame_motion, wc=0.8)
+    t_piece = {k: t_lift + d for k, d in PIECES}
+    sc.add("tiebar", bdoc(["tiebar"]), motion=piece_motion(t_piece["tiebar"]), wc=0.8)
     sc.add("cloth", bdoc(["cloth"]), motion=cloth_motion, reveal=cloth_reveal(), wc=0.8)
-    sc.add("frame", bdoc(["frame"]), motion=frame_motion, wc=0.8)
+    for k in ("frame_back", "rafter_fl", "rafter_fr"):
+        sc.add(k, bdoc([k]), motion=piece_motion(t_piece[k]), wc=0.8)
     sc.add("lash", bdoc(["lash"]), motion=lash_motion, wc=0.6)
     sc.add("branches", bdoc(["branches"]), motion=branch_motion, wc=0.7)
 
@@ -996,6 +1005,7 @@ def build(ctx):
     F_LIFT = jadd("lift", POSE["lift"], 1, "angry")
     F_THROW = jadd("throw", POSE["throw"], 1, "angry", tint=True)
     F_TIRED = jadd("tired", POSE["stand"], 1, "tired", tint=True)
+    F_MID = jadd("tired_mid", POSE["throw_down"], 1, "tired", tint=True)   # in-between: arms coming down
     F_SIT = jadd("sit", POSE["sit"], -1, "peaceful", tint=True)
     F_CHIN = jadd("chin", POSE["sit_chin"], -1, "watch", tint=True)
     F_BLINK = jadd("blink", POSE["sit_chin"], -1, "watch_blink", tint=True)
@@ -1016,12 +1026,15 @@ def build(ctx):
             return F_TOSS
         if t < t_ham:
             return F_STAND
-        if t < t_lift:
-            return F_HDN if any(kn - 0.05 <= t < kn + 0.1 for kn in knocks) else F_HUP
+        if t < t_lift:                             # (after the last knock he keeps the stone down until the lift)
+            hit = any(kn - 0.05 <= t < kn + 0.1 for kn in knocks) or t >= knocks[-1] - 0.05
+            return F_HDN if hit else F_HUP
         if t < t_throw:
             return F_LIFT
-        if t < t_tired:
+        if t < t_tired - 0.1:
             return F_THROW
+        if t < t_tired:
+            return F_MID
         if t < t_sit:
             return F_TIRED
         if t < t_chin:
@@ -1095,7 +1108,7 @@ def build(ctx):
     # =========================================================== THE BUNDLE (picked up, tossed down, used up)
     bfr = [doc(f'<g transform="translate({XBUN},{YBUN}) scale({SJ}) rotate(180)"><g filter="url(#wobble-fine)">'
                f'{bundle_local(k)}</g></g>') for k in range(4)]
-    t_used = [knocks[1], t_frame_on, t_cloth0]
+    t_used = [knocks[1], t_lift, t_cloth0]      # posts, then the frame pieces, then the cloth
 
     def bun_frame(t):
         return float(sum(1 for tu in t_used if t >= tu))
@@ -1139,8 +1152,74 @@ def build(ctx):
     sc.add("bundle_shadow", doc(C.ground_shadow(XBUN, GY + 26, 1.0, width=300, opacity=0.22)), motion=bun_shadow,
            wc=0)
 
-    sc.add("jonah_shadow", doc(C.ground_shadow(AX, GY, SJ, width=150, opacity=0.26)), motion=shadow_motion, wc=0)
     sc.add("bundle", bfr, frame_at=bun_frame, motion=bun_motion, wc=0.6)
+
+    # =========================================================== LIZARD (s19's; scurries over to its own stone)
+    # It starts exactly where s19 leaves it: on s19's big stone beside the bundle (part of the opening plate),
+    # doing push-ups on s19's clock. As Jonah comes walking toward that spot it scurries out of his way: hops down,
+    # runs east and hops up onto its own stone (LIZ_STONE, as s21's), where it basks with push-ups on this scene's
+    # clock (in step with s21 at the end).
+    LIZ0 = m19(2200, S19.knoll_y(2190) + 6 - 90)      # as s19's lizard (scale 0.62 on its stage)
+    S_LIZ0 = 0.62 * R19
+    LIZ_A = (LIZ0[0] + 120, LIZ0[1] + 92)             # down on the ground right of s19's stone
+    LIZ_B = (LIZ_STONE[0] - LIZ_STONE[2] / 2 - 10, LIZ_STONE[1] - 3)   # at the foot of its own stone
+    SEG = (0.22, 0.64, LIZ_RUN)                        # hop down | run | hop up (s after t_liz0)
+    t_liz1 = t_liz0 + LIZ_RUN
+    liz = [doc(V11._lizard(LIZ[0], LIZ[1], LIZ_S, legs=lg)) for lg in (0, 1)]
+
+    def liz_frame(t):
+        u = t - t_liz0
+        return float(int(u * 16) % 2) if 0 <= u < LIZ_RUN else 0.0
+
+    def liz_motion(t):
+        u = t - t_liz0
+        rot, sq = 0.0, 1.0
+        if u < 0:                                  # on s19's stone: s19's push-ups (as s19)
+            x, y, s = LIZ0[0], LIZ0[1], S_LIZ0
+            v = (t + T19 + 0.7) % 3.1
+            b = abs(math.sin(math.pi * v / 0.2)) if v < 0.4 else 0.0
+        elif u < LIZ_RUN:                          # the scurry
+            b = 0.0
+            s = S_LIZ0 + (LIZ_S - S_LIZ0) * M.progress(u, 0.0, LIZ_RUN, "sine")
+            if u < SEG[0]:
+                f = u / SEG[0]
+                x = LIZ0[0] + (LIZ_A[0] - LIZ0[0]) * f
+                y = LIZ0[1] + (LIZ_A[1] - LIZ0[1]) * f * f - 34 * math.sin(math.pi * f)
+                rot = 14 * math.sin(math.pi * f)
+            elif u < SEG[1]:
+                f = (u - SEG[0]) / (SEG[1] - SEG[0])
+                x = LIZ_A[0] + (LIZ_B[0] - LIZ_A[0]) * f
+                y = LIZ_A[1] + (LIZ_B[1] - LIZ_A[1]) * f - 3 * abs(math.sin(4 * math.pi * f))
+                rot = 3 * math.sin(8 * math.pi * f)
+            else:
+                f = (u - SEG[1]) / (LIZ_RUN - SEG[1])
+                x = LIZ_B[0] + (LIZ[0] - LIZ_B[0]) * f
+                y = LIZ_B[1] + (LIZ[1] - LIZ_B[1]) * math.sqrt(f) - 20 * math.sin(math.pi * f)
+                rot = -16 * math.sin(math.pi * f)
+        else:                                      # on its own stone: push-ups on this scene's clock
+            x, y, s = LIZ[0], LIZ[1], LIZ_S
+            v = (t + 0.4) % 2.6
+            b = abs(math.sin(math.pi * v / 0.2)) if (v < 0.4 and t - v >= t_liz1 + 0.3) else 0.0
+            w = t - t_liz1
+            if w < 0.14:                           # landing squash
+                sq = 1 - 0.1 * math.sin(math.pi * w / 0.14)
+        k = s / LIZ_S
+        return Tf(dx=x - LIZ[0], dy=y - LIZ[1], rot=rot, sx=k * (1 - 0.03 * b) / sq ** 0.5, sy=k * (1 + 0.13 * b) * sq,
+                  px=LIZ[0], py=LIZ[1])
+    sc.add("lizard", liz, frame_at=liz_frame, motion=liz_motion, wc=0.5)
+
+    # God's light of s19's last frame on Jonah, the bundle and the lizard (s19's own drawings, shimmering on s19's
+    # clock, as s19); it fades as he answers nothing
+    light_in19 = lambda t19: M.progress(t19, t_light19 + 0.1, t_light19 + 0.8, "sine")
+    sc.add("p19_light_pool", doc19(S19.light_pool_svg(), feather=False), wc=0, motion=mot19(
+        lambda t19: Tf(alpha=light_in19(t19) * (0.85 + 0.15 * math.sin(2 * math.pi * (t19 - t_light19) / 2.6))),
+        a_fade))
+    for k in range(2):
+        sc.add(f"p19_rays{k}", doc19(S19.rays_svg(k), feather=False), wc=0, motion=mot19(
+            lambda t19, k=k: Tf(alpha=light_in19(t19) * (0.78 + 0.22 * (0.5 + 0.5 * math.sin(
+                2 * math.pi * (t19 - t_light19) / 2.2 + k * math.pi)))), a_fade))
+
+    sc.add("jonah_shadow", doc(C.ground_shadow(AX, GY, SJ, width=150, opacity=0.26)), motion=shadow_motion, wc=0)
     sc.add("jonah", frames, frame_at=lambda t: float(j_frame(t)), motion=j_motion, wc=0.6)
 
     # shade on Jonah: a cool flat copy of his own silhouette, multiplied (only under the finished roof)
@@ -1148,6 +1227,10 @@ def build(ctx):
         0.16 * M.progress(t, t_sit, t_sit + 0.5, "sine")
     sc.add("jonah_shade", flat, frame_at=lambda t: float(tint_idx.get(j_frame(t), 0)), wc=0, blend="multiply",
            motion=M.combine(j_motion, lambda t: Tf(alpha=shade_amt(t) if j_frame(t) in tint_idx else 0.0)))
+    # s19's warm glow from the light (additive, over Jonah too, as s19), fading with it
+    sc.add("p19_warm", doc19(S19.warm_svg(), feather=False), wc=0, blend="add", motion=mot19(
+        lambda t19: Tf(alpha=0.45 * M.progress(t19, t_light19 + 0.2, t_light19 + 1.2, "sine") *
+                       (0.8 + 0.2 * math.sin(2 * math.pi * (t19 - t_light19) / 2.3))), a_fade))
 
     # --- "hmph!": grumpy steam puffs rising above and behind his head (two little bursts, all before he walks)
     _, hp = jonah_fig(AX, GY, SJ, -1, POSE["sulk_hmph"], "hmph", label="hmph_pts")
@@ -1181,15 +1264,6 @@ def build(ctx):
                       px=x, py=y)
         sc.add(f"poof{i}", dsvg, motion=dmo2, wc=0.3)
 
-    # =========================================================== LIZARD (basks, does push-ups)
-    liz = [doc(V11._lizard(LIZ[0], LIZ[1], 0.82 * (1920 / 1960) * WF / 1920, legs=0))]
-
-    def liz_motion(t):
-        u = (t + 0.4) % 2.6
-        b = abs(math.sin(math.pi * u / 0.2)) if u < 0.4 else 0.0
-        return Tf(sx=1 - 0.03 * b, sy=1 + 0.13 * b, px=LIZ[0], py=LIZ[1] + 2)
-    sc.add("lizard", liz, motion=liz_motion, wc=0.5)
-
     # =========================================================== DOVES: up from the bush, off toward the city
     dove_frames = [doc(PR.dove(DOVE0[0], DOVE0[1], 0.62, -1, wing=w)) for w in (-1.0, -0.35, 0.35, 1.0)]
 
@@ -1214,7 +1288,8 @@ def build(ctx):
     fg += V11._rock(2960, 1290, 300, 130, seed=33) + V11._rock(2740, 1310, 150, 64, seed=34)
     fg += V11._rock(1210, 1300, 180, 70, seed=35)
     fg += PR.bush(40, 1180, 1.0, variant=2) + PR.bush(3080, 1170, 1.0, variant=2)
-    sc.add("fg_rocks", doc(S.g(fg, filter="wobble")), wc=0.9)
+    world = lambda t: Tf(alpha=1 - plate(t))       # this scene's own foreground comes in as the plate fades
+    sc.add("fg_rocks", doc(S.g(fg, filter="wobble")), wc=0.9, motion=world)
 
     def grass_fn(ph):
         return lambda t: 1.5 + 1.4 * math.sin(2 * math.pi * (t / 2.6 + ph))
@@ -1225,7 +1300,7 @@ def build(ctx):
                                 [(1720, 1210, 0.9, 1), (2150, 1190, 0.8, 1), (820, 1180, 0.85, 1)]]):
         gframes = [doc("".join(PR.grass_tuft(x, y, s_, variant=v, sway=sw_) for x, y, s_, v in tufts))
                    for sw_ in (0.5, 0.0, -0.5, -1.0)]
-        sc.add(f"grass{gi}", gframes, frame_at=grass_fn(gi * 0.23), wc=0.7)
+        sc.add(f"grass{gi}", gframes, frame_at=grass_fn(gi * 0.23), wc=0.7, motion=world)
 
     # =========================================================== FX
     import cv2
@@ -1257,12 +1332,15 @@ def build(ctx):
             r = m_r[i] * sc_
             a = int(100 * k * (0.6 + 0.4 * math.sin(t * 1.3 + m_ph[i])))
             d.ellipse([ox - r, oy - r, ox + r, oy + r], fill=(255, 246, 214, a))
+        heat = 1 - plate(t)                        # (no heat shimmer over s19's green plain)
         for i, (bx, by) in enumerate(HEAT):
+            if heat <= 0.01:
+                break
             u = (t * 0.55 + i * 0.37) % 1.0
             ox, oy = view.to_out(bx, by - 80 * u)
             if not (-60 < ox < frame.size[0] + 60):
                 continue
-            a = int(95 * math.sin(math.pi * u))
+            a = int(95 * heat * math.sin(math.pi * u))
             for j in range(3):
                 x0 = ox + (j - 1) * 22 * sc_
                 pts = [(x0 + 7 * sc_ * math.sin(q * 1.1 + t * 7 + i), oy - q * 9 * sc_) for q in range(9)]
@@ -1270,10 +1348,13 @@ def build(ctx):
         frame.alpha_composite(ov)
         return frame
 
-    # warm heat vignette (constant; as FX.vignette(0.16) but precomputed)
+    # warm heat vignette (as FX.vignette(0.16) but precomputed); it comes in with the desert (none in s19)
     _vg = {}
 
     def vignette(frame, t, view):
+        kv = 1 - plate(t)
+        if kv <= 0.002:
+            return frame
         if "k" not in _vg:
             Hh, Ww = frame.size[1], frame.size[0]
             yy, xx = np.mgrid[0:Hh, 0:Ww].astype(np.float32)
@@ -1281,8 +1362,12 @@ def build(ctx):
             a = np.clip(np.clip((rr - 0.35) / 0.95, 0, 1) ** 1.6 * 0.16, 0, 1)
             _vg["k"] = cv2.merge([np.round((1 - a) * 255).astype(np.uint8)] * 3)
             _vg["c"] = cv2.merge([np.round(a * c).astype(np.uint8) for c in (150, 82, 30)])
+        kk, cc = _vg["k"], _vg["c"]
+        if kv < 0.998:
+            kk = cv2.addWeighted(kk, kv, np.full_like(kk, 255), 1 - kv, 0)
+            cc = cv2.convertScaleAbs(cc, alpha=kv)
         arr = np.array(frame)
-        arr[..., :3] = cv2.add(cv2.multiply(arr[..., :3], _vg["k"], scale=1 / 255.0), _vg["c"])
+        arr[..., :3] = cv2.add(cv2.multiply(arr[..., :3], kk, scale=1 / 255.0), cc)
         return Image.fromarray(arr, "RGBA")
 
     sx0, sy0 = m19(1620, 380)
@@ -1298,6 +1383,8 @@ def build(ctx):
     # =========================================================== SOUND
     sc.sfx("wind_soft", 0, dur=T, gain_db=-16, fade_in=0.8, fade_out=0.8)
     sc.sfx("heat", 0, dur=T, gain_db=-19, fade_in=0.8, fade_out=0.8)
+    # s19's cheering city carries on, low, until it has faded behind him
+    sc.sfx("cheer", 0, dur=t_far1, gain_db=-26, fade_in=0.8, fade_out=t_far1 - t_far0, pan=-0.45)
     sc.sfx("cloth", t_up - 0.05, gain_db=-15, pan=-0.2)
     sc.sfx("whoosh", t_grab - 0.02, gain_db=-17, pan=-0.2)
     sc.sfx("thud", t_on - 0.02, gain_db=-15, pan=-0.2)
@@ -1307,7 +1394,9 @@ def build(ctx):
     sc.sfx("cloth", t_toss, gain_db=-14, pan=-0.1)
     sc.sfx("thud", t_land - 0.02, gain_db=-8, pan=-0.1)
     sc.sfx("hammer", hammer_at, gain_db=-6, pan=0.15)
-    sc.sfx("thud", t_frame_on - 0.02, gain_db=-11, pan=0.05)
+    for k, d in PIECES[:-1]:                    # a soft knock as each frame piece lands...
+        sc.sfx("thud", t_lift + d + PIECE_DROP - 0.02, gain_db=-18, pan=0.05)
+    sc.sfx("thud", t_frame_on - 0.02, gain_db=-11, pan=0.05)    # ...and the ridge, last
     sc.sfx("cloth", t_cloth0 - 0.03, gain_db=-6)
     sc.sfx("pop", t_branch, gain_db=-14)
     sc.sfx("thud", t_sit + 0.02, gain_db=-13)

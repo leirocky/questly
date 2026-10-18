@@ -6,7 +6,9 @@ indigo vignette and a gentle palette keep it a remembered picture. After the res
 the page and we are back inside the great fish (v1 / s11 belly, drawn in the stage's top 2112 x 1188 region).
 
 Story beats (keyed to the narration chunks; Jonah speaks the whole scene):
-  L0 '你把我丢进深海，大水包围着我，'  Jonah drifts in the deep ('float', worried); soft current swirls circle
+  L0 '你把我丢进深海，大水包围着我，'  he plunges in from the top just after the opening dissolve (kept out of it
+                                     so he never double-exposes with s11's kneeling Jonah), trailing bubbles,
+                                     then drifts in the deep ('float', worried); soft current swirls circle
                                      him, loose kelp leaves and bubbles drift by.
      '海草缠在我的头上。'             a ribbon of seaweed floats in on the current and wraps over his head-cloth
                                      (gently — it slides over the top and down the back; the tail streams up).
@@ -16,7 +18,8 @@ Story beats (keyed to the narration chunks; Jonah speaks the whole scene):
      '就想起了耶和华。'               he kneels and folds his hands (hard pose cut sold by a squash-and-hop); a
                                      tiny warm light glows at his hands.
      '我的祷告，一直达到了你的面前。' a stream of golden sparkles rises from his hands up out of the picture;
-                                     warm light answers from above and a soft beam starts reaching down.
+                                     warm light answers from above and a soft cone of light (with faint ray
+                                     streaks) reaches down, its leading edge a soft arc of glow.
   L3 '你把我从深坑里，救了上来！'     the beam reaches him; he springs up, arms raised, and rises in the light
                                      (the seaweed slips off and drifts away); the light fills the page.
   L4 '我要大声感谢你。'               inside the fish again (s11's belly, warm glow): kneeling, hands raised.
@@ -27,8 +30,9 @@ The last second is a calm hold in the glowing belly.
 God is never drawn: only warm light, a beam and sparkles.
 Engine notes: blend="screen" saturates, so glows use "add"/"normal" (as in v1). Deep layers are switched off and
 belly layers on at T_SW (inside the fully golden frame of the white-out), where the camera also cuts from the deep
-to the belly region. Cost is kept down by merging the water with the parallax far peaks, stretching the beam
-instead of a per-frame reveal mask, and precomputing the vignette + mist overlay.
+to the belly region. Cost is kept down by merging the water with the parallax far peaks, giving the beam's
+radial reveal mask only to its lower piece (the part on screen while it reveals), and precomputing the
+vignette + mist overlay.
 """
 import math
 import random
@@ -1018,22 +1022,61 @@ def build(ctx):
         return Tf(dy=cam_deep(t).y - 1300, alpha=a)
     sc.add("top_light", top_light, z=104, wc=0, blend="add", motion=deep_gate(top_light_m))
 
-    BX = JXD - 20
+    # the beam: a cone of light fanning out from a narrow source above the picture (nested soft cones) with
+    # three faint ray streaks fanning inside it — narrow at the top of the picture, wide at Jonah (additive)
+    BX, AY, BOT = JXD - 20, 450, FLOOR + 60
     beam_d = ""
-    for wk in (1.0, 0.7, 0.45, 0.22):
-        beam_d += (f'<path d="M{BX - 170 * wk:.0f},300 L{BX + 170 * wk:.0f},300 L{BX + 380 * wk:.0f},{FLOOR + 60} '
-                   f'L{BX - 380 * wk:.0f},{FLOOR + 60} Z" fill="url(#dbeam)"/>')
-    beam_doc = doc(S.g(beam_d, filter="blur-lg"),
-                   defs=f'<linearGradient id="dbeam" gradientUnits="userSpaceOnUse" x1="0" y1="300" x2="0" '
-                        f'y2="{FLOOR + 60}"><stop offset="0" stop-color="#8a4c12" stop-opacity="0.3"/>'
-                        f'<stop offset="0.25" stop-color="#8a4c12"/><stop offset="0.9" stop-color="#744210"/>'
-                        f'<stop offset="1" stop-color="#744210" stop-opacity="0.3"/></linearGradient>')
+    for wk in (1.0, 0.6, 0.28):
+        t0, b0 = 20 + 20 * wk, 660 * wk
+        beam_d += (f'<path d="M{BX - t0:.0f},{AY} L{BX + t0:.0f},{AY} L{BX + b0:.0f},{BOT} '
+                   f'L{BX - b0:.0f},{BOT} Z" fill="url(#dbeam)"/>')
+    rays_d = ""
+    for dxb, hwb in ((-420, 48), (50, 66), (440, 44)):
+        rays_d += (f'<path d="M{BX + dxb * 0.08 - 7:.0f},{AY + 40} L{BX + dxb * 0.08 + 7:.0f},{AY + 40} '
+                   f'L{BX + dxb + hwb:.0f},{BOT} L{BX + dxb - hwb:.0f},{BOT} Z" fill="url(#dray)"/>')
+    beam_body = S.g(beam_d, filter="blur-lg") + S.g(rays_d, filter="blur-md")
+    beam_defs = (
+        f'<linearGradient id="dbeam" gradientUnits="userSpaceOnUse" x1="0" y1="{AY}" x2="0" y2="{BOT}">'
+        f'<stop offset="0" stop-color="#8a4c12" stop-opacity="0.15"/>'
+        f'<stop offset="0.3" stop-color="#8a4c12" stop-opacity="0.95"/>'
+        f'<stop offset="0.8" stop-color="#744210" stop-opacity="0.9"/>'
+        f'<stop offset="1" stop-color="#744210" stop-opacity="0.45"/></linearGradient>'
+        f'<linearGradient id="dray" gradientUnits="userSpaceOnUse" x1="0" y1="{AY}" x2="0" y2="{BOT}">'
+        f'<stop offset="0" stop-color="#a8682a" stop-opacity="0"/>'
+        f'<stop offset="0.35" stop-color="#a8682a" stop-opacity="0.85"/>'
+        f'<stop offset="1" stop-color="#8a5418" stop-opacity="0.2"/></linearGradient>')
+    # Cost: the engine's radial reveal mask is per-pixel over the layer's crop, so the beam is cut into two
+    # complementary pieces (soft alpha ramps over SPLIT0..SPLIT1 that sum to exactly 1): only the lower piece
+    # (all the camera can see before the lift: its top is at stage y >= ~1240 until then) carries the reveal;
+    # the upper piece switches on at t_beam1, when the beam is fully open and that part is still off screen.
+    SPLIT0, SPLIT1 = 1130, 1190
 
-    # it reaches down from above: stretched from its top (cheap; no per-frame mask)
-    sc.add("deep_beam", beam_doc, z=104.2, wc=0, blend="add", motion=deep_gate(M.combine(
-        M.keys([(t_beam0, {"alpha": 0.0, "sy": 0.12}), (t_beam0 + 0.5, {"alpha": 0.8}), (t_beam1, {"alpha": 0.9, "sy": 1.0}),
-                (t_lift + 0.8, {"alpha": 1.0})], ["sine", "inout", "sine"], pivot=(BX, 300)),
-        M.pulse(0.88, 1.0, 2.9))))
+    def beam_piece(k, a0, a1):
+        return doc(f'<g mask="url(#bm{k})">{beam_body}</g>', defs=beam_defs + (
+            f'<linearGradient id="bs{k}" gradientUnits="userSpaceOnUse" x1="0" y1="{SPLIT0}" x2="0" y2="{SPLIT1}">'
+            f'<stop offset="0" stop-color="#ffffff" stop-opacity="{a0}"/>'
+            f'<stop offset="1" stop-color="#ffffff" stop-opacity="{a1}"/></linearGradient>'
+            f'<mask id="bm{k}" maskUnits="userSpaceOnUse" x="-200" y="-200" width="{W + 400}" height="{H + 400}">'
+            f'<rect x="-200" y="-200" width="{W + 400}" height="{H + 400}" fill="url(#bs{k})"/></mask>'))
+
+    # it reaches down from the source: a radial reveal centred on it, so the leading edge is a soft arc of
+    # glow that travels down the picture (no flat edge); it ends fully open (r = maxd + soft / 2), and from
+    # t_beam1 on the mask is skipped
+    # R_MAX = the engine's radial maxd: the farthest corner of the lower piece's alpha bbox, measured as
+    # (274, 1130)-(1806, 2280), from the source (BX, AY); re-measure it if the beam geometry changes
+    R_MAX, R_SOFT = 1984.0, 420.0
+
+    def beam_reveal(t):
+        if t >= t_beam1:
+            return {"mode": "down", "frac": 1.0}
+        r = lerp(1200.0 - AY, R_MAX + R_SOFT / 2, progress(t, t_beam0, t_beam1, "sine"))
+        return {"mode": "radial", "frac": r / R_MAX, "soft": R_SOFT, "cx": BX, "cy": AY}
+    beam_m = M.combine(
+        M.keys([(t_beam0, {"alpha": 0.0}), (t_beam0 + 0.5, {"alpha": 0.8}), (t_beam1, {"alpha": 0.9}),
+                (t_lift + 0.8, {"alpha": 1.0})], ["sine", "inout", "sine"]),
+        M.pulse(0.88, 1.0, 2.9))
+    sc.add("deep_beam", beam_piece("l", 0, 1), z=104.2, wc=0, blend="add", reveal=beam_reveal,
+           motion=deep_gate(beam_m))
 
     # warm glow around Jonah: a tiny light at his hands on '就想起了耶和华', fullest when he is lifted
     hands_k = jfig(JXD, FLOOR, JSD, "kneel_pray")[2]["hands"][1]
@@ -1064,8 +1107,14 @@ def build(ctx):
         rot = 5 * math.sin(2 * math.pi * t / 4.6) * (1 - 0.6 * u) - 6 * u
         return x - JB0[0], y - JB0[1], rot
 
+    # he is kept above the frame through the opening cross-dissolve (so s11's kneeling Jonah never
+    # double-exposes with this one) and plunges in from the top on '你把我丢进深海' (L0 starts ~0.9 s),
+    # slowing as the water takes him; only his own layers follow (the swirls stay put: he falls into them)
+    ENTER0, ENTER1, ENTER_DY = 0.95, 2.3, 760.0
+
     def float_m(t):
         dx, dy, rot = float_pos(t)
+        dy -= ENTER_DY * (1.0 - progress(t, ENTER0, ENTER1, "out"))
         return Tf(dx=dx, dy=dy, rot=rot, px=JB0[0], py=JB0[1])
 
     sc.add("jonah_float", doc(fl_mk), z=110, motion=deep_gate(M.combine(swap(-1, t_land), float_m)))
@@ -1194,6 +1243,11 @@ def build(ctx):
     sc.add("weeds_r", weeds_r, z=121.1, motion=deep_gate(),
            frame_at=lambda t: float(round(4 + 4 * math.sin(2 * math.pi * t / 3.2 + 1.0))))
 
+    # the upper piece of the beam (see deep_beam above); added last so that the default per-layer seeds
+    # (watercolour texture) of every layer added before it stay as they were
+    sc.add("deep_beam_top", beam_piece("u", 1, 0), z=104.21, wc=0, blend="add",
+           motion=deep_gate(M.combine(beam_m, lambda t: Tf(alpha=1.0 if t >= t_beam1 else 0.0))))
+
     # ================================================================ camera
     deep_keys = M.cam_keys([
         (0, Cam(1080, CAM_Y0, 1880)),
@@ -1291,6 +1345,9 @@ def build(ctx):
             (lambda t: (JXD + 240, FLOOR - 30), t_land, t_land + 0.25, 22, 120, (5, 14), 40, 200),
             (jonah_mouth, t_land + 0.4, t_lift, 0.5, 70, (4, 9), 6, 150, 13),
             (up_mouth, t_lift, T_SW, 3.0, 160, (5, 12), 14, 200, 14),
+            # a short trail of bubbles left behind (above) him as he plunges in from the top
+            (lambda t: apply_tf((float_head[0] - 6, float_head[1] - 88), float_m(t), JB0),
+             ENTER0 + 0.15, ENTER0 + 1.1, 17, 55, (4, 11), 24, 170, 4),
         ], t_end=T_SW, avoid=head_now),
         prayer_stream((hands_k[0], hands_k[1] - 20), hands_k[1] - 1250, light_level),
         V.twinkles((JXD - 360, 1250, JXD + 320, 2050), count=22, t0=t_beam1 - 0.4, color=(255, 236, 170),

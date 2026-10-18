@@ -7,12 +7,12 @@ travels right with the heralds and the decree.
 
   line 0  "国王听说了，"            a messenger in sackcloth tells the seated king the news (sound arcs) and points
                                     out to the city; the king is startled ("!").
-          "也从宝座上站起来，"      he leans forward and rises from his throne (squash, hard cut, spring up) and
-                                    steps forward.
-          "脱下漂亮的王袍，"        he lifts off his tall crown, turns to the throne and — in a cloth puff — his purple
+          "也从宝座上站起来，"      he leans forward, pushes himself half-way up (an in-between) and rises
+                                    from his throne (spring up), and steps forward.
+          "脱下漂亮的王袍，"        he reaches up, lifts off his tall crown and lowers it (in-betweens), turns to the throne and — in a cloth puff — his purple
                                     robe comes off and lands folded on the throne seat with the crown on top...
           "换上粗麻布衣服，"        ...and he stands in scratchy burlap sackcloth; he turns back, shivers.
-          "坐在灰堆里，"            a heap of ashes puffs up in front of the throne and he sits down in it.
+          "坐在灰堆里，"            a heap of ashes puffs up in front of the throne; he crouches and sits down in it.
           "表示真心认错。"          he bows his head, sorry; the messenger and the scribe bow their heads too.
   line 1  "国王又派人在全城宣告："  the king lifts his head and speaks; the messenger and the scribe nod and walk out
                                     onto the terrace one after the other (planted-foot steps: the anchor advances
@@ -22,8 +22,10 @@ travels right with the heralds and the decree.
                                     open end; the camera rests on them; far heralds answer from the roofs.
   line 2  "所有的人和牛羊，都不可以吃，"  (the king's words, read from the scroll) the camera glides on and pushes in
                                     close on the yard: a cow and a goat munch at the manger — the farmer lays a
-                                    big plank lid over the hay (dust puff, bounce), they lift their heads ("?").
-          "也不可以喝。"            his daughter pulls a reed mat over the water trough; the lamb looks up ("?").
+                                    big plank lid over the hay (dust puff, bounce), they lift their heads ("?"); from
+                                    here their heads are drawn in front of the lid (the swap hides in the puff).
+          "也不可以喝。"            his daughter pulls a reed mat over the water trough; the lamb looks up ("?")
+                                    (its head moves in front of the mat as it lands).
   line 3  "人和牛羊，都要穿上麻布衣服，"  the camera eases back out; pop, pop, pop: the cow, goat, sheep, lamb and
                                     donkey each get a little sackcloth blanket (cloth puffs and happy hops).
           "诚心向上帝呼求。"        the farmer, his daughter and the neighbours kneel and pray; the animals bow;
@@ -46,7 +48,8 @@ move). Doves drift across the street sky (entering and leaving outside the frame
 a crier on a roof keeps reading.
 
 Pose changes are hard cuts (no crossfades between different drawings) hidden at the bottom of a small squash /
-dip, or under a cloth puff. All times are derived from the narration chunks.
+dip, or under a cloth puff; the king's three key actions (rise, crown off, sit in the ashes) and the two
+reconciled neighbours' kneel also get short in-between drawings (custom pose dicts, see king_ib / man_ib). All times are derived from the narration chunks.
 """
 import math
 import random
@@ -898,6 +901,80 @@ def bp(kind, variant, x, y, s, facing, pose):
     return C.body_points(C.citizen, x, y, s, facing, kind=kind, variant=variant, pose=pose, attire="sackcloth")
 
 
+# ---- the king's in-between drawings (custom pose dicts, built the way s14 builds Jonah's half-kneel RISE), so
+# his three key actions (rise from the throne, lift off the crown, sit down in the ashes) are not one-frame swaps
+_KR = C._KING_M["R"]
+
+
+def king_ib(attire, design_pose, ps, expr, x, y, facing=1, crown=None):
+    """In-between king drawing from a custom pose dict ``ps`` (design_pose 'stand' = crown on his head,
+    'remove_crown' = crown in his hands). ``crown`` = (dx, dy, rot, tilt) re-places the held crown relative to the
+    hands (in head radii; the library's own hold is (-0.05, 0.58, -8, 1.0), with the hands at the crown's middle)."""
+    D = C._king_design(attire, design_pose, False, False)
+    if crown is not None:
+        cdx, cdy, crot, ctilt = crown
+        skin = D["skin"]
+
+        def held(st):
+            W0, W1 = st["arms"][0][2], st["arms"][1][2]
+            r = st["m"]["R"]
+            c = C._lerp(W0, W1, 0.5)
+            out = (f'<g transform="translate({C._pt(c)}) rotate({crot})">'
+                   f'{C._crown(r, x0=cdx * r, y0=cdy * r, k=1.0, tilt=ctilt)}</g>')
+            for W in (W0, W1):
+                out += (f'<circle cx="{C.fmt(W[0])}" cy="{C.fmt(W[1])}" r="{C.fmt(st["m"]["hr"])}" fill="{skin}" '
+                        f'{C._st(3.2)}/>')
+            return out
+        D["front"] = held
+    inner, _ = C._figure(D, C._KING_M, ps, expr, C._fsign(facing), True)
+    return C._wrap_out(inner, x, y, KS, facing, f"king-ib-{design_pose}")
+
+
+def _hold(x, y, h=0.0, over=False):
+    """Both hands holding the crown in front of him, around body point (x, y) (as the library's remove_crown)."""
+    return C._P(t=-2, h=h, arms=(("ik", "body", x + 0.80 * _KR, y, 1), ("ik", "body", x - 0.86 * _KR, y + 2, 1)),
+                hands=("none", "none"), far_over_head=over)
+
+
+def _crouch(t, h, drop, a, b, kn=0.28):
+    """Knees bent (both feet planted at a, b), hands on the knees: on the way down into the ash heap."""
+    return C._P(t=t, h=h, drop=drop, legs=(("ik", a, 1), ("ik", b, 1)),
+                arms=(("ik", "knee", 0, kn, 1), ("ik", "knee", 1, kn, 1)), hem=0.97, flare=-8)
+
+
+# half-way up from the throne: pelvis lowered, both feet planted, hands pushing on the knees
+HALF_RISE = C._P(t=18, h=-6, drop=35, legs=(("ik", 52, 1), ("ik", 64, 1)),
+                 arms=(("ik", "knee", 0, 0.22, 1), ("ik", "knee", 1, 0.22, 1)), hem=0.97, flare=-6)
+# taking off the crown (each step moves the crown ~50-90 stage px, never across his eyes for long):
+# both hands reach up to it (design 'stand': still on his head) ...
+CROWN_REACH = C._P(t=-2, h=-6, arms=(("ik", "head", 0.78, -1.15, 1), ("ik", "head", -0.70, -1.10, -1)),
+                   hands=("open", "open"), far_over_head=True)
+# ... lift it up and forward off his head (drawn with crown=CROWN_LIFT_AT) ...
+CROWN_LIFT = C._P(t=-2, h=-6, arms=(("ik", "head", 1.45, -1.25, 1), ("ik", "head", 0.50, -1.35, -1)),
+                  hands=("none", "none"), far_over_head=True)
+CROWN_LIFT_AT = (0.0, 0.2, 16, 0.6)
+# ... bring it out in front of his face (crown=CROWN_OUT_AT) ...
+CROWN_OUT = _hold(110, -172, -2, over=True)
+CROWN_OUT_AT = (-0.05, 0.4, 6, 0.8)
+# ... and lower it beside his beard and on down to his chest (the library's remove_crown hold)
+CROWN_LOWER = _hold(95, -120, 4)
+CROWN_LOWER2 = _hold(80, -82, 6)
+# sitting down into the ash heap (sackcloth): knees bend, then a deep crouch
+CROUCH1 = _crouch(4, 4, 35, 36, 46, 0.24)
+CROUCH2 = _crouch(8, 8, 72, 52, 64)
+
+# a townsman half-way down to his knees (knees bent, hands coming together to pray)
+HALF_KNEEL = C._P(t=2, h=-8, drop=22, legs=(("ik", 30, 1), ("ik", -30, 1)),
+                  arms=(("ik", "torso", 1.3, 0.72, 1), ("ik", "torso", 1.3, 0.72, 1)), hands=("none", "pray"))
+
+
+def man_ib(variant, ps, expr, x, y, s, facing):
+    """In-between drawing of a townsman (citizen kind 'man', sackcloth) from a custom pose dict."""
+    D = C._citizen_design("man", variant, "sackcloth")
+    inner, _ = C._figure(D, C._ADULT, ps, expr, C._fsign(facing), True)
+    return C._wrap_out(inner, x, y, s, facing, f"man{variant}-ib")
+
+
 # ============================================================================ build
 
 
@@ -1073,17 +1150,23 @@ def build(ctx):
                 (t_land + 0.22, {"rot": 0})], "sine", pivot=bpv),
         hop(t_land, [(0, {"sx": 1, "sy": 1}), (0.07, {"sx": 1.06, "sy": 0.88}), (0.2, {"sx": 1, "sy": 1})], bpv)))
 
-    # the king on the throne: listens, is startled, leans forward and squashes, then hard-cuts to the standing
-    # king right in front of the seat (who springs up)
+    # the king on the throne: listens, is startled, leans forward and squashes, pushes himself half-way up (an
+    # in-between drawing for three frames), then hard-cuts to the standing king right in front of the seat (who
+    # springs up)
     pv_seat = (THRONE_X, THRONE_Y)
     seat = [doc(C.king(THRONE_X, THRONE_Y, KS, 1, pose="sit_throne", throne=False)),
             doc(C.king(THRONE_X, THRONE_Y, KS, 1, pose="sit_throne", throne=False, expr="worried")),
-            doc(C.king(THRONE_X, THRONE_Y, KS, 1, pose="sit_throne", throne=False, expr="surprised"))]
-    sc.add("king_seat", seat, z=6, frame_at=cuts([(0, 0), (snap(t_tell + 0.3), 1), (snap(t_wow), 2)]),
+            doc(C.king(THRONE_X, THRONE_Y, KS, 1, pose="sit_throne", throne=False, expr="surprised")),
+            doc(king_ib("royal", "stand", HALF_RISE, "surprised", THRONE_X + 25, THRONE_Y + 9))]
+    t_half = snap(t_rise - 0.1)
+    sc.add("king_seat", seat, z=6, frame_at=cuts([(0, 0), (snap(t_tell + 0.3), 1), (snap(t_wow), 2), (t_half, 3)]),
            motion=M.combine(
                dip(snap(t_tell + 0.3), KS, pv_seat, 4), dip(snap(t_wow), KS, pv_seat, 6),
-               hop(t_rise, [(-0.26, {"sy": 1, "rot": 0, "alpha": 1}), (0, {"sy": 0.94, "rot": 6, "alpha": 1}),
-                            (0.01, {"sy": 0.94, "rot": 6, "alpha": 0})], pv_seat, ["inout", "linear"]),
+               # the seated lean ends at the half-rise cut (that drawing stands straight); gone at the swap
+               hop(t_rise, [(-0.32, {"sy": 1, "rot": 0, "alpha": 1}),
+                            (t_half - t_rise, {"sy": 0.94, "rot": 6, "alpha": 1}),
+                            (t_half - t_rise + 0.01, {"sy": 1.0, "rot": 0, "alpha": 1}), (0, {"alpha": 1}),
+                            (0.01, {"alpha": 0})], pv_seat, ["inout", "linear", "linear", "linear"]),
                M.breathe(0.008, 3.2, pivot=pv_seat)))
     kh = C.body_points(C.king, THRONE_X, THRONE_Y, KS, 1, pose="sit_throne", throne=False)["head_top"]
     ex, ey = kh[0] + 128, kh[1] + 44
@@ -1098,7 +1181,8 @@ def build(ctx):
                     "out", pivot=(ax, SPOT_Y))
     sc.add("ash_back", doc(V.ash_heap(ax, SPOT_Y, KS, "back")), z=6.5, motion=ash_in)
     sc.add("ash_front", doc(V.ash_heap(ax, SPOT_Y, KS, "front")), z=7.5, motion=ash_in)
-    for nm, tt, w, sd, a in (("ash_puff1", t_ash, 300, 3, 0.6), ("ash_puff2", t_sit, 240, 5, 0.5)):
+    # (the second puff rises as he crouches into the heap, so he lands in it)
+    for nm, tt, w, sd, a in (("ash_puff1", t_ash, 300, 3, 0.6), ("ash_puff2", snap(t_sit - 0.13), 300, 5, 0.65)):
         pv = (ax, SPOT_Y - 20)
         sc.add(nm, doc(ash_cloud_markup(ax, SPOT_Y - 20, w, sd)), z=7.6, wc=0.5,
                motion=hop(tt, [(-0.02, {"alpha": 0, "s": 0.6, "dy": 0}), (0.08, {"alpha": a, "s": 0.95}),
@@ -1115,7 +1199,23 @@ def build(ctx):
            doc(ksh + C.king(SPOT_X, SPOT_Y, KS, 1, pose="stand", attire="sackcloth")),                    # 4
            doc(C.king(SPOT_X, SPOT_Y, KS, 1, pose="sit_ashes", ashes=False)),                             # 5
            doc(C.king(SPOT_X, SPOT_Y, KS, 1, pose="sit_ashes", ashes=False, expr="sorry")),               # 6
-           doc(C.king(SPOT_X, SPOT_Y, KS, 1, pose="sit_ashes", ashes=False, expr="call"))]                # 7
+           doc(C.king(SPOT_X, SPOT_Y, KS, 1, pose="sit_ashes", ashes=False, expr="call")),                # 7
+           # in-betweens (on twos): reach up to the crown, lift it up and forward off his head, bring it out in
+           # front of his face, lower it beside his beard and on to his chest; bend the knees and crouch into the
+           # ashes (no shadow: the heap covers his feet)
+           doc(ksh + king_ib("royal", "stand", CROWN_REACH, "worried", SPOT_X, SPOT_Y)),                 # 8
+           doc(ksh + king_ib("royal", "remove_crown", CROWN_LIFT, "sorry", SPOT_X, SPOT_Y,
+                             crown=CROWN_LIFT_AT)),                                                       # 9
+           doc(ksh + king_ib("royal", "remove_crown", CROWN_OUT, "sorry", SPOT_X, SPOT_Y,
+                             crown=CROWN_OUT_AT)),                                                        # 10
+           doc(ksh + king_ib("royal", "remove_crown", CROWN_LOWER, "sorry", SPOT_X, SPOT_Y)),            # 11
+           doc(ksh + king_ib("royal", "remove_crown", CROWN_LOWER2, "sorry", SPOT_X, SPOT_Y)),           # 12
+           doc(king_ib("sackcloth", "stand", CROUCH1, "sad", SPOT_X, SPOT_Y)),                           # 13
+           doc(king_ib("sackcloth", "stand", CROUCH2, "sad", SPOT_X, SPOT_Y))]                           # 14
+    F = 1 / 30                                 # (t_crown and t_sit sit mid-frame, so these cuts do too)
+    t_reach, t_lift, t_out = t_crown - 11 * F, t_crown - 8 * F, t_crown - 6 * F
+    t_lower, t_lower2 = t_crown - 4 * F, t_crown - 2 * F
+    t_crouch1, t_crouch2 = t_sit - 6 * F, t_sit - 3 * F
     t_unspeak = snap(c1.end - 0.3)
     step = 0.17
     bob_keys = [(0, {"dy": 0, "rot": 0})]
@@ -1123,22 +1223,28 @@ def build(ctx):
         bob_keys += [(i * step + step / 2, {"dy": -7, "rot": 1.6 * (1 if i % 2 else -1)}),
                      ((i + 1) * step, {"dy": 0, "rot": 0})]
     sc.add("king", kfr, z=7,
-           frame_at=cuts([(0, 0), (t_crown, 1), (t_turn, 2), (t_sack, 3), (t_front, 4), (t_sit, 5), (t_sorry, 6),
-                          (t_speak, 7), (t_unspeak, 6)]),
+           frame_at=cuts([(0, 0), (t_reach, 8), (t_lift, 9), (t_out, 10), (t_lower, 11), (t_lower2, 12), (t_crown, 1),
+                          (t_turn, 2), (t_sack, 3), (t_front, 4), (t_crouch1, 13), (t_crouch2, 14), (t_sit, 5),
+                          (t_sorry, 6), (t_speak, 7), (t_unspeak, 6)]),
            motion=M.combine(
                M.keys([(t_rise, {"alpha": 0}), (t_rise + 0.01, {"alpha": 1})], "linear", pivot=kp),
                M.keys([(t_w0, {"dx": RISE_X - SPOT_X}), (t_w0 + 4 * step, {"dx": 0})], "inout", pivot=kp),
                hop(t_w0, bob_keys, kp),
-               hop(t_rise, [(0, {"sy": 0.9, "rot": 5}), (0.08, {"sy": 1.04, "rot": 0}), (0.18, {"sy": 0.99}),
+               hop(t_rise, [(0, {"sy": 0.95, "rot": 3}), (0.08, {"sy": 1.04, "rot": 0}), (0.18, {"sy": 0.99}),
                             (0.28, {"sy": 1.0})], kp),
-               dip(t_crown, KS, kp, 10), dip(t_turn, KS, kp, 6),
+               hop(t_lift, [(-0.1, {"dy": 0, "sy": 1}), (0, {"dy": -6 * KS, "sy": 1.02}), (0.12, {"dy": 0, "sy": 1})],
+                   kp),
+               dip(t_crown, KS, kp, 5), dip(t_turn, KS, kp, 6),
                hop(t_sack, [(-0.1, {"dy": 0, "sy": 1}), (0, {"dy": 5, "sy": 0.96}), (0.12, {"dy": -3, "sy": 1.02}),
                             (0.26, {"dy": 0, "sy": 1})], kp, ["in", "out", "sine"]),
                dip(t_front, KS, kp, 6),
                hop(t_itch, [(0, {"rot": 0}), (0.08, {"rot": -1.6}), (0.16, {"rot": 1.6}), (0.24, {"rot": -1.3}),
                             (0.32, {"rot": 1.1}), (0.42, {"rot": 0})], (SPOT_X, SPOT_Y)),
-               hop(t_sit, [(-0.2, {"dy": 0, "sy": 1}), (0, {"dy": 14, "sy": 0.93}), (0.1, {"dy": -3, "sy": 1.03}),
-                           (0.25, {"dy": 0, "sy": 1})], kp, ["in", "out", "sine"]),
+               # sinks through the crouch drawing and lands in the heap
+               hop(t_sit, [(-0.33, {"dy": 0, "sy": 1}), (t_crouch1 - t_sit, {"dy": 3, "sy": 0.99}),
+                           (t_crouch2 - t_sit, {"dy": 6, "sy": 0.97}), (0, {"dy": 8, "sy": 0.95}),
+                           (0.1, {"dy": -3, "sy": 1.03}), (0.25, {"dy": 0, "sy": 1})], kp,
+                   ["in", "sine", "sine", "out", "sine"]),
                dip(t_sorry, KS, kp, 5), dip(t_speak, KS, kp, 4), dip(t_unspeak, KS, kp, 4),
                M.breathe(0.009, 3.0, pivot=kp, phase=0.3)))
     pk = (SPOT_X - 6, SPOT_Y - 190)
@@ -1244,7 +1350,10 @@ def build(ctx):
     # ---- the yard: animals (heads nod on their own layers), manger, trough, farmer and his daughter ----
     puffs = []
 
-    def beast(name, a, kind, z, head_angle, hops=(), t_sack_=None):
+    def beast(name, a, kind, z, head_angle, hops=(), t_sack_=None, front=None):
+        """``front`` = (z_front, t_swap): from t_swap on the head is drawn on a layer at z_front (in front of the
+        manger lid / trough mat) instead of just above its body — a hard cut of the same drawing with the same
+        motion (only its depth changes), so the faces stay visible once the food and water are covered."""
         x, y, s, f = a["x"], a["y"], a["s"], a["f"]
         b0, h0, pv = animal_parts(x, y, s, f, kind, False)
         b1, _, _ = animal_parts(x, y, s, f, kind, True)
@@ -1258,7 +1367,15 @@ def build(ctx):
         body_m = M.combine(*base)
         sc.add(name, frames, z=z, frame_at=fa, motion=body_m)
         if h0:
-            sc.add(name + "_head", doc(h0), z=z + 0.01, motion=head_motion(body_m, head_angle, (x, y), pv, f))
+            hm = head_motion(body_m, head_angle, (x, y), pv, f)
+            if front is None:
+                sc.add(name + "_head", doc(h0), z=z + 0.01, motion=hm)
+            else:
+                zf, ts = front
+                sc.add(name + "_head", doc(h0), z=z + 0.01,
+                       motion=M.combine(hm, M.keys([(ts - 0.001, {"alpha": 1}), (ts, {"alpha": 0})], "linear")))
+                sc.add(name + "_head_front", doc(h0), z=zf,
+                       motion=M.combine(hm, M.keys([(ts - 0.001, {"alpha": 0}), (ts, {"alpha": 1})], "linear")))
         if t_sack_ is not None:
             puffs.append((t_sack_, x, y, s, kind))
 
@@ -1279,14 +1396,16 @@ def build(ctx):
     t_cow_up = t_lid_on + 0.08
     t_lamb_up = t_mat_on + 0.08
     beast("donkey", DONKEY, "donkey", 10.0, None, t_sack_=snap(t_cloth + 1.2))
+    # once the lid / mat lands, the cow's, goat's and lamb's heads move in front of it (the swap hides under the
+    # lid's dust puffs, z 11.75, which sit right on the two heads; and under the bouncing mat for the lamb)
     beast("cow", COW, "cow", 10.6, munch(t_cow_up, 6, 1.3, 0.2, -7, 4, t_pray + 0.3), hops=(snap(t_cloth),),
-          t_sack_=snap(t_cloth))
+          t_sack_=snap(t_cloth), front=(11.72, snap(t_lid_on + 0.07)))
     beast("goat", GOAT, "goat", 11.2, munch(t_cow_up + 0.15, 7, 1.05, 0.6, -8, 4, t_pray + 0.45),
-          hops=(snap(t_cloth + 0.3),), t_sack_=snap(t_cloth + 0.3))
+          hops=(snap(t_cloth + 0.3),), t_sack_=snap(t_cloth + 0.3), front=(11.73, snap(t_lid_on + 0.07)))
     beast("sheep", SHEEP, "sheep", 12.2, munch(t_lamb_up + 0.1, 5, 1.6, 0.3, -6, 4, t_pray + 0.4),
           hops=(snap(t_cloth + 0.6),), t_sack_=snap(t_cloth + 0.6))
     beast("lamb", LAMB, "sheep", 11.4, munch(t_lamb_up, 6, 1.2, 0.8, -9, 5, t_pray + 0.55),
-          hops=(snap(t_cloth + 0.9),), t_sack_=snap(t_cloth + 0.9))
+          hops=(snap(t_cloth + 0.9),), t_sack_=snap(t_cloth + 0.9), front=(12.15, snap(t_mat_on + 0.08)))
 
     # farmer behind the manger
     fx_, fy_, fs, fv = FARMER["x"], FARMER["y"], FARMER["s"], FARMER["v"]
@@ -1406,7 +1525,9 @@ def build(ctx):
                 doc(person("man", v, x, y, s, facing, "walk_b", "sorry")),      # 3
                 doc(person("man", v, x, y, s, facing, "point", "happy")),       # 4
                 doc(person("man", v, x, y, s, facing, "kneel_pray", "worried")),  # 5
-                doc(person("man", v, x, y, s, facing, "kneel_pray", "peaceful"))]  # 6
+                doc(person("man", v, x, y, s, facing, "kneel_pray", "peaceful")),  # 6
+                # in-between on the way down to his knees: knees bent, hands coming together
+                doc(C.ground_shadow(x, y, s, 140, opacity=0.2) + man_ib(v, HALF_KNEEL, "worried", x, y, s, facing))]
     for nm, a, f, dt in (("man_a", MAN_A, 1, 0.0), ("man_b", MAN_B, -1, 0.12)):
         x, y, s = a["x"], a["y"], a["s"]
         pv = (x, y)
@@ -1414,14 +1535,17 @@ def build(ctx):
         t4, t5, t6 = snap(t_shake), snap(t_kneel + dt), snap(t_hope + dt)
         shout = lambda t, dt=dt: Tf(rot=1.8 * math.sin(2 * math.pi * (t + dt) / 0.55)) if t < t_stop + dt else Tf()
         sc.add(nm, man_frames(a, f), z=13 + y / 1000,
-               frame_at=cuts([(0, 0), (t1, 1), (t2, 2), (t3, 3), (t4, 4), (t5, 5), (t6, 6)]),
+               frame_at=cuts([(0, 0), (t1, 1), (t2, 2), (t3, 3), (t4, 4), (t5 - 3 / 30, 7), (t5, 5), (t6, 6)]),
                motion=M.combine(
                    # one quick planted-foot step toward the other as the walk_b drawing cuts in (no glide)
                    M.with_pivot(M.keys([(t3 - 0.06, {"dx": 0}), (t3 + 0.12, {"dx": f * SHAKE_DX})], "sine"), pv),
                    hop(t3 - 0.06, [(0, {"dy": 0}), (0.09, {"dy": -7 * s}), (0.18, {"dy": 0})], pv),
                    M.with_pivot(shout, pv),
-                   dip(t1, s, pv, 6), dip(t2, s, pv, 5), dip(t3, s, pv, 4), dip(t4, s, pv, 5), dip(t5, s, pv),
-                   dip(t6, s, pv, 4),
+                   dip(t1, s, pv, 6), dip(t2, s, pv, 5), dip(t3, s, pv, 4), dip(t4, s, pv, 5), dip(t6, s, pv, 4),
+                   # sinks through the half-kneel drawing (3 frames) onto his knees
+                   hop(t5, [(-0.25, {"dy": 0, "sy": 1}), (-3 / 30, {"dy": 3 * s, "sy": 0.98}),
+                            (0, {"dy": 9 * s, "sy": 0.95}), (0.13, {"dy": -3 * s, "sy": 1.015}),
+                            (0.28, {"dy": 0, "sy": 1})], pv, ["in", "sine", "out", "sine"]),
                    hop(t4 + 0.25, [(0, {"dy": 0}), (0.12, {"dy": -6}), (0.24, {"dy": 0}), (0.36, {"dy": -6}),
                                    (0.48, {"dy": 0})], pv),
                    M.breathe(0.01, 2.7, pivot=pv, phase=0.5 + dt)))

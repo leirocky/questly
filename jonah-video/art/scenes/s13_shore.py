@@ -24,12 +24,14 @@ Iris-open into the scene: the centre of the first frame is the fish's head and b
                   his silhouette, shake arcs by his head) and looks at himself, dripping all over.
   '可是他又看见了太阳' sunlight streams down onto him; on '看见' he opens his arms to the warm sun (hop cut); faint
                   steam rises from his drying robe; the sun pulses on '太阳'.
-  '他得救了！'      he springs up, arms raised, golden sparkles round him; once he has landed, far out at sea the
-                  fish's tail waves goodbye and sinks gently.
+  '他得救了！'      he springs up (rocks forward, squats onto his feet, half-crouch, pushes up: in-between
+                  drawings) into a jump with his arms raised, golden sparkles round him; once he has landed, far
+                  out at sea the fish's tail waves goodbye and sinks gently.
   end             calm hold: Jonah in the sunshine, waves lapping, palms swaying.
 
-Pose changes are hard cuts hidden by a squash-and-hop / shake (no crossfaded doubles). All times are keyed to
-the narration chunks (word_t() estimates a phrase's time inside its chunk).
+Pose changes are hard cuts hidden by a squash-and-hop / shake, or carried by in-between drawings (no
+crossfaded doubles). All times are keyed to the narration chunks (word_t() estimates a phrase's time inside
+its chunk).
 """
 import math
 
@@ -74,6 +76,34 @@ PART_L, PART_R = -80.0, 105.0              # how far each cloud moves aside when
 GAP = (910.0, 150.0)                       # middle of the gap once parted (at rest, before the drift)
 RAY_SRC = (GAP[0], GAP[1] - 40)            # the rays start just inside the gap (behind the cloud edges)
 RAY_TGT = (885.0, 485.0)                   # ...and end on the far fish's head (rays layer drifts with the clouds)
+
+# In-between drawings for springing up from sitting (sit_happy -> arms_up) on '他得救了': he rocks forward
+# drawing his feet in (lean_a, lean_b), rises onto them in a deep squat (squat_up) and a forward-leaning
+# half-crouch (crouch_up) and pushes up (push_up), arms swinging higher each drawing. Built with the library's
+# own pose record and figure rig (same design as C.jonah), but kept local to this scene so the shared character
+# library (and every other scene's render) stays unchanged.
+GETUP_POSES = {
+    "lean_a": C._P(t=4, h=-8, legs=(("ik", 92, 1), ("ik", 100, 1)), arms=(("fk", 122, 148), ("fk", -116, -143)),
+                   hands=("open", "open"), expr="happy", **C._SEATED),
+    "lean_b": C._P(t=20, h=-10, legs=(("ik", 62, 1), ("ik", 70, 1)), arms=(("fk", 128, 152), ("fk", -122, -147)),
+                   hands=("open", "open"), expr="happy", **C._SEATED),
+    "squat_up": C._P(t=26, h=-12, drop=56, legs=(("ik", 52, 1), ("ik", 18, 1)),
+                     arms=(("fk", 132, 154), ("fk", -126, -149)), hands=("open", "open"), expr="happy"),
+    "crouch_up": C._P(t=14, h=-8, drop=28, legs=(("ik", 40, 1), ("ik", -14, 1)),
+                      arms=(("fk", 136, 156), ("fk", -130, -152)), hands=("open", "open"), expr="happy"),
+    "push_up": C._P(t=6, h=-8, drop=10, legs=(("ik", 22, 1), ("ik", -8, 1)),
+                    arms=(("fk", 144, 163), ("fk", -140, -160)), hands=("open", "open"), expr="happy"),
+}
+STANDING_GETUP = ("squat_up", "crouch_up", "push_up")
+
+
+def jonah_fig(x, y, scale=1.0, facing=1, pose="stand", expr=None, wet=False, marks=True):
+    """C.jonah(), plus this scene's get-up in-betweens (GETUP_POSES). Works with C.body_points()."""
+    if pose not in GETUP_POSES:
+        return C.jonah(x, y, scale, facing, pose=pose, expr=expr, wet=wet, marks=marks)
+    ps = dict(GETUP_POSES[pose])
+    inner, _ = C._figure(C._jonah_design(wet), C._ADULT, ps, expr or ps["expr"], 1 if facing >= 0 else -1, marks)
+    return C._wrap_out(inner, x, y, scale, facing, f"jonah-{pose}")
 
 
 def doc(body, defs=""):
@@ -754,12 +784,14 @@ def build(ctx):
         s = lerp(S0, JS, M.ease("sine")(v))
         return x, y, rot, s
 
-    def hop(t, tc, h, up=0.13, down=0.14, pre=0.09, post=0.14, sq=0.08):
-        """Squash-and-hop centred on tc (peak). Returns (dy, sx, sy)."""
+    def hop(t, tc, h, up=0.13, down=0.14, pre=0.09, post=0.14, sq=0.08, sq_pre=None):
+        """Squash-and-hop centred on tc (peak). Returns (dy, sx, sy). ``sq_pre`` overrides the take-off squash
+        (default ``sq``, same as the landing squash)."""
         dy, sx, sy = 0.0, 1.0, 1.0
         if tc - up - pre <= t < tc - up:
             k = math.sin(math.pi * (t - (tc - up - pre)) / pre)
-            sx, sy = 1 + sq * k, 1 - sq * 1.2 * k
+            q = sq if sq_pre is None else sq_pre
+            sx, sy = 1 + q * k, 1 - q * 1.2 * k
         elif tc - up <= t < tc:
             u = (t - (tc - up)) / up
             dy = -h * (1 - (1 - u) ** 2)
@@ -809,8 +841,9 @@ def build(ctx):
             sx *= 1 + 0.025 * env
         # sees the sun: a small hop (pose cut at its peak)
         d1, a1, b1 = hop(t, t_look, 18)
-        # saved: springs up (cut to standing at the start of the rise), then one little joy bounce
-        d2, a2, b2 = hop(t, t_joy_peak, 46, up=0.18, down=0.17, pre=0.12, post=0.16, sq=0.1)
+        # saved: springs up (rocks forward, half-crouch, push up: in-between drawings, see jonah_idx), then one
+        # little joy bounce. The crouch drawing is the take-off anticipation, so its extra squash is small.
+        d2, a2, b2 = hop(t, t_joy_peak, 76, up=0.18, down=0.17, pre=0.12, post=0.16, sq=0.1, sq_pre=0.05)
         d3, a3, b3 = hop(t, t_joy_peak + 0.62, 12, up=0.12, down=0.12, pre=0.07, post=0.1, sq=0.04)
         dy += d1 + d2 + d3
         sx *= a1 * a2 * a3
@@ -822,6 +855,13 @@ def build(ctx):
 
     t_cut_look = t_look                       # at the hop's peak
     t_cut_joy = t_joy_peak - 0.18             # start of the rise
+    # springing up: sit_happy -> lean_a (2 frames) -> lean_b (2) -> squat_up (1) -> crouch_up (2) (these two
+    # during the take-off squash) -> push_up (1, at take-off) -> arms_up (rising)
+    t_lean_a = t_cut_joy - 7 / FPS
+    t_lean_b = t_cut_joy - 5 / FPS
+    t_squat = t_cut_joy - 3 / FPS
+    t_crouch = t_cut_joy - 2 / FPS
+    t_stand = t_cut_joy + 1 / FPS
 
     def jonah_idx(t):
         if t < t_land:
@@ -830,14 +870,26 @@ def build(ctx):
             return 1.0
         if t < t_cut_look:
             return 2.0
-        if t < t_cut_joy:
+        if t < t_lean_a:
             return 3.0
+        if t < t_lean_b:
+            return 5.0
+        if t < t_squat:
+            return 6.0
+        if t < t_crouch:
+            return 7.0
+        if t < t_cut_joy:
+            return 8.0
+        if t < t_stand:
+            return 9.0
         return 4.0
 
     j_fall = C.jonah(LAND[0], LAND[1], JS, -1, pose="fall", expr="surprised", wet=True)
+    # indices 0-4 as before; 5-9 are the get-up in-betweens
     J_POSES = [("fall", "surprised"), ("sit", "dizzy"), ("sit", "surprised"), ("sit_happy", "happy"),
-               ("arms_up", "happy")]
-    j_frames = [doc(j_fall)] + [doc(C.jonah(LAND[0], LAND[1], JS, -1, pose=p, expr=e, wet=True))
+               ("arms_up", "happy"), ("lean_a", "happy"), ("lean_b", "happy"), ("squat_up", "happy"),
+               ("crouch_up", "happy"), ("push_up", "happy")]
+    j_frames = [doc(j_fall)] + [doc(jonah_fig(LAND[0], LAND[1], JS, -1, pose=p, expr=e, wet=True))
                                 for p, e in J_POSES[1:]]
 
     wetpatch = (f'<ellipse cx="{LAND[0] - 15}" cy="{LAND[1] + 6}" rx="150" ry="30" fill="#c99d63" opacity="0.55"/>'
@@ -980,11 +1032,14 @@ def build(ctx):
     # steam rises from the top of his head-cloth and his front shoulder (not across the head-cloth flap at the
     # back of his head); it follows him when he springs up
     st_sit = C.body_points(C.jonah, LAND[0], LAND[1], JS, -1, pose="sit_happy", wet=True)
-    st_up = C.body_points(C.jonah, LAND[0], LAND[1], JS, -1, pose="arms_up", wet=True)
     htx, hty = st_sit["head_top"]
     shx, shy = st_sit["shoulders"][0]
-    up_dx = st_up["head_top"][0] - htx
-    up_dy = st_up["head_top"][1] - hty
+    # where his head top is in each later drawing (arms_up and the get-up in-betweens), relative to sit_happy
+    ht_off = {}
+    for i, (p, _) in enumerate(J_POSES):
+        if i >= 4:
+            hx_, hy_ = C.body_points(jonah_fig, LAND[0], LAND[1], JS, -1, pose=p, wet=True)["head_top"]
+            ht_off[i] = (hx_ - htx, hy_ - hty)
     sx0, sy0 = htx, hty
     stm_a = steam([(htx - 20, hty + 8, 58), (htx + 24, hty + 12, 50), (shx - 32, shy - 6, 46)])
     stm_b = steam([(htx + 2, hty + 6, 64), (shx - 44, shy - 2, 42)])
@@ -996,9 +1051,9 @@ def build(ctx):
             u = ((t - t_look) / 2.6 + ph) % 1.0
             env = progress(t, t_look + 0.2, t_look + 1.2, "sine") * (1 - 0.4 * progress(t, T - 1.5, T, "sine"))
             jt = jonah_tf(t)
-            up = t >= t_cut_joy
-            return Tf(dx=4 * math.sin(2 * math.pi * (u * 1.2 + ph)) + (up_dx if up else 0.0),
-                      dy=-55 * u + (up_dy if up else 0.0) + jt.dy,
+            ox, oy = ht_off.get(int(jonah_idx(t)), (0.0, 0.0))
+            return Tf(dx=4 * math.sin(2 * math.pi * (u * 1.2 + ph)) + ox,
+                      dy=-55 * u + oy + jt.dy,
                       sx=0.85 + 0.3 * u, sy=0.85 + 0.35 * u, alpha=0.9 * env * math.sin(math.pi * u) ** 1.2,
                       px=sx0, py=sy0)
         return m
@@ -1114,10 +1169,10 @@ def build(ctx):
 
     # drips: drops forming and falling from Jonah's beard, hands and hem (pose-dependent emitters)
     def emitters(pose):
-        bp = C.body_points(C.jonah, LAND[0], LAND[1], JS, -1, pose=pose, wet=True)
+        bp = C.body_points(jonah_fig, LAND[0], LAND[1], JS, -1, pose=pose, wet=True)
         hx, hy = bp["head"]
         pts = [(hx - 14 * JS, hy + 44 * JS), bp["hands"][0], bp["hands"][1], bp["feet"][0]]
-        if pose == "arms_up":
+        if pose == "arms_up" or pose in STANDING_GETUP:      # hands held high: no drips falling past his face
             pts = [(hx - 14 * JS, hy + 44 * JS), (bp["pelvis"][0] - 40, LAND[1] - 30),
                    (bp["pelvis"][0] + 30, LAND[1] - 26), (bp["shoulders"][0][0] - 6, bp["shoulders"][0][1] + 30)]
         return pts

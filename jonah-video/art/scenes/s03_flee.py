@@ -31,9 +31,11 @@ are imported from art.scenes_v1.s03_flee):
     and up. '想要逃到远方，' — the mast sailor hauls the halyard, the sail unrolls from the yard, the captain faces
     the sea, the bow sailor points the way and the ship leaves the pier westward (bow wave, foam), gathering way.
     '躲开上帝。' — Jonah glances back at the shore and ducks behind the stern rail by the cargo, peeking; the
-    camera pushes in slowly on him (close-up, the receding pier behind) while the ship slows to a gentle drift,
-    and holds nearly still for the closing dissolve (s04 opens wide on the ship at sea, so the two pictures of
-    the ship never double up).
+    camera follows the departing ship, leans in a little on him as he ducks, then pulls back (the receding pier
+    behind) while the ship slows to a gentle drift, and ends on s04's opening picture of the ship: same size and
+    place, rocking in step with s04's ship. Through the closing dissolve the ship, crew and Jonah stay put and only
+    the background changes from the harbour to the open sea (the sun settles onto s04's sun; the distant ship of
+    line 2 has sailed on over the horizon).
 
 Pose changes are hard cuts hidden by a small hop / squash or a spin (no crossfades between poses). The crew is
 the s04-s09 crew: the captain, sailor variant 1 (by the mast) and variant 0 (at the bow), same props.ship
@@ -51,6 +53,7 @@ from art import characters as C
 from art import props as PR
 from art import style as S
 from art.scenes_v1 import s03_flee as V
+from art.scenes_v1 import s04_storm as V4
 from art.style import P
 from engine import motion as M
 from engine.motion import Cam, Tf
@@ -100,6 +103,12 @@ STOP_OLIVE = (3858, 874)
 # in the far layer than where they are seen).
 X_REF = 2150
 K_FAR, K_TOWN, K_CLOUD, K_SUN = 0.25, 0.1, 0.55, 0.85
+
+# s04 opens on a static wide shot of this ship at sea; this scene ends on exactly that picture of the ship
+XF = 1.0                                  # the closing cross-dissolve (s04 starts at T - XF)
+S4_CAM = (1268.0, 690.0, 2170.0)          # s04's opening camera (static through the dissolve)
+S4_K = 1920 / S4_CAM[2]                   # output px per s04 stage px
+S4_SUN = (1980.0, 250.0, 84.0)            # s04's sun: centre, radius (its calm sky drifts right 9 px/s)
 
 SHIP_SEED = 211
 COIN = "#e9b949"
@@ -214,15 +223,15 @@ def coin_svg(x, y, r=7.5, tilt=0.0):
 # ============================================================================ background
 
 
-SUN = (2560, 285)
+SUN, SUN_R = (2560, 285), 62
 
 
 def sun_svg():
     x, y = SUN
     defs = S.rad_grad("s3sunglow", [(0, "#fffbe6", 0.95), (0.3, "#fff1bf", 0.6), (1, "#fff1bf", 0)])
     body = (f'<circle cx="{x}" cy="{y}" r="330" fill="url(#s3sunglow)"/>' +
-            S.g(f'<circle cx="{x}" cy="{y}" r="62" fill="{P["sun"]}" stroke="{S.mix(P["sun_hot"], P["ink"], 0.2)}" '
-                f'stroke-width="3.5"/>'
+            S.g(f'<circle cx="{x}" cy="{y}" r="{SUN_R}" fill="{P["sun"]}" '
+                f'stroke="{S.mix(P["sun_hot"], P["ink"], 0.2)}" stroke-width="3.5"/>'
                 f'<circle cx="{x - 18}" cy="{y - 20}" r="22" fill="#fff3c4" opacity="0.7"/>', filter="wobble"))
     return doc(body, defs)
 
@@ -240,9 +249,10 @@ def clouds_svg():
 SEA_FAR_R = 3420          # the far sea ends behind the eastern hills
 
 
-def far_svg():
+def far_svg(far_ship=True):
     """Open sea to the horizon (with a distant ship and the rocks off Joppa), the cape and the hazy hills to the
-    east, the green hills with a grove and grazing sheep behind the road."""
+    east, the green hills with a grove and grazing sheep behind the road. ``far_ship=False``: the distant ship has
+    sailed on over the horizon."""
     hz = HZ
     defs = (ugrad("s3farsea", 0, hz, 0, SH, [(0, S.mix(P["sea_pale"], "#eef6ee", 0.35)), (0.22, P["sea_pale"]),
                                              (0.6, P["sea_light"]), (1, S.mix(P["sea_light"], P["sea"], 0.5))]) +
@@ -267,7 +277,7 @@ def far_svg():
         body += (f'<path d="M{f1(x)},{f1(y)} l{f1(w)},0" stroke="#fbfdf6" stroke-width="2.6" '
                  f'stroke-linecap="round" opacity="{rng.uniform(0.35, 0.7):.2f}"/>')
     # a distant ship far out to the west (its hull below the waterline painted over with sea)
-    for x, y, s, f in ((1300, 594, 0.07, -1),):     # seen as the camera drifts west on '很远很远的西边'
+    for x, y, s, f in ((1300, 594, 0.07, -1),) if far_ship else ():   # seen on '很远很远的西边'
         body += PR.ship(x, y, s, f, sail="full", lantern=False)
         body += f'<rect x="{x - 70}" y="{y}" width="140" height="16" fill="url(#s3farsea)"/>'
     # the rocks off Joppa
@@ -939,11 +949,16 @@ def build(ctx):
 
     # ---------------------------------------------------------------- ship motion
     # the ship gathers way, cruises, and as Jonah hides it slows to a gentle drift (never a dead stop), so the
-    # closing close-up on the stern is nearly still
+    # closing shot (s04's opening picture of the ship, see the camera) is nearly still
     T_SLOW0 = T_HIDE - 0.4
-    T_PUSH1 = T - 1.0                    # the camera has finished its push-in on the stern by here
+    T_PUSH1 = T - 1.0                    # the ship has slowed to its drift by here (the closing dissolve starts)
     DIST = 500                           # distance sailed by T_PUSH1 (the stern is then clear of the pier)
     V_END = 0.08                         # drift speed at the end, as a fraction of the cruising speed
+    RISE = 36                            # sailing away it shrinks 10 % and its waterline rises toward the horizon
+    #                                      (perspective; this also keeps the closing framing inside the stage)
+    T_IN = T_DUCK + 0.2                  # the camera has leaned in on Jonah as he ducks ...
+    T_OUT = T - 0.65                     # ... and is back at s04's framing early in the dissolve (s04 at ~35 %);
+    #                                      meanwhile the ship's rocking turns into s04's, so they rock as one
     _st = np.arange(T_DEPART, T + 1.01, 1 / 240)
     _sv = np.array([M.progress(t, T_DEPART, T_DEPART + 0.9, "sine")
                     * (1 - (1 - V_END) * M.progress(t, T_SLOW0, T_PUSH1, "sine")) for t in _st])
@@ -958,16 +973,31 @@ def build(ctx):
         """0..1: how fast the ship is moving (for the bow foam and the wake)."""
         return float(np.interp(t, _st, _sv)) if t > T_DEPART else 0.0
 
+    def ship_rise(t):
+        return RISE * ship_d(t) / DIST
+
+    def s04_rock(t):
+        """s04's opening rocking at this scene's time t: roll (deg) about a pivot 40 px below its waterline and bob
+        (dx, dy) in its stage px (pitch 1.3 deg, bob 5 px, one rock per 4 s from s04's t = -1)."""
+        ph = 2 * math.pi * (t - (T - XF) + 1.0) / 4.0
+        rot = 1.3 * math.sin(ph)
+        return rot, 1.75 * math.sin(0.5 * ph + 0.4) + 40 * math.sin(math.radians(rot)), 5.0 * math.sin(ph - 1.3)
+
     def ship_tf(t):
         u = ship_d(t) / DIST
         s = 1 - 0.1 * u
-        dy = 3.0 * math.sin(2 * math.pi * t / 3.1) + 1.5 * math.sin(2 * math.pi * t / 1.7 + 1) - 8 * u
+        dx, dy = 0.0, 3.0 * math.sin(2 * math.pi * t / 3.1) + 1.5 * math.sin(2 * math.pi * t / 1.7 + 1)
         rot = (0.45 + 0.5 * u) * math.sin(2 * math.pi * (t / 3.6 + 0.2))
-        return Tf(dx=-ship_d(t), dy=dy, rot=rot, sx=s, sy=s, px=SHIP_X, py=SHIP_WL)
+        g = M.progress(t, T_IN, T_OUT, "sine")
+        if g > 0.0:
+            r4, dx4, dy4 = s04_rock(t)
+            k = K * s / V4.SS
+            rot, dx, dy = M.lerp(rot, r4, g), g * dx4 * k, M.lerp(dy, dy4 * k, g)
+        return Tf(dx=dx - ship_d(t), dy=dy - ship_rise(t), rot=rot, sx=s, sy=s, px=SHIP_X, py=SHIP_WL)
 
-    def jdeck_x(t):
-        """Jonah's stage x on deck without the bob / roll (what the closing camera tracks)."""
-        return SHIP_X + (BOARD_X - SHIP_X) * (1 - 0.1 * ship_d(t) / DIST) - ship_d(t)
+    def ship_anchor(t):
+        """The ship's anchor (hull centre on the waterline) on stage, without the bob and roll."""
+        return SHIP_X - ship_d(t), SHIP_WL - ship_rise(t)
 
     # ---------------------------------------------------------------- camera
     # every move uses 'sine' easing (peak speed 1.57x the average): zoom stays under ~30 %/s and pans under
@@ -984,38 +1014,75 @@ def build(ctx):
     T_BACK0, T_BACK1 = T_LEAP - 0.25, T_SAIL_DONE + 0.1
     W_SAIL, Y_SAIL = 1360, 578
     X_SAIL = SHIP_X + 60 - ship_d(T_BACK1)
-    # '躲开上帝': ... then pushes in slowly to a close-up of Jonah peeking over the stern rail (he sits at about
-    # 30 % from the left, looking back at the receding pier and Joppa) and holds nearly still, tracking the drifting
-    # ship, through the closing dissolve. The close-up is about 2.4x the scale of s04's opening wide shot of the
-    # ship, and the figures in it sit left of where s04's ship appears, so the dissolve never doubles up the ship.
-    W_END, Y_END = 900, 676
-    X_END = jdeck_x(T_PUSH1) + 0.2 * W_END
+    # '躲开上帝' and the closing dissolve. s04 opens on a static wide shot of this ship at sea, so this scene ends
+    # on exactly that picture of the ship (s04's opening camera, ship anchor and scale: art.scenes_v1.s04_storm):
+    # from the sail shot the camera picks up the departing ship and follows it (a follow pan of up to ~530 output
+    # px/s, like the run-follows above: the ship stays steady on screen while the pier slides away), tilts down
+    # and leans in a little on Jonah as he ducks behind the stern rail, then pulls back until the ship has s04's
+    # size and place, and tracks the drifting ship through the dissolve. Ship, sail, crew, Jonah, stern scroll and
+    # lantern stay put through the dissolve; only the backgrounds (the pier and Joppa -> the open sea) and the
+    # clouds cross-fade.
+    W_IN = 1290                             # leaned in on Jonah at T_IN, back at s04's framing by T_OUT
     LEAD = 0.13
+
+    def s04_ship_out(t):
+        """Output px of s04's ship anchor (hull centre on the waterline, no bob) at this scene's time t; s04's ship
+        drifts west 120 px over its first ~6.5 s (its sail_dx)."""
+        ax = V4.SX + 120 * (1 - M.progress(t - (T - XF), 0, 6.5, "sine"))
+        return (ax - S4_CAM[0]) * S4_K + 960, (V4.SY - S4_CAM[1]) * S4_K + 540
+
+    def match_w(t):
+        """Camera width that shows this ship at s04's size."""
+        return S4_CAM[2] * K * (1 - 0.1 * ship_d(t) / DIST) / V4.SS
+
+    def hermite(t, t0, t1, p0, v0, p1, v1):
+        d = t1 - t0
+        u = min(max((t - t0) / d, 0.0), 1.0)
+        return ((2 * u ** 3 - 3 * u ** 2 + 1) * p0 + (u ** 3 - 2 * u ** 2 + u) * d * v0
+                + (3 * u ** 2 - 2 * u ** 3) * p1 + (u ** 3 - u ** 2) * d * v1)
+
+    # where the ship's anchor is on screen: at T_BACK1 (camera at rest on the sail shot) it moves with the ship;
+    # from there it glides to where s04 shows its ship, arriving at T_OUT
+    _a0, _a1 = ship_anchor(T_BACK1 - 0.01), ship_anchor(T_BACK1 + 0.01)
+    _k0 = 1920 / W_SAIL
+    O0 = ((_a0[0] + _a1[0]) / 2 - X_SAIL) * _k0 + 960, ((_a0[1] + _a1[1]) / 2 - Y_SAIL) * _k0 + 540
+    OV0 = (_a1[0] - _a0[0]) / 0.02 * _k0, (_a1[1] - _a0[1]) / 0.02 * _k0
+    O1 = s04_ship_out(T_OUT)
+    OV1 = [(q - p) / 0.02 for p, q in zip(s04_ship_out(T_OUT - 0.01), s04_ship_out(T_OUT + 0.01))]
+
+    def end_cam(t):
+        """(x, y, w) from the sail shot (T_BACK1) to s04's framing of the ship (T_OUT) and on to the end."""
+        if t < T_IN:
+            w = W_SAIL * (W_IN / W_SAIL) ** M.progress(t, T_BACK1, T_IN, "sine")
+        else:
+            w = W_IN * (match_w(t) / W_IN) ** M.progress(t, T_IN, T_OUT, "sine")
+        if t < T_OUT:
+            ox, oy = (hermite(t, T_BACK1, T_OUT, O0[i], OV0[i], O1[i], OV1[i]) for i in (0, 1))
+        else:
+            ox, oy = s04_ship_out(t)
+        ax, ay = ship_anchor(t)
+        return ax - (ox - 960) * w / 1920, ay - (oy - 540) * w / 1920, w
 
     cam_w_f = M.keys([(0, {"dx": W_CROSS}), (T_TURN, {"dx": 1560}), (T_RUN1 + 1.2, {"dx": 1760}),
                       (T_STOP1, {"dx": 1700}), (T_BUB + 0.4, {"dx": 1560}), (T_RUN2, {"dx": 1580}),
                       (T_RUN2 + 1.8, {"dx": 1900}), (T_ARR + 0.6, {"dx": 1840}), (T_WEST, {"dx": 1720}),
                       (T_WEST_END, {"dx": W_WEST}), (T_GIVE, {"dx": W_PAY}), (T_BACK0, {"dx": W_PAY}),
-                      (T_BACK1, {"dx": W_SAIL}), (T_PUSH1, {"dx": W_END}), (T, {"dx": W_END * 0.98})], "sine")
+                      (T_BACK1, {"dx": W_SAIL})], "sine")
     cam_y_f = M.keys([(0, {"dy": Y_CROSS}), (T_TURN, {"dy": 648}), (T_RUN1 + 1.2, {"dy": 612}),
                       (T_STOP1, {"dy": 612}), (T_BUB + 0.4, {"dy": 600}), (T_RUN2 + 1.8, {"dy": 606}),
                       (T_WEST, {"dy": 606}), (T_WEST_END, {"dy": Y_WEST}), (T_GIVE, {"dy": Y_PAY}),
-                      (T_BACK0, {"dy": Y_PAY}), (T_BACK1, {"dy": Y_SAIL}), (T_PUSH1, {"dy": Y_END}),
-                      (T, {"dy": Y_END + 2})], "sine")
+                      (T_BACK0, {"dy": Y_PAY}), (T_BACK1, {"dy": Y_SAIL})], "sine")
     cam_x_after = M.keys([(T_ARR, {"dx": X_PIER}), (T_WEST, {"dx": X_PIER}), (T_WEST_END, {"dx": X_WEST}),
-                          (T_GIVE, {"dx": X_PAY}), (T_BACK0, {"dx": X_PAY}), (T_BACK1, {"dx": X_SAIL}),
-                          (T_PUSH1, {"dx": X_END})], "sine")
-    JX_PUSH1 = jdeck_x(T_PUSH1)
+                          (T_GIVE, {"dx": X_PAY}), (T_BACK0, {"dx": X_PAY}), (T_BACK1, {"dx": X_SAIL})], "sine")
 
     def cam_x_raw(t):
+        if t >= T_BACK1:
+            return end_cam(t)[0]
         w = cam_w_f(t).dx
         if t < T_ARR:
             jx = jpos(t)[0]
             return max(min(X_CROSS, jx - LEAD * w), X_PIER)
-        x = cam_x_after(t).dx
-        if t > T_PUSH1:
-            x += jdeck_x(t) - JX_PUSH1               # follow the drifting ship: Jonah stays put in the frame
-        return x
+        return cam_x_after(t).dx
 
     DT = 1 / 120
     ts = np.arange(-1.0, T + 1.0, DT)
@@ -1028,8 +1095,12 @@ def build(ctx):
     ker = np.exp(-0.5 * (kk / sig) ** 2)
     ker /= ker.sum()
     xs = np.convolve(np.pad(raw, len(kk) // 2, mode="edge"), ker, mode="valid")
-    ws = np.array([cam_w_f(min(max(t, 0.0), T)).dx for t in ts])
-    ys = np.array([cam_y_f(min(max(t, 0.0), T)).dy for t in ts])
+    # the closing move is smooth already: hand over to it exactly so the ship lines up with s04's in the dissolve
+    r = np.array([M.progress(t, T_BACK1, T_BACK1 + 3 * sig, "sine") for t in ts])
+    xs = xs * (1 - r) + raw * r
+    tc = [min(max(t, 0.0), T) for t in ts]
+    ws = np.array([end_cam(t)[2] if t >= T_BACK1 else cam_w_f(t).dx for t in tc])
+    ys = np.array([end_cam(t)[1] if t >= T_BACK1 else cam_y_f(t).dy for t in tc])
     hs = ws * 9 / 16
     xs = np.clip(xs, ws / 2 + 4, PAINT_R - ws / 2 - 4)
     ys = np.clip(ys, hs / 2 + 4, SH - hs / 2 - 4)
@@ -1043,8 +1114,26 @@ def build(ctx):
         return lambda t: Tf(dx=k * (cam(t).x - X_REF) + vx * t)
 
     # ---------------------------------------------------------------- sky / far / town
-    sc.add("far", far_svg(), motion=parallax(K_FAR), wc=0.8)
-    sc.add("sun", sun_svg(), motion=parallax(K_SUN), wc=0.4)
+    # the distant ship (seen on '他施在很远很远的西边') has sailed on over the horizon by the closing shot; it goes
+    # while it is off screen (the camera is on the pier and the hands then), so the dissolve shows no second ship
+    sc.add("far", [far_svg(), far_svg(far_ship=False)], motion=parallax(K_FAR), wc=0.8,
+           frame_at=lambda t: 0.0 if t < T_LEAP else 1.0)
+
+    # the sun: in the pull-back it settles onto s04's sun (same place and size), so the dissolve shows one sun
+    def sun_tf(t):
+        dx = K_SUN * (cam(t).x - X_REF)
+        g = M.progress(t, T_IN, T_OUT, "sine")
+        if g <= 0.0:
+            return Tf(dx=dx)
+        c = cam(t)
+        k = c.w / 1920
+        ox = (S4_SUN[0] + 9 * max(0.0, t - (T - XF)) - S4_CAM[0]) * S4_K + 960
+        oy = (S4_SUN[1] - S4_CAM[1]) * S4_K + 540
+        tx, ty = c.x + (ox - 960) * k, c.y + (oy - 540) * k
+        s_ = 1 + g * (S4_SUN[2] * S4_K * k / SUN_R - 1)
+        return Tf(dx=dx + g * (tx - SUN[0] - dx), dy=g * (ty - SUN[1]), sx=s_, sy=s_, px=SUN[0], py=SUN[1])
+
+    sc.add("sun", sun_svg(), motion=sun_tf, wc=0.4)
     sc.add("clouds", clouds_svg(), motion=parallax(K_CLOUD, 7.0), wc=0.6)
     sc.add("town", town_svg(), motion=parallax(K_TOWN))
     sc.add("harbour_back", harbour_back_svg())
@@ -1249,7 +1338,11 @@ def build(ctx):
            motion=sea_front_m, frame_at=twinkle(2.0, 1.3), wc=0.25)
 
     def water_tf(alpha_fn):
-        return lambda t: (lambda b: Tf(b.dx, b.dy * 0.4, 0, b.sx, b.sy, alpha_fn(t), b.px, b.py))(ship_tf(t))
+        """On the water with the ship: its bob damped, its rise (perspective) in full."""
+        def m(t):
+            b, r = ship_tf(t), ship_rise(t)
+            return Tf(b.dx, (b.dy + r) * 0.4 - r, 0, b.sx, b.sy, alpha_fn(t), b.px, b.py)
+        return m
 
     sc.add("hull_shadow", hull_shadow_svg(), motion=water_tf(lambda t: 1.0), wc=0.2)
     sc.add("wake", wake_svg(), motion=water_tf(lambda t: M.progress(t, T_DEPART, T_DEPART + 0.8, "sine")
@@ -1270,7 +1363,7 @@ def build(ctx):
         b = ship_tf(t)
         return SHIP_X + b.dx - 425 * K * b.sx
 
-    foam = [(ts_, bow_x(ts_) + ox, SHIP_WL - 14 + oy, ln, op) for ts_, ox, oy, ln, op in foam]
+    foam = [(ts_, bow_x(ts_) + ox, SHIP_WL - ship_rise(ts_) - 14 + oy, ln, op) for ts_, ox, oy, ln, op in foam]
 
     def foam_fn(t):
         live = [(t - ts_, x, y, ln, op) for ts_, x, y, ln, op in foam if 0 <= t - ts_ <= FOAM_LIFE]
@@ -1278,7 +1371,7 @@ def build(ctx):
             return None
         x0 = int(min(x for _, x, _, _, _ in live) - 20)
         x1 = int(max(x + ln for _, x, _, ln, _ in live) + 40)
-        y0, y1 = SHIP_WL - 24, SHIP_WL + 40
+        y0, y1 = int(min(y for _, _, y, _, _ in live) - 10), int(max(y for _, _, y, _, _ in live) + 26)
         ss = 2
         im = Image.new("RGBA", (max(1, x1 - x0) * ss, (y1 - y0) * ss), (0, 0, 0, 0))
         d = ImageDraw.Draw(im)

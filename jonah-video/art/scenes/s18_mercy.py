@@ -15,7 +15,11 @@ overcast cloud hangs low over the whole city (adapted from the approved v1 s10 e
                                           middle of the cloud, right above the square of praying people,
                                           warms to gold, a golden seam glows along its lower edge, the gloom
                                           under it thins and a few sparkles drift down (never a figure); the
-                                          girl peeks up at it; the camera drifts slowly over the praying roof.
+                                          girl peeks up at it. The camera opens on the low overcast over the
+                                          roofs of the city (no big figure in frame, so nobody from s17's
+                                          street of praying families shows twice in the dissolve), tilts down
+                                          and pulls back onto our praying roof (nearly settled as the girl
+                                          peeks) and drifts slowly over the roof.
           "就可怜他们，"                    the middle cloud splits into two halves that slide apart (chime),
                                           golden light pours down in rays over the square, the homes and our
                                           roof, the gloom lifts; the family tilts up to look into the light.
@@ -851,15 +855,28 @@ def build(ctx):
     light = light_fx(lambda t: gloom_a(t).alpha, lambda t: hole(t).sx, (GAP_X, 500), lambda t: warm_a(t).alpha,
                      lambda t: glow(t).alpha, lambda t: glow(t).sx, (GAP_X, 1130))
 
-    # ---- camera: a slow drift over the praying roof, then one continuous pull-out to the whole city ----
+    # ---- camera: opens on the low overcast over the roofs of the city, tilts down and pulls back onto our
+    # praying roof while God sees, drifts slowly over it, then one continuous pull-out to the whole city.
+    # The opening framing keeps every big figure (our family, the street neighbours) below the frame through
+    # the dissolve from s17, whose street of praying families uses the same character designs at another
+    # place and scale (shown together they read as doubled people); only the tiny roof-top figures show. ----
     t_d = t_whole + 2.6
+    O = Cam(1400, 553, 1760)          # overcast + far city + row-B roofs; viewport bottom y 1048 above all heads
+    v_o = (-4.0, 3.0, 4.0)            # slow drift through the dissolve (bottom edge stays above y 1052)
+    t_o1 = 0.5                        # the descent starts half-way through the dissolve, eased in
     A = Cam(1306, 900, 2262)          # right edge just clear of the top dove on the dovecote
     B = Cam(1340, 886, 2300)
     D = Cam(1400, 789, 2756)
     E = Cam(1400, 787, 2760)
     v_ab = tuple((getattr(B, k) - getattr(A, k)) / t_mercy for k in ("x", "y", "w"))
     v_de = tuple((getattr(E, k) - getattr(D, k)) / max(0.5, T - t_d) for k in ("x", "y", "w"))
-    sc.camera = hermite_cam([(0, A, v_ab), (t_mercy, B, v_ab), (t_d, D, v_de), (max(T, t_d + 0.5), E, v_de)])
+    # land on the original slow drift A -> B (~2.2 s descent, peak ~13 px/frame on screen), nearly settled as
+    # the girl peeks up
+    t_land = max(t_o1 + 1.8, min(t_peek + 0.15, t_mercy - 0.9))
+    O1 = Cam(*(getattr(O, k) + v_o[i] * t_o1 for i, k in enumerate(("x", "y", "w"))))
+    A1 = Cam(*(getattr(A, k) + v_ab[i] * t_land for i, k in enumerate(("x", "y", "w"))))
+    sc.camera = hermite_cam([(0, O, v_o), (t_o1, O1, v_o), (t_land, A1, v_ab), (t_mercy, B, v_ab),
+                             (t_d, D, v_de), (max(T, t_d + 0.5), E, v_de)])
 
     # ---- effects ----
     sc.fx = [
@@ -868,15 +885,17 @@ def build(ctx):
         FX.sparkles((GAP_X - 250, 600, GAP_X + 250, 700), count=10, t0=t_see + 0.5, t1=t_mercy + 1.8,
                     color=(255, 234, 164), size=(6, 13), period=2.4, drift=28, seed=29),
         # sparkles over the city: in the air above the skyline and over the homes, kept off every temple
-        # (the great ziggurat on the far left and the two small ones in the far skyline)
+        # (the great ziggurat on the far left and the two small ones in the far skyline) and off every face:
+        # no rect reaches stage y >= 1060 in x 300-1100, where our family's heads are (the children's rise to
+        # y ~1190 when they stand to cheer); on the left they twinkle in the sky above the skyline instead
         *[FX.sparkles(r, count=n, t0=t_gold0 + 0.6, t1=T + 1, color=(255, 238, 172), size=(9, 20), drift=-10,
                       seed=31 + i)
           for i, (r, n) in enumerate((((700, 240, 2600, 560), 14), ((990, 900, 2060, 1160), 12),
-                                      ((2340, 900, 2650, 1160), 4), ((60, 1010, 700, 1200), 4)))],
+                                      ((2340, 900, 2650, 1160), 4), ((120, 280, 700, 540), 4)))],
         *[FX.sparkles(r, count=n, t0=t_peace - 0.2, t1=T + 1, color=(255, 230, 150), size=(8, 17), drift=-14,
                       seed=41 + i, period=1.3)
           for i, (r, n) in enumerate((((990, 990, 2060, 1250), 14), ((2340, 990, 2600, 1250), 4),
-                                      ((60, 1040, 700, 1220), 4)))],
+                                      ((120, 300, 700, 540), 3)))],
         FX.motes((100, 150, 2700, 1400), count=40, t0=t_gold0 + 0.4, t1=T + 1, color=(255, 240, 200),
                  size=(3, 7), alpha=140, seed=41),
     ]

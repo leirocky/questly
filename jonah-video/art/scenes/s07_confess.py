@@ -21,8 +21,10 @@ Line 2 (J) '你们把我抬起来，' Jonah, sorry but brave, lays his hand on h
         cut-out and points up over the rail at the towering sea — a breaker bursts right beyond his fingertip; the
         sailors gasp. '海就会平静下来。' he turns back to them with a gentle open hand (no smile).
 Line 3 (J) '我知道，' hand on chest again ('sorry'); '这场大风浪，' he looks up at the storm (a far flash); '都是因为我。'
-        he bows his head; the crew lower their heads, sad; the camera slowly pushes in. The scene ends on a calm,
-        held frame.
+        he bows his head; the crew lower their heads, sad; the camera slowly pushes in. Then it rises over their
+        bowed heads to the towering storm (dark cloud bank, the breaker's curl, the torn sail at the left) and
+        eases to rest there: s08 dissolves in its wide shot of the ship in this storm, so the two crews never
+        overlap (no double Jonah) and the cut reads as one move from the deck out to the sea.
 
 Every key time comes from the narration: a phrase that starts a subtitle chunk starts with the chunk; one after a
 punctuation mark inside a chunk starts at the end of the voice's pause at that mark (the voice pipeline widens
@@ -949,7 +951,19 @@ def build(ctx):
     G = Cam(1440, 716, 1300)       # slow push-in on Jonah and the crew at the end
     keys = [(0.0, A), (p0, A), (p0b + 0.9, B), (p0c + 0.5, B), (p1 + 0.6, Cc), (p2 - 0.3, D),
             (p2b - 0.25, D), (p2b + 0.3, E), (p2c + 0.8, E), (p3 + 0.2, F), (T, G)]
-    base = M.cam_keys(keys, "sine")
+    push = M.cam_keys(keys, "sine")
+    # ...then, once the crew have bowed their heads, the camera rises over them to the towering storm. s08 opens
+    # on a wide shot of the whole ship in that storm (its crew in a different order, about 0.8x the size), so a
+    # dissolve from the deck group would pile two crews and two Jonahs on top of each other; this way our crew
+    # slide out at the bottom of the frame while s08's fade in at mid-height. R shows no heads at all (its bottom
+    # edge, y + w * 9/32, stays above the tallest cap) and sits at the clamp's top edge (y = w * 9/32 + 6).
+    R = Cam(1520, 324, 1130)
+    t_rise0 = min(max(p3c + 0.28, T - 1.9), T - 1.2)
+    t_rise1 = T - 0.1
+
+    def base(t):
+        c, u = push(t), M.progress(t, t_rise0, t_rise1, "sine")
+        return Cam(M.lerp(c.x, R.x, u), M.lerp(c.y, R.y, u), M.lerp(c.w, R.w, u), c.rot)
     shake1 = M.shake(9, t_crash - 0.02, t_crash + 0.7, freq=8, seed=4)
     shake2 = M.shake(4, t_point_splash, t_point_splash + 0.45, freq=8, seed=9)
 
@@ -992,6 +1006,6 @@ def build(ctx):
         "plea ('我们该拿你怎么办')": p1, "shrug ('海才会平静下来呢')": p1b, "Jonah lowers his eyes": p1b + 0.35,
         "hand on chest ('你们把我抬起来')": p2, "turn + point ('扔进海里')": p2b, "breaker answers": t_point_splash,
         "back, open hand ('海就会平静下来')": p2c, "chest ('我知道')": p3, "look up + far flash ('这场大风浪')": p3b,
-        "bow, crew sad ('都是因为我')": p3c,
+        "bow, crew sad ('都是因为我')": p3c, "camera rises to the storm": (t_rise0, t_rise1),
     }
     return sc

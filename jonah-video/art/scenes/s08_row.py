@@ -25,11 +25,13 @@ Line 3 (S) '耶和华啊，' the clouds part a little above the ship: a small cl
         (God is never shown as a person); the sailors raise their arms; '求你不要因为这个人惩罚我们，' hands pressed
         together again, pleading, eyes to the sky; '也不要怪我们害了他。' heads bowed.
 Line 4 (S) '因为这一切，' arms raised once more, eyes closed, mouths a small earnest 'o' (praying aloud - not relieved:
-        the storm goes on until s09); '都是你照着自己的心意做的。' the light glows on; the scene ends on a calm, held
-        frame (rain and rocking eased).
-End frame (for s09): ship at SX0 + 262, no oars; kneeling, arms raised, eyes closed (expr 'sleepy'): sailor 0 at
-        lx 274, sailor 1 at 132, Jonah standing at -4 (hand on chest), sailor 2 at -116, sailor 3 at -250, the
-        captain at -362 (the stern lantern hangs behind his back); camera (1682, 670, 1600).
+        the storm goes on until s09); the captain, lifting his arms, hops back under the stern lantern (s09's mark);
+        '都是你照着自己的心意做的。' the light glows on; the scene ends on a calm, held frame (rain eased; in the
+        last 2.6 s the rocking eases into s09's opening roll, which it then follows exactly through the dissolve).
+End frame (for s09): ship at SX0 + 262 rocking as s09's ship_tf, no oars; kneeling, arms raised, eyes closed
+        (expr 'sleepy'): sailor 0 at lx 274, sailor 1 at 132, Jonah standing at -4 (hand on chest), sailor 2 at
+        -116, sailor 3 at -250, the captain at -436 on the deck height at -400 (s09's A_LX / A_POS; the stern
+        lantern hangs in front of his chest); camera (1682, 670, 1600).
 
 Every key time comes from the narration chunks (a phrase inside a chunk is placed by its character position).
 Pose changes are hard cuts sold by a squash / hop (never crossfaded); each pose is held >= 0.5 s.
@@ -38,7 +40,9 @@ Technique notes
 * Rowing: each rower has 8 drawings per stroke (custom poses through the rig of art/characters.py, with a public-pose
   fallback); between drawings the rower leans slightly about his feet so his drawn hand follows the path through the
   drawn hands, and the oar (inboard + outboard layers pivoting in the oarlock) is aimed through that hand. The blade
-  is lifted by sliding the outboard part along its shaft, not by squashing it.
+  is lifted by sliding the outboard part along its shaft, not by squashing it. Blade depth and splashes are measured
+  from the DRAWN near sea (water_dy), which heaves on its own, never from the ship's waterline SY, so a blade always
+  enters the water at its splash and no splash lands on the hull planks.
 * The stroke times ARE the 'oars' sound: plan_oars() synthesises the two 'oars' cues exactly as audio/mix.py will
   (same seed / length / cycle) and reads where each blade dips in; the visual catches (and splashes) sit on them.
 * Kneeling figures sit back on their heels (an upright kneel behind the rail would read as standing); they are drawn
@@ -83,7 +87,11 @@ PIV = (SX0, SY + 40.0)        # pitch pivot
 ROWERS = [("A", 0, 300.0), ("B", 1, 158.0), ("C", 2, -142.0), ("D", 3, -276.0)]
 JON_LX = -4.0                 # Jonah in front of the mast
 CAPT_LX = -418.0              # the captain on the raised stern deck
-CAPT_KNEEL_LX = -362.0        # where he kneels to pray
+CAPT_PRAY_LX = -362.0         # where he kneels to pray (the stern lantern hangs behind his back, clear of his
+                              # face and pressed hands) ...
+CAPT_KNEEL_LX = -436.0        # ...and where he ends, after shuffling back on '因为这一切': s09_overboard's opening
+CAPT_KNEEL_DECK_LX = -400.0   # captain mark (A_LX capt, on the deck height at -400), so the dissolve lands him on
+                              # himself (under the lantern, as s09 has him)
 OAR_DX = 104.0                # oarlock this far (local px) toward the stern from each rower's feet
 
 # rowing stroke (rower-local px, scale 1, facing right = toward the stern)
@@ -98,6 +106,8 @@ OAR_OUT = 330.0                    # drawn outboard length (oarlock -> blade tip
 BLADE_L = 96.0
 HANDLE_OVER = 34.0                 # handle end beyond the near hand
 DEPTH_PULL, DEPTH_LIFT = 40.0, -24.0   # blade tip below the waterline (local px) in the pull / recovery
+
+XFADE = 1.0                        # cross-dissolve into s09 (build/timeline.json 'xfade')
 
 GRADE = V.GRADE_DEFS
 PUNCT = "，。！？：；、,.!?:;"
@@ -803,13 +813,37 @@ def build(ctx):
         rock = -3.5 * math.sin(math.pi * M.progress(u, 1.1, 2.6, "linear")) * (u > 1.1)
         return 10.5 * up + rock, -46 * up
 
+    # The last XFADE seconds overlap s09's opening in the dissolve. There s09_overboard.py (ship_tf / rock()) rocks
+    # the same ship (its scale 0.8, its anchor = this ship's end place) about its anchor with, at s09 time u < ~2 s,
+    #   a = lerp(0.4, 1, progress(u, 0.7, 2.0, 'sine')),  rot = 4.2 a sin(2 pi u / 2.6),
+    #   dx = 8 a sin(2 pi u / 3.1),  dy = 12 a sin(2 pi u / 2.2 + 0.6).
+    # Over the 1.6 s before the dissolve the rocking here eases into exactly that motion (scaled to this stage), so
+    # the two ships (and everyone on board) coincide all through it. Keep in step with s09's rock().
+    t_x = T - XFADE                     # = s09's t 0
+    k09 = SS / 0.8
+    x_end = ship_x(T) - SX0             # the ship's end place (s09's anchor)
+
+    def s09_roll(t):
+        u = t - t_x
+        a = M.lerp(0.4, 1.0, M.progress(u, 0.7, 2.0, "sine"))
+        return (4.2 * a * math.sin(2 * math.pi * u / 2.6), k09 * 8 * a * math.sin(2 * math.pi * u / 3.1),
+                k09 * 12 * a * math.sin(2 * math.pi * u / 2.2 + 0.6))
+
     def ship_tf(t):
         ph = 2 * math.pi * phase(t)
         rot = pitch_amp(t) * math.sin(ph)
         dy = bob_amp(t) * math.sin(ph - 1.3)
         ir, idy = impact(t)
-        return Tf(ship_x(t) - SX0 + 0.3 * bob_amp(t) * math.sin(0.5 * ph + 0.4), dy + idy, rot + ir, 1, 1, 1,
-                  PIV[0], PIV[1])
+        dx, dy, rot = ship_x(t) - SX0 + 0.3 * bob_amp(t) * math.sin(0.5 * ph + 0.4), dy + idy, rot + ir
+        w = M.progress(t, t_x - 1.6, t_x, "sine")
+        if w <= 0:
+            return Tf(dx, dy, rot, 1, 1, 1, PIV[0], PIV[1])
+        # (the same transform about the hull anchor on the waterline, the pivot s09 rocks about)
+        r = math.radians(rot)
+        dx += (PIV[1] - SY) * math.sin(r)
+        dy += (PIV[1] - SY) * (1 - math.cos(r))
+        r9, dx9, dy9 = s09_roll(t)
+        return Tf(M.lerp(dx, x_end + dx9, w), M.lerp(dy, dy9, w), M.lerp(rot, r9, w), 1, 1, 1, SX0, SY)
 
     def on_ship(local):
         return lambda t: V.compose(ship_tf(t), local(t))
@@ -1056,10 +1090,13 @@ def build(ctx):
         return Tf(h.dx, h.dy, 0.9 * math.sin(2 * math.pi * t / 3.9 + 2), h.sx, h.sy,
                   0.0 if t >= T_KNEEL["capt"] else 1.0, CX, CY)
     sc.add("captain", cap_frames, z=z_crew - 0.5, frame_at=track(c_sched), motion=on_ship(capt_m))
-    # (he kneels a little toward the mast, so the stern lantern hangs behind his back, not over his face)
-    ckx, cky = stage_x(CAPT_KNEEL_LX), deck_y(CAPT_KNEEL_LX)
+    # (drawn on his end mark = s09's opening one; until '因为这一切' he kneels a little toward the mast, so the stern
+    # lantern hangs behind his back, not over his face and pressed hands; lifting his arms once more he shuffles
+    # back under it in a small hop)
+    ckx, cky = stage_x(CAPT_KNEEL_LX), deck_y(CAPT_KNEEL_DECK_LX)
     ckd = [crew_doc(person("captain", ckx, cky, -1, ps, e, fallback="stand")) for ps, e in KNEEL_SEQ]
     kneel_layers.append(("capt", ckd, (ckx, cky)))
+    capt_pray_off = (stage_x(CAPT_PRAY_LX) - ckx, deck_y(CAPT_PRAY_LX) - cky)
 
     # --------------------------------------------------- ship (front): rail, shields, steering oar, oarlocks, lantern
     locks = ""
@@ -1073,15 +1110,33 @@ def build(ctx):
                                     + S.g(locks, filter="wobble-fine")) + lan, GRADE), z=z_front,
            motion=ship_tf)
 
+    # --------------------------------------------------- the sea in front of the ship (its drawn surface)
+    # The blades and splashes are placed against THIS drawn water, not against the ship's own waterline SY: the
+    # layer heaves on its own (out of phase with the ship's bob) while the ship pitches, so the water at an oar
+    # swings by ~100 px relative to the hull.
+    def gx(x):     # calm pocket around the ship (between its start and end positions)
+        return min(1.0, abs(x - (SX0 + 140)) / 1000) ** 1.4
+    f_near = V.wave_fn(lambda x: SY - 6 - 70 * gx(x), lambda x: 16 + 95 * gx(x), 600, 0.75, p=2.0, lean=0.3)
+    surge_up = lambda t: -60 * math.sin(math.pi * M.progress(t, T_HIT - 0.1, T_HIT + 1.4, "linear"))  # noqa: E731
+    near_m = wave_motion(18, 40, 0.3, 2.0, lag=0.1, extra=surge_up)
+
+    def water_dy(t, x):
+        """Drawn near-sea surface minus the moving ship's waterline SY (stage px, + = below it) at un-moved ship
+        x."""
+        bx, by = V.apply(ship_tf(t), x, SY)
+        m = near_m(t)
+        return f_near(bx - m.dx) + m.dy - by
+
     # --------------------------------------------------- the oars
-    def out_geom(O, a_deg, depth):
-        """Outboard sy (projection of a blade dipped DEPTH_PULL deep at this angle) and the slide along the shaft
-        (stage px, + = up toward the handle) that lifts the tip to ``depth``."""
+    def out_geom(O, a_deg, depth, w=0.0):
+        """Outboard sy (projection of a blade dipped DEPTH_PULL below the drawn water at this angle) and the slide
+        along the shaft (stage px, + = up toward the handle) that lifts the tip to ``depth`` below it; ``w`` = the
+        drawn water's height relative to SY at the blade (water_dy)."""
         ca = max(0.35, math.cos(math.radians(a_deg)))
-        s_out = (SY + DEPTH_PULL * SS - O[1]) / (OAR_OUT * SS * ca)
-        s_out = min(1.18, max(0.7, s_out))
+        s_out = (SY + DEPTH_PULL * SS + w - O[1]) / (OAR_OUT * SS * ca)
+        s_out = min(1.3, max(0.7, s_out))
         tip = O[1] + OAR_OUT * SS * s_out * ca
-        lift = (tip - (SY + depth * SS)) / ca
+        lift = max(0.0, (tip - (SY + depth * SS + w)) / ca)
         return s_out, lift
 
     def lose_state(spec, u):
@@ -1100,9 +1155,18 @@ def build(ctx):
         alpha = 0.0 if slide > spec["slide_end"] else 1.0
         return a, inl, depth, slide, alpha
 
+    def blade_water(spec, t, a_deg):
+        """water_dy where an oar held at a_deg crosses the drawn water (refined from its catch place)."""
+        O = spec["O"]
+        tn = math.tan(math.radians(max(-70.0, min(70.0, a_deg))))
+        w = water_dy(t, spec["tip_x"])
+        for _ in range(2):
+            w = water_dy(t, O[0] - (SY + w - O[1]) * tn)
+        return w
+
     def oar_state(spec, t):
         """(angle deg, inboard sy, outboard sy, lift along the shaft, slide along the shaft, alpha) of an oar in
-        un-moved ship coordinates."""
+        un-moved ship coordinates. The blade dips into / lifts out of the DRAWN water."""
         O = spec["O"]
         idx = int(spec["frame_idx"](t))
         if t < T_GRAB or (t >= spec["t_sc"]):
@@ -1113,22 +1177,26 @@ def build(ctx):
                 a, inl, depth, slide, alpha = lose_state(spec, t - spec["t_sc"])
             a += 1.8 * math.sin(2 * math.pi * t / 2.7 + spec["lx"] / 90)
             s_in = inl / OAR_IN
-            s_out, lift = out_geom(O, a, depth)
+            s_out, lift = out_geom(O, a, depth, blade_water(spec, t, a))
             return a, s_in, s_out, lift, slide, alpha
         hk = spec["hands"][idx] if spec["hands"][idx] else (O[0] - 40, O[1] - 100)
         hx, hy = V.apply(spec["rower_tf"](t), *hk)
         a = math.degrees(math.atan2(hx - O[0], O[1] - hy))
         dist = math.hypot(hx - O[0], hy - O[1])
         s_in = (dist + HANDLE_OVER * SS) / (OAR_IN * SS)
-        s_out, lift = out_geom(O, a, blade_depth(psi_at(t)))
+        s_out, lift = out_geom(O, a, blade_depth(psi_at(t)), blade_water(spec, t, a))
         return a, s_in, s_out, lift, 0.0, 1.0
 
     for k, spec in enumerate(oar_specs):
         spec["k"] = k
         spec["u_slip"] = 0.6 + 0.16 * (0, 2, 1, 3)[k]
+        # where the blade bites at the catch (un-moved ship; the splash goes here too)
+        hx_, hy_, _ = row_curve(0.0)
+        a_ = math.atan2(spec["F"][0] + hx_ * SS - spec["O"][0], spec["O"][1] - (spec["F"][1] + hy_ * SS))
+        spec["tip_x"] = spec["O"][0] - (SY + DEPTH_PULL * SS - spec["O"][1]) * math.tan(a_)
         st = oar_state(spec, spec["t_sc"] - 0.01)
         spec["a_lose"] = st[0]
-        # slide far enough that the handle end ends up under the sea (near the hull the sea is calm: ~SY + 14)
+        # slide far enough that the handle end ends up under the sea (near the hull the sea is calm: ~SY - 6)
         ar = math.radians(-38.0)
         spec["slide_end"] = 150 * SS + (SY + 60 - spec["O"][1]) / math.cos(ar)
         # when the handle end passes the waterline: a small splash there
@@ -1173,24 +1241,24 @@ def build(ctx):
     for name, kd, (kx, kyd) in kneel_layers:
         tk = T_KNEEL[name]
         kn_sched = [(0, 0), (T_UP[name], 1), (T_PRESS[name], 2), (T_BOW[name], 3), (T_UP2[name], 4)]
+        shuffle = name == "capt"       # the captain hops back onto his end mark as he lifts his arms once more
         ev = [(tk, "dip", 0.8)] + [(T_UP[name], "hop", 0.25), (T_PRESS[name], "dip", 0.4), (T_BOW[name], "dip", 0.3),
-                                   (T_UP2[name], "hop", 0.25)]
+                                   (T_UP2[name], "hop", 0.6 if shuffle else 0.25)]
 
-        def kn_m(t, tk=tk, ev=ev, kx=kx, kyd=kyd, name=name):
+        def kn_m(t, tk=tk, ev=ev, kx=kx, kyd=kyd, name=name, shuffle=shuffle):
             h = hop_tf(t, ev, (kx, kyd))
             br = 1 + 0.01 * math.sin(2 * math.pi * t / 3.2 + len(name))
-            return Tf(h.dx, h.dy, 0.6 * math.sin(2 * math.pi * t / 4.1 + len(name)), h.sx, h.sy * br,
+            ox_ = oy_ = 0.0
+            if shuffle:
+                k_ = 1 - M.progress(t, T_UP2[name] - 0.06, T_UP2[name] + 0.4, "inout")
+                ox_, oy_ = capt_pray_off[0] * k_, capt_pray_off[1] * k_
+            return Tf(h.dx + ox_, h.dy + oy_, 0.6 * math.sin(2 * math.pi * t / 4.1 + len(name)), h.sx, h.sy * br,
                       1.0 if t >= tk else 0.0, kx, kyd)
         sc.add(f"kneel_{name}", kd, z=z_k, motion=on_ship(kn_m), frame_at=track(kn_sched))
         z_k += 0.01
     z_kn = z_oar + 0.5         # (the sea in front of the ship and the effects stack above this)
 
-    # --------------------------------------------------- sea in front of the ship
-    def gx(x):     # calm pocket around the ship (between its start and end positions)
-        return min(1.0, abs(x - (SX0 + 140)) / 1000) ** 1.4
-    f_near = V.wave_fn(lambda x: SY + 14 - 70 * gx(x), lambda x: 16 + 95 * gx(x), 600, 0.75, p=2.0, lean=0.3)
-    surge_up = lambda t: -60 * math.sin(math.pi * M.progress(t, T_HIT - 0.1, T_HIT + 1.4, "linear"))  # noqa: E731
-    near_m = wave_motion(18, 40, 0.3, 2.0, lag=0.1, extra=surge_up)
+    # --------------------------------------------------- sea in front of the ship (layer defined above the oars)
     sc.add("sea_near", doc(sea_layer(f_near, P["storm_sea"], P["storm_sea_light"], S.shade(P["storm_sea"], -0.3),
                                      600, 70, 3, foam_size=1.0, cap_amp=lambda x: 16 + 95 * gx(x))),
            z=z_kn + 1, wc=1.0, motion=near_m)
@@ -1198,15 +1266,7 @@ def build(ctx):
     # splashes where the blades bite (one per oar, re-triggered at every catch)
     z_sp = z_kn + 1.5
     for i, spec in enumerate(oar_specs):
-        ox, oy = spec["O"]
-        hx, hy, _ = row_curve(0.0)
-        # blade tip at the catch (un-moved ship)
-        F = spec["F"]
-        hpos = (F[0] + hx * SS, F[1] + hy * SS)
-        a = math.atan2(hpos[0] - ox, oy - hpos[1])
-        tip_y = SY + DEPTH_PULL * SS
-        tip_x = ox - (tip_y - oy) * math.tan(a)
-        sx_, sy_ = tip_x, SY - 6
+        sx_, sy_ = spec["tip_x"], SY - 6        # blade tip at the catch (un-moved ship)
 
         def sp_m(t, sx_=sx_, sy_=sy_, spec=spec):
             u_d = t - spec["t_drop"]
@@ -1223,7 +1283,11 @@ def build(ctx):
             a_ = (1 - M.progress(u, 0.35, 0.75, "sine"))
             inner = Tf(dx, 0, 0, 0.6 + 0.5 * grow, 0.2 + 0.8 * grow - 0.3 * M.progress(u, 0.4, 0.75), a_ * 0.95,
                        sx_, sy_ + 10)
-            return V.compose(ship_tf(t), inner)
+            tf = V.compose(ship_tf(t), inner)
+            # its foot sits 6 px into the DRAWN water (which heaves on its own), never on the hull planks
+            fx, fy = V.apply(ship_tf(t), sx_ + dx, sy_ + 10)
+            m = near_m(t)
+            return replace(tf, dy=tf.dy + f_near(fx - m.dx) + m.dy + 6 - fy)
         sc.add(f"oar_splash_{spec['name']}", splash_svg(sx_, sy_, 300 + i), z=z_sp + 0.01 * i, wc=0.5, motion=sp_m)
 
     # the wave's crash over the bow: it bursts up, then collapses down onto its foamy base and sinks into the

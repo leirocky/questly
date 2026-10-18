@@ -8,7 +8,10 @@ Line 0  "第二天天刚亮，" — the scene opens on s21's last framing (same 
         night (crescent moon, stars twinkling IN the sky - a looping flipbook behind the clouds and the plant -,
         Jonah asleep sitting up, little z's rising); dawn breaks: the sky blushes pink and the eastern horizon
         glows (the sun itself stays below the hills until line 1), the stars fade, and two doves that roosted in
-        the plant fly out from behind its leaves up through the clear sky toward the glow.
+        the plant fly out from behind its leaves up through the clear sky toward the glow; the lizard, which
+        spent the night in the plant's shade by the booth's right post (where s21 leaves it, same drawing),
+        turns and scurries back to its stone. Jonah opens in s21's last pose and breathes only after the
+        dissolve, so the dissolve lays him, the booth and the lizard over themselves.
         "上帝又安排了一条小虫子。" — a small golden glimmer by the pebble at the foot of the stem (God's doing, light
         only) and the little worm inches out from behind it (three planted inchworm steps) while the camera
         pushes in to the stem.
@@ -93,6 +96,9 @@ INK = P["ink"]
 # ------------------------------------------------------------------ layout (same as v1 s11_vine)
 GY, SP, XP, XB, XJ = V.GY, V.SP, V.XP, V.XB, V.XJ
 SW, XW, NOTCH, HORIZON, LIZ = V.SW, V.XW, V.NOTCH, V.HORIZON, V.LIZ
+LIZ_TO = (1395, 976)      # = s21.LIZ_TO: where s21 leaves the lizard (in the shade, before the booth's right post)
+LIZ_S = 0.82              # = s21's lizard scale
+XF = 1.0                  # cross-dissolve from s21 (build/timeline.json 'xfade')
 SUN_E = (1830, 604)       # dawn: the sun's rim just over the eastern hills (crest y~570 there)
 SUN_HOT = (1490, 225)     # blazing sun, high over the booth
 CX, CY = W // 2, H // 2   # centre-drawn layers (suns, pop lines) are moved into place by their motion
@@ -712,24 +718,46 @@ def build(ctx):
         sc.add(f"dove{i}", [S.svg_doc(PR.dove(x0, y0, s_, 1, wing=w)) for w in wings], z=z_sky + 0.1 * (i + 1),
                frame_at=flap(9.0, ph), wc=0.5, motion=dove_motion(t0, 4.4, 1240, -300, ph))
 
-    # =============================================================== LIZARD (basks, runs from the hot wind)
-    liz_frames = [S.svg_doc(V._lizard(LIZ[0], LIZ[1], 0.72, legs=k)) for k in (0, 1)]
+    # =============================================================== LIZARD (back to its stone at dawn; basks;
+    # runs from the hot wind). It is s21's lizard (same drawing and scale) and opens where s21 leaves it - in the
+    # plant's shade in front of the booth's right post (LIZ_TO, facing left) - so the dissolve lays it over
+    # itself; as dawn breaks it turns and scurries back to its stone, before the camera pushes in to the worm.
+    def liz_body(legs, facing):
+        b = V._lizard(LIZ[0], LIZ[1], LIZ_S, legs=legs)
+        return b if facing > 0 else f'<g transform="translate({2 * LIZ[0]},0) scale(-1,1)">{b}</g>'
+
+    liz_frames = [S.svg_doc(liz_body(lg, f)) for lg, f in ((0, 1), (1, 1), (0, -1), (1, -1))]
+    F_LIZ_LEFT = 2.0                                  # legs 0, facing left = s21's last lizard frame
+    t_lizret = max(t_dawn0 + 0.5, XF + 0.1)           # after the dissolve, as the sky starts to blush
+    LIZ_RET = 0.7
+    assert t_lizret + LIZ_RET <= t_godw - 0.4, "the lizard must be home before the push-in to the worm"
+    ldx, ldy = LIZ_TO[0] - LIZ[0], LIZ_TO[1] - LIZ[1]
+    LIZ_HIDE = 154                                    # its dash ends centred behind liz_rock2 (and the grass)
 
     def liz_frame(t):
+        if t < t_lizret:
+            return F_LIZ_LEFT
+        if t < t_lizret + LIZ_RET:
+            return float(int((t - t_lizret) * 16) % 2)
         return 0.0 if t < t_liz else float(int((t - t_liz) * 16) % 2)
 
     def liz_motion(t):
+        if t < t_lizret + LIZ_RET:
+            u = _clamp((t - t_lizret) / LIZ_RET)
+            return Tf(dx=ldx * (1 - M.ease("out")(u)), dy=ldy * (1 - u) - 14 * math.sin(math.pi * u))
         if t < t_liz:
             u = (t + 0.9) % 2.8
             b = abs(math.sin(math.pi * u / 0.2)) if u < 0.4 else 0.0
             return Tf(sx=1 - 0.03 * b, sy=1 + 0.13 * b, px=LIZ[0], py=LIZ[1] + 2)
         v = t - t_liz
-        return Tf(dx=158 * M.ease("out")(min(1.0, v / 0.5)), dy=38 * M.progress(v, 0.08, 0.4, "sine"),
-                  alpha=1 - M.progress(v, 0.4, 0.62, "sine"))
+        return Tf(dx=LIZ_HIDE * M.ease("out")(min(1.0, v / 0.5)), dy=38 * M.progress(v, 0.08, 0.4, "sine"),
+                  alpha=1 - M.progress(v, 0.32, 0.48, "sine"))   # gone as soon as it is behind the stone
 
     sc.add("lizard", liz_frames, frame_at=liz_frame, motion=liz_motion, wc=0.5)
+    liz_layers = [sc.layers[-1]]
     sc.add("liz_rock2", S.svg_doc(S.g(V._stone(LIZ[0] + 150, 1002, 104, 58, seed=43, sw=4), filter="wobble-fine")),
            wc=0.8)
+    liz_layers.append(sc.layers[-1])
 
     # booth + its contact shadow
     booth_shadow = (f'<ellipse cx="{XB + 60}" cy="{GY + 8}" rx="{340 * SP}" ry="30" fill="{INK}" '
@@ -757,6 +785,11 @@ def build(ctx):
         return Tf(rot=rot, px=hinge[0], py=hinge[1])
 
     sc.add("booth_flap", flap_docs, frame_at=flap_frame, motion=flap_motion, wc=0.6)
+    # the lizard (and the stone it hides behind) are drawn in front of the booth, as in s21, so it is in front
+    # of the right post at LIZ_TO; still under the canopy's ground shade (added next). Only z moves: the layers'
+    # insertion order (and so their watercolour seeds) stays as it was.
+    for i, lyr in enumerate(liz_layers):
+        lyr.z = sc.layers[-1].z + 0.1 * (i + 1)
 
     # canopy shade on the ground (morning light), gone as the plant withers
     shade_amt = lambda t: (0.35 + 0.65 * a_dawn(t)) * (1 - M.progress(t, t_with0 + 0.2, t_with1, "sine"))
@@ -983,7 +1016,9 @@ def build(ctx):
         if t >= t_shout:                       # huffing after the shout, calming down
             k = 1 - M.progress(t, t_hmph + 0.5, T - 0.6, "sine")
             per, amp = 1.4 + 1.4 * (1 - k), 0.012 + 0.012 * k
-        s = 1 + amp * math.sin(2 * math.pi * t / per)
+        # asleep he starts breathing only after the dissolve (scale 1 there, like s21's resting Jonah), so his
+        # head is not doubled by a breathing mismatch in the cross-dissolve
+        s = 1 + amp * math.sin(2 * math.pi * (max(0.0, t - XF) if asleep else t) / per)
         sx, sy = s, s
         rot, dx, dy = 0.0, 0.0, 0.0
         # rocked by the gusts while he squints into the hot wind

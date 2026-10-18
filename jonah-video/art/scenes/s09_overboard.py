@@ -6,9 +6,11 @@ Two shots joined by a dip through the blank page in the pause after line 1:
   A (lines 0-1)  the approved v1 wide shot (art/scenes_v1/s06_fish.py, surface half): the ship (bow LEFT, torn
                  striped sail) rocking in the storm. It OPENS on s08's end framing: the camera is sized and placed so
                  this ship sits on s08's (art/scenes/s08_row.py: ship at SX0 + 262 / SY, scale .92, end camera
-                 (1682, 670, 1600) on its 2640 stage), the crew kneel with raised hands in s08's order and places
-                 (sailor 0, sailor 1, Jonah, sailor 2, sailor 3, the captain on the raised stern) under the fading
-                 gold of s08's prayer light, so the incoming dissolve lines up instead of doubling the ship.
+                 (1682, 670, 1600) on its 2640 stage), the crew kneel with raised hands, eyes closed and mouths a
+                 small 'o' (s08's END_EXPR 'sleepy'), in s08's order and places (sailor 0, sailor 1, Jonah, sailor 2,
+                 sailor 3, the captain on the raised stern under the lantern, where s08 ends him) under s08's prayer
+                 light as it ends (a small warm opening in the clouds and four narrow golden shafts, redrawn in s08's
+                 coordinates), which fades as they get up, so the incoming dissolve lines up instead of doubling.
   B (line 2)     on the calm deck (bulwark with painted shields, mast and torn sail on the left): the crew kneel in two
                  staggered rows, spread out so every face stays clear; a small bronze brazier on the right. God's
                  presence is only light: a warm glowing break in the clouds above and right of the brazier (the sun
@@ -87,8 +89,9 @@ def ship_x(lx):
     return SX - lx * SS                # SF = -1: local +x (toward the bow) is to the LEFT
 
 
-# ---- shot A cast: s08's order and kneeling places on the same ship (s08_row.py ROWERS / JON_LX / CAPT_LX):
-#      sailor 0, sailor 1, Jonah, sailor 2, sailor 3, the captain (on the raised stern deck)
+# ---- shot A cast: s08's order and end places on the same ship (s08_row.py's End frame: sailors kneel at 274 / 132 /
+#      -116 / -250, Jonah stands at JON_LX -4, the captain ends on the raised stern deck at CAPT_KNEEL_LX -436 on the
+#      deck height at CAPT_KNEEL_DECK_LX -400, the lantern in front of his chest)
 A_LX = dict(s0=274, s1=132, jon=-4, s2=-116, s3=-250, capt=-436)
 A_POS = {k: (ship_x(lx), deck_y(-400 if k == "capt" else lx)) for k, lx in A_LX.items()}
 A_F0 = dict(s0=1, s1=1, s2=-1, s3=-1, capt=-1)          # facings at the start (toward Jonah, as in s08)
@@ -104,12 +107,14 @@ PEN = PR.local_to_stage(SX, WL, SS, SF, -10, -930)           # masthead (pennant
 SUN_A = (1700, 215)                                          # v1 sun (removed from V.background, own layer)
 
 # s08's end framing in this stage: its ship (anchor SX0 + 262 = 1622, SY 1130, scale .92) seen by its end camera
-# (1682, 670, 1600) maps onto this ship (SX, WL, scale .8) with the camera below; its prayer-light gap
-# (2040, 350) lands at S08_GLOW.
+# (1682, 670, 1600) maps onto this ship (SX, WL, scale .8) with the camera below; S08_TF maps s08 stage coordinates
+# onto this stage the same way (its prayer light is redrawn through it).
 _O08 = OUT_W / 1600                                          # s08's end camera: output px per s08 stage px
 _K08 = 0.92 * _O08 / SS                                      # ...and per stage px here, for the matched camera
 CAM_S08 = Cam(SX - (1622 - 1682) * _O08 / _K08, WL - (1130 - 670) * _O08 / _K08, OUT_W / _K08)
-S08_GLOW = (CAM_S08.x + (2040 - 1682) * _O08 / _K08, CAM_S08.y + (350 - 670) * _O08 / _K08)
+_S08 = SS / 0.92                                             # s08 stage px -> stage px here
+S08_TF = f"translate({SX - 1622 * _S08:.2f},{WL - 1130 * _S08:.2f}) scale({_S08:.5f})"
+S08_EXPR = "sleepy"                                          # s08's END_EXPR: eyes closed, a small 'o' mouth
 
 # ---- shot B: the deck seen from on board
 B_HOR, B_RAIL, B_DBACK = 560, 780, 872
@@ -336,12 +341,60 @@ def a_sun(part):
                    f'stroke-width="4"/>', filter="wobble"))
 
 
-def a_prayer_glow():
-    """s08's warm prayer light where its cloud gap was (screen-blended, fades out as the crew get up)."""
-    x, y = S08_GLOW
-    defs = S.rad_grad("s9pg", [(0, "#ffe7b0", 0.6), (0.4, "#f8d898", 0.32), (1, "#f0c880", 0.0)])
-    return doc(f'<ellipse cx="{x:.0f}" cy="{y + 8:.0f}" rx="{620 * _O08 / _K08:.0f}" ry="{400 * _O08 / _K08:.0f}" '
-               f'fill="url(#s9pg)"/>', defs)
+def a_prayer_light(part):
+    """s08's prayer light as it ends (art/scenes/s08_row.py gap_svg, its 'gap_through' glow and rays_svg), drawn in
+    s08's stage coordinates and mapped onto this stage by S08_TF, so it lies on itself in the dissolve:
+      'gap'      the small pale-gold opening in the clouds at s08 (2040, 350), a soft warm wash round it (normal);
+      'through'  the light shining through the break (screen, sky level: it never lifts the sail);
+      'rays'     four narrow golden shafts from the break passing BETWEEN the kneeling heads and fading on the deck,
+                 and a faint warm pool on the deck (screen, over the crew)."""
+    gx, gy = 2040.0, 350.0                                   # s08's cloud break (s08 stage px)
+    if part == "gap":
+        defs = (S.rad_grad("s9gap", [(0, "#fff7de", 1.0), (0.4, "#fdeab8", 0.95), (0.7, "#f7d995", 0.55),
+                                     (0.88, "#f2cc80", 0.18), (1, "#f0c878", 0.0)])
+                + S.rad_grad("s9gapw", [(0, "#f6d796", 0.32), (0.6, "#f0c880", 0.12), (1, "#f0c070", 0.0)]))
+        b = (f'<ellipse cx="{gx}" cy="{gy}" rx="520" ry="300" fill="url(#s9gapw)"/>'
+             f'<ellipse cx="{gx + 10}" cy="{gy + 4}" rx="300" ry="190" fill="url(#s9gap)"/>')
+    elif part == "through":
+        defs = S.rad_grad("s9gt", [(0, "#ffe7b0", 0.45), (0.45, "#f8d898", 0.2), (1, "#f0c880", 0.0)])
+        b = f'<ellipse cx="{gx + 10}" cy="{gy}" rx="360" ry="220" fill="url(#s9gt)"/>'
+    else:
+        def x8(lx):                                          # s08's kneeling places (its ship at the end place)
+            return 1622.0 - lx * 0.92
+
+        def y8(lx):
+            return 1130.0 + PR._hull_top(lx) * 0.92
+        sx, sy = gx + 10, gy + 60
+        head_y = y8(0) - 225
+        k = (y8(0) - 10 - sy) / (head_y - sy)
+        defs = ('<filter id="s9rb" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/>'
+                '</filter><filter id="s9rc" x="-30%" y="-30%" width="160%" height="160%">'
+                '<feGaussianBlur stdDeviation="3.5"/></filter>')
+        shafts, cores = "", ""
+        for i, (la, lb, w) in enumerate(((274, 132, 78), (132, -4, 74), (-4, -116, 76), (-116, -250, 70))):
+            tx, ty = sx + ((x8(la) + x8(lb)) / 2 - sx) * k, y8(0) - 10      # between two heads, out on the deck
+            L = math.hypot(tx - sx, ty - sy)
+            nx, ny = -(ty - sy) / L, (tx - sx) / L
+            for kind, ww, col, stops in (
+                    ("s", w, "#ffe3a0", ((0, 0), (0.1, 0.42), (0.5, 0.28), (0.8, 0.12), (1, 0))),
+                    ("c", w * 0.3, "#fff4d2", ((0, 0), (0.12, 0.62), (0.5, 0.36), (0.8, 0.12), (1, 0)))):
+                gid = f"s9r{kind}{i}"
+                defs += (f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="{sx:.1f}" y1="{sy:.1f}" '
+                         f'x2="{tx:.1f}" y2="{ty:.1f}">'
+                         + "".join(f'<stop offset="{o}" stop-color="{col}" stop-opacity="{a}"/>' for o, a in stops)
+                         + '</linearGradient>')
+                w0 = ww * 0.12
+                p = [(sx + nx * w0, sy + ny * w0), (tx + nx * ww / 2, ty + ny * ww / 2),
+                     (tx - nx * ww / 2, ty - ny * ww / 2), (sx - nx * w0, sy - ny * w0)]
+                d = '<path d="M' + " L".join(f"{x:.1f},{y:.1f}" for x, y in p) + f' Z" fill="url(#{gid})"/>'
+                if kind == "s":
+                    shafts += d
+                else:
+                    cores += d
+        b = (f'<g filter="url(#s9rb)">{shafts}</g><g filter="url(#s9rc)">{cores}</g>'
+             f'<ellipse cx="1622" cy="{y8(0) - 60:.1f}" rx="380" ry="120" fill="#ffe2a0" opacity="0.1" '
+             f'filter="url(#blur-lg)"/>')
+    return doc(f'<g transform="{S08_TF}">{b}</g>', defs)
 
 
 def pennant(ang, L, curl=0.0, ripple=0.0, ph=0.0):
@@ -985,9 +1038,12 @@ def build(ctx):
         sc.add(f"a_storm_bank{side}", V.storm_bank(side), z=6,
                motion=a_only(lambda t, s=side: Tf(dx=s * 1250 * progress(t, t_calm0 - 0.1, t_calm0 + 0.65, "sine") +
                                                   s * 8 * math.sin(t * 1.3), alpha=storm_fast(t))))
-    # s08's prayer light, fading as they get up
-    sc.add("a_prayer_glow", a_prayer_glow(), z=6.6, wc=0, blend="screen",
-           motion=a_only(lambda t: Tf(alpha=0.85 * (1 - progress(t, t_rise, t_rise + 1.3, "sine")))))
+    # s08's prayer light as it ends (its opening ~0.82 opaque, shafts ~0.83), fading as they get up
+    def prayer_m(t):
+        return Tf(alpha=0.83 * (1 - progress(t, t_rise, t_rise + 1.3, "sine")))
+    sc.add("a_prayer_gap", a_prayer_light("gap"), z=6.6, wc=0, motion=a_only(prayer_m))
+    sc.add("a_prayer_through", a_prayer_light("through"), z=6.7, wc=0, blend="screen", motion=a_only(prayer_m))
+    sc.add("a_prayer_rays", a_prayer_light("rays"), z=12.6, wc=0, blend="screen", motion=a_only(prayer_m))
 
     # pennant: whipping in the storm; at '风停了' it sags (in-betweens) and hangs slack behind the yard and sail,
     # swaying slowly by rotation about its root (composed with the ship's rocking)
@@ -1043,23 +1099,23 @@ def build(ctx):
 
     f0 = A_F0
     a_specs = {
-        "s0": ("s", 0, [(K_LOWUP, "peaceful", f0["s0"]), (K_UPR, "worried", 1), (HALF, "worried", 1),
+        "s0": ("s", 0, [(K_LOWUP, S08_EXPR, f0["s0"]), (K_UPR, "worried", 1), (HALF, "worried", 1),
                         (STAND, "worried", 1), (C.POSES["scared"], "scared", 1), (dict(STAND, h=8), "worried", 1),
                         (PRAY, "surprised", 1)],
                rising("s0") + [(t_lift, 4), (t_watch, 5), (t_awe, 6)]),
-        "s1": ("s", 1, [(K_LOWUP, "peaceful", f0["s1"]), (K_UPR, "worried", 1), (HALF, "worried", 1),
+        "s1": ("s", 1, [(K_LOWUP, S08_EXPR, f0["s1"]), (K_UPR, "worried", 1), (HALF, "worried", 1),
                         (STAND, "worried", 1), (C.POSES["carry"], "worried", 1), (C.POSES["lift"], "worried", 1),
                         (dict(STAND, h=8), "worried", 1), (PRAY, "surprised", 1)],
                rising("s1") + [(t_grab, 4), (t_lift, 5), (t_watch, 6), (t_awe, 7)]),
-        "s2": ("s", 2, [(K_LOWUP, "peaceful", f0["s2"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
+        "s2": ("s", 2, [(K_LOWUP, S08_EXPR, f0["s2"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
                         (STAND, "worried", -1), (C.POSES["carry"], "worried", -1), (C.POSES["lift"], "worried", 1),
                         (LEAN_LOOK, "worried", 1), (PRAY, "surprised", 1)],
                rising("s2") + [(t_grab, 4), (t_lift, 5), (t_watch, 6), (t_awe, 7)]),
-        "s3": ("s", 3, [(K_LOWUP, "peaceful", f0["s3"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
+        "s3": ("s", 3, [(K_LOWUP, S08_EXPR, f0["s3"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
                         (STAND, "worried", -1), (C.POSES["scared"], "scared", -1), (LEAN_LOOK, "worried", 1),
                         (DIAG_UP, "surprised", 1)],
                rising("s3") + [(t_lift, 4), (t_watch, 5), (t_awe + 0.08, 6)]),
-        "capt": ("capt", None, [(K_LOWUP, "peaceful", f0["capt"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
+        "capt": ("capt", None, [(K_LOWUP, S08_EXPR, f0["capt"]), (K_UPR, "worried", -1), (HALF, "worried", -1),
                                 (STAND, "worried", -1), (C.POSES["worried"], "worried", -1),
                                 (LEAN_POINT, "worried", 1), (GAZE, "surprised", 1)],
                  rising("capt") + [(t_lift + 0.06, 4), (t_watch + 0.05, 5), (t_awe + 0.14, 6)]),
@@ -1281,7 +1337,7 @@ def build(ctx):
     A0 = (1000.0, 590.0, 1700.0)
     A1 = (945.0, 634.0, 1560.0)
     C08 = (CAM_S08.x, CAM_S08.y, CAM_S08.w)
-    t_ca0 = max(0.75, t_rise - 0.15)
+    t_ca0 = max(1.0, t_rise - 0.15)     # held on s08's end framing all through the 1.0 s incoming dissolve
     t_ca1 = max(t_ca0 + 0.9, t_grab - 0.05)
     t_p0 = t_still - 0.2
     vd = [1.4 * (A1[i] - A0[i]) / max(0.5, t_d0 - t_p0) for i in range(3)]

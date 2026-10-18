@@ -22,9 +22,18 @@ Line 2 "这下，约拿非常非常高兴！" — hop into a delighted pose (leg
         the camera eases back to exactly s22's opening framing for a clean same-place dissolve.
 
 Continuity
-* Start: s20 ends on this scene's first frame (booth anchor, Jonah 'sit' facing left, lizard, and this
+* Start: s20 ends on this scene's opening view (booth anchor, Jonah 'sit' facing left, lizard and this
   afternoon flame sun with its scale / turning / breathing phase are matched there), so the opening camera
-  Cam(1075, 600, 1960), the booth, Jonah's first pose and the afternoon sun must stay as they are.
+  Cam(1075, 600, 1960) (held through the dissolve), the booth, Jonah's first pose and the afternoon sun must stay
+  as they are. s20 paints its own sky, clouds, plain, ridge, rocks and grass, and ends with Jonah's 'watch'
+  face, so the opening does not cross-fade into this scene's drawings. Instead, until t_swap the picture IS s20's
+  last shot: _prev_shot() builds the previous scene from the timeline and renders it on its own clock (its
+  layers, fx, Jonah, lizard; no paper or subtitles), so the s20 -> s21 dissolve blends two identical pictures.
+  On "上帝安排了" God's light (light only) widens from the beam beside the booth until its warm glow fills the
+  frame for a few frames (fx 'flood', at most 96 %). Under that peak the picture cuts to this scene's own
+  drawings: its far view and clouds, Jonah tired and sweaty. Then the light gathers back into the beam. This
+  scene now depends on the previous scene's file. Re-render it whenever s20_booth.py changes (engine/render.py
+  hashes only a scene's own file).
 * End: the last camera key equals s22's first key Cam(1070, 600, 1990) (same stage layout V.XP / GY / SP /
   XB); Jonah ends sitting with closed eyes like s22's dozing Jonah; the noon sun is at s22's SUN_HOT.
 
@@ -37,12 +46,16 @@ Notes for maintainers
   Instead the whole frame gets one uniform night grade (multiply + small blue lift); the night sky layer is
   painted pre-compensated for it, and the stars, the moon and God's glow on the plant are drawn AFTER the
   grade (post-grade overlay fx), only in clear sky, so they stay bright.
-* Heat vs shade: the hot sky is painted warm (a light global warm grade only); the canopy shade is a bluish
-  multiply on the ground plus a post-grade cool recolour (luminance kept, hue pushed to blue-violet) inside
-  the shade pool, a lighter one on Jonah's silhouette, and almost none on the lizard so it stays readable.
+* Heat vs shade: the hot sky is painted warm (a light global warm grade only); the canopy shade is a muted
+  mauve-grey multiply pool on the ground (dappled by sun flecks, also along its upper rim) plus a gentle
+  post-grade cool recolour (luminance kept) inside the pool, a lighter one on Jonah's silhouette and almost
+  none on the lizard, so it stays readable. The 'under the roof' wash (WASH) stays inside the booth's posts, so
+  the open hills beside the booth are never tinted.
 * Camera: few long sine-eased moves inside the 2112 x 1188 stage.
 """
+import importlib
 import math
+import sys
 
 import cv2
 import numpy as np
@@ -287,6 +300,63 @@ def _plant_sparkles(growth_fn, t0, t1, count=22, color=(255, 214, 120), size=(6,
     return fx
 
 
+_NESTED = [False]       # guards against building the previous scene recursively
+
+
+def _prev_shot(ctx, t_end):
+    """The previous scene's last shot, to open this scene with (see the docstring, "Start").
+
+    Builds the previous scene (s20) from the timeline, keeps only the layers / flipbook drawings it shows from
+    its clock at this scene's t = 0 up to ``t_end`` later, and prepares a renderer for them (its own fx, no
+    paper, no subtitles). Returns (renderer, s20 clock at t = 0) or None (with a warning) if it cannot be built."""
+    if _NESTED[0]:
+        return None
+    _NESTED[0] = True
+    try:
+        from engine.loader import load_timeline
+        from engine.scene import SceneContext
+        tl = load_timeline()
+        ids = [s["id"] for s in tl["scenes"]]
+        prev = tl["scenes"][ids.index(ctx.id) - 1]
+        pctx = SceneContext.from_timeline(prev)
+        psc = importlib.import_module(f"art.scenes.{prev['id']}").build(pctx)
+        off = ctx.start - pctx.start
+        ts = [off + n / FPS for n in range(int(math.ceil(t_end * FPS)) + 2)]
+        keep = []
+        for L in psc.layers:
+            if L.motion is not None and max(L.motion(t).alpha for t in ts) <= 0.002:
+                continue
+            if len(L.frames) > 1:                 # only the flipbook drawings it shows (and blends) in the window
+                n = len(L.frames)
+                used = set()
+                for t in ts:
+                    f = min(max(L.frame_at(t) if L.frame_at else 0.0, 0.0), n - 1)
+                    i0 = int(math.floor(f))
+                    used.add(i0)
+                    if f - i0 > 0.01 and i0 + 1 < n:
+                        used.add(i0 + 1)
+                order = sorted(used)
+                new = {i: j for j, i in enumerate(order)}
+                fa = L.frame_at
+
+                def frame_at(t, fa=fa, n=n, new=new, order=order):
+                    f = min(max(fa(t) if fa else 0.0, 0.0), n - 1)
+                    i0 = int(math.floor(f))
+                    if i0 in new and (f - i0 <= 0.01 or i0 + 1 in new):
+                        return new[i0] + (f - i0 if f - i0 > 0.01 else 0.0)
+                    return float(new[min(order, key=lambda i: abs(i - f))])
+                L.frames = [L.frames[i] for i in order]
+                L.frame_at = frame_at
+            keep.append(L)
+        psc.layers = keep
+        return CO.Renderer(psc, subtitles=False, paper=0), off
+    except Exception as e:      # keep the scene renderable on its own; the opening then won't match
+        print(f"[{ctx.id}] WARNING: cannot continue the previous scene's last shot: {e!r}", file=sys.stderr)
+        return None
+    finally:
+        _NESTED[0] = False
+
+
 def _glow_pm(R=320, col=(255, 220, 140)):
     yy, xx = np.mgrid[0:2 * R, 0:2 * R].astype(np.float32)
     r = np.sqrt((xx - R) ** 2 + (yy - R) ** 2) / R
@@ -342,6 +412,20 @@ def build(ctx):
     t_happy = max(l2.start + 0.45, t_relief + 1.0)  # "这下，约拿非常非常高兴！"
     t_settle = min(l2.end + 0.1, T - 1.2)           # settles back to a calm eyes-closed rest (hop-cut) ...
     t_cam1 = min(T - 1.2, l2.end + 0.2)             # ... as the camera arrives on s22's opening framing
+
+    # --- opening: s20's last shot continues through the dissolve; on "上帝安排了" God's light floods the frame
+    # and, under its fullest moment, the picture becomes this scene's own (see the docstring, "Start")
+    try:
+        from engine.loader import load_timeline
+        XF = float(load_timeline().get("xfade", 1.0))   # cross-dissolve length (s)
+    except Exception:
+        XF = 1.0
+    t_f0 = max(XF, t_beam0)                         # the light starts to widen once the dissolve is over ...
+    t_full = t_f0 + 0.32                            # ... fills the frame for a few frames ...
+    t_swap = t_full + 0.03                          # ... (s20's picture -> this scene's own, a 1-frame cut) ...
+    t_f1 = t_full + 0.06                            # ... then gathers back into the beam beside the booth
+    t_fe = t_f1 + 0.55
+    prev_shot = _prev_shot(ctx, t_swap)
 
     # =============================================================== SKY (day / hot / gold / night / dawn)
     sky_h = 665
@@ -581,25 +665,31 @@ def build(ctx):
     blobs = [(640, 980, 115, 34), (760, 976, 145, 40), (900, 974, 155, 44), (1050, 976, 165, 46),
              (1210, 978, 175, 46), (1360, 980, 145, 40), (1470, 984, 105, 32)]
     flecks = [(712, 978, 20, 6), (845, 966, 16, 5), (985, 984, 22, 6), (1150, 990, 18, 5), (1318, 984, 22, 6),
-              (1435, 972, 14, 4), (560, 984, 14, 4)]
-    pool = "".join(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#7c84b6"/>' for x, y, rx, ry in blobs)
+              (1435, 972, 14, 4), (560, 984, 14, 4),
+              # sun flecks along the upper rim break up its straight top edge (leaf shade, not a puddle)
+              (780, 958, 18, 5), (1010, 960, 16, 5), (1250, 962, 18, 5), (1400, 966, 14, 4)]
+    pool = "".join(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#8e8296"/>' for x, y, rx, ry in blobs)
     holes = "".join(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="black"/>' for x, y, rx, ry in flecks)
+    # a light wash in the space under the roof only: inside the booth's posts (front posts at about
+    # XB -+ 178 * SP), so it never tints the open hills beside the booth
+    WASH = (int(round(XB + 15)), GY - 115, 195, 120)
+
     def gshade(pool_op, wash_op):
         return S.svg_doc(
             f'<mask id="fl" maskUnits="userSpaceOnUse" x="0" y="0" width="{W}" height="{H}">'
             f'<rect x="0" y="0" width="{W}" height="{H}" fill="white"/>{holes}</mask>'
             f'<g mask="url(#fl)"><g opacity="{pool_op}" filter="url(#shsoft)">{pool}</g></g>'
-            f'<ellipse cx="{XP + 380}" cy="{GY - 150}" rx="330" ry="200" fill="#a2a7d0" opacity="{wash_op}" '
-            f'filter="url(#blur-md)"/>',
+            f'<ellipse cx="{WASH[0]}" cy="{WASH[1]}" rx="{WASH[2]}" ry="{WASH[3]}" fill="#a2a7d0" '
+            f'opacity="{wash_op}" filter="url(#blur-md)"/>',
             defs='<filter id="shsoft" x="-30%" y="-80%" width="160%" height="260%">'
                  '<feGaussianBlur stdDeviation="14"/></filter>')
 
     sh0, sh1 = t_hot0 + 0.15, t_hot0 + 1.35     # the noon shade spreads from the stem over the booth
     # weak morning shade; retired (cost) once the stronger noon shade has spread over it
-    sc.add("ground_shade_am", gshade(0.5, 0.4), wc=0, blend="multiply",
+    sc.add("ground_shade_am", gshade(0.5, 0.28), wc=0, blend="multiply",
            motion=lambda t: Tf(alpha=0.3 * M.progress(t, t_d1, t_d1 + 1.5, "sine") *
                                (1 - M.progress(t, sh1, sh1 + 0.6, "sine"))))
-    sc.add("ground_shade", gshade(0.5, 0.42), wc=0, blend="multiply",
+    sc.add("ground_shade", gshade(0.5, 0.28), wc=0, blend="multiply",
            motion=lambda t: Tf(alpha=0.0 if t < sh0 else 1.0),
            reveal=lambda t: {"mode": "left", "frac": M.progress(t, sh0, sh1, "sine"), "soft": 160})
 
@@ -841,9 +931,10 @@ def build(ctx):
         sc.add(f"grass{gi}", frames, frame_at=grass_frame_fn(gi * 0.23), wc=0.7)
 
     # =============================================================== CAMERA
+    CAM0 = Cam(1075, 600, 1960)                     # = s20's final view (held through the dissolve)
     sc.camera = M.cam_keys([
-        (0.0, Cam(1075, 600, 1960)),
-        (t_beam0 + 0.1, Cam(1072, 598, 1956)),
+        (0.0, CAM0),
+        (max(XF, t_beam0 + 0.1), CAM0),
         (t_notice + 0.1, Cam(1012, 638, 1770)),        # closer: the glow gathers, the sprout pushes up
         (t_n0 + 0.2, Cam(1010, 640, 1762)),
         (t_g0 + 1.7, Cam(1050, 592, 1960)),            # back out as night falls and the plant shoots up
@@ -889,12 +980,12 @@ def build(ctx):
     # recoloured toward a cool blue-violet of the same luminance (texture and ink lines are kept); Jonah's
     # silhouette gets a lighter version, the lizard almost none (it must stay readable). Applied AFTER the
     # warm grade, so the warmth cannot turn it brown again.
-    COOL_TINT = np.array([0.80, 0.93, 1.36], np.float32)
-    COOL_LIFT = np.array([20.0, 22.0, 32.0], np.float32)
-    KP, KW, KJ, KZ = 0.62, 0.26, 0.15, 0.06     # recolour strength: ground pool / under the roof / Jonah / lizard
+    COOL_TINT = np.array([0.90, 0.95, 1.12], np.float32)
+    COOL_LIFT = np.array([10.0, 10.0, 16.0], np.float32)
+    KP, KW, KJ, KZ = 0.40, 0.16, 0.15, 0.06     # recolour strength: ground pool / under the roof / Jonah / lizard
     LUMA = np.array([0.299, 0.587, 0.114], np.float32)
 
-    wcx, wcy, wrx, wry = XP + 380, GY - 150, 330, 200       # the multiply wash ellipse under the roof
+    wcx, wcy, wrx, wry = WASH                               # the multiply wash ellipse under the roof
     px0 = min(min(x - rx for x, _y, rx, _r in blobs) - 40, wcx - wrx - 80)
     py0 = min(min(y - ry for _x, y, _r, ry in blobs) - 40, wcy - wry - 80)
     px1 = max(max(x + rx for x, _y, rx, _r in blobs) + 40, wcx + wrx + 80)
@@ -909,7 +1000,7 @@ def build(ctx):
     # ... plus a weaker cool wash in the space under the roof and canopy (behind Jonah), like the multiply wash
     wmask = np.zeros_like(pmask)
     cv2.ellipse(wmask, (wcx - px0, wcy - py0), (wrx, wry), 0, 0, 360, 255.0, -1, cv2.LINE_AA)
-    wmask = cv2.GaussianBlur(wmask, (0, 0), 40) * KW
+    wmask = cv2.GaussianBlur(wmask, (0, 0), 18) * KW
     pmask = np.maximum(pmask, wmask)
     pool_full = np.dstack([np.clip(pmask, 0, 255).astype(np.uint8)] * 4)
 
@@ -1037,9 +1128,57 @@ def build(ctx):
             im.alpha_composite(ov)
         return im
 
+    # --- opening: s20's last shot (its own renderer, on its clock), then God's light floods the frame ------
+    C0_inv = np.linalg.inv(CO.cam_matrix(CAM0))
+
+    def s20_shot(frame, t, view):
+        """Until t_swap the picture is s20's own last shot (exactly as s20 renders it at the same moment, before
+        paper and subtitles), moved with this scene's camera once it leaves s20's final view (= CAM0)."""
+        if prev_shot is None or t >= t_swap:
+            return frame
+        r20, off = prev_shot
+        arr = r20.frame_array(t + off)
+        A = view.M @ C0_inv                       # output px at CAM0 -> output px now
+        if not np.allclose(A, np.eye(3), atol=1e-9):
+            A = A[:2].copy()
+            A[:, 2] += 0.5 * (A[:, 0] + A[:, 1]) - 0.5
+            arr = cv2.warpAffine(arr, A, (arr.shape[1], arr.shape[0]), flags=cv2.INTER_CUBIC,
+                                 borderMode=cv2.BORDER_REPLICATE)
+        out = np.empty((arr.shape[0], arr.shape[1], 4), np.uint8)
+        out[..., :3] = arr
+        out[..., 3] = 255
+        return Image.fromarray(out, "RGBA")
+
+    F_CORE = np.array([255.0, 250.0, 232.0], np.float32)    # warm light: pale gold at the beam ...
+    F_RIM = np.array([253.0, 226.0, 168.0], np.float32)     # ... deeper gold away from it (never pure white)
+    F_PEAK, F_R0, F_RMAX, F_SOFT = 0.96, 80.0, 1600.0, 280.0
+
+    def flood_amt(t):
+        return M.progress(t, t_f0, t_f0 + 0.2, "sine") * (1 - M.progress(t, t_f1 + 0.05, t_fe, "sine"))
+
+    def flood(frame, t, view):
+        """God's light (light only): the beam beside the booth widens until its warm glow fills the whole frame
+        (at most F_PEAK), holds for a few frames, then narrows back into the beam (half-width in output px)."""
+        k = flood_amt(t)
+        if k <= 0.002:
+            return frame
+        r = F_R0 + (F_RMAX - F_R0) * (M.progress(t, t_f0, t_full, "inout") -
+                                      M.progress(t, t_f1, t_f1 + 0.5, "out"))
+        xb = view.to_out(XP, GY - 400)[0]
+        d = np.abs(np.arange(frame.size[0], dtype=np.float32) - xb)
+        a = (F_PEAK * k * np.clip((r - d) / F_SOFT + 0.5, 0.0, 1.0))[None, :, None]
+        # the gold deepens away from the beam and toward the ground, so it reads as light (not a blank page)
+        fy = np.linspace(0.0, 1.0, frame.size[1], dtype=np.float32)[:, None, None]
+        col = F_CORE + (F_RIM - F_CORE) * np.clip(0.75 * d[None, :, None] / 1000.0 + 0.45 * fy, 0.0, 1.0)
+        arr = np.array(frame)
+        rgb = arr[..., :3].astype(np.float32)
+        arr[..., :3] = np.clip(rgb + (col - rgb) * a + 0.5, 0, 255).astype(np.uint8)
+        return Image.fromarray(arr, "RGBA")
+
     def shimmer(frame, t, view):
         k = 0.7 * (1 - M.progress(t, t_n0 - 0.2, t_n0 + 0.3, "sine")) + \
             M.progress(t, t_hot0 + 0.3, t_hot0 + 1.1, "sine")
+        k *= 0.0 if t < t_swap else 1 - flood_amt(t)     # s20's own heat shimmer shows before the swap
         if k <= 0.01:
             return frame
         ov = Image.new("RGBA", frame.size, (0, 0, 0, 0))
@@ -1060,6 +1199,8 @@ def build(ctx):
         grade,
         cool_shade,
         night_overlay,
+        s20_shot,
+        flood,
         # God's sparkles: in the beam by day (they fade as dusk falls), then small warm ones that hug the
         # growing plant at night (never loose in the sky, where they would read as stars)
         FX.sparkles((XP - 140, GY - 760, XP + 140, GY - 20), count=16, t0=t_beam0 + 0.2, t1=t_n0 + 0.5,

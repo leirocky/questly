@@ -6,6 +6,9 @@ city of Nineveh far away on the eastern horizon. Echoes the first call (s02): kn
 God is never drawn: only light, sparkles and his voice. Jonah is 'still a bit wet' (robe a little darker, soaked
 hem patches, a few drops, no seaweed) and leaves damp sandal prints on the road.
 
+  open       a page of soft cream clouds, gold light glowing through a seam above Jonah, fills the frame through the
+             1 s dissolve from s13, so s13's standing Jonah never shares the screen with this one (a new page,
+             'a second time'); as L0 begins the cloud banks part sideways and fade, revealing the page below.
   start      calm page: Jonah kneels in prayer on the road (eyes closed), empty-handed as he came out of the fish
              in s13 (and as he walks up to the gate in s15: no staff, no bag); waves run up the beach, gulls
              glide, palms sway, two sheep graze, a butterfly flutters.
@@ -262,6 +265,62 @@ def clouds_svg(items):
     for cx, cy, w, h, seed in items:
         body += S.cloud(cx, cy, w, h, "#fdf6e8", seed=seed, sw=3, shade_fill="#e9dccb")
     return doc(S.g(body, filter="wobble"))
+
+
+SEAM_X = (705.0, 650.0)                   # where the opening veil's two cloud banks meet (top, bottom of the stage)
+
+
+def _seam_x(y):
+    return SEAM_X[0] + (SEAM_X[1] - SEAM_X[0]) * y / SH
+
+
+def veil_svg(side):
+    """One half (side -1 = west, +1 = east) of the bank of soft cream clouds that fills the page at the start.
+
+    The scene opens on this cloud page, so the 1 s dissolve from s13 (Jonah standing on the beach, arms up) never
+    shows this scene's kneeling Jonah at the same time; the clouds part over him only once the dissolve is over
+    ('God spoke to Jonah a second time': a new page). The seam lies right over God's gap and Jonah. The two halves
+    overlap by 80-200 px along it (rows of big puffs bulge across), so nothing behind them shows until they move
+    apart; a soft gold light glows on the clouds along the seam."""
+    rng = random.Random(60 + side)
+    uid = "w" if side < 0 else "e"
+    puffs = []
+    y = -90.0 + (0.0 if side < 0 else 68.0)
+    while y < SH + 160:
+        r = rng.uniform(118, 160)
+        puffs.append((_seam_x(y) + side * (0.35 * r + rng.uniform(-12, 12)), y, r))
+        y += rng.uniform(125, 150)
+    e0, e1 = _seam_x(-140) + side * 40, _seam_x(SH + 140) + side * 40
+    far = -140 if side < 0 else SW + 140
+    body = f'<path d="M{far},-140 L{f1(e0)},-140 L{f1(e1)},{SH + 140} L{far},{SH + 140} Z" {{a}}/>'
+    body += "".join(f'<circle cx="{f1(x)}" cy="{f1(yy)}" r="{f1(r)}" {{a}}/>' for x, yy, r in puffs)
+    sil = body.replace("{a}", "")
+    defs = (S.lin_grad(f"s14vg{uid}", [(0, S.mix(P["sky_day"], "#fdf6e8", 0.6)),
+                                       (0.45, S.mix(P["sky_warm"], "#fdf6e8", 0.45)),
+                                       (1, S.mix(P["sky_warm"], P["gold"], 0.12))])
+            + f'<clipPath id="s14vc{uid}">{sil}</clipPath>'
+            + S.rad_grad(f"s14vr{uid}", [(0, "#f6c25a", 0.5), (0.5, "#f0b040", 0.2), (1, "#f0b040", 0)]))
+    fill = f'fill="url(#s14vg{uid})"'
+    shape = (body.replace("{a}", f'{fill} stroke="{P["ink"]}" stroke-width="8"')
+             + body.replace("{a}", fill))
+    # big billowing clouds piled inside the bank: rows from the top down, so the lower clouds sit in front
+    tints = ("#fdf6e8", "#f9eedb", "#fffaf0", "#fbf1df", "#f7ead4")
+    inner = ""
+    k = 0
+    for row, cy0 in enumerate(range(60, SH + 260, 250)):
+        cy = cy0 + rng.uniform(-35, 35)
+        x = (-200 if side < 0 else _seam_x(cy) + 330) + (row % 2) * 260 + rng.uniform(-60, 60)
+        while (x < _seam_x(cy) - 300) if side < 0 else (x < SW + 300):
+            w_ = rng.uniform(600, 860)
+            inner += S.cloud(x, cy + rng.uniform(-30, 30), w_, rng.uniform(210, 270), tints[rng.randrange(5)],
+                             seed=200 + 13 * k + (side > 0) * 7, puffs=rng.choice((4, 5, 6)), sw=3,
+                             shade_fill="#ecdcc4")
+            x += w_ * rng.uniform(0.66, 0.8)
+            k += 1
+    sx_ = _seam_x(300)
+    rim = f'<ellipse cx="{f1(sx_)}" cy="300" rx="330" ry="620" fill="url(#s14vr{uid})"/>'
+    return doc(S.g(shape, filter="wobble")
+               + f'<g clip-path="url(#s14vc{uid})">{S.g(inner, filter="wobble")}{rim}</g>', defs)
 
 
 def cloud_rim_svg(item, gx, gy, rx, ry, uid):
@@ -969,6 +1028,20 @@ def build(ctx):
 
     # warm wash over everything while the light is there (additive)
     sc.add("warm", warm_svg(), z=9, wc=0, blend="add", motion=lambda t: Tf(alpha=0.55 * ray_alpha(t)))
+
+    # the opening cloud page: it covers everything through the dissolve from s13 (so the two Jonahs are never on
+    # screen together) and parts over Jonah as the narrator begins, together with the clouds above him
+    t_v0 = max(0.85, t_light - 0.1)
+
+    def veil_m(side, dist):
+        def m(t):
+            if t >= t_v0 + 1.25:
+                return Tf(alpha=0.0)
+            u = part(t, t_v0, t_v0 + 1.3, "sine")
+            return Tf(dx=side * (3 * t + dist * u), alpha=1 - part(t, t_v0 + 0.5, t_v0 + 1.25, "sine"))
+        return m
+    sc.add("veil_w", veil_svg(-1), z=9.5, wc=0.8, motion=veil_m(-1, 700))
+    sc.add("veil_e", veil_svg(1), z=9.51, wc=0.8, motion=veil_m(1, 1000))
 
     # ---------------------------------------------------------------- effects
     sc.fx = [

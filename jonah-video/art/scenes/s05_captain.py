@@ -17,9 +17,11 @@ The last move lands him on the floor in a squash, and he hurries to Jonah at onc
 drawing follows the distance walked, the planted sole never slides; 3 frames per drawing for the first steps).
 He steps up onto the end of the bed through a reaching in-between, kneels behind Jonah's head (C.captain 'wake'
 recipe, drawn behind Jonah so Jonah's face stays clear) and shakes him by the shoulder ('把他摇醒', little shake marks).
-He straightens up ('rise'), hops backwards off the bed (3 airborne tuck frames on a ~100 px arc), lands crouched at
-his standing spot (held 4 frames, squash and a soft thud) and only then stands. Jonah sits up rubbing his eye two
-frames into the captain's landing, once the captain's head has left the space above the pillow (on '说：').
+He straightens up ('rise'), hops backwards off the bed (3 airborne frames of a low tuck, arms in, on a small arc
+back and down), lands crouched at his standing spot (held 4 frames, squash and a soft thud) and only then stands.
+Jonah props himself up on his elbows two frames into the captain's landing, once the captain's head has left the
+space above the pillow (a 3-frame in-between), then sits up rubbing his eye one frame after the captain stands
+(on '说：').
 Line 1: the captain urges him ('快醒醒！'); in the pause before '风浪这么大' thunder cracks through the hatch and the
 ship lurches — he clutches his cap and Jonah turns round with a start; then he spreads his palms
 ('你怎么还在睡觉？').
@@ -81,6 +83,8 @@ KNEEL = (JX + 234 * JS, JY)          # the captain kneeling on the bed behind Jo
 X_ARR = 1622                         # his last walk contact on the floor, just past the end of the bed
 CAP_X = 1600                         # his standing spot while he talks (left of the cold light shaft)
 J_WAKE_X = 1262                      # Jonah sitting up (facing left, legs along the bed)
+J_WAKE_IB_X = 1125                   # Jonah propped up on his hands (in-between of sitting up): head halfway
+#                                      between the pillow and the sitting head
 J_SIT_X = 1212                       # Jonah sitting, turned toward the captain
 J_STAND_X = 1274                     # Jonah on his feet in front of the bed (clear of the swinging lantern)
 J_IB_X = (J_SIT_X + J_STAND_X) / 2   # Jonah half-risen (in-between of getting up)
@@ -398,9 +402,10 @@ def cap_poses():
         # straightening up again after the shake (still kneeling on the bed, about to hop off)
         "rise": C._P(t=14, h=-6, drop=34, legs=(("ik", 52, 1), ("ik", -24, 1)),
                      arms=(("fk", 24, 50), ("fk", 18, 44)), hands=("open", "open")),
-        # airborne, hopping backwards off the bed: knees tucked up, arms flung up for balance
-        "tuck": C._P(t=10, h=-8, legs=((74, -14), (52, -42)), arms=(("fk", 124, 150), ("fk", -112, -140)),
-                     hands=("open", "open")),
+        # airborne, hopping backwards off the bed: a low tuck (pelvis dropped, soles lifted off the anchor), arms
+        # bent in front at chest height
+        "tuck": C._P(t=12, h=-6, drop=60, legs=(("ik", 40, 1, 40), ("ik", -18, 1, 26)),
+                     arms=(("fk", 34, 78), ("fk", 14, 56)), hands=("open", "open")),
         "stand": C.POSES["stand"],
         # "快醒醒！": leaning in, both palms raised toward Jonah
         "urge": C._P(t=7, h=-2, legs=((8, 2), (-8, -3)), arms=(("fk", 46, 146), ("fk", 26, 136)),
@@ -428,6 +433,10 @@ def cap_poses():
 
 def jonah_poses():
     return {
+        # waking (3-frame in-between of sitting up): leaning right back, propped on his hands on the sacks behind him
+        "wake_ib": C._P(t=-50, h=-10, legs=(("ik", 108, 1), ("ik", 116, 1)),
+                        arms=(("ik", "abs", -96, -4, -1), ("ik", "abs", -66, -4, -1)), hands=("open", "open"),
+                        **C._SEATED),
         # getting up off the sacks (3-frame in-between): crouched, both sandals on the floor, leaning forward, the
         # near hand still pushing on the sacks behind him, the far arm forward for balance
         "rise_ib": C._P(t=14, h=-4, drop=78, reach=1.12, legs=(("ik", 36, 1), ("ik", -34, 1)),
@@ -618,7 +627,9 @@ def build(ctx):
     t_shake1 = t_rise
     t_cland = t_jump + 3 * FR                                   # 3 airborne frames, then lands at his spot ...
     t_cstand = t_cland + 4 * FR                                 # ... holds the crouch 4 frames, then stands
-    t_wake = t_jump + 5 * FR                                    # Jonah sits up once the captain's head is clear
+    t_wake = t_jump + 5 * FR                                    # Jonah props himself up once the captain's head
+    #                                                             is clear (3-frame in-between) ...
+    t_wake2 = t_wake + 3 * FR                                   # ... and sits up, a frame after the captain stands
     # line 1
     t_urge = ph.start("快醒醒", c_start) - 0.08
     t_storm = max(ph.end("快醒醒", c_start + 0.8) + 0.05,       # thunder in the pause after "快醒醒！"
@@ -759,7 +770,8 @@ def build(ctx):
     kx, ky = KNEEL
     JUMP_FROM = (kx + 8, ky)               # tuck drawing's lowest point at take-off (feet on the bed top) ...
     JUMP_TO = (CAP_X, FLOOR_Y)             # ... and where the feet come down
-    JUMP_H = 150                           # parabola bulge: the feet rise ~100 px above the bed top
+    JUMP_H = 60                            # parabola bulge: the anchor rises ~15 px above the bed top; the lifted
+    #                                        soles clear it by ~60-85 px (a small hop back and down)
 
     def jump_xy(t):
         u = min(1.0, max(0.0, (t - t_jump) / (t_cland - t_jump)))
@@ -850,7 +862,8 @@ def build(ctx):
 
     JP = jonah_poses()
     seated = [
-        (t_wake, C.jonah(J_WAKE_X, JY, JS, -1, pose="wake", expr="sleepy")),
+        (t_wake, jonah_fig(J_WAKE_IB_X, JY, JP["wake_ib"], -1, expr="sleepy", label="wake_ib")),
+        (t_wake2, C.jonah(J_WAKE_X, JY, JS, -1, pose="wake", expr="sleepy")),
         (t_startle, C.jonah(J_SIT_X, JY, JS, 1, pose="sit", expr="surprised")),
         (t_jworry, C.jonah(J_SIT_X, JY, JS, 1, pose="sit", expr="worried")),
     ]
@@ -858,13 +871,13 @@ def build(ctx):
     def jseat_m(t):
         if t < t_wake or t >= t_stand:
             return Tf(alpha=0.0)
-        px = J_WAKE_X if t < t_startle else J_SIT_X
-        sx, sy = pop(t, [t_wake, t_startle, t_jworry], 0.09)
+        px = J_WAKE_IB_X if t < t_wake2 else J_WAKE_X if t < t_startle else J_SIT_X
+        sx, sy = pop(t, [t_wake, t_wake2, t_startle, t_jworry], 0.09)
         sy *= 1 + 0.009 * math.sin(2 * math.pi * (t / 3.3 + 0.1))
-        dy = -14 * bump(t, t_wake) - 20 * bump(t, t_startle, 0.09)
+        dy = -14 * bump(t, t_wake2) - 20 * bump(t, t_startle, 0.09)
         rot = 0.0
-        if t < t_startle:      # sleepy sway while rubbing the eye
-            rot = 2.2 * math.sin(2 * math.pi * (t - t_wake) / 2.6) * M.progress(t, t_wake + 0.2, t_wake + 0.8)
+        if t_wake2 <= t < t_startle:      # sleepy sway while rubbing the eye
+            rot = 2.2 * math.sin(2 * math.pi * (t - t_wake2) / 2.6) * M.progress(t, t_wake2 + 0.2, t_wake2 + 0.8)
         # paper cut-out turn round the facing flip
         k = 1.0
         u = abs(t - t_startle) / 0.09
@@ -1007,7 +1020,7 @@ def build(ctx):
 
     sc.meta = dict(t_open=t_open, t_slide0=t_slide0, t_land=t_land, t_walk0=t_walk0, t_arr=t_arr, t_bend=t_bend,
                    t_shake0=t_shake0, t_rise=t_rise, t_jump=t_jump, t_cland=t_cland, t_cstand=t_cstand,
-                   t_wake=t_wake, t_urge=t_urge, t_storm=t_storm, t_startle=t_startle,
+                   t_wake=t_wake, t_wake2=t_wake2, t_urge=t_urge, t_storm=t_storm, t_startle=t_startle,
                    t_why=t_why, t_jworry=t_jworry, t_up=t_up, t_stand=t_stand, t_stand2=t_stand2, t_look=t_look,
                    t_pray=t_pray, t_plead=t_plead, t_sorry=t_sorry, t_live=t_live, t_pity=t_pity, t_jlook=t_jlook,
                    t_flash3=t_flash3, CL_T=CL_T, n_walk=n_walk, X_START=X_START, cam_keys=(t_c0, t_c1, t_p0, t_p1,

@@ -21,8 +21,10 @@ One 3200 x 1800 stage, two paintings on it, joined by a camera fly-through of th
   * THE FLY-THROUGH (v1 technique, "约拿进了城，"): every outside layer scales up around the gate opening (a hole
     cut through the wall and everything behind it) until the opening covers the frame; then the outside is dropped
     and we are inside, in a street, with Jonah walking in from the gate. The camera's zoom keeps going through the
-    start of the fly (no stop-and-whoosh). The people in the street are drawn only once the opening's bottom edge
-    has left the frame (before that the threshold would cut them off at the knees: giants standing in a pit).
+    start of the fly (no stop-and-whoosh); the shade in the passage lifts softly as the push begins. Each person in
+    the street is drawn only once the scaled-up threshold has passed below their feet (before that it would cut
+    them off at the knees: giants standing in a pit) and fades in over 9 frames while the opening grows (back
+    row first, Jonah last).
   * INSIDE — a long street that opens onto the market square (line 1, line 2).
       "走了一天的路，一边走，" — Jonah walks east (planted-foot walk cycle: the drawing follows the distance
           walked), the camera tracking him past houses, palms, laundry, children playing and passers-by (who walk
@@ -436,8 +438,31 @@ def pano_front_svg():
     return doc(wall + ground, wdefs + gdefs)
 
 
+def gate_bricks():
+    """Staggered brick joints between the mortar courses of the west gate's two towers: the camera flies through
+    this gate, and at 5-14x the plain tower faces would read as a blank slab sliding past."""
+    dark = S.shade(P["sand"], -0.2)
+    top = WALL_Y - WALL_H * 1.45                     # tower top (PR._city_wall: th = height * 1.45)
+    rows = list(range(int(top + 26 * K), int(WALL_Y - 20 * K), max(8, int(26 * K))))
+    out = ""
+    for x0 in (GX - GWD / 2 - 120 * K, GX + GWD / 2):
+        cx = x0 + 60 * K
+        wins = ((top + 40 * K, top + 74 * K), (top + 120 * K, top + 154 * K))   # the tower's slit windows
+        for j, (ya, yb) in enumerate(zip(rows, rows[1:] + [WALL_Y - 26 * K])):
+            if ya < top + 48 * K:                    # the glazed band at the top of the tower
+                continue
+            for n in range(4):
+                x = x0 + (20 + 20 * (j % 2) + 40 * n) * K
+                if x > x0 + 117 * K or (abs(x - cx) < 16 * K and any(ya < wb and yb > wa for wa, wb in wins)):
+                    continue
+                out += (f'<path d="M{f1(x)},{ya} L{f1(x)},{f1(yb)}" stroke="{dark}" stroke-width="1.8" '
+                        f'opacity="0.35"/>')
+    return S.g(out, filter="wobble-fine")
+
+
 def wall_body():
     wall = PR.city_wall(WALL_X0, SEAM_X, WALL_Y, WALL_H, gate=(GX, GWD), doors_open=1.0, seed=9)
+    wall += gate_bricks()
     wall += PR.city_wall(SEAM_X, WALL_X1, WALL_Y, WALL_H, gate=(GX2, GWD2), doors_open=0.75, seed=13)
     wall += S.g(PR._tower(SEAM_X, WALL_Y, 96 * K, WALL_H + 56 * K, P["sand"], K), filter="wobble-fine")
     ban = ""
@@ -1086,7 +1111,9 @@ def build(ctx):
     t_calloff = k_time(k_dn)
 
     # ------------------------------------------------------------ camera
-    CAM0 = Cam(820, 1128, 1560)                        # close on the road and the west gate
+    CAM0 = Cam(635, 1194, 1200)                        # close on little Jonah on the road, the west gate in the
+    #                                                    middle (he stands near where s14's Jonah walks: one
+    #                                                    Jonah through the dissolve, not two)
     CAMW = Cam(1650, 935, 2760)                        # the city from the gate to the river; it runs off both edges
     CAM_HOLD = Cam(1620, 945, 2720)
     CAM_ST0 = Cam(1000, 1000, 1800)                    # (y, w of) the street framing after the fly-through
@@ -1173,13 +1200,29 @@ def build(ctx):
     for _ in range(3):                                 # the camera still moves during the fly: iterate the pivot
         FLY_C = fly_pivot(camf(first_time(FLY_C)))
     t_cut = first_time(FLY_C)
-    # people in the street are drawn only once the opening's bottom edge has left the frame: before that, their
-    # feet would be hidden by the scaled-up threshold (heads poking up over it, far too big for the little arch)
-    t_show = min(t_cut, first_time(FLY_C, bottom_only=True))
     out_a = lambda t: 1.0 if t < t_cut else 0.0
     in_a = lambda t: 1.0 if t >= t_fly0 - 0.02 else 0.0
-    shown = lambda t: t >= t_show - 0.05
-    shown_a = lambda t: part(t, t_show - 0.05, t_show + 0.02, "linear")   # a 2-frame materialise in the whoosh
+    # Who is in the street: a figure is drawn only once the scaled-up threshold has passed below its feet (before
+    # that the sill would cut it off at the knees: a head poking up over it, far too big for the little arch), and
+    # then fades in over FADE_IN s while the opening grows, back row first, Jonah (lowest ground line) last.
+    FADE_IN = 0.30
+
+    def t_sill_below(y, margin=10):
+        """First time the scaled gate threshold is below ground line y (a figure standing there clears the sill)."""
+        kk = 0
+        while t_fly0 + kk / 120 < t_cut:
+            tt = t_fly0 + kk / 120
+            if FLY_C[1] + s_fly(tt) * (HOLE_CLEAR[3] - FLY_C[1]) >= y + margin:
+                return tt
+            kk += 1
+        return t_cut
+
+    def fade_in(t0):
+        """(drawn?, alpha) functions for a figure that appears at t0."""
+        return (lambda t: t >= t0), (lambda t: part(t, t0, t0 + FADE_IN, "sine"))
+    # things along the bottom edge wait until the opening's bottom edge has left the frame
+    t_show = min(t_cut, first_time(FLY_C, bottom_only=True))
+    shown, shown_a = fade_in(t_show)
 
     def F(local=None, pivot=FLY_C):
         return V.fly(local, pivot, FLY_C, s_fly, out_a)
@@ -1249,7 +1292,7 @@ def build(ctx):
         return sy, dy
 
     def person(name, kind, variant, x, y, s, face, z, walk=None, idle=None, events=(), shadow=True, seed=0):
-        """A townsperson sprite (drawn only from t_show on).
+        """A townsperson sprite (fades in once the gate's threshold has passed below its feet, t_sill_below(y)).
         walk=(x_from, t_a, t_b[, stride_k]): a planted-foot walk (WALK_N drawings per step; the figure advances one
             drawing's worth of stride at each drawing change, so the planted sole never slides) from about x_from,
             arriving at x at t_b on a passing drawing; the speed follows from the window.
@@ -1306,9 +1349,10 @@ def build(ctx):
             if not wf or t >= t_b:
                 return x
             return x_from if t < t_a else x_from + dirn * walk_i(t) * adv
+        p_on, p_a = fade_in(t_sill_below(y))
 
         def fn(t):
-            if not shown(t):
+            if not p_on(t):
                 return None
             sy, dy = hop_amount(t, hops, s)
             sy *= 1 + 0.012 * math.sin(2 * math.pi * (t / (2.8 + variant * 0.3) + variant * 0.17))
@@ -1316,11 +1360,11 @@ def build(ctx):
                 ph = t / idle[2]
                 if int(ph) % 2 == 1:                  # arms up: a little jump of joy
                     dy -= 18 * s * math.sin(math.pi * (ph % 1.0))
-            return sp.place(idx(t), xpos(t), y, sx=1 / math.sqrt(sy), sy=sy, dy=dy, alpha=shown_a(t))
+            return sp.place(idx(t), xpos(t), y, sx=1 / math.sqrt(sy), sy=sy, dy=dy, alpha=p_a(t))
         if shadow:
             shs = sprite(260 * s + 40, 70 * s + 30, 130 * s + 20, 35 * s + 15, wc=0)
             shi = shs.add(C.ground_shadow(shs.ax, shs.ay, s, 80 if kind == "child" else 110))
-            sc.add_dynamic(name + "_sh", lambda t: shs.place(shi, xpos(t), y, alpha=shown_a(t)) if shown(t) else None,
+            sc.add_dynamic(name + "_sh", lambda t: shs.place(shi, xpos(t), y, alpha=p_a(t)) if p_on(t) else None,
                            z=z - 0.01)
         sc.add_dynamic(name, fn, z=z)
         hp = C.body_points(C.citizen, x, y, s, last_face, kind=kind, variant=variant, pose="stand")["head_top"]
@@ -1403,26 +1447,28 @@ def build(ctx):
             sy *= 1 + 0.01 * math.sin(2 * math.pi * (t - t_stop) / 3.0)
         return sy, dy
 
+    j_on, j_a = fade_in(t_sill_below(GY))
+
     def j_fn(t):
-        if not shown(t):
+        if not j_on(t):
             return None
         sy, dy = j_squash(t)
         x, y = jonah_xy(t)
-        return JSPR.place(j_frame(t), x, y, sx=1 / math.sqrt(sy), sy=sy, dy=dy, alpha=shown_a(t))
+        return JSPR.place(j_frame(t), x, y, sx=1 / math.sqrt(sy), sy=sy, dy=dy, alpha=j_a(t))
 
     # his shadow swings round with the sun (morning: long to the right, noon: short, afternoon: to the left)
     JSH = sprite(520, 120, 260, 60, wc=0)
     JSH_I = JSH.add(C.ground_shadow(260, 60, JS, 120, opacity=0.26))
 
     def jsh_fn(t):
-        if not shown(t):
+        if not j_on(t):
             return None
         rx = sun_rel(t)
         x, y = jonah_xy(t)
         k = walk_k(t)
         if t < t_stop and k >= K_CL:                 # on the step: under the planted foot's tread
             y = GY - treads(k // WALK_N)
-        return JSH.place(JSH_I, x - 0.07 * rx, y, sx=1 + min(0.9, abs(rx) / 900), alpha=shown_a(t))
+        return JSH.place(JSH_I, x - 0.07 * rx, y, sx=1 + min(0.9, abs(rx) / 900), alpha=j_a(t))
     sc.add_dynamic("jonah_sh", jsh_fn, z=4.9)
     sc.add_dynamic("jonah", j_fn, z=5)
 
@@ -1455,8 +1501,9 @@ def build(ctx):
     # animals in the square
     ANI = sprite(820, 360, 410, 330, seed=16)
     ani_i = ANI.add(C.ground_shadow(250, 330, 0.56, 170) + PR.animal(250, 330, 0.56, 1, kind="donkey"))
+    don_on, don_a = fade_in(t_sill_below(1214))
     sc.add_dynamic("donkey", lambda t: (ANI.place(ani_i, 560 + 160, 1214, sy=1 + 0.012 * math.sin(t * 2.3),
-                                                  alpha=shown_a(t)) if shown(t) else None), z=3.15)
+                                                  alpha=don_a(t)) if don_on(t) else None), z=3.15)
     SHP = sprite(520, 260, 260, 230, seed=17)
     shp_i = SHP.add(C.ground_shadow(160, 230, 0.68, 160) + PR.animal(160, 230, 0.68, -1, kind="sheep")
                     + C.ground_shadow(360, 240, 0.6, 140) + PR.animal(360, 240, 0.6, -1, kind="sheep"))
@@ -1493,8 +1540,9 @@ def build(ctx):
     sc.add("p_clouds", pano_clouds_svg([(470, 150, 400, 112, 3), (1720, 105, 360, 100, 5), (2860, 150, 420, 118, 7),
                                         (1060, 300, 240, 70, 11)]), z=51,
            motion=F(local=M.drift(vx=8), pivot=(1600, 300)))
+    # the shade lifts softly off the street as the push begins (not before: little Jonah is cut at t_fly0 - 0.02)
     sc.add("p_passage", passage_svg(), z=53,
-           motion=F(local=lambda t: Tf(alpha=1 - part(t, t_fly0, t_fly0 + 0.12, "linear")), pivot=FLY_C))
+           motion=F(local=lambda t: Tf(alpha=1 - part(t, t_fly0, t_fly0 + 0.45, "sine")), pivot=FLY_C))
     sc.add("p_front", pano_front_svg(), z=55, motion=F())
     for ph in (0, 1):
         tw = (lambda ph_: lambda t: Tf(alpha=0.5 + 0.5 * math.sin(t * 2.6 + math.pi * ph_)))(ph)

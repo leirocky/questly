@@ -473,8 +473,9 @@ def swallow_lump():
 # ============================================================================ effects
 
 
-def bubble_fx(sources, seed=3, top=WL + 16):
-    """All bubbles in one fx (v1 recipe). sources: (emitter(t)->(x, y), t0, t1, rate, rise, size, spread, alpha)."""
+def bubble_fx(sources, seed=3, top=WL + 16, born_after=-1e9):
+    """All bubbles in one fx (v1 recipe). sources: (emitter(t)->(x, y), t0, t1, rate, rise, size, spread, alpha).
+    Bubbles born before ``born_after`` are dropped (after all random draws, so the rest stay where they were)."""
     rng = np.random.default_rng(seed)
     parts = []
     for src, t0, t1, rate, rise, size, spread, alpha in sources:
@@ -485,6 +486,7 @@ def bubble_fx(sources, seed=3, top=WL + 16):
             parts.append((ts[i], ex + rng.uniform(-spread, spread), ey + rng.uniform(-spread, spread) * 0.5,
                           rng.uniform(*size), rise * rng.uniform(0.7, 1.3), rng.uniform(0, 6.3), alpha))
     arr = np.array(parts, np.float64)
+    arr = arr[arr[:, 0] >= born_after]
 
     def fx(frame, t, view):
         live = arr[(arr[:, 0] <= t) & (arr[:, 0] > t - 7)]
@@ -551,6 +553,12 @@ def build(ctx):
     def bump(t, ts, w=0.07):
         return max(0.0, 1 - abs(t - ts - 0.03) / w)
 
+    # The first second overlaps s09's busy deck (kneeling crew, altar fire, the golden cloud break) in the
+    # cross-dissolve: Jonah, the drifting creatures and his bubbles only come in once the frame is mostly water,
+    # so nothing of this scene sits on the crew, the deck or the sky (no 'ghost' Jonah rising into the light).
+    def fade_in(t0, t1):
+        return lambda t: Tf(alpha=progress(t, t0, t1, "sine"))
+
     # ---- camera: sinks with Jonah (continuous velocity) and a little ahead of him, so the deep below is in
     # view when the fish rises; pushes in gently while the mouth opens; eases back out with the glide
     cam_y = hermite([(0.0, 520, 62), (4.2, 805, 95), (6.4, 1040, 100), (9.0, 1285, 56), (t_open0 - 0.4, 1348, 14),
@@ -576,7 +584,7 @@ def build(ctx):
            motion=lambda t: Tf(dx=34 * math.sin(2 * math.pi * t / 3.1), alpha=0.8 + 0.2 * math.sin(t * 1.7)))
     sc.add("ship", ship_hull(), z=3, wc=0.7,
            motion=lambda t: Tf(dx=-16 * t, dy=3 * math.sin(2 * math.pi * t / 2.8), rot=0.6 * math.sin(2 * math.pi * t / 3.6),
-                               px=SHIP_X, py=WL))
+                               alpha=progress(t, 0.5, 1.0, "sine"), px=SHIP_X, py=WL))
     # the bright surface 'mirror' over the hull: its wavy inked edge hides the hull's clip line
     sc.add("surface", surface(), z=3.5, wc=0.6)
     sc.add("shafts_b", shafts(1), z=5, wc=0,
@@ -603,18 +611,24 @@ def build(ctx):
                       sx=1 + 0.07 * push, sy=1 - 0.09 * push, px=x, py=y)
         return m
 
-    sc.add("jelly1", doc(jelly(470, 560, 1.0, "#f0a8c0", seed=1)), z=6, motion=jelly_m(470, 560, 2.4, 0.0, 9))
-    sc.add("jelly2", doc(jelly(640, 700, 0.7, "#c8a8e8", seed=2)), z=6.1, motion=jelly_m(640, 700, 2.0, 0.4, 7))
-    sc.add("jelly3", doc(jelly(1760, 900, 0.8, "#f4b8a0", seed=3)), z=6.2, motion=jelly_m(1760, 900, 2.6, 0.7, 6))
+    sc.add("jelly1", doc(jelly(470, 560, 1.0, "#f0a8c0", seed=1)), z=6,
+           motion=M.combine(jelly_m(470, 560, 2.4, 0.0, 9), fade_in(1.0, 1.6)))
+    sc.add("jelly2", doc(jelly(640, 700, 0.7, "#c8a8e8", seed=2)), z=6.1,
+           motion=M.combine(jelly_m(640, 700, 2.0, 0.4, 7), fade_in(1.0, 1.6)))
+    sc.add("jelly3", doc(jelly(1760, 900, 0.8, "#f4b8a0", seed=3)), z=6.2,
+           motion=M.combine(jelly_m(1760, 900, 2.6, 0.7, 6), fade_in(1.0, 1.6)))
 
-    # little fish: a school in the open water (darts away when the great fish rises), another near the reef
+    # little fish: a school in the open water (swims in from the left once the dissolve is over, darts away
+    # when the great fish rises), another near the reef
     t_dart = t_f0 + 1.6
+    SCHOOL_IN = 460.0          # school_a waits this far left (out of view) until t=0.9, then swims in
     school_a = [doc(PR.small_fish(470, 930, 0.7, 1, "yellow", tail=tl) +
                     PR.small_fish(390, 985, 0.6, 1, "orange", tail=-tl) +
                     PR.small_fish(540, 1010, 0.65, 1, "yellow", tail=-tl) +
                     PR.small_fish(320, 920, 0.55, 1, "orange", tail=tl)) for tl in (0.7, -0.7)]
     sc.add("school_a", school_a, z=7,
-           motion=M.combine(lambda t: Tf(dx=42 * t + 1100 * progress(t, t_dart, t_dart + 1.6, "in"),
+           motion=M.combine(lambda t: Tf(dx=42 * t + 1100 * progress(t, t_dart, t_dart + 1.6, "in")
+                                         - SCHOOL_IN * (1 - progress(t, 0.9, 2.6, "sine")),
                                          dy=-30 * t - 160 * progress(t, t_dart, t_dart + 1.6, "in")),
                             M.bob(9, 1.7)),
            frame_at=lambda t: float(int(t * (6 if t < t_dart else 12)) % 2))
@@ -745,7 +759,7 @@ def build(ctx):
         sq = 1 - 0.16 * bump(t, t_notice - 0.03)
         hop = -10 * bump(t, t_notice - 0.03)
         return Tf(dx=cx - JB[0], dy=cy - JB[1] + hop, rot=rot, sx=s * (2 - sq), sy=s * sq,
-                  alpha=float(t < t_close0), px=JB[0], py=JB[1])
+                  alpha=float(t < t_close0) * progress(t, 0.55, 1.1, "sine"), px=JB[0], py=JB[1])
 
     def jonah_idx(t):
         if t < t_notice:
@@ -813,7 +827,7 @@ def build(ctx):
             (lambda t: jonah_path(t)[:2], -1.5, 2.2, 6.0, 140, (5, 15), 70, 190),
             (fish_snout, t_close0 + 0.02, t_close1 + 0.35, 42, 200, (7, 22), 34, 225),
             (fish_snout, t_close1 + 1.1, T + 1, 2.0, 105, (5, 11), 8, 170),
-        ]),
+        ], born_after=0.6),     # none in s09's sky during the dissolve (same random draws as before)
     ]
 
     # ---- sound
