@@ -1,4 +1,4 @@
-"""Creatures, vehicles, plants, buildings and props for the Jonah picture-book video.
+"""Creatures, vehicles, plants, buildings and props for the Jonah and Daniel picture-book videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -309,6 +309,98 @@ signpost(x, y, scale=1.0, left_text='他施', right_text='尼尼微')
     RIGHT (right_text, default '尼尼微' Nineveh, east, centred y=-196); each board is 50*len(text)+70 px long.
     Pass '' to omit a board. Text is never mirrored. BBox with the defaults (-199, -343, 249, 9).
 
+7. DANIEL FILM (Daniel 6)
+-------------------------
+lion(x, y, scale=1.0, facing=1, pose='stand', mouth=0.0, eyes='open', tail=0.0, variant=0)
+    Anchor: ground under the middle of the body (paws on the ground line). A big, friendly picture-book lion,
+    never frightening: warm ochre body LION['body'] with a cream belly, a round scalloped rust mane with a lighter
+    inner ring and curls, round ears, a round face with big dot eyes (highlights), soft brows, puffy cream muzzle
+    with whisker dots, a rounded pink-brown nose, rosy cheeks, big soft round paws, a tail with a dark tuft.
+    Scale 1 is BIG (mane top ~ an adult's head): use 0.7-0.85 next to people for a big-but-cosy lion.
+    pose (BBox at scale 1, facing 1; lioness in brackets):
+      'stand'   (-227, -335, 236, 2)  [(-227, -306, 220, 2)]  head centre ~(150, -240)
+      'walk_a' / 'walk_b'  same box; alternate every ~0.3 s while moving x (legs swap, the head bobs 6 px)
+      'sit'     (-133, -372, 181, 5)  [(-133, -325, 166, 5)]  sitting up like a cat, front legs straight, tail curled
+                forward on the ground; head centre ~(96, -278)
+      'lie'     (-280, -191, 279, 2)  [(-280, -161, 279, 2)]  lying like a big cat, chin resting on the front paws,
+                tail out behind; head centre ~(186, -96)
+      'sleep'   (-184, -183, 279, 9)  [(-184, -156, 279, 9)]  as 'lie' but curled: head tipped onto the paws, eyes
+                closed (eyes='open' is shown closed; pass 'half' to peek), tail curled round in front
+    mouth 0..1  0 = closed smile; > 0 opens a soft round yawn / gentle roar: dark-red inside, pink tongue, two
+                small BLUNT rounded teeth (no fangs). 1 = big yawn (the chin drops ~30 px). Quantise (0, .33, .66, 1).
+    eyes        'open' | 'closed' | 'happy' (^ arcs) | 'half' (sleepy lids).
+    tail -1..1  swings the tail tip up (+1: top -372 when standing) or down; in 'lie' it lifts the tail end, in
+                'sit' / 'sleep' it curls the tip. 3-4 phases are enough for a lazy swish.
+    variant     0 lion (mane), 1 lioness (no mane, lighter tan LIONESS, slimmer and a little lower, cheek ruffs).
+lion_den(x, y, scale=1.0, part='all', view='cutaway', light=0.0)
+    view='cutaway' (default): the den in dollhouse cross-section. Anchor: the GROUND SURFACE at the centre of the
+    round opening. Above y=0 only a few rim stones and grass tufts (paint your own sky / ground to the sides; the
+    ground line runs on beyond x +-770). Below: the cut earth (strata, pebbles, ragged section edge, x -778..779,
+    down to y~710) around a dim chamber walled with rounded field stones, a straw-strewn sandy floor, and the
+    round shaft through the ceiling (stonework at its far side). BBox (-778, -40, 779, 710).
+      DEN_FLOOR_Y = 600   floor surface inside (feet of figures and lions inside: y + 600*scale)
+      DEN_INNER = (-640, 96, 640, 600)   chamber x0, ceiling underside, x1, floor
+      DEN_OPENING = (-140, 140)          x-range of the hole (it runs from y=0 down to the ceiling at 96)
+      A standing adult (340 px) fits easily; at scale 0.5-0.6 the whole den fills the lower half of a frame.
+      light 0..1: a soft beam of light falling from the opening onto the floor (dawn sun / the angel's glow;
+      add FX glow on top). Keep 0 when the stone is on.
+    part: 'back' = earth, chamber, walls, floor, light, shaft, rim stones; 'front' = foreground rocks and straw
+      along the floor's front edge and grass tufts beside the hole. Recipe: lion_den(part='back') -> lions and
+      Daniel inside (feet at y + DEN_FLOOR_Y*scale) -> lion_den(part='front') -> people standing on the ground
+      (feet at y) -> den_stone over the hole (anchor at (x, y + 8*scale), it is wider than the hole).
+      A figure on a rope in the shaft (daniel pose='hold_rope') goes between back and front.
+    view='outside': the pit mouth seen from ground level and a little above: a dark hole (ellipse DEN_HOLE =
+      (210, 62) rx, ry around the anchor) ringed by 18 stones. BBox (-270, -99, 270, 99). part='back' = the dark
+      hole and the far stones, part='front' = the near stones. Someone going down / coming up: draw
+      in_den_hole(figure_markup, x, y, scale) between the parts; it clips the figure to what shows above the
+      near rim (everything above the ground line plus the hole).
+in_den_hole(markup, x, y, scale=1.0) -> markup   (see lion_den view='outside')
+den_stone(x, y, scale=1.0, sealed=False, roll=0.0)
+    Anchor: bottom centre (ground contact). A big round boulder (DEN_STONE_R = (170, 128) half-width / half-height;
+    centre at (0, -128)), grey-tan with cracks, moss and a highlight. BBox (-177, -262, 168, 3).
+    roll (degrees) turns the cracks and moss about the centre: animate rolling = move x by roll*pi/180*128*scale
+    while changing roll. sealed=True: the king's sealing cord runs over the stone to two wooden pegs in the ground
+    on each side, with a terracotta clay seal (royal rosette) pressed on it at the top front. BBox
+    (-212, -262, 211, 3).
+upstairs_window(x, y, scale=1.0, open=1.0, part='all', wall=True, interior=False, glow=0.0)
+    Anchor: the middle of the SILL TOP (bottom centre of the opening). Daniel's upstairs window: a wooden-framed
+    opening WINDOW_OPENING = (-95, -262, 95, 0) with a lintel beam (beam ends), a sill, and two teal plank
+    shutters with battens, hinges and knobs. open 0..1: 0 closed, .5 the shutters stand out toward the viewer
+    (seen nearly edge-on), 1 swung flat against the wall on both sides (continuous; quantise in 0.25 steps).
+    wall=True draws a mud-brick wall patch WINDOW_WALL = (-300, -470, 300, 200) around it (BBox = that patch);
+    wall=False draws only the frame, sill and shutters to put on your own wall (BBox (-193, -299, 192, 18)
+    open, (-141, -299, 140, 18) closed). part 'back' = the dim room seen through the opening (glow 0..1 warms
+    it with lamp light), 'front' = wall, frame, sill, shutters. Daniel praying: window(part='back') ->
+    characters.daniel(x, y + WINDOW_FLOOR_Y*scale, scale, facing, pose='kneel_pray') -> window(part='front')
+    (WINDOW_FLOOR_Y = 90). interior=True is the view from inside the room: no back fill (your sky / distant
+    Jerusalem shows through the opening) and a paler plaster wall.
+royal_seal(x, y, scale=1.0, kind='ring')
+    Anchor: centre. kind='ring': the king's signet ring standing upright - a gold band with a blue carved seal
+    stone (rosette) on top. BBox (-39, -38, 38, 56). kind='impression': the clay seal lump with the stamped
+    rosette (as on the sealed den stone and the decree). BBox (-36, -34, 34, 31).
+decree(x, y, scale=1.0, rot=0, sealed=True)
+    Anchor: centre. The king's decree: a parchment sheet between two rollers with a red title line and wavy
+    writing; sealed=True adds the clay seal with two red ribbon tails at the bottom. BBox (-110, -126, 109, 143).
+    Post it on a wall with rot=0 (s05), or hold it up beside the king. (characters.king(pose='sign' /
+    'sit_sign') draws its own small decree in his hand.)
+persian_column(x, y, scale=1.0, height=600)
+    Anchor: bottom centre. Persepolis-style column: square plinth, bell-shaped base with petals, slender fluted
+    shaft (`height` px), painted blue ring, palm capital, and two friendly kneeling bull fore-parts back to back
+    (happy closed eyes, little horns, painted collars) holding a wooden beam end between them. Total height
+    ~ height + 378; BBox at height 600 (-190, -978, 189, 2). Use scale 0.4-0.6 for a palace hall.
+cushion(x, y, scale=1.0, color=None)   Anchor: bottom centre. Plump cushion with gold corner tassels (default
+    P['royal_light']). BBox (-89, -61, 89, 17).
+oil_lamp(x, y, scale=1.0, lit=True)   Anchor: bottom centre. Small clay oil lamp with a handle; lit adds a flame
+    at the spout (x~50, y~-40) and a soft glow. BBox lit (-47, -103, 101, 14), unlit (-47, -34, 51, 2).
+food_tray(x, y, scale=1.0)   Anchor: bottom centre. Brass tray of bread, grapes, figs, a pomegranate and a gold
+    cup (the king's untouched supper, s09). BBox (-118, -83, 117, 18).
+lyre(x, y, scale=1.0, facing=1)   Anchor: bottom centre. Musicians' wooden lyre with curved arms, crossbar,
+    strings and sound box. BBox (-68, -194, 66, 2).
+couch(x, y, scale=1.0, facing=1)   Anchor: bottom centre. The king's bed: wooden frame on gold lion-paw legs, a
+    raised headrest on the left (facing=1), purple mattress, cream pillow, folded lilac blanket. Mattress top
+    y~-122. BBox (-233, -227, 203, 2). Seat characters.king(pose='sit_sad', throne=False) on it at
+    (x + 20*scale, y - 85*scale).
+
 Helpers / constants
 -------------------
 local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
@@ -316,9 +408,11 @@ fish_mouth_points(mouth); fish_mouth_path(...); in_fish_mouth(...).
 SHIP_DECK_Y = -165, SHIP_INTERIOR, SHIP_BED, SHIP_SLEEP, SHIP_HOLD_LANTERN (ship, section 2);
 BOOTH_SEAT, BOOTH_DEPTH (booth); KING_SEAT_Y, KING_ASH_DX (throne / ash_pile); CASTOR_SHADE,
 CASTOR_BOOTH_DX, WORM_BITE_DX (castor_plant); FISH_COLORS (small_fish); HOUSE_K = 2.2 and ZIGGURAT_K = 2.4
-are the internal up-scales of the house / ziggurat drawings (informational).
+are the internal up-scales of the house / ziggurat drawings (informational). Daniel film: LION, LIONESS (colours),
+LION_POSES, DEN_FLOOR_Y, DEN_INNER, DEN_OPENING, DEN_HOLE, DEN_STONE_R, WINDOW_OPENING, WINDOW_FLOOR_Y, WINDOW_WALL,
+SHUTTER; in_den_hole(...).
 Contact sheets of everything: ``python3 tools/props_sheet.py [fish ship items castor plants creatures
-buildings]`` -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
+buildings daniel]`` -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
 """
 import hashlib
 import math
@@ -3212,3 +3306,732 @@ def _signpost(left_text="他施", right_text="尼尼微"):
 
 def signpost(x, y, scale=1.0, left_text="他施", right_text="尼尼微"):
     return _place(_signpost(left_text, right_text), x, y, scale)
+
+
+# ====================================================================== 7. Daniel film (Daniel 6)
+
+LION = {"body": "#e3a95c", "shade": "#c98b45", "belly": "#f3d6a0", "mane": "#b9632d", "mane_hi": "#d4823c",
+        "muzzle": "#f8e8c8", "nose": "#a2594b", "ear_in": "#e7a08c", "tuft": "#9a5228"}
+LIONESS = {"body": "#e8bb7c", "shade": "#cf9b5c", "belly": "#f6e0b4", "mane": "#d9a464", "mane_hi": "#e8bb7c",
+           "muzzle": "#faecd0", "nose": "#a8625a", "ear_in": "#eaa894", "tuft": "#a0602e"}
+LION_POSES = ("stand", "walk_a", "walk_b", "sit", "lie", "sleep")
+_TONGUE = "#e8857c"
+
+
+def _lion_paw(cx, cy, col, sw=3.6, rx=29, ry=16, rot=0.0):
+    """Big soft round paw (side view) with three toe lines; (cx, cy) = middle of its flat underside."""
+    tr = f'transform="rotate({rot:.1f} {_f(cx)} {_f(cy)})"' if rot else ""
+    out = _p(f"M{_f(cx - rx)},{_f(cy)} Q{_f(cx - rx)},{_f(cy - 2 * ry)} {_f(cx + rx * 0.2)},{_f(cy - 2 * ry)} "
+             f"Q{_f(cx + rx * 1.15)},{_f(cy - 2 * ry)} {_f(cx + rx)},{_f(cy)} Z", col, sw, extra=tr)
+    for k in (0.15, 0.5):
+        tx = cx + rx * k
+        out += _p(f"M{_f(tx)},{_f(cy - 1)} Q{_f(tx + 2)},{_f(cy - ry * 0.6)} {_f(tx - 1)},{_f(cy - ry * 0.95)}", sw=2.4,
+                  stroke=S.shade(col, -0.35), extra=tr)
+    return out
+
+
+def _big_cat_leg(top, paw, w0, w1, col, sw=3.8):
+    """Tapered round-ended column from the body (top) to the ground point of the paw."""
+    (x0, y0), (x1, y1) = top, paw
+    y1p = y1 - 12
+    d = (f"M{_f(x0 - w0 / 2)},{_f(y0)} Q{_f(x0 - w0 / 2 + (x1 - x0) * 0.3)},{_f((y0 + y1p) / 2)} "
+         f"{_f(x1 - w1 / 2)},{_f(y1p)} L{_f(x1 + w1 / 2)},{_f(y1p)} "
+         f"Q{_f(x0 + w0 / 2 + (x1 - x0) * 0.6)},{_f((y0 + y1p) / 2)} {_f(x0 + w0 / 2)},{_f(y0)} Z")
+    return _p(d, col, sw) + _lion_paw(x1 + 4, y1, col)
+
+
+def _lion_tail(pts, col, tuft, sw=3.8):
+    d = _sm(pts, closed=False)
+    out = _tube(d, 13, col, sw)
+    (ax, ay), (bx, by) = pts[-2], pts[-1]
+    a = math.degrees(math.atan2(by - ay, bx - ax))
+    out += _g(_p("M-6,-11 Q12,-20 30,-8 Q40,0 30,8 Q12,20 -6,11 Q2,0 -6,-11 Z", tuft, sw) +
+              _p("M6,-6 Q18,-4 26,0 M6,6 Q18,4 26,0", sw=2.2, stroke=S.shade(tuft, -0.3)),
+              f"translate({_f(bx)},{_f(by)}) rotate({a:.1f})")
+    return out
+
+
+def _lion_head(cx, cy, mouth=0.0, eyes="open", maned=True, C=None, tilt=0.0, look=(0.0, 0.0)):
+    """Round friendly lion face in a slight 3/4 view toward +x; (cx, cy) = centre of the face."""
+    C = C or LION
+    out = ""
+    m = _clamp(mouth)
+    if maned:               # scalloped mane: big soft petals around the face, a lighter inner ring
+        R = 96
+        n = 16
+        pts = []
+        for i in range(n * 2):
+            a = 2 * math.pi * i / (n * 2) - math.pi / 2
+            r = R * (1.0 if i % 2 == 0 else 0.86)
+            pts.append((cx - 12 + r * math.cos(a), cy + 2 + r * 0.98 * math.sin(a)))
+        out += _p(_sm(pts, tension=0.9), C["mane"], 4.2)
+        pts = []
+        for i in range(n * 2):
+            a = 2 * math.pi * (i + 0.5) / (n * 2) - math.pi / 2
+            r = 76 * (1.0 if i % 2 == 0 else 0.9)
+            pts.append((cx - 6 + r * math.cos(a), cy + 4 + r * 0.98 * math.sin(a)))
+        out += _p(_sm(pts, tension=0.9), C["mane_hi"], 0)
+        for i in range(10):                  # a few curl strokes in the mane
+            a = 2 * math.pi * i / 10 + 0.3
+            px, py = cx - 12 + 84 * math.cos(a), cy + 2 + 82 * math.sin(a)
+            out += _p(f"M{_f(px - 8 * math.sin(a))},{_f(py + 8 * math.cos(a))} q{_f(6 * math.cos(a))},{_f(6 * math.sin(a))} "
+                      f"{_f(16 * math.sin(a))},{_f(-16 * math.cos(a))}", sw=2.4, stroke=S.shade(C["mane"], -0.25))
+    # ears
+    for ex, ey in ((cx - 38, cy - 50), (cx + 34, cy - 54)):
+        out += _circ(ex, ey, 17, C["body"], 3.8) + _circ(ex + 1, ey + 2, 8.5, C["ear_in"], 0)
+    # face
+    fr = 60 if maned else 56
+    face = [(cx - fr * 0.95, cy - 4), (cx - fr * 0.75, cy - fr * 0.72), (cx, cy - fr * 0.98), (cx + fr * 0.8, cy - fr * 0.7),
+            (cx + fr * 1.02, cy + 4), (cx + fr * 0.78, cy + fr * 0.72), (cx + 4, cy + fr * 0.96),
+            (cx - fr * 0.72, cy + fr * 0.74)]
+    out += _p(_sm(face), C["body"], 4)
+    if not maned:            # lioness: soft cheek ruff
+        for sx in (-1, 1):
+            bx = cx + sx * fr * 0.92 + (6 if sx > 0 else 0)
+            out += _p(f"M{_f(bx)},{_f(cy - 6)} l{_f(sx * 10)},8 l{_f(-sx * 6)},6 l{_f(sx * 8)},8", sw=2.6,
+                      stroke=S.shade(C["body"], -0.3))
+    # brows, eyes
+    lx, ly = look
+    ex0, ex1, ey = cx - 18, cx + 26, cy - 12
+    for ex in (ex0, ex1):
+        out += _p(f"M{_f(ex - 10)},{_f(ey - 16)} Q{_f(ex)},{_f(ey - 23)} {_f(ex + 10)},{_f(ey - 17)}", sw=3,
+                  stroke=S.shade(C["body"], -0.45))
+        if eyes == "half":
+            out += _p(f"M{_f(ex - 9)},{_f(ey)} L{_f(ex + 9)},{_f(ey)} Q{_f(ex + 8)},{_f(ey + 10)} {_f(ex)},{_f(ey + 10)} "
+                      f"Q{_f(ex - 8)},{_f(ey + 10)} {_f(ex - 9)},{_f(ey)} Z", PUPIL, 0)
+            out += _p(f"M{_f(ex - 11)},{_f(ey)} L{_f(ex + 11)},{_f(ey)}", sw=3.2)
+        else:
+            k = {"closed": "closed", "happy": "happy"}.get(eyes, "open")
+            if k == "open":
+                out += _circ(ex + lx * 4, ey + ly * 4, 10.5, PUPIL, 0) + _circ(ex + lx * 4 - 3.5, ey + ly * 4 - 4, 4, HILITE, 0)
+                out += _circ(ex + lx * 4 + 3, ey + ly * 4 + 3, 1.4, HILITE, 0)
+            else:
+                out += _dot_eye(ex, ey + (3 if k == "closed" else 0), 8, k)
+    # muzzle: two puffy cheeks and a chin, the nose on top
+    mx, my = cx + 6, cy + 20
+    chin_drop = 30 * m
+    out += _ell(mx + 2, my + 22 + chin_drop * 0.6, 18, 13 + chin_drop * 0.3, C["muzzle"], 3.4)   # chin
+    if m > 0.02:            # open mouth: soft round yawn, pink tongue, two blunt little teeth
+        mw, mh = 13 + 9 * m, 6 + 26 * m
+        oy = my + 12
+        out += _p(f"M{_f(mx + 2 - mw)},{_f(oy)} Q{_f(mx + 2 - mw)},{_f(oy + mh * 1.25)} {_f(mx + 2)},{_f(oy + mh * 1.25)} "
+                  f"Q{_f(mx + 2 + mw)},{_f(oy + mh * 1.25)} {_f(mx + 2 + mw)},{_f(oy)} Z", P["mouth_inside"], 3.4)
+        out += _ell(mx + 2, oy + mh * 1.0, mw * 0.62, mh * 0.32 + 2, _TONGUE, 0)
+        for tx in (mx + 2 - mw * 0.55, mx + 2 + mw * 0.55):
+            out += _p(f"M{_f(tx - 4.5)},{_f(oy + 1)} L{_f(tx - 4)},{_f(oy + 4 + 4 * m)} Q{_f(tx)},{_f(oy + 8 + 5 * m)} "
+                      f"{_f(tx + 4)},{_f(oy + 4 + 4 * m)} L{_f(tx + 4.5)},{_f(oy + 1)} Z", CREAM, 2.2)
+    for sx in (-1, 1):
+        out += _ell(mx + sx * 15, my + 4, 18, 14, C["muzzle"], 3.4)
+        for k in range(3):
+            out += _circ(mx + sx * (11 + k * 6), my + 1 + (k % 2) * 6, 1.6, S.shade(C["muzzle"], -0.45), 0)
+    if m <= 0.02:           # closed: a gentle smile under the cheeks
+        out += _p(f"M{_f(mx - 12)},{_f(my + 18)} Q{_f(mx)},{_f(my + 24)} {_f(mx + 2)},{_f(my + 15)} "
+                  f"Q{_f(mx + 4)},{_f(my + 24)} {_f(mx + 16)},{_f(my + 18)}", sw=2.8)
+    out += _p(f"M{_f(mx - 12)},{_f(my - 12)} Q{_f(mx)},{_f(my - 16)} {_f(mx + 12)},{_f(my - 12)} Q{_f(mx + 10)},{_f(my - 2)} "
+              f"{_f(mx)},{_f(my + 2)} Q{_f(mx - 10)},{_f(my - 2)} {_f(mx - 12)},{_f(my - 12)} Z", C["nose"], 3)
+    out += _ell(mx - 3, my - 11, 4, 2, HILITE, 0, extra='opacity="0.7"')
+    out += _blush(cx - 40, cy + 14, 10, 6) + _blush(cx + 52, cy + 12, 9, 6)
+    if tilt:
+        out = _g(out, f"rotate({tilt:.1f} {_f(cx)} {_f(cy)})")
+    return out
+
+
+def _lion(pose="stand", mouth=0.0, eyes="open", tail=0.0, variant=0):
+    if pose not in LION_POSES:
+        raise ValueError(f"lion: unknown pose {pose!r}; choose from {LION_POSES}")
+    C = LIONESS if variant % 2 else LION
+    maned = not (variant % 2)
+    col, far = C["body"], S.shade(C["body"], -0.16)
+    sl = 0.88 if not maned else 1.0           # the lioness is a little slimmer and lower
+    out = ""
+    tw = _clamp(tail, -1, 1)
+    if pose in ("stand", "walk_a", "walk_b"):
+        bx, by = -10, -160 * sl
+        hl, hh = 140, 72 * sl
+        # leg ground x positions (far hind, far front, near hind, near front)
+        fx = {"stand": (-78, 124, -112, 96), "walk_a": (-46, 150, -142, 70), "walk_b": (-116, 94, -78, 130)}[pose]
+        lift = {"stand": (0, 0, 0, 0), "walk_a": (0, 0, 8, 0), "walk_b": (0, 10, 0, 0)}[pose]
+        tail_pts = [(bx - hl + 8, by - 22), (bx - hl - 42, by - 40 + 8 * tw), (bx - hl - 66, by - 92 - 40 * tw),
+                    (bx - hl - 52, by - 130 - 46 * tw)]
+        out += _lion_tail(tail_pts, col, C["tuft"])
+        out += _big_cat_leg((-84, by + 20), (fx[0], -5 - lift[0]), 50 * sl, 38 * sl, far)
+        out += _big_cat_leg((104, by + 20), (fx[1], -5 - lift[1]), 46 * sl, 36 * sl, far)
+        out += _big_cat_leg((-104, by + 24), (fx[2], -lift[2]), 58 * sl, 40 * sl, col)
+        out += _big_cat_leg((84, by + 24), (fx[3], -lift[3]), 50 * sl, 38 * sl, col)
+        body = [(bx - hl, by + 4), (bx - hl + 26, by - hh + 8), (bx - 20, by - hh + 4), (bx + hl - 50, by - hh - 4),
+                (bx + hl + 4, by - 10), (bx + hl - 10, by + hh - 6), (bx + hl - 60, by + hh + 4), (bx, by + hh - 10),
+                (bx - hl + 40, by + hh - 2)]
+        belly = _ell(bx + 10, by + hh - 2, hl * 0.84, hh * 0.40, C["belly"], 0)
+        out += _body(body, col, "", belly, f"lion{variant}{pose}")
+        out += _p(f"M{_f(bx - hl + 26)},{_f(by - 30)} Q{_f(bx - hl + 80)},{_f(by - 64)} {_f(bx - hl + 104)},{_f(by + 20)}",
+                  sw=3, stroke=C["shade"], extra='opacity="0.7"')                                  # haunch line
+        out += _p(f"M{_f(bx + hl - 70)},{_f(by - 20)} Q{_f(bx + hl - 92)},{_f(by + 24)} {_f(bx + hl - 82)},{_f(by + hh)}",
+                  sw=3, stroke=C["shade"], extra='opacity="0.6"')                                  # shoulder line
+        hx, hy = 150, by - 80 + (6 if pose != "stand" else 0)
+        out += _lion_head(hx, hy, mouth, eyes, maned, C)
+    elif pose == "sit":
+        tail_pts = [(-110, -24), (-60, -6), (10, -8), (66, -20 - 20 * tw)]
+        out += _big_cat_leg((96, -190 * sl), (112, -5), 40 * sl, 32 * sl, far)                          # far front
+        body = [(-130, -40), (-120, -128 * sl), (-60, -196 * sl), (20, -250 * sl), (96, -236 * sl), (118, -150 * sl),
+                (96, -60), (40, -8), (-60, -4), (-118, -10)]
+        belly = _ell(80, -130 * sl, 34, 90 * sl, C["belly"], 0, extra='transform="rotate(-18 80 -130)"')
+        out += _body(body, col, "", belly, f"lion{variant}sit")
+        out += _lion_tail(tail_pts, col, C["tuft"])
+        out += _ell(-58, -66, 70, 62 * sl, col, 3.8)                                                 # haunch
+        out += _p("M-110,-60 Q-90,-118 -40,-124", sw=2.6, stroke=C["shade"], extra='opacity="0.6"')
+        out += _lion_paw(-6, 0, col)                                                                 # hind paw
+        out += _big_cat_leg((76, -176 * sl), (82, 0), 50 * sl, 36 * sl, col)                            # near front
+        out += _ell(76, -176 * sl, 22 * sl, 30 * sl, col, 0)                       # blend the leg into the chest
+        out += _p(f"M{_f(56)},{_f(-196 * sl)} Q{_f(48)},{_f(-150 * sl)} {_f(54)},{_f(-104 * sl)}", sw=3,
+                  stroke=C["shade"], extra='opacity="0.6"')
+        hx, hy = 96, -278 * sl - (0 if maned else 6)
+        out += _lion_head(hx, hy, mouth, eyes, maned, C)
+    else:  # lie / sleep: lying like a big cat, head resting on the front paws
+        sleep = pose == "sleep"
+        by = -64 * sl
+        if sleep:
+            tail_pts = [(-170, -36), (-150, -6), (-40, -2), (60, -10 - 14 * tw)]
+        else:
+            tail_pts = [(-170, -40), (-220, -26), (-258, -40 - 30 * tw), (-262, -76 - 40 * tw)]
+        out += _lion_tail(tail_pts, col, C["tuft"]) if not sleep else ""
+        out += _p(_sm([(110, -50), (228, -40), (232, -16), (110, -14)]), far, 3.8)                     # far forearm
+        out += _lion_paw(226, -8, far)
+        body = [(-180, -30), (-160, by - 52 * sl), (-60, by - 70 * sl), (60, by - 66 * sl), (130, by - 30),
+                (140, -22), (100, -2), (-60, -2), (-160, -4)]
+        belly = _ell(-10, -14, 150, 24, C["belly"], 0)
+        out += _body(body, col, "", belly, f"lion{variant}{pose}")
+        out += _ell(-110, -58 * sl, 66, 52 * sl, col, 3.8)                                            # haunch
+        out += _p("M-160,-50 Q-130,-104 -70,-100", sw=2.6, stroke=C["shade"], extra='opacity="0.6"')
+        out += _lion_paw(-40, 0, col)                                                                 # hind paw
+        if sleep:
+            out += _lion_tail(tail_pts, col, C["tuft"])
+        hx, hy = 186 - (10 if sleep else 0), -96 + (8 if sleep else 0) + (0 if maned else 8)
+        out += _lion_head(hx, hy, mouth, "closed" if (sleep and eyes == "open") else eyes, maned, C,
+                          tilt=10 if sleep else 0)
+        out += _p(_sm([(96, -46), (250, -40), (252, -12), (96, -10)]), col, 3.8)                       # near forearm
+        out += _lion_paw(248, 0, col)
+    return out
+
+
+def lion(x, y, scale=1.0, facing=1, pose="stand", mouth=0.0, eyes="open", tail=0.0, variant=0):
+    return _place(_lion(pose, mouth, eyes, tail, variant), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the lions' den
+DEN_FLOOR_Y = 600                      # floor surface inside the den (feet of figures inside), cutaway view
+DEN_INNER = (-640, 96, 640, 600)       # chamber: x0, ceiling (underside of the ground slab), x1, floor
+DEN_OPENING = (-140, 140)              # x-range of the round hole through the ceiling (y 0 .. 96)
+DEN_HOLE = (210, 62)                   # view='outside': rx, ry of the pit mouth ellipse centred on the anchor
+_EARTH = "#b88e62"
+_EARTH_DARK = "#93694a"
+_DEN_STONE = "#c7b49a"
+_DEN_DARK = "#4a3a34"
+
+
+def _den_cave():
+    """Chamber outline (local, cutaway): flat-ish ceiling with the hole, rounded walls, flat floor."""
+    x0, top, x1, fl = DEN_INNER
+    o0, o1 = DEN_OPENING
+    return (f"M{o0},{top} L{x0 + 120},{top + 8} Q{x0 + 10},{top + 30} {x0},{top + 200} "
+            f"Q{x0 - 16},{fl - 120} {x0 + 30},{fl + 40} L{x1 - 30},{fl + 40} Q{x1 + 16},{fl - 120} {x1},{top + 200} "
+            f"Q{x1 - 10},{top + 30} {x1 - 120},{top + 8} L{o1},{top} L{o1},{-2} L{o0},{-2} Z")
+
+
+def _den_back(light=0.0):
+    x0, top, x1, fl = DEN_INNER
+    o0, o1 = DEN_OPENING
+    rng = random.Random(6)
+    out = ""
+    # earth mass in section: ragged cut edge at the sides and bottom, strata and pebbles
+    edge = [(-770, -2), (770, -2)]
+    for i in range(13):
+        u = i / 12
+        edge.append((770 + rng.uniform(-14, 10), _lerp(30, 690, u)))
+    for i in range(17):
+        u = i / 16
+        edge.append((_lerp(770, -770, u), 700 + rng.uniform(-16, 12)))
+    for i in range(13):
+        u = i / 12
+        edge.append((-770 + rng.uniform(-10, 14), _lerp(690, 30, u)))
+    ed = _poly(edge)
+    gid = _uid("earth")
+    inner = ""
+    for k, yy in enumerate(range(60, 700, 70)):
+        inner += _p(_sm([(-800, yy + rng.uniform(-8, 8)), (-300, yy + 16), (200, yy - 12), (800, yy + 6)], closed=False),
+                    sw=3, stroke=S.shade(_EARTH, -0.12 if k % 2 else 0.1), extra='opacity="0.8"')
+    for _ in range(46):
+        px, py = rng.uniform(-750, 750), rng.uniform(20, 680)
+        r = rng.uniform(6, 15)
+        inner += _ell(px, py, r * 1.4, r, S.shade(_EARTH, rng.choice((-0.2, 0.18))), 2.5, extra='opacity="0.9"')
+    out += (f'<defs>{S.lin_grad(gid, [(0, S.shade(_EARTH, 0.12)), (1, _EARTH_DARK)])}</defs>' +
+            _p(ed, f"url(#{gid})", 0) + _clip(_uid("earthc"), ed, inner) + _p(ed, sw=4.5))
+    # the chamber: dim, warm, stone-block walls
+    cave = _den_cave()
+    cg = _uid("cave")
+    walls = ""
+    yy = top - 14
+    while yy < fl + 40:                      # rough courses of rounded field stones, no two alike
+        h = rng.uniform(36, 52)
+        xx = x0 - 60 - rng.uniform(0, 50)
+        while xx < x1 + 60:
+            w = rng.uniform(56, 110)
+            walls += _p(S.blob(xx + w / 2, yy + h / 2, w / 2 - 3, h / 2 - 3, 0.07, 8, seed=int(xx * 7 + yy)),
+                        S.shade(S.mix(_DEN_STONE, P["sand"], 0.25), rng.uniform(-0.14, 0.06)), 2.8,
+                        stroke=S.shade(_DEN_DARK, 0.15))
+            xx += w + rng.uniform(2, 6)
+        yy += h + 3
+    shade_d = (f'<defs>{S.lin_grad(cg, [(0, _DEN_DARK, 0.78), (0.55, _DEN_DARK, 0.45), (1, _DEN_DARK, 0.2)])}</defs>'
+               f'<rect x="{x0 - 40}" y="{-10}" width="{x1 - x0 + 80}" height="{fl + 60}" fill="url(#{cg})"/>')
+    walls += shade_d
+    # floor: sandy earth with scattered straw
+    floor = _p(f"M{x0 - 40},{fl - 6} Q0,{fl - 18} {x1 + 40},{fl - 6} L{x1 + 40},{fl + 60} L{x0 - 40},{fl + 60} Z",
+               S.mix(P["sand_dark"], _DEN_DARK, 0.25), 0)
+    for _ in range(40):
+        px = rng.uniform(x0 + 20, x1 - 20)
+        py = fl + rng.uniform(-4, 30)
+        a = rng.uniform(-0.5, 0.5)
+        floor += _line(px, py, px + 26 * math.cos(a), py + 26 * math.sin(a), sw=3,
+                       color=S.mix(P["leaf_dry"], P["sand"], rng.uniform(0, 0.5)), extra='opacity="0.85"')
+    walls += floor
+    walls += _p(f"M{x0 - 40},{fl - 6} Q0,{fl - 18} {x1 + 40},{fl - 6}", sw=3, stroke=S.shade(_DEN_DARK, 0.2))
+    if light > 0:           # sunlight / moonlight falling through the hole onto the floor
+        lg = _uid("denlight", light)
+        walls += (f'<defs>{S.lin_grad(lg, [(0, P["glow"], 0.75 * light), (1, P["glow"], 0.15 * light)])}</defs>'
+                  f'<path d="M{o0 + 10},{top} L{o1 - 10},{top} L{o1 + 120},{fl + 10} L{o0 - 120},{fl + 10} Z" '
+                  f'fill="url(#{lg})"/>'
+                  f'<ellipse cx="0" cy="{fl + 8}" rx="{(o1 - o0) / 2 + 130}" ry="34" fill="{P["glow"]}" '
+                  f'opacity="{0.45 * light:.2f}" filter="url(#soft)"/>')
+    out += _p(cave, _DEN_DARK, 0) + _clip(_uid("cavec"), cave, walls)
+    # the round shaft through the ceiling: its far wall is curved stonework
+    shaft = f"M{o0},-2 L{o1},-2 L{o1},{top} L{o0},{top} Z"
+    sh = ""
+    for r_, yy in enumerate(range(-4, top, 32)):
+        for k, xx in enumerate(range(o0 - 20 + (24 if r_ % 2 else 0), o1 + 20, 56)):
+            sh += _rect(xx, yy + 2, 50, 28, S.shade(_DEN_STONE, -0.18 - 0.1 * (yy / top)), 2.4, rx=9)
+    out += _clip(_uid("shaft"), shaft, sh + f'<rect x="{o0}" y="-2" width="{o1 - o0}" height="{top + 4}" '
+                 f'fill="{_DEN_DARK}" opacity="0.35"/>')
+    out += _p(cave, sw=5)
+    # the cut ground slab around the hole: a lip of stones at the mouth (left and right halves)
+    for sx in (-1, 1):
+        for k in range(3):
+            cx = sx * (152 + k * 34)
+            out += _ell(cx, -8 - (2 - k) * 2, 22, 13, S.shade(_DEN_STONE, -0.05 * k), 3.5)
+    return out
+
+
+def _den_front():
+    x0, _top, x1, fl = DEN_INNER
+    rng = random.Random(9)
+    out = ""
+    # foreground rocks and straw along the floor's front edge, a few rocks at the chamber's corners
+    for cx, cy, rx, ry in ((x0 + 60, fl + 22, 66, 40), (x0 + 150, fl + 34, 40, 24), (x1 - 70, fl + 20, 70, 44),
+                           (x1 - 170, fl + 34, 36, 22), (-260, fl + 40, 30, 18), (300, fl + 42, 26, 16)):
+        out += _p(S.blob(cx, cy, rx, ry, 0.12, 9, seed=int(cx)), S.shade(_DEN_STONE, -0.2), 4)
+        out += _p(f"M{_f(cx - rx * 0.5)},{_f(cy - ry * 0.45)} Q{_f(cx)},{_f(cy - ry * 0.8)} {_f(cx + rx * 0.45)},"
+                  f"{_f(cy - ry * 0.5)}", sw=3, stroke=S.shade(_DEN_STONE, 0.15))
+    for _ in range(16):
+        px = rng.uniform(x0 + 60, x1 - 60)
+        py = fl + 44
+        for j in range(4):
+            a = -math.pi / 2 + rng.uniform(-0.9, 0.9)
+            ln = rng.uniform(16, 30)
+            out += _line(px, py, px + ln * math.cos(a), py + ln * math.sin(a), sw=3.2,
+                         color=S.mix(P["leaf_dry"], P["sand"], rng.uniform(0, 0.4)))
+    # the cut ends of the ground slab beside the hole (front face of the section), with grass tufts on top
+    for sx in (-1, 1):
+        out += _g(_grass(1), f"translate({sx * 300},0) scale(0.7)")
+        out += _g(_grass(0), f"translate({sx * 560},0) scale(0.6)")
+    return out
+
+
+def _den_outside():
+    """The pit mouth seen from ground level and a little above: a ring of stones round a dark hole."""
+    rx, ry = DEN_HOLE
+    back, front = "", ""
+    hg = _uid("hole")
+    back += (f'<defs>{S.rad_grad(hg, [(0, "#20160f"), (0.7, _DEN_DARK), (1, S.shade(_DEN_DARK, 0.2))], cy=0.7)}</defs>'
+             f'<ellipse cx="0" cy="0" rx="{rx}" ry="{ry}" fill="url(#{hg})" stroke="{INK}" stroke-width="4"/>')
+    back += _p(f"M{-rx + 14},{-6} Q0,{-ry + 2} {rx - 14},{-6} L{rx - 30},{12} Q0,{-ry + 30} {-rx + 30},{12} Z",
+               S.shade(_DEN_STONE, -0.35), 0, extra='opacity="0.85"')
+    n = 18
+    for i in range(n):
+        a = 2 * math.pi * (i + 0.5) / n
+        cx, cy = (rx + 26) * math.cos(a), (ry + 16) * math.sin(a)
+        stone = _ell(cx, cy, 34, 20, S.shade(_DEN_STONE, -0.06 * (i % 3)), 3.5)
+        stone += _p(f"M{_f(cx - 18)},{_f(cy - 9)} Q{_f(cx)},{_f(cy - 16)} {_f(cx + 16)},{_f(cy - 9)}", sw=2.5,
+                    stroke=S.shade(_DEN_STONE, 0.18))
+        if math.sin(a) < 0:
+            back += stone
+        else:
+            front += stone
+    return back, front
+
+
+def lion_den(x, y, scale=1.0, part="all", view="cutaway", light=0.0):
+    if part not in ("all", "back", "front"):
+        raise ValueError(f"lion_den: part must be 'all', 'back' or 'front', not {part!r}")
+    if view == "outside":
+        b, f = _den_outside()
+    elif view == "cutaway":
+        b = _den_back(light) if part != "front" else ""
+        f = _den_front() if part != "back" else ""
+    else:
+        raise ValueError(f"lion_den: view must be 'cutaway' or 'outside', not {view!r}")
+    body = (b if part != "front" else "") + (f if part != "back" else "")
+    return _place(body, x, y, scale, 1, filt="wobble")
+
+
+def in_den_hole(markup, x, y, scale=1.0):
+    """Clip figure markup to what shows above the near rim of lion_den(view='outside') at (x, y, scale):
+    everything above the ground line plus the dark hole (e.g. Daniel being lowered in)."""
+    rx, ry = DEN_HOLE[0] * scale, DEN_HOLE[1] * scale
+    d = (f"M{_f(x - 4000)},{_f(y - 4000)} L{_f(x + 4000)},{_f(y - 4000)} L{_f(x + 4000)},{_f(y)} L{_f(x + rx)},{_f(y)} "
+         f"A{_f(rx)},{_f(ry)} 0 0 1 {_f(x - rx)},{_f(y)} L{_f(x - 4000)},{_f(y)} Z")
+    cid = _uid("denhole", x, y, scale)
+    return f'<clipPath id="{cid}"><path d="{d}"/></clipPath><g clip-path="url(#{cid})">{markup}</g>'
+
+
+DEN_STONE_R = (170, 128)               # den_stone: half-width and half-height of the boulder
+
+
+def _den_stone(sealed=False, roll=0.0):
+    rx, ry = DEN_STONE_R
+    col = "#bdb2a2"
+    out = ""
+    pts = []
+    rng = random.Random(3)
+    for i in range(14):
+        a = 2 * math.pi * i / 14
+        k = 1 + rng.uniform(-0.035, 0.035)
+        pts.append((rx * k * math.cos(a), -ry + ry * k * math.sin(a)))
+    d = _sm(pts)
+    gid = _uid("stoneg")
+    inner = (f'<defs>{S.rad_grad(gid, [(0, S.shade(col, 0.25)), (0.6, col), (1, S.shade(col, -0.22))], cx=0.38, cy=0.3, r=0.75)}</defs>'
+             f'<rect x="{-rx - 10}" y="{-2 * ry - 10}" width="{2 * rx + 20}" height="{2 * ry + 20}" fill="url(#{gid})"/>')
+    tex = ""
+    for (x0, y0, x1, y1, x2, y2) in ((-90, -40, -40, -70, -10, -50), (40, -190, 70, -150, 110, -160),
+                                     (-120, -170, -100, -140, -70, -150), (60, -60, 90, -80, 130, -70)):
+        tex += _p(f"M{x0},{y0} Q{x1},{y1} {x2},{y2}", sw=3, stroke=S.shade(col, -0.3))
+    for cx, cy, r in ((-60, -110, 14), (90, -110, 10), (10, -200, 9), (-120, -80, 8)):
+        tex += _ell(cx, cy, r * 1.3, r, S.shade(col, -0.12), 0, extra='opacity="0.8"')
+    for cx, cy in ((-130, -40), (120, -36), (-30, -18)):
+        tex += _ell(cx, cy, 22, 9, P["olive"], 0, extra='opacity="0.55"')                          # moss
+    if roll:
+        tex = _g(tex, f"rotate({roll:.1f} 0 {-ry})")
+    inner += tex
+    out += _p(d, col, 0) + _clip(_uid("stonec", roll), d, inner) + _p(d, sw=4.5)
+    out += _p(f"M{-rx * 0.55},{-ry * 1.62} Q{-rx * 0.2},{-ry * 1.9} {rx * 0.2},{-ry * 1.78}", sw=6,
+              stroke=S.shade(col, 0.35), extra='opacity="0.7"')
+    if sealed:              # the king's seal: a cord across the stone pegged to the ground, a clay seal on it
+        for sx in (-1, 1):
+            px = sx * (rx + 34)
+            out += _p(f"M{px - 6},2 L{px - 5},-34 Q{px},-42 {px + 5},-34 L{px + 6},2 Z", P["wood"], 3)
+        cord = f"M{-rx - 34},-30 Q{-rx * 0.9},{-ry * 1.25} 0,{-ry - 10} Q{rx * 0.9},{-ry * 1.25} {rx + 34},-30"
+        out += _p(cord, sw=8, stroke=INK) + _p(cord, sw=4, stroke="#d8b878")
+        out += _royal_impression(0, -ry - 10, 1.0)
+    return out
+
+
+def _royal_impression(cx, cy, k=1.0):
+    """Lump of clay pressed with the king's signet: a rosette with a little crown above it."""
+    clay = P["terracotta"]
+    out = _p(S.blob(cx, cy, 34 * k, 30 * k, 0.08, 9, seed=4), clay, 4 * k)
+    out += _circ(cx, cy, 22 * k, S.shade(clay, -0.12), 2.6 * k)
+    for j in range(8):
+        a = j * math.pi / 4
+        out += _ell(cx + 11 * k * math.cos(a), cy + 11 * k * math.sin(a), 5 * k, 3.2 * k, S.shade(clay, -0.32), 0,
+                    extra=f'transform="rotate({j * 45} {_f(cx + 11 * k * math.cos(a))} {_f(cy + 11 * k * math.sin(a))})"')
+    out += _circ(cx, cy, 4.5 * k, S.shade(clay, -0.4), 0)
+    out += _ell(cx - 14 * k, cy - 16 * k, 8 * k, 4 * k, S.shade(clay, 0.3), 0, extra='opacity="0.7"')
+    return out
+
+
+def den_stone(x, y, scale=1.0, sealed=False, roll=0.0):
+    return _place(_den_stone(sealed, roll), x, y, scale, 1)
+
+
+# ---------------------------------------------------------------------- Daniel's upstairs window
+WINDOW_OPENING = (-95, -262, 95, 0)    # the opening (x0, top, x1, sill top) relative to the anchor
+WINDOW_FLOOR_Y = 90                    # suggested floor inside: a kneeling Daniel there shows head and chest
+WINDOW_WALL = (-300, -470, 300, 200)   # extent of the wall patch drawn with wall=True
+SHUTTER = "#5f9a92"
+
+
+def _shutter(sx, op, col=SHUTTER):
+    """One shutter hinged at x = sx*95; op 0 closed (covering half the opening) .. 1 swung flat on the wall."""
+    _x0, top, _x1, sill = WINDOW_OPENING
+    hx = sx * 95
+    th = math.pi * _clamp(op)
+    fx = hx - sx * (95 * math.cos(th) + 16 * math.sin(th))     # + the panel's thickness when edge-on
+    e = 18 * math.sin(th)                   # the free edge comes toward the viewer and looks a little bigger
+    pts = [(hx, top + 2), (fx, top + 2 - e), (fx, sill - 2 + e * 0.7), (hx, sill - 2)]
+    face = col if th <= math.pi / 2 else S.shade(col, -0.12)
+    out = _p(_poly(pts), face, 4)
+    for k in (0.33, 0.66):                  # plank joints
+        a, b = _lerp2(pts[0], pts[1], k), _lerp2(pts[3], pts[2], k)
+        out += _line(a[0], a[1] + 6, b[0], b[1] - 6, sw=2.4, color=S.shade(face, -0.3))
+    for t in (0.16, 0.84):                  # battens
+        a, b = _lerp2(pts[0], pts[3], t), _lerp2(pts[1], pts[2], t)
+        out += _p(_poly([(a[0], a[1] - 7), (b[0], b[1] - 7), (b[0], b[1] + 7), (a[0], a[1] + 7)]),
+                  S.shade(face, 0.12), 3)
+    for t in (0.16, 0.84):                  # hinges on the frame side
+        a = _lerp2(pts[0], pts[3], t)
+        out += _circ(a[0], a[1], 5, P["wood_dark"], 2)
+    if abs(fx - hx) > 20:                   # a little knob on the free edge
+        k = _lerp2(pts[1], pts[2], 0.5)
+        out += _circ(k[0] + sx * 6 * (1 if th <= math.pi / 2 else -1), k[1], 5, P["crown"], 2.2)
+    return out
+
+
+def _upwindow(op=1.0, part="all", wall=True, interior=False, glow=0.0):
+    x0, top, x1, sill = WINDOW_OPENING
+    opening = (f"M{x0},{sill} L{x0},{top + 14} Q{x0},{top} {x0 + 14},{top} L{x1 - 14},{top} Q{x1},{top} {x1},{top + 14} "
+               f"L{x1},{sill} Z")
+    back, front = "", ""
+    if not interior:                        # the dim room seen through the opening
+        ig = _uid("winin", glow)
+        back += (f'<defs>{S.rad_grad(ig, [(0, S.mix("#6b4c36", P["glow"], 0.7 * glow)), (1, "#4a3428")], cy=0.75, r=0.8)}'
+                 f'</defs><path d="{opening}" fill="url(#{ig})"/>')
+        back += _p(f"M{x0},{sill - 60} L{x1},{sill - 70}", sw=3, stroke="#3a281e", extra='opacity="0.5"')
+    if wall:
+        wx0, wy0, wx1, wy1 = WINDOW_WALL
+        col = S.mix(P["sand"], P["stone"], 0.4) if not interior else S.mix(P["sand_light"], P["stone"], 0.3)
+        d = f"M{wx0},{wy0} L{wx1},{wy0} L{wx1},{wy1} L{wx0},{wy1} Z " + opening
+        front += f'<path d="{d}" fill="{col}" fill-rule="evenodd"/>'
+        cid = _uid("winwall", interior)
+        front += (f'<clipPath id="{cid}"><path d="{d}" clip-rule="evenodd"/></clipPath>'
+                  f'<g clip-path="url(#{cid})">{_bricks(wx0 + 20, wx1 - 20, wy1 - 20, wy0 + 20, col, 11, 5)}</g>')
+    # frame, lintel beam with beam ends, sill
+    front += _p(opening, "none", 12, stroke=INK) + _p(opening, "none", 6, stroke=P["wood"])
+    front += _rect(x0 - 44, top - 34, x1 - x0 + 88, 26, P["wood"], 4, rx=6)
+    for bx in (x0 - 32, x1 + 32):
+        front += _circ(bx, top - 21, 7, P["wood_dark"], 2.4)
+    front += _line(x0 - 36, top - 24, x1 + 36, top - 24, sw=2.4, color=P["wood_dark"], extra='opacity="0.6"')
+    front += _rect(x0 - 32, sill - 4, x1 - x0 + 64, 20, P["wood_light"], 4, rx=5)
+    front += _line(x0 - 26, sill + 4, x1 + 26, sill + 4, sw=2.4, color=P["wood"], extra='opacity="0.7"')
+    front += _shutter(-1, op) + _shutter(1, op)
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def upstairs_window(x, y, scale=1.0, open=1.0, part="all", wall=True, interior=False, glow=0.0):
+    if part not in ("all", "back", "front"):
+        raise ValueError(f"upstairs_window: part must be 'all', 'back' or 'front', not {part!r}")
+    return _place(_upwindow(open, part, wall, interior, glow), x, y, scale, 1)
+
+
+# ---------------------------------------------------------------------- royal things
+def _signet_ring():
+    """The king's signet ring standing upright: a gold band with a carved blue seal stone on top."""
+    gold, dark = _GOLD, _GOLD_DARK
+    out = _p("M-30,18 A30,30 0 1 0 30,18 A30,30 0 1 0 -30,18", sw=22, stroke=INK)
+    out += _p("M-30,18 A30,30 0 1 0 30,18 A30,30 0 1 0 -30,18", sw=14, stroke=gold)
+    out += _p("M-24,34 A22,22 0 0 0 4,46", sw=4, stroke=S.shade(gold, 0.35), extra='opacity="0.8"')
+    out += _p("M-30,-16 Q-32,-4 -18,-2 L18,-2 Q32,-4 30,-16 Z", dark, 4)            # bezel shoulders
+    out += _ell(0, -20, 32, 16, gold, 4)
+    out += _ell(0, -21, 23, 10.5, "#3f6f9e", 3)                                       # carved stone
+    for j in range(8):
+        a = j * math.pi / 4
+        out += _ell(11 * math.cos(a), -21 + 5 * math.sin(a), 3.6, 2.2, "#cfe2ea", 0, extra='opacity="0.85"')
+    out += _circ(0, -21, 2.8, "#cfe2ea", 0)
+    out += _ell(-11, -26, 6, 2.4, HILITE, 0, extra='opacity="0.8"')
+    return out
+
+
+def royal_seal(x, y, scale=1.0, kind="ring"):
+    if kind == "ring":
+        return _place(_signet_ring(), x, y, scale)
+    if kind == "impression":
+        return _place(_royal_impression(0, 0, 1.0), x, y, scale)
+    raise ValueError(f"royal_seal: kind must be 'ring' or 'impression', not {kind!r}")
+
+
+def _decree(sealed=True):
+    parch, roll = "#efdfb8", "#e2cb98"
+    out = _p("M-86,-110 L86,-110 Q80,0 86,110 L-86,110 Q-80,0 -86,-110 Z", parch, 4)
+    out += _p("M-58,-80 L58,-80", sw=7, stroke=P["sail_stripe"], extra='opacity="0.85"')     # a red title line
+    for i, yy in enumerate(range(-52, 60, 18)):
+        x0, x1 = -62, 62 - (i % 3) * 16
+        d = f"M{x0},{yy}"
+        xx = x0
+        while xx < x1:
+            d += " q4,-5 8,0 q4,5 8,0"
+            xx += 16
+        out += _p(d, sw=2.4, stroke=P["ink_soft"], extra='opacity="0.8"')
+    for yy in (-112, 112):
+        out += _rect(-100, yy - 11, 200, 22, roll, 4, rx=10)
+        for sx in (-108, 100):
+            out += _rect(sx, yy - 6, 8, 12, P["wood"], 3, rx=3)
+    if sealed:
+        out += _p("M-6,80 Q-18,112 -26,130 L-14,128 L-10,140 Q-2,112 4,84 Z", P["sail_stripe"], 3)
+        out += _p("M6,80 Q18,112 28,128 L16,130 L14,142 Q4,112 -2,84 Z", S.shade(P["sail_stripe"], -0.15), 3)
+        out += _royal_impression(0, 76, 0.8)
+    return out
+
+
+def decree(x, y, scale=1.0, rot=0, sealed=True):
+    return _place(_decree(sealed), x, y, scale, 1, rot)
+
+
+def _bull_protome(sx, base_y):
+    """One friendly kneeling bull fore-part of a Persepolis capital, facing outward (sx = -1 left, +1 right)."""
+    col, dark = "#ece0c6", "#b8a684"
+    out = ""
+    b = [(sx * 10, base_y), (sx * 10, base_y - 92), (sx * 70, base_y - 104), (sx * 120, base_y - 84),
+         (sx * 128, base_y - 30), (sx * 96, base_y)]
+    out += _p(_sm(b), col, 4)
+    out += _p(f"M{sx * 26},{base_y - 64} Q{sx * 48},{base_y - 82} {sx * 74},{base_y - 70}", sw=2.6, stroke=dark)
+    for k in range(3):                              # curly chest hair
+        cx = sx * (60 + k * 18)
+        out += _p(f"M{cx - 6},{base_y - 40} q6,-8 12,0", sw=2.4, stroke=dark)
+    out += _p(f"M{sx * 96},{base_y} L{sx * 96},{base_y - 26} Q{sx * 130},{base_y - 30} {sx * 138},{base_y - 8} "
+              f"L{sx * 134},{base_y} Z", col, 3.6)                                     # folded foreleg
+    out += _rect(min(sx * 134, sx * 112) - 0, base_y - 9, 22, 9, _GOLD_DARK, 2.6, rx=3)  # hoof
+    # head
+    hx, hy = sx * 142, base_y - 104
+    out += _tube(f"M{hx - sx * 18},{hy - 26} Q{hx - sx * 30},{hy - 58} {hx - sx * 6},{hy - 64}", 9, "#e8d6a8", 3)
+    out += _tube(f"M{hx + sx * 8},{hy - 30} Q{hx + sx * 20},{hy - 60} {hx + sx * 40},{hy - 58}", 9, "#e8d6a8", 3)
+    out += _ell(hx - sx * 30, hy - 14, 18, 10, col, 3.4, extra=f'transform="rotate({sx * -30} {hx - sx * 30} {hy - 14})"')
+    out += _p(_sm([(hx - sx * 26, hy - 30), (hx + sx * 14, hy - 38), (hx + sx * 34, hy - 10), (hx + sx * 38, hy + 22),
+                   (hx + sx * 22, hy + 38), (hx - sx * 6, hy + 34), (hx - sx * 26, hy + 6)]), col, 4)
+    out += _ell(hx + sx * 24, hy + 26, 18, 13, "#e2cba2", 3.2)                      # muzzle
+    out += _circ(hx + sx * 18, hy + 26, 2.6, INK, 0) + _circ(hx + sx * 32, hy + 24, 2.6, INK, 0)
+    out += _dot_eye(hx + sx * 8, hy - 6, 5, "happy") + _blush(hx - sx * 6, hy + 12, 8, 5)
+    out += _rect(hx - 30, hy + 38, 60, 9, "#4f86b0", 2.6, rx=4)                     # painted collar
+    return out
+
+
+def _column(height=600):
+    stone, dark = "#ece0c6", "#c4b494"
+    out = ""
+    out += _rect(-80, -30, 160, 30, S.shade(stone, -0.08), 4, rx=4)                     # plinth
+    out += _p("M-66,-30 Q-70,-70 -38,-98 L38,-98 Q70,-70 66,-30 Z", stone, 4)          # bell base
+    for k in (-0.6, -0.2, 0.2, 0.6):
+        out += _p(f"M{k * 60:.1f},-32 Q{k * 46:.1f},-70 {k * 30:.1f},-96", sw=2.4, stroke=dark)
+    out += _p("M-60,-46 Q0,-30 60,-46", sw=2.4, stroke=dark)
+    top = -98 - height
+    out += _rect(-32, top, 64, height + 2, stone, 4)                                       # shaft
+    for k in (-18, -6, 6, 18):
+        out += _line(k, top + 8, k, -104, sw=2.4, color=dark, extra='opacity="0.8"')
+    out += _rect(-38, top - 14, 76, 16, "#4f86b0", 3.4, rx=4)                              # painted ring
+    out += _p(f"M-36,{top - 14} Q-80,{top - 50} -74,{top - 78} L74,{top - 78} Q80,{top - 50} 36,{top - 14} Z",
+              stone, 4)                                                                    # palm / lotus capital
+    for k in (-0.7, -0.35, 0, 0.35, 0.7):
+        out += _p(f"M{k * 30:.1f},{top - 16} Q{k * 58:.1f},{top - 46} {k * 72:.1f},{top - 74}", sw=2.4, stroke=dark)
+    out += _rect(-60, top - 106, 120, 28, S.shade(stone, -0.05), 4, rx=4)
+    for xx in (-40, -14, 12, 38):
+        out += _p(f"M{xx},{top - 102} q6,10 0,20", sw=2.4, stroke=_GOLD_DARK)
+    base_y = top - 106
+    out += _rect(-40, base_y - 74, 80, 44, P["wood"], 4, rx=4)                            # beam end between the bulls
+    out += _circ(0, base_y - 52, 9, P["wood_dark"], 2.4)
+    out += _bull_protome(-1, base_y) + _bull_protome(1, base_y)
+    return out
+
+
+def persian_column(x, y, scale=1.0, height=600):
+    return _place(_column(height), x, y, scale)
+
+
+# ---------------------------------------------------------------------- small palace props
+def _cushion(col=None):
+    col = col or P["royal_light"]
+    out = _p("M-78,0 Q-92,-26 -74,-52 Q0,-64 74,-52 Q92,-26 78,0 Q0,8 -78,0 Z", col, 4)
+    out += _p("M-60,-40 Q0,-50 60,-40", sw=3, stroke=S.shade(col, 0.3), extra='opacity="0.8"')
+    out += _p("M-40,-16 Q0,-8 40,-16", sw=2.4, stroke=S.shade(col, -0.25))
+    for sx in (-1, 1):
+        for cy in (-52, -2):
+            out += _circ(sx * 80, cy, 6, _GOLD, 2.4)
+            out += _p(f"M{sx * 82},{cy + 4} l{sx * 6},14 l{sx * -10},0 Z", _GOLD, 2.2)
+    return out
+
+
+def cushion(x, y, scale=1.0, color=None):
+    return _place(_cushion(color), x, y, scale)
+
+
+def _oil_lamp(lit=True, gid="ol"):
+    clay = P["terracotta"]
+    out = ""
+    if lit:
+        out += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.9), (0.4, P["gold"], 0.35), (1, P["gold"], 0)])}</defs>'
+                f'<ellipse cx="36" cy="-44" rx="90" ry="80" fill="url(#{gid})" filter="url(#soft)"/>')
+    out += _p("M-40,-16 Q-50,-6 -38,-4 Q-46,-30 -30,-30", sw=6, stroke=INK) + \
+        _p("M-40,-16 Q-50,-6 -38,-4 Q-46,-30 -30,-30", sw=2.5, stroke=clay)                   # handle
+    out += _p("M-36,-4 Q-40,-30 0,-32 Q30,-32 44,-22 L50,-14 Q34,-2 0,0 Q-30,2 -36,-4 Z", clay, 4)
+    out += _ell(-4, -28, 12, 4, S.shade(clay, -0.4), 2.5)                                       # fill hole
+    out += _p("M-26,-12 Q0,-6 30,-12", sw=2.4, stroke=S.shade(clay, 0.3))
+    if lit:
+        out += _p("M48,-20 Q36,-38 46,-58 Q50,-44 58,-40 Q62,-26 48,-20 Z", P["sun_hot"], 3)
+        out += _p("M49,-24 Q44,-34 48,-44 Q54,-34 49,-24 Z", P["glow"], 0)
+    return out
+
+
+def oil_lamp(x, y, scale=1.0, lit=True):
+    return _place(_oil_lamp(lit, _uid("oil", lit)), x, y, scale)
+
+
+def _food_tray():
+    brass = "#d9a845"
+    out = ""
+    out += _ell(0, -12, 116, 28, S.shade(brass, -0.15), 4)
+    out += _ell(0, -16, 106, 22, brass, 3)
+    out += _p("M-60,-26 Q-62,-56 -30,-58 Q0,-60 -2,-28 Z", "#e2b36a", 3.6)                    # bread
+    out += _p("M-52,-40 l14,-4 M-44,-30 l14,-4 M-36,-48 l12,-3", sw=2.4, stroke="#b9853f")
+    for cx, cy in ((26, -50), (40, -50), (33, -60), (19, -38), (33, -38), (47, -38), (26, -28), (40, -28)):
+        out += _circ(cx, cy, 8, "#8a5aa0", 2.6)                                                  # grapes
+    out += _p("M33,-66 q2,-10 10,-14", sw=3, stroke=P["leaf_dark"])
+    out += _ell(46, -74, 10, 6, P["leaf"], 2.4, extra='transform="rotate(-25 46 -74)"')
+    out += _circ(74, -32, 14, "#c0533a", 3.4) + _p("M70,-46 l4,-6 l4,6", sw=2.6)            # pomegranate
+    out += _ell(-10, -26, 10, 8, "#8a5a3a", 2.6) + _ell(6, -24, 9, 7, "#8a5a3a", 2.6)        # figs / dates
+    out += _p("M-96,-42 L-74,-42 L-78,-26 Q-85,-22 -92,-26 Z", _GOLD, 3)                     # cup
+    out += _line(-85, -24, -85, -14, sw=4, color=_GOLD_DARK) + _ell(-85, -13, 9, 3, _GOLD, 2.4)
+    return out
+
+
+def food_tray(x, y, scale=1.0):
+    return _place(_food_tray(), x, y, scale)
+
+
+def _lyre():
+    wood = P["wood"]
+    out = ""
+    out += _tube("M-36,-40 Q-60,-100 -44,-160 Q-40,-176 -54,-184", 12, wood, 3.6)
+    out += _tube("M36,-40 Q60,-100 44,-160 Q40,-176 54,-184", 12, wood, 3.6)
+    out += _tube("M-58,-158 L58,-158", 10, P["wood_dark"], 3.4)
+    for k in range(6):
+        xx = -25 + k * 10
+        out += _line(xx * 1.15, -154, xx, -28, sw=2, color="#efe2c4")
+    out += _p("M-52,-46 Q-58,0 -30,0 L30,0 Q58,0 52,-46 Z", P["wood_light"], 4)              # sound box
+    out += _rect(-34, -34, 68, 10, wood, 2.6, rx=4)
+    out += _circ(0, -16, 6, P["wood_dark"], 2.2)
+    for xx in (-54, 54):
+        out += _circ(xx, -184, 6, _GOLD, 2.4)
+    return out
+
+
+def lyre(x, y, scale=1.0, facing=1):
+    return _place(_lyre(), x, y, scale, facing)
+
+
+def _couch():
+    wood, purple, lav = P["wood"], P["royal"], P["royal_light"]
+    out = ""
+    out += _lion_leg(-170, -60, 0, 18) + _lion_leg(150, -60, 0, 18)
+    out += _p("M-226,-150 Q-240,-210 -206,-224 Q-190,-226 -186,-206 L-186,-70 L-226,-70 Z", wood, 4)  # headrest
+    out += _circ(-206, -214, 9, _GOLD, 2.6)
+    out += _rect(-220, -86, 420, 28, wood, 4, rx=8)
+    out += _line(-210, -72, 190, -72, sw=3, color=_GOLD)
+    out += _p("M-196,-86 Q-200,-122 -170,-122 L180,-122 Q206,-120 200,-86 Z", purple, 4)       # mattress
+    out += _p("M-150,-112 L180,-112", sw=4, stroke=lav, extra='opacity="0.6"')
+    out += _p("M-184,-120 Q-196,-158 -160,-158 L-110,-156 Q-90,-150 -98,-120 Z", "#efe2c4", 3.6)  # pillow
+    out += _p("M60,-122 Q40,-80 70,-60 L196,-60 Q206,-90 200,-120 Z", lav, 3.6)                # folded blanket
+    for xx in (90, 130, 170):
+        out += _line(xx, -112, xx - 6, -66, sw=2.2, color=S.shade(lav, -0.25))
+    return out
+
+
+def couch(x, y, scale=1.0, facing=1):
+    return _place(_couch(), x, y, scale, facing)

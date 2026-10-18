@@ -421,8 +421,80 @@ def sheet_buildings():
     return render_sheet("buildings", "props — buildings (anchor = ground line / bottom centre)", rows)
 
 
+def sheet_lions():
+    s = 0.75
+
+    def c(label, fn, w=400, ax=190, ay=300):
+        return Cell(label, lambda ox, oy: fn(ox + ax, oy + ay), w, [(ax, ay)])
+    rows = [(330, [c(p, lambda x, y, p=p: PR.lion(x, y, s, pose=p)) for p in PR.LION_POSES]),
+            (330, [c(f"sit mouth={m} eyes={e}", lambda x, y, m=m, e=e: PR.lion(x, y, s, pose="sit", mouth=m, eyes=e),
+                     ax=180) for m, e in ((0.33, "open"), (0.66, "half"), (1.0, "closed"), (0, "happy"))] +
+                   [c("facing=-1 tail=1", lambda x, y: PR.lion(x, y, s, -1, tail=1), ax=200),
+                    c("walk_a tail=-1", lambda x, y: PR.lion(x, y, s, pose="walk_a", tail=-1))]),
+            (300, [c("lioness " + p, lambda x, y, p=p: PR.lion(x, y, s, pose=p, variant=1), ay=270)
+                   for p in PR.LION_POSES]),
+            (470, [Cell("lion and people at scale 1 (lion, daniel, jonah)", lambda ox, oy: PR.lion(ox + 330, oy + 440, 1.0)
+                        + CH.daniel(ox + 640, oy + 440, 1.0, -1) + CH.jonah(ox + 790, oy + 440), 900, [(330, 440)]),
+                   Cell("lion 0.8 lie / daniel 0.8 sit_pray / lioness sleep / lion 0.6 sit mouth=1",
+                        lambda ox, oy: PR.lion(ox + 130, oy + 440, 0.8, 1, pose="lie")
+                        + CH.daniel(ox + 480, oy + 440, 0.8, 1, pose="sit_pray")
+                        + PR.lion(ox + 840, oy + 440, 0.8, -1, pose="sleep", variant=1)
+                        + PR.lion(ox + 650, oy + 340, 0.6, -1, pose="sit", mouth=1, eyes="closed"), 1100, [])])]
+    return render_sheet("lions", "props — lion(): poses, mouth / eyes / tail, lioness (scale 0.75; red cross = anchor)",
+                        rows)
+
+
+def sheet_daniel():
+    def den(ox, oy):
+        s, ax, ay = 0.62, ox + 520, oy + 110
+        fy = ay + PR.DEN_FLOOR_Y * s
+        return (PR.lion_den(ax, ay, s, part="back", light=0.6) + PR.lion(ax - 230, fy, 0.6, 1, pose="lie")
+                + PR.lion(ax + 260, fy, 0.6, -1, pose="sleep", variant=1) + CH.daniel(ax + 10, fy, s, 1, pose="sit_pray")
+                + PR.lion_den(ax, ay, s, part="front") + CH.king(ax - 210, ay, s, 1, pose="call_out", attire="darius")
+                + PR.den_stone(ax + 310, ay, s * 0.9, roll=40))
+
+    def outside(ox, oy):
+        s, ax, ay = 0.7, ox + 300, oy + 330
+        return (f'<rect x="{ox}" y="{oy + 250}" width="760" height="320" fill="{P["sand"]}"/>'
+                + PR.lion_den(ax, ay, s, view="outside", part="back")
+                + PR.in_den_hole(CH.daniel(ax, ay + 140, s, 1, pose="hold_rope"), ax, ay, s)
+                + PR.lion_den(ax, ay, s, view="outside", part="front") + PR.den_stone(ax + 300, ay + 60, s * 0.8, sealed=True))
+
+    def win(op, d=False):
+        def f(ox, oy):
+            ax, ay = ox + 170, oy + 300
+            o = PR.upstairs_window(ax, ay, 0.5, open=op, part="back", glow=0.7 if d else 0)
+            if d:
+                o += CH.daniel(ax, ay + PR.WINDOW_FLOOR_Y * 0.5, 0.5, -1, pose="kneel_pray")
+            return o + PR.upstairs_window(ax, ay, 0.5, open=op, part="front")
+        return f
+
+    def c(label, fn, w, ax, ay, ref=None):
+        ov = (lambda ox, oy: person_ref(ox + ref[0], oy + ref[1], ref[2])) if ref else ""
+        return Cell(label, lambda ox, oy: fn(ox + ax, oy + ay), w, [(ax, ay)], ov)
+    rows = [(580, [Cell("lion_den cutaway: back -> lions, Daniel -> front -> king; den_stone roll=40; light=0.6", den,
+                        1100, []),
+                   Cell("view='outside' + in_den_hole(daniel hold_rope); den_stone sealed=True", outside, 760, [])]),
+            (420, [Cell(f"window open={op}" + (" + daniel" if d else ""), win(op, d), 340, [(170, 300)])
+                   for op, d in ((0, False), (0.25, False), (0.5, False), (0.75, False), (1, True))] +
+                  [Cell("interior=True", lambda ox, oy: f'<rect x="{ox + 40}" y="{oy + 40}" width="260" '
+                        f'height="300" fill="{P["sky_day"]}"/>' + PR.upstairs_window(ox + 170, oy + 300, 0.5, interior=True),
+                        340, [(170, 300)])]),
+            (520, [c("persian_column 0.5", lambda x, y: PR.persian_column(x, y, 0.5), 300, 150, 500, (150, 500, 0.5)),
+                   c("royal_seal x1.5", lambda x, y: PR.royal_seal(x, y, 1.5), 220, 110, 400),
+                   c("impression x1.5", lambda x, y: PR.royal_seal(x, y, 1.5, "impression"), 220, 110, 240),
+                   c("decree", lambda x, y: PR.decree(x, y), 260, 130, 300),
+                   c("cushion / oil_lamp", lambda x, y: PR.cushion(x, y, 0.9) + PR.oil_lamp(x - 30, y - 300, 1.2)
+                     + PR.oil_lamp(x + 60, y - 200, 1.2, lit=False), 300, 140, 500),
+                   c("food_tray / lyre", lambda x, y: PR.food_tray(x, y) + PR.lyre(x, y - 200), 300, 150, 500),
+                   c("couch + king sit_sad (0.7)", lambda x, y: PR.couch(x, y, 0.7) + CH.king(
+                       x + 20 * 0.7, y - 85 * 0.7, 0.7, -1, pose="sit_sad", attire="darius", throne=False), 420, 210, 500)])]
+    return render_sheet("daniel", "props — Daniel film: den, stone, window, palace things", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
-          "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings}
+          "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
+          "lions": sheet_lions, "daniel": sheet_daniel}
 
 
 def main():

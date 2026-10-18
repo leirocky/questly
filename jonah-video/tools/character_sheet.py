@@ -11,7 +11,9 @@ sheet, whose anchors fall outside their cells).
 
 Output: build/preview/characters_*.png (each <= 2400 px wide):
   jonah_poses, jonah_expr (close-ups), jonah_small (scale 0.45 readability, both facings + expressions),
-  sailors, captain_king, citizens, citizens_poses, compositions (figures used together on backgrounds).
+  sailors, captain_king, citizens, citizens_poses, compositions (figures used together on backgrounds);
+  Daniel film: daniel_poses, daniel_expr, daniel_officials, daniel_darius, daniel_guards
+  (python3 tools/character_sheet.py daniel).
 """
 import json
 import sys
@@ -153,6 +155,29 @@ def sheets():
             items.append((f"{k} sack {p}", lambda x, y, s, k=k, p=p, i=i: C.citizen(
                 x, y, s, 1, kind=k, variant=i, pose=p, attire="sackcloth")))
     out.append(("citizens_poses", "Citizens — poses and sackcloth (scale 0.8)", items, 8, 280, 330, 0.8, {}))
+    # ---- Daniel film
+    items = [("jonah (compare)", _j("stand"))]
+    items += [(p, lambda x, y, s, p=p: C.daniel(x, y, s, pose=p)) for p in C.DANIEL_POSES]
+    out.append(("daniel_poses", "Daniel — poses (scale 1; Jonah for comparison)", items, 7, 290, 470, 1.0,
+                {"ground_pad": 30}))
+    items = [(e, lambda x, y, s, e=e: C.daniel(x, y, s, expr=e)) for e in C.EXPRESSIONS]
+    items += [(f"official v{v} {e}", lambda x, y, s, v=v, e=e: C.official(x, y, s, variant=v, expr=e))
+              for v in range(4) for e in ("sly", "smug")]
+    out.append(("daniel_expr", "Daniel expressions; officials sly / smug (scale 1.5, upper body)", items, 8, 290,
+                380, 1.5, {"clip_cells": True, "ground_pad": -200}))
+    items = [(f"v{v} {p}", lambda x, y, s, v=v, p=p: C.official(x, y, s, variant=v, pose=p))
+             for v in range(4) for p in C.OFFICIAL_POSES]
+    out.append(("daniel_officials", "Officials — variants 0-3 x poses (scale 0.8)", items, 10, 230, 360, 0.8,
+                {"ground_pad": 20}))
+    items = [("nineveh king (compare)", lambda x, y, s: C.king(x, y, s))]
+    items += [(p, lambda x, y, s, p=p: C.king(x, y, s, pose=p, attire="darius")) for p in C.KING_POSES
+              if p != "sit_ashes"]
+    out.append(("daniel_darius", "King Darius — king(attire='darius') poses (scale 0.85)", items, 9, 250, 420, 0.85,
+                {"ground_pad": 20}))
+    items = [(f"v{v} {p}", lambda x, y, s, v=v, p=p: C.guard(x, y, s, variant=v, pose=p))
+             for v in range(4) for p in C.GUARD_POSES]
+    out.append(("daniel_guards", "Palace guards — variants 0-3 x poses (scale 0.8)", items, 10, 230, 400, 0.8,
+                {"ground_pad": 20}))
     return out
 
 
@@ -251,6 +276,13 @@ def measure():
             jobs.append((f"king/{att}", p, lambda x, y, p=p, att=att: C.king(x, y, pose=p, attire=att)))
     jobs.append(("king/royal", "sit_throne throne=False", lambda x, y: C.king(x, y, pose="sit_throne", throne=False)))
     jobs.append(("king/sackcloth", "sit_ashes ashes=False", lambda x, y: C.king(x, y, pose="sit_ashes", ashes=False)))
+    for p in C.DANIEL_POSES:
+        jobs.append(("daniel", p, lambda x, y, p=p: C.daniel(x, y, pose=p)))
+    for v in range(4):
+        for p in C.OFFICIAL_POSES:
+            jobs.append(("official", p, lambda x, y, p=p, v=v: C.official(x, y, variant=v, pose=p)))
+        for p in C.GUARD_POSES:
+            jobs.append(("guard", p, lambda x, y, p=p, v=v: C.guard(x, y, variant=v, pose=p)))
     for k in C.CITIZEN_KINDS:
         for v in range(4):
             for p in C.CITIZEN_POSES:
