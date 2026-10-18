@@ -704,6 +704,12 @@ def build(ctx):
     t_flash2 = t_pray + 0.08
     t_flash3 = t_jlook + 0.1                                    # a faint far flash in the hatch as he looks up
 
+    def people_a(t):
+        """The captain and Jonah fade out in the first half of the dissolve into s06 (the deck): the end move keeps
+        them above the last subtitle, so they cannot also leave the frame by then; gone 0.1 s before its middle, so
+        their faces (which sit where s06's crew stands) do not ghost over the crew."""
+        return 1 - M.progress(t, T - XF, T - XF / 2 - 0.1, "sine")
+
     # ---------------------------------------------------------------- the ship's gentle roll (camera) and a lurch
     def lurch(t):
         u = t - t_storm
@@ -877,7 +883,8 @@ def build(ctx):
         rot = -2.2 * M.progress(t, t_live - 0.1, t_live + 0.5, "sine")       # held to the end (calm last frames)
         if t_pity <= t <= t_pity + 0.7:
             rot -= 1.8 * math.sin(math.pi * (t - t_pity) / 0.7)
-        return Tf(dy=dy, rot=rot, sx=sx, sy=sy * (br if t >= t_cstand else 1.0), px=CAP_X, py=FLOOR_Y)
+        return Tf(dy=dy, rot=rot, sx=sx, sy=sy * (br if t >= t_cstand else 1.0), alpha=people_a(t), px=CAP_X,
+                  py=FLOOR_Y)
     flipbook(sc, "cap_main", main, z=cap_layers_z + 0.05, motion=cap_m)
 
     # ---------------------------------------------------------------- Jonah
@@ -962,7 +969,7 @@ def build(ctx):
         sy *= 1 + 0.010 * math.sin(2 * math.pi * (t / 3.4 + 0.6))
         u = M.progress(t, t_stand2, t_stand2 + 0.2, "linear")
         dy = -26 * math.sin(math.pi * u) - 6 * bump(t, t_sorry) - 6 * bump(t, t_jlook)
-        return Tf(0, dy, 0, sx, sy, 1.0, J_STAND_X, FLOOR_Y)
+        return Tf(0, dy, 0, sx, sy, people_a(t), J_STAND_X, FLOOR_Y)
     flipbook(sc, "jonah_stand", standing, z=3.2, motion=jstand_m)
 
     # Z z z drifting up from the sleeper (continues s04), fading as the captain arrives
@@ -1042,9 +1049,9 @@ def build(ctx):
     CAM_L1 = Cam(1420, 660, 1650)        # the captain is down: a closer two-shot for line 1
     CAM_PT = Cam(1420, 622, 1650)        # pointing up to the deck: up a little so the hatch is in frame
     CAM_PL = Cam(1440, 626, 1500)        # pushed in on the two during the plea
-    CAM_END = Cam(1690, 304, 823)        # up with Jonah's gaze to the open hatch (storm light, rain) over both heads:
-    #                                      both faces below the bottom edge (the top edge stays 72 px inside the
-    #                                      painting, below its soft rim)
+    CAM_END = Cam(1540, 430, 1200)       # up with Jonah's gaze to the open hatch (storm light, rain), both heads low
+    #                                      in the frame but above the subtitle box (the top edge stays 92 px inside
+    #                                      the painting, below its soft rim)
     t_c0 = t_slide0 + 0.1
     t_c1 = max(t_c0 + 5.2, t_cstand + 1.0)
     t_p0 = lc[0].end + 0.1
@@ -1053,19 +1060,21 @@ def build(ctx):
     cam = M.cam_keys([(0, CAM0), (t_c0, CAM0), (t_c1, CAM_L1), (t_p0, CAM_L1), (t_p1, CAM_PT),
                       (t_plead, CAM_PT), (t_pe, CAM_PL)],
                      ["sine", trapezoid(0.25), "sine", "sine", "sine", "sine"])
-    # the end move, from "让我们活下来" (the captain's plea to heaven; Jonah looks up with it 0.35 s later) to the last
-    # frame: one even push (a log zoom about the move's fixed point zp, so nothing swings sideways) rising to the hatch
-    # and easing to rest; the faces leave the bottom of the frame before the middle of the dissolve into s06 (a
-    # location change to the deck). It is laid over the base camera, which is within 2 px of CAM_PL by then and
-    # settles on it at t_pe.
-    t_e0 = t_pe       # starts as the base camera settles: the faces leave as the last subtitle fades out
+    # the end move, on "让我们活下来" (the captain's plea to heaven; Jonah looks up with it 0.35 s later): one gentle
+    # even push (a log zoom about the move's fixed point zp above the hatch, so nothing swings sideways; <= 0.4 %
+    # zoom and ~8 px per frame at the heads) rising toward the hatch and easing to rest at the middle of the dissolve
+    # into s06, then held. Both heads sink toward the bottom but stay above the last subtitle box until it has faded
+    # (their bottoms <= ~915 px of 1080 at T - XF); people_a fades them out by the dissolve's middle. It is laid over
+    # the base camera, which is within ~5 px of CAM_PL when it starts and settles on it at t_pe.
+    t_e0 = t_pe - 0.4
+    t_e1 = T - XF / 2
     zp = [(a * CAM_END.w - b * CAM_PL.w) / (CAM_END.w - CAM_PL.w)
           for a, b in ((CAM_PL.x, CAM_END.x), (CAM_PL.y, CAM_END.y))]
 
     def camera(t):
         c = cam(t)
         if t > t_e0:
-            k = (CAM_END.w / CAM_PL.w) ** M.progress(t, t_e0, T, trapezoid(0.2))
+            k = (CAM_END.w / CAM_PL.w) ** M.progress(t, t_e0, t_e1, trapezoid(0.2))
             c = Cam(zp[0] + (c.x - zp[0]) * k, zp[1] + (c.y - zp[1]) * k, c.w * k)
         w = s04_view_w(t) if t < XF else c.w       # the dissolve from s04: its push-in's last 4 % (centred on V0)
         return Cam(c.x, c.y, w, cam_roll(t))
@@ -1107,6 +1116,6 @@ def build(ctx):
                    t_why=t_why, t_jworry=t_jworry, t_up=t_up, t_stand=t_stand, t_stand2=t_stand2, t_look=t_look,
                    t_pray=t_pray, t_plead=t_plead, t_sorry=t_sorry, t_live=t_live, t_pity=t_pity, t_jlook=t_jlook,
                    t_flash3=t_flash3, CL_T=CL_T, n_walk=n_walk, X_START=X_START, cam_keys=(t_c0, t_c1, t_p0, t_p1,
-                                                                                        t_plead, t_pe, t_e0, T),
+                                                                                        t_plead, t_pe, t_e0, t_e1),
                    phrases=ph.items)
     return sc
