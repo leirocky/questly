@@ -96,6 +96,7 @@ def angry(c):
 
 
 def booth(c):
+    c.gain(-0.3)
     t_shade = c.gap(c.find("阴凉"))
     b = c.seg(0, t_shade, 7, "2/4", "G major", nominal=104, label="booth-build")
     s = c.seg(t_shade, c.dur, 5, "2/4", "G major", nominal=96, rit=0.15, label="booth-shade")
