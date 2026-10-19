@@ -14,11 +14,12 @@ God is never shown as a person. Goliath's defeat is shown as a fall, nothing mor
 TITLE = "大卫和歌利亚"
 SUBTITLE = "圣经绘本 · 撒母耳记上"
 
-# speakers this story adds (same format as voice/tts.py VOICES; Kokoro v1.1-zh prompt voices: 66 is the
-# highest-pitched male voice for the boy, 63 one of the lowest for the giant)
+# speakers this story adds (same format as voice/tts.py VOICES; Kokoro v1.1-zh prompt voices: the boy David
+# is a lower female voice (33, picked by the owner from 5 auditions, as boys often are in animation), 63 one of
+# the lowest male voices for the giant)
 VOICES = {
-    "D": {"engine": "zipvoice", "sid": 66, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 66, "speed": 0.95,
+    "D": {"engine": "zipvoice", "sid": 33, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 33, "speed": 1.2,
                      "text": "我是大卫，我在山坡上放羊。我的小羊又白又胖，我每天都带它们去喝水。"}},
     "L": {"engine": "zipvoice", "sid": 63, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
           "prompt": {"engine": "kokoro", "sid": 63, "speed": 1.1,

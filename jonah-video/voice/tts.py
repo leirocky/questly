@@ -243,7 +243,8 @@ def synth_raw(text, voice):
         best = None
         # Flow matching can occasionally slur a word: verify with ASR and try other settings.
         for spd, steps in ((voice["speed"], 8), (voice["speed"], 12), (voice["speed"] - 0.03, 8),
-                           (voice["speed"] + 0.03, 12), (voice["speed"], 16)):
+                           (voice["speed"] + 0.03, 12), (voice["speed"], 16), (voice["speed"], 10),
+                           (voice["speed"], 14), (voice["speed"] + 0.03, 20)):
             a = tts.generate(tts_text(text, "zipvoice"), ptext, px.tolist(), psr, spd, steps)
             x = np.asarray(a.samples, dtype=np.float32)
             score = _take_score(text, x, a.sample_rate)
@@ -426,6 +427,8 @@ def _wrong_tone(text, x, sr, toks, ts, max_rise=0.0):
 
 def _take_score(text, x, sr):
     """(rejected, CER) of one take; ASR gets 0.3 s of padding (it is unreliable on a word at sample 0)."""
+    if len(x) < 0.1 * sr * max(1, len(_norm(text))):
+        return True, 1.0      # ZipVoice can return a near-empty clip (short text, high speed, long prompt)
     pad = np.zeros(int(0.3 * sr), np.float32)
     xp = np.concatenate([pad, x, pad])
     hyp, toks, ts = asr(xp, sr)
