@@ -331,27 +331,39 @@ def _ref_times(text, toks, ts):
     return np.interp(np.arange(len(ref) + 1), xs, [anchors[k] for k in xs])
 
 
-def _broken_word(text, x, sr, toks, ts, min_gap=0.06):
-    """True when a NO_BREAK word is read with a pause inside it (e.g. 大利 … 乌王)."""
+_STOP_INITIALS = ("b", "p", "d", "t", "g", "k", "j", "q", "z", "c")   # a closure before these is silent anyway
+
+
+def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10):
+    """True when a NO_BREAK word is read with a pause inside it (e.g. 大利乌 … 王): a run of frames
+    below -40 dBFS between two of its characters longer than ``min_gap`` (``stop_gap`` before a
+    stop or affricate initial, whose closure is silent in fluent speech too)."""
+    from voice import lexicons as LX
+
     ref = _norm(text)
     words = [w for w in NO_BREAK if w in ref]
     times = _ref_times(text, toks, ts) if words else None
     if times is None:
         return False
     hop = int(0.01 * sr)
-    quiet = np.array([np.sqrt(np.mean(x[i:i + hop] ** 2)) < 0.003 for i in range(0, len(x) - hop, hop)])
+    quiet = np.array([np.sqrt(np.mean(x[i:i + hop] ** 2)) < 0.01 for i in range(0, len(x) - hop, hop)])
     for w in words:
+        syls = [s for _, ws in LX.contextual(w) for s in ws]
         for m in re.finditer(w, ref):
-            a, b = int(times[m.start()] * 100), int(times[m.end() - 1] * 100)
-            while a < b and quiet[a]:      # the recogniser can stamp a word before its onset
+            a = int(times[m.start()] * 100)
+            while a < len(quiet) and quiet[a]:   # the recogniser can stamp a word before its onset
                 a += 1
-            a += 5
-            run = best = 0
-            for q in quiet[a:b]:
-                run = run + 1 if q else 0
-                best = max(best, run)
-            if best * 0.01 >= min_gap:
-                return True
+            for k in range(1, len(w)):
+                # from the previous character to a little into this one (often stamped before its onset)
+                b = int(times[m.start() + k] * 100) + 8
+                run = best = 0
+                for q in quiet[a + 5:b]:
+                    run = run + 1 if q else 0
+                    best = max(best, run)
+                limit = stop_gap if syls[k].startswith(_STOP_INITIALS) else min_gap
+                if best * 0.01 > limit:
+                    return True
+                a = max(a, int(times[m.start() + k] * 100))
     return False
 
 
