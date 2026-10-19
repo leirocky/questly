@@ -14,6 +14,10 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   sailors, captain_king, citizens, citizens_poses, compositions (figures used together on backgrounds);
   Daniel film: daniel_poses, daniel_expr, daniel_officials, daniel_darius, daniel_guards
   (python3 tools/character_sheet.py daniel).
+  David film (python3 tools/character_sheet.py david): david_poses, david_items (staff / basket / bag / sling
+  phases), david_expr (close-ups), david_armor, goliath (poses, fall progress, lying), goliath_expr, soldiers_israel,
+  soldiers_philistine, david_saul (king attire='saul', Eliab, Jesse, shield-bearer) and david_scale (boy / adult /
+  giant on one ground line).
 """
 import json
 import sys
@@ -178,6 +182,75 @@ def sheets():
              for v in range(4) for p in C.GUARD_POSES]
     out.append(("daniel_guards", "Palace guards — variants 0-3 x poses (scale 0.8)", items, 10, 230, 400, 0.8,
                 {"ground_pad": 20}))
+    out += david_sheets()
+    return out
+
+
+def david_sheets():
+    """Sheets for the David film (1 Samuel 17)."""
+    out = []
+    items = [("jonah (compare)", _j("stand"))]
+    items += [(p, lambda x, y, s, p=p: C.david(x, y, s, pose=p)) for p in C.DAVID_POSES]
+    out.append(("david_poses", "David — poses (scale 1; Jonah for comparison; bag=True default)", items, 9, 260, 380,
+                1.0, {"ground_pad": 24}))
+    items = [(f"staff {p}", lambda x, y, s, p=p: C.david(x, y, s, pose=p, staff=True)) for p in ("stand", "walk_a", "walk_b")]
+    items += [(f"basket {p}", lambda x, y, s, p=p: C.david(x, y, s, pose=p, basket=True)) for p in ("stand", "walk_a", "walk_b")]
+    items += [("hold_sling staff=True", lambda x, y, s: C.david(x, y, s, pose="hold_sling", staff=True)),
+              ("bag=False stand", lambda x, y, s: C.david(x, y, s, bag=False)),
+              ("facing=-1 point_up", lambda x, y, s: C.david(x, y, s, -1, pose="point_up"))]
+    items += [(f"sling_spin phase={ph}", lambda x, y, s, ph=ph: C.david(x, y, s, pose="sling_spin", phase=ph))
+              for ph in (0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875)]
+    items += [("hold_sling stone=False", lambda x, y, s: C.david(x, y, s, pose="hold_sling", stone=False))]
+    out.append(("david_items", "David — staff / basket / sling options (scale 1)", items, 9, 260, 400, 1.0,
+                {"ground_pad": 24}))
+    items = [(e, lambda x, y, s, e=e: C.david(x, y, s, expr=e)) for e in
+             ("happy", "brave", "puzzled", "worried", "laugh", "surprised", "scared", "peaceful")]
+    items += [(f"goliath {e}", lambda x, y, s, e=e: C.goliath(x, y, s * 0.42, expr=e, spear=False)) for e in
+              ("angry", "sneer", "laugh", "surprised", "roar", "dizzy")]
+    items += [(f"saul {e}", lambda x, y, s, e=e: C.king(x - 10 * s, y + 70 * s, s * 0.82, attire="saul", expr=e)) for e in
+              ("worried", "surprised", "kind")]
+    items += [(f"eliab {e}", lambda x, y, s, e=e: C.eliab(x, y, s * 0.92, expr=e)) for e in ("cross", "neutral")]
+    items += [(f"jesse {e}", lambda x, y, s, e=e: C.jesse(x, y, s, expr=e)) for e in ("happy", "neutral")]
+    out.append(("david_expr", "David-film expressions (close-ups; Goliath at 0.42 x, Saul 0.82 x)", items, 8, 270, 330,
+                1.5, {"clip_cells": True, "ground_pad": -150}))
+    items = [(p, lambda x, y, s, p=p: C.david(x, y, s, pose=p, armor=True)) for p in
+             ("stand", "walk_a", "walk_b", "armor_wobble", "talk")]
+    items += [(f"{e}", lambda x, y, s, e=e: C.david(x, y, s, pose="stand", armor=True, expr=e)) for e in
+              ("puzzled", "laugh")]
+    out.append(("david_armor", "David in Saul's armour — armor=True (scale 1)", items, 7, 300, 400, 1.0,
+                {"ground_pad": 24}))
+    items = [(p, lambda x, y, s, p=p: C.goliath(x, y, s, pose=p)) for p in
+             ("stand", "stride_a", "stride_b", "shout", "laugh", "mock_point")]
+    items += [(f"fall progress={k}", lambda x, y, s, k=k: C.goliath(x - 120 * s, y, s, pose="fall", progress=k))
+              for k in (0.0, 0.25, 0.5, 0.75, 1.0)]
+    items += [("lying bump=True", lambda x, y, s: C.goliath(x - 200 * s, y, s, pose="lying", bump=True)),
+              ("lying", lambda x, y, s: C.goliath(x - 200 * s, y, s, pose="lying"))]
+    out.append(("goliath", "Goliath — poses, fall progress (pivot at the feet), lying (scale 0.5)", items, 7, 340, 470,
+                0.5, {"ground_pad": 20}))
+    for side in ("israel", "philistine"):
+        items = []
+        for v in range(4):
+            for p in C.SOLDIER_POSES:
+                items.append((f"v{v} {p}", lambda x, y, s, v=v, p=p, sd=side: C.soldier(x, y, s, side=sd, variant=v,
+                                                                                     pose=p)))
+        out.append((f"soldiers_{side}", f"soldier(side='{side}') — variants 0-3 x poses (scale 0.7)", items, 8, 250,
+                    330, 0.7, {"ground_pad": 16}))
+    items = [(f"saul {p}", lambda x, y, s, p=p: C.king(x, y, s, pose=p, attire="saul")) for p in
+             ("stand", "sit", "talk", "bless", "walk_a", "sit_throne")]
+    items += [("saul sit stool=False", lambda x, y, s: C.king(x, y, s, pose="sit", attire="saul", stool=False))]
+    items += [(f"eliab {p}", lambda x, y, s, p=p: C.eliab(x, y, s, pose=p)) for p in C.ELIAB_POSES]
+    items += [(f"jesse {p}", lambda x, y, s, p=p: C.jesse(x, y, s, pose=p)) for p in C.JESSE_POSES]
+    items += [(f"shield_bearer {p}", lambda x, y, s, p=p: C.shield_bearer(x, y, s, pose=p)) for p in
+              C.SHIELD_BEARER_POSES]
+    out.append(("david_saul", "King Saul (attire='saul'), Eliab, Jesse, shield-bearer (scale 0.8)", items, 8, 260, 400,
+                0.8, {"ground_pad": 20}))
+    items = [("david", lambda x, y, s: C.david(x, y, s)), ("jonah", _j("stand")),
+             ("eliab", lambda x, y, s: C.eliab(x, y, s)), ("saul", lambda x, y, s: C.king(x, y, s, attire="saul")),
+             ("goliath", lambda x, y, s: C.goliath(x, y, s)),
+             ("shield_bearer", lambda x, y, s: C.shield_bearer(x, y, s, pose="stand")),
+             ("david sling_release", lambda x, y, s: C.david(x, y, s, pose="sling_release"))]
+    out.append(("david_scale", "Scale check at scale 0.6: boy ~240, adult ~330, giant ~640 px at scale 1", items, 7,
+                330, 520, 0.6, {"ground_pad": 20}))
     return out
 
 
@@ -273,11 +346,33 @@ def measure():
         for p in C.KING_POSES:
             if att == "royal" and p == "sit_ashes":
                 continue
+            try:
+                C.king(0, 0, pose=p, attire=att)
+            except ValueError:
+                continue
+            jobs.append((f"king/{att}", p, lambda x, y, p=p, att=att: C.king(x, y, pose=p, attire=att)))
+    for p in C.KING_EXTRA_POSES:
+        for att in C.KING_ATTIRES:
             jobs.append((f"king/{att}", p, lambda x, y, p=p, att=att: C.king(x, y, pose=p, attire=att)))
     jobs.append(("king/royal", "sit_throne throne=False", lambda x, y: C.king(x, y, pose="sit_throne", throne=False)))
     jobs.append(("king/sackcloth", "sit_ashes ashes=False", lambda x, y: C.king(x, y, pose="sit_ashes", ashes=False)))
     for p in C.DANIEL_POSES:
         jobs.append(("daniel", p, lambda x, y, p=p: C.daniel(x, y, pose=p)))
+    for p in C.DAVID_POSES:
+        jobs.append(("david", p, lambda x, y, p=p: C.david(x, y, pose=p)))
+        jobs.append(("david armor=True", p, lambda x, y, p=p: C.david(x, y, pose=p, armor=True)))
+    for p in C.GOLIATH_POSES:
+        jobs.append(("goliath (at scale 0.5)", p, lambda x, y, p=p: C.goliath(x, y, 0.5, pose=p, bump=True)))
+    for sd in C.SOLDIER_SIDES:
+        for v in range(4):
+            for p in C.SOLDIER_POSES:
+                jobs.append((f"soldier/{sd}", p, lambda x, y, p=p, v=v, sd=sd: C.soldier(x, y, side=sd, variant=v, pose=p)))
+    for p in C.SHIELD_BEARER_POSES:
+        jobs.append(("shield_bearer", p, lambda x, y, p=p: C.shield_bearer(x, y, pose=p)))
+    for p in C.ELIAB_POSES:
+        jobs.append(("eliab", p, lambda x, y, p=p: C.eliab(x, y, pose=p)))
+    for p in C.JESSE_POSES:
+        jobs.append(("jesse", p, lambda x, y, p=p: C.jesse(x, y, pose=p)))
     for v in range(4):
         for p in C.OFFICIAL_POSES:
             jobs.append(("official", p, lambda x, y, p=p, v=v: C.official(x, y, variant=v, pose=p)))
@@ -295,6 +390,8 @@ def measure():
         a = np.asarray(raster.rasterize(svg, 900, 700))[..., 3]
         ys, xs = np.nonzero(a > 40)
         bb = [int(xs.min()) - 450, int(ys.min()) - 620, int(xs.max()) - 450, int(ys.max()) - 620]
+        if not len(xs):
+            continue
         old = res.setdefault(who, {}).get(pose)
         if old:
             bb = [min(old[0], bb[0]), min(old[1], bb[1]), max(old[2], bb[2]), max(old[3], bb[3])]

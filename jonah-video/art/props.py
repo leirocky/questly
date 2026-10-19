@@ -1,4 +1,4 @@
-"""Creatures, vehicles, plants, buildings and props for the Jonah and Daniel picture-book videos.
+"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel and David picture-book videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -400,6 +400,91 @@ couch(x, y, scale=1.0, facing=1)   Anchor: bottom centre. The king's bed: wooden
     raised headrest on the left (facing=1), purple mattress, cream pillow, folded lilac blanket. Mattress top
     y~-122. BBox (-233, -227, 203, 2). Seat characters.king(pose='sit_sad', throne=False) on it at
     (x + 20*scale, y - 85*scale).
+
+8. DAVID FILM (1 Samuel 17)                         sheets: python3 tools/props_sheet.py david_items david_creatures
+---------------------------                                 david_camp valley
+Person scale as everywhere (adult 330 px; David ~252, Goliath ~634 at the same scale: see art/characters.py).
+sling(x, y, scale=1.0, facing=1, angle=0.0, length=96, stone=True, released=False)
+    Anchor: the finger loop at the hand end. Two cords run `length` px to a leather pouch (with a grey stone unless
+    stone=False). angle: direction of the strap from the hand in degrees, 0 = hanging down, 90 = toward facing,
+    180 = straight up (any value: rotate it for a whirl). BBox angle 0 (-12, -8, 12, 106); 90 (-8, -14, 107, 12);
+    180 (-13, -108, 11, 7). released=True: one cord let go, wavy, the open pouch at its end (angle 110:
+    (-8, -50, 145, 7)). (characters.david draws its own sling in the sling poses.)
+stone(x, y, scale=1.0, seed=0)   Anchor: bottom centre. A smooth pebble ~40 x 26 with a highlight; seed 0-4 varies
+    shape / colour. BBox about (-21, -26, 19, 1). Use scale 0.5-0.7 for the flying stone (and a whoosh line).
+five_stones(x, y, scale=1.0, n=5)   Anchor: bottom centre. A little pile: 3 below, 2 on top (n = 0..5 shown, so
+    'one, two, three, four, five' can count up). BBox n=5 (-52, -36, 47, 1).
+shepherd_bag(x, y, scale=1.0, facing=1, stones=0, strap=True)   Anchor: bottom centre. Leather bag with a flap and
+    button and a carrying strap (to y~-158); stones 1-5 opens the flap with stones peeking out. BBox (-48, -158, 47, 2).
+staff(x, y, scale=1.0, facing=1, rot=0.0)   Anchor: the bottom tip. Shepherd's crook ~300 px tall, hook toward
+    facing. BBox (-6, -305, 61, 7). rot rotates about the tip (rot=-84 lays it on the ground pointing back).
+bread_basket(x, y, scale=1.0, handle=True)   Anchor: bottom centre. Wicker basket with two loaves and a round
+    cheese with a cut wedge; rim y=-56, handle top y=-104. BBox (-71, -112, 69, 2); handle=False (-71, -92, 69, 2).
+harp(x, y, scale=1.0, facing=1)   Anchor: bottom centre. David's small shepherd's harp (kinnor lyre): sound box,
+    two uneven curved arms, slanted yoke with gold pegs, six strings. BBox (-56, -173, 59, 2). (lyre() is the
+    bigger palace lyre.)
+helmet_bronze(x, y, scale=1.0, facing=1, rot=0.0, crest=True, plume=None, circlet=False)   Anchor: bottom centre
+    (resting on the ground, side view). Bronze helmet with brim band and rivets; crest = Goliath's red comb;
+    plume (colour) + circlet=True = Saul's helmet (as taken off David). BBox crest (-60, -125, 67, 0); Saul style
+    (-64, -144, 67, 0).
+spear(x, y, scale=1.0, rot=0.0, kind='soldier')   Anchor: the middle of the shaft (lying horizontally at rot=0,
+    head toward +x). 'soldier' 360 px (-200, -8, 181, 7); 'goliath' 900 px, shaft as thick as a weaver's beam
+    (-474, -18, 452, 16).
+sword(x, y, scale=1.0, rot=0.0)   Anchor: centre. Sword in its leather scabbard, bronze guard and pommel (hilt
+    on the left). BBox (-110, -29, 114, 28).
+round_shield(x, y, scale=1.0, kind='israel', rot=0.0)   Anchor: centre, r=46. 'israel' wood and leather with a
+    bronze rim, studs and boss; 'philistine' bronze with rings and studs. BBox (-49, -48, 48, 47).
+tall_shield(x, y, scale=1.0, rot=0.0)   Anchor: centre. Goliath's great woven oval shield (the shield-bearer's),
+    bronze rim and boss. BBox (-82, -158, 80, 149).
+camp_stool(x, y, scale=1.0, facing=1)   Anchor: the FLOOR UNDER king(pose='sit', stool=False)'s anchor (pass the
+    same x, y, scale, facing; draw it first). Folding X-frame stool with a leather seat; seat top KING_STOOL_Y =
+    -74. BBox (-76, -81, 67, 4).
+bear(x, y, scale=1.0, facing=1, pose='stand', mouth=0.0)   Anchor: ground under the middle of the body. A brown
+    picture-book bear (BEAR colours), friendly: round ears, cream muzzle, dot eyes, rosy cheeks, round paws.
+    BEAR_POSES: 'stand' / 'walk_a' / 'walk_b' on all fours (-165, -225, 234, 2) (alternate walk ~0.3 s);
+    'roar' up on the hind legs, paws raised, a big open (blunt-toothed, never fierce) mouth (-110, -389, 148, 2);
+    'run_a' / 'run_b' bounding (-177, -238, 233, 2) / (-165, -220, 233, 0). mouth 0..1 opens the mouth in any pose
+    (roar defaults to 0.8). Scale 0.6-0.8 next to David for the memory bubble.
+sheep(x, y, scale=1.0, facing=1, variant=0, pose='stand', lamb=False)   Anchor: bottom centre. Flock sheep in the
+    style of animal('sheep'): variant 0 cream / tan face, 1 cream / dark-brown face and legs, 2 soft grey wool,
+    3 cream with a brown patch. SHEEP_POSES: stand (-95, -147, 104, 2), graze (head down nibbling, -95, -147, 120,
+    7), walk_a / walk_b (-95, -147, 106, 2), bleat (head up, eyes closed, sound arcs, -95, -161, 131, 2).
+    lamb=True: a small lamb with a big head (stand (-64, -107, 75, 1)) - the lamb the lion / bear grabs.
+tent(x, y, scale=1.0, facing=1, side='israel', flag=True, wave=0.0)   Anchor: bottom centre (ground at the door).
+    'israel': low wide striped goat-hair tent with poles, guy ropes and a dark doorway, a blue banner with a cream
+    band on a pole (-305, -342, 305, 3); 'philistine': tall peaked tent in red / ochre stripes with a red two-tailed
+    pennant (-235, -411, 235, 3). flag=False drops the banner (Israel top -194, Philistine -313). wave 0..1 ripples
+    the flag (2-4 phases). An adult fits the doorway at scale 1; use 0.25-0.4 for distant camps.
+brook(x0, x1, y, width=60.0, scale=1.0, phase=0.0, seed=0, pebbles=True)   Absolute stage coordinates (no facing):
+    a gently meandering stream running from x0 to x1 around the line y (~width px wide), blue gradient water,
+    foam ripple lines that slide downstream with phase 0..1 (loop it), smooth pebbles along both banks. BBox about
+    (x0-4, y-0.5*width-14*scale-12, x1+4, y+0.6*width+14*scale+12). For David picking stones (s10): kneel him on
+    the bank, see characters.david(pose='kneel_pick').
+day_counter(x, y, scale=1.0, n=7, filled=0.0, icons='pair', gap=64, pop=0.0)   Anchor: centre of the row. A picture
+    -book day counter: n days in a row; icons='pair' = a smiling sun (morning) above a crescent moon (evening) per
+    day, 'sun' or 'moon' = one row. filled counts done: with 'pair' 0.5 fills the next sun, 1.0 its moon too (so 40
+    days = morning + evening shouts). Unfilled icons are faint outlines. pop 0..1 bumps the newest filled icon
+    (scale up and back) as it appears. BBox n=7 pair (-229, -63, 227, 48); single row (-229, -37, 228, 36).
+    Width ~ (n-1)*gap*scale + 40*scale: use scale 0.6-1, e.g. n=10 rows, or show 'many' by sliding.
+valley_elah(x0, x1, y, scale=1.0, part='all', camps=True, brook=True, seed=0, bottom=None, wave=0.0)
+    The Valley of Elah backdrop (static layers only: ~3 s to rasterise a full stage, then cached). Absolute stage
+    coordinates: from x0 to x1, y = the VALLEY FLOOR line between the hills, painted down to bottom (default
+    y + 320*scale). Two grassy hills face each other with plateaus VALLEY_HILL_H*scale (330) above the floor: LEFT
+    = Israel's camp (striped goat-hair tents, blue banners), RIGHT = the Philistine camp (peaked red tents, red
+    pennants); between them the valley floor recedes to hazy far ridges, and a brook winds from the far end down to
+    the front centre, with pebbles. Olive trees and dry bushes on the hills. part: 'back' = far ridges, valley floor
+    and brook; 'hills' = the two near hills with trees, rocks and camps (so figures in the valley can stand between
+    the parts); 'all' both. camps=False leaves the plateaus empty (put your own tents / soldiers there).
+    wave animates the banners. Sky not included.
+valley_ground(x, x0, x1, y, scale=1.0) -> stage y of the ground surface at stage x (hill tops, slopes, and y on the
+    valley floor between x0+0.44*(x1-x0) and x0+0.56*(x1-x0)): the anchor y for figures on the hills.
+valley_points(x0, x1, y, scale=1.0) -> {'israel_camp', 'philistine_camp' (ground points on the plateaus, ~9% in
+    from each side), 'left_edge', 'right_edge' (feet of the slopes on the floor), 'brook' (front of the brook,
+    y + 40*scale), 'centre'}. For x0=0, x1=2112, y=900: israel_camp (190, 557), philistine_camp (1922, 583),
+    left_edge (929, 900), right_edge (1183, 900). Figures standing in the valley foreground can use y up to
+    `bottom` (the floor continues toward the viewer); in perspective, scale them up as they come forward.
+Constants: BRONZE, BRONZE_DARK, BRONZE_LIGHT, LEATHER, CORD, IRON, CREST_RED, WICKER, STONE_COLS, BEAR, BEAR_POSES,
+SHEEP_POSES, TENT_SIDES, KING_STOOL_Y, VALLEY_HILL_H.
 
 Helpers / constants
 -------------------
@@ -4035,3 +4120,737 @@ def _couch():
 
 def couch(x, y, scale=1.0, facing=1):
     return _place(_couch(), x, y, scale, facing)
+
+
+# ====================================================================== 8. David film (1 Samuel 17)
+BRONZE = "#c8914f"
+BRONZE_DARK = S.shade(BRONZE, -0.32)
+BRONZE_LIGHT = S.shade(BRONZE, 0.42)
+LEATHER = "#8b5a35"
+LEATHER_LIGHT = "#b98552"
+CORD = "#c9a46a"
+IRON = "#a9adab"
+CREST_RED = "#b8473c"
+WICKER = "#c9995a"
+STONE_COLS = ("#b9b2a6", "#c9bca6", "#a8a49c", "#cdb79a", "#b4a99a")
+
+
+# ---------------------------------------------------------------------- shapes shared with art/characters.py
+def _bread_basket(handle=True):
+    """Wicker basket of bread loaves and a cheese, anchor bottom centre; rim y=-56, handle top y=-104."""
+    out = ""
+    if handle:
+        out += _tube("M-50,-54 Q-46,-104 0,-104 Q46,-104 50,-54", 8, WICKER, 3.2)
+    out += _p(_sm([(-60, -60), (-34, -82), (-6, -84), (4, -62), (-30, -52)]), "#d9a25e", 3.4)          # loaf 1
+    out += _p("M-44,-70 l10,-8 M-30,-68 l10,-9 M-16,-68 l8,-8", sw=2.4, stroke="#a8743c")
+    out += _p(_sm([(-6, -58), (14, -86), (40, -88), (52, -64), (24, -54)]), "#e2b36a", 3.4)             # loaf 2
+    out += _p("M10,-70 l9,-9 M24,-70 l9,-9 M37,-70 l7,-8", sw=2.4, stroke="#b9853f")
+    out += _circ(40, -60, 17, "#f2cf6b", 3.2) + _p("M40,-60 L57,-62 L52,-49 Z", "#f8e6a8", 2.4)          # cheese
+    out += _circ(30, -64, 2.5, "#d9b04a", 0) + _circ(44, -70, 2, "#d9b04a", 0)
+    body = "M-60,-58 L60,-58 Q58,-22 46,-4 Q44,0 36,0 L-36,0 Q-44,0 -46,-4 Q-58,-22 -60,-58 Z"
+    weave = ""
+    for k, yy in enumerate(range(-50, 0, 10)):
+        off = 7 if k % 2 else 0
+        for xx in range(-70 + off, 70, 14):
+            weave += f"M{xx},{yy} q7,-5 14,0 "
+    for xx in range(-48, 56, 16):
+        weave += f"M{xx},-56 L{xx * 0.78:.1f},-2 "
+    out += _p(body, WICKER, 0) + _clip(_uid("bsk", handle), body, _p(weave, sw=2.0, stroke=S.shade(WICKER, -0.3)))
+    out += _p(body, sw=3.8)
+    out += _tube("M-62,-58 L62,-58", 9, S.shade(WICKER, 0.12), 3.2)
+    return out
+
+
+def _harp():
+    """Small shepherd's harp (kinnor lyre): sound box below, two uneven curved arms, slanted yoke, 6 strings."""
+    wood, wd = P["wood_light"], P["wood"]
+    out = ""
+    out += _tube("M-30,-34 Q-46,-80 -36,-118 Q-32,-130 -42,-138", 10, wd, 3.4)
+    out += _tube("M30,-34 Q48,-96 40,-140 Q38,-156 48,-164", 10, wd, 3.4)
+    out += _tube("M-48,-128 L52,-156", 9, P["wood_dark"], 3.2)
+    for k in range(6):
+        u = (k + 0.5) / 6
+        xt, yt = -36 + 80 * u, -130 - 25 * u
+        out += _line(xt, yt, -24 + 48 * u, -30, sw=1.8, color="#efe2c4")
+    out += _p("M-42,-36 Q-48,0 -20,0 L20,0 Q48,0 42,-36 Q0,-46 -42,-36 Z", wood, 3.8)
+    out += _ell(0, -18, 9, 7, P["wood_dark"], 2.4)
+    out += _rect(-28, -36, 56, 7, wd, 2.4, rx=3)
+    for k in range(6):
+        u = (k + 0.5) / 6
+        out += _circ(-36 + 80 * u, -131 - 25 * u, 2.6, _GOLD, 1.4)
+    return out
+
+
+def _round_shield(r=46, kind="israel"):
+    """Round shield centred on (0, 0): 'israel' wood and leather with a bronze rim and boss, 'philistine' bronze
+    with rings and studs."""
+    if kind == "philistine":
+        face, ring = BRONZE, BRONZE_DARK
+        out = _circ(0, 0, r, face, 4)
+        out += _circ(0, 0, r * 0.74, "none", 2.6, stroke=ring) + _circ(0, 0, r * 0.46, "none", 2.4, stroke=ring)
+        for k in range(10):
+            a = 2 * math.pi * k / 10
+            out += _circ(r * 0.6 * math.cos(a), r * 0.6 * math.sin(a), r * 0.05, BRONZE_LIGHT, 0)
+        out += _circ(0, 0, r * 0.2, BRONZE_LIGHT, 3)
+        out += _p(f"M{_f(-r * 0.55)},{_f(-r * 0.5)} Q{_f(-r * 0.2)},{_f(-r * 0.82)} {_f(r * 0.25)},{_f(-r * 0.8)}", sw=3.4,
+                  stroke=BRONZE_LIGHT, extra='opacity="0.8"')
+        return out
+    face = "#a0683e"
+    out = _circ(0, 0, r, face, 4)
+    for k in range(6):
+        a = 2 * math.pi * k / 6 + 0.3
+        out += _line(r * 0.25 * math.cos(a), r * 0.25 * math.sin(a), r * 0.84 * math.cos(a), r * 0.84 * math.sin(a),
+                     sw=2.2, color=S.shade(face, -0.3))
+    out += _circ(0, 0, r * 0.9, "none", r * 0.13, stroke=BRONZE) + _circ(0, 0, r * 0.83, "none", 1.6)
+    for k in range(8):
+        a = 2 * math.pi * k / 8
+        out += _circ(r * 0.9 * math.cos(a), r * 0.9 * math.sin(a), r * 0.045, BRONZE_LIGHT, 0)
+    out += _circ(0, 0, r * 0.24, BRONZE, 3) + _circ(-r * 0.07, -r * 0.08, r * 0.07, BRONZE_LIGHT, 0)
+    return out
+
+
+def _tall_shield(ry=150):
+    """Goliath's great tall shield (carried by his shield-bearer), centred on (0, 0): a woven oval with a bronze
+    rim, ribs and a boss."""
+    rx = ry * 0.5
+    d = f"M0,{_f(-ry)} C{_f(rx * 1.3)},{_f(-ry)} {_f(rx * 1.3)},{_f(ry)} 0,{_f(ry)} C{_f(-rx * 1.3)},{_f(ry)} {_f(-rx * 1.3)},{_f(-ry)} 0,{_f(-ry)} Z"
+    col = "#d9b878"
+    weave = ""
+    for yy in range(int(-ry), int(ry), 12):
+        weave += f"M{_f(-rx * 1.1)},{yy} q{_f(rx * 0.55)},6 {_f(rx * 1.1)},0 q{_f(rx * 0.55)},-6 {_f(rx * 1.1)},0 "
+    inner = _p(weave, sw=2.0, stroke=S.shade(col, -0.25))
+    for xx in (-0.5, 0.0, 0.5):
+        inner += _line(xx * rx, -ry, xx * rx * 1.05, ry, sw=6, color=S.shade(col, -0.18))
+    out = _p(d, col, 0) + _clip(_uid("tsh", ry), d, inner)
+    out += _p(d, "none", 14, stroke=BRONZE) + _p(d, "none", 4)
+    out += _circ(0, 0, rx * 0.28, BRONZE, 3.4) + _circ(-rx * 0.08, -rx * 0.09, rx * 0.08, BRONZE_LIGHT, 0)
+    return out
+
+
+def _camp_stool(w=110, h=67):
+    """Folding X-frame camp stool, anchor bottom centre: seat top y = -h."""
+    wood = P["wood"]
+    out = _tube(f"M{_f(-w / 2 + 6)},{_f(-h + 4)} L{_f(w / 2 - 8)},-4", 9, S.shade(wood, -0.15), 3.2)
+    out += _tube(f"M{_f(w / 2 - 6)},{_f(-h + 4)} L{_f(-w / 2 + 8)},-4", 9, wood, 3.2)
+    out += _circ(0, -h / 2, 5, BRONZE, 2.4)
+    for sx in (-1, 1):
+        out += _rect(sx * (w / 2 - 8) - 9, -6, 18, 7, P["wood_dark"], 2.4, rx=3)
+    out += _p(f"M{_f(-w / 2 - 6)},{_f(-h - 4)} Q0,{_f(-h + 8)} {_f(w / 2 + 6)},{_f(-h - 4)} L{_f(w / 2 + 6)},{_f(-h + 4)} "
+              f"Q0,{_f(-h + 16)} {_f(-w / 2 - 6)},{_f(-h + 4)} Z", LEATHER, 3.4)
+    for sx in (-1, 1):
+        out += _circ(sx * (w / 2 + 2), -h, 5, P["wood_dark"], 2.4)
+    return out
+
+
+# ---------------------------------------------------------------------- small things
+def _sling(angle=0.0, length=96, stone=True, released=False):
+    a = math.radians(angle)
+    d = (math.sin(a), math.cos(a))
+    n = (-d[1], d[0])
+    out = _circ(0, 0, 6, "none", 3.4, stroke=CORD) + _circ(0, 0, 6, "none", 1.2)
+    if released:
+        pts = [(d[0] * length * t + n[0] * 8 * math.sin(t * 7) * t, d[1] * length * t + n[1] * 8 * math.sin(t * 7) * t)
+               for t in [j / 10 for j in range(11)]]
+        out += _tube(_sm(pts, closed=False), 2.4, CORD, 1.5)
+        ex, ey = pts[-1]
+        loose = [(ex + d[0] * (10 + 8 * j) + n[0] * 10 * math.sin(j * 1.4 + 1),
+                  ey + d[1] * (10 + 8 * j) + n[1] * 10 * math.sin(j * 1.4 + 1)) for j in range(6)]
+        out += _tube(_sm([(ex, ey)] + loose, closed=False), 2.4, CORD, 1.5)
+        out += _ell(ex, ey, 12, 3.6, LEATHER, 2.4, extra=f'transform="rotate({math.degrees(math.atan2(d[1], d[0])):.1f} {_f(ex)} {_f(ey)})"')
+        return out
+    px, py = d[0] * length, d[1] * length
+    for sg in (1, -1):
+        out += _tube(f"M0,0 L{_f(px + sg * n[0] * 6.5)},{_f(py + sg * n[1] * 6.5)}", 2.4, CORD, 1.5)
+    cx, cy = px + d[0] * 4, py + d[1] * 4
+    if stone:
+        out += _ell(px, py, 7.5, 6.5, STONE_COLS[0], 2.4)
+    out += _ell(cx, cy, 11, 6, LEATHER, 2.4, extra=f'transform="rotate({math.degrees(math.atan2(n[1], n[0])):.1f} {_f(cx)} {_f(cy)})"')
+    return out
+
+
+def sling(x, y, scale=1.0, facing=1, angle=0.0, length=96, stone=True, released=False):
+    return _place(_sling(angle, length, stone, released), x, y, scale, facing)
+
+
+def _stone(seed=0, r=14):
+    rng = random.Random(seed)
+    col = STONE_COLS[seed % len(STONE_COLS)]
+    rx, ry = r * rng.uniform(1.05, 1.3), r * rng.uniform(0.7, 0.85)
+    out = _p(S.blob(0, -ry, rx, ry, 0.06, 9, seed=seed), col, 3.2)
+    out += _ell(-rx * 0.35, -ry * 1.35, rx * 0.32, ry * 0.18, HILITE, 0, extra='opacity="0.7"')
+    out += _p(f"M{_f(-rx * 0.6)},{_f(-ry * 0.45)} q{_f(rx * 0.5)},{_f(ry * 0.3)} {_f(rx * 1.1)},0", sw=2,
+              stroke=S.shade(col, -0.2), extra='opacity="0.6"')
+    return out
+
+
+def stone(x, y, scale=1.0, seed=0):
+    return _place(_stone(seed), x, y, scale)
+
+
+def five_stones(x, y, scale=1.0, n=5):
+    spots = [(-34, 0, 0), (-4, 0, 1), (28, 0, 2), (-18, -15, 3), (12, -16, 4)]
+    out = "".join(_g(_stone(sd, 13 if i < 3 else 12), f"translate({dx},{dy})") for i, (dx, dy, sd) in
+                  enumerate(spots[:max(0, min(5, n))]))
+    return _place(out, x, y, scale)
+
+
+def _shepherd_bag(stones=0, strap=True):
+    out = ""
+    if strap:
+        out += _tube("M-30,-56 Q-20,-150 0,-152 Q22,-150 32,-56", 6, LEATHER, 2.8)
+    if stones:
+        for i in range(min(5, stones)):
+            out += _g(_stone(i, 9), f"translate({-22 + i * 11},{-60 - (i % 2) * 7})")
+    body = [(-40, -60), (40, -60), (44, -30), (28, -2), (-28, -2), (-44, -30)]
+    out += _p(_sm(body, tension=0.7), LEATHER_LIGHT, 3.8)
+    out += _p("M-28,-14 L28,-14", sw=1.8, stroke=S.shade(LEATHER, -0.2), extra='stroke-dasharray="4 4"')
+    if stones:      # flap folded open behind
+        out += _p("M-40,-60 Q0,-74 40,-60 Q0,-66 -40,-60 Z", LEATHER, 2.6)
+    else:
+        out += _p(_sm([(-41, -61), (41, -61), (30, -30), (0, -20), (-30, -30)], tension=0.7), LEATHER, 3.4)
+        out += _circ(0, -28, 4.5, CORD, 2)
+    return out
+
+
+def shepherd_bag(x, y, scale=1.0, facing=1, stones=0, strap=True):
+    return _place(_shepherd_bag(stones, strap), x, y, scale, facing)
+
+
+def _crook_staff():
+    pts = [(0, 0), (0, -230), (2, -268), (14, -290), (36, -296), (54, -282), (56, -258)]
+    d = _sm(pts, closed=False)
+    return _tube(d, 9, P["wood"], 3.4) + _p(_sm(pts[:3], closed=False), sw=2, stroke=P["wood_light"], extra='opacity="0.7"')
+
+
+def staff(x, y, scale=1.0, facing=1, rot=0.0):
+    return _place(_crook_staff(), x, y, scale, facing, rot)
+
+
+def bread_basket(x, y, scale=1.0, handle=True):
+    return _place(_bread_basket(handle), x, y, scale)
+
+
+def harp(x, y, scale=1.0, facing=1):
+    return _place(_harp(), x, y, scale, facing)
+
+
+def round_shield(x, y, scale=1.0, kind="israel", rot=0.0):
+    return _place(_round_shield(46, kind), x, y, scale, 1, rot)
+
+
+def tall_shield(x, y, scale=1.0, rot=0.0):
+    return _place(_tall_shield(150), x, y, scale, 1, rot)
+
+
+KING_STOOL_Y = -74         # camp_stool seat top = under the hips of king(pose='sit', stool=False) (attire 'saul')
+
+
+def camp_stool(x, y, scale=1.0, facing=1):
+    return _place(_g(_camp_stool(126, -KING_STOOL_Y), "translate(-4,0)"), x, y, scale, facing)
+
+
+def _helmet_side(crest=True, plume=None, circlet=False):
+    col = BRONZE
+    out = ""
+    if crest:
+        out += _p("M-44,-58 Q-40,-118 10,-124 Q52,-122 60,-86 Q50,-104 12,-108 Q-24,-104 -30,-58 Z", CREST_RED, 3.4)
+        for k in range(7):
+            u = (k + 0.5) / 7
+            x0 = -36 + 90 * u
+            out += _line(x0, -64 - 40 * math.sin(math.pi * (0.2 + 0.7 * u)), x0 + 6, -98 - 18 * math.sin(math.pi * u),
+                         sw=1.8, color=S.shade(CREST_RED, -0.3))
+    if plume:
+        out += _tube("M0,-90 Q-20,-130 -54,-134", 14, plume, 2.6)
+    out += _p("M-56,-6 Q-62,-40 -46,-66 Q-16,-98 22,-92 Q56,-84 62,-44 L58,-14 Q30,-22 6,-20 Q-4,-6 -24,-2 Z", col, 4)
+    out += _p("M-36,-62 Q-6,-86 30,-80", sw=4, stroke=BRONZE_LIGHT, extra='opacity="0.85"')
+    out += _tube("M-52,-18 Q-10,-32 60,-20", 8, BRONZE_DARK, 3)
+    for x0 in (-30, 0, 30):
+        out += _circ(x0, -26 + abs(x0) * 0.1, 2.6, BRONZE_LIGHT, 0)
+    if circlet:
+        out += _tube("M-50,-42 Q0,-60 60,-46", 8, _GOLD, 2.6)
+        for x0, y0 in ((-24, -54), (8, -58), (38, -54)):
+            out += _p(f"M{x0 - 6},{y0} L{x0},{y0 - 16} L{x0 + 6},{y0} Z", _GOLD, 2)
+    return out
+
+
+def helmet_bronze(x, y, scale=1.0, facing=1, rot=0.0, crest=True, plume=None, circlet=False):
+    return _place(_helmet_side(crest, plume, circlet), x, y, scale, facing, rot)
+
+
+def _spear(kind="soldier"):
+    if kind == "goliath":
+        L, w, hl, hw = 900, 22, 104, 22
+    else:
+        L, w, hl, hw = 360, 7, 40, 10
+    out = _tube(f"M{_f(-L / 2)},0 L{_f(L / 2 - hl)},0", w, P["wood"], 3.4 if kind != "goliath" else 4)
+    tip = L / 2
+    out += _p(f"M{_f(tip - hl)},{_f(-hw * 0.45)} Q{_f(tip - hl * 0.55)},{_f(-hw)} {_f(tip)},0 "
+              f"Q{_f(tip - hl * 0.55)},{_f(hw)} {_f(tip - hl)},{_f(hw * 0.45)} Z", IRON, 3.4)
+    out += _line(tip - hl + 6, 0, tip - 10, 0, sw=2, color=S.shade(IRON, -0.35))
+    out += _rect(tip - hl - 10, -w * 0.7, 12, w * 1.4, BRONZE, 2.6, rx=3)
+    out += _tube(f"M{_f(-L / 2 - 14)},0 L{_f(-L / 2)},0", w * 0.7, IRON, 2.8)
+    return out
+
+
+def spear(x, y, scale=1.0, rot=0.0, kind="soldier"):
+    return _place(_spear(kind), x, y, scale, 1, rot)
+
+
+def _sword():
+    out = _tube("M-60,0 L100,0", 14, S.shade(LEATHER, -0.1), 3.4)           # scabbard
+    out += _tube("M88,0 L104,0", 16, BRONZE, 3)
+    out += _tube("M-64,-24 L-64,24", 8, BRONZE, 3)                           # cross-guard
+    out += _tube("M-96,0 L-66,0", 9, LEATHER, 3)                             # grip
+    out += _circ(-100, 0, 8, BRONZE, 3)
+    for x0 in (-20, 30):
+        out += _line(x0, -7, x0, 7, sw=2, color=BRONZE_LIGHT)
+    return out
+
+
+def sword(x, y, scale=1.0, rot=0.0):
+    return _place(_sword(), x, y, scale, 1, rot)
+
+
+# ---------------------------------------------------------------------- the bear
+BEAR = {"body": "#8e5f3e", "shade": "#74492e", "muzzle": "#d9b08a", "nose": "#4a3426", "ear_in": "#c98d6c",
+        "paw": "#e0bd94"}
+BEAR_POSES = ("stand", "walk_a", "walk_b", "roar", "run_a", "run_b")
+
+
+def _bear_head(cx, cy, mouth=0.0, tilt=0.0):
+    C = BEAR
+    out = ""
+    for ex, ey in ((cx - 36, cy - 42), (cx + 26, cy - 48)):
+        out += _circ(ex, ey, 18, C["body"], 3.8) + _circ(ex + 1, ey + 2, 9, C["ear_in"], 0)
+    out += _p(S.blob(cx, cy, 56, 52, 0.04, 12, seed=4), C["body"], 4)
+    out += _p(f"M{_f(cx - 40)},{_f(cy - 30)} Q{_f(cx - 20)},{_f(cy - 46)} {_f(cx + 4)},{_f(cy - 44)}", sw=3,
+              stroke=S.shade(C["body"], 0.25), extra='opacity="0.6"')
+    mx, my = cx + 30, cy + 16
+    m = _clamp(mouth)
+    out += _ell(mx, my + 2 + 10 * m, 34, 25 + 8 * m, C["muzzle"], 3.6)
+    if m > 0.02:
+        mw, mh = 14 + 8 * m, 6 + 20 * m
+        oy = my + 10
+        out += _p(f"M{_f(mx + 6 - mw)},{_f(oy)} Q{_f(mx + 6 - mw)},{_f(oy + mh * 1.2)} {_f(mx + 6)},{_f(oy + mh * 1.2)} "
+                  f"Q{_f(mx + 6 + mw)},{_f(oy + mh * 1.2)} {_f(mx + 6 + mw)},{_f(oy)} Z", P["mouth_inside"], 3.2)
+        out += _ell(mx + 6, oy + mh * 0.95, mw * 0.6, mh * 0.3 + 2, _TONGUE, 0)
+        for tx in (mx + 6 - mw * 0.5, mx + 6 + mw * 0.5):
+            out += _p(f"M{_f(tx - 4)},{_f(oy + 1)} L{_f(tx - 3.5)},{_f(oy + 5 + 3 * m)} Q{_f(tx)},{_f(oy + 9 + 4 * m)} "
+                      f"{_f(tx + 3.5)},{_f(oy + 5 + 3 * m)} L{_f(tx + 4)},{_f(oy + 1)} Z", CREAM, 2.2)
+    else:
+        out += _p(f"M{_f(mx - 6)},{_f(my + 14)} Q{_f(mx + 6)},{_f(my + 22)} {_f(mx + 18)},{_f(my + 12)}", sw=2.8)
+    out += _ell(mx + 22, my - 8, 13, 9, C["nose"], 3) + _ell(mx + 18, my - 11, 4, 2, HILITE, 0, extra='opacity="0.7"')
+    for ex, ey in ((cx - 8, cy - 12), (cx + 26, cy - 16)):
+        out += _dot_eye(ex, ey, 7.5)
+        out += _p(f"M{_f(ex - 9)},{_f(ey - 15)} Q{_f(ex)},{_f(ey - 21)} {_f(ex + 9)},{_f(ey - 16)}", sw=3,
+                  stroke=S.shade(C["body"], -0.45))
+    out += _blush(cx - 26, cy + 14, 10, 6) + _blush(cx + 56, cy + 8, 7, 5)
+    if tilt:
+        out = _g(out, f"rotate({tilt:.1f} {_f(cx)} {_f(cy)})")
+    return out
+
+
+def _bear(pose="stand", mouth=0.0):
+    if pose not in BEAR_POSES:
+        raise ValueError(f"bear: unknown pose {pose!r}; choose from {BEAR_POSES}")
+    C = BEAR
+    col, far = C["body"], S.shade(C["body"], -0.18)
+    out = ""
+    if pose == "roar":       # up on the hind legs, front paws up, a big (friendly) roar
+        out += _big_cat_leg((-40, -110), (-56, 0), 56, 44, far)
+        out += _p(S.blob(0, -190, 92, 128, 0.04, 12, seed=2), col, 4)
+        out += _ell(16, -170, 56, 86, S.shade(col, 0.22), 0, extra='opacity="0.8"')
+        out += _big_cat_leg((24, -100), (34, 0), 60, 46, col)
+        out += _tube("M-50,-260 Q-92,-300 -84,-350", 40, far, 4)
+        out += _ell(-84, -358, 22, 18, C["paw"], 3.4)
+        out += _p(_sm([(-150, -240), (-120, -200)], closed=False), sw=0)
+        out += _bear_head(28, -318, mouth if mouth > 0 else 0.8, tilt=-8)
+        out += _tube("M54,-252 Q110,-280 120,-330", 40, col, 4)
+        out += _ell(122, -340, 24, 19, C["paw"], 3.4)
+        for k in range(3):
+            out += _circ(110 + k * 12, -358 + (k % 2) * -2, 5, C["paw"], 2.2)
+        return out
+    if pose in ("stand", "walk_a", "walk_b"):
+        fx = {"stand": (-70, 120, -100, 92), "walk_a": (-40, 146, -130, 64), "walk_b": (-104, 88, -70, 124)}[pose]
+        lift = {"stand": (0, 0, 0, 0), "walk_a": (0, 0, 8, 0), "walk_b": (0, 10, 0, 0)}[pose]
+        by, bob, tilt = -130, 0, 0
+    else:
+        fx = {"run_a": (-150, 190, -110, 150), "run_b": (-40, 60, -10, 96)}[pose]
+        lift = {"run_a": (14, 24, 0, 0), "run_b": (0, 0, 16, 10)}[pose]
+        by, bob, tilt = -136, (-14 if pose == "run_a" else 0), (-6 if pose == "run_a" else 4)
+    body_pts = [(-150, by + 10), (-136, by - 56), (-60, by - 74), (40, by - 82), (110, by - 60), (140, by - 10),
+                (120, by + 50), (40, by + 62), (-60, by + 62), (-136, by + 46)]
+    inner = ""
+    out += _circ(-150, by - 20 + bob, 13, col, 3.4)                                   # stubby tail
+    out += _big_cat_leg((-80, by + 24 + bob), (fx[0], -5 - lift[0]), 58, 46, far)
+    out += _big_cat_leg((96, by + 20 + bob), (fx[1], -5 - lift[1]), 56, 44, far)
+    bd = _g(_body(body_pts, col, "", _ell(0, by + 46, 110, 22, S.shade(col, 0.18), 0), f"bear{pose}"),
+            f"translate(0,{bob}) rotate({tilt} 0 {by})")
+    out += bd
+    out += _p(f"M{-110},{by - 30 + bob} Q{-70},{by - 70 + bob} {-40},{by + 10 + bob}", sw=3, stroke=C["shade"],
+              extra='opacity="0.6"')
+    out += _big_cat_leg((-100, by + 30 + bob), (fx[2], -lift[2]), 64, 48, col)
+    out += _big_cat_leg((78, by + 30 + bob), (fx[3], -lift[3]), 60, 46, col)
+    hx, hy = 168, by - 26 + bob + (8 if pose.startswith("run") else 0)
+    out += _bear_head(hx, hy, mouth, tilt=6 if pose.startswith("run") else 0)
+    return out + inner
+
+
+def bear(x, y, scale=1.0, facing=1, pose="stand", mouth=0.0):
+    return _place(_bear(pose, mouth), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- sheep variants
+SHEEP_POSES = ("stand", "graze", "walk_a", "walk_b", "bleat")
+_SHEEP = [dict(wool="#f6efe0", face="#dcb89c", leg="#6b5040"), dict(wool="#f3ead8", face="#5e4a40", leg="#4f3e36"),
+          dict(wool="#e6e0d6", face="#e2c2a8", leg="#7a6050"), dict(wool="#f8f1e2", face="#caa384", leg="#6b5040")]
+
+
+def _sheep(variant=0, pose="stand", lamb=False):
+    if pose not in SHEEP_POSES:
+        raise ValueError(f"sheep: unknown pose {pose!r}; choose from {SHEEP_POSES}")
+    c = _SHEEP[variant % 4]
+    wool, face, leg = c["wool"], c["face"], c["leg"]
+    k = 0.66 if lamb else 1.0
+    hk = 1.18 if lamb else 1.0              # lambs: bigger head for their size
+    out = ""
+    lx = {"stand": ((-28, 44), (-46, 24)), "graze": ((-28, 44), (-46, 24)), "bleat": ((-28, 44), (-46, 24)),
+          "walk_a": ((-14, 58), (-60, 12)), "walk_b": ((-40, 30), (-30, 40))}[pose]
+    lh = 46 * k
+    for x_ in lx[0]:
+        out += _leg(x_ * k, -lh, 0, 13 * k + 1, S.shade(leg, -0.15))
+    circles = [(-74 * k, -84 * k, 16 * k)]
+    for i in range(12):
+        a = 2 * math.pi * i / 12
+        circles.append((70 * k * math.cos(a) * 0.95, -80 * k + 38 * k * math.sin(a), 24 * k))
+    circles.append((0, -80 * k, 52 * k))
+    for x_ in lx[1]:
+        out += _leg(x_ * k, -lh, 0, 14 * k + 1, leg)
+    out += _cluster(circles, wool, 3.8)
+    for cx, cy in ((-30, -96), (10, -104), (-10, -72), (30, -78), (-46, -70)):
+        out += _p(f"M{_f(cx * k - 8 * k)},{_f(cy * k)} q{_f(4 * k)},{_f(-7 * k)} {_f(8 * k)},0 q{_f(4 * k)},{_f(7 * k)} "
+                  f"{_f(8 * k)},0", sw=2.4, stroke=S.shade(wool, -0.2))
+    if variant % 4 == 3:
+        out += _ell(-20 * k, -92 * k, 22 * k, 14 * k, "#c8a07a", 0, extra='opacity="0.55"')
+    hx, hy, rot = {"stand": (76, -96, 22), "walk_a": (78, -94, 22), "walk_b": (78, -98, 22), "graze": (88, -34, 70),
+                   "bleat": (74, -112, -4)}[pose]
+    hx, hy = hx * k, hy * k
+    h = hk * (k if not lamb else 0.78)
+    out += _ell(hx - 22 * h, hy - 14 * h, 17 * h, 8 * h, face, 3.4, extra=f'transform="rotate({rot - 46} {_f(hx - 22 * h)} {_f(hy - 14 * h)})"')
+    out += _ell(hx, hy, 25 * h, 31 * h, face, 3.8, extra=f'transform="rotate({rot} {_f(hx)} {_f(hy)})"')
+    out += _cluster([(hx - 14 * h, hy - 28 * h, 12 * h), (hx - 2 * h, hy - 32 * h, 13 * h), (hx + 10 * h, hy - 26 * h, 11 * h)]
+                    if pose != "graze" else [(hx - 24 * h, hy - 18 * h, 12 * h), (hx - 16 * h, hy - 30 * h, 12 * h)],
+                    wool, 3.2)
+    eye_kind = "closed" if pose == "bleat" else "open"
+    ex, ey = (hx + 8 * h, hy - 4 * h) if pose != "graze" else (hx + 2 * h, hy + 2 * h)
+    eye_col = HILITE if variant % 4 == 1 else None
+    if eye_col:
+        out += _circ(ex, ey, 6 * h, "#e8dccb", 0)
+    out += _dot_eye(ex, ey, 4.2 * h, eye_kind) + _blush(ex + 4 * h, ey + 12 * h, 6 * h, 3.6 * h)
+    if pose == "bleat":
+        out += _ell(hx + 14 * h, hy + 22 * h, 6 * h, 5 * h, P["mouth_inside"], 2.4)
+        for j in range(2):
+            r = 18 + 12 * j
+            out += _p(f"M{_f(hx + 34 * h + r * 0.5)},{_f(hy + 4 * h - r * 0.7)} Q{_f(hx + 34 * h + r)},{_f(hy + 4 * h)} "
+                      f"{_f(hx + 34 * h + r * 0.5)},{_f(hy + 4 * h + r * 0.7)}", sw=2.6, stroke=P["ink_soft"])
+    elif pose == "graze":
+        out += _tube(f"M{_f(hx + 14 * h)},{_f(hy + 28 * h)} q4,8 10,10", 3, P["leaf"], 2)
+    else:
+        out += _p(f"M{_f(hx + 15 * h)},{_f(hy + 16 * h)} q4,4 8,0", sw=2.6)
+    return out
+
+
+def sheep(x, y, scale=1.0, facing=1, variant=0, pose="stand", lamb=False):
+    return _place(_sheep(variant, pose, lamb), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- camps
+TENT_SIDES = ("israel", "philistine")
+
+
+def _flag_pole(x, top, bottom, col, col2, kind="banner", wave=0.0):
+    out = _tube(f"M{x},{bottom} L{x},{top}", 6, P["wood_dark"], 3)
+    out += _circ(x, top - 4, 6, _GOLD, 2.4)
+    w = 8 * math.sin(wave * 2 * math.pi)
+    if kind == "banner":       # Israel: a square tribal banner
+        d = (f"M{x + 2},{top + 6} Q{x + 40},{top + 2 + w} {x + 80},{top + 8} L{x + 82},{top + 66} "
+             f"Q{x + 42},{top + 60 - w} {x + 2},{top + 64} Z")
+        out += _p(d, col, 3.4)
+        out += _p(f"M{x + 8},{top + 30} Q{x + 42},{top + 26 + w} {x + 78},{top + 32}", sw=8, stroke=col2)
+        out += _circ(x + 42, top + 46, 7, col2, 2)
+    else:                      # Philistine: a long two-tailed pennant
+        d = (f"M{x + 2},{top + 4} Q{x + 50},{top + 4 + w} {x + 110},{top + 14} L{x + 86},{top + 24} L{x + 112},{top + 34} "
+             f"Q{x + 50},{top + 38 - w} {x + 2},{top + 40} Z")
+        out += _p(d, col, 3.4)
+        out += _p(f"M{x + 6},{top + 22} Q{x + 50},{top + 20 + w} {x + 92},{top + 24}", sw=5, stroke=col2)
+    return out
+
+
+def _tent(side="israel", flag=True, wave=0.0):
+    if side not in TENT_SIDES:
+        raise ValueError(f"tent: unknown side {side!r}; choose from {TENT_SIDES}")
+    out = ""
+    if side == "israel":       # low wide goat-hair tent with stripes, poles and guy ropes
+        cloth, stripe = "#6a5546", "#8a7360"
+        for sx in (-1, 1):
+            out += _line(sx * 230, -118, sx * 300, 0, sw=2.4, color=S.shade(CORD, -0.2))
+            out += _line(sx * 120, -170, sx * 260, 0, sw=2.4, color=S.shade(CORD, -0.2))
+            out += _rect(sx * 300 - 4, -14, 8, 16, P["wood_dark"], 2.2)
+        roof = "M-250,-112 Q-200,-176 -120,-180 Q-60,-196 0,-186 Q70,-198 130,-180 Q210,-172 250,-112 L232,-104 L-232,-104 Z"
+        walls = "M-232,-108 L232,-108 L222,0 L-222,0 Z"
+        out += _p(walls, S.shade(cloth, 0.12), 4)
+        st = ""
+        for xx in range(-240, 250, 34):
+            st += f"M{xx},-200 L{xx},4 "
+        out += _clip(_uid("tw", side), walls, _p(st, sw=10, stroke=S.shade(cloth, 0.22)))
+        out += _p("M-62,0 L-50,-96 Q0,-110 50,-96 L62,0 Z", "#3a2a22", 3.4)                        # doorway
+        out += _p("M-50,-96 Q-90,-60 -86,0 L-62,0 Z", S.shade(cloth, 0.3), 3)                      # door flap
+        out += _p(roof, cloth, 4)
+        rs = ""
+        for xx in range(-230, 240, 46):
+            rs += f"M{xx},-112 Q{xx * 1.02:.1f},-150 {xx * 0.9:.1f},-190 "
+        out += _clip(_uid("tr", side), roof, _p(rs, sw=12, stroke=stripe, extra='opacity="0.8"'))
+        for xx in (-120, 0, 130):
+            out += _circ(xx, -186 + (8 if xx else 0), 6, P["wood_dark"], 2.4)
+        if flag:
+            out += _flag_pole(150, -330, -170, "#3f6f9e", "#efe2c4", "banner", wave)
+        return out
+    cloth, stripe = "#e8c27a", "#b5523b"   # peaked striped tent
+    for sx in (-1, 1):
+        out += _line(sx * 60, -250, sx * 230, 0, sw=2.4, color=S.shade(CORD, -0.2))
+        out += _rect(sx * 230 - 4, -14, 8, 16, P["wood_dark"], 2.2)
+    d = "M0,-300 Q-60,-200 -190,-30 Q-196,-6 -180,0 L180,0 Q196,-6 190,-30 Q60,-200 0,-300 Z"
+    st = ""
+    for k in range(-6, 7):
+        st += f"M0,-300 L{k * 34},{4} "
+    out += _p(d, cloth, 0) + _clip(_uid("tp", side), d, _p(st, sw=16, stroke=stripe, extra='opacity="0.9"'))
+    out += _p(d, "none", 4)
+    out += _p("M-40,0 Q-4,-150 0,-170 Q4,-150 40,0 Z", "#3a2a22", 3.4)
+    out += _p("M0,-170 Q-30,-90 -70,-6 L-40,0 Q-14,-120 0,-170 Z", S.shade(cloth, 0.2), 3)
+    out += _p("M-150,-60 Q0,-76 150,-60", sw=8, stroke=S.shade(stripe, -0.15))
+    if flag:
+        out += _flag_pole(0, -400, -296, CREST_RED, "#3f7f86", "pennant", wave)
+    else:
+        out += _circ(0, -304, 7, _GOLD, 2.4)
+    return out
+
+
+def tent(x, y, scale=1.0, facing=1, side="israel", flag=True, wave=0.0):
+    return _place(_tent(side, flag, wave), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the brook
+def _brook(x0, x1, y, width=60.0, phase=0.0, seed=0, pebbles=True, s=1.0):
+    rng = random.Random(seed)
+    n = max(6, int((x1 - x0) / (90 * s)))
+    top, bot, mid = [], [], []
+    for i in range(n + 1):
+        xx = x0 + (x1 - x0) * i / n
+        cy = y + 14 * s * math.sin(i * 1.3 + seed)
+        w = width * (0.5 + 0.1 * math.sin(i * 2.1 + seed * 0.7))
+        top.append((xx, cy - w * 0.8))
+        bot.append((xx, cy + w))
+        mid.append((xx, cy))
+    d = _sm(top, closed=False) + " " + " ".join(f"L{_f(px)},{_f(py)}" for px, py in reversed(bot)) + " Z"
+    d = "M" + d[1:]
+    gid = _uid("brk", x0, x1, y, width)
+    defs = S.lin_grad(gid, [(0, P["sea_light"]), (0.6, P["sea"]), (1, S.shade(P["sea"], -0.1))], 0, 0, 0, 1)
+    out = f"<defs>{defs}</defs>"
+    out += _p(d, f"url(#{gid})", 0)
+    inner = ""
+    for j in range(int((x1 - x0) / (70 * s)) + 2):
+        xx = x0 + ((j * 70 * s + phase * 70 * s) % (x1 - x0 + 70 * s)) - 35 * s
+        k = int(_clamp((xx - x0) / (x1 - x0 + 1e-6)) * n)
+        cy = mid[min(n, max(0, k))][1] + (j % 3 - 1) * width * 0.25
+        inner += _p(f"M{_f(xx)},{_f(cy)} q{_f(12 * s)},{_f(-5 * s)} {_f(26 * s)},0", sw=3.2 * s, stroke=P["foam"],
+                    extra='opacity="0.85"')
+    out += _clip(gid + "c", d, inner)
+    out += _p(d, "none", 3.6 * s)
+    if pebbles:
+        for i in range(int((x1 - x0) / (26 * s))):
+            xx = rng.uniform(x0, x1)
+            k = min(n, max(0, int((xx - x0) / (x1 - x0) * n)))
+            side = rng.choice((0, 1))
+            yy = (top if side == 0 else bot)[k][1] + rng.uniform(-6, 6) * s
+            r = rng.uniform(5, 11) * s
+            out += _ell(xx, yy, r * 1.3, r * 0.85, rng.choice(STONE_COLS), 2.4 * s)
+    return out
+
+
+def brook(x0, x1, y, width=60.0, scale=1.0, phase=0.0, seed=0, pebbles=True):
+    return _place(_brook(x0, x1, y, width * scale, phase, seed, pebbles, scale), 0, 0, 1.0)
+
+
+# ---------------------------------------------------------------------- picture-book day counter
+def _sun_icon(r, filled=True):
+    out = ""
+    for k in range(8):
+        a = 2 * math.pi * k / 8
+        out += _line(r * 1.3 * math.cos(a), r * 1.3 * math.sin(a), r * 1.75 * math.cos(a), r * 1.75 * math.sin(a),
+                     sw=3.2, color=P["sun_hot"] if filled else P["ink_soft"])
+    out += _circ(0, 0, r, P["sun"] if filled else P["paper"], 3.2)
+    if filled:
+        out += _dot_eye(-r * 0.32, -r * 0.1, r * 0.11) + _dot_eye(r * 0.32, -r * 0.1, r * 0.11)
+        out += _p(f"M{_f(-r * 0.3)},{_f(r * 0.25)} Q0,{_f(r * 0.5)} {_f(r * 0.3)},{_f(r * 0.25)}", sw=2.4)
+    return out
+
+
+def _moon_icon(r, filled=True):
+    d = (f"M{_f(r * 0.2)},{_f(-r)} A{_f(r)},{_f(r)} 0 1 0 {_f(r * 0.2)},{_f(r)} "
+         f"A{_f(r * 0.78)},{_f(r * 0.78)} 0 1 1 {_f(r * 0.2)},{_f(-r)} Z")
+    out = _p(d, "#f2d27a" if filled else P["paper"], 3.2)
+    if filled:
+        out += _p(f"M{_f(-r * 0.68)},{_f(-r * 0.12)} q{_f(r * 0.1)},{_f(r * 0.1)} {_f(r * 0.2)},0", sw=2.2)
+        out += _blush(-r * 0.62, r * 0.22, r * 0.12, r * 0.08, 0.7)
+    return out
+
+
+def _day_counter(n=7, filled=0.0, icons="pair", gap=64, pop=0.0, r=20):
+    out = ""
+    x0 = -(n - 1) * gap / 2
+    last = None
+    for i in range(n):
+        xx = x0 + i * gap
+        f_sun = filled - i >= (0.5 if icons == "pair" else 1.0) - 1e-9
+        f_moon = filled - i >= 1.0 - 1e-9
+        if f_sun or f_moon:
+            last = (i, f_moon)
+        items = []
+        if icons in ("pair", "sun"):
+            items.append(("sun", -r * 1.3 if icons == "pair" else 0, f_sun))
+        if icons in ("pair", "moon"):
+            items.append(("moon", r * 1.3 if icons == "pair" else 0, f_moon if icons == "pair" else filled - i >= 1 - 1e-9))
+        for kind, dy, on in items:
+            ic = _sun_icon(r, on) if kind == "sun" else _moon_icon(r, on)
+            out += _g(ic, f"translate({_f(xx)},{_f(dy)})", '' if on else 'opacity="0.45"')
+    if last is not None and pop > 0:
+        i, moon = last
+        k = 1 + 0.4 * math.sin(math.pi * _clamp(pop))
+        kind = "moon" if (moon and icons != "sun") else "sun"
+        dy = (r * 1.3 if kind == "moon" else -r * 1.3) if icons == "pair" else 0
+        ic = _sun_icon(r, True) if kind == "sun" else _moon_icon(r, True)
+        out += _g(ic, f"translate({_f(x0 + i * gap)},{_f(dy)}) scale({k:.3f})")
+    return out
+
+
+def day_counter(x, y, scale=1.0, n=7, filled=0.0, icons="pair", gap=64, pop=0.0):
+    return _place(_day_counter(n, filled, icons, gap, pop), x, y, scale)
+
+
+# ---------------------------------------------------------------------- the valley of Elah (backdrop)
+VALLEY_HILL_H = 330        # plateau height of the two hills above the valley floor at scale 1
+
+
+def valley_ground(x, x0, x1, y, scale=1.0):
+    """Stage y of the ground surface at stage x for valley_elah(x0, x1, y, scale): the hill tops / slopes and the
+    valley floor (= y between the hills). Put figures' anchors here."""
+    u = (x - x0) / float(x1 - x0)
+    hl = 1.0 - _smooth((u - 0.16) / 0.28)
+    hr = _smooth((u - 0.56) / 0.28)
+    wob = 1.0 + 0.04 * math.sin(u * 19.0)
+    return y - VALLEY_HILL_H * scale * (hl + hr) * wob
+
+
+def valley_points(x0, x1, y, scale=1.0):
+    """Key stage points of valley_elah(x0, x1, y, scale): 'israel_camp' and 'philistine_camp' (ground points on the
+    plateaus), 'left_edge' / 'right_edge' (where each hill's slope meets the valley floor), 'brook' (front of the
+    brook on the valley floor) and 'centre' (middle of the valley floor)."""
+    W = x1 - x0
+
+    def gp(u):
+        xx = x0 + W * u
+        return (xx, valley_ground(xx, x0, x1, y, scale))
+    return {"israel_camp": gp(0.09), "philistine_camp": gp(0.91), "left_edge": gp(0.44), "right_edge": gp(0.56),
+            "brook": (x0 + W * 0.505, y + 40 * scale), "centre": (x0 + W * 0.5, y)}
+
+
+def _valley(x0, x1, y, s=1.0, part="all", camps=True, brook_=True, seed=0, bottom=None, wave=0.0):
+    W = x1 - x0
+    Hh = VALLEY_HILL_H * s
+    bottom = y + 320 * s if bottom is None else bottom
+    rng = random.Random(seed)
+    out = ""
+    green, green_d, green_l = "#9cbb5e", "#7fa24a", "#b8cf7a"
+    if part in ("all", "back"):
+        # far ridges (hazy), then the receding valley floor between the hills
+        far = S.hill(x0 - 80, x1 + 80, y - Hh * 0.62, Hh * 0.75, seed=seed + 3, bumps=4, bottom=y)
+        out += _p(far, S.mix(green_l, P["sky_day"], 0.55), 2.6)
+        far2 = S.hill(x0 + W * 0.25, x1 - W * 0.2, y - Hh * 0.56, Hh * 0.45, seed=seed + 5, bumps=3, bottom=y)
+        out += _p(far2, S.mix(green, P["sky_day"], 0.4), 2.8)
+        gid = _uid("vfl", x0, x1, y, s)
+        out += f"<defs>{S.lin_grad(gid, [(0, S.mix(green_l, P['sky_day'], 0.3)), (1, green)])}</defs>"
+        out += _rect(x0 - 80, y - Hh * 0.6, W + 160, bottom - y + Hh * 0.6 + 4, f"url(#{gid})", 0)
+        out += _line(x0 - 80, y - Hh * 0.6, x1 + 80, y - Hh * 0.6, sw=2.6 * s)
+        for _ in range(int(W / (40 * s))):
+            xx, yy = rng.uniform(x0, x1), rng.uniform(y - Hh * 0.55, bottom)
+            k = 0.4 + (yy - y + Hh * 0.6) / (Hh * 0.6 + bottom - y)
+            out += _p(f"M{_f(xx)},{_f(yy)} q{_f(8 * s * k)},{_f(-4 * s * k)} {_f(16 * s * k)},0", sw=2.4 * s * k,
+                      stroke=green_d, extra='opacity="0.5"')
+        if brook_:
+            mid = (x0 + x1) / 2
+            ys = [y - Hh * 0.58 + (bottom - y + Hh * 0.58) * t for t in [j / 9 for j in range(10)]]
+            cl = [(mid + W * 0.035 * math.sin(j * 1.25 + seed), yy) for j, yy in enumerate(ys)]
+            left = [(cx - (4 + 70 * (j / 9) ** 1.6) * s, cy) for j, (cx, cy) in enumerate(cl)]
+            right = [(cx + (4 + 70 * (j / 9) ** 1.6) * s, cy) for j, (cx, cy) in enumerate(cl)]
+            d = _sm(left, closed=False) + " L" + " L".join(f"{_f(px)},{_f(py)}" for px, py in [right[-1]])
+            d += " " + _sm(right[::-1], closed=False).replace("M", "L", 1) + " Z"
+            bid = _uid("vbk", x0, x1, y, s)
+            out += f"<defs>{S.lin_grad(bid, [(0, P['sea_pale']), (1, P['sea'])])}</defs>"
+            out += _p(d, f"url(#{bid})", 3 * s)
+            for j in range(2, 9):
+                cx, cy = cl[j]
+                w = (4 + 70 * (j / 9) ** 1.6) * s
+                out += _p(f"M{_f(cx - w * 0.4)},{_f(cy)} q{_f(w * 0.2)},{_f(-3 * s)} {_f(w * 0.45)},0", sw=2.6 * s,
+                          stroke=P["foam"], extra='opacity="0.8"')
+                for sg in (-1, 1):
+                    r = (3 + 6 * j / 9) * s
+                    out += _ell(cx + sg * (w + r * 1.2), cy + rng.uniform(-8, 8) * s, r * 1.3, r * 0.8,
+                                rng.choice(STONE_COLS), 2 * s)
+    if part in ("all", "hills"):
+        for side in (-1, 1):
+            if side < 0:
+                us = [-0.04 + 0.5 * i / 40 for i in range(41)]
+                base = [(x0 + W * 0.36, bottom)]
+            else:
+                us = [0.54 + 0.5 * i / 40 for i in range(41)]
+                base = [(x1 + W * 0.04, bottom)]
+            pts = [(x0 + W * u, valley_ground(x0 + W * u, x0, x1, y, s)) for u in us]
+            if side < 0:
+                pts += [(x0 + W * 0.40, y + 0.25 * (bottom - y)), (x0 + W * 0.36, bottom), (x0 - W * 0.04, bottom)]
+            else:
+                pts = [(x0 + W * 0.64, bottom), (x0 + W * 0.60, y + 0.25 * (bottom - y))] + pts + [(x1 + W * 0.04, bottom)]
+            d = _sm(pts, closed=True, tension=0.6)
+            hid = _uid("vh", side, x0, x1, y, s)
+            gid = hid + "g"
+            defs = f"<defs>{S.lin_grad(gid, [(0, green_l), (0.5, green), (1, green_d)])}</defs>"
+            inner = ""
+            for _ in range(int(W / (30 * s))):
+                u = rng.uniform(0.0, 0.5) if side < 0 else rng.uniform(0.5, 1.0)
+                xx = x0 + W * u
+                yy = rng.uniform(valley_ground(xx, x0, x1, y, s) + 10 * s, bottom)
+                inner += _p(f"M{_f(xx)},{_f(yy)} q{_f(7 * s)},{_f(-5 * s)} {_f(14 * s)},0", sw=2.4 * s,
+                            stroke=green_d, extra='opacity="0.55"')
+            for _ in range(5):
+                u = rng.uniform(0.02, 0.36) if side < 0 else rng.uniform(0.64, 0.98)
+                xx = x0 + W * u
+                yy = rng.uniform(valley_ground(xx, x0, x1, y, s) + 60 * s, bottom - 20 * s)
+                inner += _p(S.blob(xx, yy, 26 * s, 14 * s, 0.12, 9, seed=int(xx)), "#c7b79a", 2.6 * s)
+            out += defs + _p(d, f"url(#{gid})", 0) + _clip(hid, d, inner) + _p(d, "none", 4 * s)
+        deco = ""
+        for u, kind, sc in ((0.03, "olive", 0.32), (0.30, "bush", 0.45), (0.37, "bush", 0.35), (0.62, "bush", 0.4),
+                            (0.97, "olive", 0.3), (0.71, "bush", 0.32)):
+            xx = x0 + W * u
+            yy = valley_ground(xx, x0, x1, y, s) + 6 * s
+            deco += olive_tree(xx, yy, sc * s, seed=int(u * 100)) if kind == "olive" else bush(xx, yy, sc * s, variant=2)
+        if camps:
+            for u, sd, sc in ((0.07, "israel", 0.34), (0.16, "israel", 0.3), (0.24, "israel", 0.26),
+                              (0.93, "philistine", 0.34), (0.84, "philistine", 0.3), (0.76, "philistine", 0.26)):
+                xx = x0 + W * u
+                deco += tent(xx, valley_ground(xx, x0, x1, y, s) + 4 * s, sc * s, 1 if sd == "israel" else -1, sd,
+                             wave=wave + u)
+        out += deco
+    return out
+
+
+def valley_elah(x0, x1, y, scale=1.0, part="all", camps=True, brook=True, seed=0, bottom=None, wave=0.0):
+    return _place(_valley(x0, x1, y, scale, part, camps, brook, seed, bottom, wave), 0, 0, 1.0, filt="wobble")

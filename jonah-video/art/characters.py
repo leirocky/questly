@@ -1,5 +1,7 @@
 """People library: Jonah, sailors, the ship's captain, the king of Nineveh and townspeople; for the Daniel film
-(stories/daniel) also Daniel, King Darius (king(attire='darius')), the jealous officials and the palace guards.
+(stories/daniel) also Daniel, King Darius (king(attire='darius')), the jealous officials and the palace guards; for
+the David film (stories/david) David, Goliath, his shield-bearer, Israelite / Philistine soldiers, King Saul
+(king(attire='saul')), Eliab and Jesse (section DAVID FILM at the end of this docstring).
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -313,6 +315,145 @@ Constants: EXPRESSIONS, JONAH_POSES, SAILOR_POSES, CAPTAIN_POSES, KING_POSES, KI
 CITIZEN_KINDS, CITIZEN_ATTIRES, DANIEL_POSES, OFFICIAL_POSES, GUARD_POSES (tuples of the valid names);
 DANIEL_BLUE, DANIEL_SKIN, DARIUS_ROBE, DARIUS_HAIR (colours). hand_positions / body_points work for daniel,
 official and guard too. Daniel-film sheets: python3 tools/character_sheet.py daniel.
+
+DAVID FILM (1 Samuel 17, stories/david)                     sheets: python3 tools/character_sheet.py david
+=======================================
+Same conventions as above (anchor = ground between the feet, facing, scale, marks, bboxes at scale 1 / facing 1
+measured from renders). hand_positions / body_points work for every function below.
+SCALE: at the same ``scale`` David is ~252 px to the top of his curls (a boy of ~12, head centre (2, -200)),
+adults ~330-400 (Eliab -364, Saul -399 with helmet plume), Goliath ~634 to the helmet top (2x an adult, head
+centre (2, -512)); his spear reaches -924 (raised in 'shout': -1118). Put all of them on the same ground line
+with the same scale. Line weight is the same 4 px for all (Goliath is NOT a scaled-up adult: his face, belt and
+armour details keep the library's line weight).
+New expressions (ALL_EXPRESSIONS = EXPRESSIONS + DAVID_EXPRESSIONS; any function accepts them):
+  brave (lowered brows, firm closed smile), puzzled (one brow up, slanted mouth), laugh (^ eyes, open laughing
+  mouth with teeth), cross (frowning brows, pout), sneer (lidded eyes, lopsided toothy grin - cartoon-smug),
+  kind (soft brows, smile, warm blush), roar (angry brows + wide shouting mouth).
+
+david(x, y, scale=1.0, facing=1, pose='stand', expr=None, bag=True, staff=False, basket=False, armor=False,
+      phase=0.0, stone=True, marks=True)
+---------------------------------------------------------------------------------------------------------
+The shepherd boy: child proportions, round face with ruddy cheeks, a mop of reddish-brown curls (DAVID_HAIR),
+short-sleeved warm-green knee tunic (DAVID_TUNIC) with a rope belt, sandals. bag=True: leather shepherd's bag on
+the back hip with its strap across the chest (bag=False hides it).
+  pose           bbox                     natural expr  notes (hands [far, near] at scale 1)
+  stand          (-51, -252, 45, 0)       happy
+  walk_a/walk_b  (-64, -254, 62, 0) / (-50, -256, 77, 0)   planted-foot stride frames (alternate ~0.25 s)
+  run_a/run_b    (-84, -233, 88, 0) / (-64, -228, 102, 0)  brave   (alternate ~0.15 s)
+  talk           (-54, -252, 50, 0)       happy         near hand open, palm up
+  point_up       (-61, -251, 68, 0)       brave         front hand raised, finger pointing up to heaven, face up
+  kneel_pick     (-61, -196, 119, 0)      happy         one knee down, bending forward, both hands at the brook
+                                                        bed in front (~(55, -60)): picking a stone; head (68, -144)
+  hold_sling     (-54, -253, 47, 0)       brave         the sling hangs from the near hand, loaded (stone=False:
+                                                        empty pouch). staff=True: the crook in the far hand
+                                                        (-54, -292, 109, 2) - 'he took his staff and his sling'
+  sling_spin     (-76, -252, 168, 0)      brave         front arm raised forward, the sling whirling round the
+                 (union of phases)                      hand: phase 0..1 = pouch position on the whirl (0 front,
+                                                        .25 near side, .5 back, .75 far side) with swirl lines;
+                                                        the back half is drawn behind the head. Flipbook 8 phases
+                                                        (0, .125 ... .875) at ~0.06 s each.
+  sling_release  (-79, -244, 244, 0)      brave         lunging, front arm thrown forward, one cord let go, the
+                                                        empty pouch whipping forward, whoosh marks; front hand
+                                                        (104, -144) = where the stone leaves (props.stone flies on)
+  carry_basket   (-51, -252, 75, 0)       happy         a basket of bread and cheese in both hands in front
+  sit_harp       (-48, -181, 93, 7)       peaceful      sitting on the ground, knees up, playing a small harp
+  cheer          (-74, -251, 77, 0)       happy         both arms up
+  pray           (-60, -251, 42, 0)       peaceful      standing, palms together, face lifted
+  kneel_pray     (-69, -224, 38, 3)       peaceful
+  armor_wobble   (-113, -246, 88, 0)      worried       leaning back, arms out for balance, back foot lifted
+Options:
+  staff=True     shepherd's crook in the near hand for stand / walk_a / walk_b (top ~-293, crook to x+83);
+                 far hand for hold_sling; ignored in other poses (lay props.staff() beside him instead).
+  basket=True    stand / walk_a / walk_b with the bread basket hanging from the near hand.
+  armor=True     Saul's armour, far too big (17:38-39): a bronze helmet with circlet and red plume slid down over
+                 his eyes (nose, cheeks and mouth show), a long grey chain-mail coat pooling on the ground, a big
+                 leather belt, a long sword in its scabbard dragging on the ground behind. Use with stand / walk_a /
+                 walk_b / talk / armor_wobble: bbox about (-117, -302, 95, 2). Every other option still works.
+
+goliath(x, y, scale=1.0, facing=1, pose='stand', expr=None, progress=1.0, bump=False, spear=True, sword=True,
+        marks=True)
+------------------------------------------------------------------------------------------------------------
+The Philistine champion, big and loud but cartoon-friendly: heroic proportions, bushy brows, a full dark beard (big
+jaw), a bronze helmet with a red comb crest (sits high: the FOREHEAD shows), bronze scale corselet with a leather
+belt and leather strips over a red tunic (GOLIATH_TUNIC), bronze greaves, sandals, a sword hanging at the hip
+(sword=False hides it) and a huge spear 'like a weaver's beam' (GOLIATH_SPEAR_LEN = 900 px, iron head).
+spear=True: upright in the near hand (stand / stride), raised high in the far hand (shout), resting upright in the
+far hand (laugh, mock_point); never in fall / lying (draw props.spear(kind='goliath') lying nearby).
+Figure alone (spear=False) stand: (-100, -632, 142, 0); head centre (2, -512).
+  pose           bbox (with spear)         natural expr  notes
+  stand          (-100, -924, 168, 2)      sneer
+  stride_a/_b    (-156, -924, 180, 4) / (-98, -924, 192, 4)   angry   heavy walk; alternate ~0.35 s (boom, boom)
+  shout          (-146, -1118, 184, 0)     roar          spear raised, other fist forward, sound arcs at the mouth
+  laugh          (-194, -926, 156, 2)      laugh         head back, hand on the belly, 'ha ha' ticks
+  mock_point     (-94, -926, 210, 2)       sneer         leaning, pointing down-forward at someone small
+  fall           progress=0..1             surprised     arms flung forward; the whole body pivots about the toes
+                 0: (-124, -628, 150, 0)   (x = 0.9*55 px in front of the anchor) from upright (0) to lying face
+                 .5: (-32, -558, 544, 4)   down (1); it is lifted so it never sinks below the ground. The angle is
+                 1: (48, -274, 676, 0)     90*progress: ease it in the scene (slow start, fast end) and quantise
+                                           (e.g. 0, .1, .25, .45, .7, 1). The head ends ~600*scale toward facing.
+  lying          (48, -324, 672, 0)        dizzy         flat on his front (same place as fall progress=1), arms
+                                                        forward, head lifted with spiral eyes. bump=True adds three
+                                                        circling stars over the head.
+bump=True (any pose): a round pink bump on the forehead where the stone hit (no blood, ever).
+goliath_head_point(x, y, scale=1.0, facing=1, pose='stand', progress=1.0) -> (x, y) stage point of the forehead
+  (where the stone lands): stand (30, -544), stride_a (53, -545), lying (552, -148) at scale 1; follows 'fall'.
+
+shield_bearer(x, y, scale=1.0, facing=1, pose='walk_a', variant=0, expr=None, marks=True)
+----------------------------------------------------------------------------------------
+A Philistine (soldier(side='philistine') look, variant 0-3) walking in front of Goliath behind the champion's huge
+tall woven shield (bronze rim and boss, ~300 px tall) held in front of him: only his reed crown, face, shoulder,
+near hand and legs show. poses stand (-50, -342, 117, 0), walk_a (-88, -342, 117, 1), walk_b (-62, -344, 117, 0).
+Put him ~200-260*scale in front of Goliath (toward facing).
+
+soldier(x, y, scale=1.0, facing=1, side='israel', variant=0, pose='stand', expr=None, spear=None, shake=0.0,
+        marks=True)
+-------------------------------------------------------------------------------------------------------------
+Crowd soldiers on the adult rig (330 px). side='israel': simple knee tunics in blues / browns, rope belt, small
+round leather cap, beards vary, round wood-and-leather shield with bronze rim; side='philistine': clean-shaven,
+an upright crown of reeds / feathers on a patterned band, short kilt with a fringe, a sash, round bronze shield.
+variant 0-3 (mod 4) changes colours, skin tone and hair / beard (SOLDIER_SIDES, SOLDIER_POSES).
+spear=None: a spear in stand / walk_a / walk_b (False: empty hand); the shield hangs on the back except in cower.
+  pose        bbox (union of variants and sides)  natural expr
+  stand       (-75, -388, 74, 0)                  neutral     spear tip ~-388
+  walk_a/_b   (-88, -388, 83, 1) / (-71, -390, 103, 0)
+  cower       (-47, -306, 124, 0)                 scared      crouched, knees bent, shield held up in front of
+                                                              the face (scared eyes peek over it), knee tremble
+                                                              marks; shake=0..1 jitters the body (+-3.5 px):
+                                                              cycle 0, .25, .5, .75 for trembling
+  run_a/run_b (-118, -313, 122, 0) / (-92, -306, 141, 0)  scared  fleeing (give facing away from the danger)
+  cheer       (-99, -343, 103, 0)                 happy       arms up (Israel's victory)
+  point       (-75, -343, 100, 0)                 surprised   pointing toward facing
+
+king(..., attire='saul', stool=True)  - King Saul
+-------------------------------------------------
+attire='saul' (never a default): tall (metrics 1.1 x an adult), dark curly hair and full dark beard, bronze helmet
+with a gold circlet of points and a lilac plume, bronze scale corselet with leather strips over a blue tunic
+(SAUL_TUNIC) with a gold hem, purple cloak hanging down his back with a gold clasp, bronze greaves, sword at the hip.
+New poses (KING_EXTRA_POSES; they work in every attire): 'sit' (on a folding camp stool, hands on the knees;
+stool=False draws no stool - use props.camp_stool() at the same x, y, scale, facing), 'talk' (open hand, kind),
+'bless' (hand raised, palm out, kind). All older king poses work for Saul except sit_ashes / remove_crown
+(ValueError). Natural expressions: neutral (stand / walk), kind (talk / bless); pass worried / surprised / kind.
+  stand (-84, -399, 65, 0)  talk (-84, -398, 72, 0)  bless (-84, -396, 74, 0) palm (66, -270)
+  walk_a/_b (-98, -402, 93, 0) / (-78, -404, 118, 0)  sit (-87, -341, 127, 3)  sit_throne (-95, -341, 127, 1)
+
+eliab(x, y, scale=1.0, facing=1, pose='stand', expr=None, marks=True)
+--------------------------------------------------------------------
+David's eldest brother: a tall young Israelite soldier (1.07 x an adult): teal tunic with ochre trim, leather cap,
+dark stubble beard, shield on his back. ELIAB_POSES: stand (-81, -364, 61, 0), walk_a/_b (-95, -364, 89, 1) /
+(-77, -366, 113, 0), talk (-81, -363, 71, 0) neutral, scold (-77, -363, 109, 0) cross - finger pointing at David,
+other fist on the hip, hands_hips (-81, -364, 69, 0) cross. Expressions: pass 'cross' or 'neutral' (or any).
+
+jesse(x, y, scale=1.0, facing=1, pose='stand', expr=None, marks=True)
+--------------------------------------------------------------------
+David's old father: white hair and beard, cream head-wrap, warm rust robe with an ochre shawl, slightly stooped with
+a walking stick (stand / walk / talk). JESSE_POSES: stand (-50, -327, 70, 3), walk_a/_b (-86, -322, 81, 3) /
+(-61, -327, 113, 3), talk (-50, -327, 69, 3) happy, give (-56, -326, 140, 0) happy - holding out the basket of
+bread and cheese in both hands (hands (125, -181), (79, -196)): stand David 'carry_basket' facing him to take it.
+
+Constants (David film): DAVID_POSES, GOLIATH_POSES, SOLDIER_POSES, SOLDIER_SIDES, SHIELD_BEARER_POSES,
+KING_EXTRA_POSES, ELIAB_POSES, JESSE_POSES, DAVID_EXPRESSIONS, ALL_EXPRESSIONS, GOLIATH_SPEAR_LEN; colours
+DAVID_TUNIC, DAVID_SKIN, DAVID_HAIR, GOLIATH_SKIN, GOLIATH_TUNIC, SAUL_TUNIC, SAUL_HAIR, BRONZE (+ _DARK / _LIGHT),
+LEATHER, CORD, MAIL. God is never drawn: show him as light (art.style / engine.fx), never as a figure.
 """
 import hashlib
 import math
@@ -562,7 +703,7 @@ EXPRESSIONS = tuple(EXPRS)
 _SWEAT = ((1.04, -0.20, 0.095), (1.20, 0.22, 0.07), (1.17, -0.62, 0.06))   # head-frame (x, y, size) in R
 
 
-def _face(R, skin, expr, look=(0, 0), brow_col=INK, mouth=True, tremble=True):
+def _face(R, skin, expr, look=(0, 0), brow_col=INK, mouth=True, tremble=True, brow_w=3.4):
     """Eyes, brows, nose, cheeks, mouth in head-frame coordinates (3/4 view facing +x).
 
     Returns (face, overlay): overlay (sweat drops, tremble marks) is drawn after any headwear."""
@@ -605,6 +746,9 @@ def _face(R, skin, expr, look=(0, 0), brow_col=INK, mouth=True, tremble=True):
         elif kind == "closed":
             s += _line(f"M{fmt(ex - 0.13 * R)},{fmt(ey)} Q{fmt(ex)},{fmt(ey + 0.12 * R)} {fmt(ex + 0.13 * R)},{fmt(ey)}",
                        w=3.4)
+        elif kind == "arc":                  # laughing: happy upturned arcs (David film)
+            s += _line(f"M{fmt(ex - 0.13 * R)},{fmt(ey + 0.05 * R)} Q{fmt(ex)},{fmt(ey - 0.13 * R)} "
+                       f"{fmt(ex + 0.13 * R)},{fmt(ey + 0.05 * R)}", w=3.6)
         elif kind == "spiral":
             pts = []
             for j in range(22):
@@ -634,10 +778,12 @@ def _face(R, skin, expr, look=(0, 0), brow_col=INK, mouth=True, tremble=True):
             xo, xi = ex - 0.14 * R, ex + 0.09 * R
         else:
             xi, xo = ex - 0.09 * R, ex + 0.14 * R
+        if i == 1 and "brow2" in E:          # asymmetric brows (puzzled): the near brow differs
+            bi, bo, bl = E["brow2"]
         yb = -0.24 * R + bl * R
         yi, yo = yb + bi * R, yb + bo * R
         cx, cy = (xi + xo) / 2, (yi + yo) / 2 - 0.05 * R
-        s += _line(f"M{fmt(xo)},{fmt(yo)} Q{fmt(cx)},{fmt(cy)} {fmt(xi)},{fmt(yi)}", w=3.4, col=brow_col)
+        s += _line(f"M{fmt(xo)},{fmt(yo)} Q{fmt(cx)},{fmt(cy)} {fmt(xi)},{fmt(yi)}", w=brow_w, col=brow_col)
     # nose: small soft oval between and below the eyes, a faint 'c' under it (never a full ink curve)
     nx, ny = 0.30 * R, 0.25 * R
     s += _ell(nx, ny, 0.085 * R, 0.068 * R, shade(skin, -0.13))
@@ -712,7 +858,7 @@ def _mouth(R, kind, mx=None, my=None):
     if kind == "smirk":           # lopsided little smile pulled up toward the face side, with a dimple tick
         return (_line(f"M{P_(-0.12, 0.04)} Q{P_(0.02, 0.10)} {P_(0.15, -0.05)}", w=3.2) +
                 _line(f"M{P_(0.13, -0.08)} Q{P_(0.17, -0.05)} {P_(0.165, -0.01)}", w=2.4))
-    return ""
+    return _mouth_extra(R, kind, P_, mx, my)
 
 
 # ======================================================================= head parts (head frame)
@@ -1505,7 +1651,7 @@ def _figure(D, m, ps, expr, facing=1, marks=True):
     if ps["billow"]:
         skirts[-1], hem_edge = _billow(skirts[-1], Hm, um, ps["billow"])
     robe_polys = [bodice] + skirts
-    if mode in ("seat", "body"):     # cloth lies on the floor: never below the ground line
+    if mode in ("seat", "body") or D.get("robe_floor"):     # cloth lies on the floor: never below the ground line
         robe_polys = [_clip(p_, (0, G - OW), (0, -1)) for p_ in robe_polys]
         robe_polys = [p_ for p_ in robe_polys if len(p_) > 2]
     for poly in robe_polys:
@@ -1601,6 +1747,8 @@ def _figure(D, m, ps, expr, facing=1, marks=True):
         H, K, A, a1, a2 = legs[i]
         out.append(_tube([H, K, A], m["lw"], D["leg"]))
         out.append(feet_svg[i])
+        if D.get("legwear"):
+            out.append(D["legwear"](st, i))
     out.append(_robe(D, st, ps))
     if ps["far_front"]:
         out.append(arm_svg(0))
@@ -1631,7 +1779,8 @@ def _figure(D, m, ps, expr, facing=1, marks=True):
     hands = [to_anchor(_add(W, _mul(_nrm(_sub(W, E)), 0.5 * m["hr"]))) for (Sx, E, W) in arms]
     _LAST.clear()
     _LAST.update(hands=hands, head=to_anchor(Hc), head_top=to_anchor(top), shoulders=[to_anchor(p) for p in S],
-                 pelvis=to_anchor(pel), feet=[to_anchor(lg[2]) for lg in legs], bbox=bbox)
+                 pelvis=to_anchor(pel), feet=[to_anchor(lg[2]) for lg in legs], bbox=bbox,
+                 pts=[(p[0] - ax, p[1] - gy, r) for p, r in tx])
     return f'<g transform="{tf}">{body}</g>', bbox
 
 
@@ -1693,6 +1842,8 @@ def _robe(D, st, ps):
                     r_ = 0.22 * sp
                     mot += _poly([(c[0], c[1] - r_), (c[0] + r_ * 0.75, c[1]), (c[0], c[1] + r_), (c[0] - r_ * 0.75, c[1])],
                                  pc, sw=0)
+                elif callable(pk):
+                    mot += pk(c, sp)
                 elif pk == "flower":
                     mot += (f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(0.17 * sp)}" fill="{pc}"/>'
                             f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(0.07 * sp)}" fill="{shade(pc, 0.45)}"/>')
@@ -1975,7 +2126,7 @@ def _head_svg(D, st, ps, expr, marks=True):
     if D.get("ponytail"):
         s += _tube([(-0.60 * R, -0.55 * R), (-1.0 * R, -0.28 * R)], 0.16 * R, D.get("ribbon", P["terracotta"]),
                    ow=2.4)
-    face, over = _face(R, skin, expr, ps["look"], mouth=not moustache, tremble=marks)
+    face, over = _face(R, skin, expr, ps["look"], mouth=not moustache, tremble=marks, brow_w=D.get("brow_w", 3.4))
     s += face
     mouth_kind = EXPRS[expr]["mouth"]
     if beard:
@@ -2020,6 +2171,8 @@ def _head_svg(D, st, ps, expr, marks=True):
             s += _darius_crown(R, x0=0.05 * R, y0=-0.55 * R)
         elif kind == "helmet":
             s += _helmet(R, hat[1], hat[2])
+        elif kind == "custom":               # David film: hat = ("custom", fn) with fn(R) -> head-frame markup
+            s += hat[1](R)
     if D.get("seaweed"):        # strands draped over the head-cloth and down onto the shoulder
         c1 = _spline_pts([(0.30 * R, -1.08 * R), (-0.30 * R, -1.10 * R), (-0.85 * R, -0.78 * R),
                           (-1.18 * R, -0.10 * R), (-1.20 * R, 0.55 * R), (-1.02 * R, 1.25 * R)], steps=3)
@@ -2307,7 +2460,7 @@ KING_POSES = ("stand", "sit_throne", "sit_ashes", "kneel_pray", "remove_crown",
               # added for King Darius (Daniel 6); they work in every attire
               "walk_a", "walk_b", "pace_a", "pace_b", "sign", "sit_sign", "sad", "sit_sad", "call_out",
               "reach_out", "hug", "arms_up")
-KING_ATTIRES = ("royal", "sackcloth", "darius")
+KING_ATTIRES = ("royal", "sackcloth", "darius", "saul")
 _KING_ALIAS = {"sad": "sad_head"}
 _KING_SEATED = ("sit_throne", "sit_sign", "sit_sad")
 DARIUS_HAIR = "#2e221d"
@@ -2407,10 +2560,13 @@ def _king_design(attire, pose, throne, ashes):
     return D
 
 
-def king(x, y, scale=1.0, facing=1, pose="stand", attire=None, expr=None, throne=True, ashes=True, marks=True):
-    if pose not in KING_POSES:
-        raise ValueError(f"king: unknown pose {pose!r}; choose from {sorted(KING_POSES)}")
+def king(x, y, scale=1.0, facing=1, pose="stand", attire=None, expr=None, throne=True, ashes=True, marks=True,
+         stool=True):
+    if pose not in KING_POSES + KING_EXTRA_POSES:
+        raise ValueError(f"king: unknown pose {pose!r}; choose from {sorted(KING_POSES + KING_EXTRA_POSES)}")
     ps = dict(POSES[_KING_ALIAS.get(pose, pose)])
+    if attire == "saul" or pose in KING_EXTRA_POSES:
+        return _king_david_film(x, y, scale, facing, pose, attire, expr, ps, throne, stool, marks)
     _check_expr(expr, "king")
     if attire is None:
         attire = "sackcloth" if pose == "sit_ashes" else "royal"
@@ -2671,3 +2827,1041 @@ def guard(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, spear=N
     e = expr or ps["expr"]
     inner, _ = _figure(_guard_design(variant, spear), _ADULT, ps, e, _fsign(facing), marks)
     return _wrap_out(inner, x, y, scale, facing, f"guard{variant % 4}-{pose}")
+
+
+# ======================================================================= David film (1 Samuel 17)
+# David (a shepherd boy), Goliath, his shield-bearer, Israelite / Philistine soldiers, King Saul
+# (king(attire='saul')), Eliab and Jesse. See the module doc section "David film".
+
+
+def _prp():
+    from art import props as PR          # lazy: art.props never imports this module
+    return PR
+
+
+BRONZE = "#c99a48"
+BRONZE_DARK = shade(BRONZE, -0.32)
+BRONZE_LIGHT = shade(BRONZE, 0.42)
+LEATHER = "#8b5a35"
+LEATHER_LIGHT = "#b98552"
+CORD = "#c9a46a"
+IRON = "#a9adab"
+CREST_RED = "#b8473c"
+MAIL = "#a3a6a0"
+DAVID_TUNIC = "#7fa24f"
+DAVID_SKIN = "#efbb94"
+DAVID_HAIR = "#a5552c"
+GOLIATH_SKIN = "#dc9c78"
+GOLIATH_TUNIC = "#a8433a"
+SAUL_TUNIC = "#4a6aa0"
+GOLIATH_HAIR = "#3a2a22"
+SAUL_HAIR = "#2b2220"
+
+# ---------------------------------------------------------------- expressions and mouths
+EXPRS.update({
+    "brave":   dict(eyes="dot", brow=(0.07, -0.03, 0.01), mouth="firm"),
+    "puzzled": dict(eyes="dot", brow=(0.05, 0.0, 0.05), brow2=(-0.05, -0.03, -0.13), mouth="puzzle",
+                    look=(0.02, -0.03)),
+    "laugh":   dict(eyes="arc", brow=(-0.03, 0.02, -0.08), mouth="laugh"),
+    "cross":   dict(eyes="dot", brow=(0.13, -0.06, 0.05), mouth="pout"),
+    "sneer":   dict(eyes="lidded", brow=(0.10, -0.06, 0.02), mouth="sneer"),
+    "kind":    dict(eyes="dot", brow=(-0.09, 0.04, -0.03), mouth="smile", blush=True),
+    "roar":    dict(eyes="dot", brow=(0.12, -0.06, 0.02), mouth="shout"),
+})
+DAVID_EXPRESSIONS = ("brave", "puzzled", "laugh", "cross", "sneer", "kind", "roar")
+ALL_EXPRESSIONS = EXPRESSIONS + DAVID_EXPRESSIONS
+
+
+def _mouth_extra(R, kind, P_, mx, my):
+    """Mouth shapes added for the David film (called by _mouth for kinds it does not know)."""
+    MI = P["mouth_inside"]
+    if kind == "laugh":             # big open D-shaped laugh: top teeth, tongue
+        outline = (f"M{P_(-0.22, -0.03)} Q{P_(0, 0.03)} {P_(0.22, -0.03)} Q{P_(0.21, 0.33)} {P_(0, 0.35)} "
+                   f"Q{P_(-0.21, 0.33)} {P_(-0.22, -0.03)} Z")
+        teeth = (f"M{P_(-0.19, -0.01)} Q{P_(0, 0.04)} {P_(0.19, -0.01)} L{P_(0.18, 0.05)} Q{P_(0, 0.10)} "
+                 f"{P_(-0.18, 0.05)} Z")
+        return (f'<path d="{outline}" fill="{MI}"/>' + f'<path d="{teeth}" fill="{EYE_WHITE}"/>' +
+                _ell(mx, my + 0.25 * R, 0.11 * R, 0.065 * R, TONGUE) + f'<path d="{outline}" fill="none" {_st(2.8)}/>')
+    if kind == "firm":              # closed, confident little smile
+        return (_line(f"M{P_(-0.15, 0.01)} Q{P_(-0.01, 0.09)} {P_(0.15, -0.03)}", w=3.2) +
+                _line(f"M{P_(0.13, -0.06)} Q{P_(0.17, -0.03)} {P_(0.16, 0.01)}", w=2.4))
+    if kind == "puzzle":            # slanted 'hmm?'
+        return _line(f"M{P_(-0.09, 0.07)} Q{P_(0.02, 0.01)} {P_(0.13, 0.0)}", w=3.2)
+    if kind == "pout":              # cross frown with a pushed-out lower lip
+        return (_line(f"M{P_(-0.12, 0.07)} Q{P_(0, -0.04)} {P_(0.12, 0.07)}", w=3.4) +
+                _line(f"M{P_(-0.05, 0.13)} Q{P_(0, 0.15)} {P_(0.05, 0.13)}", w=2.2, col=P["ink_soft"]))
+    if kind == "sneer":             # lopsided grin showing teeth (cartoon-smug, not scary)
+        d = (f"M{P_(-0.15, 0.03)} Q{P_(0.03, 0.08)} {P_(0.19, -0.07)} Q{P_(0.14, 0.13)} {P_(0.0, 0.14)} "
+             f"Q{P_(-0.12, 0.12)} {P_(-0.15, 0.03)} Z")
+        return (f'<path d="{d}" fill="{EYE_WHITE}" {_st(2.8)}/>' +
+                _line(f"M{P_(-0.12, 0.075)} Q{P_(0.03, 0.105)} {P_(0.16, 0.0)}", w=1.8, col=P["ink_soft"]))
+    return ""
+
+
+# ---------------------------------------------------------------- headwear (head frame, fn(R))
+
+
+def _union_circles(circ, col, ow=3.0):
+    return ("".join(f'<circle cx="{fmt(x)}" cy="{fmt(y)}" r="{fmt(r)}" fill="{col}" {_st(2 * ow)}/>' for x, y, r in circ)
+            + "".join(f'<circle cx="{fmt(x)}" cy="{fmt(y)}" r="{fmt(r)}" fill="{col}"/>' for x, y, r in circ))
+
+
+def _curls_svg(R, col, cheeks=True):
+    """Reddish-brown curly mop: a ring of round curls over the top and back of the head, two fringe curls."""
+    circ = []
+    for i, a in enumerate(range(-36, -186, -21)):
+        x, y = _polar(R, a, 0.97)
+        circ.append((x, y, (0.27 if i % 2 else 0.235) * R))
+    circ += [(0.58 * R, -0.66 * R, 0.17 * R), (0.30 * R, -0.77 * R, 0.19 * R), (-0.10 * R, -0.80 * R, 0.2 * R)]
+    s = _union_circles(circ, col)
+    dark = shade(col, -0.28)
+    for x, y, r in circ:
+        s += _line(f"M{fmt(x - 0.45 * r)},{fmt(y + 0.1 * r)} Q{fmt(x - 0.2 * r)},{fmt(y - 0.55 * r)} {fmt(x + 0.35 * r)},"
+                   f"{fmt(y - 0.25 * r)}", w=2.0, col=dark)
+    if cheeks:                      # ruddy (1 Sam 16:12): an extra warm flush over the cheeks
+        s += _ell(-0.30 * R, 0.38 * R, 0.21 * R, 0.13 * R, P["cheek"], extra='opacity="0.38"')
+        s += _ell(0.68 * R, 0.40 * R, 0.16 * R, 0.12 * R, P["cheek"], extra='opacity="0.38"')
+    return s
+
+
+def _bronze_helmet_svg(R, col=BRONZE, crest=None, circlet=False, plume=None, guard=1.0):
+    """Bronze helmet sitting high on the head (the forehead shows): dome, neck guard, brim band with rivets.
+    crest: colour of a comb crest arching front-to-back; circlet: gold royal band; plume: a small plume colour."""
+    s = ""
+    if crest:
+        outer, inner = [], []
+        for i in range(10):
+            u = i / 9
+            a = -62 - 112 * u
+            outer.append(_polar(R, a, 1.17 + 0.46 * math.sin(math.pi * (0.15 + 0.75 * u))))
+            inner.append(_polar(R, a, 1.06))
+        s += f'<path d="{smooth_path(outer + inner[::-1])}" fill="{crest}" {_st(3.2)}/>'
+        for i in range(1, 9):
+            u = i / 9
+            a = -62 - 112 * u
+            p0, p1 = _polar(R, a, 1.12), _polar(R, a, 1.12 + 0.36 * math.sin(math.pi * (0.15 + 0.75 * u)))
+            s += _line(f"M{_pt(p0)} L{_pt(p1)}", w=2.0, col=shade(crest, -0.3))
+    if plume:
+        s += _tube([(-0.05 * R, -1.22 * R), (-0.30 * R, -1.62 * R), (-0.66 * R, -1.70 * R)], 0.2 * R, plume, ow=2.4)
+    pts = [(0.93 * R, -0.50 * R), (0.88 * R, -0.92 * R), (0.42 * R, -1.24 * R), (-0.28 * R, -1.28 * R),
+           (-0.88 * R, -0.98 * R), (-1.13 * R, -0.44 * R), (-1.15 * R, (-0.44 + 0.72 * guard) * R),
+           (-0.84 * R, (-0.44 + 0.80 * guard) * R),
+           (-0.70 * R, -0.30 * R), (0.10 * R, -0.62 * R)]
+    s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
+    s += _line(f"M{fmt(-0.58 * R)},{fmt(-1.02 * R)} Q{fmt(0.0)},{fmt(-1.18 * R)} {fmt(0.58 * R)},{fmt(-0.98 * R)}",
+               w=3.2, col=shade(col, 0.4))
+    if guard > 0.7:
+        s += _line(f"M{fmt(-0.98 * R)},{fmt(-0.20 * R)} Q{fmt(-0.95 * R)},{fmt(0.10 * R)} {fmt(-1.0 * R)},{fmt(0.24 * R)}",
+                   w=2.2, col=shade(col, -0.25))
+    s += _tube(_spline_pts([(0.97 * R, -0.52 * R), (0.42 * R, -0.70 * R), (-0.30 * R, -0.68 * R),
+                            (-1.02 * R, -0.36 * R)]), 0.15 * R, shade(col, -0.22), ow=2.6)
+    for x0, y0 in ((0.62, -0.62), (0.15, -0.70), (-0.35, -0.66), (-0.80, -0.48)):
+        s += f'<circle cx="{fmt(x0 * R)}" cy="{fmt(y0 * R)}" r="{fmt(0.045 * R)}" fill="{shade(col, 0.45)}"/>'
+    if circlet:
+        s += _tube(_spline_pts([(0.92 * R, -0.80 * R), (0.35 * R, -0.98 * R), (-0.40 * R, -0.95 * R),
+                                (-0.98 * R, -0.66 * R)]), 0.13 * R, GOLD, ow=2.4)
+        for x0, y0 in ((0.62, -0.92), (0.05, -1.0), (-0.52, -0.92)):
+            s += (f'<path d="M{fmt((x0 - 0.1) * R)},{fmt((y0 - 0.04) * R)} L{fmt(x0 * R)},{fmt((y0 - 0.30) * R)} '
+                  f'L{fmt((x0 + 0.1) * R)},{fmt((y0 - 0.04) * R)} Z" fill="{GOLD}" {_st(2.2)}/>')
+            s += f'<circle cx="{fmt(x0 * R)}" cy="{fmt((y0 - 0.33) * R)}" r="{fmt(0.05 * R)}" fill="{P["royal_light"]}"/>'
+    return s
+
+
+def _david_head(armor):
+    def hat(R):
+        if not armor:
+            return _curls_svg(R, DAVID_HAIR, cheeks=True)
+        # Saul's helmet, far too big: it slides down over his eyes (only the nose, cheeks and mouth show)
+        s = _ell(-0.30 * R, 0.40 * R, 0.21 * R, 0.13 * R, P["cheek"], extra='opacity="0.38"')
+        s += _ell(0.68 * R, 0.42 * R, 0.16 * R, 0.12 * R, P["cheek"], extra='opacity="0.38"')
+        s += (f'<g transform="translate({fmt(-0.05 * R)},{fmt(1.40 * R)}) rotate(7)">'
+              f'{_bronze_helmet_svg(2.0 * R, BRONZE, plume=CREST_RED, circlet=True, guard=0.45)}</g>')
+        return s
+    return hat
+
+
+def _leather_cap_svg(R, col):
+    """Israelite soldier's small rounded leather cap with seams, a rolled edge and a top knob."""
+    pts = [(0.95 * R, -0.40 * R), (0.86 * R, -0.90 * R), (0.30 * R, -1.20 * R), (-0.45 * R, -1.16 * R),
+           (-0.98 * R, -0.72 * R), (-1.10 * R, -0.22 * R), (-0.66 * R, -0.36 * R), (0.10 * R, -0.52 * R)]
+    s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
+    for x in (-0.40, 0.25):
+        s += _line(f"M{fmt(x * R)},{fmt(-0.62 * R)} Q{fmt((x + 0.08) * R)},{fmt(-0.95 * R)} {fmt((x - 0.02) * R)},"
+                   f"{fmt(-1.16 * R)}", w=2.0, col=shade(col, -0.3))
+    s += _tube(_spline_pts([(0.98 * R, -0.42 * R), (0.40 * R, -0.60 * R), (-0.35 * R, -0.56 * R),
+                            (-1.08 * R, -0.24 * R)]), 0.15 * R, shade(col, -0.15), ow=2.6)
+    s += f'<circle cx="{fmt(-0.08 * R)}" cy="{fmt(-1.20 * R)}" r="{fmt(0.10 * R)}" fill="{shade(col, 0.15)}" {_st(2.4)}/>'
+    return s
+
+
+def _feather_band_svg(R, band, feather):
+    """Philistine feathered headdress: a patterned band round the head with a crown of upright feathers."""
+    s = ""
+    n = 12
+    for k in range(n):                   # a neat crown of upright reeds / feathers (Medinet Habu style)
+        u = k / (n - 1)
+        x = (-0.86 + 1.66 * u) * R
+        by = -0.50 * R - 0.14 * R * (1 - ((x / R - 0.05) / 0.95) ** 2)
+        top = by - (0.62 + 0.06 * math.sin(math.pi * u)) * R
+        x2 = x + 0.05 * R * (u - 0.5)
+        w = 0.085 * R
+        pts = [(x - w, by), (x2 - w * 0.9, top + w), (x2, top - 0.02 * R), (x2 + w * 0.9, top + w), (x + w, by)]
+        col = feather if k % 2 == 0 else shade(feather, -0.14)
+        s += f'<path d="{smooth_path(pts, tension=0.5)}" fill="{col}" {_st(2.4)}/>'
+        s += _line(f"M{fmt(x)},{fmt(by - 0.06 * R)} L{fmt(x2)},{fmt(top + 0.12 * R)}", w=1.4, col=shade(feather, -0.35))
+    s += _tube(_spline_pts([(0.98 * R, -0.40 * R), (0.45 * R, -0.62 * R), (-0.25 * R, -0.62 * R),
+                            (-1.0 * R, -0.30 * R)]), 0.2 * R, band, ow=2.6)
+    for x0, y0 in ((0.62, -0.52), (0.15, -0.63), (-0.35, -0.60), (-0.80, -0.40)):
+        s += f'<circle cx="{fmt(x0 * R)}" cy="{fmt(y0 * R)}" r="{fmt(0.05 * R)}" fill="{shade(band, 0.5)}"/>'
+    return s
+
+
+def _goliath_head(bump):
+    def hat(R):
+        s = _bronze_helmet_svg(R, BRONZE, crest=CREST_RED)
+        if bump:                    # the cartoon bump where the stone hit (no blood)
+            s += _ell(0.38 * R, -0.43 * R, 0.17 * R, 0.13 * R, "#ec9a86", sw=2.8)
+            s += _ell(0.33 * R, -0.47 * R, 0.06 * R, 0.035 * R, HI, extra='opacity="0.85"')
+        return s
+    return hat
+
+
+# ---------------------------------------------------------------- held / worn items (body-frame hooks)
+
+
+def _hooks(*fns):
+    fns = [f for f in fns if f]
+    if not fns:
+        return None
+    return lambda st: "".join(f(st) for f in fns)
+
+
+def _fist(W, hr, skin, dx=0.0, dy=0.0):
+    return f'<circle cx="{fmt(W[0] + dx)}" cy="{fmt(W[1] + dy)}" r="{fmt(hr)}" fill="{skin}" {_st(3.2)}/>'
+
+
+def _bag_mid(st):
+    """Leather shepherd's bag on the back hip, its strap across the chest from the near shoulder."""
+    m, tp = st["m"], st["tp"]
+    top = tp(-0.80 * m["ww"], 4)
+    w, h = 0.70 * m["ww"] + 16, 0.45 * m["T"] + 4
+    cx, y0 = top[0] - 2, top[1]
+    s = _tube([_add(st["S"][1], (-2, -3)), tp(0.1 * m["ww"], 0.45 * m["T"]), (cx + 0.3 * w, y0 + 3)], 4.5, LEATHER,
+              ow=2.2)
+    body = [(cx - w / 2, y0), (cx + w / 2, y0), (cx + w / 2 + 2, y0 + 0.6 * h), (cx + w * 0.3, y0 + h),
+            (cx - w * 0.3, y0 + h), (cx - w / 2 - 2, y0 + 0.6 * h)]
+    s += f'<path d="{smooth_path(body, tension=0.7)}" fill="{LEATHER_LIGHT}" {_st(3.0)}/>'
+    flap = [(cx - w / 2 - 1, y0 - 1), (cx + w / 2 + 1, y0 - 1), (cx + w * 0.35, y0 + 0.5 * h), (cx, y0 + 0.62 * h),
+            (cx - w * 0.35, y0 + 0.5 * h)]
+    s += f'<path d="{smooth_path(flap, tension=0.7)}" fill="{LEATHER}" {_st(2.8)}/>'
+    s += f'<circle cx="{fmt(cx)}" cy="{fmt(y0 + 0.5 * h)}" r="3.6" fill="{CORD}" {_st(1.8)}/>'
+    s += _line(f"M{fmt(cx - w * 0.3)},{fmt(y0 + 0.82 * h)} l{fmt(w * 0.2)},0 m{fmt(w * 0.12)},0 l{fmt(w * 0.2)},0",
+               w=1.6, col=shade(LEATHER, -0.2), extra='stroke-dasharray="3 3"')
+    return s
+
+
+def _crook(x, y_top, y_bot, hook=1, w=7.0):
+    """Shepherd's crook: straight shaft, a round hook at the top curling toward ``hook`` (+1 = +x)."""
+    h = hook
+    pts = _spline_pts([(x, y_bot), (x, y_top + 30), (x, y_top + 6), (x + 6 * h, y_top - 14), (x + 22 * h, y_top - 22),
+                       (x + 36 * h, y_top - 12), (x + 38 * h, y_top + 6)], steps=5)
+    return _tube(pts, w, P["wood"], ow=3.0) + _line(_d(pts[:-6], closed=False), w=1.6, col=P["wood_light"],
+                                                       extra='opacity="0.7"')
+
+
+def _staff_near(D):
+    def front(st):
+        W, R = st["arms"][1][2], st["m"]["R"]
+        return _crook(W[0] + 2, st["Hc"][1] - 1.55 * R, st["ground"] - 4) + _fist(W, st["m"]["hr"], D["skin"], 0.5)
+    return front
+
+
+def _staff_far(st):
+    W, R = st["arms"][0][2], st["m"]["R"]
+    return _crook(W[0] + 1, st["Hc"][1] - 1.55 * R, st["ground"] - 4)
+
+
+def _basket_hang(D, k=0.55):
+    def front(st):
+        W, hr = st["arms"][1][2], st["m"]["hr"]
+        return (f'<g transform="translate({fmt(W[0] + 3)},{fmt(W[1] + 104 * k)}) scale({k})">'
+                f'{_prp()._bread_basket()}</g>' + _fist(W, hr, D["skin"], 1))
+    return front
+
+
+def _basket_carry(D, k=0.6):
+    def front(st):
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        cx = (W0[0] + W1[0]) / 2
+        y = max(W0[1], W1[1]) + 58 * k
+        return (f'<g transform="translate({fmt(cx)},{fmt(y)}) scale({k})">{_prp()._bread_basket(handle=False)}</g>'
+                + _fist(W1, hr, D["skin"], 0, 2))
+    return front
+
+
+def _harp_front(D):
+    def front(st):
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        b = st["tp"](0.95 * st["m"]["ww"], -6)
+        s = f'<g transform="translate({fmt(b[0] + 8)},{fmt(b[1] + 10)}) rotate(14) scale(0.6)">{_prp()._harp()}</g>'
+        s += _fist(W0, hr, D["skin"]) + _hand(W1, (0.3, 1.0), "open", D["skin"], hr)
+        return s
+    return front
+
+
+def _sling_cords(W, Pc, d, stone=True, open_=False):
+    """Two thin cords from the hand W to a leather pouch at Pc (d = unit direction hand -> pouch)."""
+    n = (-d[1], d[0])
+    a, b = _add(Pc, _mul(n, 6.5)), _sub(Pc, _mul(n, 6.5))
+    s = _tube([W, a], 2.4, CORD, ow=1.5) + _tube([W, b], 2.4, CORD, ow=1.5)
+    c = _add(Pc, _mul(d, 4))
+    if stone and not open_:
+        sc = _sub(c, _mul(d, 4))
+        s += _ell(sc[0], sc[1], 7.5, 6.5, "#b9b2a6", sw=2.4)
+    rot = _ang(n)
+    s += (f'<ellipse cx="{fmt(c[0])}" cy="{fmt(c[1])}" rx="{fmt(11 if not open_ else 12)}" ry="{fmt(6 if not open_ else 3.5)}" '
+          f'transform="rotate({fmt(rot)} {fmt(c[0])} {fmt(c[1])})" fill="{LEATHER}" {_st(2.4)}/>')
+    return s
+
+
+def _sling_spin_hooks(D, phase, stone):
+    """sling_spin: the far (front-shoulder) hand whirls the sling; the half of the whirl behind the boy is drawn
+    behind the body and head, the near half in front. Returns (behind, front)."""
+    a = 2 * math.pi * phase
+
+    def geo(st):
+        W, R = st["arms"][0][2], st["m"]["R"]
+        L = 2.4 * R
+        rx, ry = 0.88 * L, 0.30 * L
+        Pc = (W[0] + rx * math.cos(a), W[1] + ry * math.sin(a) - 0.25 * rx * math.cos(a))
+        return W, rx, ry, Pc
+
+    def swirl(st):
+        W, rx, ry, Pc = geo(st)
+        s = ""
+        for k, (span, wid, op) in enumerate(((1.9, 3.2, 0.55), (1.2, 2.4, 0.4))):
+            pts = []
+            for j in range(14):
+                aa = a - 0.25 - span * j / 13
+                kk = 1.0 + 0.10 * (k + 1)
+                pts.append((W[0] + rx * kk * math.cos(aa), W[1] + ry * kk * math.sin(aa) - 0.25 * rx * kk * math.cos(aa)))
+            s += _line(smooth_path(pts, closed=False), w=wid, col=MARK, extra=f'opacity="{op}"')
+        return s
+
+    def back_half(st):
+        return math.cos(a) < -0.15 or (math.sin(a) < 0 and math.cos(a) < 0.25)
+
+    def behind(st):
+        W, rx, ry, Pc = geo(st)
+        s = swirl(st)
+        if back_half(st):
+            s += _sling_cords(W, Pc, _nrm(_sub(Pc, W)), stone)
+        return s
+
+    def front(st):
+        W, rx, ry, Pc = geo(st)
+        if back_half(st):
+            return ""
+        return _sling_cords(W, Pc, _nrm(_sub(Pc, W)), stone) + _fist(W, st["m"]["hr"], D["skin"])
+    return behind, front
+
+
+def _sling_front(D, mode, phase=0.0, stone=True):
+    """The sling (a long strap with a pouch) in the near hand: 'hold' hanging, 'spin' whirling overhead
+    (pouch at ``phase`` 0..1 round a tilted circle, with swirl lines), 'release' (strap trailing forward)."""
+    def front(st):
+        W, hr, skin = st["arms"][0 if mode == "release" else 1][2], st["m"]["hr"], D["skin"]
+        L = 2.4 * st["m"]["R"]
+        s = ""
+        if mode == "hold":
+            d = _nrm((0.12, 1.0))
+            s += _sling_cords(W, _add(W, _mul(d, 0.8 * L)), d, stone)
+        elif mode == "spin":
+            rx, ry = 0.88 * L, 0.30 * L
+            c = W
+            a = 2 * math.pi * phase
+            Pc = (c[0] + rx * math.cos(a), c[1] + ry * math.sin(a) - 0.25 * rx * math.cos(a))
+            # swirl: two trailing arcs behind the pouch (motion lines)
+            for k, (span, wid, op) in enumerate(((1.9, 3.2, 0.55), (1.2, 2.4, 0.4))):
+                pts = []
+                for j in range(14):
+                    aa = a - 0.25 - span * j / 13
+                    kk = 1.0 + 0.10 * (k + 1)
+                    pts.append((c[0] + rx * kk * math.cos(aa), c[1] + ry * kk * math.sin(aa) - 0.25 * rx * kk * math.cos(aa)))
+                s += _line(smooth_path(pts, closed=False), w=wid, col=MARK, extra=f'opacity="{op}"')
+            s += _sling_cords(W, Pc, _nrm(_sub(Pc, W)), stone)
+        else:   # release: the strap whips forward, one cord let go, the pouch open and empty
+            d = _nrm((1.0, -0.35))
+            nv = (-d[1], d[0])
+            pts = [_add(_add(W, _mul(d, L * t)), _mul(nv, 8 * math.sin(t * 7.0) * t)) for t in
+                   [j / 10 for j in range(11)]]
+            s += _tube(pts, 2.4, CORD, ow=1.5)
+            end = pts[-1]
+            loose = [_add(_add(end, _mul(d, 10 + 8 * j)), _mul(nv, 10 * math.sin(j * 1.4 + 1))) for j in range(6)]
+            s += _tube([end] + loose, 2.4, CORD, ow=1.5)
+            s += (f'<ellipse cx="{fmt(end[0])}" cy="{fmt(end[1])}" rx="12" ry="3.6" '
+                  f'transform="rotate({fmt(_ang(d))} {fmt(end[0])} {fmt(end[1])})" fill="{LEATHER}" {_st(2.4)}/>')
+            for j in range(3):          # whoosh marks behind the arm
+                p0 = _add(W, (-30 - 14 * j, 22 + 16 * j))
+                s += _line(f"M{_pt(p0)} q22,-6 40,-18", w=2.6, col=MARK, extra='opacity="0.6"')
+        return s + _fist(W, hr, skin)
+    return front
+
+
+def _sword_hang(st, drag=False, scale_k=1.0):
+    """A sword in a scabbard hanging from the belt at the near hip (drag=True: much too long, its tip trailing on the
+    ground behind - Saul's sword on David)."""
+    m, tp = st["m"], st["tp"]
+    h0 = tp(0.55 * m["ww"], -2)
+    if drag:
+        tip = (-0.95 * (m["th"] + m["sh"]), st["ground"] - 6)
+    elif len(st["robe"]) > 2:           # seated (lap): the scabbard lies back along the seat
+        tip = _add(h0, _mul(_nrm((-1.0, 0.45)), 0.62 * (m["th"] + m["sh"])))
+    else:
+        tip = _add(h0, _mul(_nrm((-0.45, 1.0)), 0.80 * (m["th"] + m["sh"])))
+    d = _nrm(_sub(tip, h0))
+    w = 0.30 * m["aw"] * scale_k + 4
+    s = _tube([h0, tip], w, shade(LEATHER, -0.1), ow=OW * 0.8)
+    s += _tube([_sub(tip, _mul(d, w * 1.6)), tip], w + 2, BRONZE, ow=OW * 0.7)
+    for t in (0.3, 0.6):
+        q = _lerp(h0, tip, t)
+        s += _line(f"M{_pt(_add(q, _mul((-d[1], d[0]), w / 2)))} L{_pt(_sub(q, _mul((-d[1], d[0]), w / 2)))}", w=2.0,
+                   col=BRONZE_LIGHT)
+    nv = (-d[1], d[0])
+    g0 = _sub(h0, _mul(d, 2))
+    s += _tube([_add(g0, _mul(nv, w * 1.3)), _sub(g0, _mul(nv, w * 1.3))], w * 0.55, BRONZE, ow=OW * 0.7)
+    grip = _sub(g0, _mul(d, w * 1.9))
+    s += _tube([g0, grip], w * 0.6, LEATHER, ow=OW * 0.7)
+    s += f'<circle cx="{fmt(grip[0])}" cy="{fmt(grip[1])}" r="{fmt(w * 0.5)}" fill="{BRONZE}" {_st(OW * 0.7)}/>'
+    return s
+
+
+def _corselet(col=BRONZE, scale_col=BRONZE_DARK, sp=26, belt=LEATHER, strips=0):
+    """Bronze scale armour over the torso (drawn after the tunic): the bodice of the robe plus the top of the
+    skirt down to the belt, a scale pattern, a leather belt and optional leather strips (pteruges) below it."""
+    mot = _scale_motif(scale_col)
+
+    def mid(st):
+        m, pel, u, f, tp = st["m"], st["pel"], st["u"], st["f"], st["tp"]
+        lim = m["ww"] + 3
+        polys = [st["robe"][0]]
+        for poly in st["robe"][1:]:
+            b = _band(poly, pel, u, -12, 6)
+            if len(b) > 2:
+                b = _clip(b, _sub(pel, _mul(f, lim)), f)
+            if len(b) > 2:
+                b = _clip(b, _add(pel, _mul(f, lim)), _mul(f, -1))
+            if len(b) > 2:
+                polys.append(b)
+        s = ""
+        if strips:
+            for k in range(strips):
+                x0 = (-0.85 + 1.7 * k / max(1, strips - 1)) * m["ww"]
+                w = 1.5 * m["ww"] / strips
+                q = [tp(x0 - w / 2, -4), tp(x0 + w / 2, -4), tp(x0 + w / 2, -0.30 * m["th"]), tp(x0 - w / 2, -0.30 * m["th"])]
+                s += _poly(q, shade(belt, 0.12 if k % 2 else 0.0), sw=2.6)
+        s += _union(polys, col)
+        cid = _clip_id("corselet", *[_d(p) for p in polys])
+        xs = [p[0] for poly in polys for p in poly]
+        ys = [p[1] for poly in polys for p in poly]
+        n = int(max(max(xs) - min(xs), max(ys) - min(ys)) / sp) + 2
+        cx0, cy0 = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
+        inner = ""
+        for i in range(-n // 2 - 1, n // 2 + 2):
+            for j in range(-n // 2 - 1, n // 2 + 2):
+                inner += mot(_add((cx0, cy0), tp((i + (0.5 if j % 2 else 0.0)) * sp, j * sp * 0.8)), sp)
+        for poly in polys:
+            inner += _poly(_clip(poly, _sub(pel, _mul(f, 0.42 * m["ww"])), _mul(f, -1)), shade(col, -0.12), sw=0,
+                           extra='opacity="0.5"')
+        s += (f'<clipPath id="{cid}">' + "".join(f'<path d="{_d(p)}"/>' for p in polys) + "</clipPath>"
+              + f'<g clip-path="url(#{cid})">{inner}</g>')
+        for poly in polys:
+            b = _band(poly, pel, u, -8, 8)
+            if len(b) > 2:
+                b = _clip(b, _sub(pel, _mul(f, lim)), f)
+            if len(b) > 2:
+                b = _clip(b, _add(pel, _mul(f, lim)), _mul(f, -1))
+            s += _poly(b, belt, sw=2.6)
+        return s
+    return mid
+
+
+def _greaves(col=BRONZE):
+    def legwear(st, i):
+        H, K, A, a1, a2 = st["legs"][i]
+        lw = st["m"]["lw"]
+        p0, p1 = _lerp(K, A, 0.14), _lerp(K, A, 0.93)
+        c = col if i == 1 else shade(col, -0.12)
+        s = _tube([p0, p1], lw + 6, c, ow=OW * 0.8)
+        d = _nrm(_sub(p1, p0))
+        s += _line(f"M{_pt(_add(_lerp(p0, p1, 0.12), _mul((-d[1], d[0]), lw * 0.25)))} "
+                   f"L{_pt(_add(_lerp(p0, p1, 0.88), _mul((-d[1], d[0]), lw * 0.25)))}", w=2.6, col=shade(col, 0.4),
+                   extra='opacity="0.8"')
+        return s
+    return legwear
+
+
+def _scale_motif(col):
+    def mot(c, sp):
+        r = 0.44 * sp
+        return (f'<path d="M{fmt(c[0] - r)},{fmt(c[1] - 0.3 * r)} Q{fmt(c[0] - r)},{fmt(c[1] + 0.9 * r)} {fmt(c[0])},'
+                f'{fmt(c[1] + 0.9 * r)} Q{fmt(c[0] + r)},{fmt(c[1] + 0.9 * r)} {fmt(c[0] + r)},{fmt(c[1] - 0.3 * r)}" '
+                f'fill="none" stroke="{col}" stroke-width="2"/>')
+    return mot
+
+
+def _ring_motif(col):
+    def mot(c, sp):
+        return f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(0.30 * sp)}" fill="none" stroke="{col}" stroke-width="1.5"/>'
+    return mot
+
+
+def _tremble_lines(st, phase):
+    """Little shake marks beside the knees (cowering soldiers)."""
+    s = ""
+    for (H, K, A, a1, a2), sg in zip(st["legs"], (-1, 1)):
+        x0 = K[0] + sg * (st["m"]["lw"] + 10)
+        for j in (0, 1):
+            xx = x0 + sg * 8 * j
+            s += _line(f"M{fmt(xx)},{fmt(K[1] - 12)} l{fmt(sg * 5)},7 l{fmt(-sg * 5)},7 l{fmt(sg * 5)},7", w=2.4,
+                       col=MARK, extra='opacity="0.8"')
+    return s
+
+
+# ---------------------------------------------------------------- poses
+_BOY = dict(R=40, T=64, neck=41, ua=35, fa=31, th=41, sh=39, aw=17, lw=14.5, hr=9.5, fl=23, sw=20, hw=10.5, ww=24,
+            shw=29, flare=12, sdrop=10, seat=15, ank=10)
+_GIANT = _metrics(_ADULT, 1.85, 1.22, R=74, neck=80, hr=21)
+_SAUL_M = _metrics(_ADULT, 1.1, 1.1)
+_ELIAB_M = _metrics(_ADULT, 1.07, 1.04)
+_JESSE_M = _metrics(_ADULT, 0.97, 1.02)
+
+POSES.update({
+    # David
+    "dv_stand_staff": _P(arms=(("fk", 14, 8), ("fk", 40, 76))),
+    "dv_walk_a_staff": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -46, -36), ("fk", 40, 76))),
+    "dv_walk_b_staff": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 46), ("fk", 40, 76))),
+    "dv_walk_a_basket": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -46, -36), ("fk", 12, 22))),
+    "dv_walk_b_basket": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 46), ("fk", 12, 22))),
+    "dv_stand_basket": _P(arms=(("fk", 14, 8), ("fk", 12, 22))),
+    "dv_talk": _P(h=-4, arms=(("fk", 12, 6), ("fk", 34, 86)), hands=("fist", "open"), expr="happy"),
+    "dv_point_up": _P(h=-16, legs=((5, 2), (-5, -2)), arms=(("fk", 132, 162), ("fk", -10, -4)), hands=("point", "fist"),
+                      look=(0.03, -0.10), expr="brave"),
+    "dv_kneel_pick": _P(t=38, h=4, legs=((84, 4), (6, -92)), feet=(None, 100),
+                        arms=(("ik", "knee", 0, 0.25, 1), ("ik", "abs", 96, -8, 1)), hands=("fist", "fist"),
+                        look=(0.04, 0.10), expr="happy", hem=0.97),
+    "dv_hold_sling": _P(h=-4, legs=((8, 3), (-7, -3)), arms=(("fk", 14, 8), ("fk", 22, 30)), expr="brave"),
+    "dv_hold_sling_staff": _P(h=-4, legs=((8, 3), (-7, -3)), arms=(("fk", 26, 66), ("fk", 22, 30)), expr="brave"),
+    "dv_sling_spin": _P(t=-4, h=-6, legs=((18, 6), (-18, -8)), arms=(("fk", 124, 140), ("fk", -46, -24)),
+                        hands=("fist", "open"), expr="brave", look=(0.03, -0.04)),
+    "dv_sling_release": _P(t=16, h=-6, legs=((40, 14), (-30, -52)), arms=(("fk", 100, 94), ("fk", -64, -42)),
+                           hands=("fist", "open"), expr="brave", hem=0.66),
+    "dv_carry_basket": _P(arms=(("ik", "body", 46, -40, 1), ("ik", "body", 22, -36, 1)), hands=("none", "none")),
+    "dv_sit_harp": _P(t=-2, h=8, legs=(("ik", 66, 1), ("ik", 80, 1)),
+                      arms=(("ik", "body", 46, -98, 1), ("ik", "body", 58, -58, 1)), hands=("none", "none"),
+                      expr="peaceful", **_SEATED),
+    "dv_pray": _P(h=-14, arms=(("ik", "torso", 1.55, 0.66, 1), ("ik", "torso", 1.55, 0.66, 1)),
+                  hands=("none", "pray"), expr="peaceful", look=(0.02, -0.05)),
+    "dv_armor_wobble": _P(t=-12, h=12, legs=((24, 6), (-26, -64)), arms=(("fk", 104, 118), ("fk", -98, -116)),
+                          hands=("open", "open"), expr="worried"),
+    # Goliath
+    "gl_stand": _P(legs=((5, 2), (-5, -2)), arms=(("fk", 18, 10), ("fk", 62, 92)), expr="sneer"),
+    "gl_stride_a": _P(t=5, legs=((22, 8), (-18, -30)), arms=(("fk", -34, -24), ("fk", 62, 92)), expr="angry"),
+    "gl_stride_b": _P(t=5, legs=((-18, -30), (22, 8)), arms=(("fk", 26, 40), ("fk", 62, 92)), expr="angry"),
+    "gl_shout": _P(t=-6, h=-8, legs=((12, 4), (-10, -4)), arms=(("fk", 150, 168), ("fk", 70, 100)), expr="roar"),
+    "gl_laugh": _P(t=-10, h=-22, legs=((8, 3), (-7, -3)), arms=(("fk", 26, 44), ("ik", "torso", 1.15, 0.30, 1)),
+                   hands=("fist", "open"), expr="laugh"),
+    "gl_mock": _P(t=10, h=10, legs=((8, 3), (-7, -3)), arms=(("fk", 26, 44), ("fk", 64, 42)), hands=("fist", "point"),
+                  expr="sneer", look=(0.03, 0.08)),
+    "gl_fall": _P(h=-12, legs=((3, 1), (-3, -1)), arms=(("fk", 150, 164), ("fk", 124, 150)), hands=("open", "open"),
+                  expr="surprised"),
+    "gl_lying": _P(h=-62, legs=((2, 0), (-2, 0)), arms=(("fk", 168, 176), ("fk", 160, 170)), hands=("open", "open"),
+                   expr="dizzy"),
+    # shield-bearer, soldiers
+    "sb_stand": _P(arms=(("fk", 30, 60), ("ik", "body", 46, -86, 1)), hands=("none", "fist")),
+    "sb_walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", 30, 60), ("ik", "body", 46, -86, 1)),
+                    hands=("none", "fist")),
+    "sb_walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 30, 60), ("ik", "body", 46, -86, 1)),
+                    hands=("none", "fist")),
+    "so_cower": _P(t=10, h=6, drop=34, legs=(("ik", 34, 1), ("ik", -28, 1)),
+                   arms=(("ik", "headw", 0.95, 0.75, 1), ("ik", "headw", 0.55, 0.95, 1)), hands=("none", "fist"),
+                   expr="scared"),
+    "so_point": _P(legs=((5, 2), (-5, -2)), arms=(("fk", 14, 8), ("fk", 84, 88)), hands=("fist", "point"),
+                   expr="surprised"),
+    # Saul (king attire='saul', also valid for the other attires), Eliab, Jesse
+    "king_sit_stool": _P(t=-2, lap=True, legs=((86, 4), (82, 2)),
+                         arms=(("ik", "knee", 0, 0.25, 1), ("ik", "knee", 1, 0.25, 1)), hem=0.97, flare=-8),
+    "king_talk": _P(h=-2, arms=(("fk", 12, 6), ("fk", 30, 82)), hands=("fist", "open"), expr="kind"),
+    "king_bless": _P(h=-6, arms=(("fk", 12, 6), ("fk", 78, 132)), hands=("fist", "palm"), expr="kind"),
+    "el_scold": _P(t=4, h=4, legs=((10, 3), (-8, -3)), arms=(("ik", "torso", -1.15, 0.05, -1), ("fk", 70, 80)),
+                   hands=("fist", "point"), expr="cross"),
+    "el_hips": _P(h=-4, legs=((10, 3), (-8, -3)), arms=(("ik", "torso", -1.2, 0.04, -1), ("ik", "torso", 1.25, 0.04, 1)),
+                  hands=("fist", "fist"), expr="cross"),
+    "js_give": _P(t=6, h=4, legs=((10, 3), (-8, -3)), arms=(("fk", 62, 80), ("fk", 70, 84)), hands=("none", "none"),
+                  expr="happy"),
+})
+
+
+def _check_pose(pose, allowed, who):
+    if pose not in allowed:
+        raise ValueError(f"{who}: unknown pose {pose!r}; choose from {sorted(allowed)}")
+
+
+def _check_expr2(expr, who):
+    if expr is not None and expr not in EXPRS:
+        raise ValueError(f"{who}: unknown expr {expr!r}; choose from {ALL_EXPRESSIONS}")
+
+
+# ---------------------------------------------------------------- David
+DAVID_POSES = ("stand", "walk_a", "walk_b", "run_a", "run_b", "talk", "point_up", "kneel_pick", "hold_sling",
+               "sling_spin", "sling_release", "carry_basket", "sit_harp", "cheer", "pray", "kneel_pray",
+               "armor_wobble")
+_DAVID_POSE = {"walk": "walk_a", "talk": "dv_talk", "point_up": "dv_point_up", "kneel_pick": "dv_kneel_pick",
+               "hold_sling": "dv_hold_sling", "sling_spin": "dv_sling_spin", "sling_release": "dv_sling_release",
+               "carry_basket": "dv_carry_basket", "sit_harp": "dv_sit_harp", "pray": "dv_pray",
+               "armor_wobble": "dv_armor_wobble"}
+_DAVID_NATURAL = {"stand": "happy", "walk_a": "happy", "walk_b": "happy", "run_a": "brave", "run_b": "brave",
+                  "kneel_pray": "peaceful"}
+
+
+def _david_design(armor=False, bag=True):
+    t = DAVID_TUNIC
+    D = dict(robe=t, sleeve=t, hem_col=shade(t, -0.25), skin=DAVID_SKIN, leg=DAVID_SKIN, hem=0.58, flare_k=0.9,
+             sleeve_len=0.45, rope_belt=CORD, hair=DAVID_HAIR, hair_style="curly", hat=("custom", _david_head(False)),
+             hat_h=0.30, neck_v=shade(t, 0.28), hem_w=9)
+    if armor:
+        D.update(robe=MAIL, sleeve=MAIL, hem_col=shade(MAIL, -0.22), hem=1.05, flare_k=2.3, sleeve_len=1.0,
+                 cuff=shade(MAIL, -0.25), robe_floor=True, rope_belt=None, sash=LEATHER, sash_tail=False,
+                 pattern=(None, _ring_motif(shade(MAIL, -0.3)), 12), hat=("custom", _david_head(True)), hat_h=1.2,
+                 neck_v=None)
+    return D
+
+
+def david(x, y, scale=1.0, facing=1, pose="stand", expr=None, bag=True, staff=False, basket=False, armor=False,
+          phase=0.0, stone=True, marks=True):
+    """David, the shepherd boy of about 12 (see module doc, 'David film')."""
+    _check_pose(pose, DAVID_POSES + ("walk",), "david")
+    _check_expr2(expr, "david")
+    key = _DAVID_POSE.get(pose, pose)
+    ps = dict(POSES[key])
+    if pose in _DAVID_NATURAL:
+        ps["expr"] = _DAVID_NATURAL[pose]
+    D = _david_design(armor, bag)
+    behind, mid, front = None, None, None
+    if staff and not armor and pose in ("stand", "walk", "walk_a", "walk_b"):
+        ps = dict(POSES[{"stand": "dv_stand_staff", "walk": "dv_walk_a_staff", "walk_a": "dv_walk_a_staff",
+                         "walk_b": "dv_walk_b_staff"}[pose]])
+        ps["expr"] = "happy"
+        front = _staff_near(D)
+    elif basket and pose in ("stand", "walk", "walk_a", "walk_b"):
+        ps = dict(POSES[{"stand": "dv_stand_basket", "walk": "dv_walk_a_basket", "walk_a": "dv_walk_a_basket",
+                         "walk_b": "dv_walk_b_basket"}[pose]])
+        ps["expr"] = "happy"
+        front = _basket_hang(D)
+    if pose == "hold_sling":
+        if staff:
+            ps = dict(POSES["dv_hold_sling_staff"])
+            behind = _staff_far
+        front = _sling_front(D, "hold", stone=stone)
+    elif pose == "sling_spin":
+        behind, front = _sling_spin_hooks(D, phase, stone)
+    elif pose == "sling_release":
+        front = _sling_front(D, "release")
+    elif pose == "carry_basket":
+        front = _basket_carry(D)
+    elif pose == "sit_harp":
+        front = _harp_front(D)
+    if armor:
+        mid = lambda st: _sword_hang(st, drag=True)          # noqa: E731
+    elif bag:
+        mid = _bag_mid
+    D["behind"], D["mid"], D["front"] = behind, mid, front
+    e = expr or ps["expr"]
+    m = _metrics(_BOY, 1.0, 1.22) if armor else _BOY
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"david-{pose}")
+
+
+# ---------------------------------------------------------------- Goliath
+GOLIATH_POSES = ("stand", "stride_a", "stride_b", "shout", "laugh", "mock_point", "fall", "lying")
+_GOLIATH_POSE = {"stand": "gl_stand", "stride_a": "gl_stride_a", "stride_b": "gl_stride_b", "stride": "gl_stride_a",
+                 "shout": "gl_shout", "laugh": "gl_laugh", "mock_point": "gl_mock", "fall": "gl_fall",
+                 "lying": "gl_lying"}
+GOLIATH_SPEAR_LEN = 900
+
+
+def _giant_spear(W, d, L=GOLIATH_SPEAR_LEN, grip=0.42, ground=None):
+    """Goliath's spear: a shaft 'like a weaver's beam' through the hand W along direction d (butt -> tip)."""
+    butt = _sub(W, _mul(d, grip * L))
+    if ground is not None and butt[1] > ground - 24:
+        k = (ground - 24 - W[1]) / (-d[1] * L) if d[1] else grip
+        butt = _sub(W, _mul(d, k * L))
+    tip = _add(butt, _mul(d, L))
+    nv = (-d[1], d[0])
+    s = _tube([butt, _sub(tip, _mul(d, 100))], 22, P["wood"], ow=OW)
+    s += _line(f"M{_pt(_add(butt, _mul(nv, 4)))} L{_pt(_add(_sub(tip, _mul(d, 110)), _mul(nv, 4)))}", w=3,
+               col=P["wood_light"], extra='opacity="0.7"')
+    for t in (0.06, 0.5):          # bronze rings
+        q = _add(butt, _mul(d, t * L))
+        s += _tube([q, _add(q, _mul(d, 16))], 28, BRONZE, ow=3.2)
+    base = _sub(tip, _mul(d, 104))
+    head = [_add(base, _mul(nv, 9)), _add(_add(base, _mul(d, 40)), _mul(nv, 22)), tip,
+            _sub(_add(base, _mul(d, 40)), _mul(nv, 22)), _sub(base, _mul(nv, 9))]
+    s += f'<path d="{smooth_path(head, tension=0.6)}" fill="{IRON}" {_st(OW)}/>'
+    s += _line(f"M{_pt(_add(base, _mul(d, 8)))} L{_pt(_sub(tip, _mul(d, 14)))}", w=2.4, col=shade(IRON, -0.35))
+    s += _tube([_sub(base, _mul(d, 6)), _add(base, _mul(d, 8))], 26, BRONZE, ow=3.2)
+    s += _tube([_sub(butt, _mul(d, 18)), butt], 14, IRON, ow=3.2)
+    return s
+
+
+def _goliath_items(D, pose, spear, sword):
+    hr = _GIANT["hr"]
+
+    def behind(st):
+        if not spear or pose not in ("laugh", "mock_point", "shout"):
+            return ""
+        W = st["arms"][0][2]
+        if pose == "shout":
+            return _giant_spear(W, _nrm((0.12, -1.0)), grip=0.40)
+        return _giant_spear(W, (0.0, -1.0), ground=st["ground"])
+
+    armour = _corselet(BRONZE, BRONZE_DARK, 30, strips=7)
+
+    def mid(st):
+        return armour(st) + (_sword_hang(st, scale_k=1.0) if sword else "")
+
+    def front(st):
+        s = ""
+        W = st["arms"][1][2]
+        if spear and pose in ("stand", "stride_a", "stride_b", "stride"):
+            s += _giant_spear(W, _nrm((0.07, -1.0)), ground=st["ground"]) + _fist(W, hr, D["skin"], 1)
+        if pose == "shout":             # loud voice: arcs in front of the mouth
+            mo = st["hw"](0.75, 0.62)
+            for k in range(3):
+                r = 26 + 26 * k
+                s += _line(f"M{fmt(mo[0] + r * 0.55)},{fmt(mo[1] - r * 0.85)} Q{fmt(mo[0] + r * 1.15)},{fmt(mo[1])} "
+                           f"{fmt(mo[0] + r * 0.55)},{fmt(mo[1] + r * 0.85)}", w=4.0, col=MARK, extra='opacity="0.75"')
+        if pose == "laugh":             # 'ha ha' ticks round the head
+            Hc, R = st["Hc"], st["m"]["R"]
+            for (dx, dy, a) in ((1.45, -0.9, -30), (1.7, -0.25, 0), (-1.45, -1.0, 30)):
+                c = (Hc[0] + dx * R, Hc[1] + dy * R)
+                s += (f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate({a})">'
+                      + _line("M-14,-8 Q0,-14 14,-8", w=4.0, col=MARK) + _line("M-10,6 Q0,0 10,6", w=4.0, col=MARK)
+                      + "</g>")
+        return s
+    return behind, mid, front
+
+
+def _goliath_design(pose, bump, spear, sword):
+    D = dict(robe=GOLIATH_TUNIC, sleeve=GOLIATH_TUNIC, hem_col=shade(GOLIATH_TUNIC, -0.3), hem_w=20,
+             skin=GOLIATH_SKIN, leg=GOLIATH_SKIN, hem=0.50, flare_k=0.8, sleeve_len=0.40, hair=GOLIATH_HAIR,
+             hair_style="curly",
+             beard=("full", GOLIATH_HAIR), hat=("custom", _goliath_head(bump)), hat_h=0.62, brow_w=7.5,
+             neck_v=shade(BRONZE, 0.3), ears=False, legwear=_greaves(), sandal=SANDAL_DARK)
+    D["behind"], D["mid"], D["front"] = _goliath_items(D, pose, spear, sword)
+    return D
+
+
+def _stars_svg(c, R):
+    s = ""
+    for k in range(3):
+        a = 2 * math.pi * k / 3 + 0.4
+        p = (c[0] + 1.05 * R * math.cos(a), c[1] + 0.32 * R * math.sin(a))
+        r1, r0 = 0.20 * R, 0.08 * R
+        pts = []
+        for j in range(10):
+            rr = r1 if j % 2 == 0 else r0
+            aa = -math.pi / 2 + j * math.pi / 5
+            pts.append((p[0] + rr * math.cos(aa), p[1] + rr * math.sin(aa)))
+        s += f'<path d="{_d(pts)}" fill="{P["gold"]}" {_st(2.6)}/>'
+    s += (f'<ellipse cx="{fmt(c[0])}" cy="{fmt(c[1])}" rx="{fmt(1.05 * R)}" ry="{fmt(0.32 * R)}" fill="none" '
+          f'stroke="{MARK}" stroke-width="2.6" stroke-dasharray="10 9" opacity="0.6"/>')
+    return s
+
+
+def goliath(x, y, scale=1.0, facing=1, pose="stand", expr=None, progress=1.0, bump=False, spear=True, sword=True,
+            marks=True):
+    """Goliath of Gath, the giant champion: big and loud, cartoon-friendly (see module doc, 'David film')."""
+    _check_pose(pose, GOLIATH_POSES + ("stride",), "goliath")
+    _check_expr2(expr, "goliath")
+    ps = dict(POSES[_GOLIATH_POSE[pose]])
+    D = _goliath_design(pose, bump, spear, sword)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _GIANT, ps, e, _fsign(facing), marks)
+    if pose in ("fall", "lying"):
+        th = 90.0 if pose == "lying" else 90.0 * max(0.0, min(1.0, progress))
+        px = 0.9 * _GIANT["fl"]
+        a = math.radians(th)
+        lift = max([0.0] + [(qx - px) * math.sin(a) + qy * math.cos(a) + r for qx, qy, r in _LAST["pts"]])
+        extra = ""
+        if pose == "lying" and bump:
+            hx, hy = _LAST["head"]
+            hx2 = px + (hx - px) * math.cos(a) - hy * math.sin(a)
+            hy2 = (hx - px) * math.sin(a) + hy * math.cos(a) - lift
+            extra = _stars_svg((hx2 + 0.2 * _GIANT["R"], hy2 - 1.45 * _GIANT["R"]), _GIANT["R"])
+        inner = (f'<g transform="translate(0,{fmt(-lift)}) rotate({fmt(th)} {fmt(px)} 0)">{inner}</g>' + extra)
+    return _wrap_out(inner, x, y, scale, facing, f"goliath-{pose}")
+
+
+def goliath_head_point(x, y, scale=1.0, facing=1, pose="stand", progress=1.0):
+    """Stage point of Goliath's forehead (where the stone hits) for goliath(x, y, scale, facing, pose, progress)."""
+    goliath(0, 0, 1.0, 1, pose=pose, progress=progress, spear=False)
+    hx, hy = _LAST["head"]
+    R = _GIANT["R"]
+    fx, fy = hx + 0.38 * R, hy - 0.43 * R
+    if pose in ("fall", "lying"):
+        th = 90.0 if pose == "lying" else 90.0 * max(0.0, min(1.0, progress))
+        px = 0.9 * _GIANT["fl"]
+        a = math.radians(th)
+        lift = max([0.0] + [(qx - px) * math.sin(a) + qy * math.cos(a) + r for qx, qy, r in _LAST["pts"]])
+        fx, fy = px + (fx - px) * math.cos(a) - fy * math.sin(a), (fx - px) * math.sin(a) + fy * math.cos(a) - lift
+    return (x + fx * scale * _fsign(facing), y + fy * scale)
+
+
+# ---------------------------------------------------------------- soldiers and the shield-bearer
+SOLDIER_POSES = ("stand", "walk_a", "walk_b", "cower", "run_a", "run_b", "cheer", "point")
+SOLDIER_SIDES = ("israel", "philistine")
+_ISRAEL = [
+    dict(tunic="#5b7fa6", trim="#e3c88f", skin="#e2a77e", hair="#3a2a22", beard=("short", "#3a2a22"), cap="#8b5a35"),
+    dict(tunic="#8a6440", trim="#c9714a", skin="#b9805a", hair="#2f2420", beard=("stubble", "#2f2420"), cap="#6b4127"),
+    dict(tunic="#46698a", trim="#efe2c4", skin="#d39a72", hair="#5a3a24", beard=None, cap="#a0683e"),
+    dict(tunic="#a77d4f", trim="#5b7fa6", skin="#8d5a3b", hair="#241b17", beard=("full", "#241b17"), cap="#7a4a2a"),
+]
+_PHILISTINE = [
+    dict(tunic="#b5523b", trim="#efe2c4", skin="#e0a67c", hair="#3a2a22", band="#3f6f9e", feather="#efe2c4"),
+    dict(tunic="#3f7f86", trim="#e8c27a", skin="#c68a62", hair="#2a201b", band="#b5523b", feather="#e8c27a"),
+    dict(tunic="#c99a42", trim="#7b4f6e", skin="#a46b47", hair="#241b17", band="#3f7f86", feather="#f0e2c0"),
+    dict(tunic="#7b4f6e", trim="#e3c88f", skin="#eab48c", hair="#5a3a24", band="#c99a42", feather="#d9a464"),
+]
+
+
+def _soldier_design(side, variant):
+    if side == "israel":
+        v = _ISRAEL[variant % 4]
+        return dict(robe=v["tunic"], sleeve=v["tunic"], hem_col=v["trim"], cuff=v["trim"], hem_w=9, skin=v["skin"],
+                    leg=v["skin"], hem=0.58, flare_k=0.7, sleeve_len=0.5, rope_belt="#8b5a35", hair=v["hair"],
+                    hair_style="short", hat=("custom", lambda R, c=v["cap"]: _leather_cap_svg(R, c)), hat_h=0.24,
+                    beard=v["beard"], neck_v=v["trim"], sandal=SANDAL_DARK), "israel"
+    v = _PHILISTINE[variant % 4]
+    return dict(robe=v["tunic"], sleeve=v["tunic"], hem_col=v["trim"], hem_w=9, skin=v["skin"], leg=v["skin"],
+                hem=0.46, flare_k=0.9, sleeve_len=0.4, sash=shade(v["trim"], -0.2), sash_tail=True, fringe=v["trim"],
+                hair=v["hair"], hair_style="curly", ears=False,
+                hat=("custom", lambda R, b=v["band"], f=v["feather"]: _feather_band_svg(R, b, f)), hat_h=0.80,
+                beard=None, neck_v=v["trim"], sandal=SANDAL_DARK, shawl=shade(v["tunic"], -0.25)), "philistine"
+
+
+def _shield_on_back(kind):
+    def behind(st):
+        m, tp = st["m"], st["tp"]
+        c = tp(-0.95 * m["ww"], 0.60 * m["T"])
+        r = 0.98 * m["R"]
+        return f'<g transform="translate({fmt(c[0])},{fmt(c[1])})">{_prp()._round_shield(r, kind)}</g>'
+    return behind
+
+
+def _shield_up(D, kind):
+    def front(st):
+        Hc, R, hr = st["Hc"], st["m"]["R"], st["m"]["hr"]
+        c = (Hc[0] + 1.02 * R, Hc[1] + 1.02 * R)
+        W = st["arms"][1][2]
+        return (f'<g transform="translate({fmt(c[0])},{fmt(c[1])})">{_prp()._round_shield(1.02 * R, kind)}</g>'
+                + _fist(W, hr, D["skin"]))
+    return front
+
+
+def soldier(x, y, scale=1.0, facing=1, side="israel", variant=0, pose="stand", expr=None, spear=None, shake=0.0,
+            marks=True):
+    """An Israelite or Philistine soldier for crowds (see module doc, 'David film')."""
+    if side not in SOLDIER_SIDES:
+        raise ValueError(f"soldier: unknown side {side!r}; choose from {SOLDIER_SIDES}")
+    _check_pose(pose, SOLDIER_POSES, "soldier")
+    _check_expr2(expr, "soldier")
+    D, kind = _soldier_design(side, variant)
+    key = {"stand": "guard_stand", "walk_a": "guard_walk_a", "walk_b": "guard_walk_b", "cower": "so_cower",
+           "point": "so_point"}.get(pose, pose)
+    if spear is None:
+        spear = pose in ("stand", "walk_a", "walk_b")
+    if not spear and pose in ("stand", "walk_a", "walk_b"):
+        key = pose
+    ps = dict(POSES[key])
+    if pose in ("run_a", "run_b"):
+        ps["expr"] = "scared"
+    D["behind"] = _shield_on_back(kind) if pose != "cower" else None
+    if pose == "cower":
+        f = _shield_up(D, kind)
+        D["front"] = (lambda st: f(st) + _tremble_lines(st, shake)) if marks else f
+    elif spear:
+        D["front"] = _spear_front(D)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _ADULT, ps, e, _fsign(facing), marks)
+    if pose == "cower" and shake:
+        inner = f'<g transform="translate({fmt(3.5 * math.sin(2 * math.pi * shake))},0)">{inner}</g>'
+    return _wrap_out(inner, x, y, scale, facing, f"soldier-{side}{variant % 4}-{pose}")
+
+
+SHIELD_BEARER_POSES = ("stand", "walk_a", "walk_b")
+
+
+def _big_shield_front(D):
+    def front(st):
+        m = st["m"]
+        top = -(m["T"] + m["neck"] - 0.25 * m["R"])
+        bot = 0.62 * (m["th"] + m["sh"])
+        c = (0.95 * m["ww"] + 30, (top + bot) / 2)
+        s = f'<g transform="translate({fmt(c[0])},{fmt(c[1])})">{_prp()._tall_shield((bot - top) / 2)}</g>'
+        W = st["arms"][1][2]
+        return s + _fist(W, m["hr"], D["skin"])
+    return front
+
+
+def shield_bearer(x, y, scale=1.0, facing=1, pose="walk_a", variant=0, expr=None, marks=True):
+    """Goliath's shield-bearer: a Philistine carrying the champion's huge tall shield in front of him."""
+    _check_pose(pose, SHIELD_BEARER_POSES, "shield_bearer")
+    _check_expr2(expr, "shield_bearer")
+    D, _ = _soldier_design("philistine", variant)
+    D["front"] = _big_shield_front(D)
+    ps = dict(POSES["sb_" + pose])
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _ADULT, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"shield_bearer-{pose}")
+
+
+# ---------------------------------------------------------------- Saul (king attire='saul')
+
+
+def _camp_stool_behind(st):
+    pel, m, g = st["pel"], st["m"], st["ground"]
+    seat_y = pel[1] + m["seat"] * 0.75 + 4
+    K = st["legs"][1][1]
+    xa, xb = pel[0] - m["ww"] - 18, min(K[0] - 8, pel[0] + m["ww"] + 34)
+    return f'<g transform="translate({fmt((xa + xb) / 2)},{fmt(g)})">{_prp()._camp_stool(xb - xa, g - seat_y)}</g>'
+
+
+def _saul_cape(st):
+    """Purple cloak hanging from the shoulders down the back."""
+    m, tp, g = st["m"], st["tp"], st["ground"]
+    a = tp(-m["shw"] + 2, m["T"] - 4)
+    b = tp(0.25 * m["shw"], m["T"] + 2)
+    lap = st["mode"] == "seat" or st["legs"][0][1][1] < 0
+    y_bot = (g - 0.25 * (m["th"] + m["sh"])) if not lap else g - 10
+    back = (min(a[0], tp(-m["ww"], 0)[0]) - 38, y_bot)
+    pts = [b, a, (a[0] - 18, a[1] + 0.4 * (y_bot - a[1])), (back[0], back[1] - 6), (back[0] + 30, back[1] + 4),
+           (back[0] + 70, back[1] - 4), tp(0, 0)]
+    col = P["royal"]
+    s = f'<path d="{smooth_path(pts, tension=0.8)}" fill="{col}" {_st(OW)}/>'
+    s += _line(f"M{_pt(_lerp(a, back, 0.25))} Q{fmt(back[0] + 8)},{fmt((a[1] + y_bot) / 2)} {fmt(back[0] + 26)},"
+               f"{fmt(back[1] - 6)}", w=2.4, col=shade(col, -0.25))
+    s += _line(f"M{_pt(_lerp(a, back, 0.1))} L{fmt(back[0] + 60)},{fmt(back[1] - 10)}", w=2.4, col=shade(col, 0.2),
+               extra='opacity="0.7"')
+    return s
+
+
+def _saul_clasp(st):
+    p = st["tp"](0.45 * st["m"]["shw"], st["m"]["T"] - 14)
+    return f'<circle cx="{fmt(p[0])}" cy="{fmt(p[1])}" r="8" fill="{GOLD}" {_st(2.6)}/>' + \
+        f'<circle cx="{fmt(p[0])}" cy="{fmt(p[1])}" r="3" fill="{P["royal_light"]}"/>'
+
+
+def _saul_design(pose, stool):
+    D = dict(robe=SAUL_TUNIC, sleeve=SAUL_TUNIC, hem_col=GOLD, hem_w=11, skin="#d9a27a", leg="#d9a27a",
+             hem=0.66, flare_k=0.8, sleeve_len=0.55, hair=SAUL_HAIR, hair_style="curly",
+             beard=("full", SAUL_HAIR), hat=("custom", lambda R: _bronze_helmet_svg(R, BRONZE, circlet=True,
+                                                                                  plume=P["royal_light"])),
+             hat_h=0.75, ears=False, legwear=_greaves(), sandal=SANDAL_DARK)
+    beh = [_saul_cape]
+    if pose == "sit" and stool:
+        beh.insert(0, _camp_stool_behind)
+    D["behind"] = _hooks(*beh)
+    armour = _corselet(BRONZE, BRONZE_DARK, 17, strips=6)
+    D["mid"] = lambda st: armour(st) + _sword_hang(st) + _saul_clasp(st)     # noqa: E731
+    return D
+
+
+KING_EXTRA_POSES = ("sit", "talk", "bless")      # added for Saul; they work in every attire
+_KING_ALIAS.update({"sit": "king_sit_stool", "talk": "king_talk", "bless": "king_bless"})
+
+
+def _king_david_film(x, y, scale, facing, pose, attire, expr, ps, throne, stool, marks):
+    """king() for attire='saul' and for the poses sit / talk / bless (any attire)."""
+    _check_expr2(expr, "king")
+    if attire is None:
+        attire = "royal"
+    if attire not in KING_ATTIRES:
+        raise ValueError(f"king: unknown attire {attire!r}; choose from {KING_ATTIRES}")
+    if attire == "saul" and pose in ("sit_ashes", "remove_crown"):
+        raise ValueError(f"king: pose {pose!r} is not available for attire='saul'")
+    if attire == "saul":
+        D = _saul_design(pose, stool)
+        if pose in _KING_SEATED and throne:
+            D["behind"] = _hooks(_throne, D["behind"])
+        m = _SAUL_M
+    else:
+        D = _king_design(attire, pose, throne, True)
+        if pose == "sit" and stool:
+            D["behind"] = _camp_stool_behind
+        m = _KING_M
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"king-{pose}")
+
+
+# ---------------------------------------------------------------- Eliab and Jesse
+ELIAB_POSES = ("stand", "walk_a", "walk_b", "talk", "scold", "hands_hips")
+_ELIAB_POSE = {"talk": "explain", "scold": "el_scold", "hands_hips": "el_hips"}
+
+
+def _eliab_design():
+    t = "#3f6f6a"
+    return dict(robe=t, sleeve=t, hem_col="#d9a03c", cuff="#d9a03c", hem_w=10, skin="#dca57c", leg="#dca57c",
+                hem=0.60, flare_k=0.7, sleeve_len=0.5, rope_belt="#8b5a35", hair="#3a2618", hair_style="curly",
+                hat=("custom", lambda R: _leather_cap_svg(R, "#7a4a2a")), hat_h=0.24, beard=("stubble", "#3a2618"),
+                neck_v="#d9a03c", sandal=SANDAL_DARK, behind=_shield_on_back("israel"))
+
+
+def eliab(x, y, scale=1.0, facing=1, pose="stand", expr=None, marks=True):
+    """Eliab, David's eldest brother: a tall young Israelite soldier (see module doc, 'David film')."""
+    _check_pose(pose, ELIAB_POSES, "eliab")
+    _check_expr2(expr, "eliab")
+    ps = dict(POSES[_ELIAB_POSE.get(pose, pose)])
+    if pose == "talk":
+        ps["expr"] = "neutral"
+    e = expr or ps["expr"]
+    inner, _ = _figure(_eliab_design(), _ELIAB_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"eliab-{pose}")
+
+
+JESSE_POSES = ("stand", "walk_a", "walk_b", "talk", "give")
+
+
+def _jesse_design(pose):
+    robe, wrap = "#b0603e", "#e0b25a"
+    D = dict(robe=robe, sleeve=robe, hem_col=shade(robe, -0.25), cuff=shade(robe, -0.25), skin="#dca07a",
+             leg="#dca07a", hem=0.92, hair="#e4ddd0", hair_style="short", beard=("white", "#ece6da"), shawl=wrap,
+             shawl_trim=shade(wrap, -0.25), hat=("wrap", "#efe2c4", shade("#efe2c4", -0.25)))
+    if pose == "give":
+        def front(st):
+            W0, W1 = st["arms"][0][2], st["arms"][1][2]
+            k = 0.62
+            cx, yy = (W0[0] + W1[0]) / 2, max(W0[1], W1[1]) + 58 * k
+            return (f'<g transform="translate({fmt(cx)},{fmt(yy)}) scale({k})">{_prp()._bread_basket(handle=False)}</g>'
+                    + _fist(W0, st["m"]["hr"], D["skin"], 0, 2) + _fist(W1, st["m"]["hr"], D["skin"], 0, 2))
+        D["front"] = front
+    else:
+        D["front"] = _cane
+    return D
+
+
+def jesse(x, y, scale=1.0, facing=1, pose="stand", expr=None, marks=True):
+    """Jesse of Bethlehem, David's old father: white beard, warm robe, walking stick (see module doc)."""
+    _check_pose(pose, JESSE_POSES, "jesse")
+    _check_expr2(expr, "jesse")
+    ps = dict(POSES[{"talk": "explain", "give": "js_give"}.get(pose, pose)])
+    if pose != "give":
+        ps["t"] = ps["t"] + 8
+        near = ("fk", 22, 30) if pose != "talk" else ("fk", 30, 70)
+        ps["arms"] = (ps["arms"][0] if pose != "talk" else ("fk", 12, 6), near)
+        ps["hands"] = ("fist", "fist")
+        ps["expr"] = "happy" if pose == "talk" else "neutral"
+    e = expr or ps["expr"]
+    inner, _ = _figure(_jesse_design(pose), _JESSE_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"jesse-{pose}")

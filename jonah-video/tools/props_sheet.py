@@ -10,6 +10,7 @@ Overlays (not part of the art): a red cross marks each drawing's anchor (x, y); 
 grey figure is a 330 px adult at the same scale; dashed blue boxes show documented regions
 (fish mouth box, ship cutaway interior / bed, castor shade, booth seat). Characters (Jonah, the king,
 sailors) come from art/characters.py to check the props against them.
+David film: python3 tools/props_sheet.py david_items david_creatures david_camp valley
 """
 import sys
 from pathlib import Path
@@ -492,9 +493,86 @@ def sheet_daniel():
     return render_sheet("daniel", "props — Daniel film: den, stone, window, palace things", rows)
 
 
+def sheet_david_items():
+    def c(label, fn, w=300, ax=150, ay=260, ref=None):
+        ov = (lambda ox, oy: person_ref(ox + ref[0], oy + ref[1], ref[2])) if ref else ""
+        return Cell(label, lambda ox, oy: fn(ox + ax, oy + ay), w, [(ax, ay)], ov)
+    rows = [
+        (300, [c(f"sling angle={a}", lambda x, y, a=a: PR.sling(x, y, 1.0, angle=a), 200, 100, 120) for a in (0, 60, 120, 180)]
+         + [c("sling released=True angle=110", lambda x, y: PR.sling(x, y, 1.0, angle=110, released=True), 260, 60, 160),
+            c("stone seeds 0-4 (x2)", lambda x, y: "".join(PR.stone(x - 100 + 50 * k, y, 2.0, seed=k) for k in range(5)), 300, 150, 200),
+            c("five_stones n=5 / n=3 (x2)", lambda x, y: PR.five_stones(x, y - 90, 2.0) + PR.five_stones(x, y + 40, 2.0, n=3), 300, 150, 200),
+            c("shepherd_bag stones=0 / 3", lambda x, y: PR.shepherd_bag(x - 70, y, 1.0) + PR.shepherd_bag(x + 70, y, 1.0, stones=3), 320, 160, 260)]),
+        (420, [c("staff (+adult)", lambda x, y: PR.staff(x, y), 220, 90, 380, (170, 380, 1.0)),
+               c("staff rot=-80 (lying)", lambda x, y: PR.staff(x, y, rot=-84), 340, 40, 380),
+               c("bread_basket / handle=False", lambda x, y: PR.bread_basket(x - 80, y) + PR.bread_basket(x + 80, y, handle=False), 340, 170, 380),
+               c("harp", lambda x, y: PR.harp(x, y, 1.2), 220, 110, 380),
+               c("helmet_bronze crest / saul", lambda x, y: PR.helmet_bronze(x - 80, y) + PR.helmet_bronze(x + 90, y, crest=False, plume=P["royal_light"], circlet=True), 340, 170, 380),
+               c("round_shield israel / philistine", lambda x, y: PR.round_shield(x - 60, y - 200) + PR.round_shield(x + 60, y - 200, kind="philistine")
+                 + PR.tall_shield(x, y - 40, 0.55, rot=80), 300, 150, 380),
+               c("camp_stool (+saul sit stool=False)", lambda x, y: PR.camp_stool(x, y) + CH.king(x, y, 1.0, pose="sit", attire="saul", stool=False), 280, 120, 380)]),
+        (260, [c("spear soldier / goliath (scale .5)", lambda x, y: PR.spear(x, y - 140) + PR.spear(x, y - 60, 0.5, kind="goliath"), 520, 260, 200),
+               c("sword", lambda x, y: PR.sword(x, y - 60), 300, 150, 200),
+               c("day_counter n=7 filled=3.5 pop=.5", lambda x, y: PR.day_counter(x, y - 80, 1.0, n=7, filled=3.5, pop=0.5), 520, 260, 200),
+               c("day_counter icons='sun' / 'moon'", lambda x, y: PR.day_counter(x, y - 140, 0.8, n=6, filled=4, icons="sun")
+                 + PR.day_counter(x, y - 40, 0.8, n=6, filled=2, icons="moon"), 460, 230, 200)]),
+    ]
+    return render_sheet("david_items", "props — David film: sling, stones, bag, staff, basket, harp, armour, camp, counter", rows)
+
+
+def sheet_david_creatures():
+    def c(label, fn, w=400, ax=200, ay=330, ref=None):
+        ov = (lambda ox, oy: person_ref(ox + ref[0], oy + ref[1], ref[2])) if ref else ""
+        return Cell(label, lambda ox, oy: fn(ox + ax, oy + ay), w, [(ax, ay)], ov)
+    rows = [
+        (460, [c(f"bear {p}", lambda x, y, p=p: PR.bear(x, y, 0.8, pose=p), 400, 170, 420) for p in PR.BEAR_POSES[:4]]
+         + [c("bear run_a / run_b (0.6)", lambda x, y: PR.bear(x - 60, y - 200, 0.6, pose="run_a") + PR.bear(x - 60, y, 0.6, pose="run_b"), 400, 170, 420)]),
+        (260, [c(f"sheep v{v} {p}", lambda x, y, v=v, p=p: PR.sheep(x, y, 1.0, variant=v, pose=p), 300, 130, 220)
+               for v, p in ((0, "stand"), (1, "graze"), (2, "walk_a"), (3, "bleat"), (0, "walk_b"))]
+         + [c("lambs (lamb=True) + david 0.6", lambda x, y: PR.sheep(x - 90, y, 1.0, pose="stand", lamb=True, variant=0)
+              + PR.sheep(x + 20, y, 1.0, -1, variant=1, pose="graze", lamb=True) + CH.david(x + 130, y, 0.6), 400, 200, 220)]),
+    ]
+    return render_sheet("david_creatures", "props — bear (scale 0.8) and sheep variants", rows)
+
+
+def sheet_david_camp():
+    def c(label, fn, w=600, ax=300, ay=430, ref=None):
+        ov = (lambda ox, oy: person_ref(ox + ref[0], oy + ref[1], ref[2])) if ref else ""
+        return Cell(label, lambda ox, oy: fn(ox + ax, oy + ay), w, [(ax, ay)], ov)
+    rows = [(480, [c("tent side='israel' (+adult)", lambda x, y: PR.tent(x, y), 700, 330, 440, (640, 440, 1.0)),
+                   c("tent side='philistine'", lambda x, y: PR.tent(x, y, side="philistine"), 560, 260, 440, (500, 440, 1.0)),
+                   c("tent flag=False / facing=-1 (0.5)", lambda x, y: PR.tent(x - 120, y, 0.5, flag=False) + PR.tent(x + 130, y, 0.5, -1, side="philistine", flag=False), 520, 260, 440)]),
+            (260, [Cell("brook(x0, x1, y, width=60) phase 0 / 0.5", lambda ox, oy: f'<rect x="{ox}" y="{oy}" width="1780" height="260" fill="{P["grass"]}"/>'
+                        + PR.brook(ox + 40, ox + 860, oy + 120, 60) + PR.brook(ox + 920, ox + 1740, oy + 120, 60, phase=0.5), 1780, [])])]
+    return render_sheet("david_camp", "props — tents, brook", rows)
+
+
+def sheet_valley():
+    W, Hh = 2200, 820
+
+    def art(ox, oy):
+        y = oy + 560
+        sky = f'<rect x="{ox}" y="{oy}" width="{W}" height="{Hh}" fill="{P["sky_day"]}"/>'
+        pts = PR.valley_points(ox + 40, ox + W - 40, y, 1.0)
+        figs = (CH.soldier(pts["israel_camp"][0] + 260, PR.valley_ground(ox + 420, ox + 40, ox + W - 40, y), 0.4, 1, variant=1)
+                + CH.goliath(pts["right_edge"][0] + 40, y + 60, 0.5, -1, pose="stride_a")
+                + CH.david(pts["left_edge"][0] + 40, y + 60, 0.5, 1, pose="hold_sling", staff=True))
+        return sky + PR.valley_elah(ox + 40, ox + W - 40, y, 1.0) + figs
+
+    def ov(ox, oy):
+        y = oy + 560
+        pts = PR.valley_points(ox + 40, ox + W - 40, y, 1.0)
+        return "".join(f'<circle cx="{px:.0f}" cy="{py:.0f}" r="9" fill="none" stroke="#3a7bd5" stroke-width="3"/>'
+                       for px, py in pts.values())
+    rows = [(Hh, [Cell("valley_elah(x0, x1, y, 1.0) + valley_points (blue rings); goliath 0.5 / david 0.5 on the floor", art, W,
+                       [], ov)])]
+    return render_sheet("valley", "props — valley_elah backdrop (Israel left, Philistines right)", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
           "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
-          "lions": sheet_lions, "daniel": sheet_daniel}
+          "lions": sheet_lions, "daniel": sheet_daniel, "david_items": sheet_david_items,
+          "david_creatures": sheet_david_creatures, "david_camp": sheet_david_camp, "valley": sheet_valley}
 
 
 def main():
