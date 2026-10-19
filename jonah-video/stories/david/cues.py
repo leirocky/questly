@@ -4,11 +4,15 @@ Read by audio/score.py when the story is "david" (SCENE_CUES); REQUIRED_HITS are
 audio/music_check.py and audio/test_score.py.  Same framework and orchestra as the Jonah and Daniel scores
 (audio/scorekit.py, audio/scorelib.py): every cue starts at its scene's global start, is planned in whole
 bars whose tempo follows the real line timings, and is keyed to narration phrases (Cue.find / Cue.at /
-Cue.gap), never to fixed times.  Where the narrator repeats a sound word inside one subtitle chunk ('咚！咚！
-咚！', '哐当，哐当', '一块，两块……五块', '转啊转，转啊转'), the first hit sits on the phrase (Cue.at, like every
-hit point) and the following ones keep the narrator's own rhythm: their spacing is read from the recorded
-line (group_times: the clip's pause-separated voice islands matched to the punctuation groups of the text;
-character interpolation if the clip is missing or does not match).
+Cue.gap), never to fixed times.  Hits that show an on-screen action -- the giant's footfalls (s02, s04, s07,
+s12), the armour's 哐当 (s09), the stones dropping into the bag (s10), and the helmet/sword clanks, glints, the
+log, the sling's test swings -- follow the PICTURE: picture() reads the scene's own sound-effect cues at build
+time (engine.loader.build_scene(...).sfx_cues, the same source as music_check's PICTURE_HITS), so they move when
+a scene is edited; the narration phrase then marks where the harmony arrives (a 'change' in REQUIRED_HITS).
+Without a scene that builds, those hits fall back to the narrator's own voice: voice_times() reads the recorded
+line (its pause-separated voice islands matched to the punctuation groups of the text; character interpolation
+if the clip is missing or does not match).  group_times() keeps a phrase's Cue.at anchor with the narrator's
+spacing ('转啊转，转啊转', '早上喊，晚上喊').
 
 Themes
   David, the shepherd boy (G major, 4/4; a pipe tune -- flute or clarinet over plucked harp; motif x = the
@@ -21,21 +25,23 @@ Themes
      heavy but a little comic):  Gm  G2 G2 Bb2 A2 G2 | D  F#2 G2 A2 D2 | Gm  G2 G2 Bb2 C3 D3 | Cm D  Eb3 C3 D3
   Israel's fear (E minor): tremolo strings, a clarinet shiver (the top chord tone trembling with its upper
      neighbour) and knocking knees (two woodblocks).
-  The armour: comic clanks (woodblocks + low pizzicato + bassoon) on 铜头盔 / 铠甲 / 大刀 and on each 哐当,
-     a wobbly chromatic bassoon on '哎呀，太重了'.
+  The armour: comic clanks (woodblocks + low pizzicato + bassoon) as the helmet, the mail and the sword go on
+     and on each 哐当, a wobbly chromatic bassoon on '哎呀，太重了'.
   The stones: five plucks counting up G-A-B-C-D (pizzicato + harp, glockenspiel on the fifth) over a falling
      bass G-F#-E-C-D, home to G on '都放进口袋里'.
-  The sling: a circling harp/flute whirl rising on '转啊转' (suspended cymbal swelling), the whoosh on '嗖'
+  The sling: a circling harp/flute whirl rising on '转啊转' (3/4, a beat for every turn of the strap on the
+     picture; suspended cymbal swelling), the whoosh on '嗖'
      (harp glissando, flute run, plucked chord), a 'bonk' on '正好打中' (woodblock, glockenspiel, timpani,
      celesta stars), the giant's fall (tuba + bassoon sliding down chromatically D3 -> A2) and the big low
      hit on '咚！巨人扑倒' (timpani, bass drum, tuba, plucked basses on G).
 
 Tonal plan
   s01 title G (David b1-b2, flute; a far-off soft double timpani step and a glint) -> s02 G, the question
-  (clarinet, harp, a soft thunder roll on '打雷') | E minor fear (tremolo, shiver, knees) | G minor hit on
-  '是一个巨人' -> s03 E minor horn call 'long ago' | G major on Israel's hill | Eb (a trombone chord), then
-  G minor with Goliath's head, on '非利士人站在那边' | D, the valley with its brook (V of G minor) -> s04 G
-  minor camp (tremolo, timpani growing) | the three stomps on '咚！咚！咚！' | Goliath's theme b1-b2 (a
+  (clarinet, harp, a soft thunder roll on the picture's thunder) | E minor fear (tremolo, shiver, knees) |
+  G minor on '是一个巨人' and the giant's two footfalls -> s03 E minor horn call 'long ago' | G major on
+  Israel's hill | Eb (a trombone chord), then G minor with Goliath's head, on '非利士人站在那边' | D, the
+  valley with its brook (V of G minor) -> s04 G minor camp (tremolo, timpani growing, his approaching steps)
+  | G minor on '咚！咚！咚！' and the three stomps on the picture | Goliath's theme b1-b2 (a
   clarinet run up on '好高好高') | b3-b4 with brass clanks on the bronze helmet and armour, a wooden thunk on
   '大木头' | his challenge (sparse: timpani steps, soft tremolo) | E minor fear | '连扫罗王': a drooping
   bassoon, half cadence on D -> s05 the day counter: G morning (flute bird), G minor shout (tuba) | E minor
@@ -236,6 +242,15 @@ def picture(c, name, t0=-1e9, t1=1e9):
     return sorted(t for nm, t in cues if nm == name and t0 <= t <= t1)
 
 
+def seg_at(c, segs, t):
+    """(segment, q) of cue-relative time t among segs (a hit that lands in a neighbouring segment takes its chord)."""
+    for sg in segs:
+        if sg.t0 - 1e-6 <= c.t0 + t < sg.t1 - 1e-6:
+            return sg, min(max(sg.q_of(c.t0 + t), 0.0), sg.n_q - 0.1)
+    sg = segs[0] if c.t0 + t < segs[0].t0 else segs[-1]
+    return sg, (0.0 if sg is segs[0] and c.t0 + t < sg.t0 else sg.n_q - 0.1)
+
+
 def on_picture(c, name, t0, t1, n, fallback):
     """The first n picture cues `name` in [t0, t1] if the scene shows at least n of them, else fallback()."""
     ts = picture(c, name, t0, t1)
@@ -335,7 +350,8 @@ def title(c):
 
 def afraid(c):
     """The question to the child (G major, clarinet, harp; a soft thunder roll on '打雷'); a crowd of frightened
-    people (E minor: tremolo, a clarinet shiver, knocking knees); the giant (G minor hit on '是一个巨人')."""
+    people (E minor: tremolo, a clarinet shiver, knocking knees); the giant (G minor on '是一个巨人', his two
+    footfalls on the picture)."""
     c.gain(-1.6)
     t_g = c.gap(c.find("今天的故事里"))
     t_j = c.at("是一个巨人")
@@ -372,10 +388,10 @@ def afraid(c):
     # 'what they feared was a giant!': G minor; the giant's two footfalls on the picture (timpani, bass drum,
     # tuba and plucked basses on G)
     for i_, t in enumerate(steps):
-        q = min(max(j.q_of(c.t0 + t), 0.0), j.n_q - 0.1)
-        stomp(j, q, vel=62 + 3 * i_, bass="G1")
-        j.add("tuba", q, _dq(j, q, 0.5), "G1", 54 + 2 * i_, "bass", "h")
-        j.sync(f"the giant's footfall {i_ + 1}", q, t)
+        sg, q = seg_at(c, (b, j), t)
+        stomp(sg, q, vel=62 + 3 * i_)
+        sg.add("tuba", q, _dq(sg, q, 0.5), sg.chord_at(q + 1e-3).bass_note(28, 40), 54 + 2 * i_, "bass", "h")
+        sg.sync(f"the giant's footfall {i_ + 1}", q, t)
     j.add("bsn", 0, 2, "Bb2", 48, "harmony")
     j.pad(["trem_va", "trem_va"], 2, 48, 64, vel=44, bass_ref=(31, 43))
     j.add("cb", 0, 2, "G1", 44, "bass")
@@ -387,7 +403,7 @@ def afraid(c):
 def valley(c):
     """'Long ago' (E minor horn call over timpani); Israel's hill (G major); the Philistines' hill (G minor,
     Goliath's head on the tuba) on '非利士人站在那边'; the valley between (D, a brook in the harp)."""
-    c.gain(-2.6)
+    c.gain(-3.6)
     t_i = c.at("以色列人站在这边")
     t_p = c.at("非利士人站在那边")
     t_v = c.at("中间隔着")
@@ -452,7 +468,6 @@ def giant(c):
     # the three stomps and Goliath's approaching steps follow the picture (the scene's thuds); without it,
     # the stomps sit on the spoken 咚s
     t_st = on_picture(c, "thud", t_dong - 0.3, c.le(0) + 0.3, 3, lambda: voice_times(c, "咚！咚！咚！", 3))
-    t_st = [min(max(t, t_dong), t_n - 0.3) for t in t_st]
     approach = picture(c, "thud", c.ls(0) - 0.3, t_dong - 0.3) or []
     a = c.seg(0, t_dong, 2, "4/4", "G minor", nominal=104, label="giant-camp")
     s = c.seg(t_dong, t_n, 1, "4/4", "G minor", nominal=128, label="giant-stomps")
@@ -477,8 +492,8 @@ def giant(c):
     a.pad(["trem_va", "trem_va", "trem_hi"], 3, 48, 67, vel=48, bass_ref=(31, 43))
     if approach:
         for i_, t in enumerate(approach):
-            q = min(max(a.q_of(c.t0 + t), 0.0), a.n_q - 0.5)
-            stomp(a, q, vel=48 + 3 * i_, timp=False)
+            sg, q = seg_at(c, (a, s), t)
+            stomp(sg, q, vel=48 + 3 * i_, timp=False)
     else:
         a.mel("pz_cb", "G1:1 r:1 G1:1 r:1 | Eb2:1 r:1 D2:1 r:1", vel=58, role="bass")
     timp_roll(a, 4, 7.9, midi("D2"), 24, 46)
@@ -488,10 +503,10 @@ def giant(c):
     s.sync("'咚！咚！咚！': G minor (Goliath steps out)", 0, t_dong, kind="change")
     s.add("bsn", 0, 4, "Bb2", 46, "harmony")
     for i_, t in enumerate(t_st):
-        q = min(s.q_of(c.t0 + t), s.n_q - 0.1)
-        stomp(s, q, vel=60 + 3 * i_, bass="G1")
-        s.add("tuba", q, _dq(s, q, 0.5), "G1", 54 + 2 * i_, "bass", "h")
-        s.sync(f"stomp {i_ + 1} ('咚')", q, t)
+        sg, q = seg_at(c, (a, s, n), t)
+        stomp(sg, q, vel=60 + 3 * i_)
+        sg.add("tuba", q, _dq(sg, q, 0.5), sg.chord_at(q + 1e-3).bass_note(28, 40), 54 + 2 * i_, "bass", "h")
+        sg.sync(f"stomp {i_ + 1} ('咚')", q, t)
     s.expr(["bsn"], [(0, -13), (4, -14)])
     s.pad(["trem_va", "trem_va"], 2, 48, 64, vel=44, bass_ref=(31, 43))
     s.add("cb", 0, 4, "G1", 42, "bass")
@@ -691,8 +706,9 @@ def camp(c):
     i.prog("G:4 | C:2 D:2")
     g.sync("Goliath's voice booms (his theme, a stomp)", 0, t_g)
     g.gain(-3.0)
-    far = picture(c, "thud", c.ls(0), t_g - 0.3) or []           # his booming steps, heard from afar
-    near = picture(c, "thud", t_g + 0.2, t_r - 0.3) or []        # ...and as he shouts
+    i_g = c.find("胆小鬼们")
+    far = picture(c, "thud", c.ls(0), c.ls(i_g) - 0.3) or []     # his booming steps, heard from afar
+    near = picture(c, "thud", c.ls(i_g) - 0.3, t_r - 0.3) or []  # ...and as he shouts
     # David arrives with his basket (the theme's head, clarinet) -- and hears a huge voice (Eb, D)
     a.mel("clar", DAVID[0] + " | G4:2 F#4:2", vel=58)
     a.pad(["vla", "vln2"], 2, 55, 69, vel=40, bass_part="vc", bass_lo=38, bass_hi=50)
@@ -704,8 +720,8 @@ def camp(c):
     a.expr(["vla", "vln2", "vc", "harp"], [(0, -14), (8, -14)])
     a.expr(["trem_va"], [(4, -20), (8, -12)])
     for t in far:
-        q = min(max(a.q_of(c.t0 + t), 0.0), a.n_q - 0.5)
-        stomp(a, q, vel=46, kit=True)
+        sg, q = seg_at(c, (a, g), t)
+        stomp(sg, q, vel=46, kit=True)
     a.expr(["timp", "pz_cb", "okit"], [(0, -10), (8, -10)])
     # 'Cowards! Who dares come out and fight me?': a stomp and Goliath's theme, slow and heavy
     stomp(g, 0, vel=64, bass="G1")
@@ -713,9 +729,9 @@ def camp(c):
     g.mel("bsn", GOLIATH[0], vel=56)
     g.add("cb", 0, 4, "G1", 42, "bass")
     for i_, t in enumerate(near):
-        q = min(g.q_of(c.t0 + t), g.n_q - 0.1)
-        stomp(g, q, vel=58, kit=True, bass="G1")
-        g.sync(f"Goliath's step {i_ + 1}", q, t)
+        sg, q = seg_at(c, (a, g, r), t)
+        stomp(sg, q, vel=58, kit=True)
+        sg.sync(f"Goliath's step {i_ + 1}", q, t)
     if not near:
         g.add("timp", 2, 0.5, "G2", 44, "timp")
     for k_, p_ in enumerate(g.chord_at(0).tones(50, 62)[:3]):
@@ -882,7 +898,7 @@ def armor(c):
     helmet, sword = (put[0], put[-1]) if put and len(put) >= 2 else (c.at("铜头盔"), c.at("大刀"))
     mail = on_picture(c, "coins", helmet + 0.4, sword - 0.4, 1, lambda: [c.at("铠甲")])[0]
     v_cl = voice_times(c, "哐当，哐当", 3)
-    clanks = [max(t, t_k) for t in on_picture(c, "thud", t_k - 0.3, c.le(1), 2, lambda: v_cl[:2])]
+    clanks = on_picture(c, "thud", c.ls(1) - 0.3, c.le(1), 2, lambda: v_cl[:2])
     t_oops = on_picture(c, "whoosh", clanks[-1] + 0.3, c.le(1), 1, lambda: v_cl[2:])[0]
     t_off = on_picture(c, "whoosh", c.ls(3) - 0.3, c.dur - 0.5, 1, lambda: [t_f])[0]
     a = c.seg(0, t_d, 2, "4/4", "G major", nominal=114, label="armor-fitting")
@@ -925,11 +941,12 @@ def armor(c):
     w.expr(["pz_lo", "vla", "vln2"], [(0, -12), (4, -12)])
     # 哐当，哐当: clank! clank! (woodblocks, a low pluck, the bassoon stumbling)
     for i_, t in enumerate(clanks):
-        q = min(k.q_of(c.t0 + t), k.n_q - 0.1)
-        clank(k, q, vel=56 + 2 * i_)
-        k.add("pz_cb", q, _dq(k, q, 0.5), "G1", 62, "bass", "h")
-        k.add("bsn", q, _dq(k, q, 1.75), "D3" if i_ == 0 else "G2", 58, "melody")
-        k.sync(f"'哐当' {i_ + 1} (clank)", q, t)
+        sg, q = seg_at(c, (w, k, o), t)
+        ch = sg.chord_at(q + 1e-3)
+        clank(sg, q, vel=56 + 2 * i_)
+        sg.add("pz_cb", q, _dq(sg, q, 0.5), ch.bass_note(28, 40), 62, "bass", "h")
+        sg.add("bsn", q, _dq(sg, q, 1.75), ch.tones(43, 55)[-1 if i_ == 0 else 0], 58, "melody")
+        sg.sync(f"'哐当' {i_ + 1} (clank)", q, t)
     k.pad(["vla", "vln2"], 2, 55, 69, vel=36, bass_ref=(31, 43))
     k.expr(["pz_lo", "pz_cb", "bsn"], [(0, -7), (4, -7)])
     k.expr("hand", [(0, -6), (4, -6)])
@@ -1157,9 +1174,8 @@ def sling(c):
     a.mel("bsn", GOLIATH[0], vel=54)
     if steps:
         for i_, t in enumerate(steps):
-            sg = a if t < t_r else r
-            q = min(max(sg.q_of(c.t0 + t), 0.0), sg.n_q - 0.1)
-            stomp(sg, q, vel=56 + 2 * i_, kit=True, bass="G1")
+            sg, q = seg_at(c, (a, r, p), t)
+            stomp(sg, q, vel=56 + 2 * i_, kit=True)
             sg.sync(f"Goliath's step {i_ + 1}", q, t)
     else:
         for q in (0, 1, 2, 3):
