@@ -41,8 +41,9 @@ SW, SH = 3000, 1688
 FY = 1390                      # David's ground line on the near bank
 K = 1.4                        # person scale
 VY = 780                       # far valley floor line (valley_elah)
-VS = 0.42                      # far valley scale
+VS = 0.5                      # far valley scale
 D_A = A.DAVID_A
+STAFF_S = 0.92                 # props.staff scale (x person scale) matching the crook David holds
 D_LK = A.DAVID_LK
 
 
@@ -116,7 +117,7 @@ def brook_svg(phase=0.0):
     return doc(S.g(out, filter="wobble"), defs)
 
 
-RIP_N = 8                      # ripple flipbook frames (a loop)
+RIP_N = 12                      # ripple flipbook frames (a loop)
 
 
 def ripples_svg(k):
@@ -224,10 +225,11 @@ def bank_svg():
     return doc(out)
 
 
+REEDS = ((1905, 1080, 0.55, 0), (2870, 1290, 0.9, 0), (2470, 1120, 0.5, 1))
+
+
 def plants_svg(sway=0.0):
     out = ""
-    for x, y, s, v in ((1905, 1080, 0.55, 0), (2140, 1215, 0.75, 1), (2870, 1290, 0.9, 0), (2420, 1140, 0.5, 1)):
-        out += PR.reeds(x, y, s, variant=v, sway=sway)
     for x, y, s, v in ((150, 1180, 1.0, 2), (620, 1090, 0.8, 0), (980, 1250, 1.1, 2), (1500, 1060, 0.7, 2),
                        (1740, 1330, 1.0, 0), (2620, 1050, 0.6, 2)):
         out += PR.grass_tuft(x, y, s, variant=v, sway=sway * 0.6)
@@ -351,7 +353,7 @@ def build(ctx):
     # ------------------------------------------------------------ positions
     lx_hand, _ = brook_span(FY - 84)
     KX = lx_hand - 66                                  # where David kneels (hands at the water's edge)
-    X0 = 330                                           # where he enters
+    X0 = 560                                           # where he enters
     adv = walk_adv(D_A, K)
     D0 = C._david_design(False, True)
     hands_k = C.body_points(lambda x, y, s_, f_: C.david(x, y, s_, f_, pose="kneel_pick"), KX, FY, K, 1)["hands"]
@@ -361,18 +363,21 @@ def build(ctx):
 
     # ------------------------------------------------------------ SKY, FAR, MEADOW, BROOK
     sc.add("sky", sky_svg(), wc=0.45)
+    # sky, far valley, meadow, brook, banks and the still plants are consecutive static layers = one image
+    sc.add("far", far_svg(), wc=0.7)
+    sc.add("meadow", meadow_svg(), wc=0.8)
+    sc.add("brook", brook_svg(), wc=0.6)
+    sc.add("bank", bank_svg(), wc=0.6)
+    sc.add("plants", plants_svg(), wc=0.7)
     for i, v in enumerate((6, 4, 5, 3.5)):
         sc.add(f"cloud{i}", cloud_svg(i), wc=0.7, motion=M.combine(M.drift(vx=-v), M.bob(3, 7 + i, i * 0.3)))
     birds = [doc(bird(1900, 420, 1.1, up) + bird(1990, 450, 0.9, not up) + bird(2060, 400, 0.8, up)) for up in (True, False)]
     sc.add("birds", birds, wc=0, frame_at=lambda t: float(int(t * 4) % 2), motion=M.drift(vx=-22))
-    sc.add("far", far_svg(), wc=0.7)
-    sc.add("meadow", meadow_svg(), wc=0.8)
-    sc.add("brook", brook_svg(), wc=0.6)
-    rip = [ripples_svg(k) for k in range(RIP_N)] + [ripples_svg(0)]
-    sc.add("ripples", rip, wc=0, frame_at=lambda t: (t / 1.8 * RIP_N) % RIP_N)
-    sc.add("bank", bank_svg(), wc=0.6)
-    reed_fr = [plants_svg(sw) for sw in (-0.4, 0.0, 0.4)]
-    sc.add("plants", reed_fr, wc=0.7, frame_at=lambda t: 1 + math.sin(2 * math.pi * t / 3.4))
+    rip = [ripples_svg(k) for k in range(RIP_N)]
+    sc.add("ripples", rip, wc=0, frame_at=lambda t: float(int(t / 1.8 * RIP_N) % RIP_N))
+    for i, (x, y, s_, v) in enumerate(REEDS):
+        fr = [doc(PR.reeds(x, y, s_, variant=v, sway=sw)) for sw in (-0.45, 0.0, 0.45)]
+        sc.add(f"reeds{i}", fr, wc=0.7, frame_at=lambda t, i=i: 1 + math.sin(2 * math.pi * (t / (3.2 + 0.4 * i) + 0.3 * i)))
 
     # ripple rings where his hands swish in the shallows
     for j in range(4):
@@ -385,7 +390,7 @@ def build(ctx):
 
     # the staff laid on the bank while he kneels
     staff_k = lambda t: t_bend <= t < t_hold
-    sc.add("staff_down", doc(PR.staff(KX - 150, FY + 22, 1.1 * K, 1, rot=-84)), wc=0.6,
+    sc.add("staff_down", doc(PR.staff(KX - 150, FY + 22, STAFF_S * K, 1, rot=-84)), wc=0.6,
            motion=lambda t: Tf(alpha=1.0 if staff_k(t) else 0.0))
 
     # ------------------------------------------------------------ DAVID
@@ -403,18 +408,18 @@ def build(ctx):
     hold_up = spD.add(A.david_fig(HOLD_UP, "brave", front=both(sling_far(D0), C._staff_near(D0)))(spD.ax, spD.ay, K, 1))
     hold_dn = spD.add(A.david_fig(HOLD_DOWN, "happy", front=both(sling_far(D0), C._staff_near(D0)))(spD.ax, spD.ay, K, 1))
     spins = []
+    Ds, ps_s = None, None
     for ph in [i / 8 for i in range(8)]:
         D = C._david_design(False, True)
         behind, front = C._sling_spin_hooks(D, ph, False)
         D["behind"], D["mid"], D["front"] = behind, C._bag_mid, both(front, C._staff_near(D))
+        D["front"] = front
         ps = dict(C.POSES["dv_sling_spin"])
-        ps["arms"] = (ps["arms"][0], D_ST)
-        ps["hands"] = ("fist", "fist")
         spins.append(spD.add(fig_(D, C._BOY, ps, "brave", spD.ax, spD.ay, K, 1)))
+        Ds, ps_s = D, ps
     D = C._david_design(False, True)
-    D["mid"], D["front"] = C._bag_mid, both(C._sling_front(D, "release"), C._staff_near(D))
+    D["mid"], D["front"] = C._bag_mid, C._sling_front(D, "release")
     ps = dict(C.POSES["dv_sling_release"])
-    ps["arms"] = (ps["arms"][0], D_ST)
     release = spD.add(fig_(D, C._BOY, ps, "brave", spD.ax, spD.ay, K, 1))
 
     t_arr_in = None
@@ -462,7 +467,27 @@ def build(ctx):
     sc.add("shD", doc(C.ground_shadow(0, FY, K, width=110, opacity=0.24)), wc=0,
            motion=lambda t: Tf(dx=d_pos(t)[0], alpha=1.0 if t < t_out + 0.1 or d_pos(t)[0] < lx_s - 40 or
                                d_pos(t)[0] > rx_s + 40 else 0.0))
+    # while he whirls the sling his staff stands planted in the soft bank beside him
+    hn = C.body_points(A.david_fig(HOLD_DOWN, "happy", front=both(sling_far(D0), C._staff_near(D0))), KX, FY, K,
+                       1)["hands"][1]
+    sc.add("staff_planted", doc(PR.staff(hn[0] + 2 * K, FY - 2, STAFF_S * K, 1)), wc=0.6,
+           motion=lambda t: Tf(alpha=1.0 if t_spin0 <= t < t_rel + 0.5 else 0.0))
     sc.add_dynamic("david", Actor(spD, sched, d_pos, walk=spin_fr, bper=2.6, phase=0.2))
+    # a big whirl ring round the spinning hand ("转啊转" - one gentle test swing)
+    sp_h = C.body_points(lambda x, y, s_, f_: fig_(Ds, C._BOY, ps_s, "brave", x, y, s_, f_), KX, FY, K, 1)["hands"][0]
+    rx, ry = 2.4 * 40 * 0.8 * K, 2.4 * 40 * 0.3 * K
+    sp_h = (sp_h[0] + 0.45 * rx, sp_h[1] - 6)
+    whirl = []
+    for k in range(6):
+        g = (f'<ellipse cx="{f1(sp_h[0])}" cy="{f1(sp_h[1] - 0.2 * ry)}" rx="{f1(rx)}" ry="{f1(ry)}" fill="none" '
+             f'stroke="#fffaf0" stroke-width="12" opacity="0.55"/>'
+             f'<ellipse cx="{f1(sp_h[0])}" cy="{f1(sp_h[1] - 0.2 * ry)}" rx="{f1(rx)}" ry="{f1(ry)}" fill="none" '
+             f'stroke="{P["ink_soft"]}" stroke-width="5" stroke-linecap="round" stroke-dasharray="46 30" '
+             f'stroke-dashoffset="{-k * 76 / 6:.1f}"/>')
+        whirl.append(doc(g))
+    sc.add("whirl", whirl, wc=0, frame_at=lambda t: float(int((t - t_spin0) / 0.06) % 6) if t > t_spin0 else 0.0,
+           motion=lambda t: Tf(alpha=M.progress(t, t_spin0 + 0.05, t_spin0 + 0.3, "sine") *
+                               (1 - M.progress(t, t_rel - 0.1, t_rel + 0.15, "sine"))))
 
     # stones in the bag: a little pop on the bag each time
     # ------------------------------------------------------------ count badges and the five-stone row
@@ -477,7 +502,9 @@ def build(ctx):
                     f'stroke-width="4" stroke-dasharray="10 8"/>' for x in row_x)
     row_a = lambda t: M.progress(t, counts[0] - 0.6, counts[0] - 0.1, "sine") * (1 - M.progress(t, t_hold - 0.2,
                                                                                                   t_hold + 0.4, "sine"))
-    sc.add("slots", doc(S.g(slots, filter="wobble-fine")), wc=0, motion=lambda t: Tf(alpha=row_a(t)))
+    pill = (f'<rect x="{row_x[0] - 80}" y="{ROW_Y - 66}" width="{row_x[-1] - row_x[0] + 160}" height="{200}" rx="70" '
+            f'fill="#fff8e6" fill-opacity="0.82" stroke="{P["ink_soft"]}" stroke-width="4"/>')
+    sc.add("slots", doc(S.g(pill + slots, filter="wobble-fine")), wc=0, motion=lambda t: Tf(alpha=row_a(t)))
     for i, (x, tc) in enumerate(zip(row_x, counts)):
         t_in = tc + 0.5
         mk = doc(PR.stone(x, ROW_Y + 18, 2.1, seed=i) + S.text(x, ROW_Y + 96, str(i + 1), size=46,
@@ -525,7 +552,7 @@ def build(ctx):
     # ------------------------------------------------------------ the whoosh far across the valley
     rel_h = C.body_points(lambda x, y, s_, f_: fig_(D, C._BOY, ps, "brave", x, y, s_, f_), KX, FY, K, 1)["hands"][0]
     wx0, wy0 = rel_h
-    wx1, wy1 = 2720, 650
+    wx1, wy1 = KX + 820, 720
     pts = [(M.lerp(wx0, wx1, u), M.lerp(wy0, wy1, u) - 260 * math.sin(math.pi * u) * (1 - 0.3 * u)) for u in
            [k / 20 for k in range(21)]]
     wd = S.smooth_path(pts, closed=False)
@@ -558,20 +585,18 @@ def build(ctx):
     c_wide = Cam(1560, 960, 2600)
     c_bank = Cam(KX + 40, 1095, 1500)
     c_close = Cam(KX + 60, 1135, 1250)
-    c_sling = Cam(KX + 170, 1085, 1450)
+    c_sling = Cam(KX + 230, 1040, 1550)
     c_out = Cam(KX + 380, 1060, 1700)
-    sc.camera = M.cam_keys([(0.0, c_wide), (t_walk + 0.3, c_wide), (t_arr_in + 0.4, c_bank), (t_pick, c_bank),
+    sc.camera = A.clamp_cam(M.cam_keys([(0.0, c_wide), (t_walk + 0.3, c_wide), (t_arr_in + 0.4, c_bank), (t_pick, c_bank),
                             (counts[0] - 0.3, c_close), (t_all + 0.6, c_close), (t_sling - 0.2, c_sling),
-                            (t_rel + 0.2, c_sling), (t_out + 1.2, c_out), (T, Cam(KX + 386, 1060, 1690))], "sine")
+                            (t_rel + 0.2, c_sling), (t_out + 1.2, c_out), (T, Cam(KX + 386, 1060, 1690))], "sine"), SW, SH)
 
     # ------------------------------------------------------------ FX
-    sc.fx = [
-        FX.motes((200, 300, 2900, 1500), count=24, color=(255, 248, 220), size=(3, 6), alpha=80),
-        FX.sparkles((KX + 40, HY - 30, KX + 240, HY + 40), count=10, t0=t_pick, t1=t_all + 0.5,
-                    color=(255, 250, 220), size=(6, 12), period=1.1, drift=0, seed=4),
-        FX.sparkles((2200, 1200, 2900, 1650), count=14, t0=0, t1=T + 1, color=(250, 252, 240), size=(6, 12),
-                    period=1.7, drift=0, seed=6),
-    ]
+    sc.add_dynamic("sparkle_hands", A.sparkle_dyn((KX + 40, HY - 40, KX + 240, HY + 40), count=10, t0=t_pick,
+                                                  t1=t_all + 0.5, color=(255, 250, 220), size=(6, 12), period=1.1,
+                                                  drift=0, seed=4))
+    sc.add_dynamic("sparkle_water", A.sparkle_dyn((2300, 1300, 2900, 1560), count=11, t0=-1, t1=T + 1,
+                                                  color=(250, 252, 240), size=(6, 12), period=1.7, drift=0, seed=6))
 
     # ------------------------------------------------------------ SOUND
     sc.sfx("waves_calm", 0, dur=T + 0.8, gain_db=-24, fade_in=0.8, fade_out=1.0, pan=0.3)

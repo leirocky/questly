@@ -62,8 +62,8 @@ class StarRing:
 
     def __init__(self, centre, rx=80, ry=24, period=1.1):
         self.c, self.rx, self.ry, self.per = centre, rx, ry, period
-        self.sp = Sprite(60, 60, 28, 28, wc=0.3, seed=5)
-        self.sp.add(star_svg())
+        self.sp = Sprite(84, 84, 38, 38, wc=0.3, seed=5)
+        self.sp.add(star_svg(32))
 
     def __call__(self, t):
         c = self.c(t)
@@ -77,7 +77,7 @@ class StarRing:
             ims.append(r)
         x0 = int(min(p[0] for _, p in ims))
         y0 = int(min(p[1] for _, p in ims))
-        can = Image.new("RGBA", (int(2 * self.rx + 90), int(2 * self.ry + 90)), (0, 0, 0, 0))
+        can = Image.new("RGBA", (int(2 * self.rx + 130), int(2 * self.ry + 130)), (0, 0, 0, 0))
         for im, (px, py) in ims:
             can.alpha_composite(im, (int(round(px - x0)), int(round(py - y0))))
         return can, (x0, y0)
@@ -103,7 +103,7 @@ def build(ctx):
 
     # ---------------------------------------------------------------- beats
     c0 = L0.chunks
-    t_g0 = L0.start + 0.15
+    t_g0 = max(L0.start + 0.15, 1.15)          # still for the whole dissolve from s11
     g_ff = [t_g0, t_g0 + 0.95, t_g0 + 1.9]
     t_firm = (c0[1].start if len(c0) > 1 else L0.start + 2.4) + 0.05
     t_run = (c0[2].start if len(c0) > 2 else L0.start + 4.0) + 0.1
@@ -174,8 +174,8 @@ def build(ctx):
                rot=-86 + 86 * M.ease("bounce")(clamp((t - t_fall0 - 0.05) / 0.9)), px=sb[0], py=sb[1]))
     head_up = V.C.goliath_head_point(XG2, GY, K, -1, "stand")
     hc = C.body_points(C.goliath, XG2, GY, K, -1, pose="stand")["head"]
-    sc.add_dynamic("stars", StarRing(lambda t: (hc[0] + 10, hc[1] - 105) if t_hit + 0.15 <= t < t_fall0 else None,
-                                     rx=95, ry=26), z=Z["goliath"] + 0.3)
+    sc.add_dynamic("stars", StarRing(lambda t: (hc[0] + 20 - 6 * g_rot(t), hc[1] - 150) if t_hit + 0.15 <= t < t_fall0
+                                     else None, rx=120, ry=30), z=Z["goliath"] + 0.3)
     sc.add("burst", burst_svg(head_up[0], head_up[1]), z=Z["goliath"] + 0.35, wc=0.2,
            motion=lambda t: Tf(alpha=0.0) if not (t_hit <= t < t_hit + 0.32) else
            Tf(sx=0.5 + 1.2 * (t - t_hit) / 0.32, sy=0.5 + 1.2 * (t - t_hit) / 0.32, px=head_up[0], py=head_up[1],
@@ -264,13 +264,13 @@ def build(ctx):
             ta = max(ta, t_rel)
             (xa, ya), (xb, yb) = view.to_out(*stone_at(ta)), view.to_out(*stone_at(tb))
             k = 1 - i / n
-            d.line([(xa, ya + 6), (xb, yb + 6)], fill=(255, 248, 225, int(200 * k)), width=max(2, int(26 * k)))
+            d.line([(xa, ya + 6), (xb, yb + 6)], fill=(255, 246, 215, int(235 * k)), width=max(3, int(34 * k)))
         for j, off in enumerate((-22, 0, 22)):
             ta = t - 0.5
             if ta < t_rel:
                 continue
             (xa, ya), (xb, yb) = view.to_out(*stone_at(ta)), view.to_out(*stone_at(t - 0.18))
-            d.line([(xa, ya + off + 6), (xb, yb + off + 6)], fill=(110, 80, 55, 120), width=3)
+            d.line([(xa, ya + off + 6), (xb, yb + off + 6)], fill=(110, 80, 55, 170), width=4)
         frame.alpha_composite(ov)
         return frame
 
@@ -325,7 +325,7 @@ def build(ctx):
     isr = hill_cast("israel", dict(hope=("stand", "happy"), worry=("stand", "worried"),
                                    surp=("stand", "surprised")), seed0=60)
     for j, (x, y, sp, d) in enumerate(isr):
-        sched = [(0, d["hope"] if j % 3 != 1 else d["worry"], 0), (g_ff[1] + 0.1 * j, d["worry"], 0.0),
+        sched = [(0, d["hope"], 0), (g_ff[1] + 0.1 * j, d["worry"], 0.0),
                  (t_hit + 0.2 + 0.07 * j, d["surp"], 0.6)]
         acts.append(Actor(sp, sched, lambda t, x=x, y=y: (x, y), breathe=0.012, bper=2.6 + 0.2 * j, phase=0.13 * j,
                           toff=toff))
@@ -360,7 +360,7 @@ def build(ctx):
     # ---------------------------------------------------------------- fx
     hand = C.body_points(V.C.david, XD2, GY, K, 1, pose="hold_sling")["head"]
     sc.fx = [twinkle([(t_show + 0.3, XD2 + 70 * K, GY - 240 * K, 50)]), trail,
-             FX.motes((0, 300, SW, 1800), count=26, color=(255, 246, 214), size=(3, 6), alpha=80)]
+             V.valley_motes(toff)]
     _ = hand
 
     # ---------------------------------------------------------------- sound

@@ -238,7 +238,11 @@ def valley_hills_svg():
         y = ground(x) + rng.uniform(40, 120)
         deco += (f'<path d="{S.blob(x, y, 30, 17, 0.14, 9, seed=int(x))}" fill="#cfbe9b" stroke="{INK}" '
                  f'stroke-width="3.2"/>')
-    return doc(out + S.g(deco, filter="wobble-fine"))
+    shade_ = ""
+    for cx, cy, rx, ry in ((700, 1180, 520, 110), (3100, 1180, 520, 110), (250, 1000, 300, 60), (3550, 1000, 300, 60)):
+        shade_ += (f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="#6f9440" opacity="0.22" '
+                   f'filter="url(#blur-lg)"/>')
+    return doc(out + shade_ + S.g(deco, filter="wobble-fine"))
 
 
 BACK_TENTS = ((0.025, 0.25, -26), (0.115, 0.22, -30), (0.195, 0.2, -24))
@@ -301,6 +305,11 @@ def meadow_svg():
         r = 10 + 14 * (y - MEADOW_Y) / (SH - MEADOW_Y)
         inner += (f'<path d="{S.blob(x, y, r, r * 0.55, 0.15, 8, seed=int(x))}" fill="#d6c6a4" stroke="{INK}" '
                   f'stroke-width="2.6"/>')
+    for cx, cy, rx, ry, col, op in ((600, 1560, 700, 90, "#7d9f45", 0.22), (3200, 1540, 800, 100, "#7d9f45", 0.22),
+                                    (2000, 2080, 1400, 120, "#6f9440", 0.25), (1400, 1720, 500, 70, "#d8e69a", 0.3),
+                                    (2700, 1700, 600, 80, "#d8e69a", 0.28)):
+        inner += (f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="{col}" opacity="{op}" '
+                  f'filter="url(#blur-lg)"/>')
     inner += brook_markup()
     body += f'<clipPath id="vmc"><path d="{d}"/></clipPath><g clip-path="url(#vmc)">{inner}</g>'
     body += f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="{INK}" stroke-width="4" ' \
@@ -343,7 +352,11 @@ def brook_markup():
 
 
 def big_tent_svg(wave=0.0):
-    return doc(PR.tent(TENT_X, GY + 30, TENT_S, -1, "philistine", wave=wave)
+    """The big Philistine tent at the right edge (its pennant flies from a separate pole beside it, clear of
+    Goliath's face when he walks out from behind the tent)."""
+    pole = PR._flag_pole(0, -470, 0, PR.CREST_RED, "#3f7f86", "pennant", wave)
+    pole = f'<g filter="url(#wobble-fine)" transform="translate({TENT_X + 330},{GY + 20}) scale({K * 1.25})">{pole}</g>'
+    return doc(pole + PR.tent(TENT_X, GY + 30, TENT_S, -1, "philistine", flag=False, wave=wave)
                + PR.bush(TENT_X - 380, GY + 40, 0.8, variant=1))
 
 
@@ -388,7 +401,9 @@ def add_valley(sc, toff=0.0):
         sc.add(f"camp_{side}", frames, z=Z["camps"] + (0.0 if side == "israel" else 0.01), wc=0.7,
                frame_at=lambda t, ph=(0.0 if side == "israel" else 0.4): 1.5 + 1.5 * math.sin(
                    2 * math.pi * ((t + toff) / 2.4 + ph)))
-    sc.add("meadow", meadow_svg(), z=Z["meadow"], wc=0.8)
+    # the meadow never overlaps the clouds, camps or hill people, so it sits right after the hills: sky, valley and
+    # meadow flatten into one static picture
+    sc.add("meadow", meadow_svg(), z=Z["hills"] + 0.1, wc=0.8)
     frames = [big_tent_svg(w) for w in (0.0, 0.33, 0.66)]
     sc.add("big_tent", frames, z=Z["tent"], wc=0.7,
            frame_at=lambda t: 1 + math.sin(2 * math.pi * (t + toff) / 2.2))
@@ -619,8 +634,8 @@ class Dust:
             u = (t - t0) / self.dur
             g = min(5, int(u * 3.2 * 6))
             a = 1.0 if u < 0.45 else 1 - (u - 0.45) / 0.55
-            ss = s * (1 + 0.25 * u)
-            res = self.sp.place(g, x + flip * 60 * s * u, y - 25 * s * u, ss, ss * 0.95, 0, max(0.0, a))
+            ss = round(s * (1 + 0.5 * u) / 0.02) * 0.02
+            res = self.sp.place(g, x + flip * 90 * s * u, y - 70 * s * u ** 0.7, ss, ss * 0.95, 0, max(0.0, a))
             if res:
                 ims.append(res)
         if not ims:
@@ -797,11 +812,10 @@ def bearer_sprite(seed=33):
 
 
 def dove_sprite(seed=90):
-    sp = Sprite(140, 120, 70, 60, wc=0.4, seed=seed)
-    for w in (1.0, 0.33, -0.33, -1.0, -0.33, 0.33):
-        sp.add(PR.dove(70, 64, 0.42, 1, wing=w))
-    for w in (1.0, 0.33, -0.33, -1.0, -0.33, 0.33):
-        sp.add(PR.dove(70, 64, 0.42, -1, wing=w))
+    sp = Sprite(250, 220, 125, 110, wc=0.4, seed=seed)
+    for f in (1, -1):
+        for w in (1.0, 0.33, -0.33, -1.0, -0.33, 0.33):
+            sp.add(PR.dove(125, 116, 0.8, f, wing=w))
     return sp
 
 
@@ -846,6 +860,12 @@ def shadow_sprite():
         sp.add(f'<ellipse cx="{700 + cx * K}" cy="62" rx="{rx * K}" ry="{ry * K}" fill="{INK}" opacity="0.2" '
                f'filter="url(#soft)"/>')
     return sp
+
+
+def valley_motes(toff=0.0):
+    """Drifting warm light motes over the valley, on the shared clock."""
+    m = FX.motes((0, 300, SW, 1800), count=26, color=(255, 246, 214), size=(3, 6), alpha=80)
+    return lambda frame, t, view: m(frame, t + toff, view)
 
 
 def light_motion(windows, peak=0.6):
@@ -1018,7 +1038,7 @@ def build(ctx):
     GW = [gsp.add(goliath_rig(goliath_walk_ps(k), "angry", gsp.ax, gsp.ay, items="stride_a"))
           for k in range(2 * WALK_N)]
     gi = dict(stand=gsp.add(C.goliath(gsp.ax, gsp.ay, K, -1, pose="stand")),
-              stand_sneer=gsp.add(C.goliath(gsp.ax, gsp.ay, K, -1, pose="stand", expr="smug")),
+              stand_sneer=gsp.add(C.goliath(gsp.ax, gsp.ay, K, -1, pose="stand")),
               shout=gsp.add(C.goliath(gsp.ax, gsp.ay, K, -1, pose="shout")),
               point=gsp.add(C.goliath(gsp.ax, gsp.ay, K, -1, pose="mock_point", expr="roar")),
               smug=gsp.add(C.goliath(gsp.ax, gsp.ay, K, -1, pose="laugh", expr="sneer")),
@@ -1166,7 +1186,7 @@ def build(ctx):
     # ---------------------------------------------------------------- camera
     wide = Cam(1900, 1110, 3500)
     right = Cam(2330, 1200, 2900)
-    med = Cam(2880, 1400, 1900)
+    med = Cam(2840, 1400, 1900)
     feet = Cam(2930, 1660, 1500)
     top = Cam(2930, 1090, 1500)
     hoopc = Cam(2950, 1330, 1700)
@@ -1177,14 +1197,14 @@ def build(ctx):
     shout = Cam(2150, 1150, 3200)
     ptc = Cam(2560, 1330, 2300)
     sh2 = Cam(2300, 1200, 2800)
-    israel = Cam(830, 960, 1660)
+    israel = Cam(720, 800, 1440)
     keys = [(0, wide), (L0.start + 0.2, wide), (beats[0] - 0.4, right), (beats[2] + 0.5, right),
-            (t_name + 0.2, right), (t_tall - 0.55, med), (t_tall - 0.05, feet), (t_tall + 0.15, feet),
+            (t_name + 0.1, right), (t_tall - 0.05, feet), (t_tall + 0.15, feet),
             (t_hoop - 0.05, top), (t_hoop + 0.9, hoopc), (t_hoop_out + 0.1, hoopc), (t_helm + 0.1, helm),
-            (t_armr - 0.25, helm), (t_armr + 0.55, armr), (t_spear - 0.2, armr), (t_spear + 0.75, spr),
-            (t_log, logc), (L2.end + 0.1, logc), (L3.start - 0.05, shout), (t_pt - 0.1, shout),
+            (t_armr - 0.6, helm), (t_armr + 0.7, armr), (t_spear - 0.5, armr), (t_spear + 0.8, spr),
+            (t_log, logc), (L2.end - 0.3, logc), (L3.start + 0.7, shout), (t_pt - 0.1, shout),
             (t_pt + 1.2, ptc), (t_sh2 - 0.4, ptc), (t_sh2 + 0.9, sh2), (L3.end - 0.3, sh2),
-            (L4.start - 0.2, wide), (t_fear + 2.0, israel), (T, Cam(840, 965, 1620))]
+            (L4.start - 0.2, wide), (t_fear + 2.0, israel), (T, Cam(730, 810, 1400))]
     cam = M.cam_keys(keys, "sine")
     for k_, b in enumerate(beats):
         cam = M.cam_shake(cam, amp=14 if k_ == 2 else 10, t0=b, t1=b + 0.38, freq=16, seed=3 + k_)
@@ -1198,7 +1218,7 @@ def build(ctx):
     sc.fx = [twinkle([(t_helm + 0.25, hp["head_top"][0] - 20, hp["head_top"][1] + 40, 60),
                       (t_armr + 0.45, XG - 40, GY - 520, 80), (t_armr + 0.7, XG + 60, GY - 430, 50),
                       (t_spear + 0.5, sh_pt[0] + 14, GY - 1150, 80), (t_spear + 0.75, sh_pt[0], GY - 800, 50)]),
-             FX.motes((0, 300, SW, 1800), count=26, color=(255, 246, 214), size=(3, 6), alpha=80)]
+             valley_motes()]
 
     # ---------------------------------------------------------------- sound
     sc.sfx("wind_soft", 0, dur=T, gain_db=-17, fade_in=0.8, fade_out=0.8)

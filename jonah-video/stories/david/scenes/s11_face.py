@@ -32,6 +32,8 @@ from stories.david.scenes.s04_giant import (GY, K, SH, SW, XB, XD, XG, Z, Actor,
                                             shadow_sprite, steps_walk)
 
 END_CAM = Cam(1900, 1300, 2900)      # the calm two-shot shared with s12's first frame
+PEBBLES = [[(1150, 1985, 14), (1190, 1992, 10)], [(2700, 2010, 15), (2740, 2016, 11)],
+           [(1900, 2050, 16), (1940, 2056, 10), (1870, 2060, 8)]]
 
 
 def goliath_drawings(sp):
@@ -60,12 +62,12 @@ def build(ctx):
     t_world = phrase_t(L3, "全世界", 0.15)
     t_up2 = (L3.chunks[1].start if len(L3.chunks) > 1 else L3.start + 5.0) - 0.1
     t_firm = (L3.chunks[2].start if len(L3.chunks) > 2 else L3.start + 8.2) - 0.05
-    t_end = L3.end + 0.1
+    t_end = min(L3.end + 0.1, T - 1.5)             # every pose is final before the dissolve into s12
     t_angry = t_up2 + 0.4
 
     # ---------------------------------------------------------------- David walks in
-    n = 10
-    ff = [0.6 + 0.42 * i for i in range(n + 1)]
+    n = 7                                         # he comes in from just beyond the left edge of the frame
+    ff = [0.5 + 0.5 * i for i in range(n + 1)]
     x0 = XD - n * V.STEP_D
     d_walk, d_px = steps_walk(ff, x0, V.STEP_D, 1)
     dsp = david_sprite()
@@ -94,6 +96,8 @@ def build(ctx):
     sc.add_dynamic("bearer", Actor(bsp, [(0, b_st, 0), (t_laugh + 0.2, b_sm, 0.4), (t_shout + 1.5, b_st, 0.0)],
                                    lambda t: (XB, GY), breathe=0.012, bper=2.9, phase=0.3, toff=toff),
                    z=Z["bearer_back"])
+    for i, pts in enumerate(PEBBLES):
+        sc.add(f"pebbles{i}", V.pebbles_svg(pts, 60 + i), z=Z["prop"] + 0.1 * i, wc=0.4)
     shp = shadow_sprite()
     sc.add_dynamic("shadows", lambda t: _shadows(shp, d_px(t)), z=Z["shadow"])
 
@@ -118,7 +122,7 @@ def build(ctx):
         sched = [(0, d["stand"], 0), (t_laugh + 0.3 + 0.12 * j, d["laugh"], 0.7), (t_gstand + 0.2 + 0.1 * j,
                                                                                     d["stand"], 0.4)]
         if j % 2 == 0:
-            sched += [(t_up2 + 0.5 + 0.12 * j, d["surp"], 0.4), (t_end + 0.2 + 0.1 * j, d["stand"], 0.0)]
+            sched += [(t_up2 + 0.5 + 0.12 * j, d["surp"], 0.4), (min(t_end + 0.1 + 0.04 * j, T - 1.35), d["stand"], 0.0)]
 
         def jig(t, j=j):
             u = t - (t_laugh + 0.3 + 0.12 * j)
@@ -128,13 +132,15 @@ def build(ctx):
     add_hill_actors(sc, acts)
 
     # ---------------------------------------------------------------- birds in the sky, God's light
-    sc.add_dynamic("birds", Birds(dove_sprite(), 4, 2420, 610, 420, 120, t_birds, t_talk + 0.6, period=4.6),
+    sc.add_dynamic("birds", Birds(dove_sprite(), 4, 2480, 720, 430, 120, t_birds, t_talk + 0.6, period=4.6),
                    z=Z["hills"] + 0.6)
     lx = XD + 10
     sc.add("light", light_svg(lx, 0, GY + 20, 120, 230, "s11l"), z=Z["fx"] - 2, wc=0, blend="screen",
            motion=light_motion([(t_up - 0.1, t_down + 0.6), (t_up2 - 0.1, t_firm + 1.0)]))
 
     # ---------------------------------------------------------------- camera
+    # shot / reverse shot: a clean cut from the giant (and the birds) to David in the pause before he answers
+    t_cut = round((L1.end + 0.6 * (L2.start - L1.end)) * 30) / 30
     wide = Cam(1950, 1110, 3500)
     walk = Cam(1880, 1230, 3000)
     gol = Cam(2650, 1400, 2000)
@@ -142,10 +148,10 @@ def build(ctx):
     dav = Cam(1120, 1540, 1520)
     davup = Cam(1110, 1460, 1640)
     two = Cam(1900, 1150, 3300)
-    keys = [(0, wide), (L0.start + 0.3, wide), (t_laugh + 0.2, walk), (t_mock - 0.1, walk), (t_mock + 1.2, gol),
-            (t_shout, gol), (t_birds + 1.1, sky), (L1.end + 0.1, sky), (t_talk + 0.3, dav), (t_up - 0.2, dav),
-            (t_up + 0.9, davup), (L2.end + 0.1, davup), (t_talk2 + 1.2, two), (t_up2 - 0.6, two),
-            (t_up2 + 0.7, davup), (t_firm + 0.2, davup), (t_end + 0.6, END_CAM), (T, END_CAM)]
+    keys = [(0, wide), (L0.start + 0.3, wide), (t_laugh + 0.2, walk), (t_mock - 0.6, walk), (t_mock + 1.3, gol),
+            (t_shout, gol), (t_birds + 1.1, sky), (t_cut - 0.02, sky), (t_cut - 0.0001, dav), (t_up - 0.2, dav),
+            (t_up + 0.9, davup), (L2.end + 0.1, davup), (t_talk2 + 2.0, two), (t_up2 - 1.5, two),
+            (t_up2 + 0.6, davup), (t_firm + 0.2, davup), (T - 1.3, END_CAM), (T, END_CAM)]
     sc.camera = M.cam_keys(keys, "sine")
 
     # ---------------------------------------------------------------- fx
@@ -153,7 +159,7 @@ def build(ctx):
                          size=(8, 18), drift=-14, seed=5),
              FX.sparkles((lx - 200, GY - 520, lx + 200, GY - 120), count=16, t0=t_up2 + 0.2, t1=t_firm + 0.8,
                          size=(8, 18), drift=-14, seed=6),
-             FX.motes((0, 300, SW, 1800), count=26, color=(255, 246, 214), size=(3, 6), alpha=80)]
+             V.valley_motes(toff)]
 
     # ---------------------------------------------------------------- sound
     sc.sfx("wind_soft", 0, dur=T, gain_db=-17, fade_in=0.8, fade_out=0.8)

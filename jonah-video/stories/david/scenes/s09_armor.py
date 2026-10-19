@@ -177,7 +177,7 @@ def build(ctx):
     toff = D8 - 1.0                                   # s08's clock at this scene's t = 0 (the dissolve's start)
 
     # ------------------------------------------------------------ beats
-    t_s = pt(ctx, 0, "扫罗王把自己")
+    t_s = max(pt(ctx, 0, "扫罗王把自己"), 1.12)          # (not before the dissolve from s08 has finished)
     t_give = pt(ctx, 0, "给大卫穿上")
     t_helm = pt(ctx, 0, "头上戴上")
     t_mail = pt(ctx, 0, "身上穿上")
@@ -234,8 +234,9 @@ def build(ctx):
     t_drop = t_s + 0.45
     staff_rot = lambda t: (-86 * M.ease("in")(clamp((t - t_drop) / 0.38)) +
                            (5 * math.sin(math.pi * clamp((t - t_drop - 0.38) / 0.22)) if t > t_drop + 0.38 else 0))
-    sc.add("staff", doc(PR.staff(STX, FY + 26, 1.1 * K, 1)), wc=0.6,
-           motion=lambda t: Tf(rot=staff_rot(t), alpha=1.0 if t_drop <= t < t_pick else 0.0, px=STX, py=FY + 26))
+    sc.add("staff", doc(PR.staff(STX, FY - 2, 0.92 * K, 1)), wc=0.6,
+           motion=lambda t: Tf(rot=staff_rot(t), dy=28 * M.progress(t, t_drop, t_drop + 0.38, "in"),
+                               alpha=1.0 if t_drop <= t < t_pick else 0.0, px=STX, py=FY - 2))
 
     # ------------------------------------------------------------ SAUL
     spS = A.saul_sprite()
@@ -519,7 +520,7 @@ def build(ctx):
     spB = sprite(520, 680, 260, 640, seed=64)
     b_smile = spB.add(C.soldier(spB.ax, spB.ay, K, 1, variant=2, pose="stand", expr="happy"))
     b_laugh = spB.add(C.soldier(spB.ax, spB.ay, K, 1, variant=2, pose="stand", expr="laugh"))
-    A.shadow_layer(sc, "shB", lambda t: SOLB_X, z=0.5)
+    A.shadow_layer(sc, "shB", lambda t: SOLB_X)
     sc.add_dynamic("soldierB", A.Actor(spB, [(0, b_smile, 0), (t_k2 + 0.2, b_laugh, 0.4), (t_stuck + 0.8, b_smile, 0.3),
                                              (t_m_off + 0.2, b_laugh, 0.4), (T - 1.5, b_smile, 0.3)],
                                        lambda t: (SOLB_X, FY), bper=3.2, phase=0.7 + toff / 3.2))
@@ -533,14 +534,12 @@ def build(ctx):
     c_walk = Cam(1260, 1035, 1420)
     c_peek = Cam(1240, 1040, 1360)
     c_end = Cam(1220, 1025, 1480)
-    sc.camera = M.cam_keys([(0.0, c0), (1.0, c0), (a_go + 0.9, c_fetch), (t_aarr - 0.3, c_fetch),
+    sc.camera = A.clamp_cam(M.cam_keys([(0.0, c0), (1.0, c0), (a_go + 0.9, c_fetch), (t_aarr - 0.3, c_fetch),
                             (t_take1 + 0.9, c_dress), (t_land3 + 0.6, c_dress), (t_k1 - 0.3, c_walk),
                             (t_say - 0.3, c_walk), (t_say + 0.8, c_peek), (t_off - 0.2, c_peek),
-                            (t_off + 1.4, c_end), (T, Cam(1218, 1025, 1470))], "sine")
+                            (t_off + 1.4, c_end), (T, Cam(1218, 1025, 1470))], "sine"), A.SW, A.SH)
 
-    motes = FX.motes((300, 400, 2600, 1300), count=26, color=(255, 240, 200), size=(3, 6), alpha=90)
-    sc.fx = [lambda frame, t, view: motes(frame, t + toff, view),    # s08's motes, on s08's clock
-             FX.vignette(lambda t: 0.28)]
+
 
     # ------------------------------------------------------------ SOUND
     sc.sfx("crowd", 0, dur=T + 0.8, gain_db=-28, fade_in=0.8, fade_out=1.0, pan=-0.4)

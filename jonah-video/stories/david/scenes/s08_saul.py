@@ -8,7 +8,7 @@ from PIL import Image
 from art import characters as C
 from art import props as PR
 from art import style as S
-from art.scenes.s15_city import WALK_A, WALK_N, keyed, sprite, walk_pose
+from art.scenes.s15_city import WALK_A, WALK_N, Sprite, keyed, walk_pose
 from art.style import P
 from engine import fx as FX
 from engine import motion as M
@@ -241,6 +241,11 @@ def floor_svg():
         xx, yy = rng.uniform(0, SW), rng.uniform(WB + 20, SH)
         out += (f'<path d="M{xx:.0f},{yy:.0f} l{rng.uniform(30, 90):.0f},{rng.uniform(-3, 3):.0f}" '
                 f'stroke="#d9b98c" stroke-width="3" opacity="0.6"/>')
+    # daylight from the entrance spilling across the floor
+    x0, x1, top = DOOR
+    defs += S.lin_grad("s8dl", [(0, "#fff4d6", 0.42), (1, "#fff4d6", 0.0)], x1=0, y1=0, x2=1, y2=0.4)
+    spill = (f'<path d="M{x0},{WB} L{x1},{WB} L{x1 + 900},{SH + 40} L{x0 + 120},{SH + 40} Z" fill="url(#s8dl)" '
+             f'filter="url(#blur-md)"/>')
     # the big rug (in perspective) under the king and David
     rb, rf = WB + 40, SH - 40
     pts = [(860, rb), (2330, rb), (2560, rf), (620, rf)]
@@ -261,7 +266,7 @@ def floor_svg():
     # fringe along the front edge
     for xx in range(630, 2560, 22):
         out += f'<path d="M{xx},{rf} l-3,22" stroke="#e8c062" stroke-width="4" stroke-linecap="round"/>'
-    return doc(S.g(out, filter="wobble"), defs)
+    return doc(S.g(out, filter="wobble") + spill, defs)
 
 
 def table_svg(items="all"):
@@ -363,8 +368,8 @@ def lamp_svg(lit=1.0):
 
 def lamp_glow_svg():
     x, y = LAMP
-    defs = S.rad_grad("s8glow", [(0, "#ffe9b0", 0.75), (0.35, "#ffd98a", 0.32), (1, "#ffd98a", 0)])
-    return doc(f'<ellipse cx="{x}" cy="{y + 30}" rx="620" ry="540" fill="url(#s8glow)"/>', defs)
+    defs = S.rad_grad("s8glow", [(0, "#ffe9b0", 0.8), (0.4, "#ffd98a", 0.3), (1, "#ffd98a", 0)])
+    return doc(f'<ellipse cx="{x}" cy="{y - 10}" rx="300" ry="250" fill="url(#s8glow)"/>', defs)
 
 
 def doorlight_svg():
@@ -384,11 +389,56 @@ def fg_svg():
                filter="wobble-fine")
     d = (f"M{SW + 40},-40 L{SW - 210},-40 C{SW - 150},200 {SW - 200},420 {SW - 120},560 C{SW - 90},640 {SW - 60},700 "
          f"{SW - 40},780 L{SW + 40},800 Z")
-    out += S.g(f'<path d="{d}" fill="{S.shade(GOAT, -0.1)}" stroke="{INK}" stroke-width="5"/>' +
-               f'<path d="M{SW - 170},-40 C{SW - 120},200 {SW - 150},420 {SW - 90},560" fill="none" '
-               f'stroke="{S.shade(GOAT, 0.3)}" stroke-width="8" opacity="0.6"/>', filter="wobble")
-    return doc(out)
+    right = S.g(f'<path d="{d}" fill="{S.shade(GOAT, -0.1)}" stroke="{INK}" stroke-width="5"/>' +
+                f'<path d="M{SW - 170},-40 C{SW - 120},200 {SW - 150},420 {SW - 90},560" fill="none" '
+                f'stroke="{S.shade(GOAT, 0.3)}" stroke-width="8" opacity="0.6"/>', filter="wobble")
+    return doc(out), doc(right)
 
+
+
+# ================================================================== tight sprites
+class TightSprite(Sprite):
+    """A Sprite whose drawings are cropped to their painted area after rasterising (much less to warp per frame)."""
+
+    def load(self):
+        if self.imgs is None:
+            ims = Sprite.load(self)
+            self.offs = []
+            out = []
+            for im in ims:
+                bb = im.getchannel("A").getbbox() or (0, 0, 2, 2)
+                x0, y0 = max(0, bb[0] - 2), max(0, bb[1] - 2)
+                x1, y1 = min(im.width, bb[2] + 2), min(im.height, bb[3] + 2)
+                out.append(im.crop((x0, y0, x1, y1)))
+                self.offs.append((x0, y0))
+            self.imgs = out
+        return self.imgs
+
+    def place(self, i, x, y, sx=1.0, sy=1.0, dy=0.0, alpha=1.0):
+        im = self.load()[int(i)]
+        ox, oy = self.offs[int(i)]
+        ax, ay = self.ax - ox, self.ay - oy
+        if abs(sx - 1) > 2e-3 or abs(sy - 1) > 2e-3:
+            w, h = im.size
+            nw, nh = max(1, round(w * sx)), max(1, round(h * sy))
+            key = (int(i), nw, nh)
+            if key not in self._rs:
+                if len(self._rs) > 400:
+                    self._rs.clear()
+                self._rs[key] = im.resize((nw, nh), Image.BILINEAR)
+            im = self._rs[key]
+            ax, ay = ax * nw / w, ay * nh / h
+        if alpha < 0.998:
+            if alpha <= 0.002:
+                return None
+            a = np.asarray(im).copy()
+            a[..., 3] = (a[..., 3].astype(np.float32) * alpha).astype(np.uint8)
+            im = Image.fromarray(a, "RGBA")
+        return im, (x - ax, y + dy - ay)
+
+
+def sprite(cw, ch, ax, ay, wc=1.0, seed=0):
+    return TightSprite(cw, ch, ax, ay, wc, seed)
 
 
 # ================================================================== timing helpers (shared with s09, s10)
@@ -463,16 +513,26 @@ def paste(base, im, x, y):
 _ROT = {}
 
 
-def rotated(im, deg, cx, cy):
-    """im rotated by deg (clockwise, like SVG) about (cx, cy) in its own pixels (cached, 0.5 deg steps)."""
+def rotated(im, deg, cx, cy, pad=0):
+    """im rotated by deg (clockwise, like SVG) about (cx, cy) in its own pixels, on a canvas grown by pad on every
+    side (so nothing is clipped; the caller shifts the top-left by -pad). Cached in 0.5 deg steps."""
     deg = round(deg * 2) / 2
+    if pad:
+        big = Image.new("RGBA", (im.width + 2 * pad, im.height + 2 * pad), (0, 0, 0, 0))
+        key0 = (id(im), "pad", pad)
+        if key0 not in _ROT:
+            big.paste(im, (pad, pad))
+            _ROT[key0] = big
+        base = _ROT[key0]
+    else:
+        base = im
     if abs(deg) < 0.25:
-        return im
-    key = (id(im), deg, round(cx), round(cy))
+        return base
+    key = (id(im), deg, round(cx), round(cy), pad)
     if key not in _ROT:
         if len(_ROT) > 300:
             _ROT.clear()
-        _ROT[key] = im.rotate(-deg, resample=Image.BICUBIC, center=(cx, cy))
+        _ROT[key] = base.rotate(-deg, resample=Image.BICUBIC, center=(cx + pad, cy + pad))
     return _ROT[key]
 
 
@@ -509,7 +569,8 @@ class Actor(Perf):
             r = self.rot(t)
             if abs(r) >= 0.25:
                 im, (l, tp) = out
-                out = rotated(im, r, x - l, y + hd - tp), (l, tp)
+                pad = int(0.3 * max(im.size)) + 4
+                out = rotated(im, r, x - l, y + hd - tp, pad), (l - pad, tp - pad)
         return out
 
 
@@ -838,6 +899,16 @@ def saul_draw(sp, name, facing=-1, expr=None):
 
 SAUL_BLESS = _P(h=-2, arms=(("fk", 12, 6), ("fk", 102, 126)), hands=("fist", "palm"), expr="kind")
 SAUL_A = WALK_A * 1.1          # Saul's ankle travel (1.1 x an adult)
+
+
+def snap_start(x0, x1, adv):
+    """Start x near x0 from which a whole number of walk drawings lands exactly on x1."""
+    n = int(round(abs(x1 - x0) / adv))
+    return x1 - (1 if x1 > x0 else -1) * n * adv
+
+
+# Saul walks from his stool to David in whole walk drawings: snap where he stops (s09 starts there)
+SAUL_END_X = STOOL_X - round((STOOL_X - SAUL_END_X) / (2 * SAUL_A / WALK_N * K)) * (2 * SAUL_A / WALK_N * K)
 DAVID_A = WALK_A * 0.68        # David's (boy legs)
 DAVID_LK = 0.68
 
@@ -847,26 +918,28 @@ def add_tent(sc, toff=0.0, table_items=None, saul_stool=True):
     cross-dissolve between the two scenes matches). table_items(t) -> 'all' | 'mail_sword' | 'sword' | 'none'."""
     waves = [outside_svg(w) for w in (0.0, 0.33, 0.66)]
     sc.add("outside", waves, wc=0.6, frame_at=lambda t: float(int((t + toff) * 3) % 3))
+    # wall, floor (with the daylight spill baked in), rack and stool: consecutive static layers = one image
     sc.add("wall", wall_svg(), wc=0.8)
-    sc.add("lamp_glow", lamp_glow_svg(), wc=0, blend="screen",
-           motion=lambda t: Tf(alpha=0.82 + 0.1 * math.sin((t + toff) * 5.1) + 0.06 * math.sin((t + toff) * 13.3)))
-    sc.add("lamp", lamp_svg(), wc=0.5, motion=M.sway(0.7, 4.6, pivot=(LAMP[0], LAMP_TOP), phase=toff / 4.6))
     sc.add("floor", floor_svg(), wc=0.8)
-    sc.add("doorlight", doorlight_svg(), wc=0, blend="screen",
-           motion=lambda t: Tf(alpha=0.9 + 0.1 * math.sin((t + toff) * 0.9)))
+    sc.add("rack", rack_svg(), wc=0.6)
+    if saul_stool:
+        sc.add("stool", doc(PR.camp_stool(STOOL_X, FY, K, -1)), wc=0.6)
     if table_items is None:
         sc.add("table", table_svg("all"), wc=0.6)
     else:
         states = ["all", "mail_sword", "sword", "none"]
         sc.add("table", [table_svg(s_) for s_ in states], wc=0.6,
                frame_at=lambda t: float(states.index(table_items(t))))
-    sc.add("rack", rack_svg(), wc=0.6)
-    if saul_stool:
-        sc.add("stool", doc(PR.camp_stool(STOOL_X, FY, K, -1)), wc=0.6)
+    sc.add("lamp_glow", lamp_glow_svg(), wc=0, blend="screen",
+           motion=lambda t: Tf(alpha=0.8 + 0.12 * math.sin((t + toff) * 5.1) + 0.08 * math.sin((t + toff) * 13.3)))
+    sc.add("lamp", lamp_svg(), wc=0.5, motion=M.sway(0.7, 4.6, pivot=(LAMP[0], LAMP_TOP), phase=toff / 4.6))
 
 
 def add_fg(sc, toff=0.0):
-    sc.add("fg", fg_svg(), wc=0.7)
+    left, right = fg_svg()
+    keep = lambda t: Tf()                      # (a motion keeps each piece a small separate image)
+    sc.add("fg_left", left, wc=0.7, motion=keep)
+    sc.add("fg_right", right, wc=0.7, motion=keep)
 
 
 def shadow_layer(sc, name, x_fn, width=120, opacity=0.24, alpha=None, z=None):
@@ -891,6 +964,7 @@ def build(ctx):
     t_fight = pt(ctx, 1, "我要去跟那个巨人打")
     t_ni = pt(ctx, 2, "你？")                          # the double-take
     t_child = phrase_t(L[2], "你还是个孩子啊", 0.1) + 0.05
+    t_child = max(t_child, t_ni + 0.95)               # the double-take holds long enough to read
     t_young = pt(ctx, 2, "他从年轻的时候")
     t_war = pt(ctx, 2, "就是打仗的勇士了")
     t_sheep = pt(ctx, 3, "我替爸爸放羊")
@@ -963,7 +1037,7 @@ def build(ctx):
                            arm=(None, (("fk", 48, 80), "fist")))
     b_stand = spB.add(C.soldier(spB.ax, spB.ay, K, 1, variant=2, pose="stand"))
     b_smile = spB.add(C.soldier(spB.ax, spB.ay, K, 1, variant=2, pose="stand", expr="happy"))
-    b_path = WalkPath([(t_sb, 150, SOLB_X, 22.0)], b_walk, walk_adv(WALK_A, K))
+    b_path = WalkPath([(t_sb, snap_start(150, SOLB_X, walk_adv(WALK_A, K)), SOLB_X, 22.0)], b_walk, walk_adv(WALK_A, K))
     b_sched = [(0, b_stand, 0), (b_path.end(0), b_stand, 0.4), (t_save + 0.5, b_smile, 0.3)]
     shadow_layer(sc, "shB", lambda t: b_path.x(t), alpha=lambda t: 1.0 if t > t_sb else 0.0)
     sc.add_dynamic("soldierB", Actor(spB, b_sched, lambda t: (b_path.x(t), FY), walk=b_path.frame,
@@ -975,7 +1049,8 @@ def build(ctx):
     d_brave2 = david_draw(spD, "brave")
     d_walk = walk_drawings(spD, lambda ps: david_fig(ps, "happy", front=C._staff_near(C._david_design(False, True))),
                            K, 1, DAVID_A, lk=DAVID_LK, arm=(None, (D_ST, "fist")))
-    d_path = WalkPath([(t_dv, 40, DAVID_X, 30.0)], d_walk, walk_adv(DAVID_A, K))
+    d_path = WalkPath([(t_dv, snap_start(40, DAVID_X, walk_adv(DAVID_A, K)), DAVID_X, 30.0)], d_walk,
+                      walk_adv(DAVID_A, K))
     t_darr = d_path.end(0)
     d_sched = [(0, D_["stand"], 0), (t_darr, D_["stand"], 0.5), (t_wang, D_["talk"], 0.6),
                (t_fight, D_["brave"], 1.0), (t_fight + 1.6, d_brave2, 0.6),
@@ -1000,21 +1075,17 @@ def build(ctx):
     c_mem = Cam(1390, 862, 1960)
     c_light = Cam(1420, 990, 1650)
     c_end = Cam(1330, 1003, 1560)
-    sc.camera = M.cam_keys([
+    sc.camera = clamp_cam(M.cam_keys([
         (0.0, c_saul), (t_send - 0.5, Cam(1690, 1003, 1565)), (t_send + 1.7, c_door), (t_darr + 0.2, c_door),
         (t_darr + 2.2, c_two), (t_ni - 0.6, c_two), (t_ni + 0.6, c_push), (L[2].end - 0.6, c_push),
         (p_in + 0.2, c_mem), (p_out - 0.4, c_mem), (t_god + 1.6, c_light), (t_ok, c_light), (t_sarr + 0.6, c_end),
-        (T - 1.0, CAM_MATCH), (T, CAM_MATCH)], "sine")
+        (T - 1.0, CAM_MATCH), (T, CAM_MATCH)], "sine"), SW, SH)
 
     # ------------------------------------------------------------ FX
-    sc.fx = [
-        FX.motes((300, 400, 2600, 1300), count=26, color=(255, 240, 200), size=(3, 6), alpha=90),
-        FX.sparkles((DAVID_X - 220, 620, DAVID_X + 180, 1000), count=14, t0=t_god + 0.2, t1=t_ok + 0.4,
-                    color=(255, 238, 170), size=(8, 16), period=1.5, drift=-12, seed=7),
-        FX.sparkles((gx - 300, 560, gx + 260, 820), count=12, t0=t_bless + 0.3, t1=T - 1.05,
-                    color=(255, 238, 170), size=(7, 14), period=1.7, drift=-8, seed=9),
-        FX.vignette(lambda t: 0.28),
-    ]
+    sc.add_dynamic("sparkles_god", sparkle_dyn((DAVID_X - 220, 640, DAVID_X + 180, 980), count=14, t0=t_god + 0.2,
+                                               t1=t_ok + 0.4, period=1.5, drift=-12, seed=7))
+    sc.add_dynamic("sparkles_bless", sparkle_dyn((gx - 300, 580, gx + 260, 820), count=12, t0=t_bless + 0.3,
+                                                 t1=T - 1.05, size=(7, 14), period=1.7, drift=-8, seed=9))
 
     # ------------------------------------------------------------ SOUND
     sc.sfx("crowd", 0, dur=T + 0.8, gain_db=-28, fade_in=0.8, fade_out=1.0, pan=-0.4)
@@ -1220,3 +1291,56 @@ def memory_actors(ctx, t_sheep, t_lion, t_bear, t_chase, t_save):
                                                                       k[0], k[0], 0, k[1]))(
         pop_k(t, t_snatch + 0.5, t_save + 3.4 if t_save + 3.4 < 1e9 else 1e9)))
     return acts
+
+
+def clamp_cam(cam_fn, W, H):
+    """Keep the viewport inside the painted stage (W x H) at all times."""
+    def c(t):
+        v = cam_fn(t)
+        w = min(v.w, W, H * 16 / 9)
+        h = w * 9 / 16
+        x = min(max(v.x, w / 2), W - w / 2)
+        y = min(max(v.y, h / 2), H - h / 2)
+        return Cam(x, y, w, v.rot)
+    return c
+
+
+def sparkle_dyn(rect, count=12, t0=0.0, t1=1e9, color=(255, 238, 170), size=(8, 16), period=1.6, drift=-10.0,
+                seed=11, fade=0.6, tclock=0.0):
+    """Twinkling four-point stars (like engine.fx.sparkles) as a stage-space Dynamic: it only costs anything while it
+    is visible. tclock shifts the twinkle clock (to match another scene)."""
+    from PIL import ImageDraw
+    rng = np.random.default_rng(seed)
+    x0, y0, x1, y1 = rect
+    px = rng.uniform(x0, x1, count)
+    py = rng.uniform(y0, y1, count)
+    ph = rng.uniform(0, 1, count)
+    sz = rng.uniform(*size, count)
+    pad = int(size[1] + 4)
+    W, H = int(x1 - x0) + 2 * pad, int(y1 - y0) + 2 * pad + int(abs(drift) * 8)
+
+    def fn(t):
+        if t < t0 or t > t1:
+            return None
+        k = min(1.0, M.progress(t, t0, t0 + fade, "sine"), 1 - M.progress(t, t1 - fade, t1, "sine") if t1 < 1e8 else 1.0)
+        if k <= 0.01:
+            return None
+        im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        dy0 = drift * (t - t0)
+        oy = pad + (int(abs(drift) * 8) if drift < 0 else 0)
+        for i in range(count):
+            tw = 0.5 + 0.5 * math.sin(2 * math.pi * ((t + tclock) / period + ph[i]))
+            if tw < 0.15:
+                continue
+            ox = px[i] - x0 + pad
+            oyy = py[i] - y0 + oy + max(-oy + 2, min(H - oy - (py[i] - y0) - 2, dy0))
+            r = sz[i] * (0.5 + 0.5 * tw)
+            a = int(230 * k * tw)
+            w = r * 0.22
+            g = r * 0.55
+            d.ellipse([ox - g, oyy - g, ox + g, oyy + g], fill=(*color, a // 4))
+            d.polygon([(ox, oyy - r), (ox + w, oyy - w), (ox + r, oyy), (ox + w, oyy + w), (ox, oyy + r),
+                       (ox - w, oyy + w), (ox - r, oyy), (ox - w, oyy - w)], fill=(*color, a))
+        return im, (x0 - pad, y0 - oy)
+    return fn

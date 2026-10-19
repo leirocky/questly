@@ -152,7 +152,7 @@ def build(ctx):
             y -= 60 * math.sin(math.pi * v)
         return x, y
     acts.append(Actor(hsp, [(0, 0, 0)], helm_pos, rot=lambda t: -max(0.0, t - t_h) * 260 % 360, breathe=0,
-                      alpha=lambda t: 1.0 if t >= t_h else 0.0))
+                      alpha=lambda t: 0.0 if t < t_h else 1 - M.progress(t, t_h + 1.9, t_h + 2.3, "sine")))
     # Israel cheers
     isr = hill_cast("israel", dict(surp=("stand", "surprised"), cheer=("cheer", "happy")), seed0=60)
     for j, (x, y, sp, d) in enumerate(isr):
@@ -207,9 +207,9 @@ def build(ctx):
     start = B.END_CAM
     phil = Cam(2470, 1160, 2650)
     wide = Cam(1950, 1110, 3500)
-    endc = Cam(1250, 1310, 2480)
+    endc = Cam(1265, 1190, 2500)
     keys = [(0, start), (t_see - 0.1, start), (t_drop + 0.4, phil), (t_flee + 1.4, phil), (t_cheer + 0.2, wide),
-            (t_pray - 0.2, Cam(1500, 1220, 2900)), (t_light + 1.2, endc), (T, Cam(1270, 1330, 2400))]
+            (t_pray - 0.2, Cam(1500, 1220, 2900)), (t_light + 1.2, endc), (T, Cam(1230, 1210, 2420))]
     sc.camera = M.cam_keys(keys, "sine")
 
     # ---------------------------------------------------------------- fx
@@ -217,7 +217,7 @@ def build(ctx):
                          drift=-14, seed=13),
              FX.sparkles((60, 520, 1150, 900), count=14, t0=t_cheer + 0.2, t1=T + 5, color=(255, 230, 160),
                          size=(8, 16), drift=-20, seed=17),
-             FX.motes((0, 300, SW, 1800), count=26, color=(255, 246, 214), size=(3, 6), alpha=80)]
+             V.valley_motes(toff)]
 
     # ---------------------------------------------------------------- sound
     sc.sfx("wind_soft", 0, dur=T, gain_db=-18, fade_in=0.8, fade_out=0.8)
