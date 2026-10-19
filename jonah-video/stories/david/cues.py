@@ -569,15 +569,15 @@ def giant(c):
     k.mel("bsn", "G3:1 E3:1 F#3:1 D3:1", vel=56)
     k.pad(["vla", "vln2"], 2, 52, 67, vel=40, bass_part="vc", bass_lo=43, bass_hi=55)
     k.mel("cb", "C2:2 D2:2", vel=40, role="bass")
-    k.expr(["bsn"], [(0, -11), (4, -12)])
-    k.expr(["vla", "vln2", "vc", "cb"], [(0, -13), (4, -12)])
+    k.expr(["bsn"], [(0, -11), (3, -12), (4, -14)])
+    k.expr(["vla", "vln2", "vc", "cb"], [(0, -13), (3, -13), (4, -15)])   # ease into the next page
 
 
 def forty(c):
     """The day counter: morning (G, a flute bird, a glockenspiel sunrise) and Goliath's shout (G minor tuba);
     evening (E minor, celesta) and the shout again; morning, evening, forty days (tuba honks); 'nobody dared'
     (E minor tremolo), ii-V into G."""
-    c.gain(-1.4)
+    c.gain(-1.0)
     t_e = c.at("到了晚上")
     t_c = c.gap(c.find("早上喊"))
     t_d = c.gap(c.find("可是以色列人里"))
@@ -770,7 +770,7 @@ def camp(c):
     # 'What have I done now? I was only asking.': simple and light (flute, harp)
     broken(i, "harp", 0, 8, (0, 2, 4, 2), 43, 55, vel=36, thin=True)
     i.pad(["vla", "vln2"], 2, 55, 69, vel=38, bass_part="vc", bass_lo=43, bass_hi=55)
-    i.expr(["vla", "vln2", "vc", "harp"], [(0, -14), (8, -15)])
+    i.expr(["vla", "vln2", "vc", "harp"], [(0, -13), (8, -15)])
 
 
 def saul(c):
@@ -1052,7 +1052,7 @@ def face(c):
     """Goliath sees David (G minor); the laugh on '哈哈大笑' (ho-ho-ho, tuba + bassoon + timpani); his mockery
     (the theme, soft under his voice); David answers (b1 on the horn, G major); '万军之耶和华的名' (choir);
     the build (b5-b7 and a held D with a timpani roll) into the fight."""
-    c.gain(-1.2)
+    c.gain(-1.9)
     t_h = c.at("哈哈大笑")
     t_m = c.gap(c.find("你拿着棍子"))
     t_d = c.gap(c.find("你来打我"))
