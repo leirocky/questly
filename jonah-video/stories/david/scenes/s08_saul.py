@@ -1,4 +1,31 @@
-"""placeholder"""
+"""Scene 8 — David before King Saul (1 Samuel 17:31-37).
+
+"有人把大卫的话告诉了扫罗王。扫罗王就叫人把大卫带来。" / D "王啊，大家都不用害怕。我要去跟那个巨人打！" / K "你？你还是
+个孩子啊！他从年轻的时候，就是打仗的勇士了！" / D "我替爸爸放羊的时候，有狮子来抓小羊，也有熊来抓小羊。我就去追，把小羊
+从它们嘴里救回来。" / D "上帝救我脱离了狮子和熊的爪子，也一定会救我脱离这个巨人的手！" / K "好吧，你去吧！愿上帝和你同在。"
+
+King Saul's war tent on one 2800 x 1575 stage (s09 continues on it): woven cream-and-terracotta hangings under a
+goat-hair roof, two tent poles, a swaying bronze lamp with flickering flames, the royal banner, the map table (with
+Saul's spare armour at its left end), his spear and shield on a stand, a patterned rug, and the entrance at the left
+with daylight, camp tents and banners outside.
+
+  line 0  soldier A leans in and whispers to the worried king on his camp stool; Saul's brows go up; on "扫罗王就叫人"
+          he points to the entrance - soldier B leads David in (planted-foot walks, the camera panning to the door).
+  line 1  David (staff in hand) talks ("王啊"), then a brave fist on "我要去跟那个巨人打".
+  line 2  "你？" a comic double-take: a quick look, then a jolt back with surprise lines and "!"; "你还是个孩子" a
+          palm-down "this small"; "他从年轻的时候 / 就是打仗的勇士了" arms up, showing how big the giant is.
+  line 3  a picture-book thought cloud grows out of David's head: his sheep on the Bethlehem hillside; the lion walks in
+          and takes a lamb by the scruff ("有狮子来抓小羊"), the bear from the other side ("也有熊来抓小羊"); little David
+          runs at them ("我就去追"): the lion drops its lamb and slinks off, he snatches the other lamb from the bear,
+          which scampers away ("把小羊…救回来"), and hugs it; hearts. No blood, no harm - a chase.
+  line 4  the cloud pops; David points up, soft golden light (light only) and sparkles; then a brave fist again.
+  line 5  Saul stands ("好吧"), walks up to David and blesses him, palm raised ("愿上帝和你同在"), kind; warm glow.
+          The last second is still and matches s09's first second exactly (plain cross-dissolve).
+
+Shared with s09 / s10: tent drawings and positions, TightSprite / Actor / WalkPath helpers, pose tables, the voice-
+burst timing helper pt(), sparkle_dyn() and clamp_cam(). Pose changes are hard cuts sold by squash-and-hop (Actor);
+walks are planted-foot cycles; nothing crossfades between two drawings of a figure.
+"""
 import math
 import random
 
@@ -8,9 +35,8 @@ from PIL import Image
 from art import characters as C
 from art import props as PR
 from art import style as S
-from art.scenes.s15_city import WALK_A, WALK_N, Sprite, keyed, walk_pose
+from art.scenes.s15_city import WALK_A, WALK_N, Sprite, walk_pose
 from art.style import P
-from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
@@ -370,14 +396,6 @@ def lamp_glow_svg():
     x, y = LAMP
     defs = S.rad_grad("s8glow", [(0, "#ffe9b0", 0.8), (0.4, "#ffd98a", 0.3), (1, "#ffd98a", 0)])
     return doc(f'<ellipse cx="{x}" cy="{y - 10}" rx="300" ry="250" fill="url(#s8glow)"/>', defs)
-
-
-def doorlight_svg():
-    """Daylight from the entrance spilling across the floor (screen)."""
-    x0, x1, top = DOOR
-    defs = S.lin_grad("s8dl", [(0, "#fff1c8", 0.55), (1, "#fff1c8", 0.0)], x1=0, y1=0, x2=1, y2=0.4)
-    d = f"M{x0},{WB} L{x1},{WB} L{x1 + 900},{SH + 40} L{x0 + 120},{SH + 40} Z"
-    return doc(f'<path d="{d}" fill="url(#s8dl)" filter="url(#blur-md)"/>', defs)
 
 
 def fg_svg():
@@ -960,7 +978,6 @@ def build(ctx):
     t_sb = t_send + 0.15                              # soldier B leads David in
     t_dv = t_send + 0.3
     t_wang = pt(ctx, 1, "王啊")
-    t_fear = pt(ctx, 1, "大家都不用害怕")
     t_fight = pt(ctx, 1, "我要去跟那个巨人打")
     t_ni = pt(ctx, 2, "你？")                          # the double-take
     t_child = phrase_t(L[2], "你还是个孩子啊", 0.1) + 0.05
@@ -975,7 +992,6 @@ def build(ctx):
     t_god = pt(ctx, 4, "上帝救我")
     t_giant = pt(ctx, 4, "也一定会救我")
     t_ok = pt(ctx, 5, "好吧")
-    t_go = pt(ctx, 5, "你去吧")
     t_bless = pt(ctx, 5, "愿上帝")
     p_in, p_out = t_sheep + 0.15, L[3].end + 0.35     # the memory panel
 
@@ -1146,7 +1162,6 @@ def memory_actors(ctx, t_sheep, t_lion, t_bear, t_chase, t_save):
 
     spLb = sprite(220, 190, 110, 170, wc=0.6, seed=72)
     lb_r = spLb.add(PR.sheep(spLb.ax, spLb.ay, MLb, 1, variant=0, lamb=True))
-    lb_l = spLb.add(PR.sheep(spLb.ax, spLb.ay, MLb, -1, variant=0, lamb=True))
     lb2_l = spLb.add(PR.sheep(spLb.ax, spLb.ay, MLb, -1, variant=3, lamb=True))
 
     # lion: walks in from the left, crouches, takes lamb A by the scruff; drops it and runs off when David comes

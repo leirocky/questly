@@ -29,13 +29,12 @@ from art import characters as C
 from art import props as PR
 from art import style as S
 from art.style import P
-from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.david.scenes import s08_saul as A
-from stories.david.scenes.s08_saul import (INK, WALK_A, WALK_N, Actor, WalkPath, _P, clamp, f1, pop_k, pop_tf, pt,
-                                           sprite, walk_adv, walk_drawings, walk_pose)
+from stories.david.scenes.s08_saul import (INK, Actor, WalkPath, _P, clamp, f1, pop_k, pop_tf, pt, sprite,
+                                           walk_adv, walk_drawings)
 
 SW, SH = 3000, 1688
 FY = 1390                      # David's ground line on the near bank

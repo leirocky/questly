@@ -36,14 +36,13 @@ from art import characters as C
 from art import props as PR
 from art import style as S
 from art.style import P
-from engine import fx as FX
 from engine import motion as M
 from engine.loader import context
 from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.david.scenes import s08_saul as A
-from stories.david.scenes.s08_saul import (DAVID_POSE, D_ST, FY, INK, K, SAUL_END_X, SOLA_X, SOLB_X, DAVID_X, WALK_A,
-                                           Actor, WalkPath, _P, clamp, doc, f1, pt, sprite, walk_adv, walk_drawings)
+from stories.david.scenes.s08_saul import (DAVID_POSE, FY, INK, K, SAUL_END_X, SOLA_X, SOLB_X, DAVID_X, WALK_A,
+                                           WalkPath, _P, clamp, doc, f1, pt, sprite, walk_adv, walk_drawings)
 
 POSES = C.POSES
 DX0 = DAVID_X                  # David at the start
@@ -285,13 +284,7 @@ def build(ctx):
     # the pile in his hands (drawn in front of him)
     spP = sprite(260, 220, 130, 200, wc=0.6, seed=65)
     pile_d = {k_: spP.add(A.armour_pile(spP.ax, spP.ay, k_, 1.25)) for k_ in ("all", "mail_sword", "sword")}
-    walk_hand = {}
-
     def a_hands(t):
-        fr = soldierA.frame(t)
-        if fr not in walk_hand:
-            # hand centre of this drawing, relative to the anchor
-            walk_hand[fr] = None
         x = a_path.x(t)
         facing = -1 if t >= a_back else 1
         base = hands_mid(A.soldier_fig(1, SOLD_CARRY), x, FY, facing)
@@ -405,7 +398,6 @@ def build(ctx):
     # helmet: pile -> Saul's hands -> held over David -> lowered onto his head
     spH = sprite(260, 220, 130, 190, wc=0.6, seed=66)
     h_draw = spH.add(PR.helmet_bronze(spH.ax, spH.ay, 1.12 * K, -1, crest=False, plume=C.CREST_RED, circlet=True))
-    HR = 1.3 * K * 60                                  # helmet half width-ish
 
     def helm_pos(t):
         if t < t_take1 + 0.05:
