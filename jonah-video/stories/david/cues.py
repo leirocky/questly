@@ -889,7 +889,7 @@ def armor(c):
     d = c.seg(t_d, t_w, 2, "4/4", "G major", nominal=80, label="armor-pieces")
     w = c.seg(t_w, t_k, 1, "4/4", "G major", nominal=103, label="armor-steps")
     k = c.seg(t_k, t_oops, 1, "4/4", "G major", nominal=136, label="armor-clank")
-    o = c.seg(t_oops, t_x, 1, "4/4", "G major", nominal=76, label="armor-wobble")
+    o = c.seg(t_oops, t_x, 1, "4/4", "G major", nominal=84, label="armor-wobble")
     x = c.seg(t_x, t_f, 1, "4/4", "G major", nominal=84, label="armor-not-used")
     f = c.seg(t_f, c.dur, 1, "4/4", "G major", nominal=72, label="armor-free")
     for sg in (a, d, w, k, o, x, f):
