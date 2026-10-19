@@ -53,12 +53,12 @@ Tonal plan
   question on D7) | Eliab cross (E minor, grumpy bassoon) | David's simple answer (harp and strings only) ->
   s08 Saul's tent (E minor horn, timpani) | David brave (b1-b2, horn) | '你？' a plucked double take, Goliath
   on the tuba | the lion (G minor pizzicato pounce) | the bear (Eb waddle) | the rescue (running cellos, b1 +
-  b7) | faith (b5-b8, horn, choir) | Saul's blessing (plagal C-G, harp) -> s09 the fitting (a little march)
+  b7) | faith (b5 b7 b8, horn, choir) | Saul's blessing (plagal C-G, harp) -> s09 the fitting (a little march)
   | clanks on the three pieces | the first steps | 哐当 哐当 | '哎呀': the wobble down onto D7 | '这些我穿不惯'
   (bassoon) | free again (b1, flute, harp sweep) -> s10 the brook (harp ripples) | the counting | the sling
   (circling harp) | '又快又远': a flute run up and a harp sweep on D -> s11 G minor: Goliath sees him | the
   laugh on '哈哈大笑' (ho-ho-hooo) | his mockery (theme) | David answers (b1, horn, G major) | '万军之耶和华'
-  (choir) | the build (b5-b7 on the horn, choir, a held D with a timpani roll; soft under David's words) ->
+  (choir) | the build (b5 and b7 on the horn, choir, a held D with a timpani roll; soft under David's words) ->
   s12 Goliath walks (G minor stomps) | David runs (G major, b1 + b7) | the stone in the sling (D pedal) |
   '转啊转' the whirl (G C D D7) | '嗖' | '正好打中' bonk + the fall over D7 | '咚！' the big low G minor hit,
   dust settling -> s13 the Philistines see (deflated bassoon) | they flee (scurry onto D7) | '欢呼' David's
@@ -475,7 +475,7 @@ def giant(c):
     n.gain(-1.5)
     m = c.seg(t_m, t_g, 2, "4/4", "G minor+", nominal=70, label="giant-armour")
     m.gain(-1.0)
-    g = c.seg(t_g, t_f, 4, "4/4", "G minor+", nominal=66, label="giant-challenge")
+    g = c.seg(t_g, t_f, 3, "4/4", "G minor+", nominal=66, label="giant-challenge")
     f = c.seg(t_f, t_k, 2, "4/4", "E minor+", nominal=132, label="giant-fear")
     k = c.seg(t_k, c.dur, 1, "4/4", "G major", nominal=86, label="giant-saul")
     for sg in (a, s, n, m, g, f, k):
@@ -484,7 +484,7 @@ def giant(c):
     s.prog("Gm:4")
     n.prog(" | ".join(GOLIATH_PROG[:2]))
     m.prog(" | ".join(GOLIATH_PROG[2:4]))
-    g.prog("Gm:4 | Eb:4 | Cm:2 D:2 | Gm:2 D:2")
+    g.prog("Gm:4 | Eb:4 | Cm:2 D:2")
     f.prog("Em:4 | Em:2 B7:2")
     k.prog("C:2 D:2")
     # out of the Philistine camp came a man...: tremolo, his footsteps coming closer (plucked basses, a soft
@@ -549,13 +549,13 @@ def giant(c):
     m.expr(["tbn", "glock"], [(0, -11), (8, -11)])
     m.expr(["cb", "vla", "vln2", "pz_cb"], [(0, -13), (8, -13)])
     # 'Israel, listen! Send a man out to fight me!...': under his big voice only the giant's slow steps
-    for q in range(0, 16, 4):
+    for q in range(0, 12, 4):
         stomp(g, q, vel=50, kit=q % 8 == 0)
     g.pad(["trem_va", "trem_hi"], 2, 55, 72, vel=40, bass_ref=(31, 43))
-    g.mel("cb", "G1:4 | Eb2:4 | C2:2 D2:2 | G1:2 D2:2", vel=40, role="bass")
-    g.mel("tuba", "r:4 | r:4 | r:4 | r:2 D2:2", vel=48, role="counter")
-    g.expr(["trem_va", "trem_hi", "cb"], [(0, -18), (16, -16)])
-    g.expr(["timp", "pz_cb", "tuba"], [(0, -12), (16, -12)])
+    g.mel("cb", "G1:4 | Eb2:4 | C2:2 D2:2", vel=40, role="bass")
+    g.mel("tuba", "r:4 | r:4 | r:2 D2:2", vel=48, role="counter")
+    g.expr(["trem_va", "trem_hi", "cb"], [(0, -18), (12, -16)])
+    g.expr(["timp", "pz_cb", "tuba"], [(0, -12), (12, -12)])
     # the Israelites' legs went weak: E minor tremolo, the clarinet's shiver, knocking knees
     f.sync("Israel's fear (E minor)", 0, t_f, kind="change")
     f.pad(["trem_va", "trem_va", "trem_hi"], 3, 48, 69, vel=48, bass_ref=(40, 52))
@@ -637,7 +637,7 @@ def shepherd(c):
     t_o = c.gap(c.find("大卫一大早"))
     t_go = c.at("出发了")
     a = c.seg(0, t_j, 4, "4/4", "G major", nominal=78, label="shepherd-theme")
-    j = c.seg(t_j, t_o, 4, "4/4", "G major", nominal=83, label="shepherd-jesse")
+    j = c.seg(t_j, t_o, 4, "4/4", "G major", nominal=90, label="shepherd-jesse")
     o = c.seg(t_o, t_go, 2, "4/4", "G major", nominal=112, label="shepherd-walk")
     g = c.seg(t_go, c.dur, 1, "2/4", "G major", nominal=108, label="shepherd-off")
     for sg in (a, j, o, g):
@@ -691,11 +691,11 @@ def camp(c):
     t_e = c.gap(c.find("以利押听见了"))
     t_i = c.gap(c.find("我又做了什么"))
     a = c.seg(0, t_g, 2, "4/4", "G major", nominal=84, label="camp-arrive")
-    g = c.seg(t_g, t_r, 1, "4/4", "G minor", nominal=52, label="camp-goliath")
+    g = c.seg(t_g, t_r, 1, "4/4", "G minor", nominal=66, label="camp-goliath")
     r = c.seg(t_r, t_d, 2, "4/4", "G melodic", nominal=98, label="camp-run")
-    d = c.seg(t_d, t_e, 2, "4/4", "G major", nominal=62, label="camp-david-asks")
+    d = c.seg(t_d, t_e, 2, "4/4", "G major", nominal=84, label="camp-david-asks")
     e = c.seg(t_e, t_i, 3, "4/4", "E minor", nominal=70, label="camp-eliab")
-    i = c.seg(t_i, c.dur, 2, "4/4", "G major", nominal=86, label="camp-answer")
+    i = c.seg(t_i, c.dur, 1, "4/4", "G major", nominal=60, label="camp-answer")
     for sg in (a, g, r, d, e, i):
         sg.duck(1.5)
     a.prog("G:4 | Eb:2 D:2")
@@ -703,7 +703,7 @@ def camp(c):
     r.prog("Gm:4 | D:4")
     d.prog("G:4 | C:2 D7:2")
     e.prog("Em:4 | Am:4 | Am:2 D:2")
-    i.prog("G:4 | C:2 D:2")
+    i.prog("G:2 D:2")
     g.sync("Goliath's voice booms (his theme, a stomp)", 0, t_g)
     g.gain(-3.0)
     i_g = c.find("胆小鬼们")
@@ -768,9 +768,9 @@ def camp(c):
     e.expr(["bsn"], [(0, -11), (12, -11)])
     e.expr(["pz_cb", "vla", "vln2"], [(0, -13), (12, -13)])
     # 'What have I done now? I was only asking.': simple and light (flute, harp)
-    broken(i, "harp", 0, 8, (0, 2, 4, 2), 43, 55, vel=36, thin=True)
+    broken(i, "harp", 0, 4, (0, 2, 4, 2), 43, 55, vel=36, thin=True)
     i.pad(["vla", "vln2"], 2, 55, 69, vel=38, bass_part="vc", bass_lo=43, bass_hi=55)
-    i.expr(["vla", "vln2", "vc", "harp"], [(0, -13), (8, -15)])
+    i.expr(["vla", "vln2", "vc", "harp"], [(0, -13), (4, -15)])
 
 
 def saul(c):
@@ -786,12 +786,12 @@ def saul(c):
     t_f = c.gap(c.find("上帝救我脱离"))
     t_bl = c.gap(c.find("好吧，你去吧"))
     a = c.seg(0, t_b, 2, "4/4", "E minor", nominal=68, label="saul-tent")
-    b = c.seg(t_b, t_k, 2, "4/4", "G major", nominal=64, label="saul-david")
+    b = c.seg(t_b, t_k, 2, "4/4", "G major", nominal=82, label="saul-david")
     k = c.seg(t_k, t_l, 2, "4/4", "E minor+", nominal=68, label="saul-you")
-    l = c.seg(t_l, t_br, 2, "4/4", "G minor+", nominal=76, label="saul-lion")
-    br = c.seg(t_br, t_rs, 1, "4/4", "G minor", nominal=80, label="saul-bear")
-    rs = c.seg(t_rs, t_f, 2, "4/4", "G major", nominal=84, label="saul-rescue")
-    f = c.seg(t_f, t_bl, 4, "4/4", "G major", nominal=90, label="saul-faith")
+    l = c.seg(t_l, t_br, 2, "4/4", "G minor+", nominal=108, label="saul-lion")
+    br = c.seg(t_br, t_rs, 1, "4/4", "G minor", nominal=104, label="saul-bear")
+    rs = c.seg(t_rs, t_f, 2, "4/4", "G major", nominal=112, label="saul-rescue")
+    f = c.seg(t_f, t_bl, 3, "4/4", "G major", nominal=92, label="saul-faith")
     bl = c.seg(t_bl, c.dur, 1, "4/4", "G major", nominal=58, rit=0.15, label="saul-blessing")
     for sg in (a, b, k, l, br, rs, f, bl):
         sg.duck(1.5)
@@ -801,7 +801,7 @@ def saul(c):
     l.prog("Gm:4 | Cm:2 D:2")
     br.prog("Eb:2 D:2")
     rs.prog("G:4 | C:2 D7:2")
-    f.prog(" | ".join(DAVID_PROG[4:8]))
+    f.prog(" | ".join([DAVID_PROG[4], DAVID_PROG[6], DAVID_PROG[7]]))
     bl.prog("C:2 G:2")
     # King Saul's tent: a stately, worried horn over soft timpani and low strings
     a.mel("horn", "B3:2 C4:1 B3:1 | A3:1 C4:1 A3:2", vel=54)
@@ -834,7 +834,7 @@ def saul(c):
           vel=60, role="bass")
     l.mel("bsn", "r:2 G2:1 Bb2:1/2 A2:1/2 | G2:2 F#2:2", vel=52)
     l.pad(["trem_va", "trem_hi"], 2, 55, 70, vel=42, bass_ref=(31, 43))
-    timp_roll(l, 4, 7.8, midi("D2"), 24, 30)
+    timp_roll(l, 6, 7.8, midi("D2"), 24, 30)                    # on the D chord only
     l.expr(["pz_lo"], [(0, -9), (8, -9)])
     l.expr(["bsn"], [(0, -11), (8, -11)])
     l.expr(["trem_va", "timp"], [(0, -16), (8, -14)])
@@ -861,16 +861,16 @@ def saul(c):
     rs.expr(["flute"], [(0, -15), (1, -12), (8, -11)])
     rs.expr(["vla", "vln2", "vln1"], [(0, -16), (8, -15)])
     # 'God saved me from the lion and the bear, he will save me from this giant!': b5-b8, horn and choir
-    f.mel("horn", bars(DAVID, 4, 8), vel=58, transpose=-12)
+    f.mel("horn", " | ".join([DAVID[4], DAVID[6], DAVID[7]]), vel=58, transpose=-12)
     f.pad("ooh", 3, 55, 74, vel=42, bass_ref=(43, 55))
     broken(f, "harp", 0, f.n_q, (0, 2, 4, 6, 4, 2), 43, 55, vel=36, thin=True)
     strings(f, vel=42, lo=55, hi=72, bass=(43, 55), cb=(31, 43))
     f.duck(5.0)
     f.duck(7.0, parts=["horn", "harp", "ooh"])
-    f.expr(["horn"], [(0, -12), (16, -11)])
-    f.expr(["ooh"], [(0, -20), (4, -17), (16, -16)])
-    f.expr(["harp"], [(0, -9), (16, -9)])
-    f.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (16, -13)])
+    f.expr(["horn"], [(0, -12), (12, -11)])
+    f.expr(["ooh"], [(0, -20), (4, -17), (12, -16)])
+    f.expr(["harp"], [(0, -9), (12, -9)])
+    f.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (12, -13)])
     # 'Go, and the LORD be with you!': a plagal blessing, harp
     for k_, nm in enumerate(["C3", "G3", "C4", "E4", "G4"]):
         bl.add("harp", 0.15 * k_, 2 - 0.15 * k_, nm, 42 - 2 * k_, "arp")
@@ -906,7 +906,7 @@ def armor(c):
     w = c.seg(t_w, t_k, 1, "4/4", "G major", nominal=103, label="armor-steps")
     k = c.seg(t_k, t_oops, 1, "4/4", "G major", nominal=136, label="armor-clank")
     o = c.seg(t_oops, t_x, 1, "4/4", "G major", nominal=84, label="armor-wobble")
-    x = c.seg(t_x, t_f, 1, "4/4", "G major", nominal=84, label="armor-not-used")
+    x = c.seg(t_x, t_f, 1, "4/4", "G major", nominal=120, label="armor-not-used")
     f = c.seg(t_f, c.dur, 1, "4/4", "G major", nominal=72, label="armor-free")
     for sg in (a, d, w, k, o, x, f):
         sg.duck(1.5)
@@ -1060,18 +1060,18 @@ def face(c):
     t_w = c.gap(c.find("今天，我要让"))
     a = c.seg(0, t_h, 1, "4/4", "G minor", nominal=73, label="face-sees")
     h = c.seg(t_h, t_m, 1, "3/4", "G minor", nominal=128, label="face-laugh")
-    m = c.seg(t_m, t_d, 3, "4/4", "G minor+", nominal=80, label="face-mock")
-    d = c.seg(t_d, t_n, 1, "4/4", "G major", nominal=54, label="face-david")
-    n = c.seg(t_n, t_w, 2, "4/4", "G major", nominal=77, label="face-lord")
-    w = c.seg(t_w, c.dur, 4, "4/4", "G major", nominal=74, label="face-build")
+    m = c.seg(t_m, t_d, 2, "4/4", "G minor+", nominal=66, label="face-mock")
+    d = c.seg(t_d, t_n, 1, "4/4", "G major", nominal=80, label="face-david")
+    n = c.seg(t_n, t_w, 1, "4/4", "G major", nominal=58, label="face-lord")
+    w = c.seg(t_w, c.dur, 3, "4/4", "G major", nominal=80, label="face-build")
     for sg in (a, h, m, d, n, w):
         sg.duck(1.5)
     a.prog("Gm:4")
     h.prog("Gm:3")
-    m.prog("Gm:4 | Gm:4 | Cm:2 D:2")
+    m.prog("Gm:4 | Cm:2 D:2")
     d.prog("G:4")
-    n.prog("C:2 G:2 | Am:2 D7:2")
-    w.prog("G:4 | C:2 G:2 | C:2 D7:2 | D:4")
+    n.prog("C:2 D7:2")
+    w.prog("G:4 | C:2 D7:2 | D:4")
     h.sync("'哈哈大笑' (ho-ho-ho)", 0, t_h)
     d.sync("David answers (G major)", 0, t_d, kind="change")
     # Goliath sees the boy coming: his theme's head, soft, a low tremolo
@@ -1095,16 +1095,15 @@ def face(c):
     h.sync("ho 2", 1, h.t(1) - c.t0)
     h.expr(["tuba", "bsn", "pz_lo", "timp"], [(0, -7), (3, -8)])
     # 'Am I a dog, that you come at me with a stick? ...': his theme, low and soft under his voice
-    m.mel("tuba", " | ".join([GOLIATH[0], GOLIATH[2], GOLIATH[3]]), vel=56)
-    m.mel("bsn", " | ".join([GOLIATH[0], GOLIATH[2], GOLIATH[3]]), vel=52)
-    m.add("cb", 0, 8, "G1", 40, "bass")
-    m.add("cb", 8, 2, "C2", 40, "bass")
-    for q in (4, 8):
-        stomp(m, q, vel=46, kit=False, bass="G1" if q == 4 else "C2")
+    m.mel("tuba", " | ".join([GOLIATH[0], GOLIATH[3]]), vel=56)
+    m.mel("bsn", " | ".join([GOLIATH[0], GOLIATH[3]]), vel=52)
+    m.add("cb", 0, 4, "G1", 40, "bass")
+    m.add("cb", 4, 2, "C2", 40, "bass")
+    stomp(m, 4, vel=46, kit=False, bass="C2")
     m.pad(["trem_va", "trem_hi"], 2, 55, 70, vel=38, bass_ref=(31, 43))
     m.duck(2.5, parts=["tuba", "bsn"])
-    m.expr(["tuba", "bsn"], [(0, -14), (1, -12), (12, -12)])
-    m.expr(["cb", "timp", "pz_cb", "trem_va", "trem_hi"], [(0, -15), (12, -15)])
+    m.expr(["tuba", "bsn"], [(0, -14), (1, -12), (8, -12)])
+    m.expr(["cb", "timp", "pz_cb", "trem_va", "trem_hi"], [(0, -15), (8, -15)])
     # 'You come with sword and spear -- ': David's theme on the horn, steady
     d.mel("horn", DAVID[0], vel=58, transpose=-12)
     d.pad(["vla", "vln2", "vln1"], 3, 55, 72, vel=42, bass_part="vc", bass_lo=43, bass_hi=55)
@@ -1114,26 +1113,26 @@ def face(c):
     d.expr(["horn"], [(0, -12), (4, -12)])
     d.expr(["vla", "vln2", "vln1", "vc", "cb", "timp"], [(0, -14), (4, -14)])
     # '-- I come in the name of the LORD of hosts!': the choir enters, the theme goes on
-    n.mel("horn", bars(DAVID, 1, 3), vel=58, transpose=-12)
+    n.mel("horn", DAVID[6], vel=58, transpose=-12)
     n.pad("choir", 3, 55, 72, vel=44, bass_ref=(43, 55))
     strings(n, vel=42, lo=55, hi=72, bass=(43, 55), cb=(31, 43))
     n.duck(3.0, parts=["horn", "choir"])
-    n.expr(["horn"], [(0, -12), (8, -11)])
-    n.expr(["choir"], [(0, -20), (4, -15), (8, -14)])
-    n.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (8, -13)])
+    n.expr(["horn"], [(0, -12), (4, -11)])
+    n.expr(["choir"], [(0, -20), (2, -15), (4, -14)])
+    n.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (4, -13)])
     # 'Today the whole world will know there is a God in Israel! The battle is the LORD's!': b5-b7 grow, D held
-    w.mel("horn", bars(DAVID, 4, 7), vel=58, transpose=-12)
+    w.mel("horn", DAVID[4] + " | " + DAVID[6], vel=58, transpose=-12)
     w.pad("choir", 3, 55, 74, vel=44, bass_ref=(43, 55))
     strings(w, vel=44, lo=55, hi=72, bass=(43, 55), cb=(31, 43))
-    for q in (0, 4, 8):
+    for q in (0, 4):
         w.add("timp", q, 0.5, timp_pitch(w.chord_at(q), midi("G2")), 40, "timp")
-    timp_roll(w, 12, 15.8, midi("D2"), 28, 52)
+    timp_roll(w, 8, 11.8, midi("D2"), 28, 52)
     w.duck(4.5)
     w.duck(6.0, parts=["horn", "choir"])
-    w.expr(["horn"], [(0, -13), (12, -11), (16, -10)])
-    w.expr(["choir"], [(0, -20), (8, -17), (16, -16)])
-    w.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (12, -12), (16, -11)])
-    w.expr(["timp"], [(0, -12), (16, -9)])
+    w.expr(["horn"], [(0, -13), (8, -11), (12, -10)])
+    w.expr(["choir"], [(0, -20), (6, -17), (12, -16)])
+    w.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (8, -12), (12, -11)])
+    w.expr(["timp"], [(0, -12), (12, -9)])
 
 
 def sling(c):
@@ -1283,7 +1282,7 @@ def victory(c):
     r.prog("Gm:2 D7:2")
     v.prog("G:4 | C:2 D7:2")
     v.sync("'欢呼': David's theme in full (G major)", 0, t_v, kind="change")
-    v.gain(-1.0)
+    v.gain(-1.8)
     # their mightiest warrior is down: Goliath's theme, deflated (bassoon), a low tremolo
     a.mel("bsn", "D3:1 Bb2:1 G2:2 | F#2:1 A2:1 D2:2", vel=56)
     a.pad(["trem_va", "trem_va"], 2, 48, 64, vel=40, bass_ref=(31, 43))
@@ -1361,9 +1360,9 @@ def end(c):
     strings(e, vel=42, lo=55, hi=72, bass=(43, 55), cb=(31, 43))
     e.pad("ooh", 3, 55, 72, vel=38, q0=4, bass_ref=(43, 55))
     e.duck(3.0, parts=["clar", "horn", "harp", "ooh"])
-    e.expr(["clar"], [(0, -18), (1, -13), (12, -12)])
-    e.expr(["horn", "harp"], [(0, -14), (12, -13)])
-    e.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -18), (1, -14), (12, -13)])
+    e.expr(["clar"], [(0, -20), (1.5, -13), (12, -12)])
+    e.expr(["horn", "harp"], [(0, -20), (1.5, -14), (12, -13)])
+    e.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -19), (1.5, -14), (12, -13)])
     e.expr(["ooh"], [(4, -20), (6, -16), (12, -15)])
     # '...和我在一起': the G major chord, harp rolled up, celesta stars, flute on G -- it rings to the end
     f.add("flute", 0, 4, "G5", 54, "melody")
