@@ -436,15 +436,12 @@ def title_page(sc, ctx, toff=0.0, gate=None, title_gate=None):
             return f(frame, th + toff, view)
         return fx
     fxs = [
-        gated(FX.sparkles((hx - 40, hy - 70, hx + 30, hy - 40), count=2, color=(255, 246, 214), size=(10, 18),
+        gated(FX.sparkles((hx - 60, hy - 95, hx + 30, hy - 40), count=2, color=(255, 246, 214), size=(10, 18),
                           period=2.2, drift=0, seed=4)),
         gated(FX.sparkles((hx - 60, hy - 95, hx - 10, hy - 55), count=1, t0=t_glint, t1=t_glint + 1.3,
                           color=(255, 248, 220), size=(30, 42), period=1.3, drift=0, seed=6)),
-        gated(FX.sparkles((300, 260, 520, 380), count=3, t0=t_done, color=(255, 240, 190), size=(9, 16),
+        gated(FX.sparkles((300, 250, 1820, 390), count=6, t0=t_done, color=(255, 240, 190), size=(9, 16),
                           period=2.0, drift=0, seed=9)),
-        gated(FX.sparkles((1620, 260, 1840, 380), count=3, t0=t_done, color=(255, 240, 190), size=(9, 16),
-                          period=2.0, drift=0, seed=10)),
-        gated(FX.motes((0, 600, W, 1100), count=20, color=(255, 246, 214), size=(2, 5), alpha=110, seed=12)),
     ]
     info = dict(t_rib=t_rib, t_glint=t_glint, t_bleat=t_bleat, onsets=onsets, names=names)
     return cam, fxs, info

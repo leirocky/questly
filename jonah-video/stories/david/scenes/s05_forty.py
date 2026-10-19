@@ -39,9 +39,9 @@ INK = P["ink"]
 SW, SH, FS = V.SW, V.SH, V.FS
 GOL_Y = 1190                      # Goliath's ground line on the valley floor (in front of the hills' feet)
 GOL_X0, GOL_X1 = 2150, 1640       # behind the right hill -> his shouting spot
-SUN = (1060, 360)                  # sun position at full morning
-MOON = (2030, 300)                # moon position at full evening
-CARD = (640, 420)                 # day counter card centre (stage px)
+SUN = (1400, 345)                  # sun position at full morning
+MOON = (1800, 240)                # moon position at full evening
+CARD = (1000, 395)                 # day counter card centre (stage px)
 ROWS, PER_ROW, CARD_S = 4, 10, 0.5
 
 
@@ -181,9 +181,8 @@ def build(ctx):
         return smooth((t - cyc0 + 0.3) / 0.4) * (1 - smooth((t - cyc1) / 0.4))
 
     # --- sky
-    sc.add("sky_dawn", V.sky_svg("dawn"), wc=0.6)
-    sc.add("sky_day", V.sky_svg("morning"), wc=0.6,
-           motion=lambda t: Tf(alpha=smooth((t - 0.2) / 2.2) if t < t_eve1 else 1.0))
+    sc.add("sky_day", V.sky_svg("morning"), wc=0.6)
+    sc.add("sky_dawn", V.sky_svg("dawn"), wc=0.6, motion=lambda t: Tf(alpha=1 - smooth((t - 0.2) / 2.2)))
     sc.add("sky_eve", V.sky_svg("evening"), wc=0.6, motion=lambda t: Tf(alpha=e_of(t)))
     sc.add("stars", stars_svg(), wc=0, motion=lambda t: Tf(alpha=max(0.0, e_of(t) - 0.35) / 0.65 *
                                                           (0.8 + 0.2 * math.sin(t * 3.1))))
@@ -192,7 +191,7 @@ def build(ctx):
         rise = 330 * (1 - smooth((t - 0.0) / 2.6))
         amp = 420 - 300 * fast(t)
         e = e_of(t)
-        return Tf(dy=rise + amp * e, alpha=1 - fast(t) * e)
+        return Tf(dy=rise + amp * e, alpha=1 - e)
     sc.add("sun", sun_svg(), wc=0.3, motion=sun_m)
 
     def moon_m(t):
@@ -251,13 +250,13 @@ def build(ctx):
         frames = [V.soldier_svg(x, "israel", i, "stand", expr="worried")]
         frames += [V.soldier_svg(x, "israel", i, "cower", shake=k) for k in (0.0, 0.25, 0.5, 0.75)]
         if i == peeker:
-            frames.append(V.soldier_svg(x, "israel", i, "cower", expr="surprised", shake=0.0))
+            frames.append(V.soldier_svg(x, "israel", i, "stand", expr="surprised", spear=False))
         td = snap(t_duckall + 0.06 * i)
 
         def fa(t, td=td, i=i):
             if t < td:
                 return 0.0
-            if i == peeker and snap(t_peek + 0.15) <= t < snap(t_duck):
+            if i == peeker and snap(t_peek) <= t < snap(t_duck):
                 return 5.0
             calm = i == peeker and t_peek - 0.1 <= t < t_duck
             if calm:
@@ -272,14 +271,27 @@ def build(ctx):
                 k = math.sin(math.pi * u / 0.3)
                 dy, sy = 8 * FS * k, 1 - 0.05 * k
             if i == peeker:
-                # rises slowly to peek over the shield, then ducks back fast with a squash
-                up = 30 * FS * smooth((t - t_peek) / 0.45) * (1 - M.progress(t, t_duck, t_duck + 0.12, "in"))
-                dy -= up
-                w = t - (t_duck + 0.12)
-                if 0 <= w < 0.35:
-                    k = math.sin(math.pi * w / 0.35)
-                    dy += 9 * FS * k
-                    sy *= 1 - 0.09 * k
+                # pops up to peek (a squash-dip hides the cut to the standing drawing, then a little stretch
+                # up), looks at the giant; when the giant shouts he ducks back down with a big squash
+                tp, td2 = snap(t_peek), snap(t_duck)
+                u1 = t - tp
+                if -0.12 <= u1 < 0.0:
+                    k = math.sin(math.pi * (u1 + 0.12) / 0.24)
+                    dy += 6 * FS * k
+                    sy *= 1 - 0.05 * k
+                elif 0.0 <= u1 < 0.4:
+                    k = math.sin(math.pi * u1 / 0.4)
+                    dy -= 16 * FS * k
+                    sy *= 1 + 0.04 * k
+                if tp + 0.4 <= t < td2:
+                    dy -= 3 * FS * math.sin(2 * math.pi * (t - tp) / 0.5)
+                w = t - td2
+                if -0.1 <= w < 0.0:
+                    dy -= 10 * FS * math.sin(math.pi * (w + 0.1) / 0.2)
+                if 0 <= w < 0.4:
+                    k = math.sin(math.pi * w / 0.4)
+                    dy += 12 * FS * k
+                    sy *= 1 - 0.12 * k
             return Tf(dy=dy, sy=sy, px=x, py=y)
         sc.add(f"israel{i}", frames, frame_at=fa, motion=mot, seed=50 + i)
     for i, x in enumerate(V.PHI_MEN):
@@ -292,7 +304,7 @@ def build(ctx):
             return 1.0 if any(snap(a) <= t < snap(b) for a, b in cheer) else 0.0
         sc.add(f"phil{i}", frames, frame_at=fa, seed=70 + i,
                motion=M.combine(M.breathe(0.015, 2.5, pivot=(x, y), phase=i * 0.19),
-                                V.hop_m([snap(a) for a, _ in cheer], FS, 8, (x, y))))
+                                V.hop_m([snap(a) for a, _ in cheer] + [snap(b) for _, b in cheer], FS, 8, (x, y))))
 
     sc.add("eve_tint", eve_tint_svg(), wc=0, blend="multiply", motion=lambda t: Tf(alpha=0.55 * e_of(t)))
     sc.add("tufts", [V.tufts_svg(k) for k in range(3)], frame_at=lambda t: float((0, 1, 2, 1)[int(t / 0.55) % 4]))
@@ -315,15 +327,14 @@ def build(ctx):
         (0.0, Cam(1480, 770, 2380)),
         (t_sh1, Cam(1470, 780, 2280)),
         (t_card_out, Cam(1420, 780, 2260)),
-        (t_peek - 0.2, Cam(1010, 742, 1620)),
-        (T, Cam(990, 745, 1590)),
+        (t_peek - 0.2, Cam(1075, 712, 1620)),
+        (T, Cam(1060, 712, 1590)),
     ], "sine")
 
     cx, cy = CARD
     sc.fx = [
         FX.sparkles((cx - 220, cy - 180, cx + 220, cy + 190), count=12, t0=t_40, t1=t_40 + 1.6,
                     color=(255, 238, 180), size=(9, 18), period=1.0, drift=-10, seed=41),
-        FX.motes((0, 500, SW, 1300), count=18, color=(255, 246, 214), size=(2, 5), alpha=90, seed=42),
     ]
 
     # --- sound

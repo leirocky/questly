@@ -273,6 +273,15 @@ def dark_svg():
 # ================================================================== soldiers page
 
 
+def camp_svg():
+    """Sky and land of the camp page in one document (one layer: cheaper while the page is animated)."""
+    sky, land = camp_sky_svg(), camp_land_svg()
+    strip = lambda d: d[d.index("</defs>") + 7:-6]                         # noqa: E731
+    defs = lambda d: d[d.index("<defs>") + 6:d.index("</defs>")]          # noqa: E731
+    return S.svg_doc(strip(sky) + strip(land), defs(sky).replace(defs(S.svg_doc("")), "") +
+                     defs(land).replace(defs(S.svg_doc("")), ""))
+
+
 def camp_sky_svg():
     defs = S.lin_grad("a2cs", [(0, "#9fbfd2"), (0.6, "#cfdcd6"), (1, "#ecdfc0")])
     b = f'<rect x="-20" y="-20" width="{W + 40}" height="{H + 40}" fill="url(#a2cs)"/>'
@@ -437,8 +446,7 @@ def build(ctx):
     t_sh1 = t_sh0 + 0.7
     rv2 = iris(t_iris2, t_iris2_end, IRIS2)
     page2 = lambda t: Tf(alpha=1.0 if t >= t_iris2 else 0.0)              # noqa: E731
-    sc.add("camp_sky", camp_sky_svg(), motion=page2, reveal=rv2, wc=0.6)
-    sc.add("camp_land", camp_land_svg(), motion=page2, reveal=rv2)
+    sc.add("camp", camp_svg(), motion=page2, reveal=rv2, wc=0.8)
     for i, (x, y, s, v) in enumerate(SOLDIERS):
         td = snap(t_afraid + 0.1 + 0.07 * ((i * 5) % len(SOLDIERS)))
         tj = t_sh1 + 0.04 * (i % 4)
@@ -474,6 +482,8 @@ def build(ctx):
         dx = 1500 * (1 - 0.55 * u1 - 0.45 * u2)
         return Tf(dx=dx + 6 * math.sin(2 * math.pi * (t - t_sh1) / 3.0), dy=4 * math.sin(2 * math.pi * t / 2.4),
                   alpha=1.0)
+    sc.add("dim", doc(f'<rect x="-20" y="-20" width="{W + 40}" height="{H + 40}" fill="#c7c9dc"/>'), wc=0,
+           blend="multiply", motion=lambda t: Tf(alpha=M.progress(t, t_sh0 + 0.1, t_sh1 + 0.3, "sine")))
     sc.add("shadow", shadow_svg(), wc=0, blend="multiply", motion=shadow_m)
 
     # --- camera: s01's slow push continues on the title page and the bedroom; a gentle drift on the camp page
@@ -498,7 +508,6 @@ def build(ctx):
 
     sc.fx = fx_title + [
         FX.lightning([t_thunder], dur=0.5, strength=0.45),
-        FX.tint((40, 44, 80), lambda t: 0.16 * M.progress(t, t_sh0 + 0.1, t_sh1 + 0.3, "sine"), mode="multiply"),
     ]
 
     # --- sound
