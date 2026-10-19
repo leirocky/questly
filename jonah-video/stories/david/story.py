@@ -23,12 +23,12 @@ VOICES = {
     "L": {"engine": "zipvoice", "sid": 63, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
           "prompt": {"engine": "kokoro", "sid": 63, "speed": 1.1,
                      "text": "我是非利士人的勇士，我力气很大，谁也打不过我。"}},
-    "K": {"engine": "zipvoice", "sid": 100, "speed": 1.1, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 100, "speed": 1.1, "text": "我是以色列的国王，我带着军队在山上扎营。"}},
-    "E": {"engine": "zipvoice", "sid": 87, "speed": 1.15, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 87, "speed": 1.1, "text": "我是家里的大哥，我在国王的军队里当兵。"}},
-    "X": {"engine": "zipvoice", "sid": 71, "speed": 1.05, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 71, "speed": 1.1, "text": "我是一个老人家，我有八个儿子，最小的那个在放羊。"}},
+    "K": {"engine": "zipvoice", "sid": 100, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 100, "speed": 1.0, "text": "我是以色列的国王，我带着军队在山上扎营。"}},
+    "E": {"engine": "zipvoice", "sid": 87, "speed": 0.95, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 87, "speed": 1.0, "text": "我是家里的大哥，我在国王的军队里当兵。"}},
+    "X": {"engine": "zipvoice", "sid": 71, "speed": 0.95, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 71, "speed": 1.0, "text": "我是一个老人家，我有八个儿子，最小的那个在放羊。"}},
 }
 # pronunciation fixes for this script (merged into voice/lexicons.py ZV_FIX for this story only)
 LEXICON = {
