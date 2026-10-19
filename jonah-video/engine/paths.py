@@ -3,10 +3,38 @@ import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-BUILD = ROOT / "build"          # regenerated intermediates (git-ignored)
-CACHE = ROOT / ".cache"         # downloaded models + raster cache (git-ignored)
+CACHE = ROOT / ".cache"         # downloaded models + raster/TTS caches, shared by all stories (git-ignored)
 MODELS = CACHE / "models"
 OUTPUT = ROOT / "output"
+
+# Story project (python3 build.py --story <name>, or PB_STORY): "jonah" is the original layout (story.py,
+# art/scenes/, voice/takes/, build/); any other story lives in stories/<name>/ (story.py, scenes/, takes/)
+# and builds into build/<name>/. Engine, art library, voices and audio code are shared.
+STORY = os.environ.get("PB_STORY", "jonah")
+if STORY == "jonah":
+    PROJECT = ROOT
+    SCENES_DIR, SCENES_PKG = ROOT / "art" / "scenes", "art.scenes"
+    TAKES = ROOT / "voice" / "takes"
+    BUILD = ROOT / "build"      # regenerated intermediates (git-ignored)
+else:
+    PROJECT = ROOT / "stories" / STORY
+    SCENES_DIR, SCENES_PKG = PROJECT / "scenes", f"stories.{STORY}.scenes"
+    TAKES = PROJECT / "takes"
+    BUILD = ROOT / "build" / STORY
+OUT_NAME = f"{STORY}_story.mp4"
+
+
+def load_story():
+    """The current story's story.py as the module ``story``."""
+    import importlib.util
+    import sys
+
+    if "story" not in sys.modules or getattr(sys.modules["story"], "__file__", "") != str(PROJECT / "story.py"):
+        spec = importlib.util.spec_from_file_location("story", PROJECT / "story.py")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["story"] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules["story"]
 
 FPS = 30
 OUT_W, OUT_H = 1920, 1080       # final video size

@@ -16,6 +16,7 @@ Speakers (voices in voice/tts.py):
 
 TITLE = "约拿的故事"
 SUBTITLE = "圣经绘本 · 约拿书"
+NO_BREAK = ["约拿", "尼尼微", "他施", "约帕", "以色列"]   # names read in one breath (voice/tts.py retakes a line that pauses inside one)
 
 # Each scene: id (art/scenes/<id>.py), a note for illustrators and the composer,
 # music mood, optional transition into the scene (ffmpeg xfade name, default

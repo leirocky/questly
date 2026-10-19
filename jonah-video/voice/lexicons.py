@@ -115,11 +115,18 @@ def _zv_tokens(syl):
 def zipvoice_content(texts):
     counts, words = {}, {}
     for t in texts:
-        for w, ws in contextual(t):
+        ctx = contextual(t)
+        for w, ws in ctx:
             for ch, s in zip(w, ws):
                 counts.setdefault(ch, Counter())[s] += 1
             if len(w) > 1:
                 words.setdefault(w, ws)
+        # 一/不 + the next character get their own entry with the sandhi reading (一天 yi4 tian1):
+        # a lone 一/不 entry has only one reading for the whole script
+        flat = [(ch, s) for w, ws in ctx for ch, s in zip(w, ws)]
+        for (ch, s), (nc, ns) in zip(flat, flat[1:]):
+            if ch in "一不":
+                words.setdefault(ch + nc, [s, ns])
     entries = {ch: c.most_common(1)[0][0].split() for ch, c in counts.items()}
     entries.update({w: ws for w, ws in words.items()})
     entries.update({w: s.split() for w, s in ZV_FIX.items()})

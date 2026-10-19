@@ -1,5 +1,7 @@
 """Picture hit points for the score: on-screen actions that a cue illustrates with an accent.
 
+Jonah only: for another story (engine.paths.STORY != "jonah") events() returns no events.
+
 A score hit that shows an action (a wave slamming into the ship, a mouth snapping shut, a horn being
 blown, a foot stamping) must land on the PICTURE, not on the narration word that names it.  The scene
 authors key their sound-effect cues to the animation, so the times are read at build time from the
@@ -185,8 +187,11 @@ EVENTS = {
 def events(timeline, verbose=True):
     """{key: [scene-relative s]} for every EVENTS entry whose scene is in the timeline; 'source' notes in
     events['_source'] ({key: 'sfx' | 'fallback: <reason>'})."""
+    from engine import paths
     from engine.loader import build_scene
 
+    if paths.STORY != "jonah":                  # EVENTS are Jonah's scenes; other stories have none (yet)
+        return {"_source": {}}
     by_id = {s["id"]: s for s in timeline["scenes"]}
     out, src, built = {}, {}, {}
     for key, (sid, name, pick, off, fallback) in EVENTS.items():

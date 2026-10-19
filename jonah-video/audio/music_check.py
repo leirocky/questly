@@ -10,6 +10,13 @@ echo bus (+1.5 s of repeats) must not ring on over a chord that does not contain
 
 Levels are K-weighted (ITU-R BS.1770 LUFS, pyloudnorm): integrated loudness per cue and per
 storm section, and short-term (3 s) loudness for the loudest moment of every cue.
+
+Story projects: the hit-point lists and the level checks below (storm loudest, belly quietest, ...) are the
+Jonah film's.  For another story (engine.paths.STORY != "jonah") the hit points come from the story's own
+stories/<name>/cues.py (REQUIRED_HITS, optional PICTURE_HITS; none if absent), the Jonah level checks are
+skipped (a general "no cue far above the median cue" check replaces them) and every general check stays:
+duration, clipping, cue tiling, hand-offs, silences, speech-to-music ratio, hit audibility, harmony, clashes,
+ranges, parallels.  The report goes to <the story's BUILD>/preview/.
 """
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -627,13 +634,38 @@ PICTURE_HITS = [
 ]
 
 
-def picture_targets(timeline):
-    """[(scene, label, kind, scene-relative target s or None, note)] for PICTURE_HITS."""
+def is_jonah():
+    from engine import paths
+    return paths.STORY == "jonah"
+
+
+def hit_lists():
+    """(required hits, picture hits) of the current story: Jonah's lists above, or the story's cues.py
+    REQUIRED_HITS / PICTURE_HITS (same formats; empty when not given)."""
+    if is_jonah():
+        return REQUIRED_HITS, PICTURE_HITS
+    from audio import score
+    mod = score.story_cues()
+    return list(getattr(mod, "REQUIRED_HITS", [])), list(getattr(mod, "PICTURE_HITS", []))
+
+
+def story_title():
+    if is_jonah():
+        return "约拿的故事"
+    from engine.paths import STORY, load_story
+    try:
+        return getattr(load_story(), "TITLE", STORY)
+    except Exception:
+        return STORY
+
+
+def picture_targets(timeline, hits=None):
+    """[(scene, label, kind, scene-relative target s or None, note)] for PICTURE_HITS (or `hits`)."""
     from engine.loader import build_scene
 
     by_id = {s_["id"]: s_ for s_ in timeline["scenes"]}
     cues, out = {}, []
-    for sid, cue_name, phrase, k, off, kind, what in PICTURE_HITS:
+    for sid, cue_name, phrase, k, off, kind, what in (PICTURE_HITS if hits is None else hits):
         label = f"sfx '{cue_name}' #{k}" + (f" from '{phrase}'" if phrase else "") + (f" {off:+.2f}s" if off else "")
         if sid not in by_id:
             continue
@@ -693,7 +725,8 @@ def required_hits(sc, timeline, tol=0.05, picture=True):
                  if cid == sid and k == kind and abs(actual - target) <= tol]
         return min(cands, key=lambda x: abs(x[0] - target)) if cands else None
 
-    for sid, ph, mode, kind in REQUIRED_HITS:
+    req, pic = hit_lists()
+    for sid, ph, mode, kind in req:
         s_ = by_id.get(sid)
         if s_ is None or not any(ph in ln["text"] for ln in s_["lines"]):
             out.append((sid, ph, mode, kind, float("nan"), None))
@@ -701,13 +734,35 @@ def required_hits(sc, timeline, tol=0.05, picture=True):
         target = s_["start"] + phrase_time(s_, ph, mode)
         out.append((sid, ph, mode, kind, target, placed(sid, kind, target)))
     if picture:
-        for sid, label, kind, t_rel, note in picture_targets(timeline):
+        for sid, label, kind, t_rel, note in picture_targets(timeline, pic):
             if t_rel is None:
                 out.append((sid, label, "picture", kind, float("nan"), ("n/a", note)))
                 continue
             target = by_id[sid]["start"] + t_rel
             out.append((sid, label, "picture", kind, target, placed(sid, kind, target)))
     return out
+
+
+def _jonah_level_checks(checks, loud_c, lufs, lead, top_other, storm_st, other_st, quiet_c, quiet_seg, sec_lufs,
+                        seg_lufs, med):
+    """The Jonah film's dynamic plan: the storm is the loudest music, the belly the quietest."""
+    checks.append(("a storm cue (s04 storm or s08 rowing) is the loudest cue (integrated LUFS)", loud_c.mood == "storm",
+                   f"{loud_c.id} {lufs[loud_c.id]:.1f} LUFS"))
+    checks.append((f"every storm section (hushed close excluded) >= {STORM_LEAD} LU above every non-storm cue",
+                   bool(lead) and min(lead.values()) >= STORM_LEAD,
+                   ", ".join(f"{cid} {v:+.1f} LU vs {top_other}" for cid, v in lead.items())))
+    checks.append((f"the storm's loudest 3 s beat every other cue's loudest 3 s by >= {STORM_ST_LEAD} LU (finale included)",
+                   storm_st[0] - other_st[0][0] >= STORM_ST_LEAD,
+                   f"storm {storm_st[0]:.1f} at {storm_st[1]:.1f} s vs {other_st[1]} {other_st[0][0]:.1f} at "
+                   f"{other_st[0][1]:.1f} s ({storm_st[0] - other_st[0][0]:+.1f} LU)"))
+    checks.append(("belly (or the end's open question) is the quietest (LUFS)", quiet_c.mood == "belly"
+                   or quiet_seg == "end-question", f"quietest cue {quiet_c.id}, quietest segment {quiet_seg}"))
+    worst_storm = max(sec_lufs.values(), default=float("nan"))
+    checks.append((f"storm no more than {STORM_OVER_MEDIAN:.0f} LU above the median cue",
+                   worst_storm - med <= STORM_OVER_MEDIAN, f"{worst_storm - med:+.1f} LU"))
+    if "storm-peak" in seg_lufs:
+        checks.append((f"storm-peak segment no more than {STORM_PEAK_OVER_MEDIAN:.0f} LU above the median cue",
+                       seg_lufs["storm-peak"] - med <= STORM_PEAK_OVER_MEDIAN, f"{seg_lufs['storm-peak'] - med:+.1f} LU"))
 
 
 def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
@@ -770,7 +825,8 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
         w(f"  {sid:14s} {kind:6s} {mode:10s} '{ph}'  target {target:8.3f}s  "
           + (f"score {got[1]!r} at {got[0]:8.3f}s ({1000 * (got[0] - target):+.0f} ms)" if got else "MISSING"))
     checks.append(("required hit points placed (narration text: calm, turn, salvation, herald, waltz...; picture: "
-                   "the wave hit, the splash, the gulp, the horn blow, Jonah's stamps)", not miss,
+                   "the wave hit, the splash, the gulp, the horn blow, Jonah's stamps)" if is_jonah() else
+                   "required hit points placed (the story's REQUIRED_HITS / PICTURE_HITS)", not miss,
                    (", ".join(miss) or f"all {len(hits) - len(na)}") + (f"; not checkable: {na}" if na else "")))
     w("")
 
@@ -818,28 +874,18 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
     for cid, v in sec_lufs.items():
         w(f"storm section {cid} (without its hushed close): {v:.1f} LUFS = median {v - med:+.1f} LU, loudest non-storm "
           f"cue {lead[cid]:+.1f} LU")
-    checks.append(("a storm cue (s04 storm or s08 rowing) is the loudest cue (integrated LUFS)", loud_c.mood == "storm",
-                   f"{loud_c.id} {lufs[loud_c.id]:.1f} LUFS"))
-    checks.append((f"every storm section (hushed close excluded) >= {STORM_LEAD} LU above every non-storm cue",
-                   bool(lead) and min(lead.values()) >= STORM_LEAD,
-                   ", ".join(f"{cid} {v:+.1f} LU vs {top_other}" for cid, v in lead.items())))
     storm_st = max((st_max[cid] for cid in sections), default=(float("nan"), 0.0))
     other_st = max(((v, cid) for cid, v in st_max.items() if by_id[cid].mood != "storm"),
                    default=((float("nan"), 0.0), ""))
     w(f"loudest 3 s: storm {storm_st[0]:.1f} LUFS at {storm_st[1]:.1f} s; loudest other cue {other_st[1]} "
       f"{other_st[0][0]:.1f} LUFS at {other_st[0][1]:.1f} s")
-    checks.append((f"the storm's loudest 3 s beat every other cue's loudest 3 s by >= {STORM_ST_LEAD} LU (finale included)",
-                   storm_st[0] - other_st[0][0] >= STORM_ST_LEAD,
-                   f"storm {storm_st[0]:.1f} at {storm_st[1]:.1f} s vs {other_st[1]} {other_st[0][0]:.1f} at "
-                   f"{other_st[0][1]:.1f} s ({storm_st[0] - other_st[0][0]:+.1f} LU)"))
-    checks.append(("belly (or the end's open question) is the quietest (LUFS)", quiet_c.mood == "belly"
-                   or quiet_seg == "end-question", f"quietest cue {quiet_c.id}, quietest segment {quiet_seg}"))
-    worst_storm = max(sec_lufs.values(), default=float("nan"))
-    checks.append((f"storm no more than {STORM_OVER_MEDIAN:.0f} LU above the median cue",
-                   worst_storm - med <= STORM_OVER_MEDIAN, f"{worst_storm - med:+.1f} LU"))
-    if "storm-peak" in seg_lufs:
-        checks.append((f"storm-peak segment no more than {STORM_PEAK_OVER_MEDIAN:.0f} LU above the median cue",
-                       seg_lufs["storm-peak"] - med <= STORM_PEAK_OVER_MEDIAN, f"{seg_lufs['storm-peak'] - med:+.1f} LU"))
+    if is_jonah():
+        _jonah_level_checks(checks, loud_c, lufs, lead, top_other, storm_st, other_st, quiet_c, quiet_seg, sec_lufs,
+                            seg_lufs, med)
+    else:                       # the Jonah film's dynamic plan (storm loudest, belly quietest) is its own
+        top = max(lufs, key=lambda k_: lufs[k_])
+        checks.append((f"no cue more than {STORM_OVER_MEDIAN:.0f} LU above the median cue",
+                       lufs[top] - med <= STORM_OVER_MEDIAN, f"loudest {top} {lufs[top] - med:+.1f} LU"))
     # hand-offs and entrances: adjacent 250 ms windows across every scene start (through the 1 s
     # dissolve) and every segment start
     bounds = ([(c.t0, 1.25, c.id) for c in sc.cues[1:]]
@@ -1081,7 +1127,7 @@ def report(sc, wav_path, stems, timeline, out_dir=None, notes=()):
         a, b = int(c.t0 * sr), int(c.t1 * sr)
         w("  " + " ".join(f"{_rms_db(st[a:b]):7.1f}" for st in stems.values()) + f"   {c.id}")
 
-    head = [f"MUSIC REPORT — 约拿的故事 background score ({len(sc.cues)} cues, {sc.duration:.1f} s)", "", "SUMMARY"]
+    head = [f"MUSIC REPORT — {story_title()} background score ({len(sc.cues)} cues, {sc.duration:.1f} s)", "", "SUMMARY"]
     for nm, ok_, det in checks:
         head.append(f"  [{'PASS' if ok_ else ('SKIP' if ok_ is None else 'FAIL')}] {nm}: {det}")
     head.append("")

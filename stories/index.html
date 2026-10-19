@@ -49,7 +49,7 @@
     </video>
     <div class="body">
       <h2>约拿的故事</h2>
-      <div class="meta">《约拿书》1–4 章 · 9 分 51 秒 · 中文配音与字幕 · 适合 3–8 岁</div>
+      <div class="meta">《约拿书》1–4 章 · 9 分 50 秒 · 中文配音与字幕 · 适合 3–8 岁</div>
       <p>上帝叫约拿去尼尼微，约拿却坐船往反方向逃跑。海上起了大风暴，约拿被抛进海里，又被大鱼吞进肚子……
         最后，一棵蓖麻让约拿明白：上帝爱惜每一个人。</p>
       <ul class="chapters" aria-label="章节">
@@ -59,10 +59,34 @@
         <li><button data-t="116.4"><time>1:56</time>抽签</button></li>
         <li><button data-t="213.0"><time>3:33</time>被抛进大海</button></li>
         <li><button data-t="232.2"><time>3:52</time>大鱼腹中</button></li>
-        <li><button data-t="299.5"><time>5:00</time>回到陆地</button></li>
-        <li><button data-t="332.7"><time>5:33</time>尼尼微悔改</button></li>
-        <li><button data-t="412.9"><time>6:53</time>约拿生气</button></li>
-        <li><button data-t="468.7"><time>7:49</time>蓖麻的教训</button></li>
+        <li><button data-t="299.0"><time>4:59</time>回到陆地</button></li>
+        <li><button data-t="331.6"><time>5:32</time>尼尼微悔改</button></li>
+        <li><button data-t="411.2"><time>6:51</time>约拿生气</button></li>
+        <li><button data-t="467.0"><time>7:47</time>蓖麻的教训</button></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="story" id="daniel">
+    <video controls preload="metadata" playsinline poster="daniel-poster.jpg">
+      <source src="../jonah-video/output/daniel_story.mp4" type="video/mp4">
+      你的浏览器无法播放这个视频。
+    </video>
+    <div class="body">
+      <h2>但以理和狮子坑</h2>
+      <div class="meta">《但以理书》第 6 章 · 5 分钟 · 中文配音与字幕 · 适合 3–8 岁</div>
+      <p>嫉妒的官员设下圈套：谁向上帝祷告，就要被扔进狮子坑。但以理照样打开窗户，一天三次向上帝祷告……
+        上帝派天使封住了狮子的口，但以理平平安安地度过了一夜。</p>
+      <ul class="chapters" aria-label="章节">
+        <li><button data-t="4.8"><time>0:05</time>但以理</button></li>
+        <li><button data-t="36.4"><time>0:36</time>嫉妒的官员</button></li>
+        <li><button data-t="57.0"><time>0:57</time>圈套</button></li>
+        <li><button data-t="86.8"><time>1:27</time>开窗祷告</button></li>
+        <li><button data-t="110.5"><time>1:51</time>被告发</button></li>
+        <li><button data-t="144.0"><time>2:24</time>狮子坑</button></li>
+        <li><button data-t="185.2"><time>3:05</time>天使来了</button></li>
+        <li><button data-t="207.2"><time>3:27</time>第二天早上</button></li>
+        <li><button data-t="257.3"><time>4:17</time>国王的信</button></li>
       </ul>
     </div>
   </article>
@@ -71,11 +95,14 @@
 </main>
 <script>
   // chapter buttons seek the video and play from there
-  const video = document.querySelector('#jonah video');
-  document.querySelectorAll('#jonah .chapters button').forEach(b => b.addEventListener('click', () => {
-    video.currentTime = parseFloat(b.dataset.t);
-    video.play().catch(() => {});
-  }));
+  document.querySelectorAll('.story').forEach(story => {
+    const video = story.querySelector('video');
+    story.querySelectorAll('.chapters button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.story video').forEach(v => { if (v !== video) v.pause(); });
+      video.currentTime = parseFloat(b.dataset.t);
+      video.play().catch(() => {});
+    }));
+  });
 </script>
 </body>
 </html>

@@ -7,8 +7,10 @@
   python3 build.py video [--scenes s04_storm,s05_lots] [--jobs 3] [--force]
   python3 build.py mix                 # voice + music + sfx -> build/audio/mix.wav
   python3 build.py assemble            # -> output/jonah_story.mp4
+  add --story daniel to build stories/daniel/ instead (-> build/daniel/, output/daniel_story.mp4)
 """
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -22,7 +24,10 @@ def main():
     ap.add_argument("--scenes", default=None)
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--story", default=None, help="story project: jonah (default) or stories/<name>/")
     a = ap.parse_args()
+    if a.story:
+        os.environ["PB_STORY"] = a.story       # read by engine.paths, imported below
     t0 = time.time()
     stages = ["voice", "music", "video", "mix", "assemble"] if a.stage == "all" else [a.stage]
     for st in stages:

@@ -1,4 +1,5 @@
-"""People library: Jonah, sailors, the ship's captain, the king of Nineveh and townspeople.
+"""People library: Jonah, sailors, the ship's captain, the king of Nineveh and townspeople; for the Daniel film
+(stories/daniel) also Daniel, King Darius (king(attire='darius')), the jealous officials and the palace guards.
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -25,7 +26,9 @@ fn(x, y, scale=1.0, facing=1, pose=..., expr=None, ..., marks=True)
             neutral, happy, sad, scared (wide eyes with small pupils, teeth, sweat drop, tremble marks),
             angry, surprised (big dark eyes, round 'o'), sleepy (closed eyes), peaceful (closed eyes, smile),
             dizzy (spiral eyes), shout (wide open mouth, raised brows - not angry), call (earnest open mouth,
-            for proclaiming), sorry (downcast eyes, blush), worried, tired (droopy lids, panting, 3 sweat drops).
+            for proclaiming), sorry (downcast eyes, blush), worried, tired (droopy lids, panting, 3 sweat drops),
+            sly (lids lowered, sideways glance, lopsided smirk - gentle, not scary), smug (heavy level lids,
+            raised brows, smirk).
           Unknown pose / expr / attire / kind names raise ValueError listing the valid ones.
 * marks   False hides motion / sound / sleep marks (z's, sound arcs, shake and fan arcs, tremble lines),
           e.g. the moment Jonah is woken. Water drops (wet=True) and sweat drops always show.
@@ -163,6 +166,29 @@ attire=None (default): 'royal', except pose='sit_ashes' which is always sackclot
   remove_crown  (-59, -346, 102, 0)     (-59, -344, 102, 0)     sorry    bare-headed, holding the crown (tipped
                 toward the viewer, spike and rosettes showing) in front of his chest, hands at its sides
                 (hands (92, -182) and (16, -180)); also in sackcloth
+attire='darius' (Daniel 6, never chosen by default): King Darius of Persia - a tall gold crown with stepped
+  crenellations and a row of blue / lilac jewels, a purple robe (DARIUS_ROBE) strewn with small gold flowers, wide
+  gold hem, gold sash with tails, gold collar and cuffs, no shawl, curled dark beard and hair (DARIUS_HAIR).
+  remove_crown holds the crenellated crown; sit_ashes is not allowed. Use throne=False + props.throne() for
+  every seated pose (sit_throne / sit_sign / sit_sad: same seat height, props.KING_SEAT_Y).
+  More poses (added for Darius; they work in every attire). bbox and hands [far, near] for attire='darius':
+  stand         (-56, -388, 62, 0)    neutral   hands (48, -127), (-38, -126)
+  walk_a/walk_b (-93, -388, 87, 1) / (-71, -390, 110, 0)   neutral
+  pace_a/pace_b (-93, -387, 100, 1) / (-65, -391, 100, 0)  worried  walking with the hands behind the back, head
+                bowed (flip every ~0.35 s while moving x slowly: thinking how to save Daniel / the sleepless night)
+  sign          (-54, -390, 110, 0)   neutral   standing; a decree hangs from its roller in the far hand (77, -230),
+                the near hand (64, -180) presses the gold seal onto it (a red seal mark shows)
+  sit_sign      (-92, -337, 120, 1)   neutral   the same seated (the decree rests on the knee); hands (86, -168),
+                (63, -130). With throne=False draw props.throne() first at the same anchor
+  sad           (-54, -386, 107, 0)   sad       standing, head bowed, front hand on the forehead (71, -298)
+  sit_sad       (-92, -325, 133, 1)   sad       seated, leaning forward, chin in the near hand (46, -182), the
+                other hand on the knee (80, -83) (on the throne, or on props.couch(): king at couch_x + 20*scale,
+                y - 85*scale)
+  call_out      (-60, -384, 169, 0)   call      leaning forward, both arms out and down: calling into the den
+  reach_out     (-60, -388, 155, 0)   happy     arms forward at chest height, open hands
+  hug           (-60, -390, 121, 0)   happy     hugging someone: draw daniel(x + 95*scale*facing, y, scale, -facing)
+                FIRST, then the king, whose arms come round Daniel's shoulders; hands (107, -241), (86, -219)
+  arms_up       (-81, -391, 78, 0)    happy     both arms up for joy
 
 citizen(x, y, scale=1.0, facing=1, kind='man', variant=0, pose='stand', attire='normal', expr=None, marks=True)
 ------------------------------------------------------------------------------------------------------------
@@ -191,6 +217,78 @@ attire='sackcloth': burlap robe, rope belt, ash speckles, barefoot, no shawl or 
                (arms up in a V, e.g. children playing)
   (bboxes are unions over the 4 variants and both attires)
 
+daniel(x, y, scale=1.0, facing=1, pose='stand', expr=None, marks=True)          [Daniel film]
+-------------------------------------------------------------------------
+Daniel: a kind grown man (a little taller than Jonah; head centre (2, -287)), deep-blue robe (DANIEL_BLUE) with a
+darker hem band and cuffs, gold sash with knot, cream head-cloth with a gold band and a cream flap with blue
+stripes hanging behind, short rounded dark-brown beard with a few grey flecks and a moustache, skin DANIEL_SKIN.
+Never orange / teal like Jonah, so the two heroes are never confused. Same rig and conventions as jonah().
+  pose        bbox (l, t, r, b)       natural expr  notes (hands at scale 1, facing 1)
+  stand       (-70, -340, 60, 0)      neutral
+  walk_a      (-91, -340, 85, 1)      neutral       stride frames (alternate every ~0.25 s)
+  walk_b      (-69, -342, 107, 0)     neutral
+  kneel_pray  (-92, -296, 51, 5)      peaceful      palms together (41, -169), head tilted up (praying at the window)
+  kneel_up    (-92, -298, 70, 5)      happy         kneeling, both arms lifted in thanks (57, -280), (-70, -276)
+  kneel_bow   (-92, -295, 89, 5)      peaceful      kneeling, head bowed over the praying hands (55, -157)
+  sit         (-75, -233, 120, 3)     neutral       on the ground, knees up, hands on the knees (pass expr='peaceful'
+                                                    or 'happy' for the calm night among the lions)
+  sit_pray    (-74, -233, 120, 3)     peaceful      on the ground, praying hands (43, -105)
+  explain     (-70, -340, 67, 0)      happy         near hand open, palm up in front (50, -173): talking
+  point       (-70, -340, 155, 0)     neutral       hand (130, -219)
+  look_up     (-80, -337, 84, 0)      happy         head tipped back, eyes up, hands open at his sides (from the den)
+  answer      (-70, -341, 75, 0)      call          looking up, front hand raised and open (62, -323): answering the
+                                                    king from the den
+  bow         (-54, -330, 112, 0)     peaceful      polite bow, hand on chest (42, -213)
+  read        (-70, -338, 113, 0)     neutral       an open hand-scroll held at chest height between (39, -194) and
+                                                    (101, -201), looking down at it (working in the palace)
+  hold_rope   (-68, -343, 87, -1)     happy         being pulled up: fists in front of the chest (65, -260), (67, -224),
+                                                    legs hanging; draw the rope straight up from the far hand (the
+                                                    anchor is the lowest sole: move y to lift him)
+  arms_up     (-79, -340, 76, 0)      happy
+  sad         (-56, -335, 87, 0)      sad           head bowed, arms hanging
+  listen      (-70, -340, 56, 0)      worried       hand to chin, head slightly up
+Put him at y = window_y + props.WINDOW_FLOOR_Y*scale behind props.upstairs_window(part='front') (pose
+'kneel_pray', facing toward Jerusalem): head, head-cloth and praying hands show in the opening.
+
+official(x, y, scale=1.0, facing=1, variant=0, pose='stand', expr=None, marks=True)   [Daniel film]
+--------------------------------------------------------------------------------------
+The jealous Persian court officials (gentle, never frightening): ankle-length robes covered in small repeating
+motifs, contrasting hem band, cuffs and belt, curled hair and beards. variant (mod 4):
+  0 crimson robe with gold diamonds, tall rounded maroon felt hat with a gold band, black pointed beard
+  1 green robe with cream flowers, cream turban with a red jewel and feather, short curled beard
+  2 rust robe with blue dots, tall cream fluted hat with a teal band, grey pointed beard and grey hair (older)
+  3 mustard robe with maroon diamonds, teal turban with a gold jewel and feather, deep-brown skin
+Tall hats reach ~376 px above the ground, turbans ~350.
+  pose      bbox (union of variants)  natural expr  notes
+  stand     (-62, -376, 59, 0)        neutral
+  walk_a/_b (-89, -376, 83, 1) / (-67, -377, 105, 0)   neutral  (hurrying to the king; with expr='sad' when led away)
+  whisper   (-51, -374, 88, 0)        sly           leaning in, hand raised beside the mouth (two officials face to
+                                                    face ~110*scale apart)
+  point     (-62, -376, 151, 0)       sly           pass expr='shout' / 'surprised' for '看！他在向他的上帝祷告！'
+  bow       (-49, -347, 164, 0)       smug          deep bow to the king, hands together in front (flattering)
+  peek      (-55, -352, 114, 0)       sly           crouched on tiptoe, leaning forward, hands up in front as if at a
+                                                    wall corner (spying on Daniel's window)
+  scheme    (-57, -375, 60, 0)        sly           hands rubbed together in front of the belly
+  read      (-52, -373, 112, 0)       worried       searching Daniel's records (open scroll in both hands)
+  sad       (-48, -366, 107, 0)       sad           head bowed, arms hanging
+
+guard(x, y, scale=1.0, facing=1, variant=0, pose='stand', expr=None, spear=None, marks=True)   [Daniel film]
+-------------------------------------------------------------------------------------------------
+Friendly palace guards: knee-length tunic with a contrasting hem and neck, rope belt, trousers in soft boots,
+rounded bronze helmet with a little plume, a round painted shield slung on the back, and a spear (wooden shaft,
+small leaf blade, gold ball butt) held upright in the near hand. variant (mod 4): 0 brick red / blue shield,
+stubble; 1 olive / red shield, young, clean-shaven, deep skin; 2 ochre / green shield, brown beard; 3 blue-grey /
+ochre shield, curled beard. spear=None: spear in stand / walk_a / walk_b, none in push / pull_rope; spear=False
+in stand / walk gives a relaxed empty hand instead; spear=True forces it.
+  pose       bbox (union)            natural expr  hands [far, near] at scale 1
+  stand      (-75, -388, 74, 0)      neutral       spear hand (63, -180); spear tip ~-388
+  walk_a/_b  (-88, -388, 83, 1) / (-71, -390, 103, 0)   neutral  the spear arm stays still, the other swings
+  push       (-71, -322, 170, 1)     worried       leaning in, both palms flat forward (162, -176), (116, -189):
+                                                   rolling the stone (props.den_stone is ~170*stone_scale wide on
+                                                   each side of its anchor, its centre ~128*stone_scale up)
+  pull_rope  (-117, -314, 103, 0)    happy         leaning back on a rope through the fists (81, -166), (37, -151)
+                                                   (as sailor 'pull'): pulling Daniel up out of the den
+
 ground_shadow(x, y, scale=1.0, width=120, opacity=0.22, color=None)
 --------------------------------------------------------------------
 Soft blurred oval contact shadow centred on an anchor point (uses the #soft filter). Put it on a layer
@@ -212,7 +310,9 @@ Use it to attach props (a cargo jar on carrying hands, a stick, a rope) or to pl
 each other (see captain 'wake').
 
 Constants: EXPRESSIONS, JONAH_POSES, SAILOR_POSES, CAPTAIN_POSES, KING_POSES, KING_ATTIRES, CITIZEN_POSES,
-CITIZEN_KINDS, CITIZEN_ATTIRES (tuples of the valid names).
+CITIZEN_KINDS, CITIZEN_ATTIRES, DANIEL_POSES, OFFICIAL_POSES, GUARD_POSES (tuples of the valid names);
+DANIEL_BLUE, DANIEL_SKIN, DARIUS_ROBE, DARIUS_HAIR (colours). hand_positions / body_points work for daniel,
+official and guard too. Daniel-film sheets: python3 tools/character_sheet.py daniel.
 """
 import hashlib
 import math
@@ -454,6 +554,9 @@ EXPRS = {
     "sorry":     dict(eyes="down", brow=(-0.10, 0.05, 0.03), mouth="wobble", blush=True),
     "worried":   dict(eyes="dot", brow=(-0.09, 0.04, -0.02), mouth="flat"),
     "tired":     dict(eyes="droop", brow=(-0.11, 0.05, 0.02), mouth="pant", sweat=3),
+    # Daniel film: the jealous officials (gentle, never scary)
+    "sly":       dict(eyes="narrow", brow=(-0.02, -0.07, -0.04), mouth="smirk", look=(0.05, 0.0)),
+    "smug":      dict(eyes="lidded", brow=(-0.02, -0.03, -0.07), mouth="smirk"),
 }
 EXPRESSIONS = tuple(EXPRS)
 _SWEAT = ((1.04, -0.20, 0.095), (1.20, 0.22, 0.07), (1.17, -0.62, 0.06))   # head-frame (x, y, size) in R
@@ -509,6 +612,22 @@ def _face(R, skin, expr, look=(0, 0), brow_col=INK, mouth=True, tremble=True):
                 rr = 0.02 * R + 0.0058 * R * j
                 pts.append((ex + rr * math.cos(a), ey + rr * math.sin(a)))
             s += _line(smooth_path(pts, closed=False), w=2.4)
+        elif kind in ("narrow", "lidded"):   # sly / smug: the upper lid lowered over the dot eye
+            cx, cy = ex + lx * R, ey + ly * R + 0.02 * R
+            rx, ry = 0.125 * R, 0.15 * R
+            if kind == "narrow":             # lid slants a little down toward the nose: a sideways glance
+                y0, sl = cy - 0.12 * ry, 0.12
+            else:                            # heavy, level lids: pleased with himself
+                y0, sl = cy + 0.05 * ry, -0.05
+            ell = [(cx + rx * math.cos(2 * math.pi * j / 28), cy + ry * math.sin(2 * math.pi * j / 28))
+                   for j in range(28)]
+            vis = _clip(ell, (cx, y0), _nrm((-sl * inner, 1.0)))
+            s += _poly(vis, EYE, sw=0)
+            s += f'<circle cx="{fmt(cx - 0.3 * rx)}" cy="{fmt(cy + 0.32 * ry)}" r="{fmt(0.26 * rx)}" fill="{HI}"/>'
+            xa, xb = cx - 1.3 * rx, cx + 1.3 * rx
+            ya, yb = y0 + sl * inner * (xa - cx), y0 + sl * inner * (xb - cx)
+            s += _line(f"M{fmt(xa)},{fmt(ya + 0.05 * ry)} Q{fmt(cx)},{fmt(y0 - 0.32 * ry)} {fmt(xb)},{fmt(yb + 0.05 * ry)}",
+                       w=3.2)
     bi, bo, bl = E["brow"]
     for i, (ex, ey) in enumerate(eyes):
         if i == 0:
@@ -590,6 +709,9 @@ def _mouth(R, kind, mx=None, my=None):
         return _line(f"M{P_(-0.12, 0.05)} Q{P_(-0.06, -0.02)} {P_(0, 0.02)} T{P_(0.12, 0.04)}", w=3.0)
     if kind == "flat":
         return _line(f"M{P_(-0.12, 0.03)} Q{P_(-0.04, -0.01)} {P_(0.02, 0.02)} T{P_(0.13, 0.01)}", w=3.0)
+    if kind == "smirk":           # lopsided little smile pulled up toward the face side, with a dimple tick
+        return (_line(f"M{P_(-0.12, 0.04)} Q{P_(0.02, 0.10)} {P_(0.15, -0.05)}", w=3.2) +
+                _line(f"M{P_(0.13, -0.08)} Q{P_(0.17, -0.05)} {P_(0.165, -0.01)}", w=2.4))
     return ""
 
 
@@ -623,7 +745,7 @@ def _hair_cap(R, col, style="short", front=-28, back=165, line=-0.42):
     return f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
 
 
-_MOUSTACHED = ("full", "white", "captain", "assyrian", "assyrian_short")
+_MOUSTACHED = ("full", "white", "captain", "assyrian", "assyrian_short", "trim", "pointed")
 
 
 def _beard(R, col, kind):
@@ -668,6 +790,30 @@ def _beard(R, col, kind):
             for i in range(n):
                 d += f" q{fmt(w / 2)},{fmt(0.13 * R)} {fmt(w)},0"
             s += f'<path d="{d}" fill="none" {_st(2.2, curl)}/>'
+        return s
+    if kind == "trim":         # Daniel: short rounded beard, dark with a little grey at the chin and jaw
+        L = 1.10
+        pts = [(-0.86 * R, 0.0), (-0.90 * R, 0.55 * R), (-0.55 * R, (L - 0.18) * R), (0.10 * R, L * R),
+               (0.66 * R, (L - 0.20) * R), (0.90 * R, 0.52 * R), (0.70 * R, 0.64 * R), (0.20 * R, 0.82 * R),
+               (-0.30 * R, 0.70 * R), (-0.62 * R, 0.25 * R)]
+        s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+        grey = mix(col, "#e6e0d6", 0.62)            # a little grey: soft flecks inside the beard
+        for (x0, y0, w0) in ((-0.30, 0.90, 0.20), (0.18, 0.96, 0.24), (-0.70, 0.42, 0.14), (0.62, 0.74, 0.14)):
+            s += _line(f"M{fmt((x0 - w0 / 2) * R)},{fmt(y0 * R)} q{fmt(w0 / 4 * R)},{fmt(0.06 * R)} {fmt(w0 / 2 * R)},0 "
+                       f"t{fmt(w0 / 2 * R)},0", w=2.4, col=grey)
+        return s
+    if kind == "pointed":      # an official: neat beard ending in a soft point, a curl row across it
+        pts = [(-0.86 * R, 0.0), (-0.88 * R, 0.55 * R), (-0.50 * R, 1.10 * R), (0.08 * R, 1.62 * R),
+               (0.52 * R, 1.16 * R), (0.90 * R, 0.55 * R), (0.70 * R, 0.66 * R), (0.20 * R, 0.84 * R),
+               (-0.30 * R, 0.72 * R), (-0.62 * R, 0.25 * R)]
+        s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+        curl = mix(col, "#c9b29a", 0.5)
+        d = f"M{fmt(-0.48 * R)},{fmt(1.04 * R)}"
+        for i in range(4):
+            d += f" q{fmt(0.115 * R)},{fmt(0.12 * R)} {fmt(0.23 * R)},0"
+        s += f'<path d="{d}" fill="none" {_st(2.2, curl)}/>'
+        s += _line(f"M{fmt(0.06 * R)},{fmt(1.22 * R)} q{fmt(0.03 * R)},{fmt(0.16 * R)} {fmt(0.02 * R)},{fmt(0.28 * R)}",
+                   w=2.0, col=curl)
         return s
     return ""
 
@@ -791,6 +937,95 @@ def _wrap(R, col, stripe=None):
                    f"{fmt(yy * R)}", w=2.2, col=shade(col, -0.22))
     s += _tube(_spline_pts([(0.98 * R, -0.40 * R), (0.40 * R, -0.57 * R), (-0.35 * R, -0.53 * R),
                             (-1.04 * R, -0.24 * R)]), 0.14 * R, stripe or shade(col, -0.15), ow=2.4)
+    return s
+
+
+# ---------------------------------------------------------------- headwear for the Daniel film (head frame)
+
+
+def _tall_hat(R, col, band):
+    """Persian official's tall rounded felt hat: a soft fluted cylinder, slightly wider at the rounded top."""
+    pts = [(0.95 * R, -0.40 * R), (0.92 * R, -1.10 * R), (0.86 * R, -1.72 * R), (0.45 * R, -2.02 * R),
+           (-0.30 * R, -2.04 * R), (-0.84 * R, -1.76 * R), (-0.94 * R, -1.10 * R), (-1.02 * R, -0.30 * R),
+           (-0.45 * R, -0.50 * R), (0.20 * R, -0.56 * R)]
+    s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
+    fl = shade(col, -0.2)
+    for x0 in (-0.55, -0.18, 0.20, 0.56):        # soft vertical flutes
+        s += _line(f"M{fmt(x0 * R)},{fmt(-0.62 * R)} Q{fmt((x0 + 0.04) * R)},{fmt(-1.30 * R)} {fmt(x0 * 0.9 * R)},"
+                   f"{fmt(-1.90 * R)}", w=2.2, col=fl)
+    s += _line(f"M{fmt(-0.55 * R)},{fmt(-1.86 * R)} Q{fmt(0.05 * R)},{fmt(-1.98 * R)} {fmt(0.62 * R)},{fmt(-1.80 * R)}",
+               w=2.0, col=shade(col, 0.25))
+    s += _tube(_spline_pts([(0.98 * R, -0.46 * R), (0.40 * R, -0.62 * R), (-0.35 * R, -0.58 * R),
+                            (-1.02 * R, -0.36 * R)]), 0.20 * R, band, ow=2.6)
+    for x0, y0 in ((0.62, -0.57), (0.05, -0.64), (-0.55, -0.55)):
+        s += f'<circle cx="{fmt(x0 * R)}" cy="{fmt(y0 * R)}" r="{fmt(0.055 * R)}" fill="{shade(band, 0.35)}"/>'
+    return s
+
+
+def _turban(R, col, band):
+    """Rounded wrapped turban with a jewel at the front and a short tail at the back."""
+    s = _tube([(-0.98 * R, -0.42 * R), (-1.26 * R, -0.05 * R), (-1.22 * R, 0.30 * R)], 0.22 * R, shade(col, -0.08),
+              ow=2.6)
+    pts = [(0.98 * R, -0.36 * R), (1.08 * R, -0.86 * R), (0.66 * R, -1.38 * R), (-0.10 * R, -1.52 * R),
+           (-0.90 * R, -1.24 * R), (-1.18 * R, -0.60 * R), (-1.04 * R, -0.20 * R), (-0.50 * R, -0.50 * R),
+           (0.25 * R, -0.56 * R)]
+    s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
+    wl = shade(col, -0.22)
+    for k in range(4):
+        y0 = -0.66 - 0.20 * k
+        s += _line(f"M{fmt(-1.02 * R)},{fmt((y0 + 0.30) * R)} Q{fmt(-0.10 * R)},{fmt((y0 - 0.30) * R)} "
+                   f"{fmt(1.00 * R)},{fmt((y0 - 0.02) * R)}", w=2.2, col=wl)
+    s += (f'<path d="M{fmt(0.66 * R)},{fmt(-0.96 * R)} Q{fmt(0.40 * R)},{fmt(-1.30 * R)} {fmt(0.52 * R)},{fmt(-1.58 * R)} '
+          f'Q{fmt(0.84 * R)},{fmt(-1.30 * R)} {fmt(0.66 * R)},{fmt(-0.96 * R)} Z" fill="{shade(band, 0.25)}" {_st(2.4)}/>')
+    s += _line(f"M{fmt(0.66 * R)},{fmt(-0.98 * R)} Q{fmt(0.58 * R)},{fmt(-1.28 * R)} {fmt(0.54 * R)},{fmt(-1.50 * R)}",
+               w=1.8, col=shade(band, -0.3))
+    s += _ell(0.70 * R, -0.80 * R, 0.17 * R, 0.20 * R, band, sw=2.6)
+    s += _ell(0.70 * R, -0.80 * R, 0.07 * R, 0.08 * R, shade(band, 0.35))
+    return s
+
+
+def _darius_crown(R, x0=0.0, y0=0.0, k=1.0):
+    """King Darius' crown: a tall gold band with stepped crenellations on top and a row of jewels."""
+    def q(x, y):
+        return f"{fmt(x0 + x * R * k)},{fmt(y0 + y * R * k)}"
+    gold, dark = GOLD, GOLD_DARK
+    xl, xr, yt, mh = -0.80, 0.90, -1.12, 0.34
+    s = (f'<path d="M{q(xl + 0.02, yt)} Q{q(0.05, yt - 0.22)} {q(xr - 0.02, yt)} L{q(xr - 0.02, yt + 0.08)} '
+         f'L{q(xl + 0.02, yt + 0.08)} Z" fill="{dark}" {_st(2.6)}/>')       # the inner back rim
+    n = 4
+    w = (xr - xl) / (n + (n - 1) * 0.55)
+    top = f"M{q(xl - 0.02, 0.02)} L{q(xl, yt)}"
+    for i in range(n):
+        a = xl + i * w * 1.55
+        st_ = w / 4
+        top += (f" L{q(a, yt - mh * 0.45)} L{q(a + st_, yt - mh * 0.45)} L{q(a + st_, yt - mh)} "
+                f"L{q(a + w - st_, yt - mh)} L{q(a + w - st_, yt - mh * 0.45)} L{q(a + w, yt - mh * 0.45)} "
+                f"L{q(a + w, yt)}")
+        if i < n - 1:
+            top += f" Q{q(a + w * 1.275, yt + 0.05)} {q(a + w * 1.55, yt)}"
+    top += f" L{q(xr + 0.02, 0.02)} Q{q(0.05, 0.22)} {q(xl - 0.02, 0.02)} Z"
+    s += f'<path d="{top}" fill="{gold}" {_st(3.4)}/>'
+    s += _line(f"M{q(xl, -0.22)} Q{q(0.05, -0.04)} {q(xr, -0.22)}", w=2.4, col=dark)
+    s += _line(f"M{q(xl, -0.86)} Q{q(0.05, -0.70)} {q(xr, -0.86)}", w=2.4, col=dark)
+    for i, xx in enumerate((-0.52, -0.12, 0.30, 0.68)):
+        yy = -0.52 + (0.07 if 0 < i < 3 else 0.02)
+        col = P["royal_light"] if i % 2 == 0 else "#4f86b0"
+        s += f'<circle cx="{fmt(x0 + xx * R * k)}" cy="{fmt(y0 + yy * R * k)}" r="{fmt(0.11 * R * k)}" fill="{col}" {_st(2.0)}/>'
+    return s
+
+
+def _helmet(R, col, plume):
+    """Palace guard's rounded bronze helmet with a brim band, a back neck flap and a little plume."""
+    s = _tube([(-0.05 * R, -1.20 * R), (-0.25 * R, -1.50 * R), (-0.60 * R, -1.58 * R)], 0.17 * R, plume, ow=2.4)
+    pts = [(0.96 * R, -0.40 * R), (0.92 * R, -0.84 * R), (0.45 * R, -1.20 * R), (-0.25 * R, -1.24 * R),
+           (-0.86 * R, -0.96 * R), (-1.10 * R, -0.42 * R), (-1.12 * R, 0.10 * R), (-0.80 * R, 0.12 * R),
+           (-0.62 * R, -0.36 * R), (0.10 * R, -0.54 * R)]
+    s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
+    s += _line(f"M{fmt(-0.55 * R)},{fmt(-1.00 * R)} Q{fmt(0.05 * R)},{fmt(-1.16 * R)} {fmt(0.62 * R)},{fmt(-0.92 * R)}",
+               w=3.0, col=shade(col, 0.35))
+    s += _tube(_spline_pts([(1.0 * R, -0.42 * R), (0.40 * R, -0.62 * R), (-0.35 * R, -0.58 * R),
+                            (-1.00 * R, -0.30 * R)]), 0.16 * R, shade(col, -0.22), ow=2.6)
+    s += f'<circle cx="{fmt(-0.05 * R)}" cy="{fmt(-1.22 * R)}" r="{fmt(0.10 * R)}" fill="{shade(col, -0.1)}" {_st(2.4)}/>'
     return s
 
 
@@ -991,6 +1226,69 @@ POSES = {
                       expr="worried"),
 }
 POSES["walk"] = POSES["walk_a"]
+
+# ---- Daniel film (Daniel 6): Daniel, King Darius, the officials and the palace guards
+_KNEEL = dict(legs=((4, -88), (0, -92)), feet=(100, 100), hem=0.97)
+POSES.update({
+    "explain": _P(h=-2, arms=(("fk", 12, 6), ("fk", 30, 80)), hands=("fist", "open"), expr="happy"),
+    "look_up": _P(h=-24, arms=(("fk", 20, 30), ("fk", -18, -26)), hands=("open", "open"), look=(0.03, -0.10),
+                  expr="happy"),
+    "answer": _P(h=-22, arms=(("fk", 152, 168), ("fk", 20, 40)), hands=("open", "open"), look=(0.03, -0.10),
+                 expr="call"),
+    "bow": _P(t=18, h=18, legs=((6, 2), (-4, -2)), arms=(("fk", 26, 20), ("ik", "torso", 0.55, 0.74, 1)),
+              hands=("fist", "open"), expr="peaceful"),
+    "bow_low": _P(t=32, h=8, legs=((6, 2), (-4, -2)), arms=(("ik", "abs", 64, -196, 1), ("ik", "abs", 60, -188, 1)),
+                  hands=("none", "fist"), expr="smug"),
+    "kneel_up": _P(t=-6, h=-22, arms=(("fk", 148, 166), ("fk", -150, -170)), hands=("open", "open"),
+                   look=(0.02, -0.06), expr="happy", **_KNEEL),
+    "kneel_bow": _P(t=8, h=18, arms=(("ik", "torso", 1.55, 0.62, 1), ("ik", "torso", 1.55, 0.62, 1)),
+                    hands=("none", "pray"), expr="peaceful", **_KNEEL),
+    "sit_pray": _P(t=-3, h=-10, legs=(("ik", 80, 1), ("ik", 90, 1)),
+                   arms=(("ik", "torso", 1.55, 0.66, 1), ("ik", "torso", 1.55, 0.66, 1)),
+                   hands=("none", "pray"), expr="peaceful", **_SEATED),
+    "read": _P(h=14, arms=(("ik", "body", 96, -60, 1), ("ik", "body", 34, -54, 1)), hands=("fist", "fist"),
+               look=(0.03, 0.07)),
+    "hold_rope": _P(h=-14, legs=((8, 2), (-6, -10)), arms=(("ik", "body", 66, -112, 1),
+                                                           ("ik", "body", 62, -80, 1)),
+                    hands=("fist", "fist"), expr="happy", look=(0.02, -0.05)),
+    "whisper": _P(t=10, h=-2, legs=((8, 3), (-6, -2)), arms=(("fk", 8, 3), ("ik", "head", 1.08, 0.50, 1)),
+                  hands=("fist", "open"), expr="sly"),
+    "peek": _P(t=22, h=-16, drop=14, legs=(("ik", 30, 1), ("ik", -32, 1)),
+               arms=(("ik", "abs", 96, -212, 1), ("ik", "abs", 78, -190, 1)), hands=("open", "open"),
+               expr="sly", look=(0.04, -0.02)),
+    "scheme": _P(h=6, arms=(("ik", "torso", 1.45, 0.45, 1), ("ik", "torso", 1.45, 0.45, 1)),
+                 hands=("none", "fist"), expr="sly"),
+    "sign": _P(h=12, arms=(("ik", "body", 74, -84, 1), ("ik", "body", 62, -40, 1)), hands=("fist", "fist"),
+               look=(0.03, 0.06)),
+    "sit_sign": _P(t=-2, h=12, lap=True, legs=((86, 4), (82, 2)), hem=0.97, flare=-8,
+                   arms=(("ik", "body", 82, -76, 1), ("ik", "body", 70, -38, 1)), hands=("fist", "fist"),
+                   look=(0.03, 0.06)),
+    "sad_head": _P(t=4, h=22, arms=(("ik", "head", 0.78, -0.50, 1), ("fk", -6, -2)), hands=("open", "fist"),
+                   far_over_head=True, expr="sad"),
+    "sit_sad": _P(t=14, h=16, lap=True, legs=((86, 4), (82, 2)), hem=0.97, flare=-8,
+                  arms=(("ik", "knee", 0, 0.25, 1), ("ik", "head", 0.42, 1.05, 1)), hands=("fist", "fist"),
+                  expr="sad"),
+    "pace_a": _P(t=6, h=14, legs=((24, 8), (-20, -34)),
+                 arms=(("ik", "torso", -1.35, 0.32, -1), ("ik", "torso", -1.35, 0.32, -1)), hands=("none", "fist"),
+                 expr="worried"),
+    "pace_b": _P(t=6, h=14, legs=((-20, -34), (24, 8)),
+                 arms=(("ik", "torso", -1.35, 0.32, -1), ("ik", "torso", -1.35, 0.32, -1)), hands=("none", "fist"),
+                 expr="worried"),
+    "call_out": _P(t=16, h=10, legs=((10, 3), (-8, -3)), arms=(("fk", 66, 82), ("fk", 72, 90)), hands=("open", "open"),
+                   expr="call"),
+    "reach_out": _P(t=4, legs=((10, 3), (-8, -3)), arms=(("fk", 74, 84), ("fk", 80, 94)), hands=("open", "open"),
+                    expr="happy"),
+    "hug": _P(t=6, h=4, legs=((10, 3), (-8, -3)), arms=(("ik", "abs", 104, -236, 1), ("ik", "abs", 92, -218, 1)),
+              hands=("open", "open"), expr="happy"),
+    "guard_stand": _P(arms=(("fk", 14, 8), ("fk", 48, 80))),
+    "guard_walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -46, -36), ("fk", 48, 80))),
+    "guard_walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 46), ("fk", 48, 80))),
+    "push": _P(t=26, drop=24, legs=(("ik", 52, 1), ("ik", -52, 0)),
+               arms=(("fk", 86, 92), ("fk", 80, 88)), hands=("palm", "palm"),
+               expr="worried"),
+    "pull_rope": _P(t=-24, drop=18, legs=(("ik", 66, 0), ("ik", -20, 1)),
+                    arms=(("ik", "abs", 80, -166, 1), ("ik", "abs", 34, -152, 1)), expr="happy"),
+})
 
 
 # ======================================================================= the rig
@@ -1380,6 +1678,27 @@ def _robe(D, st, ps):
             for poly in polys:
                 inner += _poly(_band(poly, pel, u, d0, d0 + sw_), sc, sw=0)
             k += 1
+    # small repeating motifs (Persian court robes): a staggered grid that follows the torso axis
+    if D.get("pattern"):
+        pc, pk, sp = D["pattern"]
+        xs = [p[0] for poly in polys for p in poly]
+        ys = [p[1] for poly in polys for p in poly]
+        n = int(max(max(xs) - min(xs), max(ys) - min(ys)) / sp) + 2
+        cx0, cy0 = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
+        mot = ""
+        for i in range(-n // 2 - 1, n // 2 + 2):
+            for j in range(-n // 2 - 1, n // 2 + 2):
+                c = _add((cx0, cy0), tp((i + (0.5 if j % 2 else 0.0)) * sp, j * sp * 0.92))
+                if pk == "diamond":
+                    r_ = 0.22 * sp
+                    mot += _poly([(c[0], c[1] - r_), (c[0] + r_ * 0.75, c[1]), (c[0], c[1] + r_), (c[0] - r_ * 0.75, c[1])],
+                                 pc, sw=0)
+                elif pk == "flower":
+                    mot += (f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(0.17 * sp)}" fill="{pc}"/>'
+                            f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(0.07 * sp)}" fill="{shade(pc, 0.45)}"/>')
+                else:
+                    mot += f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(0.11 * sp)}" fill="{pc}"/>'
+        inner += f'<g opacity="0.85">{mot}</g>'
     # folds
     fold = shade(col, -0.16)
     if ps["lap"]:
@@ -1693,6 +2012,14 @@ def _head_svg(D, st, ps, expr, marks=True):
             s += _crown(R, x0=0.05 * R, y0=-0.55 * R)
         elif kind == "wrap":
             s += _wrap(R, hat[1], hat[2] if len(hat) > 2 else None)
+        elif kind == "tallhat":
+            s += _tall_hat(R, hat[1], hat[2])
+        elif kind == "turban":
+            s += _turban(R, hat[1], hat[2])
+        elif kind == "darius":
+            s += _darius_crown(R, x0=0.05 * R, y0=-0.55 * R)
+        elif kind == "helmet":
+            s += _helmet(R, hat[1], hat[2])
     if D.get("seaweed"):        # strands draped over the head-cloth and down onto the shoulder
         c1 = _spline_pts([(0.30 * R, -1.08 * R), (-0.30 * R, -1.10 * R), (-0.85 * R, -0.78 * R),
                           (-1.18 * R, -0.10 * R), (-1.20 * R, 0.55 * R), (-1.02 * R, 1.25 * R)], steps=3)
@@ -1912,9 +2239,79 @@ def captain(x, y, scale=1.0, facing=1, pose="stand", expr=None, marks=True):
     return _wrap_out(inner, x, y, scale, facing, f"captain-{pose}")
 
 
+# ---------------------------------------------------------------- held props (Daniel film)
+PARCH = "#efdfb8"
+PARCH_ROLL = "#e2cb98"
+SEAL_RED = "#b8473c"
+
+
+def _writing(x0, x1, y0, y1, rows=4):
+    """Wavy lines of writing between x0..x1 and y0..y1 (soft ink)."""
+    s = ""
+    for i in range(rows):
+        yy = y0 + (y1 - y0) * (i + 0.5) / rows
+        xe = x1 - (x1 - x0) * (0.25 if i % 2 else 0.05)
+        d = f"M{fmt(x0)},{fmt(yy)}"
+        n = max(1, int((xe - x0) / 10))
+        w = (xe - x0) / n
+        for _ in range(n):
+            d += f" q{fmt(w / 4)},-3 {fmt(w / 2)},0 q{fmt(w / 4)},3 {fmt(w / 2)},0"
+        s += _line(d, w=2.0, col=P["ink_soft"], extra='opacity="0.75"')
+    return s
+
+
+def _read_front(D):
+    """An open hand-scroll held in both hands in front of the chest (pose 'read')."""
+    def front(st):
+        W0, W1 = st["arms"][0][2], st["arms"][1][2]
+        hr, skin = st["m"]["hr"], D["skin"]
+        xa, xb = sorted((W0[0], W1[0]))
+        yc = (W0[1] + W1[1]) / 2
+        h = 33
+        s = _poly([(xa, yc - h), (xb, yc - h - 3), (xb, yc + h - 3), (xa, yc + h)], PARCH, sw=3.0)
+        s += _writing(xa + 10, xb - 10, yc - h + 8, yc + h - 10, rows=4)
+        for W in (W0, W1):
+            s += (f'<rect x="{fmt(W[0] - 7)}" y="{fmt(W[1] - h - 9)}" width="14" height="{fmt(2 * h + 18)}" rx="6" '
+                  f'fill="{PARCH_ROLL}" {_st(3.0)}/>')
+            s += f'<circle cx="{fmt(W[0])}" cy="{fmt(W[1] + 4)}" r="{fmt(hr)}" fill="{skin}" {_st(3.2)}/>'
+        return s
+    return front
+
+
+def _sign_front(D, seated=False):
+    """A decree hanging from a roller in the far hand; the near hand presses the royal seal onto it."""
+    def front(st):
+        W0, W1 = st["arms"][0][2], st["arms"][1][2]
+        hr, skin = st["m"]["hr"], D["skin"]
+        x0, x1 = W0[0] - 30, W0[0] + 26
+        top = W0[1]
+        bot = (top + 64) if seated else (top + 96)
+        s = (f'<path d="M{fmt(x0 + 3)},{fmt(top)} L{fmt(x1 - 3)},{fmt(top)} L{fmt(x1)},{fmt(bot - 8)} '
+             f'Q{fmt((x0 + x1) / 2)},{fmt(bot + 6)} {fmt(x0)},{fmt(bot - 4)} Z" fill="{PARCH}" {_st(3.0)}/>')
+        s += _writing(x0 + 8, x1 - 8, top + 10, bot - 30, rows=3)
+        s += (f'<rect x="{fmt(x0 - 9)}" y="{fmt(top - 7)}" width="{fmt(x1 - x0 + 18)}" height="14" rx="6" '
+              f'fill="{PARCH_ROLL}" {_st(3.0)}/>')
+        s += f'<circle cx="{fmt(W0[0])}" cy="{fmt(W0[1])}" r="{fmt(hr)}" fill="{skin}" {_st(3.2)}/>'
+        sx, sy = W1[0] - 6, W1[1] + 18                                     # the stamp's face on the sheet
+        s += f'<circle cx="{fmt(sx + 9)}" cy="{fmt(sy + 4)}" r="8" fill="{SEAL_RED}" {_st(2.4)}/>'
+        s += (f'<rect x="{fmt(sx - 8)}" y="{fmt(sy - 30)}" width="16" height="30" rx="5" fill="{GOLD}" {_st(2.8)}/>'
+              f'<ellipse cx="{fmt(sx)}" cy="{fmt(sy - 1)}" rx="11" ry="4.5" fill="{GOLD_DARK}" {_st(2.4)}/>'
+              f'<circle cx="{fmt(sx)}" cy="{fmt(sy - 34)}" r="7" fill="{GOLD}" {_st(2.6)}/>')
+        s += f'<circle cx="{fmt(W1[0])}" cy="{fmt(W1[1] - 6)}" r="{fmt(hr)}" fill="{skin}" {_st(3.2)}/>'
+        return s
+    return front
+
+
 # ---------------------------------------------------------------- king
-KING_POSES = ("stand", "sit_throne", "sit_ashes", "kneel_pray", "remove_crown")
-KING_ATTIRES = ("royal", "sackcloth")
+KING_POSES = ("stand", "sit_throne", "sit_ashes", "kneel_pray", "remove_crown",
+              # added for King Darius (Daniel 6); they work in every attire
+              "walk_a", "walk_b", "pace_a", "pace_b", "sign", "sit_sign", "sad", "sit_sad", "call_out",
+              "reach_out", "hug", "arms_up")
+KING_ATTIRES = ("royal", "sackcloth", "darius")
+_KING_ALIAS = {"sad": "sad_head"}
+_KING_SEATED = ("sit_throne", "sit_sign", "sit_sad")
+DARIUS_HAIR = "#2e221d"
+DARIUS_ROBE = "#74489a"
 _KING_M = _metrics(_ADULT, 1.04, 1.08)
 KING_HAIR = "#3a2b25"
 
@@ -1982,8 +2379,17 @@ def _king_design(attire, pose, throne, ashes):
                  shawl_trim=GOLD, cuff=GOLD, sash=GOLD, sash_tail=False, collar=GOLD, hem_w=11)
         if pose != "remove_crown":
             D.update(hat=("crown",), hat_h=1.75)
-    if pose == "sit_throne" and throne:
+    if attire == "darius":       # Persian king: crenellated crown, purple robe with gold flowers, curled beard
+        D.update(skin="#dba57f", leg="#dba57f", long_hair=DARIUS_HAIR, hair=DARIUS_HAIR,
+                 beard=("assyrian", DARIUS_HAIR), robe=DARIUS_ROBE, sleeve=DARIUS_ROBE, hem_col=GOLD, hem_w=14,
+                 fringe=None, shawl=None, cuff=GOLD, sash=GOLD, sash_tail=True, collar=GOLD,
+                 pattern=(shade(GOLD, 0.1), "flower", 27), neck_v=shade(GOLD, 0.25))
+        if pose != "remove_crown":
+            D.update(hat=("darius",), hat_h=1.55)
+    if pose in _KING_SEATED and throne:
         D["behind"] = _throne
+    if pose in ("sign", "sit_sign"):
+        D["front"] = _sign_front(D, pose == "sit_sign")
     if pose == "sit_ashes" and ashes:
         D["behind"] = _ash_heap
     if pose == "remove_crown":
@@ -1991,7 +2397,9 @@ def _king_design(attire, pose, throne, ashes):
             W0, W1 = st["arms"][0][2], st["arms"][1][2]
             R = st["m"]["R"]
             c = _lerp(W0, W1, 0.5)
-            s = f'<g transform="translate({_pt(c)}) rotate(-8)">{_crown(R, x0=-0.05 * R, y0=0.58 * R, k=1.0, tilt=1.0)}</g>'
+            cr = (_darius_crown(R, x0=-0.05 * R, y0=0.58 * R) if attire == "darius" else
+                  _crown(R, x0=-0.05 * R, y0=0.58 * R, k=1.0, tilt=1.0))
+            s = f'<g transform="translate({_pt(c)}) rotate(-8)">{cr}</g>'
             for W in (W0, W1):
                 s += f'<circle cx="{fmt(W[0])}" cy="{fmt(W[1])}" r="{fmt(st["m"]["hr"])}" fill="{D["skin"]}" {_st(3.2)}/>'
             return s
@@ -2000,13 +2408,15 @@ def _king_design(attire, pose, throne, ashes):
 
 
 def king(x, y, scale=1.0, facing=1, pose="stand", attire=None, expr=None, throne=True, ashes=True, marks=True):
-    ps = _resolve_pose(pose, KING_POSES, "king")
+    if pose not in KING_POSES:
+        raise ValueError(f"king: unknown pose {pose!r}; choose from {sorted(KING_POSES)}")
+    ps = dict(POSES[_KING_ALIAS.get(pose, pose)])
     _check_expr(expr, "king")
     if attire is None:
         attire = "sackcloth" if pose == "sit_ashes" else "royal"
     if attire not in KING_ATTIRES:
         raise ValueError(f"king: unknown attire {attire!r}; choose from {KING_ATTIRES}")
-    if pose == "sit_ashes" and attire == "royal":
+    if pose == "sit_ashes" and attire in ("royal", "darius"):
         raise ValueError("king: pose 'sit_ashes' is in sackcloth (Jonah 3:6) - use attire='sackcloth' or omit it")
     e = expr or ps["expr"]
     if attire == "sackcloth" and expr is None and pose == "stand":
@@ -2100,3 +2510,164 @@ def citizen(x, y, scale=1.0, facing=1, kind="man", variant=0, pose="stand", atti
                 D["front"] = _cane
     inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
     return _wrap_out(inner, x, y, scale, facing, f"{kind}{variant}-{pose}")
+
+
+# ======================================================================= Daniel film (Daniel 6)
+# ---------------------------------------------------------------- Daniel
+DANIEL_POSES = ("stand", "walk_a", "walk_b", "kneel_pray", "kneel_up", "kneel_bow", "sit", "sit_pray", "explain",
+                "point", "look_up", "answer", "bow", "read", "hold_rope", "arms_up", "sad", "listen")
+DANIEL_BLUE = "#41629a"
+DANIEL_SKIN = "#e2a882"
+_DANIEL_M = _metrics(_ADULT, 1.02, 1.05)
+
+
+def _daniel_design():
+    blue = DANIEL_BLUE
+    return dict(robe=blue, sleeve=blue, hem_col=shade(blue, -0.28), cuff=shade(blue, -0.28), sash=P["gold"],
+                skin=DANIEL_SKIN, leg=DANIEL_SKIN, hem=0.92, hat=("headcloth", P["headcloth"], P["gold"]),
+                tail=(P["headcloth"], blue), ears=False, beard=("trim", "#57392a"),
+                neck_v=shade(P["headcloth"], -0.12))
+
+
+def daniel(x, y, scale=1.0, facing=1, pose="stand", expr=None, marks=True):
+    """Daniel: kind grown man, deep-blue robe, gold sash, cream head-cloth with a gold band (see module doc)."""
+    if pose not in DANIEL_POSES:
+        raise ValueError(f"daniel: unknown pose {pose!r}; choose from {sorted(DANIEL_POSES)}")
+    _check_expr(expr, "daniel")
+    ps = dict(POSES["listen_chin" if pose == "listen" else pose])
+    if pose in ("kneel_pray", "sit"):
+        ps["expr"] = "peaceful" if pose == "kneel_pray" else "neutral"
+    e = expr or ps["expr"]
+    D = _daniel_design()
+    if pose == "read":
+        D["front"] = _read_front(D)
+    inner, _ = _figure(D, _DANIEL_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"daniel-{pose}")
+
+
+# ---------------------------------------------------------------- the jealous officials
+OFFICIAL_POSES = ("stand", "walk_a", "walk_b", "whisper", "point", "bow", "peek", "scheme", "read", "sad")
+_OFFICIAL_ALIAS = {"bow": "bow_low"}
+_OFFICIALS = [
+    dict(robe="#a8434a", pattern=("#f0c870", "diamond"), trim="#e6b45a", hat=("tallhat", "#6b3a3a", "#e6b45a"),
+         skin="#e2a77e", hair="#2c211c", beard=("pointed", "#2c211c")),
+    dict(robe="#547a40", pattern=("#eadcae", "flower"), trim="#e9d9ae", hat=("turban", "#eadbb8", "#c0533a"),
+         skin="#b9805a", hair="#3a2a22", beard=("assyrian_short", "#3a2a22")),
+    dict(robe="#9a5a36", pattern=("#8fcad3", "dots"), trim="#5fa8a6", hat=("tallhat", "#e0c48e", "#3b8b89"),
+         skin="#d39a72", hair="#9d968c", beard=("pointed", "#a8a196")),
+    dict(robe="#c49a3c", pattern=("#8a3c3c", "diamond"), trim="#8a3c3c", hat=("turban", "#3c7d84", "#e8b63c"),
+         skin="#8d5a3b", hair="#2a201b", beard=("assyrian_short", "#5e3a26")),
+]
+
+
+def _official_design(variant):
+    v = _OFFICIALS[variant % 4]
+    sp = 22 if v["pattern"][1] != "dots" else 18
+    return dict(robe=v["robe"], sleeve=v["robe"], hem_col=v["trim"], cuff=v["trim"], hem_w=12, skin=v["skin"],
+                leg=v["skin"], hem=0.97, flare_k=0.8, pattern=(v["pattern"][0], v["pattern"][1], sp),
+                sash=shade(v["trim"], -0.18), sash_tail=False, hair=v["hair"], hair_style="curly",
+                long_hair=v["hair"] if v["hat"][0] == "tallhat" else None, hat=v["hat"],
+                hat_h=1.10 if v["hat"][0] == "tallhat" else 0.56, beard=v["beard"], sandal=SANDAL_DARK)
+
+
+_OFFICIAL_M = _metrics(_ADULT, 1.0, 1.04)
+
+
+def official(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, marks=True):
+    """One of the jealous Persian officials (variant 0-3); gentle 'sly' / 'smug' faces (see module doc)."""
+    if pose not in OFFICIAL_POSES:
+        raise ValueError(f"official: unknown pose {pose!r}; choose from {sorted(OFFICIAL_POSES)}")
+    _check_expr(expr, "official")
+    ps = dict(POSES[_OFFICIAL_ALIAS.get(pose, pose)])
+    if pose == "point":
+        ps["expr"] = "sly"
+    if pose == "read":
+        ps["expr"] = "worried"
+    e = expr or ps["expr"]
+    D = _official_design(variant)
+    if pose == "read":
+        D["front"] = _read_front(D)
+    inner, _ = _figure(D, _OFFICIAL_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"official{variant % 4}-{pose}")
+
+
+# ---------------------------------------------------------------- palace guards
+GUARD_POSES = ("stand", "walk_a", "walk_b", "push", "pull_rope")
+_GUARD_ALIAS = {"stand": "guard_stand", "walk_a": "guard_walk_a", "walk_b": "guard_walk_b"}
+_GUARDS = [
+    dict(tunic="#b5523b", trim="#e8c27a", legs="#7a5c42", skin="#dca57c", hair="#3a2a22",
+         beard=("stubble", "#3a2a22"), helmet="#c99252", plume="#c0533a", shield="#4f86b0"),
+    dict(tunic="#6f8a45", trim="#e9d9ae", legs="#5e4a3a", skin="#a46b47", hair="#241b17", beard=None,
+         helmet="#c99252", plume="#e0a23c", shield="#b5523b"),
+    dict(tunic="#c99a42", trim="#8a3c3c", legs="#6b4a3a", skin="#e8b28c", hair="#7a4a2a",
+         beard=("short", "#7a4a2a"), helmet="#b98a4e", plume="#3b8b89", shield="#6f8a45"),
+    dict(tunic="#4f7f8f", trim="#e6b45a", legs="#5a4636", skin="#c68a62", hair="#2f2420",
+         beard=("assyrian_short", "#2f2420"), helmet="#c99252", plume="#c0533a", shield="#c99a42"),
+]
+SPEAR_WOOD = "#9a6a40"
+SPEAR_TIP = "#c9c2b4"
+
+
+def _shield_back(col):
+    """Round shield slung on the back (drawn behind the body)."""
+    def behind(st):
+        m, tp = st["m"], st["tp"]
+        c = tp(-0.95 * m["ww"], 0.62 * m["T"])
+        r = 0.98 * m["R"]
+        s = f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(r)}" fill="{col}" {_st(OW)}/>'
+        s += f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(r * 0.78)}" fill="none" {_st(2.6, GOLD)}/>'
+        for k in range(8):
+            a = math.pi * k / 4
+            s += (f'<circle cx="{fmt(c[0] + 0.55 * r * math.cos(a))}" cy="{fmt(c[1] + 0.55 * r * math.sin(a))}" '
+                  f'r="{fmt(0.07 * r)}" fill="{GOLD}"/>')
+        s += f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="{fmt(r * 0.26)}" fill="{GOLD}" {_st(2.6)}/>'
+        return s
+    return behind
+
+
+def _spear_front(D):
+    """Upright spear in the near hand: wooden shaft, soft leaf-shaped blade, round pomegranate butt."""
+    def front(st):
+        W, R, skin = st["arms"][1][2], st["m"]["R"], D["skin"]
+        hr = st["m"]["hr"]
+        x = W[0] + 2
+        y_top = st["Hc"][1] - 2.25 * R
+        y_bot = min(st["ground"] - 6, W[1] + 150)
+        s = _tube([(x, y_bot), (x, y_top + 30)], 7, SPEAR_WOOD, ow=3.0)
+        s += (f'<path d="M{fmt(x)},{fmt(y_top - 6)} Q{fmt(x + 13)},{fmt(y_top + 16)} {fmt(x + 6)},{fmt(y_top + 34)} '
+              f'L{fmt(x - 6)},{fmt(y_top + 34)} Q{fmt(x - 13)},{fmt(y_top + 16)} {fmt(x)},{fmt(y_top - 6)} Z" '
+              f'fill="{SPEAR_TIP}" {_st(3.0)}/>')
+        s += _line(f"M{fmt(x)},{fmt(y_top + 2)} L{fmt(x)},{fmt(y_top + 28)}", w=1.8, col=shade(SPEAR_TIP, -0.3))
+        s += f'<rect x="{fmt(x - 6)}" y="{fmt(y_top + 32)}" width="12" height="9" rx="3" fill="{GOLD}" {_st(2.4)}/>'
+        s += f'<circle cx="{fmt(x)}" cy="{fmt(y_bot - 2)}" r="9" fill="{GOLD}" {_st(2.6)}/>'
+        s += _line(f"M{fmt(x - 4)},{fmt(y_bot - 11)} L{fmt(x)},{fmt(y_bot - 15)} L{fmt(x + 4)},{fmt(y_bot - 11)}",
+                   w=2.2, col=GOLD_DARK)
+        s += f'<circle cx="{fmt(W[0] + 0.3 * hr)}" cy="{fmt(W[1] + 0.2 * hr)}" r="{fmt(hr)}" fill="{skin}" {_st(3.2)}/>'
+        return s
+    return front
+
+
+def _guard_design(variant, spear):
+    v = _GUARDS[variant % 4]
+    D = dict(robe=v["tunic"], sleeve=v["tunic"], hem_col=v["trim"], cuff=v["trim"], hem_w=10, skin=v["skin"],
+             leg=v["legs"], hem=0.60, flare_k=0.7, rope_belt="#8b5a35", hair=v["hair"], hair_style="short",
+             hat=("helmet", v["helmet"], v["plume"]), hat_h=0.45, beard=v["beard"], sandal=SANDAL_DARK,
+             neck_v=v["trim"], behind=_shield_back(v["shield"]))
+    if spear:
+        D["front"] = _spear_front(D)
+    return D
+
+
+def guard(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, spear=None, marks=True):
+    """Friendly palace guard (variant 0-3) with a round shield on his back and a spear (see module doc)."""
+    if pose not in GUARD_POSES:
+        raise ValueError(f"guard: unknown pose {pose!r}; choose from {sorted(GUARD_POSES)}")
+    _check_expr(expr, "guard")
+    ps = dict(POSES[_GUARD_ALIAS.get(pose, pose)])
+    if spear is None:
+        spear = pose in ("stand", "walk_a", "walk_b")
+    if not spear and pose in _GUARD_ALIAS:       # empty hand: relaxed arm instead of the spear grip
+        ps["arms"] = (ps["arms"][0], POSES[pose]["arms"][1])
+    e = expr or ps["expr"]
+    inner, _ = _figure(_guard_design(variant, spear), _ADULT, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"guard{variant % 4}-{pose}")

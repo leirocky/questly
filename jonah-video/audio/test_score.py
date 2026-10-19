@@ -1,6 +1,7 @@
 """Robustness tests of the score generator against re-timed narration (no audio rendering).
 
     python3 -m audio.test_score          # from the project root; or: python3 -m pytest audio/test_score.py
+    python3 -m audio.test_score --story daniel     # another story project (or PB_STORY=daniel)
 
 The score reads every scene start and line timing from the timeline, so a TTS re-trim, a new
 narrator or a LINE_GAP change must not break `build.py music`.  Each variant re-times
@@ -12,7 +13,8 @@ alike) and non-uniformly (every pause scaled by its own random factor 0.3-1.6, e
   * every cue's segments tile its window exactly and every hit point lies inside its cue,
   * every required hit point is placed (music_check.REQUIRED_HITS, defined by the narration text, and
     music_check.PICTURE_HITS, read from the re-timed scenes' own sfx cues -- a scene that does not build on a
-    re-timed variant is reported as not checkable, and the score falls back to its narration formula),
+    re-timed variant is reported as not checkable, and the score falls back to its narration formula; for
+    another story: its cues.py REQUIRED_HITS / PICTURE_HITS),
   * no segment tempo strays more than 35 % from its nominal tempo,
   * harmony (incl. let-ring / echo tails): 0 violations, notes inside instrument ranges, 0 parallel
     fifths/octaves (whole score),
@@ -25,6 +27,9 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+if "--story" in sys.argv[:-1]:                  # read by engine.paths when audio.score is imported below
+    import os
+    os.environ["PB_STORY"] = sys.argv[sys.argv.index("--story") + 1]
 
 from audio import music_check, score
 from audio.scorekit import PARTS
