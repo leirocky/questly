@@ -68,7 +68,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s04_giant", "mood": "storm",
+        "id": "s04_giant", "transition": "dippaper", "mood": "storm",
         "note": "17:4-11. Goliath strides out of the Philistine camp (boom, boom, boom), huge: bronze helmet, scale "
                 "armour, a shield-bearer in front of him, a spear as thick as a weaver's beam; he shouts his "
                 "challenge across the valley; Israel's soldiers (and King Saul among them) shrink back, knees "
@@ -82,7 +82,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s05_forty", "mood": "lots",
+        "id": "s05_forty", "transition": "dippaper", "mood": "lots",
         "note": "17:16. Morning and evening, forty days: the sun rises and sets over the valley again and again (a "
                 "picture-book day counter), Goliath shouting each time, Israel's soldiers hiding behind shields.",
         "lines": [
@@ -157,7 +157,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s11_face", "mood": "storm",
+        "id": "s11_face", "transition": "dippaper", "mood": "storm",
         "note": "17:41-47. The valley: the giant and his shield-bearer on one side, the small boy on the other; "
                 "Goliath laughs and mocks; David answers bravely, pointing up to heaven; both armies watch from the "
                 "hills.",
