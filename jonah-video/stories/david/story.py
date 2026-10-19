@@ -14,21 +14,22 @@ God is never shown as a person. Goliath's defeat is shown as a fall, nothing mor
 TITLE = "大卫和歌利亚"
 SUBTITLE = "圣经绘本 · 撒母耳记上"
 
-# speakers this story adds (same format as voice/tts.py VOICES; Kokoro v1.1-zh prompt voices: 66 is the
-# highest-pitched male voice for the boy, 63 one of the lowest for the giant)
+# speakers this story adds (same format as voice/tts.py VOICES; Kokoro v1.1-zh prompt voices: the boy David
+# is a lower female voice (33, picked by the owner from 5 auditions, as boys often are in animation), 63 one of
+# the lowest male voices for the giant)
 VOICES = {
-    "D": {"engine": "zipvoice", "sid": 66, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 66, "speed": 0.95,
+    "D": {"engine": "zipvoice", "sid": 33, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 33, "speed": 1.2,
                      "text": "我是大卫，我在山坡上放羊。我的小羊又白又胖，我每天都带它们去喝水。"}},
-    "L": {"engine": "zipvoice", "sid": 63, "speed": 0.85, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 63, "speed": 0.85,
+    "L": {"engine": "zipvoice", "sid": 63, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 63, "speed": 1.1,
                      "text": "我是非利士人的勇士，我力气很大，谁也打不过我。"}},
-    "K": {"engine": "zipvoice", "sid": 100, "speed": 0.9, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 100, "speed": 0.9, "text": "我是以色列的国王，我带着军队在山上扎营。"}},
-    "E": {"engine": "zipvoice", "sid": 87, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 87, "speed": 0.9, "text": "我是家里的大哥，我在国王的军队里当兵。"}},
-    "X": {"engine": "zipvoice", "sid": 71, "speed": 0.9, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 71, "speed": 0.85, "text": "我是一个老人家，我有八个儿子，最小的那个在放羊。"}},
+    "K": {"engine": "zipvoice", "sid": 100, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 100, "speed": 1.0, "text": "我是以色列的国王，我带着军队在山上扎营。"}},
+    "E": {"engine": "zipvoice", "sid": 87, "speed": 0.95, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 87, "speed": 1.0, "text": "我是家里的大哥，我在国王的军队里当兵。"}},
+    "X": {"engine": "zipvoice", "sid": 71, "speed": 0.95, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
+          "prompt": {"engine": "kokoro", "sid": 71, "speed": 1.0, "text": "我是一个老人家，我有八个儿子，最小的那个在放羊。"}},
 }
 # pronunciation fixes for this script (merged into voice/lexicons.py ZV_FIX for this story only)
 LEXICON = {

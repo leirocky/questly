@@ -88,6 +88,6 @@ Owner feedback on v1: unnatural pauses in the male voices, narration too fast, t
 - Work: 1 agent for new characters/props (david, goliath, shield_bearer, soldier, king attire='saul', eliab, jesse, sling, stones, bear, sheep, tent, brook, day_counter, valley_elah; Jonah/Daniel output verified identical), 4 scene agents (one pass each, self-checked), 1 composer agent. Cross-agent seams are page dips (dippaper) so neighbours never ghost.
 - Executed here: `build.py voice/check --story david` (mean CER 0.036; flags only homophones/digits), `build.py all --story david` (all 14 scenes rendered, music 15/15 checks, mix -16.0 LUFS / -1.72 dBTP). Main-agent check: mid-transition frames of all 13 seams and a 1-per-12 s overview. Output `jonah-video/output/david_story.mp4`: 1080p, 353.17 s; repo copy re-encoded two-pass at 1950 kbps (93.7 MB, under GitHub's 100 MB limit); the 105 MB build.py output was sent to the owner.
 - Not verified: no independent agent review of the film, no human playback check yet, no phone playback.
-- Stories page on the branch has the David card (poster, 10 chapters) and refreshed Daniel/Jonah chapter times; NOT published — main still has the previous page until the owner approves a PR.
+- Published: owner approved; PR #10 merged to main (b58bafb). The stories page now has all three films.
 - Known leftovers reported by agents (not fixed): `valley_elah` hill edges show ink artefacts at the backdrop ends (worked around in scenes); David has no plain sit pose; bench numbers measured under heavy load.
-- Next executable task: owner review of the David film; then PR to main to publish all three films.
+- Next executable task: none required. Optional: owner playback check on a phone; the next story in the SCRIPT_STYLE.md style.

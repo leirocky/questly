@@ -243,7 +243,8 @@ def synth_raw(text, voice):
         best = None
         # Flow matching can occasionally slur a word: verify with ASR and try other settings.
         for spd, steps in ((voice["speed"], 8), (voice["speed"], 12), (voice["speed"] - 0.03, 8),
-                           (voice["speed"] + 0.03, 12), (voice["speed"], 16)):
+                           (voice["speed"] + 0.03, 12), (voice["speed"], 16), (voice["speed"], 10),
+                           (voice["speed"], 14), (voice["speed"] + 0.03, 20)):
             a = tts.generate(tts_text(text, "zipvoice"), ptext, px.tolist(), psr, spd, steps)
             x = np.asarray(a.samples, dtype=np.float32)
             score = _take_score(text, x, a.sample_rate)
@@ -309,7 +310,8 @@ def _edge_junk(ref, hyp):
     return any(op == "insert" and (i1 == 0 or i1 == len(ref)) for op, i1, _, _, _ in ops)
 
 
-NO_BREAK = tuple(getattr(story, "NO_BREAK", ()))   # names that must be read without a pause inside
+# names that must be read without a pause inside (the story's list plus names every Bible story uses)
+NO_BREAK = tuple(dict.fromkeys(list(getattr(story, "NO_BREAK", ())) + ["耶和华"]))
 
 
 def _ref_times(text, toks, ts):
@@ -331,13 +333,15 @@ def _ref_times(text, toks, ts):
     return np.interp(np.arange(len(ref) + 1), xs, [anchors[k] for k in xs])
 
 
-_STOP_INITIALS = ("b", "p", "d", "t", "g", "k", "j", "q", "z", "c")   # a closure before these is silent anyway
+# a stop's closure is silent, and a fricative (h, s, sh, x, f) is quiet, in fluent speech too
+_QUIET_INITIALS = ("b", "p", "d", "t", "g", "k", "j", "q", "z", "c", "f", "h", "s", "x")
 
 
-def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10):
-    """True when a NO_BREAK word is read with a pause inside it (e.g. 大利乌 … 王): a run of frames
-    below -40 dBFS between two of its characters longer than ``min_gap`` (``stop_gap`` before a
-    stop or affricate initial, whose closure is silent in fluent speech too)."""
+def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10, silence_gap=0.04):
+    """True when a NO_BREAK word is read with a pause inside it (e.g. 大利乌 … 王, 耶 … 和华): between
+    two of its characters, a run of frames below -40 dBFS longer than ``min_gap`` (``stop_gap``
+    before a stop, affricate or fricative initial), or real silence (below -55 dBFS) for
+    ``silence_gap`` before any initial."""
     from voice import lexicons as LX
 
     ref = _norm(text)
@@ -346,7 +350,8 @@ def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10):
     if times is None:
         return False
     hop = int(0.01 * sr)
-    quiet = np.array([np.sqrt(np.mean(x[i:i + hop] ** 2)) < 0.01 for i in range(0, len(x) - hop, hop)])
+    rms = np.array([np.sqrt(np.mean(x[i:i + hop] ** 2)) for i in range(0, len(x) - hop, hop)])
+    quiet, silent = rms < 0.01, rms < 0.0018      # -40 / -55 dBFS
     for w in words:
         syls = [s for _, ws in LX.contextual(w) for s in ws]
         for m in re.finditer(w, ref):
@@ -356,24 +361,80 @@ def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10):
             for k in range(1, len(w)):
                 # from the previous character to a little into this one (often stamped before its onset)
                 b = int(times[m.start() + k] * 100) + 8
-                run = best = 0
-                for q in quiet[a + 5:b]:
-                    run = run + 1 if q else 0
-                    best = max(best, run)
-                limit = stop_gap if syls[k].startswith(_STOP_INITIALS) else min_gap
-                if best * 0.01 > limit:
+                def longest(mask):
+                    run = best = 0
+                    for q in mask[a + 5:b]:
+                        run = run + 1 if q else 0
+                        best = max(best, run)
+                    return best * 0.01
+                limit = stop_gap if syls[k].startswith(_QUIET_INITIALS) else min_gap
+                if longest(quiet) > limit or longest(silent) >= silence_gap:
                     return True
                 a = max(a, int(times[m.start() + k] * 100))
     return False
 
 
+def _f0(x, sr, t0, t1, hop=0.015, win=0.04):
+    """Autocorrelation pitch (Hz) of the voiced 40 ms frames between t0 and t1, cut at the first jump of
+    more than 12 % (where the next syllable begins)."""
+    out = []
+    for t in np.arange(t0, t1, hop):
+        seg = x[int(t * sr):int((t + win) * sr)]
+        if len(seg) < int(win * sr) or np.sqrt(np.mean(seg ** 2)) < 0.01:
+            continue
+        seg = seg - seg.mean()
+        ac = np.correlate(seg, seg, "full")[len(seg) - 1:]
+        lo, hi = int(sr / 450), int(sr / 70)
+        k = lo + int(np.argmax(ac[lo:hi]))
+        if ac[k] > 0.4 * ac[0]:
+            f = sr / k
+            if out and abs(f / out[-1] - 1) > 0.12:
+                break
+            out.append(f)
+    return out
+
+
+def _wrong_tone(text, x, sr, toks, ts, max_rise=0.0):
+    """True when a NO_BREAK name ending in a 4th tone ends on a rise instead (大卫 read da4 wei2): the
+    median pitch of the last third of that syllable is above that of its first third by more than
+    ``max_rise``. Only the last syllable: a 4th tone before another 4th tone (以色列, 歌利亚) only half
+    falls in fluent speech."""
+    from voice import lexicons as LX
+
+    ref = _norm(text)
+    words = [w for w in NO_BREAK if w in ref]
+    times = _ref_times(text, toks, ts) if words else None
+    if times is None:
+        return False
+    for w in words:
+        entry = LX.ZV_FIX.get(w)
+        syls = entry.split() if entry else [s for _, ws in LX.contextual(w) for s in ws]
+        for m in re.finditer(w, ref):
+            for k, syl in list(enumerate(syls))[-1:]:
+                if not syl.endswith("4"):
+                    continue
+                j = m.start() + k
+                t0 = times[j]
+                t1 = min(times[j + 1] if j + 1 < len(times) else t0 + 0.35, t0 + 0.35)
+                p = _f0(x, sr, t0, t1)
+                if len(p) < 4:
+                    continue
+                q = max(1, len(p) // 3)
+                if (np.median(p[-q:]) - np.median(p[:q])) / np.median(p[:q]) > max_rise:
+                    return True
+    return False
+
+
 def _take_score(text, x, sr):
     """(rejected, CER) of one take; ASR gets 0.3 s of padding (it is unreliable on a word at sample 0)."""
+    if len(x) < 0.1 * sr * max(1, len(_norm(text))):
+        return True, 1.0      # ZipVoice can return a near-empty clip (short text, high speed, long prompt)
     pad = np.zeros(int(0.3 * sr), np.float32)
     xp = np.concatenate([pad, x, pad])
     hyp, toks, ts = asr(xp, sr)
     err = _cer(text, hyp)
-    return (err > CER_OK or _edge_junk(text, hyp) or _broken_word(text, xp, sr, toks, ts)), err
+    return (err > CER_OK or _edge_junk(text, hyp) or _broken_word(text, xp, sr, toks, ts)
+            or _wrong_tone(text, xp, sr, toks, ts)), err
 
 
 PAUSE_AFTER = {"，": 0.30, "、": 0.22, "：": 0.36, "；": 0.36, "。": 0.50, "！": 0.50, "？": 0.50}
