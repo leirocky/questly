@@ -24,7 +24,7 @@ from engine.scene import Scene
 from stories.david.scenes import s04_giant as V
 from stories.david.scenes import s12_sling as B
 from stories.david.scenes.s04_giant import (GY, K, KH, SH, SW, XB, XD, XD2, XG2, Z, Actor, Sprite, add_hill_actors,
-                                            add_valley, clamp, david_sprite, f1, hill_cast, light_motion,
+                                            add_valley, clamp, david_sprite, hill_cast, light_motion,
                                             light_svg, phrase_t, run_pose, saul_sprite, scene_clock, shadow_sprite)
 
 

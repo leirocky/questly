@@ -47,7 +47,7 @@ from PIL import Image
 from art import characters as C
 from art import props as PR
 from art import style as S
-from art.scenes.s15_city import WALK_N, gait, walk_pose
+from art.scenes.s15_city import WALK_N, walk_pose
 from art.scenes.s15_city import Sprite as _BaseSprite
 from art.style import P
 from engine import fx as FX
@@ -1186,7 +1186,6 @@ def build(ctx):
     # ---------------------------------------------------------------- camera
     wide = Cam(1900, 1110, 3500)
     right = Cam(2330, 1200, 2900)
-    med = Cam(2840, 1400, 1900)
     feet = Cam(2930, 1660, 1500)
     top = Cam(2930, 1090, 1500)
     hoopc = Cam(2950, 1330, 1700)

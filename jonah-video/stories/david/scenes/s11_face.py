@@ -23,7 +23,7 @@ import math
 from art import characters as C
 from engine import fx as FX
 from engine import motion as M
-from engine.motion import Cam, Tf
+from engine.motion import Cam
 from engine.scene import Scene
 from stories.david.scenes import s04_giant as V
 from stories.david.scenes.s04_giant import (GY, K, SH, SW, XB, XD, XG, Z, Actor, Birds, add_hill_actors, add_valley,

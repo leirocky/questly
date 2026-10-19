@@ -23,7 +23,6 @@ from PIL import Image, ImageDraw
 
 from art import characters as C
 from art import props as PR
-from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
