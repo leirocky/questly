@@ -443,8 +443,8 @@ def build(ctx):
         return m
     sc.add("b_sun", b_sun_svg(False), wc=0.3, motion=sun_m(False))
     sc.add("b_sun_eve", b_sun_svg(True), wc=0.3, motion=sun_m(True))
-    sc.add("b_clouds", b_clouds_svg(60), motion=lambda t: Tf(dx=-80 + 14 * t, alpha=(1 - 0.6 * eve(t)) * b_in(t).alpha))
-    sc.add("b_clouds_eve", b_clouds_svg(60, True), motion=lambda t: Tf(dx=-80 + 14 * t, alpha=0.8 * eve(t) * b_in(t).alpha))
+    sc.add("b_clouds", b_clouds_svg(60), motion=lambda t: Tf(dx=-60 + 5 * t, alpha=(1 - 0.6 * eve(t)) * b_in(t).alpha))
+    sc.add("b_clouds_eve", b_clouds_svg(60, True), motion=lambda t: Tf(dx=-60 + 5 * t, alpha=0.8 * eve(t) * b_in(t).alpha))
     sc.add("b_mountain", b_mountain_svg(), motion=b_in, seed=17)
     sc.add("b_far0", b_far_svg(0.0), motion=b_in, seed=19)
     sc.add("b_far1", b_far_svg(1.0), motion=lambda t: Tf(alpha=grn(t) * b_in(t).alpha), seed=19)
@@ -453,6 +453,9 @@ def build(ctx):
     sea_bf.append(sea_bf[0])
     sc.add("b_sea", sea_bf, frame_at=lambda t: (t / 0.8) % 4,
            motion=lambda t: Tf(dy=sea_b(t) - SEA_B[0], alpha=b_in(t).alpha), seed=23)
+    hz = S.lin_grad("s11hz", [(0, "#e9f2ee", 0.75), (0.25, "#d4e6e6", 0.35), (1, "#c4dce2", 0.08)])
+    sc.add("b_haze", doc(f'<rect x="-40" y="{HZ - 30}" width="{W + 80}" height="{H - HZ + 70}" fill="url(#s11hz)"/>', hz),
+           wc=0, motion=b_in)
     sc.add("b_slope0", b_slope_svg(0.0), motion=b_in, seed=25)
     sc.add("b_slope1", b_slope_svg(1.0), motion=lambda t: Tf(alpha=grn(t) * b_in(t).alpha), seed=25)
 
@@ -494,7 +497,7 @@ def build(ctx):
     dips = [dip(ts, KB, npiv, 6) for ts, _ in sched if ts != t_fly1 and ts != t_fly2 and ts != t_fly3]
     dips.append(dip(t_wave, KB, npiv, 4))
     sc.add("noah", frames, frame_at=noah_fa, z=None, motion=M.combine(
-        lambda t: Tf(alpha=0.0 if t < t_show else 1.0), *dips,
+        lambda t: Tf(alpha=M.progress(t, t_show - 0.12, t_show + 0.12, "sine")), *dips,
         hop(t_know + 0.25, [(0, {"dy": 0}), (0.16, {"dy": -10 * KB}), (0.32, {"dy": 0}), (0.48, {"dy": -7 * KB}),
                             (0.64, {"dy": 0})], npiv),
         M.breathe(0.012, 2.8, pivot=npiv)))
@@ -561,7 +564,7 @@ def build(ctx):
             ((-10, -30, 0.05, 20), (24, -8, 0.3, 14), (-30, 10, 0.55, 12), (10, -50, 0.9, 16))]
     cues += [(x, y - 40, t_dry + 0.1 + 0.07 * k, 11) for k, (x, y) in enumerate(spots[::2])]
     sc.fx = [lut_tint((255, 196, 150), lambda t: 0.22 * eve(t), mode="multiply"),
-             stars_fx(cues),
+             stars_fx(cues, life=2.2),
              FX.sparkles((200, 300, 1400, 800), count=14, t0=t_wind, t1=t_recede + 1.0, size=(6, 12), drift=-10,
                          seed=21, color=(255, 240, 190))]
 

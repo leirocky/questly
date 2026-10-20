@@ -101,7 +101,7 @@ def build(ctx):
         up = M.progress(t, t_god - 0.3, t_god + 1.6, "sine")
         down = M.progress(t, L0.end, L0.end + 2.0, "sine")
         up2 = M.progress(t, t_prom - 0.3, t_prom + 1.2, "sine")
-        return 0.4 * up * (1 - 0.6 * down) + 0.18 * up2
+        return 0.4 * up * (1 - 0.6 * down) + 0.1 * up2
     O.add_world(sc, g, light_alpha)
     rbf = [doc(PR.rainbow(RB[0], RB[1], RB[2], progress=k / 7, radius=RB_R, band=RB_BAND)) for k in range(8)]
 
@@ -112,7 +112,8 @@ def build(ctx):
         tb = t_bands[n - 1]
         return (n - 1) + clamp((t - tb) / 0.22)
     sc.add("rainbow", rbf, frame_at=rb_fa, z=3.5, wc=0.35,
-           motion=lambda t: Tf(alpha=0.94 + 0.06 * math.sin(2 * math.pi * g(t) / 2.2) * M.progress(t, t_prom, t_prom + 1)))
+           motion=lambda t: Tf(alpha=1 - 0.06 * (0.5 + 0.5 * math.sin(2 * math.pi * g(t) / 2.2)) *
+                               M.progress(t, t_prom, t_prom + 1)))
     # a soft glow where the rainbow will be, before the colours come
     pg = S.rad_grad("s13pg", [(0, "#fff6d8", 0.0), (0.82, "#fff2c4", 0.55), (0.9, "#fff2c4", 0.3), (1, "#fff2c4", 0)])
     sc.add("preglow", doc(f'<ellipse cx="{RB[0]}" cy="{RB[1]}" rx="{RB_R * RB[2] * 1.12}" ry="{RB_R * RB[2] * 1.12}" '
@@ -122,7 +123,7 @@ def build(ctx):
     # a golden shimmer gliding along the arc during the promise (rotates about the rainbow's centre)
     rr = RB_R * RB[2]
     arc = (f'<path d="M{RB[0] - rr},{RB[1]} A{rr},{rr} 0 0 1 {RB[0] - rr * math.cos(0.5)},{RB[1] - rr * math.sin(0.5)}" '
-           f'fill="none" stroke="#fff6dc" stroke-width="{RB_BAND * RB[2] * 5}" stroke-linecap="round" '
+           f'fill="none" stroke="#fff6dc" stroke-width="{RB_BAND * RB[2] * 3}" stroke-linecap="round" '
            f'filter="url(#blur-md)"/>')
     sweep_t = [t_prom + 0.2, t_prom + 2.2]
 
@@ -130,7 +131,7 @@ def build(ctx):
         for ts in sweep_t:
             if ts <= t <= ts + 1.8:
                 u = (t - ts) / 1.8
-                return Tf(rot=180 * u - 10, px=RB[0], py=RB[1], alpha=0.7 * math.sin(math.pi * u))
+                return Tf(rot=180 * u - 10, px=RB[0], py=RB[1], alpha=0.5 * math.sin(math.pi * u))
         return Tf(alpha=0.0)
     sc.add("shimmer", doc(arc), z=3.55, wc=0, blend="screen", motion=shim)
     # soft clouds gather round the rainbow's feet and in the sky ('放在云彩里')
@@ -206,10 +207,10 @@ def build(ctx):
     ax_, ay_, _ = O.ALTAR
     sc.add("altar", O.altar_frames(), frame_at=O.flicker_fa(g), z=40 + ay_ / 100 - 0.005, wc=0.7)
     fg = S.rad_grad("s12fg", [(0, "#ffd890", 0.9), (0.4, "#f6b860", 0.4), (1, "#f2c14e", 0)])
-    sc.add("fire_glow", doc(f'<ellipse cx="{ax_}" cy="{ay_ - 90}" rx="430" ry="330" fill="url(#s12fg)"/>', fg), wc=0,
+    sc.add("fire_glow", doc(f'<ellipse cx="{ax_}" cy="{ay_ - 90}" rx="370" ry="290" fill="url(#s12fg)"/>', fg), wc=0,
            blend="screen", z=60, motion=lambda t: Tf(alpha=min(1.0, (0.75 + 0.25 * M.progress(t, t_god, t_god + 1.5, "sine") *
                                                     (1 - 0.6 * M.progress(t, L0.end, L0.end + 1.5)) +
-                                                    0.15 * M.progress(t, t_prom, t_prom + 1.2, "sine")) *
+                                                    0.08 * M.progress(t, t_prom, t_prom + 1.2, "sine")) *
                                                    (0.88 + 0.12 * math.sin(2 * math.pi * g(t) / 0.7)))))
     O.turtle_layers(sc, g)
     sc.add("occluder", O.occluder_svg(1.0), z=55, seed=11, wc_edge=0.0)
@@ -267,7 +268,7 @@ def build(ctx):
                          period=2.2)]
 
     # ---------------------------------------------------------------- camera: from s12's framing back to the whole sky
-    keys = [(0, O.END_CAM), (t_look - 0.3, O.END_CAM), (t_bands[0] - 0.15, Cam(1080, 600, 2080)),
+    keys = [(0, O.END_CAM), (min(t_look - 0.3, L0.end - 1.6), O.END_CAM), (t_bands[0] - 0.3, Cam(1080, 600, 2080)),
             (t_prom, Cam(1076, 598, 2090)), (T, Cam(1100, 604, 2000))]
     sc.camera = M.cam_keys(keys, "sine")
     O.fix_seeds(sc)

@@ -615,7 +615,7 @@ def build(ctx):
            motion=M.combine(*[hop(ts, [(0, {"sy": 1.0}), (0.06, {"sy": 0.94}), (0.2, {"sy": 1.0})], (ax_, ay_))
                               for ts in stage_t]))
     fg = S.rad_grad("s12fg", [(0, "#ffd890", 0.9), (0.4, "#f6b860", 0.4), (1, "#f2c14e", 0)])
-    sc.add("fire_glow", doc(f'<ellipse cx="{ax_}" cy="{ay_ - 90}" rx="430" ry="330" fill="url(#s12fg)"/>', fg), wc=0,
+    sc.add("fire_glow", doc(f'<ellipse cx="{ax_}" cy="{ay_ - 90}" rx="370" ry="290" fill="url(#s12fg)"/>', fg), wc=0,
            blend="screen", z=60, motion=M.combine(
                M.keys([(t_fire, {"alpha": 0}), (t_fire + 0.8, {"alpha": 0.75})], "sine"),
                lambda t: Tf(alpha=0.88 + 0.12 * math.sin(2 * math.pi * g(t) / 0.7))))

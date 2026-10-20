@@ -529,12 +529,12 @@ def build(ctx):
     gg = S.rad_grad("s10gg", [(0, "#ffe7a0", 0.85), (0.45, "#f7cf78", 0.45), (1, "#f2c14e", 0)])
     sc.add("god_glow", doc(f'<ellipse cx="{gc[0]}" cy="{gc[1]}" rx="1250" ry="820" fill="url(#s10gg)"/>', gg), wc=0,
            blend="screen",
-           motion=M.combine(M.keys([(t_rem - 0.1, {"s": 0.18, "alpha": 0}), (t_rem + 0.5, {"alpha": 0.75}),
-                                    (t_rem + 1.9, {"s": 1.0, "alpha": 0.62})], ["out", "sine"], pivot=gc),
+           motion=M.combine(M.keys([(t_rem - 0.1, {"s": 0.18, "alpha": 0}), (t_rem + 0.5, {"alpha": 0.5}),
+                                    (t_rem + 1.9, {"s": 1.0, "alpha": 0.4})], ["out", "sine"], pivot=gc),
                             lambda t: Tf(alpha=0.9 + 0.1 * math.sin(2 * math.pi * t / 2.6))))
     rays = S.path(S.rays(gc[0], 60, 60, 900, n=14, width_deg=6, rot=8), fill="#fff0c0", stroke=False)
     sc.add("god_rays", doc(S.g(rays, filter="blur-md"), ""), wc=0, blend="screen",
-           motion=M.combine(M.keys([(t_rem, {"alpha": 0}), (t_rem + 1.2, {"alpha": 0.2})], "sine"),
+           motion=M.combine(M.keys([(t_rem, {"alpha": 0}), (t_rem + 1.2, {"alpha": 0.14})], "sine"),
                             lambda t: Tf(rot=1.5 * math.sin(2 * math.pi * t / 9), px=gc[0], py=60)))
 
     # each sleeping animal gets its own tiny sparkle, one after another
