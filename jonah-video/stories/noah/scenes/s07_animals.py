@@ -34,7 +34,7 @@ from PIL import Image
 from art import characters as C
 from art import props as PR
 from art import style as S
-from art.scenes.s17_king import arcs_markup
+from art.scenes.s17_king import blast_markup
 from art.style import P
 from engine import fx as FX
 from engine import motion as M
@@ -54,7 +54,7 @@ DX0, DTOP, DX1, SILL = AP["door_box"]
 RTX, RTY = AP["ramp_top"]
 RBX, RBY = AP["ramp_bottom"]
 WBOX = AP["window_box"]
-NOAH_SPOT = (2120, GY + 56)     # Noah welcomes everybody, standing in the grass in front of the path
+NOAH_SPOT = (2600, GY + 56)     # Noah welcomes everybody, standing in the grass in front of the path
 FAM_GAP = 105                   # the family's spacing in their line on the ramp
 FAM_ORDER = ["shem", "daughter_in_law0", "ham", "daughter_in_law1", "japheth", "daughter_in_law2", "noah_wife", "noah"]
 FAM_ITEMS = {"shem": "sack", "daughter_in_law0": "basket", "ham": "hay", "daughter_in_law1": "grain",
@@ -98,9 +98,10 @@ _SEGS = {}
 _ALIGN = {}
 
 
-def voice_segs(ctx, i):
-    """Voiced stretches [(start, end)] (scene seconds) of narration line i, from its take; None if unavailable."""
-    key = (ctx.id, i)
+def voice_segs(ctx, i, merge=8, thr=-30, min_len=6):
+    """Voiced stretches [(start, end)] (scene seconds) of narration line i, from its take; None if unavailable.
+    Stretches closer than ``merge`` x 10 ms are joined."""
+    key = (ctx.id, i, merge, thr, min_len)
     if key in _SEGS:
         return _SEGS[key]
     out = None
@@ -116,21 +117,21 @@ def voice_segs(ctx, i):
             e = np.sqrt((x[:m * hp].reshape(m, hp) ** 2).mean(axis=1)) + 1e-7
             db = np.convolve(20 * np.log10(e), np.ones(3) / 3, mode="same")
             db -= db.max()
-            q = db < -30
+            q = db < thr
             segs, j = [], 0
             while j < m:
                 if not q[j]:
                     k = j
                     while k < m and not q[k]:
                         k += 1
-                    if segs and j - segs[-1][1] < 8:
+                    if segs and j - segs[-1][1] < merge:
                         segs[-1][1] = k
                     else:
                         segs.append([j, k])
                     j = k
                 else:
                     j += 1
-            out = [(line.start + a * 0.01, line.start + b * 0.01) for a, b in segs if b - a >= 6]
+            out = [(line.start + a * 0.01, line.start + b * 0.01) for a, b in segs if b - a >= min_len]
     except Exception:
         out = None
     _SEGS[key] = out
@@ -170,7 +171,7 @@ def _align(groups, segs):
                 if j >= m:
                     break
                 c = sum(cnt[i:i2])
-                cost = c * math.log((dur[j] / c) / r0) ** 2 + 0.05 * (i2 - i - 1)
+                cost = c * math.log((dur[j] / c) / r0) ** 2 + 0.6 * (i2 - i - 1)
                 if best[i][j] + cost < best[i2][j + 1]:
                     best[i2][j + 1] = best[i][j] + cost
                     back[i2][j + 1] = (i, j, "g")
@@ -239,7 +240,7 @@ def pt(ctx, i, phrase, occ=0):
             raise KeyError(f"{phrase!r} #{occ} not in {line.text!r}")
     key = (ctx.id, i)
     if key not in _ALIGN:
-        segs = voice_segs(ctx, i)
+        segs = voice_segs(ctx, i, merge=1, thr=-32, min_len=4)
         _ALIGN[key] = _align(_groups(line.text), segs) if segs else None
     ts = _ALIGN[key]
     if ts is None:
@@ -629,8 +630,8 @@ def clouds_svg(i):
 def far_svg():
     """Hazy far ridges below the hilltop (the ark's hill stands high above the plain)."""
     out = ""
-    out += S.path(S.hill(-60, SW + 60, 1000, 150, seed=3, bumps=6), "#bdd3cc", sw=3)
-    out += S.path(S.hill(-60, SW + 60, 1030, 90, seed=8, bumps=5), "#adc9b9", sw=3)
+    out += S.path(S.hill(-60, SW + 60, 1010, 230, seed=3, bumps=4), "#c3d6d2", sw=3)
+    out += S.path(S.hill(-60, SW + 60, 1040, 140, seed=8, bumps=5), "#adc9b9", sw=3)
     rng = random.Random(4)
     for _ in range(26):
         x = rng.uniform(0, SW)
@@ -642,7 +643,7 @@ def far_svg():
 def mid_svg():
     """The rolling top of the hill behind the ark: grass, olive trees, bushes."""
     defs = S.lin_grad("n7mid", [(0, "#accc80"), (1, "#97bc68")])
-    out = S.path(S.hill(-80, SW + 80, 1095, 70, seed=21, bumps=4), "url(#n7mid)", sw=4)
+    out = S.path(S.hill(-80, SW + 80, 1100, 150, seed=21, bumps=3), "url(#n7mid)", sw=4)
     for x, y, s, sd in ((260, 1086, 0.42, 1), (2440, 1080, 0.36, 2), (2780, 1088, 0.4, 3), (3240, 1076, 0.34, 4),
                         (1960, 1082, 0.3, 5)):
         out += PR.olive_tree(x, y, s, seed=sd)
@@ -723,7 +724,7 @@ def fg_svg(k):
 def add_backdrop(sc, toff=0.0, ark=True):
     """Sky, sun, clouds, hills, meadow (+ the ark, door open). toff shifts the cyclic clocks (s08 continues s07)."""
     sc.add("sky", sky_svg(), z=0, wc=0.45)
-    sc.add("sun", sun_svg(), z=0.1, wc=0.3, motion=M.breathe(0.012, 4.0, pivot=(2980, 250)))
+    sc.add("sun", sun_svg(), z=0.1, wc=0.3, motion=lambda t: M.breathe(0.012, 4.0, pivot=(2980, 250))(t + toff))
     for i, v in enumerate((7.0, 4.5)):
         sc.add(f"clouds{i}", clouds_svg(i), z=0.2 + 0.05 * i, wc=0.6,
                motion=lambda t, v=v: Tf(dx=-v * (t + toff)))
@@ -1070,7 +1071,8 @@ def build(ctx):
     lion_x = actors[("lion", False)].xfn(t_roar)
     head = (lion_x - 150 * SC * 0.8, GY - 240 * SC * 0.8)
     mouth = (head[0] - 70 * SC * 0.8, head[1] + 40 * SC * 0.8)
-    sc.add("roar_arcs", [doc(arcs_markup(mouth[0] - 8, mouth[1], -1, k, 1.5)) for k in (1, 2, 3)], z=z0 + 1, wc=0,
+    sc.add("roar_arcs", [doc(blast_markup(mouth[0] + 6, mouth[1] - 16, -1, k, 1.25, ang=-62, halo=True))
+                         for k in (1, 2, 3)], z=z0 - 0.36, wc=0,
            frame_at=lambda t: float(int(t * 9) % 3),
            motion=lambda t: Tf(alpha=1.0 if t_roar + 0.02 <= t < t_roar + 0.75 else 0.0))
     sc.add("roar_fluff", [doc(fluff_markup(head[0], head[1], 62, k)) for k in (1.0, 1.35)], z=z0 - 0.35, wc=0.3,
@@ -1136,6 +1138,7 @@ def build(ctx):
     # ---------------- Noah's family carrying food (line 3) - they stop in a line on the ramp
     fam = family_sprites()
     t_fam_stop = L3.end - 0.15
+    fam_cuts = None
     FSTEP = 51.0
     FPER = 0.25
     for k, nm in enumerate(FAM_ORDER[:-1]):
@@ -1146,12 +1149,13 @@ def build(ctx):
         step = (x_start - x_end) / n
         t_start = snap(t_fam_stop - n * FPER)
         cts = [t_start + j * FPER for j in range(n)]
+        fam_cuts = cts
         xc = lin_plan([(t_start - 0.2, x_start), (t_fam_stop, x_end)])
         st = Stepper(lambda t, xc=xc: xc(t), t_start - 0.2, T, step, cut_times=cts, mf=0.6, max_move=0.15)
         st.pos = [x_start - step * (j + 1) for j in range(n)]
         st.x0 = x_start
         t_hold = cts[-1] + FPER
-        bl = [t_hold + 0.9 + 0.13 * k] if t_hold + 1.2 + 0.13 * k < T - 0.3 else []
+        bl = [b for b in (t_hold + 0.25 + 0.11 * k,) if b + 0.2 < T - 1.1]
         base = cuts([(0, idx["carry"])] + sum([[(snap(b), idx["blink"]), (snap(b + 0.13), idx["carry"])] for b in bl], []))
         act = Actor(sp, st.x, base, stepper=st, walk=(idx["carry_walk_a"], idx["carry_walk_b"]), span=26 * SC,
                     bounce=6 * SC, clip=door_clip, kshift=k % 2, breathe=(0.010, 2.9, 0.21 * k),
@@ -1161,7 +1165,7 @@ def build(ctx):
 
     # ---------------- Noah
     add_noah_s07(sc, ctx, dict(t_come=t_come, t_dong=t_dong, t_roar=t_roar, t_rab=t_rab, t_pairs=t_pairs,
-                               t_line=t_line, t_food=t_food, t_people=t_people, t_end=t_fam_stop), z=z0 + 4)
+                               t_line=t_line, t_food=t_food, fam_cuts=fam_cuts), z=z0 + 4)
 
     # ---------------- sound
     sc.sfx("birds", 0.0, dur=T, gain_db=-21, fade_in=0.8, fade_out=1.0)
@@ -1358,10 +1362,10 @@ def add_birds(sc, t_bird, t_pu, z):
         t_arr = t_pu[2] + 0.45 + 0.4 * bi
         t_dep = t_bird - 0.3 + 0.32 * bi
         for female in (False, True):
-            sp = Spr(150, 150, 75, 80, wc=0.5, seed=400 + bi * 3 + female)
-            fr = [sp.add(PR.songbird(75, 80, SC * 1.2 * (0.95 if female else 1.0), 1, wing=w, color=col,
+            sp = Spr(190, 190, 95, 100, wc=0.5, seed=400 + bi * 3 + female)
+            fr = [sp.add(PR.songbird(95, 100, SC * 1.55 * (0.95 if female else 1.0), 1, wing=w, color=col,
                                      female=female)) for w in wings]
-            p0 = (200 + 110 * bi + (60 if female else 0), 110 + 70 * bi + (40 if female else 0))
+            p0 = (330 + 120 * bi + (70 if female else 0), 190 + 80 * bi + (44 if female else 0))
             p3 = (wx + (12 if female else -10), wy + (8 if female else -6))
             p1 = (p0[0] + 560, p0[1] + 30)
             p2 = (p3[0] - 320, p3[1] - 340)
@@ -1446,9 +1450,10 @@ def add_noah_s07(sc, ctx, tm, z):
     fr = noah_frames(sp)
     nx, ny = NOAH_SPOT
     t_come, t_dong, t_roar = tm["t_come"], tm["t_dong"], tm["t_roar"]
-    t_food, t_people, t_end = tm["t_food"], tm["t_people"], tm["t_end"]
+    t_food = tm["t_food"]
+    fam_cuts = tm["fam_cuts"]
     c_cheer = snap(t_come + 0.05)
-    c_turn = snap(t_dong[1] - 0.1)
+    c_turn = snap(t_dong[0] - 0.55)
     c_talk = snap(t_dong[2] + 0.6)
     c_stand = snap(c_talk + 1.6)
     c_laugh = snap(t_roar + 0.18)
@@ -1457,47 +1462,43 @@ def add_noah_s07(sc, ctx, tm, z):
     c_nod = [snap(tm["t_pairs"] + 0.1 + 0.55 * k) for k in range(3)]
     c_talk2 = snap(tm["t_line"] + 0.1)
     c_wave = snap(t_food + 0.25)
-    c_talk3 = snap(t_people - 0.1)
-    # step back into the line (two strides, diagonal) at the end
-    t_w0 = snap(t_end - 0.62)
+    # he walks in at the back of his family's line, in step with them, and stops with them
     x_line = FAM_END["noah"]
-    entries = [(0, fr["stand_r"]), (c_cheer, fr["cheer"]), (snap(c_cheer + 0.9), fr["stand_r"]), (c_turn, fr["stand_l"]),
-               (c_talk, fr["talk_l"]), (c_stand, fr["stand_l"]), (c_laugh, fr["laugh_l"]),
+    n = int(round((nx - x_line) / 51.0))
+    cts = list(fam_cuts[-n:])
+    c_talk3 = snap(min(c_wave + 1.5, cts[0] - 0.9))
+    entries = [(0, fr["stand_r"]), (c_cheer, fr["cheer"]), (snap(c_cheer + 0.9), fr["stand_r"]),
+               (c_turn, fr["stand_l"]), (c_talk, fr["talk_l"]), (c_stand, fr["stand_l"]), (c_laugh, fr["laugh_l"]),
                (c_laugh_end, fr["stand_l"]), (c_happy, fr["happy_l"]), (snap(c_happy + 1.6), fr["stand_l"])]
     for k, cn in enumerate(c_nod):
-        entries += [(cn, fr["nod_l"]), (snap(cn + 0.28), fr["talk_l"] if k == 2 else fr["stand_l"])]
+        entries += [(cn, fr["nod_l"]), (snap(cn + 0.28), fr["stand_l"])]
     entries += [(c_talk2, fr["talk_l"]), (snap(c_talk2 + 1.3), fr["stand_l"])]
-    wave_end = snap(c_talk3 - 0.05)
-    entries += [(c_wave, fr["wave0"])]
-    entries += [(c_talk3, fr["talk_l"]), (snap(t_w0 - 0.25), fr["stand_l"])]
+    entries += [(c_wave, fr["wave0"]), (c_talk3, fr["talk_l"]), (snap(cts[0] - 0.3), fr["stand_l"])]
     entries = sorted(entries, key=lambda e: e[0])
-    blinks = [1.5, 6.9, 12.3, 16.0, t_end + 0.7]
+    blinks = [b for b in (1.5, 6.9, 12.3, 16.0, cts[-1] + 0.5) if b + 0.2 < ctx.duration - 1.1]
 
     def base(t):
         v = entries[0][1]
         for tk, i in entries:
             if t >= tk:
                 v = i
-        if c_wave <= t < wave_end:
+        if c_wave <= t < c_talk3:
             return fr[f"wave{int((t - c_wave) * 8) % 4}"]
         for b in blinks:
             if b <= t < b + 0.13 and v in (fr["stand_l"], fr["stand_r"]):
                 return fr["blink_l"] if v == fr["stand_l"] else fr["blink_r"]
         return v
-    pts_ = [(t_w0, nx), (t_w0 + 0.5, x_line)]
-    st = Stepper(lin_plan([(t_w0 - 0.1, nx), (t_w0 + 0.45, x_line)]), t_w0 - 0.2, ctx.duration, 50,
-                 cut_times=[t_w0, snap(t_w0 + 0.27)], mf=0.7, max_move=0.2)
-    st.pos = [nx + (x_line - nx) * 0.5, x_line]
-    st.hold = 0.4
+    st = Stepper(lambda t: nx, cts[0] - 0.5, ctx.duration, 51, cut_times=cts, mf=0.6, max_move=0.15)
+    st.pos = [nx - (nx - x_line) * (j + 1) / n for j in range(n)]
+    st.hold = 0.35
 
     def yfn(t):
-        u = M.progress(t, t_w0 - 0.1, t_w0 + 0.45, "sine")
-        return ny + (GY - ny) * u
+        return ny + (GY - ny) * M.progress(t, cts[0] - 0.08, cts[min(3, n - 1)] + 0.1, "sine")
     bumps = [squash_dip(c, 0.045, 0.28) for c, _ in entries[1:]]
     bumps.append(jump_bump(c_cheer + 0.02, 22 * SC, 0.42))
     bumps.append(jump_bump(c_laugh + 0.02, 14 * SC, 0.36))
-    bumps.append(squash_dip(snap(t_w0 + 0.55), 0.04, 0.28))
-    act = Actor(sp, st.x, base, stepper=st, walk=(fr["walk_a"], fr["walk_b"]), yfn=yfn, bumps=bumps, bounce=5 * SC,
-                breathe=(0.011, 3.1, 0.1))
+    bumps.append(squash_dip(snap(cts[-1] + 0.25), 0.04, 0.28))
+    act = Actor(sp, st.x, base, stepper=st, walk=(fr["walk_a"], fr["walk_b"]), yfn=yfn, bumps=bumps, bounce=6 * SC,
+                breathe=(0.011, 3.1, 0.1), kshift=1)
     sc.add_dynamic("noah", act, z=z)
     return act

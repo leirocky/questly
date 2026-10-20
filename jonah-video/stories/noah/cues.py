@@ -418,7 +418,7 @@ def title(c):
     s.pad(["vla", "vln2", "vln1"], 3, 53, 72, vel=46, bass_part="vc", bass_lo=41, bass_hi=53)
     bassline(s, "cb", 29, 41, 40)
     glint = picture(c, "sparkle", 0.5, c.dur - 0.5)
-    q_gl = min(max(s.q_of(c.t0 + glint[0]), 4.0), 7.0) if glint else 6.5
+    q_gl = min(max(s.q_of(c.t0 + glint[0]), 4.0), 7.5) if glint else 6.5
     s.add("glock", q_gl, _dq(s, q_gl, 1.0), "C7", 40, "arp", "r")          # C: in both the C and the F chord
     s.expr(["clar"], [(0, -9), (8, -10)])
     s.expr(["harp"], [(0, -8), (8, -9)])
@@ -433,8 +433,8 @@ def rain(c):
     c.gain(-2.2)
     t_w = c.at("哗啦啦")
     t_s = c.gap(c.find("今天的故事里"))
-    pours = syl(c, "哗啦啦", 2)
-    t_40 = c.at("四十天")
+    pours = on_picture(c, "splash_small", c.ls(0) - 0.3, c.le(0) + 0.3, 2, lambda: syl(c, "哗啦啦", 2))
+    t_40 = on_picture(c, "sparkle", c.ls(1), c.dur, 1, lambda: [c.at("四十天")])[0]
     a = c.seg(0, t_w, 2, "4/4", "F major", nominal=100, label="rain-window")
     w = c.seg(t_w, t_s, 1, "4/4", "D minor", nominal=112, label="rain-pour")
     s = c.seg(t_s, c.dur, 3, "4/4", "F major", nominal=94, label="rain-story")
@@ -454,12 +454,20 @@ def rain(c):
     w.pad(["trem_va", "trem_va", "trem_hi"], 3, 50, 74, vel=48, bass_ref=(38, 50))
     bassline(w, "cb", 28, 40, 44)
     timp_roll(w, 0, 3.9, midi("D2"), 26, 40)
-    for t in pours:
-        q = qpos(w, c, t, 0.0, 3.5)
-        gliss(w, "harp", q, 0.45, midi("D4"), midi("D6"), up=False, v0=46, v1=56, scale=ChordTones(w.chord_at(q + 1e-3)))
-    w.expr(["vc_fast"], [(0, -14), (2, -11), (4, -13)])
+    for i_, t in enumerate(pours):
+        sg, q = seg_at(c, (a, w, s), t)
+        q = min(q, sg.n_q - 0.5)
+        gliss(sg, "harp", q, 0.45, midi("D4"), midi("D6"), up=False, v0=46, v1=56,
+              scale=ChordTones(sg.chord_at(q + 1e-3)))
+        sg.add("pz_cb", q, _dq(sg, q, 0.5), sg.chord_at(q + 1e-3).bass_note(29, 41), 64, "bass", "h")
+        sg.add("timp", q, _dq(sg, q, 0.5), timp_pitch(sg.chord_at(q + 1e-3), midi("D2")), 58, "timp", "h")
+        pluck_chord(sg, q, vel=62, lo=62, hi=74)
+        sg.add("okit", q, 1, 36, 48, "perc", "h")
+        sg.sync(f"'哗啦啦' {i_ + 1} (the big drops)", q, t)
+    w.expr(["vc_fast"], [(0, -16), (2, -14), (4, -15)])
     w.expr(["trem_va", "trem_hi", "cb"], [(0, -16), (1.5, -11), (4, -13)])
-    w.expr(["timp", "harp"], [(0, -12), (4, -12)])
+    w.expr(["timp", "harp", "pz_cb", "pz_hi"], [(0, -10), (4, -10)])
+    w.expr("okit", [(0, -12), (4, -12)])
     # 'in today's story it rained and rained -- for how long? forty whole days!': the oboe, harp, strings
     s.mel("oboe", "C5:1 A4:1 C5:2 | F5:1 E5:1 D5:1 F5:1 | Bb4:1 D5:1 E5:1 C5:1", vel=54)
     broken(s, "harp", 0, s.n_q, (0, 2, 4, 2), 41, 53, vel=36, thin=True)
@@ -479,7 +487,8 @@ def world(c):
     c.gain(-2.6)
     t_q = c.at("他们不听")
     t_s = c.gap(c.find("上帝看见了"))
-    push, grab = syl(c, "你推我", 2)
+    push, grab = on_picture(c, "whoosh", c.ls(0) - 0.3, c.le(0), 2, lambda: syl(c, "你推我", 2))
+    t_tear = on_picture(c, "drip", c.ls(1), c.dur, 1, lambda: [None])[0]
     a = c.seg(0, t_q, 2, "3/4", "D minor", nominal=84, label="world-long-ago")
     q = c.seg(t_q, t_s, 2, "4/4", "D minor+", nominal=96, label="world-quarrel")
     s = c.seg(t_s, c.dur, 1, "4/4", "D minor+", nominal=78, label="world-sorrow")
@@ -502,19 +511,22 @@ def world(c):
                  "D3:1/2:s F3:1/2:s A3:1/2:s r:1/2 G3:1/2:s E3:1/2:s C#3:1/2:s A2:1/2:s", vel=58)
     q.mel("pz_cb", "D2:1 r:1 A1:1 r:1 | D2:1 r:1 A1:1 r:1", vel=52, role="bass")
     q.pad(["vla", "vln2"], 2, 52, 67, vel=36, bass_ref=(33, 45))
-    for t in (push, grab):                                  # 你推我 / 我抢你: a shove and a grab
+    for lbl, t in (("push ('你推我')", push), ("grab ('我抢你')", grab)):   # a shove and a grab
         sg, qq = seg_at(c, (a, q), t)
-        drum(sg, qq, 77, 50)
-        pluck_chord(sg, qq, vel=50, lo=57, hi=69)
+        drum(sg, qq, 77, 58)
+        pluck_chord(sg, qq, vel=56, lo=57, hi=69)
+        sg.add("pz_cb", qq, _dq(sg, qq, 0.5), sg.chord_at(qq + 1e-3).bass_note(33, 45), 56, "bass", "h")
+        sg.sync(lbl, qq, t)
     q.mel("clar", "E5:1/4 C#5:1/4 E5:1/4 C#5:1/4 G5:1/4 E5:1/4 C#5:1/4 A4:1/4", q=6, vel=50, art="s")
     q.expr(["bsn"], [(0, -11), (8, -11)])
-    q.expr(["clar"], [(0, -13), (8, -13)])
+    q.expr(["clar"], [(0, -14), (8, -16)])
     q.expr(["pz_cb", "pz_hi", "vla", "vln2"], [(0, -13), (8, -13)])
     q.expr("hand", [(0, -12), (8, -12)])
     # God saw it and was very sad: soft strings, a single falling tear (celesta)
     strings(s, vel=40, lo=55, hi=70, bass=(43, 55), cb=(31, 43))
-    s.add("celesta", 2.5, 1.5, "A5", 40, "arp")
-    s.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -13), (2, -15), (4, -18)])
+    q_t = 2.5 if t_tear is None else min(max(qpos(s, c, t_tear), 2.0), s.n_q - 0.5)
+    s.add("celesta", q_t, s.n_q - q_t, "A5", 40, "arp")
+    s.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -11), (2, -14), (4, -18)])
     s.expr(["celesta"], [(0, -10), (4, -10)])
 
 
@@ -562,11 +574,13 @@ def noah(c):
     # Noah had three sons, Shem, Ham and Japheth: b4-b5 on the clarinet, a pluck for every name
     s.mel("clar", bars(NOAH, 3, 5), vel=56)
     strings(s, vel=40, lo=53, hi=70)
-    names = [c.at("闪"), c.at("含"), c.at("雅弗")]
+    names = on_picture(c, "pop", c.ls(2) - 0.3, c.dur, 3, lambda: [c.at("闪"), c.at("含"), c.at("雅弗")])
     for k, t in enumerate(names):
         q = qpos(s, c, t, 0.0, s.n_q - 0.5)
-        s.add("harp", q, _dq(s, q, 0.75), top(s, q, 72 + 3 * k, 76 + 4 * k, 0), 44 + 2 * k, "arp", "h")
-        s.add("glock", q, _dq(s, q, 0.5), top(s, q, 84 + 3 * k, 88 + 4 * k, 0), 34 + 2 * k, "arp", "h")
+        s.add("harp", q, _dq(s, q, 0.75), top(s, q, 72 + 3 * k, 76 + 4 * k, 0), 50 + 2 * k, "arp", "h")
+        s.add("glock", q, _dq(s, q, 0.5), top(s, q, 84 + 3 * k, 88 + 4 * k, 0), 42 + 2 * k, "arp", "h")
+        s.add("pz_hi", q, _dq(s, q, 0.25), top(s, q, 60 + 3 * k, 64 + 4 * k, 0), 50, "arp", "h")
+        s.sync(f"son {k + 1} ({'闪含雅弗'[k] if k < 2 else '雅弗'})", q, t)
     s.duck(2.0, parts=["clar"])
     s.expr(["clar"], [(0, -12), (8, -12)])
     s.expr(["harp", "glock"], [(0, -10), (8, -10)])
@@ -637,8 +651,11 @@ def build(c):
     t_done = c.at("造好了")
     v_saw = syl(c, "嘎吱嘎吱", 4)
     v_nail = syl(c, "叮叮当当", 4)
-    saws = on_picture(c, "saw", c.ls(0), t_nail, 4, lambda: v_saw)
-    nails = on_picture(c, "hammer", t_nail - 0.3, c.le(0) + 0.4, 4, lambda: v_nail)
+    strokes = on_picture(c, "ship_creak", c.ls(0) - 0.3, t_nail, 2, lambda: [v_saw[0], v_saw[2]])
+    pull = min(0.24, max(0.12, v_saw[1] - v_saw[0]))           # 嘎 push on the stroke, 吱 pull just after
+    nxt = strokes[1:] + [t_nail]
+    saws = sorted(strokes + [min(t + pull, t2 - 0.1) for t, t2 in zip(strokes, nxt)])
+    nails = on_picture(c, "coins", c.ls(0) - 0.3, c.le(0) + 0.4, 4, lambda: v_nail)
     a = c.seg(0, t_saw, 2, "4/4", "C major", nominal=126, label="build-start")
     s = c.seg(t_saw, t_nail, 1, "4/4", "C major", nominal=96, label="build-saw")
     n = c.seg(t_nail, t_g, 1, "4/4", "C major", nominal=90, label="build-nails")
@@ -667,7 +684,7 @@ def build(c):
         drum(a, q, 76, 36 if q % 2 else 42)
     a.pad(["vla", "vln2"], 2, 55, 72, vel=36, bass_ref=(36, 48))
     a.duck(2.0, parts=["clar"])
-    a.expr(["pz_hi", "bsn"], [(0, -12), (8, -12)])
+    a.expr(["pz_hi", "bsn"], [(0, -12), (6, -12), (8, -14)])
     a.expr(["clar"], [(0, -13), (6, -13), (8, -16)])
     a.expr(["vla", "vln2"], [(0, -16), (8, -16)])
     a.expr("hand", [(0, -11), (8, -11)])
@@ -685,14 +702,14 @@ def build(c):
         sg.add("bsn", q, _dq(sg, q, 0.25), p - 12, 58 if push else 50, "bass", "h")
         if push:
             sg.add("pz_lo", q, _dq(sg, q, 0.25), p - 12, 60, "bass", "h")
-            sg.sync(f"saw stroke {i_ + 1} ('嘎')", q, t)
-    s.expr(["pz_hi", "pz_cb"], [(0, -13), (4, -13)])
-    s.expr(["vc_fast", "bsn", "pz_lo"], [(0, -11), (4, -11)])
-    s.expr(["vla", "vln2"], [(0, -17), (4, -17)])
-    s.expr("hand", [(0, -9), (4, -9)])
+            sg.sync(f"saw stroke {i_ // 2 + 1} ('嘎吱')", q, t)
+    s.expr(["pz_hi", "pz_cb"], [(0, -11), (4, -11)])
+    s.expr(["vc_fast", "bsn", "pz_lo"], [(0, -12), (4, -12)])
+    s.expr(["vla", "vln2"], [(0, -15), (4, -15)])
+    s.expr("hand", [(0, -10), (4, -10)])
     # 钉钉子，叮叮当当: the hammer (two high 'ting's, two lower 'tang's)
     broken(n, "pz_hi", 0, 4, (0, 1, 2, 1), 60, 76, vel=42, step=0.5, ring=False, art="s", thin=True)
-    n.pad(["vla", "vln2"], 2, 55, 72, vel=34, bass_ref=(36, 48))
+    n.pad(["vla", "vln2"], 2, 55, 72, vel=36, bass_ref=(36, 48))
     bassline(n, "pz_cb", 31, 43, 46, art="s")
     for i_, t in enumerate(nails):
         sg, q = seg_at(c, segs, t)
@@ -701,12 +718,11 @@ def build(c):
         sg.add("glock", q, _dq(sg, q, 0.5), p, 58 if i_ % 2 == 0 else 50, "arp", "h")
         sg.add("celesta", q, _dq(sg, q, 0.5), p - 12, 48, "arp", "h")
         drum(sg, q, 76 if ting else 77, 60 if i_ % 2 == 0 else 52)
-        if i_ % 2 == 0:
-            sg.sync(f"hammer {i_ + 1} ('{'叮' if ting else '当'}')", q, t)
-    n.expr(["pz_hi", "pz_cb"], [(0, -13), (4, -13)])
-    n.expr(["glock", "celesta"], [(0, -8), (4, -8)])
-    n.expr(["vla", "vln2"], [(0, -17), (4, -17)])
-    n.expr("hand", [(0, -8), (4, -8)])
+        sg.sync(f"hammer {i_ + 1} ('{'叮' if ting else '当'}')", q, t)
+    n.expr(["pz_hi", "pz_cb"], [(0, -11), (4, -12)])
+    n.expr(["glock", "celesta"], [(0, -11), (4, -11)])
+    n.expr(["vla", "vln2"], [(0, -15), (2.5, -15), (4, -12)])
+    n.expr("hand", [(0, -10), (4, -10)])
     # so long, longer than a football field! three decks, a door, a window: the ark grows
     for b in range(4):
         broken(g, "pz_hi", 4 * b, 4 * b + 4, (0, 1, 2, 1), 60 + 2 * b, 77 + 2 * b, vel=44 + 2 * b, step=0.5,
@@ -723,8 +739,8 @@ def build(c):
         drum(g, q, 76, 34)
     g.duck(2.0, parts=["horn"])
     g.expr(["pz_hi"], [(0, -14), (16, -11)])
-    g.expr(["horn"], [(0, -15), (16, -12)])
-    g.expr(["vla", "vln2", "vln1", "cb"], [(0, -17), (16, -14)])
+    g.expr(["horn"], [(0, -20), (1.5, -15), (16, -12)])
+    g.expr(["vla", "vln2", "vln1", "cb"], [(0, -13), (1.5, -16), (16, -14)])
     g.expr(["glock"], [(0, -10), (16, -10)])
     g.expr("hand", [(0, -13), (16, -13)])
     # they built and built, day after day: sun (glockenspiel) and moon (celesta), the hammer ticking on
@@ -780,9 +796,13 @@ def animals(c):
     t_m = c.gap(c.find("它们都是两个两个来的"))
     t_f = c.gap(c.find("挪亚还在方舟里"))
     i_b = c.find("大象来了")
-    dongs = on_picture(c, "thud", t_dong - 0.3, t_b, 3, lambda: syl(c, "咚，咚，咚", 3))
-    puffs = on_picture(c, "whoosh", t_b, t_l, 3, lambda: syl(c, "扑扑扑", 3))
-    hops = on_picture(c, "pop", t_r, c.le(i_b) + 0.4, 3, lambda: syl(c, "蹦蹦蹦", 3))
+    # the picture's cues on the big line (as PICTURE_HITS counts them): thud x3 (the stomps), whoosh x3 (the flaps)
+    # and a fourth whoosh (the roar), pop x3 (the hops); each falls back to the narrator's voice
+    wh = picture(c, "whoosh", c.ls(i_b) - 0.3, c.le(i_b) + 0.3) or []
+    dongs = on_picture(c, "thud", c.ls(i_b) - 0.3, t_b, 3, lambda: syl(c, "咚，咚，咚", 3))
+    puffs = wh[:3] if len(wh) >= 4 else syl(c, "扑扑扑", 3)
+    t_roar_pic = wh[3] if len(wh) >= 4 else t_roar
+    hops = on_picture(c, "pop", c.ls(i_b) - 0.3, c.le(i_b) + 0.4, 3, lambda: syl(c, "蹦蹦蹦", 3))
     i = c.seg(0, t_e, 1, "4/4", "Bb major", nominal=84, label="animals-here")
     e = c.seg(t_e, t_dong, 1, "2/4", "Bb major", nominal=88, label="animals-elephants")
     E = c.seg(t_dong, t_b, 1, "2/4", "Bb major", nominal=106, label="animals-stomps")
@@ -798,11 +818,13 @@ def animals(c):
     e.prog("F7:2")
     E.prog("Bb:2")
     b.prog("Eb:2 Bb:2")
-    lion.prog("Gm:2 Eb:2")
+    e_r = min(max(int(round(lion.q_of(c.t0 + t_roar) * 48)), 12), int(lion.n_q * 48) - 12)
+    lion.prog(f"Gm:{e_r}/48 Eb:{int(lion.n_q * 48) - e_r}/48")
     r.prog("Bb:2 F:2")
     m.prog(" | ".join(PARADE_PROG[:3]))
     f.prog("Eb:2 Bb:2 | Gm:2 C7:2@F-major | F:4@F-major")
     E.sync("'咚，咚，咚': the elephants (B-flat)", 0, t_dong, kind="change")
+    lion.sync("'嗷呜': E-flat (the roar)", e_r / 48, t_roar, kind="change")
     m.sync("'两个两个': the march two by two", 0, t_m, kind="change")
     # 'and then -- the animals came!': a horn call, a snare roll, plucked oom-pah
     i.mel("horn", "F4:1 Bb4:1 D5:2", vel=56)
@@ -823,7 +845,7 @@ def animals(c):
         stomp(sg, q, vel=60 + 3 * i_)
         sg.sync(f"stomp {i_ + 1} ('咚')", q, t)
     E.pad(["vla", "vln2"], 2, 58, 74, vel=36, bass_ref=(34, 46))
-    E.expr(["timp", "pz_cb", "tuba"], [(0, -6), (2, -7)])
+    E.expr(["timp", "pz_cb", "tuba"], [(0, -8), (2, -9)])
     E.expr("okit", [(0, -8), (2, -9)])
     E.expr(["vla", "vln2"], [(0, -15), (2, -15)])
     # the little birds fly in: 扑扑扑 -- flute flutters
@@ -832,41 +854,45 @@ def animals(c):
     for i_, t in enumerate(puffs):
         sg, q = seg_at(c, segs, t)
         flutter(sg, q, vel=56 + 2 * i_)
-        if i_ == 0:
-            sg.sync("the birds' first flap ('扑')", q, t)
+        sg.sync(f"flap {i_ + 1} ('扑')", q, t)
     b.expr(["flute", "celesta"], [(0, -12), (4, -12)])
-    b.expr(["pz_cb", "pz_hi"], [(0, -14), (4, -14)])
-    b.expr(["vla", "vln2", "vln1"], [(0, -16), (4, -16)])
+    b.expr(["pz_cb", "pz_hi"], [(0, -12), (4, -13)])
+    b.expr(["vla", "vln2", "vln1"], [(0, -14), (4, -16)])
     # the lion comes: a prowl (low pizzicato) -- 嗷呜! the comic roar (trombones, tuba, bassoon, timpani)
-    lion.mel("pz_lo", "G2:1/2:s r:1/2 D3:1/2:s r:1/2 Eb3:1/2:s r:1/2 Bb2:1/2:s r:1/2", vel=54, role="bass")
+    for q in range(4):                                    # a prowl: low plucks, root and fifth of the chord
+        ch = lion.chord_at(q + 1e-3)
+        lion.add("pz_lo", q, _dq(lion, q, 0.5), ch.tones(43, 55)[0 if q % 2 == 0 else -1], 54, "bass", "s")
     lion.pad(["trem_va", "trem_va"], 2, 55, 70, vel=36, bass_ref=(31, 43))
-    q_r = qpos(lion, c, t_roar, 0.0, 3.0)
-    ch = lion.chord_at(q_r + 1e-3)
-    for j, p in enumerate(ch.tones(46, 62)[:3]):
-        lion.add("tbn", q_r, _dq(lion, q_r, 1.0), p, 62, "harmony", "h", voice=f"tbn.{j}")
-    lo_b = ch.bass_note(31, 43)
-    lion.add("tuba", q_r, _dq(lion, q_r, 0.5), lo_b, 62, "bass", "h")
-    fifth_down = [p for p in ch.tones(lo_b - 8, lo_b - 1)]
-    if fifth_down and q_r + 0.5 < span_end(lion, q_r + 1e-6) - 0.1:
-        lion.add("tuba", q_r + 0.5, _dq(lion, q_r + 0.5, 1.0), fifth_down[-1], 56, "bass")
-    lion.add("bsn", q_r, _dq(lion, q_r, 1.0), lo_b + 12, 58, "bass", "h")
-    lion.add("timp", q_r, _dq(lion, q_r, 0.5), timp_pitch(ch, midi("Eb2")), 58, "timp", "h")
+    # the roar sits on the tones G and B-flat, common to the G minor before it and the E-flat it lands on
+    q_r = qpos(lion, c, t_roar_pic, 0.0, 3.0)
+    pcs = lion.chord_at(q_r + 1e-3).pcset & lion.chord_at(e_r / 48 + 1e-3).pcset
+    roar = [p for p in range(46, 63) if p % 12 in pcs][:3]
+    for j, p in enumerate(roar):
+        lion.add("tbn", q_r, 1.0, p, 62, "harmony", "h", voice=f"tbn.{j}")
+    low = [p for p in range(31, 47) if p % 12 in pcs]
+    lion.add("tuba", q_r, 0.5, low[-1], 62, "bass", "h")
+    q2 = q_r + 0.5
+    second = lion.chord_at(q2 + 1e-3).bass_note(31, 43) if q2 >= e_r / 48 else low[0]
+    lion.add("tuba", q2, _dq(lion, q2, 1.0), second, 56, "bass")      # ...rrrooar: down onto the E-flat
+    bassline(lion, "cb", 31, 43, 46)
+    lion.add("bsn", q_r, 1.0, low[-1] + 12 if low[-1] + 12 <= 60 else low[-1], 58, "bass", "h")
+    lion.add("timp", q_r, 0.5, [p for p in range(38, 51) if p % 12 in pcs][0], 58, "timp", "h")
     lion.add("okit", q_r, 1, 36, 52, "perc", "h")
-    lion.sync("'嗷呜' (the lion's roar)", q_r, t_roar)
-    lion.expr(["tbn"], [(0, -13), (4, -14)])
-    lion.expr(["tuba", "bsn", "timp", "pz_lo"], [(0, -12), (4, -12)])
+    lion.sync("the lion's roar (on the picture)", q_r, t_roar_pic)
+    lion.expr(["tbn"], [(0, -14), (4, -15)])
+    lion.expr(["tuba", "bsn", "timp", "pz_lo"], [(0, -13), (4, -13)])
     lion.expr(["trem_va"], [(0, -18), (4, -17)])
+    lion.expr(["cb"], [(0, -14), (4, -12)])
     # the little rabbits hop in: 蹦蹦蹦 -- pizzicato hops
     oompah(r, 0, 4, vel=46)
     r.pad(["vla", "vln2"], 2, 58, 74, vel=34, bass_ref=(34, 46))
     for i_, t in enumerate(hops):
         sg, q = seg_at(c, segs, t)
         hop(sg, q, i_, vel=60)
-        if i_ in (0, 2):
-            sg.sync(f"hop {i_ + 1} ('蹦')", q, t)
+        sg.sync(f"hop {i_ + 1} ('蹦')", q, t)
     r.expr(["pz_hi"], [(0, -10), (4, -10)])
-    r.expr(["pz_cb"], [(0, -14), (4, -14)])
-    r.expr(["vla", "vln2"], [(0, -16), (4, -16)])
+    r.expr(["pz_cb"], [(0, -12), (4, -13)])
+    r.expr(["vla", "vln2"], [(0, -14), (4, -16)])
     r.expr("hand", [(0, -9), (4, -9)])
     # two by two, a male and a female, in a line into the ark: the march in thirds
     tune = bars(PARADE, 0, 3)
@@ -878,8 +904,8 @@ def animals(c):
         m.add("okit", q, 1, 36, 46 if q == 0 else 40, "perc", "h")
     m.sync("the march's first downbeat (bass drum, tuba)", 0, t_m)
     m.pad(["vla", "vln2"], 2, 55, 70, vel=34, bass_ref=(34, 46))
-    m.duck(2.5, parts=["flute", "clar"])
-    m.expr(["flute", "clar"], [(0, -16), (1, -12), (12, -12)])
+    m.duck(3.5, parts=["flute", "clar"])
+    m.expr(["flute", "clar"], [(0, -17), (1, -13.5), (12, -13.5)])
     m.expr(["tuba", "pz_hi"], [(0, -13), (12, -13)])
     m.expr("okit", [(0, -12), (12, -12)])
     m.expr(["vla", "vln2"], [(0, -17), (12, -17)])
@@ -1105,6 +1131,8 @@ def dove(c):
     t_leaf = c.at("橄榄叶")
     t_3 = c.gap(c.find("又过了七天"))
     t_n = c.at("这一次")
+    t_settle = on_picture(c, "thud", t_s - 0.3, c.le(0) + 0.5, 1, lambda: [None])[0]
+    ticks = [t for t in (picture(c, "pop", c.ls(2) - 0.3, c.dur) or [])]          # seven days pass (twice)
     w = c.seg(0, t_r, 1, "4/4", "F major", nominal=72, label="dove-wind")
     r = c.seg(t_r, t_s, 1, "4/4", "F major", nominal=104, label="dove-recede")
     s = c.seg(t_s, t_1, 1, "4/4", "F major", nominal=88, label="dove-ararat")
@@ -1143,14 +1171,22 @@ def dove(c):
     r.expr(["clar"], [(0, -12), (4, -13)])
     r.expr(["vla", "vln2", "vc"], [(0, -16), (4, -16)])
     # the ark came to rest on the mountains of Ararat: a soft settle, open fifths in the horn
-    s.add("timp", 0.5, 0.5, "C3", 40, "timp")
-    s.add("pz_cb", 0.5, 0.5, "C2", 46, "bass", "s")
+    q_st = 0.5 if t_settle is None else qpos(s, c, t_settle, 0.0, 3.0)
+    s.add("timp", q_st, 0.5, "C3", 50, "timp", "h")
+    s.add("pz_cb", q_st, 0.5, "C2", 54, "bass", "h")
+    s.add("okit", q_st, 1, 36, 36, "perc", "h")
+    if t_settle is not None:
+        s.sync("the ark settles on Ararat", q_st, t_settle)
     for j, nm in enumerate(["C3", "G3"]):
         s.add("horn", 0, 4, nm, 44, "pad", voice=f"horn.{j}")
     s.pad(["vla", "vln2", "vln1"], 3, 55, 74, vel=36, bass_part="vc", bass_lo=36, bass_hi=48)
     s.expr(["horn"], [(0, -18), (2, -14), (4, -15)])
     s.expr(["timp", "pz_cb"], [(0, -12), (4, -12)])
+    s.expr("okit", [(0, -12), (4, -12)])
     s.expr(["vla", "vln2", "vln1", "vc"], [(0, -16), (4, -15)])
+    for t in ticks:                                       # the days tick by: soft celesta ticks on the picture
+        sg, q = seg_at(c, (o1, b1, o2, lf, o3, n), t)
+        sg.add("celesta", q, _dq(sg, q, 0.25), top(sg, q, 84, 91, 0), 30, "arp", "s")
     # the first dove: out (a rising arpeggio), searching, home again
     o1.mel("flute", "C5:1 F5:1/2 A5:1 C6:1/2 | D6:3/2 Bb5:1 F5:1/2 | F5:1 A5:1/2 G5:1 Bb5:1/2 | "
                     "C6:1 Bb5:1/2 G5:1 E5:1/2", vel=56)
@@ -1346,8 +1382,8 @@ def rainbow(c):
     broken(p, "harp", 0, 4, (0, 1, 2, 3, 4, 3, 2, 1), 58, 82, vel=34, step=0.25, thin=True)
     p.pad(["trem_va", "trem_hi", "trem_hi"], 3, 60, 79, vel=38, bass_ref=(36, 48))
     p.add("cb", 0, 4, "C2", 36, "bass")
-    p.expr(["harp"], [(0, -13), (4, -11)])
-    p.expr(["trem_va", "trem_hi", "cb"], [(0, -20), (4, -15)])
+    p.expr(["harp"], [(0, -19), (1, -14), (4, -11)])
+    p.expr(["trem_va", "trem_hi", "cb"], [(0, -23), (4, -15)])
     # 红、橙、黄、绿、青、蓝、紫: a note for every colour, rising
     scale_up = ["F5", "G5", "A5", "Bb5", "C6", "D6", "E6"]
     q_col = [qpos(r, c, max(v_col[k], 0.0), 0.0, r.n_q - 0.15) for k in range(7)]
@@ -1414,13 +1450,14 @@ def end(c):
     w.prog("Bb:2 Csus4:2")
     f.prog("F:2")
     f.sync("the final F major chord (after the question)", 0, t_f, kind="change")
+    f.sync("the final chord: harp roll", 0, t_f)
     # next time you see a rainbow after the rain: the theme on the flute, harp
     a.mel("flute", bars(NOAH, 0, 2), vel=54)
     broken(a, "harp", 0, 8, (0, 2, 4, 6, 4, 2), 41, 53, vel=38, thin=True)
     strings(a, vel=40, lo=55, hi=72)
     a.duck(2.5, parts=["flute", "harp"])
-    a.expr(["flute"], [(0, -18), (1.5, -12), (8, -12)])
-    a.expr(["harp"], [(0, -16), (1.5, -9), (8, -10)])
+    a.expr(["flute"], [(0, -19), (1.5, -13.5), (8, -13.5)])
+    a.expr(["harp"], [(0, -17), (1.5, -11), (8, -11)])
     a.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -19), (2, -15), (8, -15)])
     # what God says, he will do; God remembers you, just as he remembered Noah: b5-b7, warm
     b.mel("clar", bars(NOAH, 4, 7), vel=56)
@@ -1456,7 +1493,7 @@ def end(c):
     strings(f, vel=40, lo=57, hi=72)
     f.pad("ooh", 3, 57, 72, vel=38, bass_ref=(41, 53))
     f.expr(["flute", "vla", "vln2", "vln1", "vc", "cb", "ooh"], [(0, -15), (0.5, -14.5), (1.4, -17), (2, -26)])
-    f.expr(["harp", "celesta"], [(0, -12), (2, -16)])
+    f.expr(["harp", "celesta"], [(0, -13), (2, -17)])
 
 
 SCENE_CUES = {
@@ -1476,7 +1513,7 @@ REQUIRED_HITS = [
     ("s05_command", "可是，挪亚还是", "gap", "change"),          # Noah obeys (his theme)
     ("s06_build", "造好了", "phrase", "change"),                # the ark is finished (C major)
     ("s07_animals", "咚，咚，咚", "phrase", "change"),           # the elephants (B-flat; the stomps: picture / voice)
-    ("s07_animals", "嗷呜", "phrase", "hit"),                   # the lion's roar
+    ("s07_animals", "嗷呜", "phrase", "change"),                # the lion's roar: E-flat (the attack: picture)
     ("s07_animals", "它们都是两个两个来的", "gap", "change"),    # the march two by two
     ("s08_door", "把门关上了", "phrase", "change"),             # God shuts the door: the warm chord (thunk: picture)
     ("s09_flood", "哗啦啦", "phrase", "change"),                # the pour (D minor)
@@ -1498,4 +1535,29 @@ REQUIRED_HITS = [
 # Hit points defined by the PICTURE (music_check.PICTURE_HITS format: (scene, sfx cue name, from-line phrase or
 # None, index, offset s, kind, what)): the scenes' own sound-effect cues, keyed to the animation.  Filled in as the
 # scenes are drawn (see the report in the hand-off).
-PICTURE_HITS = []
+PICTURE_HITS = [
+    ("s02_rain", "splash_small", "小朋友", 0, 0.0, "hit", "'哗啦啦' 1: the big drops"),
+    ("s02_rain", "splash_small", "小朋友", 1, 0.0, "hit", "'哗啦啦' 2"),
+    ("s03_world", "whoosh", "他们不听", 0, 0.0, "hit", "the push ('你推我')"),
+    ("s03_world", "whoosh", "他们不听", 1, 0.0, "hit", "the grab ('我抢你')"),
+    ("s04_noah", "pop", "挪亚有三个儿子", 0, 0.0, "hit", "Shem"),
+    ("s04_noah", "pop", "挪亚有三个儿子", 1, 0.0, "hit", "Ham"),
+    ("s04_noah", "pop", "挪亚有三个儿子", 2, 0.0, "hit", "Japheth"),
+    ("s06_build", "ship_creak", "锯木头", 0, 0.0, "hit", "saw stroke 1 ('嘎吱')"),
+    ("s06_build", "ship_creak", "锯木头", 1, 0.0, "hit", "saw stroke 2 ('嘎吱')"),
+    ("s06_build", "coins", "钉钉子", 0, 0.0, "hit", "hammer '叮'"),
+    ("s06_build", "coins", "钉钉子", 1, 0.0, "hit", "hammer '叮'"),
+    ("s06_build", "coins", "钉钉子", 2, 0.0, "hit", "hammer '当'"),
+    ("s06_build", "coins", "钉钉子", 3, 0.0, "hit", "hammer '当'"),
+    ("s07_animals", "thud", "大象来了", 0, 0.0, "hit", "elephant stomp 1 ('咚')"),
+    ("s07_animals", "thud", "大象来了", 1, 0.0, "hit", "elephant stomp 2 ('咚')"),
+    ("s07_animals", "thud", "大象来了", 2, 0.0, "hit", "elephant stomp 3 ('咚')"),
+    ("s07_animals", "whoosh", "小鸟飞来了", 0, 0.0, "hit", "flap 1 ('扑')"),
+    ("s07_animals", "whoosh", "小鸟飞来了", 1, 0.0, "hit", "flap 2 ('扑')"),
+    ("s07_animals", "whoosh", "小鸟飞来了", 2, 0.0, "hit", "flap 3 ('扑')"),
+    ("s07_animals", "whoosh", "小鸟飞来了", 3, 0.0, "hit", "the lion's roar ('嗷呜')"),
+    ("s07_animals", "pop", "小兔子跳来了", 0, 0.0, "hit", "hop 1 ('蹦')"),
+    ("s07_animals", "pop", "小兔子跳来了", 1, 0.0, "hit", "hop 2 ('蹦')"),
+    ("s07_animals", "pop", "小兔子跳来了", 2, 0.0, "hit", "hop 3 ('蹦')"),
+    ("s11_dove", "thud", "方舟停在了", 0, 0.0, "hit", "the ark settles on Ararat"),
+]

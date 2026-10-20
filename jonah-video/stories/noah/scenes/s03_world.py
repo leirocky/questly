@@ -35,7 +35,7 @@ G2, S2 = 1172, 1.0         # back row
 HZ = 905                   # town ground line
 LIGHT = (1056, 150)
 TEAR_TOP = 330
-TEAR_X, TEAR_Y = 1056, 1236
+TEAR_X, TEAR_Y = 1056, 1206
 
 
 def doc(body, defs=""):
@@ -67,7 +67,9 @@ def cit(x, y, s, f, kind, variant, pose, expr=None, over=None, marks=True):
 
 def sky_svg():
     defs = (S.lin_grad("n3sky", [(0, "#f3d9a6"), (0.35, "#f1e2bd"), (0.7, "#cfe2e2"), (1, "#e8e6cf")]))
-    return doc(S.rect_bg("url(#n3sky)", W, SH), defs)
+    lt = light_svg()
+    return doc(S.rect_bg("url(#n3sky)", W, SH) + lt[lt.index("</defs>") + 7:lt.rindex("</svg>")],
+               defs + lt[lt.index("<defs>") + 6:lt.index("</defs>")].split("</filter>")[-1])
 
 
 def light_svg():
@@ -80,7 +82,11 @@ def light_svg():
 
 
 def gloom_svg():
-    return doc(f'<rect x="-20" y="-20" width="{W + 40}" height="{SH + 40}" fill="#9aa3b4"/>')
+    """Multiply wash: greys the page and, more strongly, the warm light above (God's sorrow: the light dims)."""
+    x, y = LIGHT
+    defs = S.rad_grad("n3gl", [(0, "#7d8496", 1), (0.6, "#8d95a8", 0.7), (1, "#9aa3b4", 0)])
+    return doc(f'<rect x="-20" y="-20" width="{W + 40}" height="{SH + 40}" fill="#a7afbf"/>'
+               f'<ellipse cx="{x}" cy="{y}" rx="900" ry="640" fill="url(#n3gl)"/>', defs)
 
 
 def far_svg():
@@ -110,7 +116,7 @@ def square_svg():
     b = S.g(b, filter="wobble")
     # a little market stall and things lying about
     st = ""
-    k = 1.25
+    ks = 1.6
     sx, sy = 70, 1110
     st += (f'<rect x="{sx}" y="{sy - 170}" width="16" height="170" fill="{P["wood"]}" stroke="{INK}" stroke-width="3"/>'
            f'<rect x="{sx + 300}" y="{sy - 170}" width="16" height="170" fill="{P["wood"]}" stroke="{INK}" stroke-width="3"/>'
@@ -120,12 +126,13 @@ def square_svg():
         st += (f'<path d="M{sx - 30 + k * 63},{sy - 160} q31,26 63,0" fill="#f3e4c6" stroke="{INK}" '
                f'stroke-width="3"/>')
     st += (f'<rect x="{sx - 10}" y="{sy - 70}" width="336" height="70" fill="#b98a58" stroke="{INK}" stroke-width="3"/>')
-    b += S.g(st, filter="wobble-fine")
-    b += PR.food_basket(sx + 70, sy - 66, 0.55, "fruit") + PR.food_basket(sx + 170, sy - 66, 0.55, "veg")
-    b += PR.food_basket(sx + 260, sy - 66, 0.5, "bread")
+    b += S.g(S.g(st, filter="wobble-fine"), transform=f"translate({sx},{sy}) scale({ks}) translate({-sx},{-sy})")
+    b += (PR.food_basket(sx + 70 * ks, sy - 66 * ks, 0.55 * ks, "fruit") +
+          PR.food_basket(sx + 170 * ks, sy - 66 * ks, 0.55 * ks, "veg") +
+          PR.food_basket(sx + 260 * ks, sy - 66 * ks, 0.5 * ks, "bread"))
     b += PR.jar(1990, 1110, 0.75) + PR.jar(2070, 1125, 0.62) + PR.sack(1905, 1140, 0.75, seed=2)
     b += PR.crate(690, 1105, 0.7) + PR.sack(590, 1118, 0.7, seed=5)
-    b += PR.bush(1560, HZ + 70, 0.6, variant=2) + PR.bush(940, HZ + 64, 0.55, variant=0)
+    b += PR.bush(1560, HZ + 70, 0.6, variant=2) + PR.bush(470, HZ + 66, 0.55, variant=0)
     return doc(b, defs)
 
 
@@ -222,9 +229,6 @@ def build(ctx):
 
     # ---- sky, light and clouds
     sc.add("sky", sky_svg(), z=0, wc=0.5)
-    sc.add("light", light_svg(), z=0.5, wc=0, blend="screen",
-           motion=lambda t: Tf(alpha=(0.95 + 0.05 * math.sin(2 * math.pi * t / 3.0)) *
-                               (1 - 0.68 * M.progress(t, t_dim0, t_dim1, "sine"))))
     clouds = [  # (x, y, scale, w, h, seed, light, from_dx, t_start, t_end)
         (230, 300, 1.05, 700, 250, 1, 0.7, -950, t_bad, t_fight + 0.6),
         (1890, 320, 1.05, 680, 240, 2, 0.75, 950, t_bad + 0.3, t_fight + 0.8),
@@ -244,7 +248,7 @@ def build(ctx):
     def dove_m(t):
         u = max(0.0, t - t_dove)
         return Tf(dx=260 * u + 20 * u * u, dy=-110 * u - 8 * u * u, alpha=1 - M.progress(t, t_dove + 2.6, t_dove + 3.2))
-    sc.add("doves", [doves_svg(k) for k in range(4)], z=2.2, motion=dove_m, wc=0.5,
+    sc.add("doves", [doves_svg(k) for k in range(4)], z=3.1, motion=dove_m, wc=0.5,
            frame_at=lambda t: 0.0 if t < t_dove else float(int((t - t_dove) / 0.08) % 4))
     sc.add("square", square_svg(), z=3)
 
@@ -254,8 +258,8 @@ def build(ctx):
     Gm = (790, G2, S2, 1, "man", 1)
     D_ = (1290, G1, S1, 1, "woman", 2)
     Cw = (1498, G1, S1, -1, "woman", 1)
-    E = (1700, G2, S2, 1, "elder", 0)
-    F = (1872, G2, S2, -1, "man", 2)
+    E = (1625, G2, S2, 1, "elder", 0)
+    F = (1905, G2, S2, -1, "man", 2)
     blink = "n3_blink_neutral"
 
     def stagger(i):
@@ -378,7 +382,7 @@ def build(ctx):
                 if t < t0:
                     return Tf(alpha=0)
                 u = ((t - t0) / per + off) % 1.0
-                a = math.sin(math.pi * u) * min(1.0, (t - t0) / 0.3)
+                a = math.sin(math.pi * u) * min(1.0, (t - t0) / 0.3) * (1 - M.progress(t, t_sad - 0.2, t_sad + 0.6))
                 sc_ = 0.6 + 0.7 * u
                 return Tf(dx=(18 if j else -18) * u, dy=-90 * u, sx=sc_, sy=sc_, alpha=a, px=hx, py=hy)
             sc.add(f"puff{i}_{j}", puff_svg(hx, hy, s), z=6.5, motion=pm, wc=0)
@@ -387,8 +391,8 @@ def build(ctx):
 
     # ---- gloom over everything as the light dims
     sc.add("gloom", gloom_svg(), z=8, wc=0, blend="multiply",
-           motion=lambda t: Tf(alpha=0.18 * M.progress(t, t_bad, t_fight + 1.0, "sine") +
-                               0.22 * M.progress(t, t_dim0, t_dim1, "sine")))
+           motion=lambda t: Tf(alpha=0.16 * M.progress(t, t_bad, t_fight + 1.0, "sine") +
+                               0.42 * M.progress(t, t_dim0, t_dim1, "sine")))
 
     # ---- the tear
     def tear_m(t):

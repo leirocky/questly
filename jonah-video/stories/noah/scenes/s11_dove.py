@@ -46,7 +46,7 @@ KA = 0.25                                     # ark scale in the wide shot (ARAR
 LEDGE_Y = AR[1] + PR.ARARAT_LEDGE[1] * AR[2]  # 570
 LVL_LAND = LEDGE_Y - PR.ARK_DRAFT * KA        # waterline when the keel touches the saddle
 LVL0 = LVL_LAND - 122                         # start level (only the big peak shows)
-LVL_END = 900
+LVL_END = 950
 A_LAST = Cam(1006, 652, 1420)                 # shot A's framing when the dissolve starts
 SEA_REF = 520                                 # level the sea layer is drawn at (moved by dy)
 
@@ -136,8 +136,8 @@ def b_sky_svg(kind):
 def b_clouds_svg(seed0, warm=False):
     fill, sh = ("#fbe6cf", "#f0c6a6") if warm else ("#fbf3e6", "#e6dccb")
     b = ""
-    for i, (x, y, w, h) in enumerate(((330, 210, 420, 110), (860, 120, 380, 95), (120, 470, 300, 80),
-                                      (700, 400, 260, 70))):
+    for i, (x, y, w, h) in enumerate(((200, 330, 340, 90), (1000, 150, 360, 90), (620, 480, 240, 60),
+                                      (60, 140, 220, 60))):
         b += S.cloud(x, y, w, h, fill=fill, seed=seed0 + i, puffs=5, sw=3, shade_fill=sh)
     return doc(S.g(b, filter="wobble"))
 
@@ -148,7 +148,7 @@ def b_sun_svg(warm):
     defs = S.rad_grad(f"s11sun{int(warm)}", [(0, glow, 0.9), (0.5, glow, 0.35), (1, glow, 0)])
     body = (f'<circle cx="{x}" cy="{y}" r="190" fill="url(#s11sun{int(warm)})"/>'
             f'<circle cx="{x}" cy="{y}" r="62" fill="{col}" {S.STROKE}/>')
-    return S.svg_doc(f'<g transform="translate(420,250)">{body}</g>', defs)
+    return S.svg_doc(f'<g transform="translate(720,330)">{body}</g>', defs)
 
 
 def b_far_svg(green):
@@ -363,7 +363,7 @@ def build(ctx):
         for ts, d in steps:
             lv += d * M.progress(t, ts, ts + 0.55, "inout")
         lv = min(lv, LVL_LAND) if t <= t_land else LVL_LAND
-        after = [(t_land + 0.2, 34), (t_land + 0.85, 34), (t_land + 1.5, 34), (t_land + 2.15, LVL_END - LVL_LAND - 102)]
+        after = [(t_land + 0.25, 60), (t_land + 0.9, 60), (t_land + 1.55, 66), (t_land + 2.2, LVL_END - LVL_LAND - 186)]
         for ts, d in after:
             lv += d * M.progress(t, ts, ts + 0.55, "inout")
         return lv
@@ -437,7 +437,7 @@ def build(ctx):
         def m(t):
             e = eve(t)
             if warm:
-                y = 420 * M.progress(t, t_eve - 0.2, t_eve + 2.5, "sine")
+                y = 250 * M.progress(t, t_eve - 0.2, t_eve + 2.5, "sine")
                 return Tf(dx=60 * M.progress(t, t_eve - 0.2, t_eve + 2.5), dy=y, alpha=e * b_in(t).alpha)
             return Tf(dx=8 * math.sin(t / 3), dy=0, alpha=(1 - e) * b_in(t).alpha)
         return m
@@ -544,7 +544,7 @@ def build(ctx):
         lambda t: Tf(sx=1 + 0.01 * math.sin(2 * math.pi * t / 2.2), px=W / 2, py=1030)))
 
     # ---------------------------------------------------------------- day counters ('过了七天' x 2)
-    cx_, cy_, cs_ = 470, 170, 0.85
+    cx_, cy_, cs_ = 480, 180, 0.85
     cnt = [doc(PR.day_counter(cx_, cy_, cs_, n=7, filled=k, icons="sun")) for k in range(8)]
     for i, td in enumerate((t_days1, t_days2)):
         fill_t = [snap(td + 0.35 + 0.2 * k) for k in range(7)]
@@ -566,12 +566,12 @@ def build(ctx):
                          seed=21, color=(255, 240, 190))]
 
     # ---------------------------------------------------------------- camera
-    a0 = Cam(1000, 540, 1800)
-    a1 = Cam(1010, 640, 1500)
+    a0 = Cam(1000, 610, 1800)
+    a1 = Cam(1004, 628, 1640)
     b0 = Cam(940, 560, 1640)
     b_close = Cam(1060, 520, 1400)
     b_wide = Cam(900, 560, 1720)
-    keys = [(0, a0), (t_wind, a0), (t_land + 0.6, a1), (t_xa, A_LAST),
+    keys = [(0, a0), (t_land - 0.2, a0), (t_land + 0.9, a1), (t_xa, A_LAST),
             (t_xa + 0.01, b0), (t_rel2, b0), (t_leafc - 0.3, Cam(1000, 540, 1520)), (t_take + 0.6, b_close),
             (L3.end, b_close), (t_rel3 - 0.2, b_wide), (T, Cam(905, 560, 1700))]
     camf = M.cam_keys(keys, "sine")
