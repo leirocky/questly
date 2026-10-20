@@ -21,7 +21,7 @@ import random
 from art import characters as C
 from art import props as PR
 from art import style as S
-from art.style import P, W, H
+from art.style import P, W
 from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
@@ -209,7 +209,6 @@ def build(ctx):
     T = ctx.duration
     m0 = voice_marks(ctx, 0)
     m1 = voice_marks(ctx, 1)
-    names = [m[0] for m in m0]
 
     def at(i, default):
         return m0[i][1] if len(m0) > i else default
@@ -346,7 +345,7 @@ def build(ctx):
     # an apple bounces out of the basket
     t_ap = t_g + 0.12
     ax0, ay0 = (hc[0] + hd[0]) / 2, hc[1] - 30
-    ax1, ay1 = ax0 + 70, G1 + 6
+    ay1 = G1 + 6
 
     def apple_m(t):
         if t < t_ap:

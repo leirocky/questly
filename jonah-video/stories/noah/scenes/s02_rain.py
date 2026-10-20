@@ -166,7 +166,7 @@ def wall_svg():
     for x in range(-40, W + 60, 180):
         b += f'<path d="M{x},{FLOOR_Y + 2} L{x - 60},{H + 40}" stroke="#8a5d3a" stroke-width="3" opacity="0.6"/>'
     b += f'<ellipse cx="760" cy="1080" rx="560" ry="74" fill="#d9776a" stroke="{INK}" stroke-width="3.5"/>'
-    b += f'<ellipse cx="760" cy="1080" rx="490" ry="56" fill="none" stroke="#f2c38f" stroke-width="8" stroke-dasharray="20 14"/>'
+    b += '<ellipse cx="760" cy="1080" rx="490" ry="56" fill="none" stroke="#f2c38f" stroke-width="8" stroke-dasharray="20 14"/>'
     deco = wall_deco()
     return doc(S.g(b, filter="wobble") + deco, defs)
 
@@ -400,7 +400,6 @@ def build(ctx):
         L = ctx.lines[0]
         t_hua = [L.end - 1.6, L.end - 0.7]
     t_line1 = m1[0][1]
-    t_big = m1[1][1] if len(m1) > 1 else t_line1 + 1.4
     t_how = m1[2][1] if len(m1) > 2 else ctx.lines[1].chunks[-1].start
     forty = m1[3] if len(m1) > 3 else m1[-1]
     fc = char_times(forty)

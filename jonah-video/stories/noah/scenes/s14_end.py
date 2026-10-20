@@ -27,7 +27,7 @@ from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
-from stories.noah.scenes.s01_title import char_times, cuts, dip, f1, heart_markup, snap, voice_marks
+from stories.noah.scenes.s01_title import cuts, dip, f1, heart_markup, snap, voice_marks
 
 INK = P["ink"]
 KID = (400, 1040, 1.45)
@@ -71,12 +71,14 @@ def sky_svg():
     return doc(b, defs)
 
 
-def clouds_svg():
+def clouds_svg(edge=False):
     sh = "#d3e3ec"
-    b = (S.cloud(300, 170, 300, 90, "#fbf6ec", seed=51, sw=3.5, shade_fill=sh) +
-         S.cloud(1660, 120, 280, 84, "#fbf6ec", seed=52, sw=3.2, shade_fill=sh))
-    b += S.cloud(-60, 380, 420, 130, "#b9c3d1", seed=54, sw=3.5, shade_fill="#9aa6b8")
-    b += S.cloud(2180, 420, 380, 120, "#c3ccd8", seed=55, sw=3.5, shade_fill="#a4afbe")
+    if edge:      # the last grey clouds, cut by the page edges: static (a drifting cut edge would show)
+        b = S.cloud(-60, 380, 420, 130, "#b9c3d1", seed=54, sw=3.5, shade_fill="#9aa6b8")
+        b += S.cloud(2180, 420, 380, 120, "#c3ccd8", seed=55, sw=3.5, shade_fill="#a4afbe")
+    else:
+        b = (S.cloud(300, 170, 300, 90, "#fbf6ec", seed=51, sw=3.5, shade_fill=sh) +
+             S.cloud(1660, 120, 280, 84, "#fbf6ec", seed=52, sw=3.2, shade_fill=sh))
     return doc(S.g(b, filter="wobble"))
 
 
@@ -94,8 +96,8 @@ def far_svg():
     d = S.smooth_path([(560, 860), (760, 780), (940, 722), (1056, 708), (1180, 716), (1360, 770), (1560, 860)],
                       closed=False) + " L1560,900 L560,900 Z"
     hill = S.path(d, fill="#9cc477", sw=3)
-    hill += (f'<path d="M700,820 Q860,760 1000,734" stroke="#b6d68c" stroke-width="12" fill="none" '
-             f'stroke-linecap="round" opacity="0.7"/>')
+    hill += ('<path d="M700,820 Q860,760 1000,734" stroke="#b6d68c" stroke-width="12" fill="none" '
+             'stroke-linecap="round" opacity="0.7"/>')
     deco = (PR.olive_tree(760, 800, 0.22, seed=3) + PR.bush(1300, 760, 0.3, variant=1) +
             PR.bush(880, 770, 0.26, variant=0) + PR.olive_tree(1420, 812, 0.2, seed=8))
     x, y, s = ARK
@@ -227,8 +229,9 @@ def build(ctx):
            kid_svg("wave", "happy"), kid_svg("cheer", "laugh"), kid_svg("stand", "happy"),
            kid_svg("smile_up", "n14_blink_happy"), kid_svg("point_up", "n14_blink_amazed")]
     N = {n: i for i, n in enumerate(names)}
-    kents = [(0, N["stand"]), (j1, N["jump"]), (land[0], N["splash"]), (snap(land[0] + 0.45), N["stand"]),
-             (j2, N["jump"]), (land[1], N["splash"]), (snap(land[1] + 0.5), N["stand"]), (t_up, N["smile_up"]),
+    kents = [(0, N["stand"]), (snap(j1 - 0.17), N["splash"]), (j1, N["jump"]), (land[0], N["splash"]),
+             (snap(land[0] + 0.45), N["stand"]), (snap(j2 - 0.17), N["splash"]), (j2, N["jump"]),
+             (land[1], N["splash"]), (snap(land[1] + 0.5), N["stand"]), (t_up, N["smile_up"]),
              (t_pt, N["point_up"]), (t_smile, N["smile_up_h"]), (t_wave, N["wave"]), (t_cheer, N["cheer"]),
              (t_calm, N["stand_h"])]
     for tb, base, bl in ((t_word - 0.9, "point_up", "blink_amazed"), (t_you + 0.9, "smile_up_h", "blink_happy"),
@@ -246,8 +249,7 @@ def build(ctx):
                 u = (t - j) / (l - j)
                 dy = -95 * ks * math.sin(math.pi * u) * (1.0 if j == j1 else 1.25)
         return Tf(dy=dy)
-    pose_cuts = [tk for tk, _ in kents if tk > 0]
-    land_dips = [dip(l, ks, (kx, ky), 14) for l in land]
+    land_dips = [dip(l, ks, (kx, ky), 14) for l in land] + [dip(snap(j - 0.17), ks, (kx, ky), 8) for j in (j1, j2)]
     other_dips = [dip(tc, ks, (kx, ky), 7) for tc in (t_up, t_pt, t_smile, t_wave, t_cheer, t_calm)]
 
     def wave_rock(t):
@@ -279,6 +281,7 @@ def build(ctx):
 
     # ---- backdrop
     sc.add("sky", sky_svg(), z=0, wc=0.5)
+    sc.add("clouds_edge", clouds_svg(edge=True), z=0.4)
     sc.add("clouds", clouds_svg(), z=0.5, motion=lambda t: Tf(dx=8 * t))
     t_bow1 = t_bow + 1.6
 

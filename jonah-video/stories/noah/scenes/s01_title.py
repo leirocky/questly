@@ -268,15 +268,17 @@ def rainbow_svg():
     return doc(S.g(PR.rainbow(x, y, s), opacity=0.82))
 
 
-def clouds_svg():
+def clouds_svg(edge=False):
     sh = "#d3e3ec"
-    b = (S.cloud(380, 250, 300, 92, "#fbf6ec", seed=31, sw=3.5, shade_fill=sh) +
-         S.cloud(1700, 190, 340, 104, "#fbf6ec", seed=32, sw=3.5, shade_fill=sh) +
-         S.cloud(1180, 120, 180, 56, "#f8f3ea", seed=33, sw=2.8, shade_fill=sh) +
-         S.cloud(-80, 520, 260, 80, "#f8f3ea", seed=34, sw=3, shade_fill=sh) +
-         S.cloud(2160, 560, 300, 86, "#f8f3ea", seed=35, sw=3, shade_fill=sh))
-    # the last grey rain cloud drifting away at the right edge
-    b += S.cloud(2120, 330, 420, 130, "#b9c3d1", seed=36, sw=3.5, shade_fill="#9aa6b8")
+    if edge:      # clouds cut by the page edges stay put (a drifting cut edge would show)
+        b = (S.cloud(-80, 520, 260, 80, "#f8f3ea", seed=34, sw=3, shade_fill=sh) +
+             S.cloud(2160, 560, 300, 86, "#f8f3ea", seed=35, sw=3, shade_fill=sh))
+        # the last grey rain cloud at the right edge
+        b += S.cloud(2120, 330, 420, 130, "#b9c3d1", seed=36, sw=3.5, shade_fill="#9aa6b8")
+    else:
+        b = (S.cloud(380, 250, 300, 92, "#fbf6ec", seed=31, sw=3.5, shade_fill=sh) +
+             S.cloud(1700, 190, 340, 104, "#fbf6ec", seed=32, sw=3.5, shade_fill=sh) +
+             S.cloud(1180, 120, 180, 56, "#f8f3ea", seed=33, sw=2.8, shade_fill=sh))
     return doc(S.g(b, filter="wobble"))
 
 
@@ -344,9 +346,6 @@ def elephant_svg(pose):
     return doc(PR.in_ark_door(ele, x, y, s, 1))
 
 
-RIDGE_Y = None
-
-
 def bird_svg(i, kind, x, color=None, flap=False):
     ry = ark_pts()["roof_mid"][1]
     if kind == "dove":
@@ -365,7 +364,6 @@ BIRDS = [(0, "song", 845, "blue"), (1, "dove", 965, None), (2, "song", 1150, "re
 
 
 def monkey_svg(pose):
-    p = ark_pts()
     return doc(PR.ark_animal(MONKEY[0], MONKEY[1], ARK[2], 1, kind="monkey", pose=pose))
 
 
@@ -474,6 +472,7 @@ def title_page(sc, ctx, toff=0.0, gate=None, title_gate=None):
 
     add("sky", sky_svg(), wc=0.6)
     add("rainbow", rainbow_svg(), wc=0.35)
+    add("clouds_edge", clouds_svg(edge=True))
     add("clouds", clouds_svg(), motion=M.drift(vx=7))
     add("far", far_svg())
 
