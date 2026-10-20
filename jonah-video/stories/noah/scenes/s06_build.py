@@ -57,23 +57,41 @@ def doc(body, defs=""):
     return S.svg_doc(body, defs, w=SW, h=SH)
 
 
-def char_beats(ctx, i, phrase, offsets, snap=0.18):
-    """Times of characters (offsets inside phrase) of line i, estimated by character position inside the subtitle
-    chunk, each snapped to the start of a voiced burst of the take if one starts within ``snap`` s."""
+def char_beats(ctx, i, phrase, offsets, snap=0.12):
+    """Times of characters (offsets inside phrase) of line i: the characters of the subtitle chunk (punctuation
+    dropped) are spread over the VOICED time of the take inside that chunk (silences skipped); each time is snapped
+    to the start of a voiced burst if one starts within ``snap`` s. Falls back to the plain character estimate."""
     line = ctx.lines[i]
     segs = voice_segs(ctx, i) or []
     for c in line.chunks:
         j = c.text.find(phrase)
-        if j >= 0:
-            n = max(1, len(c.text.rstrip("，。！？：；、…")))
-            out = []
-            for o in offsets:
-                est = c.start + (c.end - c.start) * (j + o) / n
-                near = [s_[0] for s_ in segs if abs(s_[0] - est) <= snap]
-                out.append(min(near, key=lambda v: abs(v - est)) if near else est)
-            for k in range(1, len(out)):
-                out[k] = max(out[k], out[k - 1] + 0.18)
-            return out
+        if j < 0:
+            continue
+        punct = "，。！？：；、…"
+        chars = [ch for ch in c.text]
+        idx = [k for k, ch in enumerate(chars) if ch not in punct]
+        n = len(idx)
+        inside = [(max(a, c.start - 0.1), min(b, c.end)) for a, b in segs if b > c.start - 0.1 and a < c.end]
+        total = sum(b - a for a, b in inside)
+        out = []
+        for o in offsets:
+            k = idx.index(j + o) if (j + o) in idx else j + o
+            if total > 0.2:
+                v = total * k / n
+                for a, b in inside:
+                    if v < b - a - 0.04:
+                        est = a + v
+                        break
+                    v -= b - a
+                else:
+                    est = inside[-1][1]
+            else:
+                est = c.start + (c.end - c.start) * k / max(1, n)
+            near = [s_[0] for s_ in segs if abs(s_[0] - est) <= snap]
+            out.append(min(near, key=lambda v_: abs(v_ - est)) if near else est)
+        for k in range(1, len(out)):
+            out[k] = max(out[k], out[k - 1] + 0.18)
+        return out
     return [line.start + 0.3 * k for k in range(len(offsets))]
 
 
@@ -240,8 +258,8 @@ def deck_svg(i):
     """Deck i (0 bottom .. 2 cabin) glowing on the panel ark, with its number badge."""
     y0, y1, wk = DECKS[i]
     half = PR.ARK_LEN / 2 * wk
-    xa, ya = ark_local(-half, y1 + 18)
-    xb, yb = ark_local(half, y0 - 18)
+    xa, ya = ark_local(-half, y0 + 14)
+    xb, yb = ark_local(half, y1 - 14)
     cols = ("#f6c34a", "#f08a5d", "#7cc0d8")
     out = (f'<rect x="{f1(xa)}" y="{f1(ya)}" width="{f1(xb - xa)}" height="{f1(yb - ya)}" rx="18" fill="{cols[i]}" '
            f'fill-opacity="0.35" stroke="{cols[i]}" stroke-width="7"/>')
@@ -257,10 +275,10 @@ def ring_svg(box, col="#ffd65a"):
     xa, ya = ark_local(x0, t0)
     xb, yb = ark_local(x1, b0)
     pad = 14
-    return doc(f'<rect x="{f1(xa - pad)}" y="{f1(ya - pad)}" width="{f1(xb - xa + 2 * pad)}" height="{f1(yb - ya + 2 * pad)}" '
-               f'rx="16" fill="{col}" fill-opacity="0.25" stroke="{col}" stroke-width="8"/>'
-               f'<rect x="{f1(xa - pad)}" y="{f1(ya - pad)}" width="{f1(xb - xa + 2 * pad)}" height="{f1(yb - ya + 2 * pad)}" '
-               f'rx="16" fill="none" stroke="{INK}" stroke-width="3" opacity="0.6"/>')
+    r = (f'x="{f1(xa - pad)}" y="{f1(ya - pad)}" width="{f1(xb - xa + 2 * pad)}" height="{f1(yb - ya + 2 * pad)}" rx="18"')
+    return doc(f'<rect {r} fill="none" stroke="#fff3b0" stroke-width="30" filter="url(#soft)"/>'
+               f'<rect {r} fill="{col}" fill-opacity="0.28" stroke="{S.mix(col, INK, 0.45)}" stroke-width="15"/>'
+               f'<rect {r} fill="none" stroke="{col}" stroke-width="9"/>')
 
 
 # ================================================================== sawdust and timing helpers
@@ -352,6 +370,10 @@ def build(ctx):
     t_swap = nights[-1]                                      # the workers become the family in the last night
     t_dawn = DAY0 + PD * n_days
 
+    # the workers make way for the whole family in the darkest moment of the last night (a short dissolve)
+    work_a = lambda t: 1 - M.progress(t, t_swap - 0.15, t_swap + 0.1, "sine")
+    fam_a = lambda t: M.progress(t, t_swap - 0.05, t_swap + 0.2, "sine")
+
     def night(t):
         a = 0.0
         for tn in nights:
@@ -375,15 +397,13 @@ def build(ctx):
         f = max(0.0, min(len(PROGS) - 1.0, f))
         if p >= 0.999:
             return float(len(PROGS) - 1)
-        if f > len(PROGS) - 2:
-            f = len(PROGS) - 2.0          # no crossfade into the finished ark (the door / ramp appear on the beat)
-        return f
+        return float(min(int(f + 1e-6), len(PROGS) - 2))    # building steps: no crossfades (no ghost ribs)
 
     # ------------------------------------------------------------ backdrop
     sc.add("sky", sky_svg(), wc=0.45)
     sc.add("far", far_svg(), wc=0.7)
     sc.add("meadow", meadow_svg(), wc=0.8)
-    for i, (cx, cy, w, h, sd, v) in enumerate(((600, 260, 360, 96, 3, 6), (1500, 160, 300, 86, 7, 5),
+    for i, (cx, cy, w, h, sd, v) in enumerate(((600, 260, 360, 96, 3, 6), (2000, 230, 300, 86, 7, 5),
                                                 (2350, 420, 280, 76, 11, 7), (300, 560, 220, 60, 5, 4))):
         sc.add(f"cloud{i}", doc(S.g(S.cloud(cx, cy, w, h, "#fdf6e8", seed=sd, sw=3, shade_fill="#efe2d0"),
                                     filter="wobble")), wc=0.7,
@@ -443,8 +463,8 @@ def build(ctx):
         sp = sprite(760, 440, 380, 400, seed=seed)
         frames = [fam(sp, name, "saw", s=A, facing=facing, phase=ph) for ph in (0.0, 0.25, 0.5, 0.75)]
         phf = saw_phase_fn(gz[0], off)
-        alpha = lambda t: 1.0 if t < t_swap else 0.0
-        walk = lambda t, phf=phf, frames=frames: frames[int(phf(t) * 4 + 0.5) % 4] if t < t_swap else None
+        alpha = work_a
+        walk = lambda t, phf=phf, frames=frames: frames[int(phf(t) * 4 + 0.5) % 4] if t < t_swap + 0.15 else None
         sched = [(0, frames[0], 0)]
         actors.append((name, Actor(sp, sched, lambda t, x=x: (x, GY), walk=walk, alpha=alpha, breathe=0.0)))
         cut = (x + facing * 209 * A, GY - 104 * A)
@@ -472,12 +492,12 @@ def build(ctx):
         hp = hammer_phase(sts)
 
         def walk(t, hp=hp, frames=frames):
-            if t >= t_swap:
+            if t >= t_swap + 0.15:
                 return None
             p = hp(t)
             return frames[min(range(4), key=lambda i: abs(HPH[i] - p))]
         actors.append((name, Actor(sp, [(0, frames[0], 0)], lambda t, x=x: (x, GY), walk=walk,
-                                   alpha=lambda t: 1.0 if t < t_swap else 0.0, breathe=0.0)))
+                                   alpha=work_a, breathe=0.0)))
         hops[name] = (x + facing * C.NOAH_NAIL[0] * A * (1.04 if name == "shem" else 1.05),
                       GY + C.NOAH_NAIL[1] * A * (1.04 if name == "shem" else 1.05))
 
@@ -485,10 +505,10 @@ def build(ctx):
     sh = ""
     for x in (NOAH_X, SHEM_X, HAM_X, JAP_X):
         sh += C.ground_shadow(x, GY, A, width=150, opacity=0.24)
-    sc.add("sh_work", doc(sh), wc=0, motion=lambda t: Tf(alpha=1.0 if t < t_swap else 0.0))
+    sc.add("sh_work", doc(sh), wc=0, motion=lambda t: Tf(alpha=work_a(t)))
     # the sawhorses stay in the yard when the saws stop
     horses = (PR.sawhorse(NOAH_X + 236 * A, GY, A * 0.72, 1) + PR.sawhorse(JAP_X - 236 * A, GY, A * 0.72, -1))
-    sc.add("horses", doc(horses), wc=0.6, motion=lambda t: Tf(alpha=1.0 if t >= t_swap else 0.0))
+    sc.add("horses", doc(horses), wc=0.6, motion=lambda t: Tf(alpha=1.0 - work_a(t)))
     for name, a in actors:
         sc.add_dynamic(name, a)
 
@@ -497,14 +517,14 @@ def build(ctx):
     f_stand = spF.add(C.noah_family(spF.ax, spF.ay, A, 1, pose="stand", expr="happy"))
     f_cheer = spF.add(C.noah_family(spF.ax, spF.ay, A, 1, pose="cheer"))
     sc.add("sh_fam", doc(C.ground_shadow(GROUP_X, GY, A, width=900, opacity=0.2)), wc=0,
-           motion=lambda t: Tf(alpha=1.0 if t >= t_swap else 0.0))
+           motion=lambda t: Tf(alpha=fam_a(t)))
     sc.add_dynamic("family", Actor(spF, [(0, f_stand, 0), (t_done + 0.05, f_cheer, 1.2)], lambda t: (GROUP_X, GY),
-                                   alpha=lambda t: 1.0 if t >= t_swap else 0.0, bper=2.6))
+                                   alpha=fam_a, bper=2.6))
 
     # ------------------------------------------------------------ sound words and clangs
     nx, ny = hops["noah"]
     for k, tb in enumerate(gz):
-        wx, wy = nx + 40 + 60 * k, ny - 250 - 40 * k
+        wx, wy = nx - 90 + 230 * k, ny - 240 - 50 * k
         sc.add(f"gz{k}", word_svg(wx, wy, "嘎吱", 70), wc=0,
                motion=lambda t, tb=tb, wx=wx, wy=wy: pop_tf(t, tb, tb + 0.75, wx, wy - 20, dur_in=0.2, bob=3))
     for k, tb in enumerate(dd):
@@ -539,8 +559,8 @@ def build(ctx):
                motion=lambda t, td=td: (lambda b, k: Tf(dx=b.dx, dy=b.dy, sx=b.sx, sy=b.sy, px=b.px, py=b.py,
                                                         alpha=b.alpha * k))(pmo(t, 0.15),
                                                                             M.progress(t, td, td + 0.15, "sine") *
-                                                                            (1 - M.progress(t, t_door - 0.1, t_door + 0.2,
-                                                                                            "sine"))))
+                                                                            (1 - 0.6 * M.progress(t, t_door - 0.1,
+                                                                                                  t_door + 0.2, "sine"))))
     for nm, box, tb in (("door", PR.ARK_DOOR, t_door), ("win", PR.ARK_WINDOW, t_win)):
         sc.add(f"ring_{nm}", ring_svg(box), wc=0,
                motion=lambda t, tb=tb: (lambda b, k: Tf(dx=b.dx, dy=b.dy, sx=b.sx, sy=b.sy, px=b.px, py=b.py,
@@ -549,9 +569,9 @@ def build(ctx):
                                                                             (0.75 + 0.25 * math.sin(2 * math.pi * (t - tb) / 0.6))))
 
     # ------------------------------------------------------------ the day counter (line 2)
-    DCX, DCY = 1400, 150
+    DCX, DCY = 1400, 120
     DC_N = n_days
-    dcs = [doc(PR.day_counter(DCX, DCY, 1.15, n=DC_N, filled=k * 0.5, icons="pair", gap=90)) for k in range(2 * DC_N + 1)]
+    dcs = [doc(PR.day_counter(DCX, DCY, 1.7, n=DC_N, filled=k * 0.5, icons="pair", gap=90)) for k in range(2 * DC_N + 1)]
 
     def dc_frame(t):
         if t < DAY0:
@@ -561,7 +581,7 @@ def build(ctx):
            motion=lambda t: Tf(alpha=M.progress(t, DAY0 - 0.3, DAY0, "sine") * (1 - M.progress(t, t_done - 0.6,
                                                                                                t_done - 0.1, "sine"))))
     sc.add("night", doc(S.rect_bg("#5d6aa6", SW, SH)), wc=0, blend="multiply",
-           motion=lambda t: Tf(alpha=0.62 * night(t)))
+           motion=lambda t: Tf(alpha=0.72 * night(t)))
     sc.add_dynamic("night_stars", sparkle_dyn((100, 60, 2700, 560), count=16, t0=DAY0, t1=t_dawn, color=(255, 248, 220),
                                               size=(5, 10), period=0.7, drift=0, seed=3, fade=0.2))
 
@@ -578,10 +598,10 @@ def build(ctx):
     c_saw = cam_at(590, 1350)
     c_ham = cam_at(1505, 1400)
     c_full = Cam(1400, 787, 2800)
-    c_end = cam_at(1450, 2450)
+    c_end = cam_at(1420, 2150)
     keys = [(0.0, c0), (t_saw - 0.9, c0), (t_saw + 0.1, c_saw), (t_nail - 0.6, c_saw), (t_nail + 0.25, c_ham),
             (L[0].end + 0.1, c_ham), (t_long + 0.5, c_full), (t_done - 0.3, c_full), (t_done + 1.2, c_end),
-            (T, cam_at(1452, 2440))]
+            (T, cam_at(1422, 2140))]
     sc.camera = clamp_cam(M.cam_keys(keys, "sine"), SW, SH)
 
     # ------------------------------------------------------------ SOUND
