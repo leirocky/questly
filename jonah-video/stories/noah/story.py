@@ -64,7 +64,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s04_noah", "mood": "flee",
+        "id": "s04_noah", "transition": "dippaper", "mood": "flee",
         "note": "6:8-10. One man was different: Noah, a kind grey-bearded man, with his wife, his three grown sons "
                 "Shem, Ham and Japheth and their wives (a family portrait, eight people); Noah praying, helping a "
                 "neighbour, walking with God (a soft golden light walking beside him).",
@@ -102,7 +102,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s07_animals", "mood": "shore",
+        "id": "s07_animals", "transition": "dippaper", "mood": "shore",
         "note": "7:2-3, 8-9, 6:21. The animals come two by two from every direction: elephants (boom boom), birds "
                 "(flap flap), lions (roar), rabbits (hop hop), giraffes, zebras, sheep, cows, turtles, butterflies; "
                 "a long happy queue up the ramp into the ark; Noah's family carries baskets and sacks of food "
