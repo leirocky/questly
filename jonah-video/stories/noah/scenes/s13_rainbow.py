@@ -101,7 +101,7 @@ def build(ctx):
         up = M.progress(t, t_god - 0.3, t_god + 1.6, "sine")
         down = M.progress(t, L0.end, L0.end + 2.0, "sine")
         up2 = M.progress(t, t_prom - 0.3, t_prom + 1.2, "sine")
-        return O.LIGHT_BASE + 0.3 * up - 0.18 * down + 0.15 * up2
+        return 0.4 * up * (1 - 0.6 * down) + 0.18 * up2
     O.add_world(sc, g, light_alpha)
     rbf = [doc(PR.rainbow(RB[0], RB[1], RB[2], progress=k / 7, radius=RB_R, band=RB_BAND)) for k in range(8)]
 
@@ -141,7 +141,8 @@ def build(ctx):
             dx=-30 + 6 * t, dy=12 * (1 - M.progress(t, t_god, t_god + 3.0, "sine")),
             alpha=M.progress(t, t_god + 0.3, t_god + 3.0, "sine")))
     cloud_layer("soft_clouds", ((1000, 200, 320, 84), (1700, 230, 340, 88)), 2.7, 90)       # behind the bow
-    cloud_layer("feet_clouds", ((2050, 700, 380, 110), (760, 330, 260, 76)), 3.6, 94)     # round its feet
+    cloud_layer("feet_cloud_r", ((2050, 700, 380, 110),), 3.6, 94)                        # round its feet
+    cloud_layer("feet_cloud_l", ((760, 330, 260, 76),), 3.61, 95)
     O.add_ground(sc, g)
     sc.add("ark", O.ark_svg(1.0, 1.0, 0.0), seed=11)
 

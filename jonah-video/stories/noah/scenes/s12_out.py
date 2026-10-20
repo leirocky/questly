@@ -50,7 +50,6 @@ HORIZON = 640
 ALTAR = (1190, 984, 0.62)
 FULL = Cam(W / 2, H / 2, W)      # the wide framing (s13 pulls back to it for the rainbow)
 END_CAM = Cam(1230, 740, 1440)   # s12's last framing = s13's first
-LIGHT_BASE = 0.40                # God's light at the end of s12 / start of s13
 
 # where everyone ends up (feet), facing at rest
 REST = {
@@ -85,12 +84,18 @@ def clamp(v, a=0.0, b=1.0):
 
 
 def sky_svg():
+    """Sky with God's warm light from the upper left baked in (soft glow + broad rays)."""
     defs = S.lin_grad("s12sky", [(0, "#8cc6de"), (0.5, "#bfe0e8"), (0.85, "#f4ead2"), (1, "#f8e2b8")])
-    return doc(f'<rect x="-20" y="-20" width="{W + 40}" height="{HORIZON + 140}" fill="url(#s12sky)"/>', defs)
+    defs += S.rad_grad("s12lb", [(0, "#fff3cc", 0.95), (0.35, "#fbe3a0", 0.5), (1, "#f8d98a", 0)])
+    body = f'<rect x="-20" y="-20" width="{W + 40}" height="{HORIZON + 140}" fill="url(#s12sky)"/>'
+    body += f'<circle cx="160" cy="-60" r="1050" fill="url(#s12lb)"/>'
+    body += S.g(S.path(S.rays(160, -60, 120, 1000, n=16, width_deg=5, rot=12), fill="#fff6dc", stroke=False),
+                filter="blur-md", opacity=0.3)
+    return doc(body, defs)
 
 
 def light_svg():
-    """God's warm light from the upper left: a soft glow + broad rays (screen-blended, alpha animated)."""
+    """Extra light while God speaks (screen-blended, alpha animated; 0 when idle)."""
     defs = S.rad_grad("s12lg", [(0, "#fff0c0", 1), (0.35, "#f8d98a", 0.55), (1, "#f2c14e", 0)])
     body = f'<circle cx="160" cy="-60" r="1050" fill="url(#s12lg)"/>'
     body += S.g(S.path(S.rays(160, -60, 120, 1000, n=16, width_deg=5, rot=12), fill="#fff3c8", stroke=False),
@@ -203,11 +208,12 @@ def g_breathe(g, pivot, amount=0.012, period=3.0, phase=0.0, on=None):
 
 def add_world(sc, g, light_alpha, door_frames=None, door_fa=None, occ_fa=None):
     """Sky, light, clouds, far land, meadow, the ark (+ its occluder), grass. Returns nothing."""
+    # sky and far land are static and adjacent (one flattened item); the light and clouds go over them
     sc.add("sky", sky_svg(), seed=3, wc=0.6)
-    sc.add("light", light_svg(), wc=0, blend="screen",
-           motion=lambda t: Tf(alpha=light_alpha(t) * (0.92 + 0.08 * math.sin(2 * math.pi * g(t) / 4.0))))
-    sc.add("clouds", clouds_svg(70), motion=lambda t: Tf(dx=-60 + 9 * ((g(t) - 200) % 60)))
     sc.add("far", far_svg(), seed=5)
+    sc.add("light", light_svg(), wc=0, blend="screen",
+           motion=lambda t: Tf(alpha=max(0.0, light_alpha(t))))
+    sc.add("clouds", clouds_svg(70), motion=lambda t: Tf(dx=-60 + 9 * ((g(t) - 200) % 60)))
 
 
 def add_ground(sc, g):
@@ -466,7 +472,7 @@ def build(ctx):
         down = M.progress(t, L1.end, L1.end + 1.5, "sine")
         pulse = 0.07 * math.sin(2 * math.pi * (t - t_god) / 1.7) * (M.progress(t, t_god, t_god + 0.5) -
                                                                       M.progress(t, L1.end - 0.3, L1.end))
-        return LIGHT_BASE - 0.12 + 0.34 * up - 0.22 * down + pulse
+        return 0.42 * up * (1 - down) + pulse
     add_world(sc, g, light_alpha)
     add_ground(sc, g)
 
