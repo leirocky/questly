@@ -1,4 +1,4 @@
-"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel and David picture-book videos.
+"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David and Noah picture-book videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -486,6 +486,163 @@ valley_points(x0, x1, y, scale=1.0) -> {'israel_camp', 'philistine_camp' (ground
 Constants: BRONZE, BRONZE_DARK, BRONZE_LIGHT, LEATHER, CORD, IRON, CREST_RED, WICKER, STONE_COLS, BEAR, BEAR_POSES,
 SHEEP_POSES, TENT_SIDES, KING_STOOL_Y, VALLEY_HILL_H.
 
+9. NOAH FILM (Genesis 6-9)                sheets: python3 tools/props_sheet.py noah_ark noah_animals noah_pairs
+--------------------------                        noah_weather noah_items (+ characters_noah_group.png)
+Person scale as everywhere (adult 330 px). Noah, his family and the child are in art/characters.py (NOAH FILM).
+God is never drawn as a person; the flood is water and weather only - never people or animals in danger.
+
+THE ARK
+ark(x, y, scale=1.0, facing=1, door=0.0, window=0.0, ramp=True, progress=1.0, floating=False, wet=False, glow=0.0,
+    lamps=0.0, blocks=None)
+    Anchor: grounded (floating=False) = the ground under the middle of the keel (the round bottom touches it there);
+    floating=True = the WATERLINE at the middle (the keel hangs ARK_DRAFT = 150 px below it: paint the sea in front).
+    A big warm picture-book boat-house, bow toward facing: a long round-bottomed hull of planks (nail pairs, a
+    rub strake, a teal painted band under the gunwale cap rail), a row of small square portholes (the middle deck),
+    a big side door, and on top a cabin of vertical boards (the third deck) with five small windows and one larger
+    window with two teal shutters near the top, under a wide shingled gable roof with a ridge cap.
+    ARK_LEN = 1915 px hull length at scale 1 (~6 adults; 2.5-3 houses). Use scale 0.25-0.6 in most shots.
+    BBox (-966, -1026, 990, 4) (ramp=False right 980); floating (-966, -876, 980, 152); progress .15 (-916, -626, 914, 12).
+    Geometry (local, scale 1, facing right, grounded; floating adds +ARK_DRAFT to every y):
+      ARK_DOOR = (150, -560, 410, -170)    door opening x0, top, x1, sill (390 px tall: an adult, the elephants at
+                                           scale <= 0.9 and a bowing giraffe fit)
+      ARK_RAMP = ((150, -170), (440, -170), (980, 0))  landing along the sill, top of the slope, foot on the ground
+      ARK_WINDOW = (-520, -860, -280, -630) the high window; ARK_WINDOW_STAND = (-400, -480): anchor for a person
+                                           inside looking out (head and hands show in the opening)
+      ARK_DECK_Y = -605 (top of the hull / cabin floor), ARK_ROOF_Y = -1010 (ridge, x -690..712; eaves y -868,
+      x -775..795: birds on the roof stand on the ridge)
+    Options:
+      door 0..1 ('closed' / 'open')  the plank door (Z brace, iron hinges) is hinged on its left jamb and swings out
+               toward the viewer (edge-on at ~.5, flat against the hull at 1); open shows a dark warm hold with straw
+               and a little hanging lamp. Quantise in steps of .1-.125 ('God shut the door': 1 -> 0 over ~1 s).
+      glow 0..1  a golden rim of light round the door edges + a soft halo (God shuts the door, 7:16).
+      window 0..1 ('closed' / 'open')  the two teal shutters swing open (flat against the wall at 1).
+      lamps 0..1  warm lamplight in the small cabin windows and the high window (night, inside life).
+      ramp       the plank ramp with cleats (grounded and finished only), in front of the hull, from the door down
+                 toward facing; ark_ramp_y() gives its surface.
+      progress 0..1  building in stages (quantise to ~0.05): 0-.12 the keel beam grows from the middle on wooden
+                 blocks; .06-.22 the curved ribs rise (fence-like skeleton) and the gunwale rail; .22-.55 the hull
+                 planks fill in from the keel up (the ribs still show above), with the dark door opening; .55-.8 the
+                 cabin posts, then its boards from the bottom up; .8-1 rafters, then the roof boards from the eaves
+                 up; a ladder leans on the hull while building (.2-1). Door panel / shutters / ramp appear at 1.
+      blocks     cradle blocks under the keel; None = while building (progress < 1, grounded) only.
+      wet        darker wood, soft highlight streaks on planks / wall / roof, drips from the gunwale and the eaves
+                 (in the rain, floating, just landed on Ararat).
+ark_points(x, y, scale=1.0, facing=1, floating=False) -> dict of stage points: 'door' (sill centre), 'door_box'
+    (x0, top, x1, sill), 'ramp_top', 'ramp_bottom', 'window_box', 'window_stand', 'windows' (5 small window boxes,
+    stern to bow), 'deck', 'roof' [stern end, bow end of the ridge], 'roof_mid', 'eaves', 'bow', 'stern', 'waterline'.
+ark_ramp_y(sx, x, y, scale=1.0, facing=1) -> stage y of the ramp surface at stage x (the ground y off the ramp):
+    animals walking up use y = ark_ramp_y(their x, ...) each frame.
+in_ark_door(markup, x, y, scale=1.0, facing=1, floating=False) -> markup clipped for someone going in at the door: the
+    doorway (down past the sill) plus everything on the ramp side of the bow-side jamb, so they vanish behind the
+    stern-side jamb. Draw it after the ark (same x, y, scale, facing).
+in_ark_window(markup, ...) -> clipped to the high window opening (Noah looking out: noah(*ark_points(...)['window_stand'],
+    scale, facing, pose='release_dove' / 'open_window' / 'hold_leaf'), drawn after the ark; open the shutters).
+in_ark_porthole(markup, i, ...) -> clipped to small cabin window i (0-4): a peeking animal / a bird.
+ANIMALS (two by two)
+ark_animal(x, y, scale=1.0, facing=1, kind='elephant', pose='stand', female=False, eyes='open', phase=0.0)
+    Anchor: the ground under the middle of the body (all feet on the ground line, also in walk frames). Friendly,
+    round picture-book animals in the style of lion() / bear() / sheep(): 4 px umber ink, dot eyes with highlights and
+    brows, rosy cheeks. female=True: a pink ribbon bow on the head, eyelashes and ~6% smaller (males: elephant tusks,
+    stag antlers, the green-headed mallard, the lion's mane - see animal_pair). eyes 'open' | 'closed' | 'happy'.
+    Walk: alternate walk_a / walk_b every ~0.3 s while moving x. ARK_ANIMALS, ARK_ANIMAL_POSES[kind].
+    kind       poses                                       bbox stand (male; female ~0.94x)   notes
+    elephant   stand walk_a walk_b trunk_up spray sleep    (-227, -413, 300, 2)  grey-blue, big pink-lined ear;
+               trunk_up (top -554): trumpeting with sound arcs; spray (top -674): a fountain of drops from the raised
+               trunk; sleep (-242, -331, 320, 16): lying, trunk curled, z's.
+    giraffe    stand walk_a walk_b bow                     (-145, -692, 218, 2)  ~2.1 x an adult; bow (-145, -418,
+               334, 2): neck lowered forward (to go in at the door / to drink).
+    zebra      stand walk_a walk_b                         (-145, -346, 190, 2)
+    horse      stand walk_a walk_b                         (-162, -376, 208, 2)  chestnut, dark mane, white blaze
+    deer       stand walk_a walk_b                         (-134, -395, 170, 2)  dappled; stag antlers (doe -316)
+    rabbit     stand hop sleep                             (-66, -169, 64, 2)    hop: phase 0 crouch (-66,-156,65,3),
+               .25 push-off (-91,-173,82,2), .5 in the air (-107,-186,88,-67: 67 px up), .75 landing on the front
+               paws (-86,-140,83,1); 4 frames ~0.08 s each while moving x ~70*scale per cycle. sleep (-66,-130,108,4)
+    turtle     stand walk_a walk_b                         (-95, -91, 122, 5)
+    duck       stand walk_a walk_b swim                    (-67, -117, 83, 1)    mallard drake (green head) / brown
+               duck; swim: anchor = the waterline (-78, -86, 83, 15)
+    monkey     stand walk_a walk_b wave sit                (-90, -175, 46, 3)    upright, curly tail
+    hippo      stand walk_a walk_b yawn                    (-209, -226, 256, 2)  lavender-grey, pink muzzle; yawn: a
+               big friendly yawn (blunt teeth)
+    fox        stand walk_a walk_b sit sleep               (-186, -182, 146, 2)  bushy white-tipped tail; sleep curled
+butterfly(x, y, scale=1.0, flap=0.0, color='orange', rot=0.0)   Anchor: body centre. flap 0..1 closes and reopens the
+    wings (cycle 0, .25, .5, .75 fast). BUTTERFLY_COLORS orange blue yellow pink purple. BBox (-47, -37, 47, 28).
+songbird(x, y, scale=1.0, facing=1, wing=0.0, pose='fly', color='blue', female=False)   Anchor: body centre. A small
+    round bird (blue / red / yellow / brown / green, SONGBIRD_COLORS) with the dove / gull wing cycle (wing -1..1,
+    cycle 1, .5, 0, -.5, -1, ...); pose 'perch' (feet at y~+32); female: duller colours. BBox wing 1 (-48, -70, 43,
+    19), wing -1 (-48, -30, 43, 42), perch (-48, -30, 43, 32).
+dove(..., leaf=False)   (section 5) leaf=True: a fresh olive leaf in the dove's beak (8:11), fly and stand.
+animal_pair(kind, x, y, scale=1.0, facing=1, pose='stand', phase=0.0, eyes='open', gap=None)
+    He and she side by side for the 'two by two' queue: the male at (x, y) in front, the female a little ahead
+    (toward facing, gap*scale, default per kind ~0.3 body lengths) and 18*scale higher (farther away), drawn first,
+    in the opposite walk frame (so they don't march in step) and with her bow. kind: PAIR_KINDS = ARK_ANIMALS + lion
+    (lion + lioness at 0.8 x lion() scale), bear, sheep, cow, goat, donkey, camel (these four only stand), dove,
+    songbird (flying; phase = wing phase 0..1). Unknown poses fall back to 'stand'. BBox walk_a e.g. elephant
+    (-227, -407, 422, 2), giraffe (-145, -692, 307, 1), zebra (-145, -346, 283, 2), lion (-182, -262, 319, 1),
+    rabbit (-66, -170, 108, 2), camel (-138, -367, 412, 1).
+WEATHER, WATER, LANDSCAPE
+rain(phase=0.0, intensity=0.6, x0=0, y0=0, x1=W, y1=H, angle=10, seed=0, color=None, drops=None, scale=1.0)
+    Absolute stage coordinates (a layer helper, no anchor): slanted pale streaks clipped to the box (x0, y0, x1, y1);
+    the count grows with intensity (0..1.5). intensity < 0.3 (or drops=True) draws separate outlined drops instead
+    ('drip, drip...'). phase 0..1 loops seamlessly (each streak falls once per cycle at its own speed): 6-8 phases
+    at ~0.06 s. Cost ~1.5 s per full-stage frame at intensity 1 -> render a small flipbook.
+puddle(x, y, scale=1.0, width=260, ripple=0.0, splash=0.0, sky=None)   Anchor: centre of the puddle on the ground.
+    Flat puddle reflecting the sky (sky colour), ripple 0..1 loops expanding rings, splash 0..1 a crown of water and
+    flying drops (rise to ~.5, falling and landing by 1). BBox (-137, -31, 135, 30); splash .5 top -63.
+flood_sea(x0, x1, level, phase=0.0, bottom=None, storm=0.0, seed=0, scale=1.0, foam=True)
+    Absolute coordinates: a wide body of water whose surface is at stage y = level, four wave bands to `bottom`
+    (default stage bottom), foam crests; phase 0..1 loops; storm 0..1 darkens it to slate and raises the waves.
+    Animate the rising flood by moving `level` (quantise ~10 px) and draw it in FRONT of hills / houses / Ararat
+    so they disappear under it; draw it in front of a floating ark (anchor at the waterline) to hide the keel.
+dark_cloud(x, y, scale=1.0, width=620, height=230, seed=0, light=0.0, flash=0.0)   Anchor: centre. A heavy slate
+    storm cloud with a lighter front bank; light 0..1 greys it, flash 0..1 a soft golden glow inside (distant
+    lightning, gentle). BBox (-379, -251, 384, 128) at the defaults.
+rainbow(x, y, scale=1.0, progress=1.0, radius=900, band=30, glow=True)   Anchor: centre of the arc on its base line.
+    Seven soft bands RAINBOW = red, orange, yellow, green, cyan, blue, violet (红橙黄绿青蓝紫) from the outside in;
+    progress 0..1 draws them ONE BAND AT A TIME in that order (band i sweeps in from the left foot over the top
+    during progress i/7 .. (i+1)/7): key band k as the narrator names it -> progress (k+1)/7. The feet fade out
+    (put clouds / hills over them); glow = a soft golden haze behind. BBox (-1038, -1024, 1036, -48). ~2 s per
+    frame (blur): render the 8 key values only.
+ararat(x, y, scale=1.0, snow=True, green=0.0, seed=0, facing=1)   Anchor: bottom centre. Mount Ararat: the big
+    snow-capped Greater Ararat (left) and the smaller Lesser Ararat (right, hazier), rocky ridges, a shady east side.
+    ARARAT_LEDGE = (-260, -640, 260): the saddle (x0, y, x1) on the big mountain's shoulder where the ark rests:
+    ark(x, y + ARARAT_LEDGE[1]*scale, ~0.25*scale, ramp=False, wet=True). green 0..1: grass and bushes return on the
+    lower slopes. BBox (-1038, -1083, 1010, 33). Mountain tops above the flood: draw flood_sea in front.
+football_field(x, y, scale=1.0, goals=True)   Anchor: bottom centre of the near touchline. A little green pitch in
+    perspective with mown stripes, white lines, centre circle, boxes, two goals with nets and a ball. FOOTBALL_LEN =
+    1000 px (near touchline at scale 1). Size comparison '比一个足球场还要长': the ark is ~137 m, a pitch ~100 m, so
+    draw ark(..., scale = pitch_scale * 1.37 * FOOTBALL_LEN / ARK_LEN, ramp=False). BBox (-502, -284, 500, 18).
+BUILDING AND FOOD
+saw(x, y, scale=1.0, facing=1, rot=0.0)        Anchor: the grip. Hand saw, blade toward +x. BBox (-29, -28, 172, 21).
+hammer(x, y, scale=1.0, facing=1, rot=0.0)     Anchor: the grip; handle toward +x, iron head across it at x~91.
+    BBox (-23, -34, 106, 25).
+plank(x, y, scale=1.0, rot=0.0, length=260, seed=0)   Anchor: centre. BBox (-133, -16, 132, 15).
+timber_pile(x, y, scale=1.0, facing=1, kind='mixed')  Anchor: bottom centre. 'logs' (round ends toward the viewer,
+    stacked 3-2-1) (-108, -212, 202, 3); 'planks' (six on two sleepers) (-117, -159, 156, 3); 'mixed' (logs with
+    planks on top) (-117, -235, 202, 3).
+sawhorse(x, y, scale=1.0, facing=1, plank=True)  Anchor: bottom centre. A-frame trestle (top -118) with a plank
+    across it. BBox (-137, -147, 197, 9); plank=False (-127, -121, 127, 9).
+nails(x, y, scale=1.0, box=True, n=9)   Anchor: bottom centre. An open box of nails + three loose ones (-57, -67, 138, 4);
+    box=False a few loose nails (-80, -20, 47, 5).
+pitch_bucket(x, y, scale=1.0, facing=1, brush=True)   Anchor: bottom centre. Wooden bucket of glossy black pitch
+    (6:14) with drips and a brush. BBox (-49, -185, 60, 2).
+food_basket(x, y, scale=1.0, kind='fruit')   Anchor: bottom centre, rim y=-56. kind 'fruit' (apples, pear, grapes)
+    (-70, -101, 69, 2), 'grain' (heaped grain and ears, top -130), 'veg' (carrots, a melon, greens, top -109),
+    'bread' (= bread_basket(handle=False)). sack() and jar() (section 3) are the food sacks and jars.
+hay(x, y, scale=1.0, facing=1, kind='bale')   Anchor: bottom centre. 'bale' (-83, -112, 94, 2), 'bundle' a sheaf
+    tied in the middle, lying (-93, -53, 97, -11), 'pile' a soft heap (-112, -76, 113, 2) - animal food / bedding.
+olive_branch(x, y, scale=1.0, facing=1, rot=0.0, leaves=5, olives=True)   Anchor: the cut end; the twig grows
+    toward +x. BBox (-5, -37, 146, 20). olive_leaf(x, y, scale=1.0, facing=1, rot=0.0): one leaf, anchor at its stem,
+    pointing +x, BBox (-2, -8, 45, 5) (the dove's leaf: dove(leaf=True)).
+altar(x, y, scale=1.0, fire=1.0, phase=0.0, smoke=True)   Anchor: bottom centre. A small heap of rounded field stones
+    with sticks on top (8:20); fire 0..1 a friendly flame with a warm glow, phase 0..1 flickers it (3-4 phases),
+    smoke = soft translucent wisps rising. BBox (-138, -422, 137, 4); fire=0 (-124, -158, 120, 4).
+Constants: TIMBER, TIMBER_LIGHT, TIMBER_DARK, PITCH, OLIVE_LEAF, OLIVE_LEAF_DARK, RAINBOW, BOW_PINK, RAIN_COL, HAY,
+ARK_*, ARARAT_LEDGE, FOOTBALL_LEN, ELEPHANT, GIRAFFE, RABBIT, TURTLE, DUCK, MONKEY, HIPPO, FOX (colours),
+ARK_ANIMALS, ARK_ANIMAL_POSES, PAIR_KINDS, BUTTERFLY_COLORS, SONGBIRD_COLORS.
+RENDER COST (2112 x 1188 layer, uncached): ark ~1.2 s, noah_family ~1.0 s, an animal / pair ~1 s, flood_sea ~1.2 s,
+rain (intensity 1, full stage) ~1.6 s, ararat ~1.5 s, rainbow ~2 s - same range as the existing library; quantise
+every option into a small flipbook (see RENDERING COST above).
+
 Helpers / constants
 -------------------
 local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
@@ -497,7 +654,8 @@ are the internal up-scales of the house / ziggurat drawings (informational). Dan
 LION_POSES, DEN_FLOOR_Y, DEN_INNER, DEN_OPENING, DEN_HOLE, DEN_STONE_R, WINDOW_OPENING, WINDOW_FLOOR_Y, WINDOW_WALL,
 SHUTTER; in_den_hole(...).
 Contact sheets of everything: ``python3 tools/props_sheet.py [fish ship items castor plants creatures
-buildings daniel]`` -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
+buildings daniel david_items ... noah_ark noah_animals noah_pairs noah_weather noah_items]``
+-> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
 """
 import hashlib
 import math
@@ -4927,7 +5085,7 @@ def olive_leaf(x, y, scale=1.0, facing=1, rot=0.0):
 
 def _saw_shape():
     """Hand saw: wooden grip around (0, 0), the blade runs +x to ~170 with teeth along its lower edge."""
-    blade = f"M22,-14 L168,-4 Q174,4 166,12.8 " + " ".join(
+    blade = "M22,-14 L168,-4 Q174,4 166,12.8 " + " ".join(
         f"L{_f(30 + (14 - i) * 9 + 4.5)},{_f(19.5)} L{_f(30 + (14 - i) * 9)},{_f(12.5)}" for i in range(15)) + " L22,14 Z"
     out = _p(blade, IRON, 3.2)
     out += _p("M30,-8 L160,-1", sw=3, stroke=S.shade(IRON, 0.45), extra='opacity="0.8"')
@@ -5375,6 +5533,8 @@ def _dark_cloud(w=620.0, h=230.0, seed=0, light=0.0, flash=0.0):
     base = S.mix(P["storm_cloud"], P["storm_cloud_light"], _clamp(light))
     under = S.shade(base, -0.25)
     out = S.cloud(0, 0, w, h, fill=base, seed=seed, puffs=6, sw=4, shade_fill=under)
+    lite = S.shade(base, 0.12)                     # a lighter front bank of puffs gives the cloud depth
+    out += S.cloud(-w * 0.08, h * 0.12, w * 0.62, h * 0.55, fill=lite, seed=seed + 11, puffs=4, sw=3)
     rng = random.Random(seed)
     for _ in range(4):
         cx, cy = rng.uniform(-w * 0.32, w * 0.3), rng.uniform(-h * 0.5, -h * 0.1)
@@ -5396,7 +5556,6 @@ def _rainbow(progress=1.0, r=900.0, band=30.0, glow=True):
     pr = _clamp(progress) * 7
     out = ""
     if glow and pr > 0:
-        gid = _uid("rbglow", r)
         out += f'<path d="M{_f(-r - band)},0 A{_f(r + band)},{_f(r + band)} 0 0 1 {_f(r + band)},0" fill="none" ' \
                f'stroke="{P["glow"]}" stroke-width="{_f(band * 9)}" opacity="{0.35 * min(1, pr / 7):.2f}" filter="url(#blur-md)"/>'
     for i, col in enumerate(RAINBOW):
@@ -5621,8 +5780,8 @@ def _ark(door=0.0, window=0.0, ramp=True, progress=1.0, floating=False, wet=Fals
                 out += _tube(f"M{_f(rx)},{_f(ky)} Q{_f(rx + bow * abs(rx) / 900)},{_f((ky + sy) / 2)} {_f(rx)},{_f(sy)}",
                              16, TIMBER_DARK, 3.4)
             if ribs_t >= 1:
-                out += _tube(f"M960,-380 Q982,-520 966,-650", 18, TIMBER_DARK, 3.4)
-                out += _tube(f"M-940,-390 Q-966,-520 -952,-650", 18, TIMBER_DARK, 3.4)
+                out += _tube("M960,-380 Q982,-520 966,-650", 18, TIMBER_DARK, 3.4)
+                out += _tube("M-940,-390 Q-966,-520 -952,-650", 18, TIMBER_DARK, 3.4)
                 out += _tube(_sm([(x, _ark_sheer(x) + 6) for x in range(-950, 966, 80)], closed=False), 12, TIMBER, 3.2)
         if keel_t > 0:
             L = 900 * keel_t
@@ -6179,7 +6338,7 @@ def _giraffe(pose="stand", female=False, eyes="open"):
     # head
     hx, hy = head
     rot = 28 if bow else 18
-    hd = _g(_p(f"M-30,-14 Q-28,-30 -6,-30 Q30,-30 42,-6 Q48,14 30,20 Q0,26 -20,16 Q-34,6 -30,-14 Z", col, 4)
+    hd = _g(_p("M-30,-14 Q-28,-30 -6,-30 Q30,-30 42,-6 Q48,14 30,20 Q0,26 -20,16 Q-34,6 -30,-14 Z", col, 4)
             + _ell(30, 4, 18, 14, C["muzzle"], 3) + _circ(38, -2, 2.4, INK, 0)
             + _p("M22,14 Q30,18 38,12", sw=2.6), f"translate({hx},{hy}) rotate({rot})")
     horns = ""
@@ -6229,13 +6388,12 @@ def _equine(kind="horse", pose="stand", female=False, eyes="open"):
     for i, (hx, f_, hind) in enumerate(((-82, fx[0], True), (80, fx[1], False), (-98, fx[2], True), (64, fx[3], False))):
         out += _qleg((hx, top), f_, lw0, lw1, legs_col, hind=hind, far=i < 2, ground=-lift[i], bend=0.5)
         if zebra:
-            fc = S.shade(col, -0.2) if i < 2 else col
             for k in range(3):
                 yy = -30 - k * 30 - (5 if i < 2 else 0) - lift[i]
                 xx = f_ + (hx - f_) * (k + 1) * 0.12
                 out += _line(xx - 8, yy, xx + 8, yy - 2, sw=5, color=C["stripes"], extra='opacity="0.9"')
-    body = [(-128, -198), (-110, -238), (-40, -250), (40, -248), (98, -238), (126, -202), (110, -160), (40, -146),
-            (-50, -148), (-112, -160)]
+    body = [(-134, -196), (-122, -238), (-82, -254), (-24, -244), (30, -242), (86, -254), (120, -228), (130, -188),
+            (110, -152), (40, -140), (-40, -142), (-112, -152)]
     if deer:
         body = [(x * 0.92, y - 8) for x, y in body]
     bd = _sm(body)
@@ -6729,7 +6887,7 @@ def _songbird(wing=0.0, pose="fly", color="blue", female=False):
     out += _clip(_uid("sbb", color, female), S.blob(0, 0, 24, 18, 0.03, 9, seed=1), _ell(10, 8, 18, 14, breast, 0))
     out += _p(S.blob(0, 0, 24, 18, 0.03, 9, seed=1), sw=3.4)
     out += _circ(20, -14, 13, back, 3.4)
-    out += _clip(_uid("sbh", color, female), f"M7,-14 A13,13 0 1 0 33,-14 A13,13 0 1 0 7,-14 Z", _ell(26, -6, 9, 8, breast, 0))
+    out += _clip(_uid("sbh", color, female), "M7,-14 A13,13 0 1 0 33,-14 A13,13 0 1 0 7,-14 Z", _ell(26, -6, 9, 8, breast, 0))
     out += _circ(20, -14, 13, "none", 3.4)
     out += _p("M31,-17 L42,-13 L31,-9 Z", "#e8b04a", 2.4)
     out += _dot_eye(24, -17, 3) + _blush(24, -8, 4, 2.6)
@@ -6759,7 +6917,6 @@ def _one(kind, x, y, scale, facing, pose, female, eyes, phase):
     if kind in ARK_ANIMALS:
         p_ = pose if pose in ARK_ANIMAL_POSES[kind] else ("stand" if pose != "hop" else "stand")
         return ark_animal(x, y, scale, facing, kind, p_, female, eyes, phase)
-    sx = 1 if facing >= 0 else -1
     bow = ""
     if female and kind in _OLD_BOW:
         bx, by = _OLD_BOW[kind]

@@ -1,7 +1,8 @@
 """People library: Jonah, sailors, the ship's captain, the king of Nineveh and townspeople; for the Daniel film
 (stories/daniel) also Daniel, King Darius (king(attire='darius')), the jealous officials and the palace guards; for
 the David film (stories/david) David, Goliath, his shield-bearer, Israelite / Philistine soldiers, King Saul
-(king(attire='saul')), Eliab and Jesse (section DAVID FILM at the end of this docstring).
+(king(attire='saul')), Eliab and Jesse (section DAVID FILM); for the Noah film (stories/noah) Noah, his wife, Shem,
+Ham, Japheth, their wives, noah_family() and a modern child in a raincoat (section NOAH FILM at the end).
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -454,6 +455,116 @@ Constants (David film): DAVID_POSES, GOLIATH_POSES, SOLDIER_POSES, SOLDIER_SIDES
 KING_EXTRA_POSES, ELIAB_POSES, JESSE_POSES, DAVID_EXPRESSIONS, ALL_EXPRESSIONS, GOLIATH_SPEAR_LEN; colours
 DAVID_TUNIC, DAVID_SKIN, DAVID_HAIR, GOLIATH_SKIN, GOLIATH_TUNIC, SAUL_TUNIC, SAUL_HAIR, BRONZE (+ _DARK / _LIGHT),
 LEATHER, CORD, MAIL. God is never drawn: show him as light (art.style / engine.fx), never as a figure.
+
+NOAH FILM (Genesis 6-9, stories/noah)                       sheets: python3 tools/character_sheet.py noah
+=====================================
+Same rig and conventions as above (anchor = ground under the pelvis, between the feet; facing; scale; marks; bboxes
+(l, t, r, b) at scale 1 / facing 1 measured from renders, wobble included). hand_positions / body_points work for
+every function here (for child(pose='jump') subtract CHILD_JUMP*scale from their y).
+SCALE: at the same ``scale`` Noah is ~333 px tall (head centre (2, -282)), his wife ~314, the sons 339-349, the
+daughters-in-law 311-321, the child ~223 (head centre (2, -179)). Put them all on one ground line with one scale.
+New expressions (NOAH_EXPRESSIONS; every function accepts them): determined (lowered brows, firm closed smile),
+amazed (big shining eyes, raised brows, open delighted 'oh!' mouth). Also useful: kind, happy, puzzled, worried,
+peaceful, surprised, laugh (DAVID_EXPRESSIONS / EXPRESSIONS).
+
+noah(x, y, scale=1.0, facing=1, pose='stand', expr=None, phase=0.0, item='sack', dove=False, sawhorse=True,
+     marks=True)
+----------------------------------------------------------------------------------------------------------
+Noah: a kind, sturdy, lively grandfather - long wavy white beard (beard kind 'long', moustache curling up into a
+smile), bushy grey brows, smile wrinkles at the eyes, a grey tuft at the temple, a pale sage-cream head-cloth
+(NOAH_CLOTH) with a green band (NOAH_BAND) and a flap down the back, a warm brown robe (NOAH_ROBE) with an ochre
+hem band and cuffs (NOAH_TRIM), a rope belt, sandals. Never orange / teal (Jonah) or blue (Daniel).
+  pose          bbox (l, t, r, b)        natural expr  notes (hands [far, near] at scale 1)
+  stand         (-69, -333, 60, 0)       kind          hands (47, -122), (-37, -121)
+  walk_a/walk_b (-90, -332, 84, 1) / (-69, -335, 105, 0)   happy   planted-foot stride frames; walk_c
+  walk_c        (-67, -337, 59, 0)       happy         the passing frame (feet together): cycle a, c, b, c every
+                                                       ~0.2 s while moving x (or a/b only, as the other films)
+  talk          (-69, -334, 65, 0)       happy         near hand open, palm up (48, -171)
+  pray          (-67, -334, 57, 0)       peaceful      standing, palms together (48, -204), face lifted
+  kneel_pray    (-91, -290, 52, 5)       peaceful
+  point_up      (-66, -334, 93, 0)       determined    finger up to heaven (81, -305)
+  scratch_head  (-69, -368, 81, 0)       puzzled       hand on top of the head, other fist on the hip, a '?' mark
+                                                       (marks=False hides it): "a boat here, so far from the sea?"
+  nod           (-67, -329, 70, 0)       kind          head bowed 22 deg: alternate with 'stand' (~0.3 s) to nod yes
+  saw           (-57, -300, 377, 6)      determined    leaning over a plank on a low sawhorse in front (the trestle
+                                                       stands at x+236*scale, plank top ~-103); the saw slides along
+                                                       its blade: phase 0 pulled back, .5 pushed forward, 1 back
+                                                       (flipbook 0, .25, .5, .75 at ~0.12 s; sawdust specks when
+                                                       marks). sawhorse=False: only the saw in the hand
+                                                       (-57, -300, 230, 0), for sawing a plank of your own.
+  hammer        phase 0 (-122, -366, 175, 0), .5 (-59, -392, 175, 0), 1 (-59, -332, 192, 0)   determined
+                                                       hammer raised behind the head (0) .. swung down so the head
+                                                       strikes the nail (1); the far hand holds the nail at NOAH_NAIL
+                                                       = (146, -250) (put the hull / plank there); impact ticks at
+                                                       phase >= .85. Flipbook e.g. 0, .35, .7, 1, 1 (hold), .5 ...
+  carry         item='sack' (-129, -333, 61, 0) / 'hay' (-145, ...): a sack / a hay sheaf on the shoulder behind
+                the head, steadied by the near hand; item='basket' (fruit), 'grain', 'veg' (-65, -333, 87, 0) or
+                'jar' (amphora, right 77): held in both hands in front of the chest. CARRY_ITEMS. natural happy
+  carry_walk_a/_b  the same carrying while walking (stride frames, bbox like carry with walk_a / walk_b legs)
+  open_window   (-75, -334, 82, 0)       happy         both arms up, palms out, pushing the shutters open
+  release_dove  (-67, -334, 135, 0)      kind          both arms reaching forward-up, open hands (120, -261),
+                                                       (57, -275); dove=True puts a white dove (wings up) just
+                                                       leaving the hands (top -371). Use props.dove for the flight.
+  hold_leaf     (-67, -380, 81, 0)       amazed        far hand raised (61, -316) holding an olive twig up
+  cheer         (-101, -334, 106, 0)     happy         both arms up
+  wave          (-69, -334, 109, 0)      happy         far hand up, open; phase 0..1 swings the forearm (+-18 deg),
+                                                       wave marks beside the hand (flipbook 0, .25, .5, .75)
+
+noah_wife(...), shem(...), ham(...), japheth(...), daughter_in_law(x, y, scale, facing, variant=0..2, ...)
+--------------------------------------------------------------------------------------------------------
+Same signature and the SAME pose list as noah() (FAMILY_POSES = NOAH_POSES), including saw / hammer / carry
+(item default 'basket' for the women, 'sack' for the men) and the dove / sawhorse options:
+  noah_wife          plum-rose robe, cream veil with a rose edge, golden sash, smile wrinkles (head (2, -265))
+  shem               eldest: blue robe with cream trim, dark curly hair and a full dark beard (head (2, -293))
+  ham                terracotta robe, golden headband, black curly hair, short black beard, deep-brown skin
+                     (head (2, -296), the tallest and broadest son)
+  japheth            youngest: leaf-green robe, ginger curls and stubble, fair skin (head (2, -287))
+  daughter_in_law    0 (Shem's wife) saffron robe, teal veil; 1 (Ham's) lilac robe, coral veil, brown skin;
+                     2 (Japheth's) rose-pink robe, sky-blue veil (heads (2, -268) / (2, -271) / (2, -263))
+  stand bboxes: wife (-52, -314, 53, 0), shem (-53, -345, 61, 0), ham (-64, -349, 64, 0), japheth (-51, -339, 58, 0),
+  daughters-in-law (-54, -321, 54, 0) (union). Other poses: like Noah's, scaled to their height (e.g. saw / hammer
+  extend to x +377 / +175; women's carry with a basket (-48, -317, 87, 0)).
+family_member(name, x, y, scale=1.0, facing=1, **kw): any of FAMILY = ('noah', 'noah_wife', 'shem', 'ham',
+  'japheth', 'daughter_in_law0', 'daughter_in_law1', 'daughter_in_law2') by name.
+
+noah_family(x, y, scale=1.0, facing=1, pose='stand', expr=None, gap=150, items=None, marks=True)
+---------------------------------------------------------------------------------------------
+All eight at once, drawn back to front in one <g>. Anchor x = 85*scale left of Noah's feet (the middle of the group)
+for the portrait; pose (FAMILY_GROUP_POSES) is given to everybody.
+  group portrait  stand / cheer / pray / talk / wave / nod / kneel_pray: front row daughter_in_law0 (-255),
+                  noah_wife (-85), Noah (+85, facing left toward his wife), daughter_in_law2 (+255); back row (36-40 px
+                  higher, 0.97 x) daughter_in_law1 (-340), Shem (-170), Ham (0), Japheth (+170) - every face shows.
+                  Left half faces right, right half faces left (facing=-1 mirrors the whole group).
+                  bbox stand (-392, -378, 306, 4), cheer (-431, -379, 343, 4), kneel_pray (-423, -334, 337, 9).
+  walking line    walk_a / walk_b / carry_walk_a / carry_walk_b: a procession toward `facing`, Noah leading AT x, the
+                  others behind him every gap*scale px (wife, Shem, his wife, Ham, his wife, Japheth, his wife);
+                  neighbours alternate stride frames. carry_*: items (list, cycled) default sack, basket, sack, grain,
+                  hay, veg, sack, jar. bbox (-1109, -351, 105, 1) at gap 150 (mirror for facing=-1). Flip walk_a /
+                  walk_b every ~0.25 s while moving x.
+
+child(x, y, scale=1.0, facing=1, pose='stand', expr=None, hood=False, boots=True, coat=None, phase=0.0, marks=True)
+-----------------------------------------------------------------------------------------------------------------
+A little modern child (5-6 years, the story's listener) for the opening and the ending: a sunny yellow raincoat
+(CHILD_COAT; coat='#7fb6d6' etc. for another colour) with toggle buttons, red rubber boots (CHILD_BOOTS;
+boots=False shows bare legs and sandals), short brown hair; hood=True puts the hood up (otherwise it hangs at the
+back). On the _CHILD rig (citizen(kind='child') size, 223 px). CHILD_POSES:
+  stand        (-42, -223, 43, 4)    happy
+  walk_a/_b    (-57, -224, 57, 1) / (-48, -226, 71, 0)
+  peek_window  (-38, -223, 66, 4)    amazed   standing on tiptoe at a window, both hands on the sill in front at
+                                              (54, -147), (46, -140): put the sill top ~ y-140*scale, nose ~ x+40
+  splash       (-84, -204, 80, 3)    laugh    landing in a puddle: knees bent, arms flung up and out (pair with
+                                              props.puddle(x, y, scale, splash=...))
+  jump         (-65, -260, 60, -44)  laugh    in the air: the soles CHILD_JUMP = 46 px above the anchor's ground
+                                              line (alternate jump / splash for jumping in puddles)
+  point_up     (-54, -222, 60, 3)    amazed   pointing at the rainbow
+  wave         (-45, -223, 55, 4)    happy    far hand up; phase swings it (as Noah's wave)
+  smile_up     (-57, -221, 40, 4)    happy    face lifted, hands clasped at the chest
+  cheer        (-69, -222, 72, 3)    laugh
+  (hood=True adds ~2-3 px at the top.)
+
+Constants (Noah film): NOAH_POSES, FAMILY_POSES, FAMILY_GROUP_POSES, CARRY_ITEMS, FAMILY, CHILD_POSES, CHILD_JUMP,
+NOAH_NAIL, NOAH_EXPRESSIONS; colours NOAH_ROBE, NOAH_TRIM, NOAH_CLOTH, NOAH_BAND, NOAH_SKIN, NOAH_BEARD, CHILD_COAT,
+CHILD_BOOTS. God is never drawn as a person (golden light only, see ART_GUIDE.md).
 """
 import hashlib
 import math
@@ -987,6 +1098,12 @@ def _moustache(R, col, kind):
                 f'{fmt(mx)},{fmt(my - 0.03 * R)} Q{fmt(mx + 0.20 * R)},{fmt(my - 0.12 * R)} {fmt(mx + w)},{fmt(my - 0.05 * R)} '
                 f'Q{fmt(mx + 0.22 * R)},{fmt(my + 0.11 * R)} {fmt(mx)},{fmt(my + 0.10 * R)} '
                 f'Q{fmt(mx - 0.22 * R)},{fmt(my + 0.12 * R)} {fmt(mx - w)},{fmt(my - 0.02 * R)} Z" fill="{col}" {_st(2.4)}/>')
+    w = 0.22 * R
+    return (f'<path d="M{fmt(mx - w)},{fmt(my + 0.08 * R)} Q{fmt(mx - 0.13 * R)},{fmt(my - 0.05 * R)} '
+            f'{fmt(mx)},{fmt(my)} Q{fmt(mx + 0.13 * R)},{fmt(my - 0.05 * R)} {fmt(mx + w)},{fmt(my + 0.08 * R)} '
+            f'Q{fmt(mx + 0.10 * R)},{fmt(my + 0.05 * R)} {fmt(mx)},{fmt(my + 0.06 * R)} '
+            f'Q{fmt(mx - 0.10 * R)},{fmt(my + 0.05 * R)} {fmt(mx - w)},{fmt(my + 0.08 * R)} Z" '
+            f'fill="{col}" {_st(2.4)}/>')
 
 
 # ---------------------------------------------------------------- headwear (head frame)
@@ -4024,7 +4141,7 @@ def _nh_items(D, pose, phase, item, dove, sawhorse, marks):
     elif pose == "saw":
         def front(st):
             G = st["ground"]
-            W, E = st["arms"][1][2], st["arms"][1][1]
+            W = st["arms"][1][2]
             hr = st["m"]["hr"]
             s_ = ""
             blade = f'<g transform="translate({fmt(W[0])},{fmt(W[1])}) rotate(30) scale(0.85)">{PR._saw_shape()}</g>'
@@ -4049,7 +4166,6 @@ def _nh_items(D, pose, phase, item, dove, sawhorse, marks):
             W = st["arms"][1][2]
             hr = st["m"]["hr"]
             ang = _NH_HAMMER_ANG[0] + (_NH_HAMMER_ANG[1] - _NH_HAMMER_ANG[0]) * _nh_hammer_ease(phase)
-            hd = (math.cos(math.radians(ang)), math.sin(math.radians(ang)))
             s_ = f'<g transform="translate({fmt(W[0])},{fmt(W[1])}) rotate({fmt(ang)})">{_prp()._hammer_shape()}</g>'
             s_ += _fist(W, hr, skin)
             G = st["ground"]
@@ -4085,7 +4201,7 @@ def _nh_items(D, pose, phase, item, dove, sawhorse, marks):
             s_ = ""
             for k in (0, 1):
                 r = 26 + 14 * k
-                s_ += _line(f"M{fmt(W[0] - r)},{fmt(W[1] - r * 0.6)} Q{fmt(W[0] - r * 1.15)},{fmt(W[1])} {fmt(W[0] - r)},{fmt(W[1] + r * 0.6)}",
+                s_ += _line(f"M{fmt(W[0] + r)},{fmt(W[1] - r * 0.6)} Q{fmt(W[0] + r * 1.15)},{fmt(W[1])} {fmt(W[0] + r)},{fmt(W[1] + r * 0.6)}",
                             w=2.8, col=MARK)
             return s_
     return behind, mid, front

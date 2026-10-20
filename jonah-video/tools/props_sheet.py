@@ -11,6 +11,7 @@ grey figure is a 330 px adult at the same scale; dashed blue boxes show document
 (fish mouth box, ship cutaway interior / bed, castor shade, booth seat). Characters (Jonah, the king,
 sailors) come from art/characters.py to check the props against them.
 David film: python3 tools/props_sheet.py david_items david_creatures david_camp valley
+Noah film: python3 tools/props_sheet.py noah_ark noah_animals noah_pairs noah_weather noah_items
 """
 import sys
 from pathlib import Path
@@ -642,7 +643,7 @@ def sheet_noah_items():
                _c("pitch_bucket", lambda x, y: PR.pitch_bucket(x, y), 220, 100, 260)]),
         (300, [_c(f"food_basket {k}", lambda x, y, k=k: PR.food_basket(x, y, kind=k), 230, 115, 260) for k in ("fruit", "grain", "veg", "bread")]
          + [_c("sack / jar (existing)", lambda x, y: PR.sack(x - 50, y) + PR.jar(x + 60, y - 82), 260, 120, 260),
-            _c(f"hay bale / bundle / pile", lambda x, y: PR.hay(x - 150, y, 0.8) + PR.hay(x + 30, y - 120, 0.8, kind="bundle") + PR.hay(x + 100, y, 0.8, kind="pile"), 420, 220, 260)]),
+            _c("hay bale / bundle / pile", lambda x, y: PR.hay(x - 150, y, 0.8) + PR.hay(x + 30, y - 120, 0.8, kind="bundle") + PR.hay(x + 100, y, 0.8, kind="pile"), 420, 220, 260)]),
         (360, [_c(f"altar fire={f} phase={ph}", lambda x, y, f=f, ph=ph: PR.altar(x, y, fire=f, phase=ph), 280, 140, 330) for f, ph in ((1, 0), (1, 0.33), (1, 0.66), (0, 0))]
          + [_c("olive_branch / olive_leaf (x2)", lambda x, y: PR.olive_branch(x - 120, y - 140, 1.4) + PR.olive_leaf(x - 60, y - 40, 2.0), 300, 150, 330),
             _c("dove leaf=True (x1.4)", lambda x, y: PR.dove(x, y - 200, 1.4, wing=0.5, leaf=True) + PR.dove(x, y - 60, 1.4, pose="stand", leaf=True), 280, 140, 330)]),

@@ -18,6 +18,9 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   phases), david_expr (close-ups), david_armor, goliath (poses, fall progress, lying), goliath_expr, soldiers_israel,
   soldiers_philistine, david_saul (king attire='saul', Eliab, Jesse, shield-bearer) and david_scale (boy / adult /
   giant on one ground line).
+  Noah film (python3 tools/character_sheet.py noah): noah_poses, noah_actions (saw / hammer phases, carry items,
+  options), noah_expr (close-ups), noah_family (wife, sons, daughters-in-law), noah_child (raincoat child) and
+  noah_group (noah_family portrait and walking line, scale check with the ark and animal pairs).
 """
 import json
 import sys
@@ -268,7 +271,7 @@ def noah_sheets():
     items += [(f"carry item={it}", lambda x, y, s, it=it: C.noah(x, y, s, pose="carry", item=it)) for it in C.CARRY_ITEMS]
     items += [("carry_walk_a sack", lambda x, y, s: C.noah(x, y, s, pose="carry_walk_a")),
               ("release_dove dove=True", lambda x, y, s: C.noah(x, y, s, pose="release_dove", dove=True)),
-              (f"wave phase=0.5 / facing -1", lambda x, y, s: C.noah(x, y, s, -1, pose="wave", phase=0.5)),
+              ("wave phase=0.5 / facing -1", lambda x, y, s: C.noah(x, y, s, -1, pose="wave", phase=0.5)),
               ("marks=False scratch_head", lambda x, y, s: C.noah(x, y, s, pose="scratch_head", marks=False))]
     out.append(("noah_actions", "Noah — saw / hammer phases, carry items, options (scale 0.9)", items, 8, 290, 420, 0.9,
                 {"ground_pad": 26}))
@@ -456,6 +459,11 @@ def measure():
         jobs.append(("eliab", p, lambda x, y, p=p: C.eliab(x, y, pose=p)))
     for p in C.JESSE_POSES:
         jobs.append(("jesse", p, lambda x, y, p=p: C.jesse(x, y, pose=p)))
+    for name in C.FAMILY:
+        for p in C.NOAH_POSES:
+            jobs.append((name, p, lambda x, y, p=p, name=name: C.family_member(name, x, y, pose=p)))
+    for p in C.CHILD_POSES:
+        jobs.append(("child", p, lambda x, y, p=p: C.child(x, y, pose=p)))
     for v in range(4):
         for p in C.OFFICIAL_POSES:
             jobs.append(("official", p, lambda x, y, p=p, v=v: C.official(x, y, variant=v, pose=p)))
