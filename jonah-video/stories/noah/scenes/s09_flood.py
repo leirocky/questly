@@ -39,8 +39,6 @@ WL0 = GY - DRAFT                         # the waterline that lifts the ark
 INK = P["ink"]
 FAR_FINAL = 560                          # far water level at the end (above the highest peak)
 NEAR_FINAL = 985                         # near water level at the end
-PEAKS = [(380, 820, 330), (900, 760, 360), (1320, 840, 300), (1760, 870, 280), (2150, 640, 420), (2620, 760, 360),
-         (2950, 860, 300)]               # x, peak y, half-width (the highest: x 2150)
 
 
 def doc(body, defs=""):
@@ -57,39 +55,55 @@ def sky_svg():
     return doc(f'<rect x="-20" y="-20" width="{SW + 40}" height="{SH + 40}" fill="url(#n9sky)"/>', defs)
 
 
+BACK_PEAKS = [(-120, 900), (260, 770), (640, 840), (980, 730), (1330, 820), (1700, 760), (2150, 600), (2620, 740),
+              (2960, 800), (3150, 900)]
+FRONT_PEAKS = [(-120, 1040), (180, 930), (520, 980), (860, 900), (1180, 960), (1880, 950), (2380, 900), (2780, 960),
+               (3150, 1000)]
+
+
+def _ridge(peaks, base, seed, dip=150):
+    """Ridge line through the peaks with valleys between (points), closed down to `base`."""
+    rng = random.Random(seed)
+    pts = []
+    for (xa, ya), (xb, yb) in zip(peaks, peaks[1:]):
+        pts.append((xa, ya))
+        pts.append(((xa + xb) / 2 + rng.uniform(-40, 40), max(ya, yb) + dip * rng.uniform(0.7, 1.1)))
+    pts.append(peaks[-1])
+    return pts
+
+
 def mountains_svg():
-    """A range of mountains behind the plain; snow-grey tops, hazy in the rain."""
+    """Two ranges of mountains behind the plain: a hazy back range with the highest snowy peak (x 2150), a greener
+    front range; ridges, gullies and snow caps."""
+    defs = S.lin_grad("n9mb", [(0, "#99a3ab"), (1, "#828e96")]) + S.lin_grad("n9mf", [(0, "#7f8e82"), (1, "#6a7c6a")])
     out = ""
-    order = sorted(PEAKS, key=lambda p: -p[1])        # lower peaks first? draw far (low) ones behind
-    for i, (x, y, hw) in enumerate(sorted(PEAKS, key=lambda p: p[1], reverse=False)):
-        pass
-    for i, (x, y, hw) in enumerate(order):
-        base = 1300
-        col = S.mix("#8d9a98", "#a9b3ae", 0.3 + 0.1 * (i % 3))
-        rng = random.Random(i + 3)
-        pts = [(x - hw * 1.25, base)]
-        n = 6
-        for k in range(1, n):
-            u = k / n
-            px = x - hw * 1.25 + 2.5 * hw * u
-            h = (base - y) * (1 - abs(u - 0.5) * 2) ** 0.85
-            pts.append((px + rng.uniform(-14, 14), base - h + rng.uniform(-10, 10) * (0 < k < n)))
-        pts.append((x + hw * 1.25, base))
-        pts[3] = (x, y)
-        d = S.smooth_path(pts, closed=False, tension=0.7) + f" L{f1(x + hw * 1.25)},{base + 40} L{f1(x - hw * 1.25)},{base + 40} Z"
-        out += S.path(d, col, sw=3.5)
-        # snow / pale rock cap and a shady side
-        cap = [(x - hw * 0.28, y + (base - y) * 0.2), (x - hw * 0.12, y + 16), (x, y), (x + hw * 0.1, y + 18),
-               (x + hw * 0.3, y + (base - y) * 0.22), (x + hw * 0.08, y + (base - y) * 0.15), (x - hw * 0.1, y + (base - y) * 0.18)]
-        out += S.path(S.smooth_path(cap, tension=0.6), "#dfe3df", sw=2.5)
-        out += (f'<path d="M{f1(x)},{f1(y + 6)} L{f1(x + hw * 0.9)},{base} L{f1(x + hw * 0.2)},{base} Z" '
-                f'fill="{S.shade(col, -0.12)}" opacity="0.5"/>')
-    return doc(S.g(out, filter="wobble"))
+    for peaks, fill, seed, dip, snow in ((BACK_PEAKS, "url(#n9mb)", 5, 170, 790), (FRONT_PEAKS, "url(#n9mf)", 9, 110, 0)):
+        pts = _ridge(peaks, 1320, seed, dip)
+        d = S.smooth_path(pts, closed=False, tension=0.55) + f" L{SW + 150},1330 L-150,1330 Z"
+        out += S.path(d, fill, sw=3.5)
+        rng = random.Random(seed + 1)
+        for x, y in peaks:
+            # gullies and a shady flank
+            out += (f'<path d="M{f1(x)},{f1(y + 8)} L{f1(x + 120 + rng.uniform(0, 60))},1320 L{f1(x + 30)},1320 Z" '
+                    f'fill="#4b3426" opacity="0.08"/>')
+            for k in range(2):
+                gx = x + rng.uniform(-50, 50)
+                out += (f'<path d="M{f1(gx)},{f1(y + 50 + 30 * k)} q{f1(rng.uniform(-30, 30))},{f1(80)} '
+                        f'{f1(rng.uniform(-50, 50))},{f1(160 + 60 * k)}" fill="none" stroke="#5f6e66" stroke-width="2.4" '
+                        f'opacity="0.45"/>')
+            if snow and y < snow:
+                h = (snow - y) * 0.55 + 30
+                cap = [(x - h * 0.75, y + h), (x - h * 0.35, y + h * 0.7), (x - h * 0.15, y + h * 0.95), (x, y - 2),
+                       (x + h * 0.2, y + h * 0.8), (x + h * 0.45, y + h * 1.0), (x + h * 0.8, y + h * 1.1),
+                       (x + h * 0.3, y + h * 0.2)]
+                out += S.path(S.smooth_path(cap[:4] + [(x + h * 0.15, y + h * 0.15)] + cap[4:7], tension=0.5),
+                              "#eef0ec", sw=2.5)
+    return doc(S.g(out, filter="wobble"), defs)
 
 
 def plain_svg():
     """The wide plain below the hill: fields, a river line, far trees and little empty houses."""
-    defs = S.lin_grad("n9pl", [(0, "#8ea27a"), (1, "#7d9468")])
+    defs = S.lin_grad("n9pl", [(0, "#7e8f72"), (1, "#6d8062")])
     out = S.path(S.wave_band(1250, 8, 900, 0.3, x0=-60, x1=SW + 60, bottom=SH + 60, seed=4), "url(#n9pl)", sw=3.5)
     rng = random.Random(7)
     for k in range(4):
@@ -111,7 +125,7 @@ HILL = [(-80, 1700), (420, 1560), (850, 1380), (1180, 1172), (1500, 1150), (1820
 
 
 def hill_svg():
-    defs = S.lin_grad("n9hill", [(0, "#8fb05c"), (1, "#6f9447")])
+    defs = S.lin_grad("n9hill", [(0, "#7e9b5c"), (1, "#5f7f46")])
     d = S.smooth_path(HILL, closed=False, tension=0.8) + f" L{SW + 80},{SH + 60} L-80,{SH + 60} Z"
     out = S.path(d, "url(#n9hill)", sw=4.5)
     rng = random.Random(3)
@@ -131,8 +145,19 @@ def ark_svg(wet):
     return doc(PR.ark(AX, WL0, S9, 1, door=0.0, window=0.0, ramp=False, floating=True, wet=wet))
 
 
-CLOUDS = [(260, 300, 1.5, 1), (1050, 230, 1.7, 2), (1900, 260, 1.6, 3), (2700, 330, 1.5, 4), (620, 520, 1.1, 5),
-          (2350, 520, 1.15, 6), (1500, 470, 1.0, 7)]
+CLOUDS = [(260, 270, 1.45, 1), (1080, 200, 1.75, 2), (1930, 300, 1.5, 3), (2740, 250, 1.6, 4), (700, 470, 1.0, 5),
+          (2380, 480, 1.05, 6), (1480, 430, 0.85, 7), (3350, 330, 1.5, 8), (3150, 520, 1.0, 9)]
+
+
+BACK_CLOUDS = [(600, 120, 1.3, 21), (1500, 90, 1.5, 22), (2450, 140, 1.35, 23), (120, 520, 0.9, 24),
+               (2900, 560, 0.95, 25), (1950, 600, 0.8, 26), (3250, 160, 1.3, 27)]
+
+
+def back_clouds_svg():
+    out = ""
+    for x, y, s_, sd in BACK_CLOUDS:
+        out += PR.dark_cloud(x, y, s_, seed=sd, light=0.75)
+    return doc(S.g(out, opacity=0.9))
 
 
 def clouds_svg(flash_i=None, k=0.0):
@@ -182,8 +207,8 @@ def build(ctx):
                  (t_float + 0.9, WL0 - 34), (t_drift, WL0 - 50), (t_high, NEAR_FINAL + 25), (T - 1.0, NEAR_FINAL)]
     far_keys = [(0, 1760), (t_up[0] - 0.05, 1760), (t_up[0] + d_up, 1330), (t_up[0] + 0.62, 1330),
                 (t_up[0] + 0.62 + d_up, 1230), (t_up[1] - 0.05, 1230), (t_up[1] + d_up, 1110),
-                (t_up[1] + 0.62, 1110), (t_up[1] + 0.62 + d_up, 1010), (t_float + 1.0, 930), (L1.end + 0.4, 860),
-                (L2.start, 830), (t_high - 0.3, 720), (t_high + 0.75, 610), (t_gone, 575), (T - 1.0, FAR_FINAL)]
+                (t_up[1] + 0.62, 1110), (t_up[1] + 0.62 + d_up, 1030), (t_float + 1.0, 960), (L1.end + 0.3, 880),
+                (L2.start + 0.1, 840), (t_high - 0.2, 735), (t_high + 0.8, 592), (t_gone, 575), (T - 1.0, FAR_FINAL)]
 
     def level(keys):
         def f(t):
@@ -211,7 +236,7 @@ def build(ctx):
     sc.add("mountains", mountains_svg(), z=1, wc=0.7)
     sc.add("plain", plain_svg(), z=1.5, wc=0.7)
     phases = 6
-    far_fr = [doc(PR.flood_sea(-80, SW + 80, FAR_FINAL, phase=k / phases, bottom=SH + 60, storm=0.55, seed=3,
+    far_fr = [doc(PR.flood_sea(-80, SW + 80, FAR_FINAL, phase=k / phases, bottom=1130, storm=0.55, seed=3,
                                scale=0.55)) for k in range(phases)]
     sc.add("far_sea", far_fr, z=2, wc=0.6, frame_at=lambda t: float(int(t * 5) % phases),
            motion=lambda t: Tf(dy=far(t) - FAR_FINAL))
@@ -239,6 +264,7 @@ def build(ctx):
 
     # ---------------- clouds (one soft lightning glow inside a cloud on the first 哗啦啦)
     t_fl = t_hua[0] + 0.05
+    sc.add("back_clouds", back_clouds_svg(), z=0.5, wc=0.6, motion=lambda t: Tf(dx=-3 * t))
     cl = [clouds_svg(), clouds_svg(1, 1.0)]
     sc.add("clouds", cl, z=6, wc=0.7,
            frame_at=lambda t: 1.0 - clamp(abs(t - t_fl - 0.12) / 0.35) if abs(t - t_fl - 0.12) < 0.35 else 0.0,
@@ -249,12 +275,12 @@ def build(ctx):
     pts = PR.ark_points(AX, WL0, S9, 1, floating=True)
     roof = pts["roof"]
     hit = [(roof[0][0] + 150, roof[0][1] + 2), (roof[1][0] - 130, roof[1][1] + 2)]
-    dsp = Spr(80, 90, 40, 60, wc=0.3, seed=21)
-    dsp.add(f'<path d="{PR._raindrop_d(40, 60, 13)}" fill="{PR.RAIN_COL}" stroke="{S.shade(PR.RAIN_COL, -0.4)}" '
-            f'stroke-width="2.4"/><ellipse cx="36" cy="54" rx="3" ry="5" fill="#fffaf0" opacity="0.8"/>')
-    ssp = Spr(140, 90, 70, 60, wc=0.3, seed=22)
-    for k in (0.6, 1.0, 1.25):
-        ssp.add(splash_markup(70, 60, k))
+    dsp = Spr(120, 140, 60, 100, wc=0.3, seed=21)
+    dsp.add(f'<path d="{PR._raindrop_d(60, 100, 26)}" fill="{PR.RAIN_COL}" stroke="{S.shade(PR.RAIN_COL, -0.45)}" '
+            f'stroke-width="3.2"/><ellipse cx="51" cy="88" rx="5" ry="9" fill="#fffaf0" opacity="0.85"/>')
+    ssp = Spr(260, 160, 130, 110, wc=0.3, seed=22)
+    for k in (1.3, 2.1, 2.7):
+        ssp.add(splash_markup(130, 110, k))
     for i, (tb, (hx, hy)) in enumerate(zip(t_di, hit)):
         t0 = tb - 0.42
 
@@ -262,7 +288,7 @@ def build(ctx):
             if t < t0 or t >= tb:
                 return None
             u = (t - t0) / (tb - t0)
-            y = hy - 560 * (1 - u) ** 1.6 - 14
+            y = hy - 620 * (1 - u) ** 1.6 - 6
             im, ax, ay = dsp.get(0, 1, 1 + 0.25 * u, 0)
             return im, (hx - ax, y - ay)
 
@@ -284,8 +310,9 @@ def build(ctx):
     drops = [doc(PR.rain(phase=k / 6, intensity=0.18, x0=0, y0=0, x1=SW, y1=SH, angle=8, seed=5, drops=True,
                          scale=0.8)) for k in range(6)]
     sc.add("drops", drops, z=7, wc=0.3, frame_at=lambda t: float(int(t * 14) % 6),
-           motion=lambda t: Tf(alpha=M.progress(t, t_di[0] + 0.1, t_di[0] + 0.5, "sine") *
-                               (1 - 0.6 * M.progress(t, t_hua[0], t_hua[0] + 1.0, "sine"))))
+           motion=lambda t: Tf(alpha=(0.35 * M.progress(t, t_di[0] + 0.1, t_di[0] + 0.5, "sine") +
+                                      0.65 * M.progress(t, t_di[1] + 0.05, t_hua[0], "sine")) *
+                               (1 - M.progress(t, t_hua[0], t_hua[1] + 0.8, "sine"))))
     sc.fx.append(FX.rain(t0=t_hua[0] - 0.1, density=0.55, angle=12, length=44, speed=1500, alpha=95, seed=5))
     sc.fx.append(FX.rain(t0=t_hua[1] - 0.1, density=0.55, angle=14, length=56, speed=1800, alpha=105, seed=8))
 
@@ -294,9 +321,7 @@ def build(ctx):
     add_forty(sc, t_40, t_40n, t_up[0])
 
     # ---------------- light
-    sc.fx.append(FX.tint((150, 160, 185), lambda t: 0.18 + 0.12 * M.progress(t, t_rain - 0.2, t_hua[0] + 0.5, "sine"),
-                         mode="multiply"))
-    sc.fx.append(FX.vignette(lambda t: 0.25))
+    # (the rainy gloom is painted into the backdrop colours: a full-frame multiply costs ~100 ms per frame)
 
     # ---------------- sound
     sc.sfx("storm_wind", 0.0, dur=T, gain_db=-24, fade_in=0.8, fade_out=1.0)
@@ -316,10 +341,10 @@ def build(ctx):
 # ============================================================================ counters
 def add_seven(sc, t_seven, t_rain):
     """'七天以后': seven little suns pop into a row, one by one, then the row fades."""
-    cx, cy = 900, 520
-    sp = Spr(560, 140, 280, 70, wc=0.3, seed=31)
+    cx, cy = 960, 700
+    sp = Spr(820, 200, 410, 100, wc=0.3, seed=31)
     for k in range(8):
-        sp.add(PR.day_counter(280, 70, 0.95, n=7, filled=k, icons="sun", gap=64))
+        sp.add(PR.day_counter(410, 100, 1.45, n=7, filled=k, icons="sun", gap=64))
     t0, t1 = t_seven + 0.05, t_rain - 0.15
     t_out = t_rain + 1.2
 
@@ -347,12 +372,12 @@ def plaque_markup(x, y):
 
 def add_forty(sc, t_40, t_40n, t_hide):
     """'四十天四十夜': a plaque counts the days 1 -> 40 and lands on 40 with a pop."""
-    cx, cy = 900, 560
-    psp = Spr(440, 200, 220, 100, wc=0.4, seed=33)
-    psp.add(plaque_markup(220, 100))
-    nsp = Spr(200, 130, 100, 65, wc=0, seed=34)
+    cx, cy = 930, 700
+    psp = Spr(580, 260, 290, 130, wc=0.4, seed=33)
+    psp.add(S.g(plaque_markup(0, 0), extra='transform="translate(290,130) scale(1.3)"'))
+    nsp = Spr(240, 150, 120, 66, wc=0, seed=34)
     for n in range(1, 41):
-        nsp.add(S.text(100, 92, str(n), size=78, fill="#d9893c",
+        nsp.add(S.text(120, 100, str(n), size=100, fill="#d9893c",
                        extra=f'stroke="{INK}" stroke-width="6" paint-order="stroke"'))
     t0, t1 = t_40 - 0.05, t_40n + 0.2
     t_out = t_hide - 0.1

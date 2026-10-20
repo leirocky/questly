@@ -55,9 +55,9 @@ LIGHT_BASE = 0.40                # God's light at the end of s12 / start of s13
 # where everyone ends up (feet), facing at rest
 REST = {
     "elephant_m": (1530, 852, -1), "elephant_f": (1675, 838, -1),
-    "giraffe_m": (1835, 822, -1), "giraffe_f": (1975, 810, -1),
+    "giraffe_m": (1790, 822, -1), "giraffe_f": (1895, 808, -1),
     "zebra_m": (1600, 910, -1), "zebra_f": (1735, 898, -1),
-    "horse_m": (1890, 918, -1), "horse_f": (2030, 902, -1),
+    "horse_m": (1840, 924, -1), "horse_f": (1930, 908, -1),
     "rabbit_m": (1525, 988, -1), "rabbit_f": (1590, 976, -1),
     "monkey_m": (1705, 990, -1), "monkey_f": (1775, 978, -1),
     # the family round the altar: left side faces right, right side faces left
@@ -92,8 +92,8 @@ def sky_svg():
 def light_svg():
     """God's warm light from the upper left: a soft glow + broad rays (screen-blended, alpha animated)."""
     defs = S.rad_grad("s12lg", [(0, "#fff0c0", 1), (0.35, "#f8d98a", 0.55), (1, "#f2c14e", 0)])
-    body = f'<circle cx="160" cy="-60" r="1250" fill="url(#s12lg)"/>'
-    body += S.g(S.path(S.rays(160, -60, 120, 1700, n=16, width_deg=5, rot=12), fill="#fff3c8", stroke=False),
+    body = f'<circle cx="160" cy="-60" r="1050" fill="url(#s12lg)"/>'
+    body += S.g(S.path(S.rays(160, -60, 120, 1000, n=16, width_deg=5, rot=12), fill="#fff3c8", stroke=False),
                 filter="blur-md", opacity=0.55)
     return doc(body, defs)
 
@@ -171,10 +171,22 @@ def ark_svg(door=1.0, window=1.0, glow=0.0):
 def occluder_svg(window=1.0):
     """The ark (door open) minus the doorway and everything on the ramp side below the lintel: drawn over people
     and animals still inside so they come out from behind the stern-side jamb."""
-    x0, top = DOOR[0], DOOR[1]
-    clip = (f"M-40,-40 L{W + 40},-40 L{W + 40},{top} L{x0},{top} L{x0},{H + 40} L-40,{H + 40} Z")
+    x0, top, x1 = DOOR[0], DOOR[1], DOOR[2]
+    clip = (f"M-40,-40 L{x1 + 6},-40 L{x1 + 6},{top} L{x0},{top} L{x0},{H + 40} L-40,{H + 40} Z")
     return doc(f'<clipPath id="s12occ"><path d="{clip}"/></clipPath>'
                f'<g clip-path="url(#s12occ)">{PR.ark(AX, AY, KS, 1, door=1.0, window=window)}</g>')
+
+
+def fix_seeds(sc):
+    """Watercolour seeds from the layer NAME (not its index) so s12's last frame and s13's first match."""
+    import zlib
+    for L in sc.layers:
+        L.seed = zlib.crc32(L.name.encode()) % 997
+
+
+def g_fx(fx, g, offset=200.0):
+    """Run an engine fx on the film's clock (so the dissolve between s12 and s13 matches)."""
+    return lambda frame, t, view: fx(frame, g(t) - offset, view)
 
 
 def gtime(ctx):
@@ -391,7 +403,7 @@ def turtle_state(g, idx):
     return x, y, fr, d, tot
 
 
-TURTLE_REST = [(1150, 836), (1215, 848)]
+TURTLE_REST = [(872, 874), (806, 860)]
 TURTLE_G0 = [0.0, 0.0]            # set from the timeline in build() (global seconds when each starts)
 
 
@@ -512,10 +524,10 @@ def build(ctx):
     A("elephant_f", "elephant", True, snap(te + 0.6), 240, 62, front=290,
       schedule=[(0, "stand"), (snap(t_joy + 0.9), "spray"), (snap(t_joy + 2.3), "stand")], shadow=360)
     tg = snap(max(t_one + 0.9, te + 1.5))
-    A("giraffe_m", "giraffe", False, tg, 270, 66, front=340, pose_in="bow", inside_until=RAMP_TOP[0] + 40,
+    A("giraffe_m", "giraffe", False, tg, 270, 66, front=340, pose_in="bow", inside_until=DOOR[2] + 80,
       schedule=[(0, "stand")], shadow=260)
     A("giraffe_f", "giraffe", True, snap(tg + 0.6), 270, 64, front=330, pose_in="bow",
-      inside_until=RAMP_TOP[0] + 40, schedule=[(0, "stand")], shadow=250)
+      inside_until=DOOR[2] + 80, schedule=[(0, "stand")], shadow=250)
     hops = tuple(f"hop{p}" for p in (0.0, 0.25, 0.5, 0.75))
     tr = snap(t_jump - 0.35)
     A("rabbit_m", "rabbit", False, tr, 230, 17, walk=hops, front=70, schedule=[(0, "stand")], shadow=120)
@@ -656,7 +668,7 @@ def build(ctx):
 
     # ---------------------------------------------------------------- grass in front
     tuf = [tufts_svg(p) for p in (0.0, 0.25, 0.5, 0.75)]
-    sc.add("tufts", tuf, z=90, frame_at=lambda t: 1.5 + 1.5 * math.sin(2 * math.pi * g(t) / 2.8))
+    sc.add("tufts", tuf, z=90, frame_at=lambda t: float(round(1.5 + 1.5 * math.sin(2 * math.pi * g(t) / 2.8))))
 
     # ---------------------------------------------------------------- fx
     door_c = ((DOOR[0] + DOOR[2]) / 2, (DOOR[1] + DOOR[3]) / 2)
@@ -665,8 +677,8 @@ def build(ctx):
     cues += [(ax_ + dx, ay_ - 140 + dy, t_fire + dt, 16) for dx, dy, dt in ((-30, 0, 0.1), (40, -30, 0.35), (0, -70, 0.6))]
     sc.fx = [FX.sparkles((300, 120, 1100, 620), count=16, t0=t_god - 0.3, t1=L1.end + 0.8, size=(7, 15), drift=-10,
                          seed=31),
-             stars_fx(cues),
-             FX.motes((0, 200, W, 900), count=24, color=(255, 240, 200), size=(3, 6), seed=17, alpha=110)]
+             stars_fx(cues, life=1.8),
+             g_fx(FX.motes((0, 200, W, 900), count=24, color=(255, 240, 200), size=(3, 6), seed=17, alpha=110), g)]
 
     # ---------------------------------------------------------------- camera: on the ark while God speaks, then wide
     c_ark = Cam(800, 560, 1560)
@@ -676,6 +688,7 @@ def build(ctx):
     sc.camera = M.cam_keys(keys, "sine")
 
     # ---------------------------------------------------------------- sound
+    fix_seeds(sc)
     sc.sfx("birds", 0, dur=T + 0.1, gain_db=-22, fade_in=0.8, fade_out=0.9)
     sc.sfx("wind_soft", 0, dur=T + 0.1, gain_db=-24, fade_in=0.8, fade_out=0.9)
     sc.sfx("chime", t_god - 0.3, gain_db=-12)

@@ -993,8 +993,8 @@ def build(ctx):
     CL = cam_at(1790, 1820, BOT - 10)
     CQ = cam_at(2150, 2480, BOT)
     CQ2 = cam_at(1980, 2400, BOT)
-    CR = cam_at(1830, 1900, BOT - 8)
-    CEND = cam_at(1700, 1760, BOT - 10)
+    CR = cam_at(1760, 1900, BOT - 8)
+    CEND = cam_at(1640, 1760, BOT - 10)
     t_end_pos = L3.end - 0.25
     base_cam = cam_path([(0, CW), (max(1.4, t_come + 0.2), CW), (t_ele + 0.15, CE1), (t_bird - 0.25, CE1),
                          (t_bird + 0.75, CB), (t_lion - 0.35, CB), (t_lion + 0.65, CL), (L2.start - 0.35, CL),
@@ -1101,8 +1101,8 @@ def build(ctx):
     t_h = t_mf + 0.15
     cam_h = base_cam(t_h + 0.3)
     xlo, xhi = cam_h.x - cam_h.w / 2 + 120, cam_h.x + cam_h.w / 2 - 120
-    hsp = Spr(80, 80, 40, 40, wc=0.3, seed=7)
-    hsp.add(heart_markup(40, 40, 22))
+    hsp = Spr(120, 120, 60, 60, wc=0.3, seed=7)
+    hsp.add(heart_markup(60, 60, 36))
     nh = 0
     for kd in order:
         if kd in ("rabbit",) or (kd, False) not in actors:
@@ -1163,6 +1163,16 @@ def build(ctx):
                     bumps=[squash_dip(snap(t_hold), 0.04, 0.3)])
         st.hold = FPER * 1.4
         sc.add_dynamic(f"fam_{nm}", act, z=z0 - 2.0 - 0.1 * k)
+
+    # ---------------- '也有动物吃的': a giraffe looks out of the high window, munching hay
+    gx, gy = (WBOX[0] + WBOX[2]) / 2 - 90, (WBOX[1] + WBOX[3]) / 2 + 380
+    g_body = PR.ark_animal(gx, gy, SC, 1, "giraffe", "stand", eyes="happy")
+    g_body += PR.hay(gx + 128, gy - 372, 0.32, 1, kind="bundle")
+    t_ge = t_animals_eat - 0.15
+    sc.add("giraffe_window", doc(PR.in_ark_window(g_body, AX, GY, SC, 1)), z=3.2, wc=0.8,
+           motion=lambda t: Tf(alpha=M.progress(t, t_ge, t_ge + 0.3, "sine") * (1 - M.progress(t, T - 1.6, T - 1.25, "sine")),
+                               dy=-3 * abs(math.sin(2 * math.pi * (t - t_ge) * 1.6)) * (t > t_ge), rot=0))
+    sc.sfx("crunch", t_ge + 0.3, gain_db=-16, pan=-0.4)
 
     # ---------------- Noah
     add_noah_s07(sc, ctx, dict(t_come=t_come, t_dong=t_dong, t_roar=t_roar, t_rab=t_rab, t_pairs=t_pairs,

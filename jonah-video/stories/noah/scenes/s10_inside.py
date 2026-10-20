@@ -336,8 +336,9 @@ def table_svg():
 # ============================================================================ helpers
 
 
-def stars_fx(cues, color=(255, 236, 170)):
-    """Single sparkles: cues = [(x, y, t0, size)] in stage px; each pops in, twinkles and settles to a glint."""
+def stars_fx(cues, color=(255, 236, 170), life=None):
+    """Single sparkles: cues = [(x, y, t0, size)] in stage px; each pops in, twinkles and settles to a glint
+    (or, with ``life`` seconds, fades out completely)."""
     def fx(frame, t, view):
         live = [(x, y, t0, s) for x, y, t0, s in cues if t >= t0]
         if not live:
@@ -348,6 +349,10 @@ def stars_fx(cues, color=(255, 236, 170)):
             u = t - t0
             k = min(1.0, u / 0.18)
             env = k * (1.0 if u < 0.6 else 0.35 + 0.65 * math.exp(-(u - 0.6) / 0.5))
+            if life is not None:
+                env *= 1 - M.progress(u, life - 0.5, life, "sine")
+                if env <= 0.003:
+                    continue
             tw = 0.75 + 0.25 * math.sin(2 * math.pi * (u / 0.9) + x)
             ox, oy = view.to_out(x, y - 10 * min(u, 2.0))
             r = s * view.scale * (0.6 + 0.6 * k) * tw * (1.3 if u < 0.35 else 1.0)

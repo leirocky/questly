@@ -81,7 +81,7 @@ def build(ctx):
 
     # ---------------- camera: s07's last framing, a little closer for the door, then back for the clouds
     BOT = SH - 2
-    C0 = cam_at(1700, 1760, BOT - 10)
+    C0 = cam_at(1640, 1760, BOT - 10)
     C1 = cam_at(1560, 1560, BOT - 40)
     C2 = cam_at(1450, 1480, BOT - 60)
     C3 = cam_at(1560, 2060, BOT - 30)

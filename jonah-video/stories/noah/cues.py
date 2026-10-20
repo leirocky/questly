@@ -39,9 +39,9 @@ Themes
   The dove (F major, 6/8 flute): out (rising arpeggio), searching, back home to F -- twice (the second time it
      comes home on a glowing D major chord for the olive leaf); the third time the melody flies up and ends open,
      on the ninth of a B-flat add9 chord: it does not come back, hopeful.
-  The rainbow (F major): a rising glockenspiel/celesta/harp scale, one note per colour word as the narrator says
-     it (红 F 橙 G 黄 A 绿 Bb 青 C 蓝 D 紫 E), over a bass falling in thirds (F | Dm | Bb | Gm | C); the radiant tutti
-     with choir 'ah', cymbal and timpani on F on '好漂亮啊'.
+  The rainbow (F major): a rising glockenspiel/celesta/harp scale, one note per colour band as it appears on the
+     picture (红 F 橙 G 黄 A 绿 Bb 青 C 蓝 D 紫 E; the narrator's colour words without the scene), over a bass falling
+     in thirds (F | Dm | Bb | Gm | C); the radiant tutti with choir 'ah', cymbal and timpani on F on '好漂亮啊'.
 
 Tonal plan
   s01 title F (Noah b1-b2, clarinet, harp; a rainbow glint) -> s02 F, raindrops on the window (pizzicato,
@@ -263,7 +263,7 @@ def seg_at(c, segs, t):
     """(segment, q) of cue-relative time t among segs (a hit that lands in a neighbouring segment takes its chord)."""
     for sg in segs:
         if sg.t0 - 1e-6 <= c.t0 + t < sg.t1 - 1e-6:
-            return sg, min(max(sg.q_of(c.t0 + t), 0.0), sg.n_q - 0.1)
+            return sg, min(max(sg.q_of(c.t0 + t), 0.0), sg.n_q - 1e-3)
     sg = segs[0] if c.t0 + t < segs[0].t0 else segs[-1]
     return sg, (0.0 if sg is segs[0] and c.t0 + t < sg.t0 else sg.n_q - 0.1)
 
@@ -399,16 +399,23 @@ def hop(seg, q, k, vel=60):
     drum(seg, q, 76, vel - 6)
 
 
+def thump(seg, q, vel=50, sync=None, t=None, kit=True):
+    """A soft low accent (timpani, plucked basses, a bass drum) on tones common to the chord there and the chord
+    a little later (it may sit just before a chord change)."""
+    pcs = seg.chord_at(q + 1e-3).pcset & seg.chord_at(min(q + 0.4, seg.n_q - 1e-3)).pcset or seg.chord_at(q + 1e-3).pcset
+    seg.add("timp", q, _dq(seg, q, 0.5), [p for p in range(38, 51) if p % 12 in pcs][0], vel, "timp", "h")
+    seg.add("pz_cb", q, 0.4, [p for p in range(29, 41) if p % 12 in pcs][0], vel + 2, "bass", "h")
+    if kit:
+        seg.add("okit", q, 1, 36, vel - 8, "perc", "h")
+    if sync:
+        seg.sync(sync, q, t)
+
+
 def gliss_in(seg, part, q, dur_s, lo, hi, **kw):
     """A harp glissando that stays inside its segment (shortened to the room left; none if under 0.12 s)."""
     room = seg.t(seg.n_q) - seg.t(q) - 0.03
     if room >= 0.12:
         gliss(seg, part, q, min(dur_s, room), lo, hi, **kw)
-
-
-def colour_glint(seg, q, vel=44, lo=84, hi=100):
-    """Glockenspiel + harp glint on a chord tone (for picture sparkles)."""
-    seg.add("glock", q, _dq(seg, q, 0.5), top(seg, q, lo, hi), vel, "arp", "h")
 
 
 # ------------------------------------------------------------------------------------------- cues
@@ -991,7 +998,13 @@ def flood(c):
     t_m = c.gap(c.find("大水盖过了"))
     t_h = c.at("外面的一切")
     v_drip = syl(c, "滴答", 4)
-    drip = on_picture(c, "drip", c.ls(0), t_w, 4, lambda: v_drip)
+    d_pic = picture(c, "drip", c.ls(0) - 0.3, t_w + 0.3) or []
+    if len(d_pic) >= 2:                                   # the picture's drop on each 滴 (答 follows as spoken)
+        drip = sorted(d_pic[:2] + [t + (v_drip[1] - v_drip[0]) for t in d_pic[:2]])
+    else:
+        drip = v_drip
+    t_thunder = on_picture(c, "thunder", c.ls(0) - 0.3, c.le(0) + 0.3, 1, lambda: [None])[0]
+    rises = picture(c, "splash", c.ls(1) - 0.3, c.le(1)) or []
     pours = syl(c, "哗啦啦", 2)
     a = c.seg(0, t_d, 1, "4/4", "D minor", nominal=80, label="flood-seven-days")
     d = c.seg(t_d, t_w, 1, "2/4", "D minor+", nominal=80, label="flood-drips")
@@ -1031,9 +1044,18 @@ def flood(c):
         sg.add("celesta", q, _dq(sg, q, 0.25), p, 50 if hi_ else 44, "arp", "h")
         if hi_:
             sg.sync(f"drip {i_ // 2 + 1} ('滴')", q, t)
+    if t_thunder is not None:                             # a distant rumble on the picture's thunder
+        sg, q = seg_at(c, segs, t_thunder)
+        thump(sg, q, vel=50, sync="thunder (a soft rumble)", t=t_thunder)
+    for k, t in enumerate(rises[:2]):                     # the water rises: a low accent on each surge
+        sg, q = seg_at(c, segs, t)
+        thump(sg, q, vel=60 + 4 * k, sync=f"the water rises {k + 1}", t=t)
+        pluck_chord(sg, q, vel=58 + 2 * k, lo=55, hi=67)
     d.pad(["trem_va", "trem_va"], 2, 52, 69, vel=36, bass_ref=(33, 45))
     d.add("cb", 0, 2, "A1", 38, "bass")
     d.expr(["pz_hi", "celesta"], [(0, -8), (2, -8)])
+    for sg in (d, w, r):
+        sg.expr("okit", [(0, -12), (sg.n_q, -12)])
     d.expr(["trem_va", "cb"], [(0, -17), (2, -15)])
     # 哗啦啦，哗啦啦: rolling cellos, tremolo, a timpani roll, harp sweeps down
     broken(w, "vc_fast", 0, 4, (0, 1, 2, 1), 38, 62, vel=54, step=0.25, accent=6, ring=False, art="s", role="arp")
@@ -1052,12 +1074,14 @@ def flood(c):
     r.pad(["trem_va", "trem_va", "trem_hi"], 3, 52, 76, vel=48, bass_ref=(38, 50))
     bassline(r, "cb", 38, 50, 44)
     r.mel("horn", "F4:2 G4:2 | A4:2 Bb4:1 C#5:1", vel=54)
-    timp_roll(r, 4, 7.9, midi("D2"), 28, 48)
+    q_roll = max(4.0, max((qpos(r, c, t) for t in rises[:2]), default=0.0) + 0.6)
+    if q_roll < 7.4:
+        timp_roll(r, q_roll, 7.9, midi("D2"), 28, 48)
     r.duck(2.0, parts=["horn"])
     r.expr(["vc_fast"], [(0, -12), (8, -10)])
     r.expr(["trem_va", "trem_hi", "cb"], [(0, -14), (8, -11)])
     r.expr(["horn"], [(0, -13), (8, -11)])
-    r.expr(["timp"], [(0, -12), (8, -10)])
+    r.expr(["timp", "pz_cb", "pz_hi"], [(0, -10), (8, -10)])
     # the ark lifted and floated, on and on: B-flat, 6/8 rocking
     fl.mel("clar", "D5:1 C5:1/2 D5:1 F5:1/2 | G5:1 F5:1/2 D5:3/2", vel=56)
     broken(fl, "harp", 0, 6, (0, 2, 4, 2, 4, 2), 46, 58, vel=40, thin=True)
@@ -1264,8 +1288,12 @@ def out(c):
     t_o = c.at("门打开了")
     t_t = c.gap(c.find("挪亚做的第一件事"))
     t_a = c.at("感谢上帝")
-    t_open = on_picture(c, "door", t_o - 0.3, t_o + 0.4, 1, lambda: [t_o])[0]
-    jumps = syl(c, "有的跳", 3)
+    t_open = on_picture(c, "ship_creak", t_o - 0.3, t_o + 0.5, 1, lambda: [t_o])[0]
+    i_o = c.find("门打开了")
+    v_j = [t + 0.25 for t in syl(c, "有的跳", 3)]          # 跳 / 飞 / 跑 (just after each 有的)
+    jumps = [on_picture(c, nm, c.ls(i_o) - 0.3, c.le(i_o), 1, lambda k=k: [v_j[k]])[0]
+             for k, nm in enumerate(("pop", "whoosh", "footsteps_run"))]
+    stones = picture(c, "thud", c.ls(i_o + 1) - 0.3, c.dur) or []
     n = c.seg(0, t_g, 1, "4/4", "Bb major", nominal=86, label="out-god-speaks")
     g = c.seg(t_g, t_o, 2, "4/4", "Bb major", nominal=75, label="out-god")
     o = c.seg(t_o, t_t, 4, "4/4", "Bb major", nominal=118, label="out-parade")
@@ -1278,7 +1306,7 @@ def out(c):
     o.prog(" | ".join(PARADE_PROG))
     t.prog(" | ".join(NOAH_PROG[:2]))
     a.prog("Bb:1 F:1")
-    o.sync("'门打开了': the door opens (the parade returns)", 0, t_o)
+    o.sync("'门打开了': the parade returns (B-flat)", 0, t_o, kind="change")
     a.sync("'感谢上帝': the amen (B-flat)", 0, t_a, kind="change")
     # God said to Noah: a soft harp, strings
     broken(n, "harp", 0, 4, (0, 2, 4, 6), 46, 58, vel=34, thin=True)
@@ -1297,6 +1325,7 @@ def out(c):
     sg.add("okit", q0, 2, 57, 42, "perc", "h")
     sg.add("glock", q0, _dq(sg, q0, 1.0), top(sg, q0, 86, 98), 46, "arp", "h")
     pluck_chord(sg, q0, vel=58, lo=58, hi=70)
+    sg.sync("the door opens (on the picture)", q0, t_open)
     gliss_in(o, "harp", 0, 0.35, midi("Bb3"), midi("Bb5"), v0=36, v1=50, scale=ChordTones(o.chord_at(0)))
     tune = bars(PARADE, 0, 4)
     o.mel("brass", tune, vel=54)
@@ -1309,7 +1338,7 @@ def out(c):
     o.pad(["vla", "vln2", "vln1"], 3, 55, 74, vel=38, bass_ref=(34, 46))
     labels = ("hop", "flap", "run")
     for k, tj in enumerate(jumps):
-        qj = qpos(o, c, tj + 0.25, 0.0, o.n_q - 0.6)
+        qj = qpos(o, c, tj, 0.0, o.n_q - 0.6)
         if labels[k] == "hop":
             hop(o, qj, 1, vel=52)
         elif labels[k] == "flap":
@@ -1329,7 +1358,16 @@ def out(c):
     t.mel("horn", bars(NOAH, 0, 2), vel=56, transpose=-12)
     strings(t, vel=40, lo=55, hi=72)
     broken(t, "harp", 0, 8, (0, 2, 4, 6, 4, 2), 41, 53, vel=36, thin=True)
+    for k, ts_ in enumerate(stones[:4]):                   # the altar's stones, one by one (on the picture)
+        sg, q = seg_at(c, (o, t, a), ts_)
+        ch = sg.chord_at(q + 1e-3)
+        sg.add("pz_lo", q, _dq(sg, q, 0.5), ch.bass_note(41, 53), 54, "bass", "h")
+        sg.add("timp", q, _dq(sg, q, 0.5), timp_pitch(ch, midi("F2")), 46, "timp", "h")
+        drum(sg, q, 77, 48)
+        sg.sync(f"altar stone {k + 1}", q, ts_)
     t.duck(2.0, parts=["horn"])
+    t.expr(["pz_lo", "timp"], [(0, -10), (8, -10)])
+    t.expr("hand", [(0, -11), (8, -11)])
     t.expr(["horn"], [(0, -12), (8, -12)])
     t.expr(["harp"], [(0, -10), (8, -10)])
     t.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -15), (8, -15)])
@@ -1337,16 +1375,17 @@ def out(c):
     a.mel("horn", "D4:1 C4:1", vel=52)
     a.pad("ooh", 3, 57, 72, vel=40, bass_ref=(41, 53))
     strings(a, vel=42, lo=57, hi=72)
-    a.expr(["horn"], [(0, -12), (2, -14)])
-    a.expr(["ooh"], [(0, -16), (2, -18)])
-    a.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -13), (2, -15)])
+    a.expr(["horn"], [(0, -12), (1.2, -14), (2, -17)])
+    a.expr(["ooh"], [(0, -16), (1.2, -18), (2, -20)])
+    a.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -13), (1.2, -15), (2, -17)])
 
 
 def rainbow(c):
     """God's covenant (soft pads, F); the rainbow in the clouds (B-flat over C, harp shimmer); the colours: a rising
-    scale, one note per colour word as the narrator says it (glockenspiel, celesta, harp, pizzicato), over a bass
-    falling in thirds (F | Dm | Bb | Gm | C -- the chords arrive with 红 黄 绿 蓝 紫); the radiant tutti on
-    '好漂亮啊' (choir 'ah', brass, cymbal, timpani, F); God's promise (soft pads, Bb Gm C)."""
+    scale, one note per colour band as it appears on the picture (the scene's sparkle on each band; the narrator's
+    colour words without the scene), glockenspiel, celesta, harp, pizzicato, over a bass falling in thirds (F | Dm |
+    Bb | Gm | C: F arrives with the word 红, Dm Bb Gm with the bands of 黄 绿 蓝, C with the word 紫); the radiant tutti
+    on '好漂亮啊' (on the picture's chime: choir 'ah', brass, cymbal, timpani, F); God's promise (soft pads)."""
     c.gain(-2.2)
     t_p = c.gap(c.find("上帝把一道彩虹"))
     words = ["红", "橙", "黄", "绿", "青", "蓝", "紫"]
@@ -1354,7 +1393,10 @@ def rainbow(c):
     t_red = t_c["红"]
     v_col = syl(c, "红", 8)
     i_c = c.find("红")
-    t_wow = min(max(v_col[7], t_c["紫"] + 0.35), c.le(i_c) - 0.2)
+    bands = on_picture(c, "sparkle", c.ls(i_c) - 0.3, c.le(i_c), 7, lambda: v_col[:7])
+    bands = [max(b_, t_red + 0.02) for b_ in bands]
+    t_wow = on_picture(c, "chime", bands[-1] + 0.1, c.le(i_c) + 0.3, 1, lambda: [v_col[7]])[0]
+    t_wow = min(max(t_wow, t_c["紫"] + 0.35, bands[-1] + 0.25), c.le(i_c) - 0.2)
     t_e = c.gap(c.find("每次看见彩虹"))
     g = c.seg(0, t_p, 2, "4/4", "F major", nominal=72, label="rainbow-covenant")
     p = c.seg(t_p, t_red, 1, "4/4", "F major", nominal=66, label="rainbow-clouds")
@@ -1367,8 +1409,8 @@ def rainbow(c):
         sg.duck(1.5)
     g.prog("F:4 | Dm:2 Bb:2")
     p.prog("Bb/C:2 C:2")
-    # the colour chords arrive where the narration names 红 黄 绿 蓝 紫 (in 48ths of a quarter)
-    qs = [0.0] + [r.q_of(c.t0 + t_c[w_]) for w_ in ("黄", "绿", "蓝", "紫")] + [r.n_q]
+    # the colour chords (in 48ths of a quarter): F on the word 红, Dm Bb Gm on the bands of 黄 绿 蓝, C on the word 紫
+    qs = [0.0] + [r.q_of(c.t0 + t) for t in (bands[2], bands[3], bands[5], t_c["紫"])] + [r.n_q]
     edges = [int(round(q * 48)) for q in qs]
     for k in range(1, len(edges)):
         edges[k] = max(edges[k], edges[k - 1] + 6)
@@ -1377,15 +1419,15 @@ def rainbow(c):
     r.prog(" ".join(f"{ch}:{edges[k + 1] - edges[k]}/48" for k, ch in enumerate(chords)))
     t.prog("F:2" if long_wow else "F:3/2")
     e.prog("Bb:4 | Gm:2 C:2")
-    for w_, q in zip(("红", "黄", "绿", "蓝", "紫"), [e_ / 48 for e_ in edges[:5]]):
-        r.sync(f"'{w_}': the rainbow colour chord", q, t_c[w_], kind="change")
+    r.sync("'红': the rainbow begins (F)", 0, t_red, kind="change")
+    r.sync("'紫': the last colour (C)", edges[4] / 48, t_c["紫"], kind="change")
     t.sync("'好漂亮啊': the radiant tutti (F)", 0, t_wow)
     # 'I make a covenant with you: never again a flood': soft pads only
     g.pad("ooh", 3, 57, 74, vel=36, bass_ref=(41, 53))
     g.pad(["vla", "vln2", "vln1"], 3, 60, 77, vel=36, bass_part="vc", bass_lo=41, bass_hi=53)
     g.duck(3.0)
-    g.expr(["ooh"], [(0, -22), (2, -19), (8, -19)])
-    g.expr(["vla", "vln2", "vln1", "vc"], [(0, -18), (8, -18)])
+    g.expr(["ooh"], [(0, -20), (2, -19), (8, -19)])
+    g.expr(["vla", "vln2", "vln1", "vc"], [(0, -15), (2, -18), (8, -18)])
     # God put a rainbow in the clouds: a harp shimmer over C, high tremolo
     broken(p, "harp", 0, 4, (0, 1, 2, 3, 4, 3, 2, 1), 58, 82, vel=34, step=0.25, thin=True)
     p.pad(["trem_va", "trem_hi", "trem_hi"], 3, 60, 79, vel=38, bass_ref=(36, 48))
@@ -1394,10 +1436,11 @@ def rainbow(c):
     p.expr(["trem_va", "trem_hi", "cb"], [(0, -23), (4, -15)])
     # 红、橙、黄、绿、青、蓝、紫: a note for every colour, rising
     scale_up = ["F5", "G5", "A5", "Bb5", "C6", "D6", "E6"]
-    q_col = [qpos(r, c, max(v_col[k], 0.0), 0.0, r.n_q - 0.15) for k in range(7)]
+    q_col = [qpos(r, c, bands[k], 0.0, r.n_q - 0.15) for k in range(7)]
     for k in range(1, 7):
         q_col[k] = max(q_col[k], q_col[k - 1] + 0.12)
-    r.sync("'红': the first colour note", q_col[0], v_col[0])
+    for k in range(7):
+        r.sync(f"colour {k + 1} ({words[k]})", q_col[k], bands[k])
     for k, (q, nm) in enumerate(zip(q_col, scale_up)):
         end = q_col[k + 1] if k + 1 < 7 else r.n_q
         if midi(nm) % 12 in r.chord_at(q + 1e-3).pcset:         # a chord tone stops with its chord
@@ -1445,6 +1488,9 @@ def end(c):
     t_q = c.gap(c.find("对了"))
     t_w = c.at("你最喜欢")
     t_f = c.le(c.find("你最喜欢"))
+    splashes = picture(c, "splash_small", c.ls(0) - 0.3, c.le(0)) or []
+    pops = picture(c, "pop", c.ls(2) - 0.3, t_f) or []
+    t_chime = on_picture(c, "chime", t_f, c.dur, 1, lambda: [None])[0]
     a = c.seg(0, t_b, 2, "4/4", "F major", nominal=76, label="end-rainbow")
     b = c.seg(t_b, t_q, 3, "4/4", "F major", nominal=100, label="end-promise")
     q = c.seg(t_q, t_w, 1, "4/4", "F major", nominal=88, label="end-animals")
@@ -1464,9 +1510,16 @@ def end(c):
     broken(a, "harp", 0, 8, (0, 2, 4, 6, 4, 2), 41, 53, vel=38, thin=True)
     strings(a, vel=40, lo=55, hi=72)
     a.duck(2.5, parts=["flute", "harp"])
-    a.expr(["flute"], [(0, -19), (1.5, -13.5), (8, -13.5)])
+    a.expr(["flute"], [(0, -19), (1.5, -14.5), (8, -14.5)])
     a.expr(["harp"], [(0, -17), (1.5, -11), (8, -11)])
     a.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -19), (2, -15), (8, -15)])
+    for k, t in enumerate(splashes[:2]):                  # splish, splash: the child jumps in the puddle
+        sg, qs = seg_at(c, (a, b), t)
+        sg.add("pz_hi", qs, _dq(sg, qs, 0.25), top(sg, qs, 72, 84), 56, "arp", "h")
+        sg.add("celesta", qs, _dq(sg, qs, 0.25), top(sg, qs, 84, 96), 46, "arp", "h")
+        sg.add("pz_lo", qs, _dq(sg, qs, 0.25), sg.chord_at(qs + 1e-3).bass_note(41, 53), 50, "bass", "h")
+        sg.sync(f"puddle splash {k + 1}", qs, t)
+    a.expr(["pz_hi", "celesta", "pz_lo"], [(0, -12), (8, -13)])
     # what God says, he will do; God remembers you, just as he remembered Noah: b5-b7, warm
     b.mel("clar", bars(NOAH, 4, 7), vel=56)
     b.mel("horn", "F3:4 | F3:2 F3:2 | G3:2 G3:2", vel=44, role="counter")
@@ -1485,6 +1538,9 @@ def end(c):
     q.expr(["celesta"], [(0, -12), (4, -13)])
     q.expr(["pz_lo"], [(0, -12), (4, -12)])
     q.expr(["vla", "vln2", "vln1", "vc"], [(0, -17), (4, -17)])
+    for t in pops:                                         # the animals pop up, one after another
+        sg, qp = seg_at(c, (q, w), t)
+        sg.add("celesta", qp, _dq(sg, qp, 0.25), top(sg, qp, 81, 93, 0), 32, "arp", "s")
     # '...which one do you like best?': a very soft question
     w.pad(["vla", "vln2", "vln1"], 3, 57, 74, vel=34, bass_part="vc", bass_lo=41, bass_hi=53)
     w.add("cb", 0, 2, "Bb1", 32, "bass")
@@ -1498,10 +1554,12 @@ def end(c):
     for k_, nm in enumerate(["F2", "C3", "F3", "A3", "C4", "F4", "A4", "C5", "F5"]):
         f.add("harp", 0.06 * k_, 2 - 0.06 * k_, nm, 46 - 2 * k_, "arp", "r")
     f.mel("celesta", "C6:1/2 F6:1/2 A6:1", vel=36, art="r", role="arp")
+    if t_chime is not None and f.q_of(c.t0 + t_chime) < f.n_q - 0.3:      # the rainbow's chime
+        f.add("glock", f.q_of(c.t0 + t_chime), 0.5, "C7", 34, "arp", "r")
     strings(f, vel=40, lo=57, hi=72)
     f.pad("ooh", 3, 57, 72, vel=38, bass_ref=(41, 53))
     f.expr(["flute", "vla", "vln2", "vln1", "vc", "cb", "ooh"], [(0, -15), (0.5, -14.5), (1.4, -17), (2, -26)])
-    f.expr(["harp", "celesta"], [(0, -13), (2, -17)])
+    f.expr(["harp", "celesta", "glock"], [(0, -13), (2, -17)])
 
 
 SCENE_CUES = {
@@ -1530,13 +1588,10 @@ REQUIRED_HITS = [
     ("s11_dove", "又飞回来了", "phrase", "change"),             # the first dove comes home (F)
     ("s11_dove", "橄榄叶", "phrase", "change"),                 # the olive leaf (D major)
     ("s11_dove", "这一次", "phrase", "change"),                 # the last flight (open ending)
-    ("s12_out", "门打开了", "phrase", "hit"),                   # the door opens: the parade returns
+    ("s12_out", "门打开了", "phrase", "change"),                # the door opens: the parade returns (B-flat)
     ("s12_out", "感谢上帝", "phrase", "change"),                # the amen
-    ("s13_rainbow", "红", "phrase", "change"),                  # the rainbow colours, one chord each
-    ("s13_rainbow", "黄", "phrase", "change"),
-    ("s13_rainbow", "绿", "phrase", "change"),
-    ("s13_rainbow", "蓝", "phrase", "change"),
-    ("s13_rainbow", "紫", "phrase", "change"),
+    ("s13_rainbow", "红", "phrase", "change"),                  # the rainbow begins (F; the bands: picture)
+    ("s13_rainbow", "紫", "phrase", "change"),                  # the last colour (C)
     ("s14_end", "你最喜欢哪一种呢", "end", "change"),           # the final chord, after the question
 ]
 
@@ -1568,4 +1623,25 @@ PICTURE_HITS = [
     ("s07_animals", "pop", "小兔子跳来了", 1, 0.0, "hit", "hop 2 ('蹦')"),
     ("s07_animals", "pop", "小兔子跳来了", 2, 0.0, "hit", "hop 3 ('蹦')"),
     ("s11_dove", "thud", "方舟停在了", 0, 0.0, "hit", "the ark settles on Ararat"),
+    ("s08_door", "thud", "把门关上了", 0, 0.0, "hit", "the door shuts (a gentle low thunk)"),
+    ("s09_flood", "drip", "滴答", 0, 0.0, "hit", "drip 1 ('滴')"),
+    ("s09_flood", "drip", "滴答", 1, 0.0, "hit", "drip 2 ('滴')"),
+    ("s09_flood", "thunder", "七天以后", 0, 0.0, "hit", "thunder (a soft rumble)"),
+    ("s09_flood", "splash", "大雨下了", 0, 0.0, "hit", "the water rises 1"),
+    ("s09_flood", "splash", "大雨下了", 1, 0.0, "hit", "the water rises 2"),
+    ("s12_out", "ship_creak", "门打开了", 0, 0.0, "hit", "the door opens"),
+    ("s12_out", "thud", "挪亚做的第一件事", 0, 0.0, "hit", "altar stone 1"),
+    ("s12_out", "thud", "挪亚做的第一件事", 1, 0.0, "hit", "altar stone 2"),
+    ("s12_out", "thud", "挪亚做的第一件事", 2, 0.0, "hit", "altar stone 3"),
+    ("s12_out", "thud", "挪亚做的第一件事", 3, 0.0, "hit", "altar stone 4"),
+    ("s13_rainbow", "sparkle", "红", 0, 0.0, "hit", "colour band 1 (红)"),
+    ("s13_rainbow", "sparkle", "红", 1, 0.0, "hit", "colour band 2 (橙)"),
+    ("s13_rainbow", "sparkle", "红", 2, 0.0, "hit", "colour band 3 (黄)"),
+    ("s13_rainbow", "sparkle", "红", 3, 0.0, "hit", "colour band 4 (绿)"),
+    ("s13_rainbow", "sparkle", "红", 4, 0.0, "hit", "colour band 5 (青)"),
+    ("s13_rainbow", "sparkle", "红", 5, 0.0, "hit", "colour band 6 (蓝)"),
+    ("s13_rainbow", "sparkle", "红", 6, 0.0, "hit", "colour band 7 (紫)"),
+    ("s13_rainbow", "chime", "红", 0, 0.0, "hit", "'好漂亮啊': the radiant tutti"),
+    ("s14_end", "splash_small", "小朋友", 0, 0.0, "hit", "puddle splash 1"),
+    ("s14_end", "splash_small", "小朋友", 1, 0.0, "hit", "puddle splash 2"),
 ]
