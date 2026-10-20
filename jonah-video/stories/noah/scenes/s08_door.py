@@ -73,7 +73,7 @@ def build(ctx):
     T7 = context("s07_animals", load_timeline()).duration
     toff = T7 - 1.0                       # s08 t=0 is s07's t = T7 - 1 (the 1 s dissolve)
 
-    t_walk = snap(max(1.02, pt(ctx, 0, "挪亚") + 0.08))
+    t_walk = snap(max(1.12, pt(ctx, 0, "挪亚") + 0.1))
     t_god = pt(ctx, 1, "上帝")
     t_door = pt(ctx, 1, "把门")
     t_shut = pt(ctx, 1, "关上了")
@@ -120,7 +120,7 @@ def build(ctx):
             u = M.progress(t, t_d0, t_close, lambda v: v * (0.35 + 0.65 * v))
             return float(3 + min(8, int(u * 8 + 0.5)))
         return 11 + 3.0 * M.progress(t, t_close + 0.4, t_close + 1.6, "sine")
-    sc.add("ark", frames, z=3, frame_at=ark_frame)
+    sc.add("ark", frames, z=3, frame_at=ark_frame, seed=A.ARK_SEED)
     sc.add("door_glow", door_glow_svg(), z=3.5, wc=0, blend="screen",
            motion=lambda t: Tf(alpha=0.9 * M.progress(t, t_g0, t_g0 + 0.9, "sine") *
                                (1 - M.progress(t, t_close + 0.3, t_close + 1.6, "sine")),

@@ -399,6 +399,13 @@ def hop(seg, q, k, vel=60):
     drum(seg, q, 76, vel - 6)
 
 
+def gliss_in(seg, part, q, dur_s, lo, hi, **kw):
+    """A harp glissando that stays inside its segment (shortened to the room left; none if under 0.12 s)."""
+    room = seg.t(seg.n_q) - seg.t(q) - 0.03
+    if room >= 0.12:
+        gliss(seg, part, q, min(dur_s, room), lo, hi, **kw)
+
+
 def colour_glint(seg, q, vel=44, lo=84, hi=100):
     """Glockenspiel + harp glint on a chord tone (for picture sparkles)."""
     seg.add("glock", q, _dq(seg, q, 0.5), top(seg, q, lo, hi), vel, "arp", "h")
@@ -456,8 +463,7 @@ def rain(c):
     timp_roll(w, 0, 3.9, midi("D2"), 26, 40)
     for i_, t in enumerate(pours):
         sg, q = seg_at(c, (a, w, s), t)
-        q = min(q, sg.n_q - 0.5)
-        gliss(sg, "harp", q, 0.45, midi("D4"), midi("D6"), up=False, v0=46, v1=56,
+        gliss_in(sg, "harp", q, 0.45, midi("D4"), midi("D6"), up=False, v0=46, v1=56,
               scale=ChordTones(sg.chord_at(q + 1e-3)))
         sg.add("pz_cb", q, _dq(sg, q, 0.5), sg.chord_at(q + 1e-3).bass_note(29, 41), 64, "bass", "h")
         sg.add("timp", q, _dq(sg, q, 0.5), timp_pitch(sg.chord_at(q + 1e-3), midi("D2")), 58, "timp", "h")
@@ -472,9 +478,9 @@ def rain(c):
     s.mel("oboe", "C5:1 A4:1 C5:2 | F5:1 E5:1 D5:1 F5:1 | Bb4:1 D5:1 E5:1 C5:1", vel=54)
     broken(s, "harp", 0, s.n_q, (0, 2, 4, 2), 41, 53, vel=36, thin=True)
     strings(s, vel=40, lo=53, hi=70)
-    q40 = qpos(s, c, t_40, 0.0, s.n_q - 0.6)
-    gliss(s, "harp", q40, 0.4, midi("C4"), midi("C6"), v0=32, v1=48, scale=ChordTones(s.chord_at(q40 + 1e-3)))
-    s.add("glock", q40 + 0.25, _dq(s, q40 + 0.25, 1.0), top(s, q40 + 0.25, 84, 96), 40, "arp", "h")
+    q40 = qpos(s, c, t_40, 0.0, s.n_q - 0.3)
+    gliss_in(s, "harp", q40, 0.4, midi("C4"), midi("C6"), v0=32, v1=48, scale=ChordTones(s.chord_at(q40 + 1e-3)))
+    s.add("glock", q40, _dq(s, q40, 1.0), top(s, q40, 84, 96), 40, "arp", "h")
     s.duck(2.5, parts=["oboe", "harp"])
     s.expr(["oboe"], [(0, -12), (12, -12)])
     s.expr(["harp", "glock"], [(0, -9), (12, -10)])
@@ -515,13 +521,13 @@ def world(c):
         sg, qq = seg_at(c, (a, q), t)
         drum(sg, qq, 77, 58)
         pluck_chord(sg, qq, vel=56, lo=57, hi=69)
-        sg.add("pz_cb", qq, _dq(sg, qq, 0.5), sg.chord_at(qq + 1e-3).bass_note(33, 45), 56, "bass", "h")
+        sg.add("okit", qq, 1, 36, 40, "perc", "h")
         sg.sync(lbl, qq, t)
     q.mel("clar", "E5:1/4 C#5:1/4 E5:1/4 C#5:1/4 G5:1/4 E5:1/4 C#5:1/4 A4:1/4", q=6, vel=50, art="s")
     q.expr(["bsn"], [(0, -11), (8, -11)])
     q.expr(["clar"], [(0, -14), (8, -16)])
     q.expr(["pz_cb", "pz_hi", "vla", "vln2"], [(0, -13), (8, -13)])
-    q.expr("hand", [(0, -12), (8, -12)])
+    q.expr(["hand", "okit"], [(0, -12), (8, -12)])
     # God saw it and was very sad: soft strings, a single falling tear (celesta)
     strings(s, vel=40, lo=55, hi=70, bass=(43, 55), cb=(31, 43))
     q_t = 2.5 if t_tear is None else min(max(qpos(s, c, t_tear), 2.0), s.n_q - 0.5)
@@ -550,7 +556,7 @@ def noah(c):
     n.sync("'他的名字叫挪亚': Noah's theme (F major)", 0, t_n, kind="change")
     # but there was one man who was different: a lift (harp, clarinet rising)
     a.mel("clar", "D5:2 E5:2", vel=50)
-    gliss(a, "harp", 0.25, 0.5, midi("Bb3"), midi("Bb5"), v0=30, v1=44, scale=ChordTones(a.chord_at(0)))
+    gliss_in(a, "harp", 0.25, 0.5, midi("Bb3"), midi("Bb5"), v0=30, v1=44, scale=ChordTones(a.chord_at(0)))
     strings(a, vel=40, lo=53, hi=70)
     a.expr(["clar"], [(0, -14), (4, -12)])
     a.expr(["harp"], [(0, -10), (4, -10)])
@@ -576,14 +582,14 @@ def noah(c):
     strings(s, vel=40, lo=53, hi=70)
     names = on_picture(c, "pop", c.ls(2) - 0.3, c.dur, 3, lambda: [c.at("闪"), c.at("含"), c.at("雅弗")])
     for k, t in enumerate(names):
-        q = qpos(s, c, t, 0.0, s.n_q - 0.5)
-        s.add("harp", q, _dq(s, q, 0.75), top(s, q, 72 + 3 * k, 76 + 4 * k, 0), 50 + 2 * k, "arp", "h")
-        s.add("glock", q, _dq(s, q, 0.5), top(s, q, 84 + 3 * k, 88 + 4 * k, 0), 42 + 2 * k, "arp", "h")
-        s.add("pz_hi", q, _dq(s, q, 0.25), top(s, q, 60 + 3 * k, 64 + 4 * k, 0), 50, "arp", "h")
-        s.sync(f"son {k + 1} ({'闪含雅弗'[k] if k < 2 else '雅弗'})", q, t)
+        sg, q = seg_at(c, (a, n, w, s), t)
+        sg.add("harp", q, _dq(sg, q, 0.75), top(sg, q, 72 + 3 * k, 76 + 4 * k, 0), 50 + 2 * k, "arp", "h")
+        sg.add("glock", q, _dq(sg, q, 0.5), top(sg, q, 84 + 3 * k, 88 + 4 * k, 0), 42 + 2 * k, "arp", "h")
+        sg.add("pz_hi", q, _dq(sg, q, 0.25), top(sg, q, 60 + 3 * k, 64 + 4 * k, 0), 50, "arp", "h")
+        sg.sync(f"son {k + 1} ({'闪含雅弗'[k] if k < 2 else '雅弗'})", q, t)
     s.duck(2.0, parts=["clar"])
     s.expr(["clar"], [(0, -12), (8, -12)])
-    s.expr(["harp", "glock"], [(0, -10), (8, -10)])
+    s.expr(["harp", "glock", "pz_hi"], [(0, -10), (8, -10)])
     s.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -15), (8, -15)])
 
 
@@ -607,7 +613,7 @@ def command(c):
     o.prog(" | ".join(NOAH_PROG[6:8]))
     o.sync("'可是，挪亚还是…': Noah obeys (his theme, G minor)", 0, t_o, kind="change")
     # one day, God said to Noah: a golden shimmer
-    gliss(a, "harp", 0.5, 0.6, midi("F3"), midi("F6"), v0=28, v1=42, scale=ChordTones(a.chord_at(0)))
+    gliss_in(a, "harp", 0.5, 0.6, midi("F3"), midi("F6"), v0=28, v1=42, scale=ChordTones(a.chord_at(0)))
     a.mel("celesta", "r:1 D6:1 F6:1 Bb6:1", vel=36, role="arp")
     a.pad(["vla", "vln2", "vln1"], 3, 58, 74, vel=38, bass_part="vc", bass_lo=46, bass_hi=58)
     a.expr(["harp", "celesta"], [(0, -11), (4, -12)])
@@ -769,7 +775,7 @@ def build(c):
     k.add("pz_cb", 0, 0.5, "C2", 60, "bass", "h")
     k.add("glock", 0, 1, "C7", 46, "arp", "h")
     pluck_chord(k, 0, vel=58, lo=60, hi=72)
-    gliss(k, "harp", 0, 0.35, midi("C4"), midi("C6"), v0=36, v1=50, scale=ChordTones(k.chord_at(0)))
+    gliss_in(k, "harp", 0, 0.35, midi("C4"), midi("C6"), v0=36, v1=50, scale=ChordTones(k.chord_at(0)))
     for j, nm in enumerate(["C4", "E4", "G4"]):
         k.add("horn", 0, 2, nm, 54, "pad", voice=f"horn.{j}")
     k.mel("flute", "E6:2", vel=50)
@@ -950,7 +956,7 @@ def door(c):
     # then God himself...: a swell (choir 'ooh', strings), a harp sweep up
     d.pad("ooh", 3, 58, 74, vel=40, bass_ref=(34, 46))
     strings(d, vel=38, lo=58, hi=74, bass=(46, 58), cb=(34, 46))
-    gliss(d, "harp", 0.5, 0.7, midi("F3"), midi("F6"), v0=28, v1=44, scale=ChordTones(d.chord_at(0)))
+    gliss_in(d, "harp", 0.5, 0.7, midi("F3"), midi("F6"), v0=28, v1=44, scale=ChordTones(d.chord_at(0)))
     d.expr(["ooh"], [(0, -22), (3, -16)])
     d.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -17), (3, -13)])
     d.expr(["harp"], [(0, -11), (3, -11)])
@@ -1036,7 +1042,7 @@ def flood(c):
     timp_roll(w, 0, 3.9, midi("D2"), 30, 46)
     for t in pours:
         q = qpos(w, c, t, 0.0, 3.5)
-        gliss(w, "harp", q, 0.45, midi("D4"), midi("D6"), up=False, v0=46, v1=58,
+        gliss_in(w, "harp", q, 0.45, midi("D4"), midi("D6"), up=False, v0=46, v1=58,
               scale=ChordTones(w.chord_at(q + 1e-3)))
     w.expr(["vc_fast"], [(0, -11), (4, -11)])
     w.expr(["trem_va", "trem_hi", "cb"], [(0, -12), (4, -12)])
@@ -1157,8 +1163,8 @@ def dove(c):
     lf.sync("'橄榄叶': the olive leaf (D major)", 0, t_leaf, kind="change")
     n.sync("'这一次': the last flight (C)", 0, t_n, kind="change")
     # God sent a wind over the earth: harp sweeps up and down, tremolo swelling, an airy flute
-    gliss(w, "harp", 0.25, 0.8, midi("D3"), midi("D6"), v0=28, v1=42, scale=ChordTones(w.chord_at(0)))
-    gliss(w, "harp", 2.25, 0.8, midi("G5"), midi("G3"), up=False, v0=40, v1=28, scale=ChordTones(w.chord_at(2)))
+    gliss_in(w, "harp", 0.25, 0.8, midi("D3"), midi("D6"), v0=28, v1=42, scale=ChordTones(w.chord_at(0)))
+    gliss_in(w, "harp", 2.25, 0.8, midi("G5"), midi("G3"), up=False, v0=40, v1=28, scale=ChordTones(w.chord_at(2)))
     w.mel("flute", "A5:2 Bb5:2", vel=44)
     w.pad(["trem_va", "trem_va", "trem_hi"], 3, 50, 72, vel=40, bass_ref=(38, 50))
     bassline(w, "cb", 31, 43, 36)
@@ -1214,7 +1220,7 @@ def dove(c):
     o2.expr(["vla", "vln2", "vln1", "vc"], [(0, -16), (15, -16)])
     # the leaf: D major glowing (flute, glockenspiel, harp sweep), then Gm C F -- the waters were gone!
     lf.mel("flute", "F#5:1 A5:1/2 D6:3/2 | Bb5:1 G5:1/2 G5:1 E5:1/2 | F5:3", vel=56)
-    gliss(lf, "harp", 0, 0.5, midi("D4"), midi("D6"), v0=34, v1=50, scale=ChordTones(lf.chord_at(0)))
+    gliss_in(lf, "harp", 0, 0.5, midi("D4"), midi("D6"), v0=34, v1=50, scale=ChordTones(lf.chord_at(0)))
     lf.add("glock", 0, 1.5, "F#6", 46, "arp", "h")
     lf.add("celesta", 0.5, 1.0, "A6", 38, "arp")
     lf.pad(["vla", "vln2", "vln1"], 3, 55, 74, vel=40, bass_part="vc", bass_lo=40, bass_hi=52)
@@ -1291,7 +1297,7 @@ def out(c):
     sg.add("okit", q0, 2, 57, 42, "perc", "h")
     sg.add("glock", q0, _dq(sg, q0, 1.0), top(sg, q0, 86, 98), 46, "arp", "h")
     pluck_chord(sg, q0, vel=58, lo=58, hi=70)
-    gliss(o, "harp", 0, 0.35, midi("Bb3"), midi("Bb5"), v0=36, v1=50, scale=ChordTones(o.chord_at(0)))
+    gliss_in(o, "harp", 0, 0.35, midi("Bb3"), midi("Bb5"), v0=36, v1=50, scale=ChordTones(o.chord_at(0)))
     tune = bars(PARADE, 0, 4)
     o.mel("brass", tune, vel=54)
     o.mel("flute", tune, vel=54)
@@ -1353,7 +1359,9 @@ def rainbow(c):
     g = c.seg(0, t_p, 2, "4/4", "F major", nominal=72, label="rainbow-covenant")
     p = c.seg(t_p, t_red, 1, "4/4", "F major", nominal=66, label="rainbow-clouds")
     r = c.seg(t_red, t_wow, 1, "4/4", "F major", nominal=80, label="rainbow-colours")
-    t = c.seg(t_wow, t_e, 1, "2/4", "F major", nominal=88, label="rainbow-radiant")
+    long_wow = t_e - t_wow >= 1.15
+    t = c.seg(t_wow, t_e, 1, "2/4" if long_wow else "3/8", "F major", nominal=88 if long_wow else 100,
+              label="rainbow-radiant")
     e = c.seg(t_e, c.dur, 2, "4/4", "F major", nominal=96, label="rainbow-promise")
     for sg in (g, p, r, t, e):
         sg.duck(1.5)
@@ -1367,7 +1375,7 @@ def rainbow(c):
     edges[-1] = int(round(r.n_q * 48))
     chords = ["F", "Dm", "Bb", "Gm", "C"]
     r.prog(" ".join(f"{ch}:{edges[k + 1] - edges[k]}/48" for k, ch in enumerate(chords)))
-    t.prog("F:2")
+    t.prog("F:2" if long_wow else "F:3/2")
     e.prog("Bb:4 | Gm:2 C:2")
     for w_, q in zip(("红", "黄", "绿", "蓝", "紫"), [e_ / 48 for e_ in edges[:5]]):
         r.sync(f"'{w_}': the rainbow colour chord", q, t_c[w_], kind="change")
@@ -1406,19 +1414,19 @@ def rainbow(c):
     r.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -16), (4, -13)])
     # '好漂亮啊!': the radiant tutti (choir 'ah', brass, strings, timpani, cymbal, harp sweep, glockenspiel)
     t.add("timp", 0, 0.5, "F2", 52, "timp", "h")
-    t.add("okit", 0, 2, 57, 40, "perc", "h")
+    t.add("okit", 0, t.n_q, 57, 40, "perc", "h")
     t.add("glock", 0, 1, "F6", 50, "arp", "h")
     t.add("pz_cb", 0, 0.5, "F1", 56, "bass", "h")
-    gliss(t, "harp", 0, 0.35, midi("F4"), midi("F6"), v0=38, v1=52, scale=ChordTones(t.chord_at(0)))
+    gliss_in(t, "harp", 0, 0.35, midi("F4"), midi("F6"), v0=38, v1=52, scale=ChordTones(t.chord_at(0)))
     t.pad("choir", 3, 57, 74, vel=44, bass_ref=(41, 53))
     t.pad(["brass", "brass", "brass"], 3, 53, 70, vel=44, bass_ref=(41, 53))
-    t.mel("vln_mel", "F5:2", vel=52)
+    t.add("vln_mel", 0, t.n_q, "F5", 52, "melody")
     strings(t, vel=44, lo=57, hi=77)
     t.duck(3.0, parts=["choir", "brass", "vln_mel"])
-    t.expr(["choir"], [(0, -14), (2, -13)])
-    t.expr(["brass", "vln_mel"], [(0, -12), (2, -13)])
-    t.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -12), (2, -12)])
-    t.expr(["timp", "glock", "harp", "pz_cb"], [(0, -8), (2, -10)])
+    t.expr(["choir"], [(0, -14), (t.n_q, -13)])
+    t.expr(["brass", "vln_mel"], [(0, -12), (t.n_q, -13)])
+    t.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -12), (t.n_q, -12)])
+    t.expr(["timp", "glock", "harp", "pz_cb"], [(0, -8), (t.n_q, -10)])
     # 'whenever I see the rainbow, I will remember my promise': soft pads only
     e.pad("ooh", 3, 57, 74, vel=36, bass_ref=(36, 48))
     e.pad(["vla", "vln2", "vln1"], 3, 57, 76, vel=36, bass_part="vc", bass_lo=40, bass_hi=52)

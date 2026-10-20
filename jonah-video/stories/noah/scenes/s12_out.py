@@ -48,7 +48,8 @@ WIN = PTS["window_box"]
 RIDGE_Y = PTS["roof"][0][1]
 HORIZON = 640
 ALTAR = (1190, 984, 0.62)
-FULL = Cam(W / 2, H / 2, W)      # the shared final / first framing
+FULL = Cam(W / 2, H / 2, W)      # the wide framing (s13 pulls back to it for the rainbow)
+END_CAM = Cam(1230, 740, 1440)   # s12's last framing = s13's first
 LIGHT_BASE = 0.40                # God's light at the end of s12 / start of s13
 
 # where everyone ends up (feet), facing at rest
@@ -191,7 +192,7 @@ def g_breathe(g, pivot, amount=0.012, period=3.0, phase=0.0, on=None):
 def add_world(sc, g, light_alpha, door_frames=None, door_fa=None, occ_fa=None):
     """Sky, light, clouds, far land, meadow, the ark (+ its occluder), grass. Returns nothing."""
     sc.add("sky", sky_svg(), seed=3, wc=0.6)
-    sc.add("light", light_svg(), wc=0, blend="screen", z=85,
+    sc.add("light", light_svg(), wc=0, blend="screen",
            motion=lambda t: Tf(alpha=light_alpha(t) * (0.92 + 0.08 * math.sin(2 * math.pi * g(t) / 4.0))))
     sc.add("clouds", clouds_svg(70), motion=lambda t: Tf(dx=-60 + 9 * ((g(t) - 200) % 60)))
     sc.add("far", far_svg(), seed=5)
@@ -416,7 +417,7 @@ def fam_starts(ctx):
     """When each family member starts out of the door (scene seconds) — also used by s13 for the turtles."""
     t_joy = phrase_t(ctx.lines[2], "开心极了")
     tf0 = snap(t_joy - 0.1)
-    return tf0, {nm: snap(tf0 + 0.38 * k + (0.45 if k > 0 else 0)) for k, nm in enumerate(FAMILY_ORDER)}
+    return tf0, {nm: snap(tf0 + 0.3 * k + (0.45 if k > 0 else 0)) for k, nm in enumerate(FAMILY_ORDER)}
 
 
 def set_turtle_starts(ctx12):
@@ -475,6 +476,11 @@ def build(ctx):
         return 7.0 + min(2.0, float(int((t - t_win) / 0.12)))
     sc.add("ark", ark_frames, frame_at=ark_fa, seed=11)
 
+    ag = S.rad_grad("s12ag", [(0, "#ffe7a0", 0.8), (0.5, "#f7cf78", 0.35), (1, "#f2c14e", 0)])
+    sc.add("ark_glow", doc(f'<ellipse cx="{AX + 60}" cy="{AY - 300}" rx="760" ry="520" fill="url(#s12ag)"/>', ag),
+           wc=0, blend="screen", z=19, motion=lambda t: Tf(alpha=0.55 * M.progress(t, t_god - 0.4, t_god + 0.8, "sine") *
+                                                          (1 - M.progress(t, t_door, t_door + 1.6, "sine")) *
+                                                          (0.85 + 0.15 * math.sin(2 * math.pi * t / 1.7))))
     # birds peeking out of the small cabin windows on '所有的动物'
     peek = ""
     for i, (wbox, col) in enumerate(zip([PTS["windows"][k] for k in (0, 2, 4)], ("blue", "yellow", "red"))):
@@ -499,16 +505,16 @@ def build(ctx):
                              x_in=door_in - front * KS, z=20 + yr / 100, **kw)
         return actors[name]
 
-    te = snap(t_door + 0.55)
-    A("elephant_m", "elephant", False, te, 175, 52, front=300,
+    te = snap(t_door + 0.42)
+    A("elephant_m", "elephant", False, te, 240, 64, front=300,
       schedule=[(0, "stand"), (snap(t_joy + 0.1), "spray"), (snap(t_joy + 1.6), "trunk_up"),
                 (snap(t_joy + 2.6), "stand")], shadow=380)
-    A("elephant_f", "elephant", True, snap(te + 0.75), 175, 50, front=290,
+    A("elephant_f", "elephant", True, snap(te + 0.6), 240, 62, front=290,
       schedule=[(0, "stand"), (snap(t_joy + 0.9), "spray"), (snap(t_joy + 2.3), "stand")], shadow=360)
     tg = snap(max(t_one + 0.9, te + 1.5))
-    A("giraffe_m", "giraffe", False, tg, 210, 56, front=340, pose_in="bow", inside_until=RAMP_TOP[0] + 40,
+    A("giraffe_m", "giraffe", False, tg, 270, 66, front=340, pose_in="bow", inside_until=RAMP_TOP[0] + 40,
       schedule=[(0, "stand")], shadow=260)
-    A("giraffe_f", "giraffe", True, snap(tg + 0.6), 210, 54, front=330, pose_in="bow",
+    A("giraffe_f", "giraffe", True, snap(tg + 0.6), 270, 64, front=330, pose_in="bow",
       inside_until=RAMP_TOP[0] + 40, schedule=[(0, "stand")], shadow=250)
     hops = tuple(f"hop{p}" for p in (0.0, 0.25, 0.5, 0.75))
     tr = snap(t_jump - 0.35)
@@ -538,7 +544,7 @@ def build(ctx):
             pass
         sched.append((snap(t_kneel + 0.07 * k), "kneel_pray"))
         pauses = [(RAMP_TOP[0] - (door_in - 60 * KS) - 10, 0.55, "cheer")] if nm == "noah" else []
-        actors[nm] = Actor(sc, g, nm, fam_draw(nm, xr, yr), (xr, yr, fr), t0=fam_t0[nm], speed=230, stride=36,
+        actors[nm] = Actor(sc, g, nm, fam_draw(nm, xr, yr), (xr, yr, fr), t0=fam_t0[nm], speed=280, stride=44,
                            walk=("walk_a:laugh", "walk_b:laugh"), x_in=door_in - 60 * KS, schedule=sched,
                            pauses=pauses, z=40 + yr / 100, breathe=(0.012, 2.6 + 0.2 * k, 0.13 * k),
                            keys_extra=[("release_dove", fr)])
@@ -603,7 +609,7 @@ def build(ctx):
     # ---------------------------------------------------------------- the occluder (door jamb, hull, lintel)
     t_occ = snap(t_door + 0.6)
     occ = [occluder_svg(0.0), occluder_svg(0.5), occluder_svg(1.0)]
-    sc.add("occluder", occ, z=55, seed=11,
+    sc.add("occluder", occ, z=55, seed=11, wc_edge=0.0,
            frame_at=lambda t: min(2.0, float(int(max(0.0, t - t_win) / 0.12))) if t >= t_win else 0.0,
            motion=lambda t: Tf(alpha=1.0 if t >= t_occ else 0.0))
 
@@ -663,9 +669,10 @@ def build(ctx):
              FX.motes((0, 200, W, 900), count=24, color=(255, 240, 200), size=(3, 6), seed=17, alpha=110)]
 
     # ---------------------------------------------------------------- camera: on the ark while God speaks, then wide
-    c_ark = Cam(760, 560, 1560)
-    keys = [(0, c_ark), (t_door - 0.2, Cam(800, 570, 1600)), (t_jump + 0.4, Cam(1000, 590, 1960)),
-            (t_joy + 0.6, FULL), (T, FULL)]
+    c_ark = Cam(800, 560, 1560)
+    keys = [(0, c_ark), (t_door - 0.2, Cam(830, 570, 1600)), (t_jump + 0.4, Cam(1000, 600, 1900)),
+            (t_joy + 0.4, Cam(1060, 610, 1960)), (t_first + 0.3, Cam(1060, 610, 1960)), (t_first + 2.6, END_CAM),
+            (T, END_CAM)]
     sc.camera = M.cam_keys(keys, "sine")
 
     # ---------------------------------------------------------------- sound

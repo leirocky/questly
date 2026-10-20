@@ -700,6 +700,7 @@ def ark_svg(door=1.0, window=1.0, glow=0.0, wet=False):
     return doc(PR.ark(AX, GY, SC, 1, door=door, window=window, glow=glow, wet=wet))
 
 
+ARK_SEED = 52                   # same watercolour seed for the ark in s07 and s08 (the dissolve matches)
 BUSH = (1560, GY + 50, 0.72)
 
 
@@ -732,7 +733,7 @@ def add_backdrop(sc, toff=0.0, ark=True):
     sc.add("mid", mid_svg(), z=1.5)
     sc.add("ground", ground_svg(), z=2)
     if ark:
-        sc.add("ark", ark_svg(), z=3)
+        sc.add("ark", ark_svg(), z=3, seed=ARK_SEED)
 
 
 def add_foreground(sc, toff=0.0):
