@@ -27,9 +27,9 @@ from art import style as S
 from art.style import P
 from engine import fx as FX
 from engine import motion as M
-from engine.motion import Cam, Tf
+from engine.motion import Tf
 from engine.scene import Scene
-from stories.noah.scenes.s07_animals import Spr, cam_at, cam_path, clamp, pt, snap
+from stories.noah.scenes.s07_animals import Spr, cam_at, cam_path, clamp, pt
 
 SW, SH = 3000, 1690
 S9 = 0.34
@@ -264,11 +264,12 @@ def build(ctx):
 
     # ---------------- clouds (one soft lightning glow inside a cloud on the first 哗啦啦)
     t_fl = t_hua[0] + 0.05
-    sc.add("back_clouds", back_clouds_svg(), z=0.5, wc=0.6, motion=lambda t: Tf(dx=-3 * t))
+    sc.add("back_clouds", back_clouds_svg(), z=0.5, wc=0.6, motion=lambda t: Tf(dx=12 * math.sin(t / 5.0), sx=1.03, sy=1.03, px=SW / 2, py=300))
     cl = [clouds_svg(), clouds_svg(1, 1.0)]
     sc.add("clouds", cl, z=6, wc=0.7,
            frame_at=lambda t: 1.0 - clamp(abs(t - t_fl - 0.12) / 0.35) if abs(t - t_fl - 0.12) < 0.35 else 0.0,
-           motion=lambda t: Tf(dx=-6 * t, dy=3 * math.sin(t / 3.0)))
+           motion=lambda t: Tf(dx=-22 * math.sin(t / 4.0), dy=3 * math.sin(t / 3.0), sx=1.03, sy=1.03, px=SW / 2,
+                               py=300))
     sc.fx.append(FX.lightning([t_fl], dur=0.5, strength=0.22, color=(236, 240, 255)))
 
     # ---------------- the two single drops on 滴答 (falling, a splash on the roof)

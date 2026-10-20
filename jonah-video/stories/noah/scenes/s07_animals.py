@@ -36,7 +36,6 @@ from art import props as PR
 from art import style as S
 from art.scenes.s17_king import blast_markup
 from art.style import P
-from engine import fx as FX
 from engine import motion as M
 from engine import raster
 from engine import watercolor as WC
@@ -617,7 +616,7 @@ def sun_svg():
 
 
 CLOUDS = [[(420, 230, 420, 96, 1), (1500, 150, 340, 80, 2), (2350, 300, 380, 86, 3)],
-          [(900, 420, 300, 66, 4), (1900, 470, 260, 58, 5), (3200, 120, 420, 96, 6), (-80, 120, 300, 70, 7)]]
+          [(900, 420, 300, 66, 4), (1900, 470, 260, 58, 5), (3020, 130, 400, 92, 6), (-80, 120, 300, 70, 7)]]
 
 
 def clouds_svg(i):
@@ -935,7 +934,6 @@ def build(ctx):
     t_mf = pt(ctx, 2, "一公一母")
     t_line = pt(ctx, 2, "排着队")
     t_food = pt(ctx, 3, "挪亚还在")
-    t_people = pt(ctx, 3, "有人吃的")
     t_animals_eat = pt(ctx, 3, "也有动物")
 
     # ---------------- the queue plan: Q(tau) = front of the elephant pair; everybody behind the lion waits while
@@ -969,7 +967,6 @@ def build(ctx):
     def anchor_plan(kd, t):
         return front_x(kd, t) - EXT[kd][0]
 
-    X_IN = DX0 - 420                      # far enough inside to be hidden
 
     # turtles: on the conveyor to the foot of the ramp, then slower up it
     t_turtle_foot = None
@@ -1253,7 +1250,6 @@ def add_rabbits(sc, ctx, t_rab, t_beng, plan, clip, z):
     """Two rabbits peek out of the bush, hop out along the grass in front of the path, then - one hop on each 蹦 -
     bound into their place in the queue (behind the lions) and on up the ramp and in."""
     bx = BUSH[0]
-    y_grass = GY + 40
     for female in (False, True):
         sd = 300 + (5 if female else 0)
         sp = figure_spr(130, 300, seed=sd)

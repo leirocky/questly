@@ -24,9 +24,9 @@ from engine.scene import Scene
 from art import props as PR
 from art import style as S
 from stories.noah.scenes import s07_animals as A
-from stories.noah.scenes.s07_animals import (AX, DX0, DX1, DTOP, FAM_END, FAM_ORDER, GY, RTX, SC, SH, SILL, SW, Actor,
-                                              Stepper, cam_at, cam_path, clamp, doc, family_sprites, lin_plan,
-                                              noah_frames, person_spr, pt, snap, squash_dip)
+from stories.noah.scenes.s07_animals import (DX0, DX1, DTOP, FAM_END, FAM_ORDER, RTX, SC, SH, SILL, SW, Actor, Stepper,
+                                              cam_at, cam_path, doc, family_sprites, noah_frames, person_spr, pt,
+                                              snap, squash_dip)
 
 STEP = 51.0          # stride (px) and period (s) of the family's walk
 PER = 0.22
