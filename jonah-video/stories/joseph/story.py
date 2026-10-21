@@ -70,7 +70,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s04_dream", "mood": "lots",
+        "id": "s04_dream", "transition": "dippaper", "mood": "lots",
         "note": "37:5-8. Night, Joseph asleep; a dream bubble: sheaves of wheat in a field, Joseph's sheaf stands "
                 "up and the brothers' sheaves gather round and bow to it; morning, Joseph tells his brothers "
                 "excitedly; they cross their arms, angrier.",
@@ -146,7 +146,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s11_ruler", "mood": "lesson",
+        "id": "s11_ruler", "transition": "dippaper", "mood": "lesson",
         "note": "41:37-49. Pharaoh puts his ring on Joseph's hand, a gold chain round his neck, fine linen clothes; "
                 "Joseph rides in a chariot as people bow; during the good years the storehouses fill up, the "
                 "grain heaps grow like mountains.",
