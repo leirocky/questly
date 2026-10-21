@@ -21,7 +21,7 @@ VOICES = {
           "prompt": {"engine": "kokoro", "sid": 87, "speed": 1.1,
                      "text": "我是约瑟，我是爸爸的第十一个儿子，我最喜欢爸爸给我做的彩衣。"}},
     "B": {"engine": "zipvoice", "sid": 95, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
-          "prompt": {"engine": "kokoro", "sid": 95, "speed": 1.1, "text": "我们是约瑟的哥哥，每天都在田野里放羊。"}},
+          "prompt": {"engine": "kokoro", "sid": 95, "speed": 1.0, "text": "我们是约瑟的哥哥，每天都在田野里放羊。"}},
     "P": {"engine": "zipvoice", "sid": 100, "speed": 1.0, "fx": None, "gain_db": 0.0, "stretch_pauses": True,
           "prompt": {"engine": "kokoro", "sid": 100, "speed": 1.0, "text": "我是埃及的法老王，我住在很大很大的王宫里。"}},
 }

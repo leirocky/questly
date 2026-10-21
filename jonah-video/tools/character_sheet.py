@@ -21,8 +21,14 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   Noah film (python3 tools/character_sheet.py noah): noah_poses, noah_actions (saw / hammer phases, carry items,
   options), noah_expr (close-ups), noah_family (wife, sons, daughters-in-law), noah_child (raincoat child) and
   noah_group (noah_family portrait and walking line, scale check with the ark and animal pairs).
+  Joseph film (python3 tools/character_sheet.py joseph): joseph_poses, joseph_attires (coat progress, torn / None, slave,
+  prisoner, ruler), joseph_expr (close-ups), joseph_brothers, joseph_jacob_pharaoh, joseph_egyptians (and traders),
+  joseph_siblings (child(sibling=...)) and joseph_group (groups, hugs, the pit, the chariot, the caravan).
+Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
+uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -38,7 +44,9 @@ from engine.paths import BUILD, FONT_BOLD, FONT_REGULAR  # noqa: E402
 from engine.scene import BOIL_TOKEN  # noqa: E402
 from engine.watercolor import apply_paper, paper_multiplier, watercolor  # noqa: E402
 
-OUT = BUILD / "preview"
+OUT = Path(os.environ.get("PB_PREVIEW_DIR") or BUILD / "preview")   # PB_PREVIEW_DIR: write sheets elsewhere
+if os.environ.get("PB_RASTER_CACHE"):          # optional separate raster cache (e.g. a scratch dir you delete)
+    raster._RASTER_DIR = Path(os.environ["PB_RASTER_CACHE"])
 LABEL_H = 34
 INK_RGB = (75, 52, 38)
 
@@ -187,6 +195,7 @@ def sheets():
                 {"ground_pad": 20}))
     out += david_sheets()
     out += noah_sheets()
+    out += joseph_sheets()
     return out
 
 
@@ -336,6 +345,140 @@ def noah_group():
         d.text((x0, y0), text, fill=INK_RGB, font=font)
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / "characters_noah_group.png"
+    sheet.save(path)
+    return path
+
+
+def joseph_sheets():
+    """Sheets for the Joseph film (Genesis 37-50)."""
+    out = []
+    items = [("jonah (compare)", _j("stand"))]
+    items += [(p, lambda x, y, s, p=p: C.joseph(x, y, s, pose=p)) for p in C.JOSEPH_POSES]
+    out.append(("joseph_poses", "Joseph — teen shepherd in the coat of many colours: poses (scale 0.9)", items, 8, 270,
+                420, 0.9, {"ground_pad": 24}))
+    items = [(f"coat progress={pr:.2f}", lambda x, y, s, pr=pr: C.joseph(x, y, s, progress=pr, expr="proud"))
+             for pr in (0, 1 / 6, 2 / 6, 3 / 6, 4 / 6, 1)]
+    items += [("coat='torn' sad", lambda x, y, s: C.joseph(x, y, s, coat="torn", pose="sad")),
+              ("coat=None walk_a", lambda x, y, s: C.joseph(x, y, s, coat=None, pose="walk_a")),
+              ("torn call_up", lambda x, y, s: C.joseph(x, y, s, coat="torn", pose="call_up")),
+              ("torn hold_rope", lambda x, y, s: C.joseph(x, y, s, coat="torn", pose="hold_rope"))]
+    for att in ("slave", "prisoner", "ruler"):
+        for p in ("stand", "walk_a", "talk", "point_up", "kneel_pray", "carry", "sad", "cry", "hug", "give", "comfort",
+                  "ride", "ride_wave", "open_arms", "bow", "sit"):
+            if att != "ruler" and p in ("ride", "ride_wave", "comfort"):
+                continue
+            if att == "ruler" and p in ("carry", "kneel_pray", "sit"):
+                continue
+            items.append((f"{att} {p}", lambda x, y, s, att=att, p=p: C.joseph(x, y, s, pose=p, attire=att)))
+    items += [("ruler chain=False ring=False", lambda x, y, s: C.joseph(x, y, s, attire="ruler", chain=False, ring=False))]
+    out.append(("joseph_attires", "Joseph — coat progress, torn / None, slave, prisoner, ruler (scale 0.8)", items, 10,
+                220, 360, 0.8, {"ground_pad": 22}))
+    exprs = ("happy", "proud", "worried", "sad", "crying", "tearful", "kind", "amazed", "determined", "peaceful")
+    items = [(e, lambda x, y, s, e=e: C.joseph(x, y, s, expr=e)) for e in exprs]
+    items += [(f"ruler {e}", lambda x, y, s, e=e: C.joseph(x, y + 10 * s, s, attire="ruler", expr=e))
+              for e in ("kind", "crying", "tearful")]
+    items += [(f"brother{v} {e}", lambda x, y, s, v=v, e=e: C.brothers(x, y + 26 * s, s, variant=v, expr=e))
+              for v, e in ((1, "jealous"), (3, "angry"), (4, "sly"), (6, "scared"), (0, "ashamed"), (8, "crying"),
+                           (2, "happy"))]
+    items += [("jacob crying", lambda x, y, s: C.jacob(x, y + 8 * s, s, expr="crying")),
+              ("jacob tearful", lambda x, y, s: C.jacob(x, y + 8 * s, s, expr="tearful")),
+              ("pharaoh amazed", lambda x, y, s: C.pharaoh(x, y + 30 * s, s, expr="amazed")),
+              ("pharaoh worried", lambda x, y, s: C.pharaoh(x, y + 30 * s, s, expr="worried"))]
+    out.append(("joseph_expr", "Joseph-film expressions (close-ups, scale 1.4)", items, 8, 290, 370, 1.4,
+                {"clip_cells": True, "ground_pad": -175}))
+    items = [(f"{v} {C.BROTHER_NAMES[v]}", lambda x, y, s, v=v: C.brothers(x, y, s, variant=v)) for v in range(10)]
+    items += [("benjamin", lambda x, y, s: C.brothers(x, y, s, variant="benjamin")),
+              ("benjamin walk_a", lambda x, y, s: C.brothers(x, y, s, variant="benjamin", pose="walk_a"))]
+    for i, p in enumerate(C.BROTHER_POSES):
+        if p in ("stand",):
+            continue
+        items.append((f"v{i % 10} {p}", lambda x, y, s, i=i, p=p: C.brothers(x, y, s, variant=i % 10, pose=p)))
+    out.append(("joseph_brothers", "The brothers — variants 0-9, Benjamin, poses (scale 0.75)", items, 10, 220, 340,
+                0.75, {"ground_pad": 20}))
+    items = [(f"jacob {p}", lambda x, y, s, p=p: C.jacob(x, y, s, pose=p)) for p in C.JACOB_POSES]
+    items += [("jacob give progress=.5", lambda x, y, s: C.jacob(x, y, s, pose="give", progress=0.5)),
+              ("jacob staff=False", lambda x, y, s: C.jacob(x, y, s, staff=False))]
+    items += [(f"pharaoh {p}", lambda x, y, s, p=p: C.pharaoh(x, y, s, pose=p)) for p in C.PHARAOH_POSES]
+    out.append(("joseph_jacob_pharaoh", "Jacob and Pharaoh (scale 0.8)", items, 8, 270, 380, 0.8, {"ground_pad": 22}))
+    items = []
+    for k in C.EGYPTIAN_KINDS:
+        for p in ("stand", "walk_a", "bow", "shrug", "carry", "lead", "give"):
+            if p == "give" and k not in ("potiphar", "cupbearer"):
+                continue
+            items.append((f"{k} {p}", lambda x, y, s, k=k, p=p: C.egyptian(x, y, s, kind=k, variant=1 if k == "wise" else 0,
+                                                                            pose=p)))
+    items += [(f"servant v{v}", lambda x, y, s, v=v: C.egyptian(x, y, s, kind="servant", variant=v)) for v in (1, 2, 3)]
+    items += [(f"wise v{v}", lambda x, y, s, v=v: C.egyptian(x, y, s, kind="wise", variant=v)) for v in (0, 2)]
+    items += [(f"woman v{v}", lambda x, y, s, v=v: C.egyptian(x, y, s, kind="woman", variant=v)) for v in (1, 2)]
+    items += [("cupbearer prisoner", lambda x, y, s: C.egyptian(x, y, s, kind="cupbearer", prisoner=True, pose="shrug")),
+              ("baker prisoner", lambda x, y, s: C.egyptian(x, y, s, kind="baker", prisoner=True, expr="worried")),
+              ("cupbearer prisoner sit", lambda x, y, s: C.egyptian(x, y, s, kind="cupbearer", prisoner=True, pose="sit")),
+              ("baker prisoner sad", lambda x, y, s: C.egyptian(x, y, s, kind="baker", prisoner=True, pose="sad"))]
+    items += [(f"trader v{v} {p}", lambda x, y, s, v=v, p=p: C.trader(x, y, s, variant=v, pose=p))
+              for v, p in ((0, "stand"), (1, "walk_a"), (2, "lead"), (0, "give"), (1, "count"), (2, "talk"))]
+    out.append(("joseph_egyptians", "Egyptians (servant, guard, wise, Potiphar, woman, cupbearer, baker) and traders "
+                "(scale 0.75)", items, 10, 220, 350, 0.75, {"ground_pad": 20}))
+    items = [(f"{sb or 'raincoat'} {p}", lambda x, y, s, sb=sb, p=p: C.child(x, y, s, pose=p, sibling=sb))
+             for sb in ("big", "little", None) for p in ("stand", "walk_a", "tug", "sulk", "sorry", "hug", "share")]
+    items += [("big share toy=horse", lambda x, y, s: C.child(x, y, s, pose="share", sibling="big", toy="horse")),
+              ("little tug toy=ball", lambda x, y, s: C.child(x, y, s, pose="tug", sibling="little", toy="ball")),
+              ("little stand toy=horse", lambda x, y, s: C.child(x, y, s, sibling="little", toy="horse")),
+              ("big cross", lambda x, y, s: C.child(x, y, s, sibling="big", expr="cross")),
+              ("little crying", lambda x, y, s: C.child(x, y, s, sibling="little", expr="crying"))]
+    out.append(("joseph_siblings", "Modern siblings: child(sibling='big' / 'little') and the new poses (scale 1.0)",
+                items, 8, 250, 330, 1.0, {"ground_pad": 22}))
+    return out
+
+
+def joseph_group():
+    """Compositions: the family, the brothers group, hugs, the pit, the chariot, the caravan (scale checks)."""
+    PR = C._prp()
+    W, H = 2300, 64 + 4 * 560
+    top = 64
+    body = ""
+    labels = []
+    gy = top + 470
+    body += C.brothers_group(520, gy, 0.8, pose="cross_arms", expr="jealous")
+    body += C.jacob(1180, gy, 0.8, pose="give", progress=1.0) + C.joseph(1400, gy, 0.8, -1, expr="amazed", progress=0.0, coat="colours")
+    body += C.brothers(1620, gy, 0.8, variant="benjamin") + C.brothers_group(2050, gy, 0.55, pose="bow")
+    labels.append((20, gy + 12, "brothers_group(cross_arms, jealous) | jacob give + joseph (coat progress 0) + Benjamin | brothers_group(bow) at 0.55"))
+    gy2 = gy + 560
+    body += C.hug_pair(250, gy2, 0.8)
+    body += C.hug_pair(560, gy2, 0.8, a=(C.joseph, dict(attire="ruler", expr="tearful")), b=(C.brothers, dict(variant=3, expr="crying")))
+    body += C.brothers(925, gy2, 0.8, -1, variant=0, pose="sad") + C.joseph(830, gy2, 0.8, attire="ruler", pose="comfort")
+    body += C.child(1150, gy2, 1.0, pose="hug", sibling="big") + C.child(1225, gy2, 1.0, -1, pose="hug", sibling="little")
+    body += C.child(1430, gy2, 1.0, pose="tug", sibling="big", toy="horse") + C.child(1600, gy2, 1.0, -1, pose="tug", sibling="little")
+    body += C.child(1800, gy2, 1.0, pose="share", sibling="big", toy="ball") + C.child(1900, gy2, 1.0, -1, pose="stand", sibling="little")
+    body += C.child(2120, gy2, 1.0, pose="sulk", sibling="big") + C.child(2230, gy2, 1.0, -1, pose="sorry", sibling="little")
+    labels.append((20, gy2 + 12, "hug_pair() default (Joseph + Jacob) | with Judah | comfort | children hug / tug / share / sulk + sorry"))
+    gy3 = gy2 + 560
+    pk, rim = 0.6, gy3 - 330
+    body += PR.pit(330, rim, pk, view="cutaway", rope=0.0) + C.joseph(330, rim + PR.PIT_DEPTH * pk, pk, coat="torn", pose="call_up")
+    body += C.brothers(330 + 230 * pk, rim, pk, -1, variant=3, pose="point")
+    body += PR.pit(900, gy3 - 60, 0.8, part="back") + PR.in_pit(C.joseph(900, gy3 - 60 + 300 * 0.8, 0.8, coat="torn", pose="call_up"), 900, gy3 - 60, 0.8) + PR.pit(900, gy3 - 60, 0.8, part="front")
+    body += C.brothers(1060, gy3 - 60, 0.8, -1, variant=0, pose="pull")
+    cx = 1600
+    body += PR.chariot(cx, gy3, 0.8, part="back", wheel=0.3, phase=0.2)
+    sx, sy = PR.local_to_stage(cx, gy3, 0.8, 1, *PR.CHARIOT_STAND)
+    body += C.joseph(sx, sy, 0.8, attire="ruler", pose="ride_wave")
+    body += PR.chariot(cx, gy3, 0.8, part="front", wheel=0.3)
+    body += C.egyptian(2150, gy3, 0.8, -1, kind="servant", pose="bow")
+    labels.append((20, gy3 + 12, "pit cutaway + Joseph call_up at PIT_FLOOR | pit outside (back, in_pit, front) | chariot back + Joseph ride_wave + front"))
+    gy4 = gy3 + 560
+    body += PR.camel(500, gy4, 0.7, pose="walk", phase=0.0) + C.trader(500 + PR.CAMEL_LEAD[0] * 0.7 + 30, gy4, 0.7, pose="lead")
+    body += PR.camel(980, gy4, 0.7, pose="walk", phase=0.5, bridle=False)
+    body += C.joseph(1180, gy4, 0.7, attire="slave", pose="walk_a", expr="sad") + C.brothers(1330, gy4, 0.7, -1, variant=3, pose="talk")
+    body += C.trader(1450, gy4, 0.7, -1, pose="give") + PR.donkey(1750, gy4, 0.7, pose="walk", phase=0.25)
+    body += C.pharaoh(2000, gy4, 0.7, pose="give_ring") + C.joseph(2130, gy4, 0.7, -1, attire="ruler", pose="bow", ring=False, chain=False)
+    labels.append((20, gy4 + 12, "caravan: camel walk + trader lead (rope end CAMEL_LEAD) | slave Joseph, Judah, trader give | donkey | Pharaoh gives the ring"))
+    svg = S.svg_doc(f'<rect x="0" y="{gy3 - 520}" width="{W}" height="540" fill="#e8d9b0"/>' + body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Joseph film — groups, hugs, the pit, the chariot, the caravan (scale checks)")
+    font = ImageFont.truetype(str(FONT_REGULAR), 22)
+    for x0, y0, text in labels:
+        d.text((x0, y0), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_joseph_group.png"
     sheet.save(path)
     return path
 
@@ -511,6 +654,8 @@ def main():
         print(compositions())
     if not filt or any(f in "noah_group" for f in filt):
         print(noah_group())
+    if not filt or any(f in "joseph_group" for f in filt):
+        print(joseph_group())
     raster.close()
 
 
