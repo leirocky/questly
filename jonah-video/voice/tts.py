@@ -394,34 +394,49 @@ def _f0(x, sr, t0, t1, hop=0.015, win=0.04):
     return out
 
 
-def _wrong_tone(text, x, sr, toks, ts, max_rise=0.0):
-    """True when a NO_BREAK name ending in a 4th tone ends on a rise instead (大卫 read da4 wei2): the
-    median pitch of the last third of that syllable is above that of its first third by more than
-    ``max_rise``. Only the last syllable: a 4th tone before another 4th tone (以色列, 歌利亚) only half
-    falls in fluent speech."""
+TONE_WATCH = str(getattr(story, "TONE_WATCH", ""))   # characters the voice tends to read in the wrong tone
+
+
+def _wrong_tone(text, x, sr, toks, ts, max_rise=0.0, watch_rise=0.05):
+    """True when a syllable that must not rise does (大卫 read da4 wei2, 越涨越高 read chang2): the median
+    pitch of the last third of the syllable is above that of its first third by more than the limit.
+    Checked: the last syllable of a NO_BREAK name when it is a 4th tone (only the last: a 4th tone before
+    another 4th tone, 以色列 or 歌利亚, only half falls in fluent speech), and every TONE_WATCH character
+    read in the 3rd or 4th tone inside a phrase (a 3rd tone may rise at the end of a phrase)."""
     from voice import lexicons as LX
 
     ref = _norm(text)
-    words = [w for w in NO_BREAK if w in ref]
-    times = _ref_times(text, toks, ts) if words else None
-    if times is None:
-        return False
-    for w in words:
+    checks = []                                   # (index in ref, limit)
+    for w in NO_BREAK:
+        if w not in ref:
+            continue
         entry = LX.ZV_FIX.get(w)
         syls = entry.split() if entry else [s for _, ws in LX.contextual(w) for s in ws]
-        for m in re.finditer(w, ref):
-            for k, syl in list(enumerate(syls))[-1:]:
-                if not syl.endswith("4"):
-                    continue
-                j = m.start() + k
-                t0 = times[j]
-                t1 = min(times[j + 1] if j + 1 < len(times) else t0 + 0.35, t0 + 0.35)
-                p = _f0(x, sr, t0, t1)
-                if len(p) < 4:
-                    continue
-                q = max(1, len(p) // 3)
-                if (np.median(p[-q:]) - np.median(p[:q])) / np.median(p[:q]) > max_rise:
-                    return True
+        if syls and syls[-1].endswith("4"):
+            checks += [(m.start() + len(w) - 1, max_rise) for m in re.finditer(w, ref)]
+    if TONE_WATCH:
+        flat = [sy for _, ws in LX.contextual(text) for sy in ws]
+        runs = re.findall(r"[\u4e00-\u9fff]+", text)
+        run_end = set()
+        k = 0
+        for r in runs:
+            k += len(r)
+            run_end.add(k - 1)
+        for k, ch in enumerate(ref):
+            if ch in TONE_WATCH and k < len(flat) and flat[k][-1:] in ("3", "4") and k not in run_end:
+                checks.append((k, watch_rise))
+    times = _ref_times(text, toks, ts) if checks else None
+    if times is None:
+        return False
+    for j, limit in checks:
+        t0 = times[j]
+        t1 = min(times[j + 1] if j + 1 < len(times) else t0 + 0.35, t0 + 0.35)
+        p = _f0(x, sr, t0, t1)
+        if len(p) < 4:
+            continue
+        q = max(1, len(p) // 3)
+        if (np.median(p[-q:]) - np.median(p[:q])) / np.median(p[:q]) > limit:
+            return True
     return False
 
 

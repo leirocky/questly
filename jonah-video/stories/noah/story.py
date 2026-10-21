@@ -31,7 +31,8 @@ LEXICON = {
     "叼着": "diao1 zhe5", "落脚": "luo4 jiao3", "应许": "ying1 xu3", "一公一母": "yi4 gong1 yi4 mu3",
     "漂啊漂": "piao1 a5 piao1", "造啊造": "zao4 a5 zao4", "飞啊飞": "fei1 a5 fei1",
 }
-NO_BREAK = ["挪亚", "雅弗", "亚拉拉特", "方舟", "上帝"]  # read in one breath (耶和华 is added for every story)
+NO_BREAK = ["挪亚", "雅弗", "亚拉拉特", "方舟", "上帝"]
+TONE_WATCH = "涨"   # 越涨越高 must stay zhang3 (the voice drifted to chang2)  # read in one breath (耶和华 is added for every story)
 
 # Each scene: id (stories/noah/scenes/<id>.py), a note for illustrators and the composer, music mood,
 # optional transition into the scene ("fade" default, "fadeblack", "circleopen", "dippaper" = a page-turn dip
