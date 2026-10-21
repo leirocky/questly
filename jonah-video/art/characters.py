@@ -2,7 +2,10 @@
 (stories/daniel) also Daniel, King Darius (king(attire='darius')), the jealous officials and the palace guards; for
 the David film (stories/david) David, Goliath, his shield-bearer, Israelite / Philistine soldiers, King Saul
 (king(attire='saul')), Eliab and Jesse (section DAVID FILM); for the Noah film (stories/noah) Noah, his wife, Shem,
-Ham, Japheth, their wives, noah_family() and a modern child in a raincoat (section NOAH FILM at the end).
+Ham, Japheth, their wives, noah_family() and a modern child in a raincoat (section NOAH FILM); for the Joseph film
+(stories/joseph) Joseph (shepherd with the coat of many colours / slave / prisoner / ruler), Jacob, the brothers and
+Benjamin, brothers_group(), Pharaoh, Egyptians, the Ishmaelite traders, hug_pair() and the modern siblings
+(child(sibling=...)) (section JOSEPH FILM at the end).
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -565,6 +568,226 @@ back). On the _CHILD rig (citizen(kind='child') size, 223 px). CHILD_POSES:
 Constants (Noah film): NOAH_POSES, FAMILY_POSES, FAMILY_GROUP_POSES, CARRY_ITEMS, FAMILY, CHILD_POSES, CHILD_JUMP,
 NOAH_NAIL, NOAH_EXPRESSIONS; colours NOAH_ROBE, NOAH_TRIM, NOAH_CLOTH, NOAH_BAND, NOAH_SKIN, NOAH_BEARD, CHILD_COAT,
 CHILD_BOOTS. God is never drawn as a person (golden light only, see ART_GUIDE.md).
+
+JOSEPH FILM (Genesis 37-50, stories/joseph)                 sheets: python3 tools/character_sheet.py joseph
+===========================================
+Same rig and conventions as above (anchor = ground under the pelvis, between the feet; facing; scale; marks; bboxes
+(l, t, r, b) at scale 1 / facing 1 measured from renders, wobble included). hand_positions / body_points work for every
+function here. Sheets: characters_joseph_poses / _attires / _expr / _brothers / _jacob_pharaoh / _egyptians / _siblings
+and characters_joseph_group (groups, hugs, the pit, the chariot, the caravan, scale checks).
+SCALE: at the same ``scale`` teen Joseph is ~325 px (head centre (2, -276)), adult Joseph ~339 (ruler 341 with the
+headcloth), the brothers 340-350 (staff tops ~-387), Jacob ~325 (staff top -369), Pharaoh ~355, Egyptians 320-345
+(a guard's spear -396), Benjamin ~228, the modern big sister ~243 and little brother ~207. One ground line, one scale.
+New expressions (JOSEPH_EXPRESSIONS; every function accepts them): proud (happy ^ eyes, big grin, chin up), crying
+(eyes squeezed shut, sad brows, open wobbly mouth, two tear streams with drops, a falling drop), tearful (happy tears:
+^ eyes, grin, blush and tear streams - the reunion), jealous (narrow sideways glance, frowning brows, pout), ashamed
+(downcast eyes, sad brows, blush, wobbly mouth). Also useful: kind, happy, sad, worried, amazed, determined, angry, sly,
+scared, cross, puzzled, peaceful. Tears are tears only - nothing in this film is violent.
+
+joseph(x, y, scale=1.0, facing=1, pose='stand', expr=None, attire='shepherd', coat='colours', progress=1.0,
+       chain=True, ring=True, item='sack', marks=True)
+---------------------------------------------------------------------------------------------------------------
+The same face in every attire: round face, rosy cheeks, short dark curls (JOSEPH_HAIR), no beard, skin JOSEPH_SKIN.
+attire (JOSEPH_ATTIRES):
+  'shepherd'  the teen (~17, slim: metrics 0.96 x an adult). coat (JOSEPH_COATS):
+              'colours' the coat of many colours: a long, long-sleeved robe in bold bands, top to hem and along the
+                        sleeves, repeating red, yellow, blue, green, purple, orange (COAT_BANDS, 红黄蓝绿紫橙) on a cream
+                        base (COAT_BASE). progress 0..1 reveals the colours ONE AT A TIME in that order: colour k fades
+                        in over progress k/6 .. (k+1)/6, so key red -> 1/6, yellow -> 2/6, blue -> 3/6, green -> 4/6
+                        as the narrator names them (progress 0 = a plain cream robe; quantise to the 7 key values).
+              'torn'    the bare cream under-tunic after the coat is pulled off: knee length, short sleeves, rope belt,
+                        barefoot, dust smudges and a little rip at the hem (the pit, the caravan).
+              None      the clean under-tunic (sandals).
+  'slave'     adult (metrics 1.01): sleeveless white linen work tunic, blue cloth belt, barefoot (Potiphar's house).
+  'prisoner'  adult: plain grey-brown tunic, rope belt, barefoot, a little dusty.
+  'ruler'     vizier of Egypt: long white pleated linen robe with a pale-gold hem, gold sash, broad bead collar
+              (gold / lapis / carnelian), a white court headcloth with thin gold stripes and a gold band (lappets in
+              front of the shoulders, two dark curls at the temple), gold sandals. chain=True the gold chain with a
+              round pendant (Gen 41:42), ring=True the signet ring on the near hand; pass chain=False / ring=False
+              for the moment before Pharaoh gives them.
+  pose (JOSEPH_POSES)  bbox shepherd (adult attires ~14 px taller)  natural expr (teen / adult)  notes
+  stand          (-49, -325, 53, 0)     happy / kind
+  walk_a/walk_b  (-84, -324, 78, 1) / (-61, -326, 98, 0)   planted-foot stride frames (alternate ~0.25 s; 'walk' = walk_a)
+  run_a/run_b    (-112, -296, 116, 0) / (-90, -290, 133, 0)  happy   (alternate ~0.15 s)
+  talk           (-53, -324, 71, 0)     happy     near hand open, palm up
+  explain        (-53, -324, 103, 0)    kind      both hands open in front (interpreting the dreams)
+  point          (-50, -325, 142, 0)    happy
+  point_up       (-64, -324, 85, 0)     determined / kind   finger up to heaven ('能解梦的不是我，是上帝')
+  pray           (-62, -324, 50, 0)     peaceful  standing, palms together
+  kneel_pray     (-85, -283, 43, 4)     peaceful
+  sleep          (-184, -181, 94, 0)    sleepy    curled on his side, head on the LEFT for facing=1, z's
+  dream          (-184, -181, 94, 0)    peaceful  the same, smiling in his sleep (put PR.dream_bubble above him)
+  call_up        (-72, -325, 68, 0)     call      both arms raised, face up: calling from the bottom of the pit
+  hold_rope      (-62, -327, 82, 0)     worried   fists in front of the chest, being pulled up (rope from the far hand)
+  sit            (-57, -223, 117, 3)    neutral   on the ground, knees up (the prison floor)
+  sad            (-48, -318, 85, 0)     sad       head bowed, arms hanging (led away to Egypt)
+  cry            (-48, -322, 77, 0)     crying    a fist at the chin, the other at the chest ('再也忍不住了，大哭起来')
+  hug            (-54, -323, 118, 0)    tearful   arms round someone in front (hands (100, -214), (88, -198)): use
+                                                  hug_pair(), or draw the other person first at x + 95*scale*facing
+  open_arms      (-132, -325, 129, 0)   tearful   arms spread wide, welcoming
+  give           (-54, -323, 138, 0)    kind      both hands forward, palms up (giving grain / receiving the ring)
+  comfort        (-53, -323, 89, 0)     kind      near hand on the shoulder of someone ~95*scale in front (hand
+                                                  (92, -262)); draw that person FIRST ('bless' = this pose for Jacob)
+  bow            (-49, -313, 109, 0)    kind      polite standing bow, hand on chest (before Pharaoh)
+  ride           ruler (-71, -290, 115, 0)  kind  seated, hands forward on the rail: in the chariot (PR.CHARIOT_SEAT)
+  ride_wave      ruler (-68, -342, 77, 0)   kind  standing in the chariot (PR.CHARIOT_STAND), far hand waving, near
+                                                  hand on the rail
+  carry / carry_walk_a / carry_walk_b  (-128, -324, 54, 0)  determined  item='sack' / 'hay' on the shoulder or
+                 'basket' / 'grain' / 'veg' / 'jar' in front (as noah(pose='carry')): the hard-working servant
+
+jacob(x, y, scale=1.0, facing=1, pose='stand', expr=None, staff=True, stool=True, progress=1.0, marks=True)
+---------------------------------------------------------------------------------------------------------
+Joseph's old father: long wavy white beard, bushy grey brows, smile wrinkles, cream head-cloth with a plum band and a
+flap at the back, warm plum robe (JACOB_ROBE) with a gold hem, a cream shawl with blue trim, slightly stooped, a
+shepherd's crook (staff=True) in stand / walk / talk / sad / bless. Not Noah (brown robe) or Jesse (rust robe).
+  pose (JACOB_POSES)  bbox                 natural expr  notes
+  stand          (-54, -369, 100, 2)     kind
+  walk_a/walk_b  (-86, -365, 103, 2) / (-61, -370, 108, 2)  kind   (going down to Egypt)
+  talk           (-54, -369, 123, 2)     happy     far hand open
+  sad            (-50, -360, 106, 2)     sad
+  bless          (-57, -369, 125, 2)     kind      far hand raised, palm out
+  sit            (-70, -274, 110, 4)     kind      on a low wooden three-legged stool (stool=False: no stool)
+  give           (-61, -323, 178, 0)     happy     holding the new coat up by its shoulders to show it (coat top centre
+                                                   between the hands, ~0.64 x coat_of_colours); progress 0..1 reveals its
+                                                   bands exactly like joseph(progress=...)
+  cry            (-39, -216, 119, 3)     crying    sitting on the ground holding the torn, dirty coat against him
+                                                   (Gen 37:34-35: tears only)
+  hug            (-57, -322, 118, 0)     tearful   see hug_pair (Jacob meets Joseph in Egypt, 46:29)
+  open_arms      (-136, -325, 133, 0)    tearful
+
+brothers(x, y, scale=1.0, facing=1, variant=0, pose='stand', expr=None, staff=None, item='sack', marks=True)
+(brother() is the same function)
+---------------------------------------------------------------------------------------------------------
+Joseph's brothers. variant 0-9: the ten older brothers (BROTHER_NAMES Reuben, Simeon, Levi, Judah, Dan, Naphtali, Gad,
+Asher, Issachar, Zebulun): bearded shepherds in knee-to-calf robes with a rope belt, each a different robe colour and
+head-dress: 0 olive green, cream head-cloth, full dark beard (Reuben); 1 brick red, ochre wrap, short black beard;
+2 slate blue, red headband, stubble; 3 mustard, cream head-cloth, full brown beard, brown shawl (Judah); 4 brown, teal
+wrap, pointed beard; 5 teal-grey, ochre headband; 6 dusty lilac, head-cloth, full beard; 7 terracotta, cream wrap,
+deep skin; 8 moss green, ochre headband; 9 rose-brown, bare curly head (the youngest of the ten). Slightly different
+heights / widths. variant='benjamin': Joseph's little full brother, a small boy (child rig, ~228 px) with Joseph's
+curls and skin in a sky-blue knee tunic (BENJAMIN_TUNIC). staff=None: a crook in the near hand for stand / walk_a /
+walk_b / talk (False: none; never for Benjamin).
+  pose (BROTHER_POSES)  bbox (union of 0-9)   natural expr   notes
+  stand          (-69, -387, 100, 2)     neutral  (with staff; -345 without)
+  walk_a/walk_b  (-90, -387, 106, 2) / (-64, -388, 106, 2)  neutral
+  run_a/run_b    (-120, -314, 125, 0) / (-94, -308, 145, 0)  worried
+  talk           (-69, -387, 116, 2)     neutral  far hand open (pass 'jealous' / 'angry': '凭什么只给他做？')
+  point          (-69, -346, 154, 0)     angry    ('看，那个做梦的来了！')
+  cross_arms     (-70, -345, 64, 0)      jealous  arms folded
+  whisper        (-53, -344, 90, 0)      sly      hand by the mouth (two brothers face to face ~110*scale apart)
+  pull           (-114, -315, 104, 0)    determined  leaning back on a rope through the fists (81, -166), (37, -151)
+                                                  (as sailor 'pull'): pulling Joseph up out of the pit
+  bow            (-89, -218, 191, 5)     worried  kneeling, bent low, hands flat on the ground in front, head bowed:
+                                                  bowing before Joseph (42:6) - the sheaves dream come true
+  kneel_pray     (-92, -301, 48, 5)      peaceful
+  hug            (-60, -344, 120, 0)     tearful  (hug_pair with Joseph)
+  sad            (-55, -340, 91, 0)      ashamed  head bowed (showing Jacob the coat; frightened of Joseph)
+  scared         (-98, -347, 85, 0)      scared   hands up by the face ('哥哥们吓坏了')
+  cheer          (-101, -345, 106, 0)    happy
+  carry / carry_walk_a / carry_walk_b   (-130, -345, 59, 0)  neutral  grain sacks on the shoulder (item as joseph)
+  Benjamin: stand (-45, -228, 43, 0), walk (-57, -230, 57, 0), the other poses scaled to the child rig.
+
+brothers_group(x, y, scale=1.0, facing=1, pose='stand', n=10, expr=None, gap=150, exprs=None, marks=True)
+---------------------------------------------------------------------------------------------------------
+The ten older brothers at once (drawn back to front in one <g>). expr applies to all; exprs (a list) cycles per brother.
+  group     stand / talk / cross_arms / point / sad / scared / hug / cheer / whisper: two rows centred on x - back row
+            (34 px higher, 0.96 x) variants 4, 8, 1, 5, 9 at -330 .. +330, front row 6, 2, 0, 3, 7 at -410 .. +245;
+            the left half faces right, the right half left (whisper: the right-facing ones whisper, the others fold
+            their arms). bbox cross_arms (-478, -366, 380, 0) at scale 1.
+  kneeling  bow / kneel_pray: two staggered rows, everybody facing ``facing`` (toward Joseph): front row at x-460,
+            -230, 0, +230, +460, back row (40 px higher) halfway between; bbox bow (-545, -242, 755, 5).
+  line      walk_a / walk_b / run_a / run_b / carry_walk_a / carry_walk_b: a line toward facing, variant 0 leading AT x,
+            the others every gap*scale behind, neighbours in opposite frames (the journey to Egypt with grain sacks);
+            bbox walk_a about (-1440, -388, 103, 2) at gap 150.
+  n < 10 draws the first n of them.
+
+pharaoh(x, y, scale=1.0, facing=1, pose='stand', expr=None, throne=True, marks=True)
+---------------------------------------------------------------------------------
+The king of Egypt, friendly: a gold-and-lapis striped nemes headdress with lappets and a little gold cobra at the brow,
+kohl-lined eyes, a narrow plaited false beard under the chin (the mouth stays free), bare chest with a broad bead collar
+(gold / lapis / carnelian), gold armbands and bracelets, a long white pleated linen kilt-robe with a gold belt and a
+gold front apron, gold sandals. Skin PHARAOH_SKIN.
+  pose (PHARAOH_POSES)  bbox            natural expr   notes
+  stand          (-70, -355, 61, 0)     neutral
+  walk_a/walk_b  (-94, -354, 88, 1) / (-70, -357, 111, 0)  neutral
+  talk           (-70, -355, 74, 0)     happy      (pass 'kind': '上帝和你同在...')
+  sit_throne     (-89, -324, 167, 0)    neutral    on his gilded Egyptian throne (throne=True draws it behind him;
+                                                   throne=False: (-73, -301, 120, 0), use props.egypt_throne at the same
+                                                   x, y, scale, facing: seat top EGYPT_SEAT_Y = -73)
+  sleep          (-202, -202, 98, 7)    sleepy     lying on his side, z's (dreaming: add PR.dream_bubble; or put him on
+                                                   props.couch)
+  point          (-70, -355, 160, 0)    neutral
+  give_ring      (-63, -354, 97, 0)     kind       arm forward, the signet ring held up in the fingers (~(84, -230))
+  amazed         (-128, -356, 127, 0)   amazed     hands open, raised a little
+  worried        (-74, -358, 58, 0)     worried    hands on his head (nobody can explain the dream)
+
+egyptian(x, y, scale=1.0, facing=1, kind='servant', variant=0, pose='stand', expr=None, prisoner=False, spear=None,
+         item='sack', marks=True)
+---------------------------------------------------------------------------------------------------------------
+Egyptians, all with kohl-lined eyes; variant 0-3 varies skin (EGYPT_SKIN) and belt / band colours. kind (EGYPTIAN_KINDS):
+  'servant'    black bob hair, bare chest, short white pleated linen kilt, coloured belt, barefoot
+  'guard'      white-and-blue striped khat headcloth, bare chest with a leather cross-strap, kilt with a striped apron,
+               sandals, a spear (spear=None: in stand / walk; True / False to force)
+  'wise'       wise men / magicians: shaven heads, long robes (0 deep blue with gold dots, 1 brown with diamonds and a white
+               pointed beard, 2 green with flowers), gold sash and collar; variant 0 holds a scroll when standing
+  'potiphar'   the rich master, plump and smiling: shoulder-length black wig, long white pleated robe with a red sash and
+               hem, a big bead collar, gold sandals; pose 'give' holds out a ring of big keys (trusting Joseph)
+  'woman'      long black wig with a coloured headband, long white sheath dress, bead collar, sash
+  'cupbearer'  bob hair, gold collar, knee kilt; holds a gold cup in 'stand' and 'give' (Gen 40)
+  'baker'      plump, shaven head, kilt with a white baker's apron
+prisoner=True (cupbearer / baker / servant): a plain dusty prison tunic, rope belt, barefoot; the cupbearer with stubble,
+the baker bald and round (they look puzzled about their dreams: pose 'shrug' or expr 'worried' / 'puzzled').
+  pose (EGYPTIAN_POSES)  bbox servant (others similar; Potiphar ~10 px wider)   natural expr   notes
+  stand          (-56, -337, 56, 0)    neutral (Potiphar happy)    guard (-64, -396, 75, 0) with the spear
+  walk_a/walk_b  (-80, -333, 76, 0) / (-64, -335, 105, 0)
+  bow            (-84, -209, 189, 0)   peaceful   kneeling, bent low, hands on the ground (people bow as Joseph's
+                                                  chariot passes, 41:43)
+  shrug          (-111, -367, 108, 0)  puzzled    palms up, a '?' (marks=False hides it): the wise men cannot explain
+  lead / lead_b  (-88, -333, 124, 0)   neutral    walking (frames a / b), near hand back at hip height holding the person
+                                                  / rope behind; a guard carries the spear in the far hand behind him
+  carry / carry_walk_a / carry_walk_b  (-129, -337, 57, 0)  item 'sack' (grain) etc.
+  give           (-50, -336, 146, 0)   happy (Potiphar)   arm forward (keys for Potiphar, the cup for the cupbearer)
+  talk, point, sit (-63, -234, 114, 0), sad, cheer, amazed, worried, kneel_bow (= bow)
+
+trader(x, y, scale=1.0, facing=1, variant=0, pose='stand', expr=None, marks=True)
+--------------------------------------------------------------------------------
+Ishmaelite spice traders of the caravan (Gen 37:25-28): long robes with bold horizontal stripes, a red sash, a desert
+head-cloth held by a dark double cord, full beard. variant 0 sand / brown stripes, 1 sage / cream with a red
+head-cloth, 2 rust / yellow. TRADER_POSES: stand (-69, -333, 59, 0) happy, walk_a / walk_b, talk, point, lead / lead_b
+(-89, -332, 124, 1) walking with the near hand back holding the camel's lead rope (put the hand near props.CAMEL_LEAD),
+give (-62, -333, 96, 0) holding out three silver coins, count (-69, -332, 81, 0) an open money pouch in both hands.
+
+hug_pair(x, y, scale=1.0, facing=1, a=None, b=None, gap=95)
+-----------------------------------------------------------
+Two people hugging: a = (fn, kwargs) stands at x facing ``facing``, b = (fn, kwargs) stands gap*scale in front of him
+facing back; both get pose='hug' unless their kwargs say otherwise; b is drawn first, then a, whose arms come round b.
+Default: Joseph (ruler, tearful) and Jacob (tearful). E.g. hug_pair(x, y, s, a=(joseph, dict(attire='ruler')),
+b=(brothers, dict(variant=3, expr='crying'))) or the siblings: a=(child, dict(sibling='big')), b=(child,
+dict(sibling='little')), gap=70. bbox default (-58, -341, 151, 0); the siblings at gap 70 (-54, -245, 100, 0).
+
+child(..., sibling=None, toy=None)  - the modern siblings (opening squabble and ending)
+-------------------------------------------------------------------------------------
+child() keeps its raincoat look and output by default; new options:
+  sibling='big'     the big sister (~7, 243 px): coral dress with a cream collar and a pocket, brown hair in a ponytail
+                    with a yellow ribbon and a side fringe, red shoes
+  sibling='little'  the little brother (~4, 207 px): blue t-shirt with yellow stripes, navy shorts, light sneakers,
+                    curly light-brown hair
+  toy='horse' / 'ball'  the shared toy (props.toy) held: in 'share' in both hands in front, in 'tug' gripped and reaching
+                    out in front, in stand / walk / sulk hanging from the near hand.
+  New poses (SIBLING_POSES; they work for the raincoat child too). bbox big / little:
+  tug       (-99, -224, 79, 0) / (-67, -195, 71, 0)   cross    leaning back, both fists forward at hip height (a tug of
+            war over the toy: give one child toy='horse' and put the other, facing back, ~150*scale away)
+  sulk      (-59, -244, 56, 0) / (-50, -205, 31, 0)   cross    arms folded, body and head turned AWAY from facing
+  sorry     (-52, -244, 63, 0) / (-37, -204, 54, 0)   sorry    head bowed, hands behind the back
+  hug       (-54, -245, 75, 0) / (-31, -207, 78, 0)   happy    arms round someone in front (~70*scale away)
+  share     (-54, -246, 59, 0) / (-30, -206, 53, 0)   kind     holding the toy out in both hands
+  Every expression works (cross, crying, sorry, kind, happy, laugh ...).
+
+Constants (Joseph film): JOSEPH_POSES, JOSEPH_ATTIRES, JOSEPH_COATS, JOSEPH_EXPRESSIONS, JACOB_POSES, BROTHER_POSES,
+BROTHER_NAMES, BROTHERS_GROUP_POSES, PHARAOH_POSES, EGYPTIAN_KINDS, EGYPTIAN_POSES, TRADER_POSES, SIBLINGS,
+SIBLING_POSES; colours JOSEPH_SKIN, JOSEPH_HAIR, COAT_BANDS, COAT_BASE, TUNIC, LINEN, EGYPT_SKIN, EGYPT_HAIR, LAPIS,
+CARNELIAN, JACOB_ROBE, PHARAOH_SKIN, BENJAMIN_TUNIC, SIB_DRESS, SIB_SHIRT, SIB_SHORTS. God is never drawn as a person:
+show his presence as soft golden light (engine.fx / art.style), never as a figure.
 """
 import hashlib
 import math
@@ -860,6 +1083,12 @@ def _face(R, skin, expr, look=(0, 0), brow_col=INK, mouth=True, tremble=True, br
         elif kind == "arc":                  # laughing: happy upturned arcs (David film)
             s += _line(f"M{fmt(ex - 0.13 * R)},{fmt(ey + 0.05 * R)} Q{fmt(ex)},{fmt(ey - 0.13 * R)} "
                        f"{fmt(ex + 0.13 * R)},{fmt(ey + 0.05 * R)}", w=3.6)
+        elif kind == "squeeze":              # Joseph film: crying - eyes squeezed shut, a wavy lid line and lashes
+            sl = -inner * 0.05 * R
+            s += _line(f"M{fmt(ex - 0.14 * R)},{fmt(ey - 0.01 * R + sl)} Q{fmt(ex - 0.05 * R)},{fmt(ey + 0.09 * R)} "
+                       f"{fmt(ex + 0.01 * R)},{fmt(ey + 0.03 * R)} T{fmt(ex + 0.14 * R)},{fmt(ey - 0.01 * R - sl)}", w=3.4)
+            for dx in (-0.07, 0.05):
+                s += _line(f"M{fmt(ex + dx * R)},{fmt(ey + 0.07 * R)} l{fmt(0.01 * R)},{fmt(0.07 * R)}", w=2.0)
         elif kind == "spiral":
             pts = []
             for j in range(22):
@@ -905,6 +1134,16 @@ def _face(R, skin, expr, look=(0, 0), brow_col=INK, mouth=True, tremble=True, br
     over = ""
     for (hx, hy, k) in _SWEAT[:E.get("sweat", 0)]:
         over += _drop(hx * R, hy * R, k * R)
+    if E.get("tears"):                       # Joseph film: tear streams down both cheeks, a drop at each end
+        for k, (tx, l) in enumerate(((-0.13, 0.62), (0.44, 0.55))):
+            x0, y0 = tx * R, 0.16 * R
+            d = (f"M{fmt(x0)},{fmt(y0)} Q{fmt(x0 - 0.05 * R)},{fmt(y0 + l * 0.45 * R)} "
+                 f"{fmt(x0 + 0.01 * R)},{fmt(y0 + l * R)}")
+            over += _line(d, w=0.11 * R + 2.4, col=INK, extra='opacity="0.5"')
+            over += _line(d, w=0.11 * R, col=DRIP)
+            over += _drop(x0 + 0.01 * R, y0 + (l + 0.16) * R, 0.085 * R)
+        if E["tears"] > 1:                   # sobbing: one more drop falling beside the face
+            over += _drop(-0.42 * R, 1.02 * R, 0.07 * R)
     if E.get("tremble") and tremble:
         for (hx, hy, sg) in ((1.30, -0.05, 1), (-1.32, -0.25, -1)):
             for j in (0, 1):
@@ -1865,6 +2104,8 @@ def _figure(D, m, ps, expr, facing=1, marks=True):
                 s += _line(f"M{_pt(_add(c0, _mul((-dw[1], dw[0]), m['aw'] / 2)))} "
                            f"L{_pt(_sub(c0, _mul((-dw[1], dw[0]), m['aw'] / 2)))}", w=2.2)
         dw = _nrm(_sub(W, E))
+        if D.get("arm_deco"):        # Joseph film: decoration over the sleeve (coat bands), under the hand
+            s += D["arm_deco"](st, i, Sx, E, W)
         s += _hand(W, dw, ps["hands"][i], skin, m["hr"])
         return s
 
@@ -1956,6 +2197,8 @@ def _robe(D, st, ps):
             for poly in polys:
                 inner += _poly(_band(poly, pel, u, d0, d0 + sw_), sc, sw=0)
             k += 1
+    if D.get("robe_deco"):      # Joseph film: extra decoration inside the robe clip (coat bands, pleats, dust)
+        inner += D["robe_deco"](st, polys)
     # small repeating motifs (Persian court robes): a staggered grid that follows the torso axis
     if D.get("pattern"):
         pc, pk, sp = D["pattern"]
@@ -3020,6 +3263,10 @@ def _mouth_extra(R, kind, P_, mx, my):
     if kind == "pout":              # cross frown with a pushed-out lower lip
         return (_line(f"M{P_(-0.12, 0.07)} Q{P_(0, -0.04)} {P_(0.12, 0.07)}", w=3.4) +
                 _line(f"M{P_(-0.05, 0.13)} Q{P_(0, 0.15)} {P_(0.05, 0.13)}", w=2.2, col=P["ink_soft"]))
+    if kind == "cry":               # Joseph film: an open, wobbly, downturned crying mouth
+        d = (f"M{P_(-0.16, 0.10)} Q{P_(-0.08, -0.02)} {P_(0, 0.0)} Q{P_(0.08, -0.02)} {P_(0.16, 0.10)} "
+             f"Q{P_(0.10, 0.24)} {P_(0, 0.22)} Q{P_(-0.10, 0.24)} {P_(-0.16, 0.10)} Z")
+        return (f'<path d="{d}" fill="{MI}" {_st(2.8)}/>' + _ell(mx, my + 0.17 * R, 0.06 * R, 0.035 * R, TONGUE))
     if kind == "awe":               # Noah film: open, delighted 'oh!' smile
         d = (f"M{P_(-0.13, 0.0)} Q{P_(0, 0.03)} {P_(0.13, 0.0)} Q{P_(0.12, 0.26)} {P_(0, 0.27)} "
              f"Q{P_(-0.12, 0.26)} {P_(-0.13, 0.0)} Z")
@@ -4465,8 +4712,11 @@ def _child_design(ps_legs, hood, boots, coat):
 
 
 def child(x, y, scale=1.0, facing=1, pose="stand", expr=None, hood=False, boots=True, coat=None, phase=0.0,
-          marks=True):
-    """A little modern child in a raincoat and rubber boots (opening / ending, see module doc)."""
+          marks=True, sibling=None, toy=None):
+    """A little modern child in a raincoat and rubber boots (opening / ending, see module doc); Joseph film:
+    sibling='big' / 'little' (play clothes), the poses tug / sulk / sorry / hug / share and toy='horse' / 'ball'."""
+    if sibling is not None or toy is not None or pose in SIBLING_POSES:
+        return _child_joseph(x, y, scale, facing, pose, expr, hood, boots, coat, phase, marks, sibling, toy)
     if pose not in CHILD_POSES:
         raise ValueError(f"child: unknown pose {pose!r}; choose from {CHILD_POSES}")
     if expr is not None and expr not in EXPRS:
@@ -4482,3 +4732,1127 @@ def child(x, y, scale=1.0, facing=1, pose="stand", expr=None, hood=False, boots=
     if pose == "jump":
         inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
     return _wrap_out(inner, x, y, scale, facing, f"child-{pose}")
+
+
+# ======================================================================= Joseph film (Genesis 37-50)
+# Joseph (teen shepherd with the coat of many colours, slave, prisoner, ruler of Egypt), Jacob, the brothers and
+# Benjamin, Pharaoh, Egyptians, the Ishmaelite traders, hug_pair(); and the modern siblings via child(sibling=...).
+# Module doc section "JOSEPH FILM".
+
+EXPRS.update({
+    "proud":   dict(eyes="arc", brow=(-0.04, -0.03, -0.10), mouth="grin", look=(0.02, -0.04)),
+    "crying":  dict(eyes="squeeze", brow=(-0.13, 0.06, 0.0), mouth="cry", tears=2),
+    "tearful": dict(eyes="arc", brow=(-0.10, 0.05, -0.02), mouth="grin", tears=1, blush=True),
+    "jealous": dict(eyes="narrow", brow=(0.10, -0.05, 0.04), mouth="pout", look=(0.06, 0.0)),
+    "ashamed": dict(eyes="down", brow=(-0.12, 0.06, 0.04), mouth="wobble", blush=True, look=(0.0, 0.06)),
+})
+JOSEPH_EXPRESSIONS = ("proud", "crying", "tearful", "jealous", "ashamed")
+
+JOSEPH_SKIN = "#e9b38c"
+JOSEPH_HAIR = "#3b2619"
+COAT_BANDS = ("#d9534a", "#f2c84b", "#4f86c6", "#6fae55", "#8e64b0", "#ef9440")   # 红 黄 蓝 绿 紫 橙
+COAT_BASE = "#f1e6cc"
+TUNIC = "#e6d6b2"
+LINEN = "#f6f0e2"
+EGYPT_SKIN = ("#c98f68", "#b07a52", "#d9a37a", "#9a6342")
+EGYPT_HAIR = "#2a2320"
+LAPIS = "#3f6fa8"
+CARNELIAN = "#c9533f"
+JACOB_ROBE = "#86424c"
+PHARAOH_SKIN = "#c98f68"
+
+_JOSEPH_TEEN_M = _metrics(_ADULT, 0.96, 0.9)
+_JOSEPH_M = _metrics(_ADULT, 1.01, 0.97)
+_JACOB_M = _metrics(_ADULT, 0.97, 1.02)
+_PHARAOH_M = _metrics(_ADULT, 1.05, 1.06)
+
+
+def _band_alpha(k, progress, n=len(COAT_BANDS)):
+    """Coat progress 0..1 -> visibility of colour k (colour k fades in over progress k/n .. (k+1)/n)."""
+    return _clamp01(progress * n - k)
+
+
+# ---------------------------------------------------------------- heads (head frame, fn(R))
+def _joseph_curls(R, col=JOSEPH_HAIR):
+    """Joseph's short dark curls: a ring of small curls over the top and back, two curls on the forehead."""
+    circ = []
+    for i, a in enumerate(range(-40, -172, -22)):
+        x, y = _polar(R, a, 0.98)
+        circ.append((x, y, (0.23 if i % 2 else 0.20) * R))
+    circ += [(0.52 * R, -0.70 * R, 0.15 * R), (0.24 * R, -0.82 * R, 0.17 * R), (-0.10 * R, -0.86 * R, 0.18 * R),
+             (-0.96 * R, -0.30 * R, 0.17 * R)]
+    s = _union_circles(circ, col)
+    lite = shade(col, 0.28)
+    for x, y, r in circ:
+        s += _line(f"M{fmt(x - 0.45 * r)},{fmt(y + 0.15 * r)} Q{fmt(x - 0.15 * r)},{fmt(y - 0.55 * r)} {fmt(x + 0.40 * r)},"
+                   f"{fmt(y - 0.20 * r)}", w=1.8, col=lite)
+    return s
+
+
+def _eyeliner(R, col=INK):
+    """Egyptian kohl: a short wing at the outer corner of each eye."""
+    return (_line(f"M{fmt(-0.22 * R)},{fmt(0.0)} l{fmt(-0.10 * R)},{fmt(-0.04 * R)}", w=2.2, col=col) +
+            _line(f"M{fmt(0.53 * R)},{fmt(0.0)} l{fmt(0.10 * R)},{fmt(-0.05 * R)}", w=2.2, col=col))
+
+
+def _nemes(R, base, stripe=None, band=GOLD, cobra=False, lappet=True, stripes=7):
+    """Egyptian royal / court headcloth: smooth cap over the head with a band at the forehead, side panels
+    flaring down behind the cheek to the shoulders, a lappet hanging in front of the shoulder (lappet=False:
+    a khat gathered into a bag at the back of the neck). stripe: colour of horizontal stripes (None: plain)."""
+    main = [(0.97 * R, -0.38 * R), (0.92 * R, -0.88 * R), (0.42 * R, -1.20 * R), (-0.35 * R, -1.18 * R),
+            (-0.98 * R, -0.80 * R), (-1.25 * R, -0.15 * R)]
+    if lappet:
+        main += [(-1.44 * R, 0.70 * R), (-1.50 * R, 1.28 * R), (-1.04 * R, 1.34 * R), (-0.80 * R, 0.62 * R)]
+    else:
+        main += [(-1.30 * R, 0.30 * R), (-1.20 * R, 0.62 * R), (-0.84 * R, 0.55 * R), (-0.74 * R, 0.30 * R)]
+    main += [(-0.72 * R, 0.02 * R), (-0.60 * R, -0.34 * R), (0.30 * R, -0.50 * R)]
+    lap = [(-0.84 * R, 0.30 * R), (-0.60 * R, 0.38 * R), (-0.48 * R, 1.86 * R), (-0.80 * R, 1.92 * R),
+           (-0.98 * R, 0.95 * R)]
+    s = ""
+    shapes = [smooth_path(main, tension=0.85)] + ([smooth_path(lap, tension=0.7)] if lappet else [])
+    for d in shapes:
+        s += f'<path d="{d}" fill="{base}" {_st(3.4)}/>'
+        if stripe:
+            cid = _clip_id("nemes", R, base, stripe, d[:40])
+            lines = ""
+            for k in range(stripes * 2 + 4):
+                yy = (-1.25 + 0.24 * k) * R
+                lines += (f'<path d="M{fmt(-1.6 * R)},{fmt(yy + 0.10 * R)} Q{fmt(-0.3 * R)},{fmt(yy - 0.06 * R)} '
+                          f'{fmt(1.1 * R)},{fmt(yy - 0.02 * R)}" fill="none" stroke="{stripe}" '
+                          f'stroke-width="{fmt(0.10 * R)}"/>')
+            s += f'<clipPath id="{cid}"><path d="{d}"/></clipPath><g clip-path="url(#{cid})">{lines}</g>'
+            s += f'<path d="{d}" fill="none" {_st(3.4)}/>'
+    if not lappet:            # the gathered bag at the back of the neck
+        s += _ell(-1.18 * R, 0.52 * R, 0.24 * R, 0.17 * R, shade(base, -0.08), sw=2.8)
+    s += _line(f"M{fmt(-0.25 * R)},{fmt(-0.95 * R)} Q{fmt(-0.80 * R)},{fmt(-0.55 * R)} {fmt(-0.95 * R)},{fmt(0.30 * R)}",
+               w=2.0, col=shade(base, -0.22))
+    if band:
+        s += _tube(_spline_pts([(0.99 * R, -0.42 * R), (0.45 * R, -0.58 * R), (-0.25 * R, -0.55 * R),
+                                (-0.66 * R, -0.32 * R)]), 0.13 * R, band, ow=2.4)
+    if cobra:                 # the little rearing cobra (uraeus) at the brow, friendly
+        cx, cy = 0.80 * R, -0.62 * R
+        s += (f'<path d="M{fmt(cx - 0.06 * R)},{fmt(cy + 0.08 * R)} Q{fmt(cx - 0.14 * R)},{fmt(cy - 0.20 * R)} '
+              f'{fmt(cx + 0.02 * R)},{fmt(cy - 0.36 * R)} Q{fmt(cx + 0.18 * R)},{fmt(cy - 0.40 * R)} {fmt(cx + 0.16 * R)},'
+              f'{fmt(cy - 0.26 * R)} Q{fmt(cx + 0.08 * R)},{fmt(cy - 0.10 * R)} {fmt(cx + 0.08 * R)},{fmt(cy + 0.08 * R)} Z" '
+              f'fill="{GOLD}" {_st(2.4)}/>')
+        s += _ell(cx + 0.03 * R, cy - 0.20 * R, 0.06 * R, 0.09 * R, LAPIS)
+        s += f'<circle cx="{fmt(cx + 0.11 * R)}" cy="{fmt(cy - 0.32 * R)}" r="{fmt(0.025 * R)}" fill="{INK}"/>'
+    return s
+
+
+def _vizier_head(R):
+    """Joseph as ruler: a white court headcloth with thin gold stripes and band; dark curls at the temple."""
+    s = _nemes(R, LINEN, "#e6c97e", GOLD, lappet=True)
+    circ = [(-0.62 * R, -0.24 * R, 0.13 * R), (-0.64 * R, 0.02 * R, 0.12 * R)]
+    s += _union_circles(circ, JOSEPH_HAIR, 2.4)
+    for x, y, r in circ:
+        s += _line(f"M{fmt(x - 0.4 * r)},{fmt(y + 0.1 * r)} Q{fmt(x - 0.1 * r)},{fmt(y - 0.5 * r)} {fmt(x + 0.4 * r)},{fmt(y - 0.2 * r)}",
+                   w=1.6, col=shade(JOSEPH_HAIR, 0.3))
+    return s
+
+
+def _false_beard(R, col="#3a2a22"):
+    """Pharaoh's narrow plaited ceremonial beard under the chin (the mouth stays free)."""
+    x0, x1, y0, y1 = 0.08 * R, 0.30 * R, 0.86 * R, 1.52 * R
+    s = (f'<path d="M{fmt(x0)},{fmt(y0)} L{fmt(x1)},{fmt(y0)} L{fmt(x1 + 0.05 * R)},{fmt(y1)} '
+         f'Q{fmt((x0 + x1) / 2 + 0.03 * R)},{fmt(y1 + 0.10 * R)} {fmt(x0 + 0.04 * R)},{fmt(y1)} Z" fill="{col}" {_st(2.6)}/>')
+    for k in range(1, 6):
+        yy = y0 + (y1 - y0) * k / 6
+        s += _line(f"M{fmt(x0 + 0.02 * R)},{fmt(yy)} q{fmt(0.11 * R)},{fmt(0.05 * R)} {fmt(0.24 * R)},0", w=1.6,
+                   col=shade(col, 0.35))
+    s += _line(f"M{fmt(x0)},{fmt(y0 + 0.02 * R)} Q{fmt(-0.40 * R)},{fmt(0.86 * R)} {fmt(-0.62 * R)},{fmt(0.42 * R)}", w=1.8,
+               col=shade(col, 0.2), extra='opacity="0.7"')
+    return s
+
+
+def _bob_wig(R, col=EGYPT_HAIR, length=0.55, band=None):
+    """Egyptian black bob: straight fringe, hair falling to the jaw (length in R; ~1.4 for women)."""
+    pts = [(0.98 * R, -0.40 * R), (0.92 * R, -0.90 * R), (0.40 * R, -1.22 * R), (-0.40 * R, -1.20 * R),
+           (-1.02 * R, -0.82 * R), (-1.24 * R, -0.10 * R), (-1.22 * R, length * R), (-0.95 * R, (length + 0.05) * R),
+           (-0.52 * R, length * R), (-0.48 * R, -0.18 * R), (-0.10 * R, -0.42 * R), (0.45 * R, -0.44 * R)]
+    s = f'<path d="{smooth_path(pts, tension=0.75)}" fill="{col}" {_st(3.4)}/>'
+    lite = shade(col, 0.30)
+    for x0 in (-1.05, -0.86, -0.68):
+        s += _line(f"M{fmt(x0 * R)},{fmt(-0.55 * R)} L{fmt((x0 - 0.04) * R)},{fmt((length - 0.08) * R)}", w=1.8, col=lite)
+    s += _line(f"M{fmt(-0.40 * R)},{fmt(-0.98 * R)} Q{fmt(0.20 * R)},{fmt(-1.10 * R)} {fmt(0.66 * R)},{fmt(-0.86 * R)}",
+               w=2.6, col=lite, extra='opacity="0.7"')
+    if band:
+        s += _tube(_spline_pts([(0.97 * R, -0.62 * R), (0.40 * R, -0.80 * R), (-0.40 * R, -0.76 * R),
+                                (-1.10 * R, -0.42 * R)]), 0.12 * R, band, ow=2.2)
+    return s
+
+
+def _bald(R, skin):
+    """Shaven head (Egyptian wise men / the baker): a shine on the scalp and a faint hairline shadow."""
+    return (_ell(0.05 * R, -0.70 * R, 0.30 * R, 0.12 * R, HI, extra='opacity="0.45" transform="rotate(-14)"') +
+            _line(f"M{fmt(-0.85 * R)},{fmt(-0.30 * R)} Q{fmt(-0.55 * R)},{fmt(-0.62 * R)} {fmt(-0.10 * R)},{fmt(-0.78 * R)}",
+                  w=2.0, col=shade(skin, -0.18), extra='opacity="0.7"'))
+
+
+def _trader_cloth(R, col, cord):
+    """Desert traveller's head-cloth held by a dark cord ring (Ishmaelite traders)."""
+    s = _cloth_cap(R, col)
+    s += _tube(_spline_pts([(0.97 * R, -0.52 * R), (0.40 * R, -0.70 * R), (-0.40 * R, -0.66 * R),
+                            (-0.98 * R, -0.36 * R)]), 0.13 * R, cord, ow=2.2)
+    s += _tube(_spline_pts([(0.94 * R, -0.66 * R), (0.40 * R, -0.84 * R), (-0.40 * R, -0.80 * R),
+                            (-0.96 * R, -0.50 * R)]), 0.10 * R, cord, ow=2.2)
+    return s
+
+
+# ---------------------------------------------------------------- worn things (body-frame hooks)
+def _coat_robe_deco(progress, bw=19.0):
+    """The coat of many colours: bold bands across the robe, colour k shown once progress >= (k+1)/6."""
+    def deco(st, polys):
+        m, pel, u = st["m"], st["pel"], st["u"]
+        s = ""
+        d = m["T"] + 12.0
+        k = 0
+        lo = -(m["th"] + m["sh"]) - 30
+        while d > lo:
+            j = k % len(COAT_BANDS)
+            a = _band_alpha(j, progress)
+            if a > 0:
+                op = "" if a >= 1 else f'opacity="{a:.2f}"'
+                for poly in polys:
+                    s += _poly(_band(poly, pel, u, d - bw, d), COAT_BANDS[j], sw=0, extra=op)
+            d -= bw
+            k += 1
+        if progress > 0:         # soft stitch lines between the bands
+            d = m["T"] + 12.0 - bw
+            while d > lo:
+                for poly in polys:
+                    e = _band_edge(poly, pel, u, d)
+                    if len(e) == 2:
+                        s += _line(_d(e, closed=False), w=1.6, col=shade(COAT_BASE, -0.25), extra='opacity="0.6"')
+                d -= bw
+        return s
+    return deco
+
+
+def _coat_sleeve_deco(progress, bw=16.0):
+    n = len(COAT_BANDS)
+
+    def deco(st, i, Sx, E, W):
+        if progress <= 0:
+            return ""
+        aw = st["m"]["aw"]
+        dw = _nrm(_sub(W, E))
+        W2 = _sub(W, _mul(dw, 9))
+        d = _d([Sx, E, W2], closed=False)
+        s = ""
+        for j, col in enumerate(COAT_BANDS):
+            a = _band_alpha(j, progress)
+            if a <= 0:
+                continue
+            op = "" if a >= 1 else f' opacity="{a:.2f}"'
+            s += (f'<path d="{d}" fill="none" stroke="{col}" stroke-width="{fmt(aw - 0.5)}" stroke-linecap="butt" '
+                  f'stroke-linejoin="round" stroke-dasharray="{fmt(bw)} {fmt((n - 1) * bw)}" '
+                  f'stroke-dashoffset="{fmt(-j * bw)}"{op}/>')
+        return s
+    return deco
+
+
+def _dust_deco(seed=0):
+    """Dust smudges and a little rip at the hem (the under-tunic after the pit)."""
+    def deco(st, polys):
+        m, tp = st["m"], st["tp"]
+        s = ""
+        for fx, uy, r in ((-0.5, 0.55, 9), (0.45, 0.25, 7), (0.1, -0.35, 10), (-0.35, -0.75, 8), (0.55, -0.95, 7)):
+            c = tp(fx * m["ww"], uy * m["T"] if uy > 0 else uy * (m["th"] + m["sh"]) * 0.5)
+            s += _ell(c[0], c[1], r * 1.4, r, P["sackcloth_dark"], extra='opacity="0.35"')
+        Hm, um = st["Hm"], st["um"]
+        nv = (-um[1], um[0])
+        a = _add(Hm, _mul(nv, 0.30 * m["ww"]))
+        s += _poly([_sub(a, _mul(nv, 7)), _sub(_add(a, _mul(nv, 1)), _mul(um, 18)), _add(a, _mul(nv, 9)),
+                    _add(_add(a, _mul(nv, 9)), _mul(um, 8)), _sub(_add(a, _mul(nv, -7)), _mul(um, -8))],
+                   P["paper"], sw=2.4)
+        return s
+    return deco
+
+
+def _pleat_deco(col, n=7):
+    """Fine vertical pleats on a linen skirt (Egyptian kilts / robes)."""
+    def deco(st, polys):
+        m, pel, f, u = st["m"], st["pel"], st["f"], st["u"]
+        s = ""
+        for k in range(n):
+            x = (-0.8 + 1.6 * k / (n - 1)) * m["ww"]
+            a = _add(pel, _add(_mul(f, x), _mul(u, -6)))
+            b = _add(st["Hm"], _mul(f, x * 1.25))
+            s += _line(f"M{_pt(a)} L{_pt(b)}", w=1.6, col=col, extra='opacity="0.55"')
+        return s
+    return deco
+
+
+def _collar_pts(st, k=1.0):
+    m, tp = st["m"], st["tp"]
+    T, shw = m["T"], m["shw"]
+    outer = [tp(-0.95 * shw, T - 5), tp(-0.62 * shw, T - 26 * k), tp(0.08 * shw, T - 34 * k), tp(0.72 * shw, T - 24 * k),
+             tp(0.98 * shw, T - 5)]
+    inner = [tp(0.55 * shw, T + 1), tp(0.06 * shw, T - 11), tp(-0.55 * shw, T + 1)]
+    return outer, inner
+
+
+def _broad_collar(st, cols=(GOLD, LAPIS, CARNELIAN), k=1.0):
+    """Egyptian broad bead collar (wesekh) round the neck: gold with rows of blue and red beads."""
+    outer, inner = _collar_pts(st, k)
+    s = f'<path d="{smooth_path(outer + inner, tension=0.8)}" fill="{cols[0]}" {_st(3.0)}/>'
+    for t, col in ((0.38, cols[1]), (0.70, cols[2])):
+        row = [_lerp(outer[j], _lerp(inner[0], inner[-1], 1 - j / 4) if j not in (2,) else inner[1], t)
+               for j in range(5)]
+        row = [_lerp(outer[0], inner[2], t), _lerp(outer[1], inner[2], t * 0.9), _lerp(outer[2], inner[1], t),
+               _lerp(outer[3], inner[0], t * 0.9), _lerp(outer[4], inner[0], t)]
+        s += (f'<path d="{smooth_path(row, closed=False)}" fill="none" stroke="{col}" stroke-width="{fmt(5 * k)}" '
+              f'stroke-linecap="round" stroke-dasharray="{fmt(4 * k)} {fmt(3 * k)}"/>')
+    s += f'<path d="{smooth_path(outer, closed=False)}" fill="none" {_st(2.2, GOLD_DARK)}/>'
+    return s
+
+
+def _gold_chain(st):
+    """A gold chain of links round the neck with a round pendant on the chest (Gen 41:42)."""
+    m, tp = st["m"], st["tp"]
+    T, shw = m["T"], m["shw"]
+    pts = _spline_pts([tp(-0.62 * shw, T - 6), tp(-0.30 * shw, T - 36), tp(0.12 * shw, T - 48), tp(0.55 * shw, T - 34),
+                       tp(0.78 * shw, T - 8)], steps=5)
+    s = ""
+    for j, p in enumerate(pts[1:-1]):
+        s += f'<ellipse cx="{fmt(p[0])}" cy="{fmt(p[1])}" rx="4.2" ry="3.2" fill="{GOLD}" {_st(1.6)}/>'
+    c = tp(0.12 * shw, T - 58)
+    s += f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="10" fill="{GOLD}" {_st(2.4)}/>'
+    s += f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="4.5" fill="{LAPIS}"/>'
+    s += f'<circle cx="{fmt(c[0] - 3)}" cy="{fmt(c[1] - 3)}" r="1.8" fill="{HI}"/>'
+    return s
+
+
+def _bare_chest(skin, belt, apron=None, collar=None, strap=None, chain=False, kilt_top=10):
+    """Mid hook for a bare upper body over a linen kilt: skin-coloured chest, belt, optional front apron,
+    leather chest strap (guards), broad collar and gold chain."""
+    def mid(st):
+        m, pel, u, f, tp = st["m"], st["pel"], st["u"], st["f"], st["tp"]
+        lim = m["ww"] + 3
+        bod = _clip(st["robe"][0], tp(0, kilt_top - 6), u)
+        s = _poly(bod, skin, sw=OW) if len(bod) > 2 else ""
+        s += _line(f"M{_pt(tp(-0.10 * m['ww'], m['T'] - 30))} Q{_pt(tp(0.25 * m['ww'], m['T'] - 40))} "
+                   f"{_pt(tp(0.55 * m['ww'], m['T'] - 32))}", w=2.0, col=shade(skin, -0.2), extra='opacity="0.6"')
+        if strap:
+            a, b = tp(-0.85 * m["shw"], m["T"] - 4), tp(0.55 * m["ww"], kilt_top + 6)
+            s += _tube([a, b], 9, strap, ow=2.4)
+        for poly in st["robe"]:
+            bb = _band(poly, pel, u, kilt_top - 9, kilt_top + 4)
+            if len(bb) > 2:
+                bb = _clip(bb, _sub(pel, _mul(f, lim)), f)
+            if len(bb) > 2:
+                bb = _clip(bb, _add(pel, _mul(f, lim)), _mul(f, -1))
+            s += _poly(bb, belt, sw=2.6)
+        if apron:
+            top = tp(0.30 * m["ww"], kilt_top - 9)
+            bot = _add(st["Hm"], _mul(f, 0.30 * m["ww"]))
+            bot = _sub(bot, _mul(st["um"], 6))
+            w0, w1 = 0.30 * m["ww"], 0.46 * m["ww"]
+            q = [_sub(top, _mul(f, w0)), _add(top, _mul(f, w0)), _add(bot, _mul(f, w1)), _sub(bot, _mul(f, w1))]
+            s += _poly(q, apron, sw=2.6)
+            for t in (0.3, 0.55, 0.8):
+                s += _line(_d([_lerp(q[0], q[3], t), _lerp(q[1], q[2], t)], closed=False), w=1.8,
+                           col=shade(apron, -0.3))
+        if collar:
+            s += _broad_collar(st, collar)
+        if chain:
+            s += _gold_chain(st)
+        return s
+    return mid
+
+
+def _armbands(col=GOLD, upper=True, wrist=True):
+    def deco(st, i, Sx, E, W):
+        s = ""
+        aw = st["m"]["aw"]
+        if upper:
+            p = _lerp(Sx, E, 0.62)
+            dv = _nrm(_sub(E, Sx))
+            nv = (-dv[1], dv[0])
+            s += _tube([_add(p, _mul(nv, aw / 2)), _sub(p, _mul(nv, aw / 2))], 6, col, ow=2.0)
+        if wrist:
+            dv = _nrm(_sub(W, E))
+            p = _sub(W, _mul(dv, 5))
+            nv = (-dv[1], dv[0])
+            s += _tube([_add(p, _mul(nv, aw * 0.42)), _sub(p, _mul(nv, aw * 0.42))], 6, col, ow=2.0)
+        return s
+    return deco
+
+
+def _ring_on(W, hr, col=GOLD):
+    """A signet ring on the hand at W (a gold dot with a blue stone)."""
+    return (f'<circle cx="{fmt(W[0] + 0.2 * hr)}" cy="{fmt(W[1] + 0.55 * hr)}" r="{fmt(0.42 * hr)}" fill="{col}" {_st(1.8)}/>'
+            f'<circle cx="{fmt(W[0] + 0.2 * hr)}" cy="{fmt(W[1] + 0.55 * hr)}" r="{fmt(0.18 * hr)}" fill="{LAPIS}"/>')
+
+
+def _question_mark(Hc, R):
+    x0, y0 = Hc[0] + 1.25 * R, Hc[1] - 1.45 * R
+    return (_line(f"M{fmt(x0 - 9)},{fmt(y0 - 6)} Q{fmt(x0 - 6)},{fmt(y0 - 22)} {fmt(x0 + 8)},{fmt(y0 - 20)} "
+                  f"Q{fmt(x0 + 20)},{fmt(y0 - 14)} {fmt(x0 + 10)},{fmt(y0 - 2)} Q{fmt(x0 + 1)},{fmt(y0 + 6)} {fmt(x0 + 1)},"
+                  f"{fmt(y0 + 14)}", w=4.2, col=MARK) + f'<circle cx="{fmt(x0 + 1)}" cy="{fmt(y0 + 26)}" r="3.4" fill="{MARK}"/>')
+
+
+# ---------------------------------------------------------------- poses
+_JS = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3))),
+    "walk_a": dict(POSES["walk_a"]),
+    "walk_b": dict(POSES["walk_b"]),
+    "run_a": dict(POSES["run_a"]),
+    "run_b": dict(POSES["run_b"]),
+    "talk": dict(POSES["dv_talk"]),
+    "point": dict(POSES["point"]),
+    "point_up": dict(POSES["dv_point_up"]),
+    "pray": dict(POSES["dv_pray"]),
+    "kneel_pray": dict(POSES["kneel_pray"]),
+    "sleep": dict(POSES["sleep"]),
+    "dream": dict(POSES["sleep"], expr="peaceful"),
+    "sit": dict(POSES["sit"]),
+    "sad": dict(POSES["sad"]),
+    "hug": _P(t=6, h=4, legs=((10, 3), (-8, -3)), arms=(("ik", "abs", 100, -214, 1), ("ik", "abs", 88, -198, 1)),
+              hands=("open", "open"), expr="happy"),
+    "bow": dict(POSES["bow"]),
+    "hold_rope": dict(POSES["hold_rope"], expr="worried"),
+    "call_up": _P(h=-26, legs=((6, 2), (-5, -2)), arms=(("fk", 146, 166), ("fk", -162, -172)), hands=("open", "open"),
+                  look=(0.03, -0.12), expr="call"),
+    "cry": _P(t=6, h=14, arms=(("ik", "torso", 1.30, 0.55, 1), ("ik", "head", 0.70, 1.45, 1)), hands=("fist", "fist"),
+              expr="crying"),
+    "open_arms": _P(h=-6, legs=((8, 3), (-7, -3)), arms=(("fk", 92, 118), ("fk", -88, -112)), hands=("open", "open"),
+                    expr="tearful"),
+    "give": _P(t=6, h=4, legs=((10, 3), (-8, -3)), arms=(("fk", 62, 80), ("fk", 70, 84)), hands=("open", "open"),
+               expr="kind"),
+    "explain": _P(h=-4, arms=(("fk", 26, 64), ("fk", 40, 96)), hands=("open", "open"), expr="kind"),
+    "comfort": _P(t=4, h=10, legs=((8, 3), (-7, -3)), arms=(("fk", 12, 6), ("ik", "abs", 92, -262, 1)),
+                  hands=("fist", "open"), expr="kind"),
+    "ride": _P(t=-2, lap=True, legs=((86, 4), (82, 2)), arms=(("ik", "body", 84, -58, 1), ("ik", "body", 70, -48, 1)),
+               hem=0.97, flare=-8, expr="kind"),
+    "ride_wave": _P(legs=((5, 2), (-5, -2)), arms=(("fk", 146, 168), ("ik", "body", 64, -40, 1)),
+                    hands=("open", "fist"), expr="kind"),
+    "cross_arms": _P(h=6, legs=((8, 3), (-7, -3)), arms=(("ik", "torso", -0.15, 0.60, 1), ("ik", "torso", 1.25, 0.56, 1)),
+                     far_front=True, expr="jealous"),
+    "kneel_bow": _P(t=60, h=30, arms=(("ik", "abs", 132, -6, 1), ("ik", "abs", 116, -6, 1)),
+                    hands=("ground", "ground"), expr="ashamed", **_KNEEL),
+    "scared": dict(POSES["scared"]),
+    "cheer": dict(POSES["cheer"]),
+    "pull": dict(POSES["pull"]),
+    "whisper": dict(POSES["whisper"]),
+    "shrug": _P(h=-4, legs=((8, 3), (-7, -3)), arms=(("fk", 22, 112), ("fk", -24, -112)), hands=("open", "open"),
+                expr="puzzled"),
+    "lead": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", 40, 72), ("fk", -42, -26)), hands=("fist", "fist")),
+    "lead_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 40, 72), ("fk", -42, -26)), hands=("fist", "fist")),
+    "sit_throne": dict(POSES["sit_throne"]),
+    "give_ring": _P(t=4, legs=((8, 3), (-7, -3)), arms=(("fk", 12, 6), ("fk", 78, 96)), hands=("fist", "fist"),
+                    expr="kind"),
+    "amazed": _P(h=-8, legs=((8, 3), (-7, -3)), arms=(("fk", 40, 118), ("fk", -36, -112)), hands=("open", "open"),
+                 expr="amazed"),
+    "worried": dict(POSES["worried"]),
+    "count": _P(h=12, arms=(("ik", "body", 66, -66, 1), ("ik", "body", 42, -58, 1)), hands=("none", "fist"),
+                look=(0.03, 0.08), expr="happy"),
+}
+
+
+def _js_pose(name):
+    return dict(_JS[name])
+
+
+def _check_js(pose, allowed, who):
+    if pose not in allowed:
+        raise ValueError(f"{who}: unknown pose {pose!r}; choose from {allowed}")
+
+
+def _check_js_expr(expr, who):
+    if expr is not None and expr not in EXPRS:
+        raise ValueError(f"{who}: unknown expr {expr!r}; choose from {tuple(EXPRS)}")
+
+
+def _carry_hooks(D, pose, item):
+    """Carrying (sack on the shoulder / basket or jar in front), shared with the Noah section."""
+    if pose in ("carry", "carry_walk_a", "carry_walk_b"):
+        return _nh_items(D, "carry", 0.0, item, False, False, False)
+    return None, None, None
+
+
+def _carry_pose(pose, item):
+    if pose == "carry":
+        return _nh_carry_pose(item)
+    return _nh_carry_pose(item, pose[-1])
+
+
+# ---------------------------------------------------------------- Joseph
+JOSEPH_POSES = ("stand", "walk_a", "walk_b", "run_a", "run_b", "talk", "explain", "point", "point_up", "pray",
+                "kneel_pray", "sleep", "dream", "call_up", "hold_rope", "sit", "sad", "cry", "hug", "open_arms", "give",
+                "ride", "ride_wave", "comfort", "bow", "carry", "carry_walk_a", "carry_walk_b")
+JOSEPH_ATTIRES = ("shepherd", "slave", "prisoner", "ruler")
+JOSEPH_COATS = ("colours", "torn", None)
+_JS_NATURAL = {"stand": "happy", "walk_a": "happy", "walk_b": "happy", "run_a": "happy", "run_b": "happy",
+               "talk": "happy", "point_up": "determined", "sleep": "sleepy", "dream": "peaceful", "sad": "sad",
+               "kneel_pray": "peaceful", "pray": "peaceful", "hug": "tearful", "bow": "kind", "point": "happy",
+               "sit": "neutral", "carry": "determined", "carry_walk_a": "determined", "carry_walk_b": "determined"}
+_JS_ADULT_NATURAL = {"stand": "kind", "walk_a": "kind", "walk_b": "kind", "talk": "kind", "point": "kind",
+                     "point_up": "kind", "sit": "neutral"}
+
+
+def _joseph_design(attire, coat, progress, chain, ring, pose):
+    D = dict(skin=JOSEPH_SKIN, leg=JOSEPH_SKIN, hair=JOSEPH_HAIR, hair_style="curly",
+             hat=("custom", _joseph_curls), hat_h=0.12, sandal=SANDAL)
+    if attire == "shepherd":
+        if coat == "colours":
+            D.update(robe=COAT_BASE, sleeve=COAT_BASE, hem=0.90, cuff=COAT_BANDS[4],
+                     neck_v=shade(TUNIC, -0.08), robe_deco=_coat_robe_deco(progress),
+                     arm_deco=_coat_sleeve_deco(progress))
+        else:
+            D.update(robe=TUNIC, sleeve=TUNIC, hem=0.60, flare_k=0.85, sleeve_len=0.5, hem_col=shade(TUNIC, -0.16),
+                     hem_w=8, rope_belt=CORD, neck_v=shade(TUNIC, -0.18))
+            if coat == "torn":
+                D["robe_deco"] = _dust_deco()
+                D["bare"] = True
+    elif attire == "slave":       # sleeveless linen work tunic, cloth belt, barefoot
+        D.update(robe=LINEN, sleeve=LINEN, sleeve_len=0.18, hem=0.62, flare_k=0.8, hem_col=shade(LINEN, -0.12), hem_w=7,
+                 sash="#5d8fb0", sash_tail=True, bare=True, neck_v=shade(LINEN, -0.15), robe_deco=_pleat_deco(shade(LINEN, -0.25), 5))
+    elif attire == "prisoner":    # plain grey-brown tunic, rope belt, barefoot, a little dusty
+        col = "#a99c86"
+        D.update(robe=col, sleeve=col, sleeve_len=0.5, hem=0.64, flare_k=0.8, hem_col=shade(col, -0.18), hem_w=8,
+                 rope_belt="#8b6a45", bare=True, neck_v=shade(col, -0.2), robe_deco=_dust_deco(1))
+    else:                         # ruler: vizier of Egypt
+        D.update(robe=LINEN, sleeve=LINEN, hem=0.95, hem_col="#e3c47a", hem_w=9, cuff=GOLD, sash=GOLD, sash_tail=True,
+                 robe_deco=_pleat_deco(shade(LINEN, -0.22), 7), sandal=GOLD_DARK, ears=False,
+                 hat=("custom", _vizier_head), hat_h=0.22,
+                 hair=None)
+        D["mid"] = lambda st: _broad_collar(st) + (_gold_chain(st) if chain else "")    # noqa: E731
+        if ring:
+            D["front"] = lambda st: _ring_on(st["arms"][1][2], st["m"]["hr"])          # noqa: E731
+    return D
+
+
+def joseph(x, y, scale=1.0, facing=1, pose="stand", expr=None, attire="shepherd", coat="colours", progress=1.0,
+           chain=True, ring=True, item="sack", marks=True):
+    """Joseph (Genesis 37-50): teen shepherd with the coat of many colours, slave, prisoner or ruler of Egypt
+    (see module doc, 'JOSEPH FILM')."""
+    _check_js(pose, JOSEPH_POSES + ("walk",), "joseph")
+    _check_js_expr(expr, "joseph")
+    if attire not in JOSEPH_ATTIRES:
+        raise ValueError(f"joseph: unknown attire {attire!r}; choose from {JOSEPH_ATTIRES}")
+    if coat not in JOSEPH_COATS:
+        raise ValueError(f"joseph: unknown coat {coat!r}; choose from {JOSEPH_COATS}")
+    pose = "walk_a" if pose == "walk" else pose
+    D = _joseph_design(attire, coat, _clamp01(progress), chain, ring, pose)
+    if pose.startswith("carry"):
+        ps = _carry_pose(pose, item)
+        b, mi, fr = _carry_hooks(D, pose, item)
+        D["behind"] = b
+        D["mid"] = _hooks(D.get("mid"), mi)
+        D["front"] = _hooks(D.get("front"), fr)
+    else:
+        ps = _js_pose(pose)
+    if attire != "shepherd" and pose in _JS_ADULT_NATURAL:
+        ps["expr"] = _JS_ADULT_NATURAL[pose]
+    elif pose in _JS_NATURAL:
+        ps["expr"] = _JS_NATURAL[pose]
+    m = _JOSEPH_TEEN_M if attire == "shepherd" else _JOSEPH_M
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"joseph-{attire}-{pose}")
+
+
+# ---------------------------------------------------------------- Jacob
+JACOB_POSES = ("stand", "walk_a", "walk_b", "talk", "sit", "give", "cry", "hug", "sad", "bless", "open_arms")
+
+
+def _jacob_hat(R):
+    return _aged(R, "#e2a882", "#e7e1d8") + _cloth_cap(R, "#efe6d2", edge=JACOB_ROBE)
+
+
+def _jacob_stool(st):
+    """A low wooden three-legged stool under a seated figure (drawn behind)."""
+    pel, m, g = st["pel"], st["m"], st["ground"]
+    seat_y = pel[1] + m["seat"] * 0.75 + 4
+    K = st["legs"][1][1]
+    xa, xb = pel[0] - m["ww"] - 14, min(K[0] - 10, pel[0] + m["ww"] + 30)
+    wood, wd = P["wood"], P["wood_dark"]
+    s = ""
+    for x0, x1 in ((xa + 10, xa + 2), (xb - 10, xb - 2), ((xa + xb) / 2, (xa + xb) / 2 + 4)):
+        s += _tube([(x0, seat_y + 6), (x1, g - 3)], 10, wd, ow=3.0)
+    s += (f'<rect x="{fmt(xa - 6)}" y="{fmt(seat_y - 4)}" width="{fmt(xb - xa + 12)}" height="15" rx="6" fill="{wood}" '
+          f'{_st(3.4)}/>')
+    s += _line(f"M{fmt(xa)},{fmt(seat_y + 1)} L{fmt(xb)},{fmt(seat_y + 1)}", w=2.0, col=P["wood_light"])
+    return s
+
+
+def _jacob_coat_front(D, kind, progress):
+    def front(st):
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        PR = _prp()
+        if kind == "give":         # holding the new coat up by its shoulders to show it
+            cx, top = (W0[0] + W1[0]) / 2, min(W0[1], W1[1]) + 4
+            k = 0.64
+            s = f'<g transform="translate({fmt(cx)},{fmt(top)}) scale({k:.3f})">{PR._coat_shape("held", progress=progress)}</g>'
+            return s + _fist(W0, hr, D["skin"], 0, 1) + _fist(W1, hr, D["skin"], 0, 1)
+        # cry: the torn, dirty coat held to his chest, hanging over his knees
+        c = ((W0[0] + W1[0]) / 2, min(W0[1], W1[1]) - 4)
+        s = (f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate(-8) scale(0.42)">'
+             f'{PR._coat_shape("held", torn=True, dirty=True)}</g>')
+        return s + _fist(W0, hr, D["skin"], 0, 0) + _fist(W1, hr, D["skin"], 0, 0)
+    return front
+
+
+def _jacob_design(pose, staff, stool, progress):
+    robe = JACOB_ROBE
+    D = dict(robe=robe, sleeve=robe, hem_col="#d9b25a", cuff="#d9b25a", hem_w=10, skin="#e2a882", leg="#e2a882",
+             hem=0.93, hair="#e4ddd0", hair_style="short", beard=("long", "#efeae2"), shawl="#e8d6aa",
+             shawl_trim="#5f7f9a", hat=("custom", _jacob_hat), tail=("#efe6d2", JACOB_ROBE), ears=False,
+             brow_w=5.0, brow_col="#9a9088", rope_belt=None)
+    if pose == "give":
+        D["front"] = _jacob_coat_front(D, "give", progress)
+    elif pose == "cry":
+        D["front"] = _jacob_coat_front(D, "cry", progress)
+    elif pose == "sit" and stool:
+        D["behind"] = _jacob_stool
+    elif staff and pose in ("stand", "walk_a", "walk_b", "talk", "sad", "bless"):
+        D["front"] = _staff_near(D)
+    return D
+
+
+_JC = {
+    "stand": _P(t=8, arms=(("fk", 14, 8), ("fk", 30, 72)), expr="kind"),
+    "walk_a": _P(t=10, legs=((24, 8), (-20, -34)), arms=(("fk", -40, -30), ("fk", 30, 72)), expr="kind"),
+    "walk_b": _P(t=10, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 44), ("fk", 30, 72)), expr="kind"),
+    "talk": _P(t=8, arms=(("fk", 26, 74), ("fk", 30, 72)), hands=("open", "fist"), expr="happy"),
+    "sad": _P(t=12, h=22, arms=(("fk", 6, 2), ("fk", 30, 72)), expr="sad"),
+    "bless": _P(t=6, h=-4, arms=(("fk", 84, 140), ("fk", 30, 72)), hands=("palm", "fist"), expr="kind"),
+    "sit": dict(POSES["king_sit_stool"], expr="kind"),
+    "give": _P(t=4, h=-2, legs=((10, 3), (-8, -3)), arms=(("ik", "abs", 168, -214, 1), ("ik", "abs", 70, -220, 1)),
+               hands=("none", "none"), expr="happy", look=(0.03, -0.02)),
+    "cry": _P(t=14, h=18, legs=(("ik", 80, 1), ("ik", 92, 1)),
+              arms=(("ik", "torso", 1.40, 1.0, 1), ("ik", "torso", 1.20, 0.95, 1)), hands=("none", "none"),
+              expr="crying", **_SEATED),
+    "hug": dict(_JS["hug"], expr="tearful"),
+    "open_arms": dict(_JS["open_arms"], expr="tearful"),
+}
+
+
+def jacob(x, y, scale=1.0, facing=1, pose="stand", expr=None, staff=True, stool=True, progress=1.0, marks=True):
+    """Jacob (Israel), Joseph's old father: long white beard, plum robe, striped shawl, staff (see module doc)."""
+    _check_js(pose, JACOB_POSES + ("walk",), "jacob")
+    _check_js_expr(expr, "jacob")
+    pose = "walk_a" if pose == "walk" else pose
+    ps = dict(_JC[pose])
+    if not staff and pose in ("stand", "walk_a", "walk_b", "talk", "sad", "bless"):
+        ps["arms"] = (ps["arms"][0], ("fk", 10, 6) if pose != "bless" else ("fk", 10, 6))
+    D = _jacob_design(pose, staff, stool, _clamp01(progress))
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _JACOB_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"jacob-{pose}")
+
+
+# ---------------------------------------------------------------- the brothers and Benjamin
+BROTHER_POSES = ("stand", "walk_a", "walk_b", "run_a", "run_b", "talk", "point", "cross_arms", "whisper", "pull",
+                 "bow", "kneel_pray", "hug", "sad", "scared", "cheer", "carry", "carry_walk_a", "carry_walk_b")
+BROTHER_NAMES = ("Reuben", "Simeon", "Levi", "Judah", "Dan", "Naphtali", "Gad", "Asher", "Issachar", "Zebulun")
+_BROTHERS = [
+    dict(robe="#6f8f5a", trim="#e3d2a6", skin="#dca57c", hair="#3a2618", beard=("full", "#3a2618"),
+         hat=("headcloth", "#ece0c4", "#6f8f5a"), tail=("#ece0c4", "#6f8f5a"), shawl="#e3d2a6"),
+    dict(robe="#9a4a3c", trim="#e0b25a", skin="#c98f68", hair="#241b17", beard=("short", "#241b17"),
+         hat=("wrap", "#e0b25a", "#a8743c")),
+    dict(robe="#4e6d92", trim="#e6d6b2", skin="#d9a37a", hair="#2f2420", beard=("stubble", "#2f2420"),
+         hat=("headband", "#c0533a")),
+    dict(robe="#b8873c", trim="#7a4a2a", skin="#d39a72", hair="#5a3a24", beard=("full", "#5a3a24"),
+         hat=("headcloth", "#efe2c4", "#7a4a2a"), tail=("#efe2c4", "#7a4a2a"), shawl="#7a4a2a"),
+    dict(robe="#7a5a3e", trim="#5fa8a6", skin="#c68a62", hair="#2a201b", beard=("pointed", "#2a201b"),
+         hat=("wrap", "#5fa8a6", "#3b7d7b")),
+    dict(robe="#5f8a85", trim="#e0a23c", skin="#dca57c", hair="#3a2a22", beard=("short", "#3a2a22"),
+         hat=("headband", "#e0a23c")),
+    dict(robe="#8a6a9a", trim="#ead9b4", skin="#e2a77e", hair="#4a2f1f", beard=("full", "#4a2f1f"),
+         hat=("headcloth", "#ead9b4", "#8a6a9a"), tail=("#ead9b4", "#8a6a9a"), shawl="#ead9b4"),
+    dict(robe="#c4704a", trim="#efe2c4", skin="#b07a52", hair="#241b17", beard=("stubble", "#241b17"),
+         hat=("wrap", "#efe2c4", "#c4704a")),
+    dict(robe="#6a7a4a", trim="#d9a03c", skin="#d39a72", hair="#4a3020", beard=("short", "#4a3020"),
+         hat=("headband", "#d9a03c")),
+    dict(robe="#a65a6a", trim="#e9dcc0", skin="#e2a77e", hair="#3a2618", beard=("stubble", "#3a2618"), hat=None),
+]
+BENJAMIN_TUNIC = "#88b5c9"
+
+
+def _brother_design(variant, pose, staff):
+    if variant == "benjamin":
+        t = BENJAMIN_TUNIC
+        D = dict(robe=t, sleeve=t, hem_col=shade(t, -0.2), hem_w=7, skin=JOSEPH_SKIN, leg=JOSEPH_SKIN, hem=0.56,
+                 flare_k=0.9, sleeve_len=0.55, rope_belt=CORD, hair=JOSEPH_HAIR, hair_style="curly",
+                 hat=("custom", _joseph_curls), hat_h=0.12, neck_v=shade(t, 0.3))
+        return D
+    v = _BROTHERS[int(variant) % 10]
+    robe = v["robe"]
+    D = dict(robe=robe, sleeve=robe, hem_col=v["trim"], cuff=v["trim"], hem_w=10, skin=v["skin"], leg=v["skin"],
+             hem=0.80, flare_k=0.9, sleeve_len=0.62, rope_belt="#8b6a45", hair=v["hair"], hair_style="curly",
+             beard=v["beard"], neck_v=v["trim"], sandal=SANDAL)
+    if v.get("hat"):
+        D["hat"] = v["hat"]
+    if v.get("tail"):
+        D.update(tail=v["tail"], ears=False)
+    if v.get("shawl"):
+        D.update(shawl=v["shawl"], shawl_trim=shade(v["shawl"], -0.25))
+    if staff:
+        D["front"] = _staff_near(D)
+    return D
+
+
+_BR = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", 40, 76))),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -46, -36), ("fk", 40, 76))),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 46), ("fk", 40, 76))),
+    "talk": _P(h=-2, arms=(("fk", 26, 74), ("fk", 40, 76)), hands=("open", "fist"), expr="happy"),
+}
+_BR_NATURAL = {"stand": "neutral", "walk_a": "neutral", "walk_b": "neutral", "point": "angry", "pull": "determined",
+               "bow": "worried", "kneel_pray": "peaceful", "hug": "tearful", "sad": "ashamed", "run_a": "worried",
+               "run_b": "worried", "carry": "neutral", "carry_walk_a": "neutral", "carry_walk_b": "neutral",
+               "talk": "neutral"}
+
+
+def brothers(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, staff=None, item="sack", marks=True):
+    """One of Joseph's brothers: variant 0-9 = the ten older brothers (bearded shepherds), 'benjamin' = the
+    youngest, a small boy (see module doc, 'JOSEPH FILM'). brother() is the same function."""
+    _check_js(pose, BROTHER_POSES + ("walk",), "brothers")
+    _check_js_expr(expr, "brothers")
+    if variant != "benjamin" and not isinstance(variant, int):
+        raise ValueError(f"brothers: variant must be 0-9 or 'benjamin', not {variant!r}")
+    pose = "walk_a" if pose == "walk" else pose
+    ben = variant == "benjamin"
+    if staff is None:
+        staff = not ben and pose in _BR
+    use_staff = staff and pose in _BR and not ben
+    D = _brother_design(variant, pose, use_staff)
+    if pose.startswith("carry"):
+        ps = _carry_pose(pose, item)
+        D["behind"], D["mid"], D["front"] = _carry_hooks(D, pose, item)
+    elif use_staff:
+        ps = dict(_BR[pose])
+    else:
+        ps = dict(_JS.get(pose) or POSES[pose])
+    if pose == "bow":
+        ps = _js_pose("kneel_bow")
+    ps["expr"] = _BR_NATURAL.get(pose, ps["expr"])
+    if ben and pose in ("stand", "walk_a", "walk_b", "talk"):
+        ps["expr"] = "happy"
+    e = expr or ps["expr"]
+    m = _CHILD if ben else _metrics(_ADULT, 1.0 + 0.012 * (int(variant) % 5 - 2), 1.0 + 0.03 * (int(variant) % 3 - 1))
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"brother{variant}-{pose}")
+
+
+brother = brothers
+
+# (variant, dx, dy, facing) at scale 1: back row (drawn first, 34 px higher, 0.96 x) then the front row
+_BR_GROUP = [(4, -330, -34, 1), (8, -165, -34, 1), (1, 0, -36, 1), (5, 165, -34, -1), (9, 330, -34, -1),
+             (6, -410, 0, 1), (2, -245, 0, 1), (0, -82, 0, 1), (3, 82, 0, -1), (7, 245, 0, -1)]
+BROTHERS_GROUP_POSES = ("stand", "talk", "cross_arms", "point", "bow", "kneel_pray", "sad", "scared", "hug", "cheer",
+                        "walk_a", "walk_b", "run_a", "run_b", "carry_walk_a", "carry_walk_b", "whisper")
+
+
+def brothers_group(x, y, scale=1.0, facing=1, pose="stand", n=10, expr=None, gap=150, exprs=None, marks=True):
+    """The ten older brothers together (see module doc): a group in two rows, or a line for walk / run poses."""
+    _check_js(pose, BROTHERS_GROUP_POSES, "brothers_group")
+    sx = 1 if facing >= 0 else -1
+    n = max(1, min(10, int(n)))
+    out = ""
+    if pose.startswith(("walk", "run", "carry_walk")):
+        other = {"walk_a": "walk_b", "walk_b": "walk_a", "run_a": "run_b", "run_b": "run_a",
+                 "carry_walk_a": "carry_walk_b", "carry_walk_b": "carry_walk_a"}[pose]
+        for i in reversed(range(n)):
+            p_ = pose if i % 2 == 0 else other
+            e = (exprs[i % len(exprs)] if exprs else expr)
+            out += brothers(x - sx * i * gap * scale, y, scale, facing, variant=i, pose=p_, expr=e, marks=marks)
+        return f'<g data-who="brothers_group-{pose}">{out}</g>'
+    if pose in ("bow", "kneel_pray"):          # kneeling: two staggered rows, everybody facing the same way
+        for i in reversed(range(n)):
+            back = i % 2 == 1
+            dx = (-460 + 230 * (i // 2)) + (115 if back else 0)
+            e = (exprs[i % len(exprs)] if exprs else expr)
+            out += brothers(x + sx * dx * scale, y - (40 if back else 0) * scale, scale * (0.96 if back else 1.0), sx,
+                            variant=i, pose=pose, expr=e, marks=marks)
+        return f'<g data-who="brothers_group-{pose}">{out}</g>'
+    members = [g for g in _BR_GROUP if g[0] < n] if n < 10 else _BR_GROUP
+    for v, dx, dy, f in members:
+        p_ = pose
+        if pose == "whisper":
+            p_ = "whisper" if f > 0 else "cross_arms"
+        e = (exprs[v % len(exprs)] if exprs else expr)
+        k = 0.96 if dy < 0 else 1.0
+        out += brothers(x + sx * dx * scale, y + dy * scale, scale * k, f * sx, variant=v, pose=p_, expr=e, marks=marks)
+    return f'<g data-who="brothers_group-{pose}">{out}</g>'
+
+
+# ---------------------------------------------------------------- Pharaoh
+PHARAOH_POSES = ("stand", "walk_a", "walk_b", "talk", "sit_throne", "sleep", "point", "give_ring", "amazed", "worried")
+
+
+def _pharaoh_head(R):
+    return _nemes(R, GOLD, LAPIS, GOLD_DARK, cobra=True) + _false_beard(R) + _eyeliner(R)
+
+
+def _pharaoh_design(pose, throne):
+    skin = PHARAOH_SKIN
+    D = dict(robe=LINEN, sleeve=skin, sleeve_len=0.0, skin=skin, leg=skin, hem=0.92, hem_col=GOLD, hem_w=8,
+             flare_k=1.0, ears=False, hat=("custom", _pharaoh_head), hat_h=0.24, sandal=GOLD_DARK,
+             robe_deco=_pleat_deco(shade(LINEN, -0.22), 9), arm_deco=_armbands())
+    D["mid"] = _bare_chest(skin, GOLD, apron="#e8c25a", collar=(GOLD, LAPIS, CARNELIAN))
+    if pose == "sit_throne" and throne:
+        def behind(st):
+            pel, g = st["pel"], st["ground"]
+            return f'<g transform="translate({fmt(pel[0])},{fmt(g)})">{_prp()._egypt_throne()}</g>'
+        D["behind"] = behind
+    if pose == "give_ring":
+        def front(st):
+            W, hr = st["arms"][1][2], st["m"]["hr"]
+            return (f'<g transform="translate({fmt(W[0] + 6)},{fmt(W[1] - 10)}) scale(0.32)">{_prp()._signet_ring()}</g>'
+                    + _fist(W, hr, skin, 0, 2))
+        D["front"] = front
+    return D
+
+
+def pharaoh(x, y, scale=1.0, facing=1, pose="stand", expr=None, throne=True, marks=True):
+    """Pharaoh, king of Egypt: blue-gold striped nemes with a cobra, false beard, broad collar, white pleated
+    kilt-robe (see module doc, 'JOSEPH FILM')."""
+    _check_js(pose, PHARAOH_POSES + ("walk",), "pharaoh")
+    _check_js_expr(expr, "pharaoh")
+    pose = "walk_a" if pose == "walk" else pose
+    ps = _js_pose(pose)
+    if pose in ("stand", "walk_a", "walk_b", "sit_throne"):
+        ps["expr"] = "neutral"
+    D = _pharaoh_design(pose, throne)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _PHARAOH_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"pharaoh-{pose}")
+
+
+# ---------------------------------------------------------------- Egyptians
+EGYPTIAN_KINDS = ("servant", "guard", "wise", "potiphar", "woman", "cupbearer", "baker")
+EGYPTIAN_POSES = ("stand", "walk_a", "walk_b", "talk", "point", "bow", "kneel_bow", "shrug", "carry", "carry_walk_a",
+                  "carry_walk_b", "lead", "lead_b", "give", "sit", "sad", "cheer", "amazed", "worried")
+_EG_KILT = ["#e9d39a", "#c9533f", "#3f6fa8", "#6f8a45"]          # belts / aprons per variant
+_EG_WISE = [dict(robe="#2f4f7f", pat=("#e8c25a", "dots")), dict(robe="#8a5a2a", pat=("#f0dca0", "diamond")),
+            dict(robe="#4f6f3f", pat=("#e9d9ae", "flower"))]
+
+
+def _scroll_front(D):
+    def front(st):
+        W0, hr = st["arms"][0][2], st["m"]["hr"]
+        return (f'<rect x="{fmt(W0[0] - 8)}" y="{fmt(W0[1] - 34)}" width="16" height="56" rx="7" fill="{PARCH_ROLL}" '
+                f'{_st(3.0)}/>' + _fist(W0, hr, D["skin"]))
+    return front
+
+
+def _keys_front(D):
+    """A ring of big wooden keys held out (Potiphar trusts Joseph with the house)."""
+    def front(st):
+        W, hr = st["arms"][1][2], st["m"]["hr"]
+        c = (W[0] + 4, W[1] + 18)
+        s = f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="11" fill="none" {_st(7)}/>'
+        s += f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="11" fill="none" {_st(3.2, GOLD)}/>'
+        for ang, ln in ((60, 46), (100, 40), (135, 34)):
+            a = math.radians(ang)
+            p0 = (c[0] + 11 * math.cos(a), c[1] + 11 * math.sin(a))
+            p1 = (p0[0] + ln * math.cos(a), p0[1] + ln * math.sin(a))
+            s += _tube([p0, p1], 6, P["wood_light"], ow=2.4)
+            s += _tube([p1, (p1[0] + 9 * math.cos(a + 1.57), p1[1] + 9 * math.sin(a + 1.57))], 5, P["wood_light"], ow=2.2)
+        return s + _fist(W, hr, D["skin"], 0, 0)
+    return front
+
+
+def _cup_front(D):
+    def front(st):
+        W, hr = st["arms"][1][2], st["m"]["hr"]
+        x, y0 = W[0] + 4, W[1] - 8
+        s = (f'<path d="M{fmt(x - 13)},{fmt(y0 - 22)} L{fmt(x + 13)},{fmt(y0 - 22)} Q{fmt(x + 12)},{fmt(y0 - 4)} {fmt(x)},'
+             f'{fmt(y0 - 2)} Q{fmt(x - 12)},{fmt(y0 - 4)} {fmt(x - 13)},{fmt(y0 - 22)} Z" fill="{GOLD}" {_st(2.6)}/>')
+        s += _ell(x, y0 - 22, 13, 4, "#8a2f4a", sw=2.2)
+        return s + _fist(W, hr, D["skin"], 0, 2)
+    return front
+
+
+def _egyptian_design(kind, variant, prisoner, spear, pose):
+    v = int(variant)
+    skin = EGYPT_SKIN[v % 4]
+    wig = ("custom", lambda R: _bob_wig(R) + _eyeliner(R))
+    if prisoner and kind in ("cupbearer", "baker", "servant"):
+        col = "#b7aa90" if kind != "baker" else "#c9b48a"
+        D = dict(robe=col, sleeve=col, sleeve_len=0.5, skin=skin, leg=skin, hem=0.64, flare_k=0.8,
+                 hem_col=shade(col, -0.18), hem_w=8, rope_belt="#8b6a45", bare=True, neck_v=shade(col, -0.2),
+                 robe_deco=_dust_deco(2 + v), hair=EGYPT_HAIR, hair_style="short")
+        if kind == "baker":
+            D.update(hair=None, hat=("custom", lambda R: _bald(R, skin)), hat_h=0.0)
+        else:
+            D.update(beard=("stubble", "#3a2a22"))
+        return D, (_metrics(_ADULT, 0.98, 1.16) if kind == "baker" else _metrics(_ADULT, 1.0, 0.96))
+    m = _ADULT
+    if kind in ("servant", "guard", "cupbearer", "baker"):
+        D = dict(robe=LINEN, sleeve=skin, sleeve_len=0.0, skin=skin, leg=skin, hem=0.55 if kind != "baker" else 0.62,
+                 flare_k=0.8, hem_col=shade(LINEN, -0.10), hem_w=6, ears=False, hat=wig, hat_h=0.16, bare=True,
+                 robe_deco=_pleat_deco(shade(LINEN, -0.25), 5))
+        belt = _EG_KILT[v % 4]
+        collar = None
+        apron = None
+        strap = None
+        if kind == "guard":
+            D.update(hat=("custom", lambda R: _nemes(R, LINEN, LAPIS, None, lappet=False, stripes=6) + _eyeliner(R)),
+                     hat_h=0.22, sandal=SANDAL_DARK, bare=False)
+            apron, strap = shade(belt, 0.2), LEATHER
+            m = _metrics(_ADULT, 1.02, 1.04)
+        elif kind == "cupbearer":
+            collar = (GOLD, LAPIS, CARNELIAN)
+            D.update(hem=0.80, bare=False, sandal=SANDAL)
+        elif kind == "baker":
+            D.update(hat=("custom", lambda R: _bald(R, skin)), hat_h=0.0, hair=None, hem=0.70)
+            m = _metrics(_ADULT, 0.98, 1.16)
+            apron = "#f2e8d0"
+        D["mid"] = _bare_chest(skin, belt, apron=apron, collar=collar, strap=strap)
+        if kind == "guard" and spear:
+            D["front"] = _spear_front(D)
+        return D, m
+    if kind == "wise":
+        w = _EG_WISE[v % 3]
+        D = dict(robe=w["robe"], sleeve=w["robe"], skin=skin, leg=skin, hem=0.97, flare_k=0.9, hem_col=GOLD, hem_w=9,
+                 cuff=GOLD, pattern=(w["pat"][0], w["pat"][1], 22), sash=GOLD, sash_tail=True, sandal=SANDAL_DARK,
+                 ears=True, hat=("custom", lambda R: _bald(R, skin) + _eyeliner(R)), hat_h=0.0, hair=None,
+                 neck_v=GOLD)
+        D["mid"] = lambda st: _broad_collar(st, (GOLD, LAPIS, "#e8dcc0"), 0.8)    # noqa: E731
+        if v % 3 == 1:
+            D["beard"] = ("pointed", "#e4ddd0")
+        return D, _metrics(_ADULT, 1.0, 1.0)
+    if kind == "potiphar":
+        D = dict(robe=LINEN, sleeve=LINEN, skin="#c98f68", leg="#c98f68", hem=0.95, flare_k=1.1, hem_col=CARNELIAN,
+                 hem_w=10, cuff=CARNELIAN, sash=CARNELIAN, sash_tail=True, sandal=GOLD_DARK, ears=False,
+                 hat=("custom", lambda R: _bob_wig(R, length=0.70) + _eyeliner(R)), hat_h=0.16,
+                 robe_deco=_pleat_deco(shade(LINEN, -0.22), 7))
+        D["mid"] = lambda st: _broad_collar(st, (GOLD, LAPIS, CARNELIAN), 1.1)     # noqa: E731
+        return D, _metrics(_ADULT, 1.02, 1.24)
+    # woman
+    dress = LINEN
+    band = (LAPIS, CARNELIAN, "#3b8b89", GOLD)[v % 4]
+    D = dict(robe=dress, sleeve=skin, sleeve_len=0.0, skin=skin, leg=skin, hem=1.0, flare_k=0.55, hem_col=band,
+             hem_w=7, sandal=SANDAL, ears=False, sash=band, sash_tail=True,
+             hat=("custom", lambda R: _bob_wig(R, length=1.45, band=band) + _eyeliner(R)), hat_h=0.16,
+             robe_deco=_pleat_deco(shade(LINEN, -0.2), 5))
+    D["mid"] = lambda st: _broad_collar(st, (GOLD, band, "#e8dcc0"), 0.85)        # noqa: E731
+    return D, _metrics(_ADULT, 0.95, 0.88)
+
+
+def egyptian(x, y, scale=1.0, facing=1, kind="servant", variant=0, pose="stand", expr=None, prisoner=False,
+             spear=None, item="sack", marks=True):
+    """Egyptians (servants, guards, wise men, Potiphar, women, the cupbearer and the baker), see module doc."""
+    if kind not in EGYPTIAN_KINDS:
+        raise ValueError(f"egyptian: unknown kind {kind!r}; choose from {EGYPTIAN_KINDS}")
+    _check_js(pose, EGYPTIAN_POSES + ("walk",), "egyptian")
+    _check_js_expr(expr, "egyptian")
+    pose = "walk_a" if pose == "walk" else pose
+    if spear is None:
+        spear = kind == "guard" and pose in ("stand", "walk_a", "walk_b")
+    D, m = _egyptian_design(kind, variant, prisoner, spear, pose)
+    if pose.startswith("carry"):
+        ps = _carry_pose(pose, item)
+        b, mi, fr = _carry_hooks(D, pose, item)
+        D["behind"], D["mid"], D["front"] = b, _hooks(D.get("mid"), mi), fr
+    elif pose == "bow":
+        ps = _js_pose("kneel_bow")
+        ps["expr"] = "peaceful"
+    elif kind == "guard" and spear and pose in ("stand", "walk_a", "walk_b"):
+        ps = dict(POSES[_GUARD_ALIAS[pose]])
+    elif kind == "guard" and pose in ("lead", "lead_b"):
+        ps = _js_pose(pose)
+        far = _spear_front(D)
+
+        def spear_far(st):           # the spear in the far hand, behind the body
+            st2 = dict(st, arms=[st["arms"][1], st["arms"][0]])
+            return far(st2)
+        D["behind"] = spear_far
+        D["front"] = None
+    else:
+        ps = _js_pose(pose)
+    if pose == "give":
+        D["front"] = _keys_front(D) if kind == "potiphar" else (_cup_front(D) if kind == "cupbearer" else None)
+    elif pose == "stand" and kind == "cupbearer" and not prisoner:
+        ps = _P(arms=(("fk", 14, 8), ("fk", 40, 90)), expr="neutral")
+        D["front"] = _cup_front(D)
+    elif pose in ("stand", "shrug") and kind == "wise" and int(variant) % 3 == 0 and pose == "stand":
+        D["front"] = _scroll_front(D)
+    if pose == "shrug" and marks:
+        D["front"] = _hooks(D.get("front"), lambda st: _question_mark(st["Hc"], st["m"]["R"]))
+    if kind == "potiphar" and pose in ("stand", "walk_a", "walk_b", "talk", "give", "point"):
+        ps["expr"] = "happy"
+    elif pose in ("stand", "walk_a", "walk_b", "lead", "lead_b") and ps["expr"] == "neutral":
+        ps["expr"] = "neutral"
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"egyptian-{kind}{variant}-{pose}")
+
+
+# ---------------------------------------------------------------- the Ishmaelite traders
+TRADER_POSES = ("stand", "walk_a", "walk_b", "talk", "lead", "lead_b", "give", "count", "point")
+_TRADERS = [dict(robe="#c9a46a", stripe="#8a5a3a", cloth="#f0e6cc", cord="#3a2a22", skin="#b07a52", beard="#2a201b"),
+            dict(robe="#7f9a8a", stripe="#e8d6aa", cloth="#d9534a", cord="#2a201b", skin="#c68a62", beard="#4a3020"),
+            dict(robe="#b8674a", stripe="#f0d890", cloth="#efe2c4", cord="#5a3a24", skin="#a46b47", beard="#2a201b")]
+
+
+def _coins_front(D, n=3):
+    def front(st):
+        W, hr = st["arms"][1][2], st["m"]["hr"]
+        s = ""
+        for k in range(n):
+            s += _prp()._coin(W[0] + 6 + 4 * k, W[1] - 10 - 7 * k, 9)
+        return s + _fist(W, hr, D["skin"], 0, 2)
+    return front
+
+
+def _pouch_front(D):
+    def front(st):
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        c = ((W0[0] + W1[0]) / 2, (W0[1] + W1[1]) / 2 + 14)
+        s = f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) scale(0.55)">{_prp()._coin_pouch(open_=True)}</g>'
+        s += _prp()._coin(W0[0] + 4, W0[1] - 8, 9)
+        return s + _fist(W0, hr, D["skin"]) + _fist(W1, hr, D["skin"])
+    return front
+
+
+def trader(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, marks=True):
+    """An Ishmaelite spice trader (Gen 37:25-28), variant 0-2 (see module doc)."""
+    _check_js(pose, TRADER_POSES + ("walk",), "trader")
+    _check_js_expr(expr, "trader")
+    pose = "walk_a" if pose == "walk" else pose
+    v = _TRADERS[int(variant) % 3]
+    D = dict(robe=v["robe"], sleeve=v["robe"], hem_col=v["stripe"], cuff=v["stripe"], hem_w=10, skin=v["skin"],
+             leg=v["skin"], hem=0.94, flare_k=1.0, stripes=(v["stripe"], 26, 7), sash="#8a3c3c", sash_tail=True,
+             hair=v["beard"], hat=("custom", lambda R: _trader_cloth(R, v["cloth"], v["cord"])), hat_h=0.12,
+             tail=(v["cloth"], None), ears=False, beard=("full", v["beard"]), sandal=SANDAL_DARK)
+    ps = _js_pose(pose if pose != "give" else "give")
+    if pose == "give":
+        ps = _P(t=4, legs=((8, 3), (-7, -3)), arms=(("fk", 12, 6), ("fk", 68, 86)), hands=("fist", "none"), expr="happy")
+        D["front"] = _coins_front(D)
+    elif pose == "count":
+        D["front"] = _pouch_front(D)
+    if pose in ("stand", "walk_a", "walk_b", "talk", "lead", "lead_b"):
+        ps["expr"] = "happy"
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _metrics(_ADULT, 1.0, 1.04), ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"trader{int(variant) % 3}-{pose}")
+
+
+# ---------------------------------------------------------------- two figures hugging
+def hug_pair(x, y, scale=1.0, facing=1, a=None, b=None, gap=95):
+    """Two people hugging. a = (fn, kwargs) stands at x facing ``facing``; b = (fn, kwargs) stands gap*scale in
+    front of a, facing back. Both get pose='hug' unless their kwargs say otherwise. b is drawn first, then a,
+    whose arms come round b's shoulders. Default: Joseph (ruler, tearful) hugging Jacob."""
+    a = a or (joseph, dict(attire="ruler", expr="tearful"))
+    b = b or (jacob, dict(expr="tearful"))
+    sx = 1 if facing >= 0 else -1
+    ka, kb = dict(a[1]), dict(b[1])
+    ka.setdefault("pose", "hug")
+    kb.setdefault("pose", "hug")
+    out = b[0](x + sx * gap * scale, y, scale, -sx, **kb)
+    out += a[0](x, y, scale, sx, **ka)
+    return f'<g data-who="hug_pair">{out}</g>'
+
+
+# ---------------------------------------------------------------- the modern siblings (child(sibling=...))
+SIBLINGS = ("big", "little")
+SIBLING_POSES = ("tug", "sulk", "sorry", "hug", "share")
+_SIB_POSES = {
+    "tug": _P(t=-18, drop=8, legs=(("ik", 40, 0), ("ik", -16, 1)), arms=(("ik", "abs", 74, -108, 1), ("ik", "abs", 58, -102, 1)),
+              expr="cross"),
+    "sulk": _P(flip=True, h=14, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", -0.15, 0.60, 1), ("ik", "torso", 1.25, 0.56, 1)),
+               far_front=True, expr="cross"),
+    "sorry": _P(h=20, arms=(("ik", "torso", -1.30, 0.30, -1), ("ik", "torso", -1.30, 0.30, -1)), hands=("none", "fist"),
+                expr="sorry"),
+    "hug": _P(t=6, h=4, legs=((8, 3), (-7, -3)), arms=(("ik", "abs", 64, -152, 1), ("ik", "abs", 54, -140, 1)),
+              hands=("open", "open"), expr="happy"),
+    "share": _P(t=4, h=8, arms=(("ik", "body", 44, -36, 1), ("ik", "body", 26, -32, 1)), hands=("none", "none"),
+                expr="kind", look=(0.03, 0.04)),
+}
+SIB_DRESS = "#e8786a"
+SIB_SHIRT = "#5fa3c9"
+SIB_SHORTS = "#3f5f8a"
+
+
+def _sister_hair(R, col="#6a3f24"):
+    """Big sister: a bouncy ponytail at the back with a yellow ribbon, a side-swept fringe."""
+    s = (f'<path d="{smooth_path([(-0.80 * R, -0.62 * R), (-1.30 * R, -0.70 * R), (-1.62 * R, -0.30 * R), (-1.55 * R, 0.30 * R), (-1.30 * R, 0.10 * R), (-1.10 * R, -0.25 * R)])}" '
+         f'fill="{col}" {_st(3.2)}/>')
+    s += _line(f"M{fmt(-1.25 * R)},{fmt(-0.50 * R)} Q{fmt(-1.45 * R)},{fmt(-0.25 * R)} {fmt(-1.42 * R)},{fmt(0.10 * R)}", w=2.0,
+               col=shade(col, 0.3))
+    s += _ell(-0.96 * R, -0.62 * R, 0.14 * R, 0.20 * R, "#f2c84b", sw=2.6, extra='transform="rotate(30)"')
+    s += _ell(-0.96 * R, -0.62 * R, 0.06 * R, 0.06 * R, shade("#f2c84b", -0.3))
+    s += (f'<path d="M{fmt(0.92 * R)},{fmt(-0.42 * R)} Q{fmt(0.55 * R)},{fmt(-0.30 * R)} {fmt(0.15 * R)},{fmt(-0.46 * R)} '
+          f'Q{fmt(0.50 * R)},{fmt(-0.70 * R)} {fmt(0.92 * R)},{fmt(-0.42 * R)} Z" fill="{col}" {_st(2.4)}/>')
+    return s
+
+
+def _sibling_design(sibling):
+    if sibling == "big":          # big sister (~7): coral dress with a cream collar, ponytail with a yellow ribbon
+        c = SIB_DRESS
+        D = dict(robe=c, sleeve=c, sleeve_len=0.45, hem_col=shade(c, -0.15), hem_w=7, skin="#f0c09a", leg="#f0c09a",
+                 hem=0.56, flare_k=1.25, hair="#6a3f24", hair_style="short", sandal="#d4523f", neck_v="#f6ecd8",
+                 hat=("custom", _sister_hair), hat_h=0.1)
+        def mid(st):
+            tp, m = st["tp"], st["m"]
+            p = tp(0.35 * m["ww"], -0.15 * m["T"])
+            return (f'<rect x="{fmt(p[0] - 8)}" y="{fmt(p[1] - 7)}" width="16" height="13" rx="3" fill="{shade(c, 0.25)}" '
+                    f'{_st(2.2)}/>')
+        D["mid"] = mid
+        return D, _metrics(_CHILD, 1.07, 1.0)
+    c = SIB_SHIRT                # little brother (~4): striped t-shirt, navy shorts, sneakers
+    D = dict(robe=c, sleeve=c, sleeve_len=0.42, hem_col=shade(c, -0.12), hem_w=6, skin="#f2c29c", leg="#f2c29c",
+             hem=0.30, flare_k=0.9, hair="#8a5a34", hair_style="curly", sandal="#e8e2d6", neck_v=shade(c, 0.35),
+             stripes=("#f2c84b", 16, 6))
+
+    def legwear(st, i):
+        H, K, A, a1, a2 = st["legs"][i]
+        return _tube([H, _lerp(H, K, 0.92)], st["m"]["lw"] + 10, SIB_SHORTS if i else shade(SIB_SHORTS, -0.15), ow=3.2)
+    D["legwear"] = legwear
+    return D, _metrics(_CHILD, 0.92, 1.0)
+
+
+def _toy_front(D, kind, pose):
+    def front(st):
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        PR = _prp()
+        if pose == "share":       # held out in both hands
+            cx, yy = (W0[0] + W1[0]) / 2 + 8, max(W0[1], W1[1]) + (40 if kind == "horse" else 30)
+            s = f'<g transform="translate({fmt(cx)},{fmt(yy)}) scale(0.5)">{PR._toy(kind)}</g>'
+            return s + _fist(W0, hr, D["skin"], 0, 1) + _fist(W1, hr, D["skin"], 0, 1)
+        if pose == "tug":         # gripped by the head / the near side, the toy reaching out in front
+            cx, yy = W0[0] + (26 if kind == "horse" else 22), W0[1] + (42 if kind == "horse" else 28)
+            s = f'<g transform="translate({fmt(cx)},{fmt(yy)}) scale(0.5)">{PR._toy(kind)}</g>'
+            return s + _fist(W0, hr, D["skin"]) + _fist(W1, hr, D["skin"])
+        W = W1                    # other poses: hanging from the near hand / tucked under the arm
+        s = f'<g transform="translate({fmt(W[0] + 4)},{fmt(W[1] + 34)}) scale(0.42)">{PR._toy(kind)}</g>'
+        return s + _fist(W, hr, D["skin"])
+    return front
+
+
+def _child_joseph(x, y, scale, facing, pose, expr, hood, boots, coat, phase, marks, sibling, toy):
+    """child() with the Joseph-film options (sibling outfits, the new poses, the toy)."""
+    if pose not in CHILD_POSES + SIBLING_POSES:
+        raise ValueError(f"child: unknown pose {pose!r}; choose from {CHILD_POSES + SIBLING_POSES}")
+    if expr is not None and expr not in EXPRS:
+        raise ValueError(f"child: unknown expr {expr!r}; choose from {tuple(EXPRS)}")
+    if sibling is not None and sibling not in SIBLINGS:
+        raise ValueError(f"child: unknown sibling {sibling!r}; choose from {SIBLINGS}")
+    if toy is not None and toy not in ("horse", "ball"):
+        raise ValueError(f"child: toy must be None, 'horse' or 'ball', not {toy!r}")
+    if pose == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * phase)
+        ps = _P(h=-4, arms=(("fk", 146, f), ("fk", -10, -4)), hands=("open", "fist"), expr="happy")
+    elif pose in _SIB_POSES:
+        ps = dict(_SIB_POSES[pose])
+    else:
+        ps = dict(_CH_POSES[pose])
+    if sibling is None:
+        D, m = _child_design(ps["legs"], hood, boots, coat or CHILD_COAT), _CHILD
+    else:
+        D, m = _sibling_design(sibling)
+    if toy and pose in ("share", "tug", "stand", "walk_a", "walk_b", "sulk"):
+        if pose in ("stand", "walk_a", "walk_b"):
+            ps["arms"] = (ps["arms"][0], ("fk", 10, 30))
+        D["front"] = _toy_front(D, toy, pose)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    if pose == "jump":
+        inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
+    return _wrap_out(inner, x, y, scale, facing, f"child{'-' + sibling if sibling else ''}-{pose}")

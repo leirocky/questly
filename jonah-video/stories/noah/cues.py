@@ -1129,10 +1129,10 @@ def inside(c):
     a.pad(["vla", "vln2", "vln1"], 3, 55, 72, vel=36, bass_part="vc", bass_lo=39, bass_hi=51)
     a.pad(["trem_va", "trem_va"], 2, 50, 65, vel=34, q0=6, bass_ref=(39, 51))
     a.duck(2.0, parts=["celesta", "harp"])
-    a.expr(["celesta"], [(0, -18), (1.5, -10), (12, -10)])
-    a.expr(["harp"], [(0, -18), (1.5, -10), (12, -10)])
-    a.expr(["pz_hi"], [(0, -14), (12, -14)])
-    a.expr(["vla", "vln2", "vln1", "vc"], [(0, -22), (2, -16), (12, -16)])
+    a.expr(["celesta"], [(0, -24), (2, -10), (12, -10)])
+    a.expr(["harp"], [(0, -24), (2, -10), (12, -10)])
+    a.expr(["pz_hi"], [(0, -20), (1.5, -14), (12, -14)])   # raindrops fade in after the dip to black
+    a.expr(["vla", "vln2", "vln1", "vc"], [(0, -28), (3, -16), (12, -16)])
     a.expr(["trem_va"], [(6, -24), (9, -17), (12, -20)])
     # but God remembered Noah, and every animal in the ark: the horn, a choir 'ooh', the lullaby goes on
     g.mel("horn", "G3:1 Bb3:1 Eb4:1 | D4:3", vel=54)

@@ -1,4 +1,4 @@
-"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David and Noah picture-book videos.
+"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David, Noah and Joseph picture-book videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -643,6 +643,141 @@ RENDER COST (2112 x 1188 layer, uncached): ark ~1.2 s, noah_family ~1.0 s, an an
 rain (intensity 1, full stage) ~1.6 s, ararat ~1.5 s, rainbow ~2 s - same range as the existing library; quantise
 every option into a small flipbook (see RENDERING COST above).
 
+10. JOSEPH FILM (Genesis 37-50)              sheets: python3 tools/props_sheet.py joseph_items joseph_animals joseph_egypt
+-------------------------------                     (+ characters_joseph_group.png: pit, chariot, caravan with people)
+Person scale as everywhere (adult 330 px). Joseph, Jacob, the brothers, Pharaoh, Egyptians, traders and the modern
+siblings are in art/characters.py (JOSEPH FILM). God is never drawn as a person; nothing violent is ever shown: the pit is
+dry, the coat is only torn and dirty, the prison is plain.
+THE COAT, THE DREAMS
+coat_of_colours(x, y, scale=1.0, facing=1, state='held', torn=False, dirty=False, progress=1.0, rot=0.0)
+    The coat of many colours on its own: a long-sleeved robe in bold bands (COAT_BANDS = red, yellow, blue, green,
+    purple, orange, the same colours as characters.joseph's coat) on a cream base (COAT_BASE). progress 0..1 reveals the
+    colours one at a time exactly like joseph(progress=...) (colour k at (k+1)/6). state:
+      'held'    hanging, front view; Anchor: the TOP CENTRE (the neck, where hands hold it up) (-128, -2, 127, 264)
+      'lying'   laid flat on the ground (hem toward facing); Anchor: bottom centre (-134, -104, 132, 3)
+      'folded'  a neat folded stack; Anchor: bottom centre (-81, -57, 80, 12)
+      'bundle'  crumpled up (in someone's arms / thrown down); Anchor: centre (-115, -84, 100, 86)
+    torn=True ragged hem, a torn short sleeve, a dark rip (no blood ever); dirty=True brown dirt smudges (37:31-33).
+    (characters.jacob(pose='give' / 'cry') draws it in his hands.)
+wheat_sheaf(x, y, scale=1.0, facing=1, bow=0.0, rise=1.0, glow=0.0, ripe=1.0, kind='standing', seed=0)
+    Anchor: bottom centre (the cut stalk ends on the ground). A bound sheaf of golden wheat: spreading stalk ends, a
+    twisted straw tie at y=-92, a fan of ears up to ~-245. BBox standing (-78, -249, 76, 3).
+      bow 0..1   the top bends toward facing at the tie (up to 62 deg) and the bundle leans 8 deg: the brothers' sheaves
+                 bowing (bow=1 (-42, -209, 168, 5)); give each a facing toward Joseph's sheaf.
+      rise 0..1  0 lying on its side .. 1 standing up (rotates about the cut ends): 'my sheaf rose and stood upright'.
+      glow 0..1  a soft golden halo behind it (Joseph's sheaf) (-139, -306, 138, 5).
+      ripe 0..1  green (0) .. golden (1).  kind='bundle': a sheaf lying on the field (-130, -130, 122, 24).
+    Quantise bow / rise in steps of ~0.1-0.125.
+dream_bubble(x, y, w=600, h=380, tail=None, inner='', pop=1.0, fill='#fbf6ea', glow=True, seed=0)
+    ABSOLUTE stage coordinates (centre x, y; size w x h). A soft cloud-shaped dream frame (scalloped edge, umber outline,
+    a golden glow behind), three shrinking circles trailing toward tail=(tx, ty) (the sleeper's head), and ``inner``
+    (markup in stage coordinates, e.g. cows, sheaves, a vine) CLIPPED to the cloud. pop 0..1 grows it from its centre
+    (ease in ~0.5 s; quantise 0, .25, .5, .75, 1). BBox about (x - w/2 - 41, y - h/2 - 40, x + w/2 + 41, y + h/2 + 84)
+    plus the tail. Several bubbles may share a document (ids derive from x, y, w, h, seed).
+grapevine(x, y, scale=1.0, grow=1.0, facing=1)   Anchor: bottom centre. The cupbearer's dream vine (Gen 40:9-11): a
+    twisted stem with three branches; grow 0..1: 0-.4 the branches grow out one by one, .3-.5 leaves, .5-.75 blossoms,
+    .7-1 grape clusters (green, ripening to purple at 1). BBox grow=1 (-128, -287, 131, 9). Steps of ~0.1.
+bread_baskets(x, y, scale=1.0, n=3, birds=0)   Anchor: bottom centre (rest it on the baker's head). The baker's dream
+    (40:16-17): n flat wicker baskets stacked, the top one heaped with loaves and a round cake; birds 1-3 small birds
+    pecking on top. BBox n=3 (-80, -164, 78, 2); birds=3 top -190.
+cow(x, y, scale=1.0, facing=1, kind='fat', pose='stand', phase=0.0, mouth=0.0)   Anchor: ground under the middle of the
+    body. Pharaoh's dream cows (41:1-4), comic and friendly: 'fat' = round glossy cream cow with brown patches and
+    happy ^ eyes (-138, -226, 193, 1); 'thin' = a bony cow on long thin knobbly legs, ribs, big round hungry eyes
+    (-119, -251, 177, 2). pose: 'stand', 'walk' (phase 0..1, diagonal gait, a little bob; 'walk_a' / 'walk_b' = phase 0
+    / .5), 'graze' (head down: fat (-138, -201, 203, 1), thin (-119, -199, 187, 2)). mouth 0..1 opens the mouth (the
+    thin cows 'eat' the fat ones: munch 0 / .8 alternately - keep it comic, never show eating literally).
+    Walk: 8 phases at ~0.08 s while moving x ~87*scale per cycle.
+THE PIT, THE CARAVAN, SILVER
+pit(x, y, scale=1.0, facing=1, view='outside', part='all', rope=0.0, width=400)
+    The dry, empty pit (37:24: 'there was no water in it').
+      view='outside'  Anchor: centre of the round opening on the ground. A ring of rounded field stones round a dark
+                      hole (ellipse PIT_R = (150, 46) half-axes), the far inner wall's stone courses showing, dry grass
+                      tufts; BBox (-221, -75, 219, 86). part='back' (shadow, hole, inner wall, back rim) / 'front' (front
+                      rim stones and tufts): FIGURE-IN-THE-PIT RECIPE: pit(part='back') -> in_pit(figure) -> pit(part=
+                      'front'), all at the same x, y, scale. For Joseph calling from deep down use joseph(x, y +
+                      300*scale, scale, pose='call_up', coat='torn'): only his face and raised hands show.
+      view='cutaway'  Anchor: the GROUND LINE at the centre of the opening; a cross-section of the earth (soil layers,
+                      pebbles) from x-width to x+width, the stone-lined shaft (2*150 wide) PIT_DEPTH = 470 deep with a
+                      lit back wall and a sandy floor with dry grass. Stand a figure on PIT_FLOOR = (0, 470) (local):
+                      joseph(x, y + PIT_DEPTH*scale, scale, pose='call_up') - his raised hands stay ~70 px below the rim.
+                      Brothers stand on the ground line beside it (x +- (rx + 60)*scale). BBox (-402, -25, 401, 540).
+      rope 0..1       a rope hanging into the pit from the rim (0 = none, 1 = to near the floor): being pulled up -
+                      joseph(pose='hold_rope') + brothers(pose='pull') at the rim.
+in_pit(markup, x, y, scale=1.0)   Clip markup to the pit opening seen from outside (everything above the front rim edge
+    stays visible). x, y, scale = the PIT's.
+camel(x, y, scale=1.0, facing=1, pose='stand', phase=0.0, load=True, bridle=True, eyes='open')   Anchor: ground under
+    the middle of the body. A caravan camel in the style of animal('camel'): one hump, knobbly knees, pad feet, lashes.
+    load=True: a red saddle blanket with gold / blue stripes and fringe over the hump, a rolled teal rug on top, a
+    burlap bundle and a leather spice bag tied on the flanks. bridle=True: a red halter with gold tassels and a lead rope
+    hanging forward to CAMEL_LEAD = (300, -150) (local; a trader in pose 'lead' walks ahead holding it).
+    pose 'walk' with phase 0..1 = a PACE (both legs of one side swing together, as camels walk), the body bobbing and
+    the head nodding a little ('walk_a' / 'walk_b' = phase 0 / .5). BBox stand (-138, -357, 304, 2), walk (union of
+    phases) (-145, -365, 304, 2). Walk: 8 phases (0, 1/8 ...) at ~0.09 s while moving x ~113*scale per cycle (the
+    planted feet then do not slide). A caravan: camels every ~460*scale, a trader leading, the next camel's rope optional.
+donkey(x, y, scale=1.0, facing=1, pose='stand', phase=0.0, sacks=2)   Anchor: ground under the middle of the body. The
+    grey donkey of animal('donkey') with a red saddle cloth and grain sacks hanging on both flanks (sacks 0 / 1 / 2);
+    pose 'walk' + phase (diagonal gait, bob, nodding head; walk_a / walk_b; ~87*scale per cycle). BBox
+    (-115, -308, 169, 2). The brothers'
+    journey to Egypt and back (42-43).
+coins(x, y, scale=1.0, n=20, kind='pile', seed=0)   Anchor: bottom centre. Silver coins (SILVER) with a rim, a stamped
+    mark and a highlight: 'pile' a little heap of n (20: (-78, -51, 78, 3)), 'row' counted out in rows of ten (count
+    up n = 1..20 for '二十块银子': (-150, -62, 149, -3)), 'stacks' stacks of five, 'pouch' a leather money pouch with
+    coins at its mouth and a few beside it ((-46, -96, 102, 5)). (characters.trader(pose='give' / 'count') holds some.)
+EGYPT
+pyramids(x, y, scale=1.0, n=3, haze=0.0, facing=1, ground=True)   Anchor: bottom centre. Three (n=1..3) sand-coloured
+    pyramids with a lit and a shaded face, faint courses and gold capstones on a low desert ground band (ground=False
+    leaves it off). haze 0..1 blends them toward the day sky for distance. BBox (-764, -520, 902, 28) at scale 1: use
+    0.2-0.6 on the horizon (static layer).
+nile(x0, x1, y, width=150.0, scale=1.0, phase=0.0, seed=0, reeds=True)   ABSOLUTE stage coordinates: the Nile as a wide
+    band from x0 to x1 centred on y, green banks, blue gradient water with ripples sliding with phase 0..1 (loop it),
+    lily pads and pink lotus, papyrus clumps along the near bank. BBox ~ (x0, y - width/2 - 20, x1, y + width/2 + 34).
+papyrus(x, y, scale=1.0, sway=0.0)   Anchor: bottom centre. A papyrus clump (-64, -140, 51, 1).
+field(x0, x1, y, depth=120.0, scale=1.0, ripe=1.0, dry=0.0, seed=0)   ABSOLUTE stage coordinates: a band of wheat
+    (rows of stalks with ears) from x0 to x1, top at ~y, soil down to y + depth. ripe 0..1 green -> golden (the seven
+    good years); dry 0..1 withers it to short dry stubble on cracked earth (the famine, 41:54).
+egypt_house(x, y, scale=1.0, variant=0, facing=1)   Anchor: bottom centre. variant 0: a whitewashed flat-roofed house with
+    high barred windows and a painted lintel over the door (-296, -456, 352, 4); variant 1: Potiphar's villa with a
+    columned porch and a painted frieze (-442, -496, 440, 6). Doors are 260 px tall at scale 1: an adult walks in at
+    scale >= 1.35; use 0.4-0.8 for houses further back.
+egypt_column(x, y, scale=1.0, height=420)   Anchor: bottom centre. A painted papyrus-bundle column with blue / red bands
+    and an open green capital (-75, -439, 73, 2) at height 420. Palms: palm_tree() (section 4).
+granary(x, y, scale=1.0, fill=1.0, facing=1)   Anchor: bottom centre. Pharaoh's storehouses (41:48-49): three domed mud
+    silos behind a yard wall, each with a cutaway window showing its grain LEVEL, a ladder, and in front golden grain
+    heaps 'like mountains' and a row of sacks. fill 0..1: the silo levels rise one after another (left first), the
+    heaps grow and sacks appear. GRANARY_W = 820; BBox (-414, -418, 412, 30). Quantise fill in steps of ~0.1.
+grain_heap(x, y, scale=1.0, size=1.0, seed=0)   Anchor: bottom centre. A golden grain heap, ~300 x 200 at size 1
+    ((-153, -203, 152, 2)); size up to 3 for mountains.
+grain_sacks(x, y, scale=1.0, n=1, open_=False, facing=1)   Anchor: bottom centre. n 1..6 burlap grain sacks in a little
+    stack (1: (-54, -110, 51, 4); 6: (-123, -242, 124, 4)); open_=True opens the first one, heaped with grain, a little
+    spilled.
+egypt_throne(x, y, scale=1.0, facing=1)   Anchor: the FLOOR under pharaoh(pose='sit_throne', throne=False) (same x, y,
+    scale, facing; draw it first): gilded lion-legged throne with a tall back of coloured feather bands, a cushion
+    (seat top EGYPT_SEAT_Y = -73), an armrest ending in a little lion head and a footstool. BBox (-89, -325, 167, -1).
+signet_ring(x, y, scale=1.0, rot=0.0)   Anchor: centre. Pharaoh's ring (41:42) = royal_seal(kind='ring'):
+    (-39, -38, 38, 56).
+gold_chain(x, y, scale=1.0, state='held')   'held': hanging in a U from two hands (anchor = the middle between them, the
+    hands at x +- 70, the pendant at y+172) (-79, -7, 78, 191); 'lying': a loose loop (-79, -7, 78, 119).
+prison_window(x, y, scale=1.0, light=1.0, wall=True, facing=1)   Anchor: centre of a small high barred window (a
+    glimpse of sky and green outside) in a patch of rough stone wall (wall=False: just the window); light 0..1 a soft
+    beam slanting down into the cell (use it for 'God was with Joseph' together with engine.fx glow). BBox
+    (-232, -173, 295, 439) with the beam.
+prison_bars(x, y, scale=1.0, width=300, height=400, open_=0.0, facing=1)   Anchor: bottom centre. A barred prison door in
+    a stone frame, dark cell behind; open_ 0..1 swings it open on its left hinge. BBox (-171, -421, 170, 2).
+chariot(x, y, scale=1.0, facing=1, part='all', wheel=0.0, horse=True, phase=0.0)   Anchor: ground under the wheel.
+    Joseph's chariot (41:43): a gilded car with lapis / carnelian / teal stripes, six-spoked wheels (radius 80), a pole to
+    a chestnut horse (ark_animal('horse') style) with a blue saddle pad, gold tassels, a red plume and bridle, reins to
+    the front rail. wheel 0..1 turns the spokes (one spoke spacing per cycle; turn wheel by distance / (2*pi*80*scale)
+    * 6 when moving); phase 0..1 switches the horse's walk frame (<.5 walk_a, else walk_b). BBox (-96, -404, 576, 7).
+    RIDER RECIPE: chariot(part='back') -> joseph(*local_to_stage(x, y, scale, facing, *CHARIOT_STAND), scale, facing,
+    attire='ruler', pose='ride_wave') (or CHARIOT_SEAT with pose='ride', seated on the bench) -> chariot(part='front')
+    (the car's near side covers his legs). CHARIOT_STAND = (4, -96), CHARIOT_SEAT = (-20, -96).
+toy(x, y, scale=1.0, facing=1, kind='horse', rot=0.0)   Anchor: bottom centre. The siblings' toy: a little wooden horse
+    on red wheels (-68, -144, 71, 3) or a striped ball (-36, -71, 36, 2). characters.child(toy=...) holds it.
+Constants: COAT_BANDS, COAT_BASE, WHEAT, WHEAT_DARK, SILVER, SILVER_DARK, LINEN_P, LAPIS_P, CARNELIAN_P, MUD, MUD_DARK,
+NILE, PAPYRUS, PIT_R, PIT_DEPTH, PIT_FLOOR, CAMEL_LEAD, CHARIOT_STAND, CHARIOT_SEAT, EGYPT_SEAT_Y, GRANARY_W.
+RENDER COST: like the rest of the library (camel / cow / donkey ~ an ark_animal, granary ~ a house, pyramids / nile on
+static layers); quantise every 0..1 option into a small flipbook.
+
 Helpers / constants
 -------------------
 local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
@@ -654,7 +789,8 @@ are the internal up-scales of the house / ziggurat drawings (informational). Dan
 LION_POSES, DEN_FLOOR_Y, DEN_INNER, DEN_OPENING, DEN_HOLE, DEN_STONE_R, WINDOW_OPENING, WINDOW_FLOOR_Y, WINDOW_WALL,
 SHUTTER; in_den_hole(...).
 Contact sheets of everything: ``python3 tools/props_sheet.py [fish ship items castor plants creatures
-buildings daniel david_items ... noah_ark noah_animals noah_pairs noah_weather noah_items]``
+buildings daniel david_items ... noah_ark noah_animals noah_pairs noah_weather noah_items joseph_items
+joseph_animals joseph_egypt]``
 -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
 """
 import hashlib
@@ -6957,3 +7093,1174 @@ def animal_pair(kind, x, y, scale=1.0, facing=1, pose="stand", phase=0.0, eyes="
     back = _one(kind, x + sx * dx, y + dy, scale * 0.96, facing, fpose, True, eyes, fphase)
     front = _one(kind, x, y, scale, facing, pose, False, eyes, phase)
     return back + front
+
+
+# ====================================================================== 10. Joseph film (Genesis 37-50)
+COAT_BANDS = ("#d9534a", "#f2c84b", "#4f86c6", "#6fae55", "#8e64b0", "#ef9440")   # 红 黄 蓝 绿 紫 橙 (= characters)
+COAT_BASE = "#f1e6cc"
+WHEAT = "#e9c25a"
+WHEAT_DARK = "#c4953a"
+SILVER = "#cfd3d2"
+SILVER_DARK = "#8e9594"
+LINEN_P = "#f6f0e2"
+LAPIS_P = "#3f6fa8"
+CARNELIAN_P = "#c9533f"
+MUD = "#d9b98a"
+MUD_DARK = "#b8946a"
+NILE = "#4f97b5"
+PAPYRUS = "#7fa24f"
+DIRT = "#9a7a52"
+PIT_R = (150, 46)                # pit opening half-width / half-depth (ellipse on the ground, outside view)
+PIT_DEPTH = 470                  # cutaway: floor of the pit below the ground line (anchor of a figure inside)
+PIT_FLOOR = (0, 470)
+CAMEL_LEAD = (300, -150)         # camel(bridle=True): end of the lead rope (local, facing right)
+CAMEL_WALK = 40                  # camel: x a walk cycle (phase 0 -> 1) covers at scale 1 is ~2 * 40 = 80 px ... see doc
+CHARIOT_STAND = (4, -96)         # chariot: anchor of a person standing in the car (joseph pose 'ride_wave')
+CHARIOT_SEAT = (-20, -96)        # chariot: anchor of a person seated in the car (joseph pose 'ride')
+EGYPT_SEAT_Y = -73               # egypt_throne: seat top above the floor (pharaoh 'sit_throne', throne=False)
+GRANARY_W = 820                  # granary width at scale 1
+
+
+def _alpha_k(k, progress, n=len(COAT_BANDS)):
+    return _clamp(progress * n - k)
+
+
+# ---------------------------------------------------------------------- the coat of many colours
+_COAT_HELD = [(-20, 0), (-60, 6), (-74, 14), (-126, 150), (-98, 164), (-62, 58), (-80, 252), (-40, 262), (0, 258),
+              (40, 262), (80, 252), (62, 58), (98, 164), (126, 150), (74, 14), (60, 6), (20, 0), (0, 30)]
+
+
+def _coat_body_d(torn=False):
+    pts = list(_COAT_HELD)
+    if torn:                      # ragged hem and a short, torn right sleeve
+        hem = [(-80, 252), (-66, 236), (-54, 258), (-38, 240), (-22, 262), (-6, 236), (10, 260), (26, 238), (42, 262),
+               (58, 242), (80, 252)]
+        pts = pts[:6] + hem + [(62, 58), (88, 110), (100, 96), (98, 118), (114, 102), (74, 14), (60, 6), (20, 0), (0, 30)]
+    return "M" + " L".join(f"{_f(x)},{_f(y)}" for x, y in pts) + " Z", pts
+
+
+def _coat_shape(state="held", torn=False, dirty=False, progress=1.0):
+    """The coat on its own (local, see coat_of_colours)."""
+    if state == "bundle":         # crumpled up: the coat squashed and twisted, with soft fold lines
+        body = _coat_shape("held", torn, dirty, progress)
+        out = _g(body, "rotate(-16) scale(0.95,0.55) translate(0,-131)")
+        for a, b in (((-50, -30), (-14, 30)), ((24, -40), (44, 24)), ((-80, 6), (-40, 40))):
+            out += _p(f"M{a[0]},{a[1]} Q{(a[0] + b[0]) / 2 + 12},{(a[1] + b[1]) / 2} {b[0]},{b[1]}", sw=3,
+                      stroke=S.shade(COAT_BASE, -0.45), extra='opacity="0.6"')
+        return out
+    if state == "folded":
+        out = ""
+        for k, (w, y0) in enumerate(((150, -12), (140, -34), (130, -54))):
+            d = f"M{-w / 2},{y0} L{w / 2},{y0} L{w / 2 + 4},{y0 + 22} L{-w / 2 - 4},{y0 + 22} Z"
+            inner = "".join(_rect(-w / 2 - 10 + j * 26, y0 - 2, 26, 30, COAT_BANDS[(j + k * 2) % 6], 0) for j in range(8))
+            out += _p(d, COAT_BASE, 0) + _clip(_uid("cfold", k), d, inner) + _p(d, sw=3.6)
+        return out
+    d, pts = _coat_body_d(torn)
+    inner = ""
+    for k in range(15):
+        j = k % 6
+        a = _alpha_k(j, progress)
+        if a <= 0:
+            continue
+        op = f'opacity="{a:.2f}"' if a < 1 else ""
+        inner += _rect(-130, -4 + k * 19, 260, 19.5, COAT_BANDS[j], 0, extra=op)
+    if progress > 0:
+        for k in range(1, 15):
+            inner += _line(-130, -4 + k * 19, 130, -4 + k * 19, sw=1.6, color=S.shade(COAT_BASE, -0.3),
+                           extra='opacity="0.5"')
+    inner += _p("M-34,40 Q-40,150 -30,250 M30,40 Q38,150 30,250", sw=3, stroke=S.shade(COAT_BASE, -0.4),
+                extra='opacity="0.35"')
+    if dirty:
+        inner += _coat_dirt(1.0)
+    out = _p(d, COAT_BASE, 0) + _clip(_uid("coat", torn, dirty, round(progress, 3)), d, inner) + _p(d, sw=4)
+    out += _p("M-20,0 L0,30 L20,0", sw=3.2)                                     # neck opening
+    out += _p("M-62,52 Q-58,30 -60,8 M62,52 Q58,30 60,8", sw=2.4, stroke=S.shade(COAT_BASE, -0.4), extra='opacity="0.6"')
+    if torn:                      # a rip in the body (a dark slit, never blood)
+        out += _p("M-30,120 L-18,150 L-28,170 L-14,196 L-24,200 L-36,176 L-26,152 L-40,124 Z", "#6b5442", 2.6)
+    return out
+
+
+def _coat_dirt(k=1.0):
+    rng = random.Random(7)
+    s = ""
+    for _ in range(9):
+        x, y, r = rng.uniform(-80, 80) * k, rng.uniform(20, 240) * (k if k < 1.1 else 0.35) - (0 if k < 1.1 else 60), \
+            rng.uniform(10, 22)
+        s += _ell(x, y, r * 1.4, r, "#8a6a45", 0, extra='opacity="0.42"')
+    return s
+
+
+def coat_of_colours(x, y, scale=1.0, facing=1, state="held", torn=False, dirty=False, progress=1.0, rot=0.0):
+    """The coat of many colours on its own (see module doc, section 10)."""
+    if state not in ("held", "lying", "folded", "bundle"):
+        raise ValueError(f"coat_of_colours: state must be held / lying / folded / bundle, not {state!r}")
+    body = _coat_shape("held" if state == "lying" else state, torn, dirty, _clamp(progress))
+    if state == "lying":          # laid flat on the ground, seen from a little above (hem toward facing)
+        body = _g(body, "translate(0,-50) scale(1,0.42) translate(-131,0) rotate(-90)")
+    return _place(body, x, y, scale, facing, rot)
+
+
+# ---------------------------------------------------------------------- wheat sheaves (the dream)
+def _ear(x, y, ang, L=34, col=WHEAT):
+    """One ear of wheat (a plump spike of grains with whiskers) pointing at screen angle ang (deg, -90 = up)."""
+    a = math.radians(ang)
+    dx, dy = math.cos(a), math.sin(a)
+    nx, ny = -dy, dx
+    out = ""
+    for k in range(5):
+        t = 0.18 + k * 0.17
+        cx, cy = x + dx * L * t, y + dy * L * t
+        for sg in (-1, 1):
+            gx, gy = cx + nx * 4.2 * sg, cy + ny * 4.2 * sg
+            out += _ell(gx, gy, 5.2, 3.2, col, 1.8, extra=f'transform="rotate({ang:.0f} {_f(gx)} {_f(gy)})"')
+    out += _ell(x + dx * L * 1.02, y + dy * L * 1.02, 4.5, 3.0, col, 1.8, extra=f'transform="rotate({ang:.0f} {_f(x + dx * L * 1.02)} {_f(y + dy * L * 1.02)})"')
+    for sg in (-1, 1):            # whiskers
+        out += _line(x + dx * L * 0.9, y + dy * L * 0.9, x + dx * L * 1.5 + nx * 7 * sg, y + dy * L * 1.5 + ny * 7 * sg,
+                     sw=1.4, color=WHEAT_DARK)
+    return out
+
+
+def _sheaf(bow=0.0, glow=0.0, ripe=1.0, seed=0):
+    """A bound sheaf standing on its stalk ends: anchor bottom centre; the tie at y=-92, ears up to ~-230.
+    bow 0..1 bends the top (above the tie) toward +x by up to 62 deg and leans the bundle 8 deg."""
+    col = S.mix("#9fbf5a", WHEAT, _clamp(ripe))
+    dark = S.mix("#6f9040", WHEAT_DARK, _clamp(ripe))
+    rng = random.Random(seed)
+    out = ""
+    if glow > 0:
+        gid = _uid("shglow", seed, glow)
+        out += f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.95 * glow), (0.6, P["gold"], 0.35 * glow), (1, P["gold"], 0)])}</defs>'
+        out += _ell(0, -150, 170, 190, f"url(#{gid})", 0)
+    # lower bundle: stalks spreading a little toward the cut ends
+    low = "M-26,-92 L-40,-4 Q0,6 40,-4 L26,-92 Z"
+    stalks = ""
+    for k in range(-6, 7):
+        stalks += _line(k * 2.2, -92, k * 6.4, 0, sw=2.0, color=dark, extra='opacity="0.75"')
+    out += _p(low, col, 0) + _clip(_uid("shl", seed, ripe), low, stalks) + _p(low, sw=3.6)
+    for k in range(-5, 6):        # cut ends
+        out += _ell(k * 7.2, -2, 3.4, 2.2, S.shade(col, -0.25), 1.4)
+    # upper part: a fan of stalks with ears, bent at the tie
+    top = ""
+    upper = "M-24,-92 Q-46,-150 -58,-196 L58,-196 Q46,-150 24,-92 Z"
+    st_ = ""
+    for k in range(-6, 7):
+        st_ += _line(k * 2.0, -92, k * 9.5, -200, sw=2.0, color=dark, extra='opacity="0.7"')
+    top += _p(upper, col, 0) + _clip(_uid("shu", seed, ripe), upper, st_) + _p(upper, sw=3.6)
+    angs = [-90 + a for a in (-38, -26, -14, -4, 6, 16, 28, 40)]
+    for i, a in enumerate(angs):
+        bx, by = 9.5 * (i - 3.5) * 1.3, -196 + abs(i - 3.5) * 4
+        top += _ear(bx, by, a + rng.uniform(-4, 4), 30 + rng.uniform(-3, 5), col)
+    for i, a in enumerate((-110, -78, -96, -64)):
+        top += _ear(rng.uniform(-30, 30), -190 - rng.uniform(4, 16), a, 28, S.shade(col, 0.08))
+    ang = 62 * _clamp(bow)
+    out += f'<g transform="rotate({ang:.1f} 0 -92)">{top}</g>'
+    # the twisted straw tie
+    out += _tube("M-29,-96 Q0,-84 29,-96", 11, S.shade(col, -0.18), 3.2)
+    out += _p("M-18,-98 l6,8 M-4,-96 l6,8 M10,-97 l6,8", sw=1.8, stroke=S.shade(col, -0.45))
+    lean = 8 * _clamp(bow)
+    return _g(out, f"rotate({lean:.1f})") if lean else out
+
+
+def wheat_sheaf(x, y, scale=1.0, facing=1, bow=0.0, rise=1.0, glow=0.0, ripe=1.0, kind="standing", seed=0):
+    """A sheaf of wheat (see module doc, section 10)."""
+    if kind not in ("standing", "bundle"):
+        raise ValueError(f"wheat_sheaf: kind must be 'standing' or 'bundle', not {kind!r}")
+    body = _sheaf(bow, glow, ripe, seed)
+    r = _clamp(rise) if kind == "standing" else 0.0
+    if r < 1.0:                   # lying on its side (a bundle) .. standing up: rotate about the cut ends
+        u = 1 - r
+        body = _g(body, f"translate({_f(118 * u)},{_f(-38 * u)}) rotate({-86 * u:.1f} 0 0)")
+    return _place(body, x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the dry pit
+def _rim_stone(cx, cy, rx, ry, col, sw=3.2):
+    return _ell(cx, cy, rx, ry, col, sw)
+
+
+def _pit_outside(part="all", rope=0.0):
+    rx, ry = PIT_R
+    stones = ("#c9bca6", "#b9b2a6", "#d6c7aa", "#a8a49c", "#cdb79a")
+    out = ""
+    if part in ("all", "back"):
+        out += _ell(0, 6, rx + 70, ry + 34, P["sand_dark"], 0, extra='opacity="0.35" filter="url(#soft)"')
+        hole = f"M{-rx},0 A{rx},{ry} 0 1 1 {rx},0 A{rx},{ry} 0 1 1 {-rx},0 Z"
+        gid = _uid("pitg", rx)
+        out += f'<defs>{S.lin_grad(gid, [(0, "#6b5442"), (0.5, "#4a3a30"), (1, "#3a2e28")], 0, 0, 0, 1)}</defs>'
+        out += _p(hole, f"url(#{gid})", 0)
+        inner = ""
+        for k in range(4):        # courses of the stone lining on the far inner wall
+            yy = -ry + 12 + k * 18
+            for j in range(-6, 7):
+                xx = j * 24 + (12 if k % 2 else 0)
+                inner += _ell(xx, yy, 12, 7, "#7a6655", 1.8, stroke="#3a2e28", extra='opacity="0.85"')
+        out += _clip(gid + "c", hole, inner + _ell(0, ry * 0.9, rx * 0.9, ry * 0.8, "#2e2420", 0, extra='opacity="0.7"'))
+        for j in range(18):       # back rim stones
+            a = math.pi + math.pi * j / 17
+            out += _rim_stone(rx * 1.04 * math.cos(a), ry * 1.06 * math.sin(a) - 4, 19, 12, stones[j % 5])
+        if rope > 0:
+            L = 10 + 120 * _clamp(rope)
+            out += _tube(f"M60,-10 Q66,{_f(L * 0.5)} 58,{_f(L)}", 5, P["wood_light"], 2.4)
+    if part in ("all", "front"):
+        for j in range(18):       # front rim stones (cover the lower edge of the hole)
+            a = math.pi * j / 17
+            out += _rim_stone(rx * 1.05 * math.cos(a), ry * 1.10 * math.sin(a) + 2, 20, 13, stones[(j + 2) % 5])
+        rng = random.Random(3)
+        for _ in range(6):        # dry grass tufts by the rim
+            x0 = rng.choice((-1, 1)) * rng.uniform(rx * 0.7, rx * 1.2)
+            y0 = rng.uniform(-ry * 0.2, ry * 1.1) + 10
+            for k in range(4):
+                out += _line(x0, y0, x0 + (k - 1.5) * 7, y0 - 22 - k % 2 * 8, sw=2.6, color=P["leaf_dry"])
+    return out
+
+
+def _pit_cutaway(rope=0.0, w=400):
+    rx = PIT_R[0]
+    D = PIT_DEPTH
+    out = ""
+    soil = f"M{-w},0 L{w},0 L{w},{D + 70} L{-w},{D + 70} Z"
+    gid = _uid("pitsoil", w)
+    out += f'<defs>{S.lin_grad(gid, [(0, "#c9a070"), (0.5, "#b0845a"), (1, "#8f6a48")], 0, 0, 0, 1)}</defs>'
+    layers = ""
+    rng = random.Random(11)
+    for k in range(1, 5):
+        yy = k * (D + 70) / 5
+        layers += _p(_sm([(-w - 20, yy), (-w / 2, yy + rng.uniform(-14, 14)), (0, yy + rng.uniform(-14, 14)),
+                          (w / 2, yy + rng.uniform(-14, 14)), (w + 20, yy)], closed=False), sw=3,
+                     stroke=S.shade("#b0845a", -0.2), extra='opacity="0.4"')
+    for _ in range(26):
+        layers += _ell(rng.uniform(-w, w), rng.uniform(20, D + 60), rng.uniform(5, 12), rng.uniform(4, 8),
+                       rng.choice(("#c9bca6", "#a8a49c", "#d6c7aa")), 2.2)
+    out += _clip(gid + "c", soil, _rect(-w - 10, -10, 2 * w + 20, D + 90, f"url(#{gid})", 0) + layers)
+    # the shaft: back wall of stone courses, side linings, sandy dry floor
+    shaft = f"M{-rx},0 L{rx},0 L{rx},{D} L{-rx},{D} Z"
+    sg = _uid("pitsh", rx)
+    out += f'<defs>{S.lin_grad(sg, [(0, "#8a7462"), (0.45, "#5e4c40"), (1, "#4a3c34")], 0, 0, 0, 1)}</defs>'
+    wall = ""
+    for k in range(int(D / 30) + 1):
+        yy = k * 30 + 14
+        for j in range(-6, 7):
+            xx = j * 46 + (23 if k % 2 else 0)
+            wall += _rect(xx - 21, yy - 13, 42, 26, "#7a6655", 2.0, rx=8, stroke="#3e322b",
+                          extra='opacity="0.9"')
+    light = _p(f"M{-rx + 20},0 L{rx - 60},0 L{rx - 30},{D} L{-rx + 70},{D} Z", P["glow"], 0, extra='opacity="0.16"')
+    out += _p(shaft, f"url(#{sg})", 0) + _clip(sg + "c", shaft, wall + light) + _p(shaft, sw=4)
+    for sx in (-1, 1):            # side linings (stones seen in section)
+        for k in range(int(D / 34) + 1):
+            out += _rect(sx * rx - (24 if sx > 0 else 0), k * 34 + 2, 24, 32, ("#b9b2a6", "#a8a49c", "#c9bca6")[k % 3],
+                         3, rx=6)
+    floor = f"M{-rx},{D - 24} Q-60,{D - 34} 0,{D - 28} Q70,{D - 36} {rx},{D - 22} L{rx},{D} L{-rx},{D} Z"
+    out += _p(floor, "#d9b98a", 3.4)
+    for xx, r in ((-96, 7), (-40, 5), (52, 8), (104, 6), (10, 4)):
+        out += _ell(xx, D - 22, r * 1.4, r * 0.8, "#a8a49c", 2)
+    for xx in (-120, 86):
+        for k in range(4):
+            out += _line(xx, D - 26, xx + (k - 1.5) * 6, D - 46 - (k % 2) * 8, sw=2.4, color=P["leaf_dry"])
+    # rim stones at ground level and the ground line beyond
+    out += _line(-w, 0, -rx - 26, 0, sw=4) + _line(rx + 26, 0, w, 0, sw=4)
+    for sx in (-1, 1):
+        for j in range(3):
+            out += _rim_stone(sx * (rx + 4 + j * 26), -10 + (j % 2) * 3, 17, 12, ("#c9bca6", "#d6c7aa", "#b9b2a6")[j])
+    if rope > 0:
+        L = 20 + (D - 60) * _clamp(rope)
+        out += _tube(f"M{rx - 30},-14 Q{rx - 18},{_f(L * 0.5)} {rx - 36},{_f(L)}", 6, P["wood_light"], 2.6)
+    return out
+
+
+def pit(x, y, scale=1.0, facing=1, view="outside", part="all", rope=0.0, width=400):
+    """The dry, empty pit (see module doc, section 10)."""
+    if view == "cutaway":
+        return _place(_pit_cutaway(rope, width), x, y, scale, facing)
+    if view != "outside":
+        raise ValueError(f"pit: view must be 'outside' or 'cutaway', not {view!r}")
+    if part not in ("all", "back", "front"):
+        raise ValueError(f"pit: part must be all / back / front, not {part!r}")
+    return _place(_pit_outside(part, rope), x, y, scale, facing)
+
+
+def in_pit(markup, x, y, scale=1.0):
+    """Clip figure markup to the pit opening seen from outside (the part above the rim stays visible)."""
+    rx, ry = PIT_R[0] * scale, PIT_R[1] * scale
+    d = (f"M{_f(x - rx)},{_f(y)} A{_f(rx)},{_f(ry)} 0 0 0 {_f(x + rx)},{_f(y)} L{_f(x + rx)},{_f(y - 2000)} "
+         f"L{_f(x - rx)},{_f(y - 2000)} Z")
+    return _clip(_uid("inpit", x, y, scale), d, markup)
+
+
+# ---------------------------------------------------------------------- silver coins
+def _coin(cx, cy, r=13.0, tilt=0.0):
+    """One silver coin (local markup) with a rim, a stamped mark and a highlight."""
+    ry = r * (1 - 0.55 * tilt)
+    out = _ell(cx, cy + 2.4, r, ry, SILVER_DARK, 2.2)
+    out += _ell(cx, cy, r, ry, SILVER, 2.4)
+    out += _ell(cx, cy, r * 0.68, ry * 0.68, "none", 1.4, stroke=SILVER_DARK, extra='opacity="0.8"')
+    out += _p(f"M{_f(cx - r * 0.25)},{_f(cy)} L{_f(cx)},{_f(cy - ry * 0.32)} L{_f(cx + r * 0.25)},{_f(cy)} "
+              f"L{_f(cx)},{_f(cy + ry * 0.32)} Z", SILVER_DARK, 0, extra='opacity="0.7"')
+    out += _ell(cx - r * 0.38, cy - ry * 0.4, r * 0.22, ry * 0.12, HILITE, 0, extra='opacity="0.9"')
+    return out
+
+
+def _coin_pouch(open_=True):
+    """Leather money pouch, anchor bottom centre; open_ shows silver coins at the mouth."""
+    out = _p("M-40,-10 Q-52,-50 -26,-72 L26,-72 Q52,-50 40,-10 Q0,6 -40,-10 Z", LEATHER, 4)
+    out += _p("M-26,-72 Q0,-60 26,-72", sw=3)
+    if open_:
+        for k, (dx, dy) in enumerate(((-12, -76), (8, -80), (-2, -88), (18, -72))):
+            out += _coin(dx, dy, 10, 0.5)
+    out += _tube("M-28,-66 Q0,-56 28,-66", 4, CORD, 2)
+    out += _p("M24,-64 q14,10 6,24", sw=4, stroke=INK) + _p("M24,-64 q14,10 6,24", sw=2, stroke=CORD)
+    out += _ell(-14, -36, 9, 14, S.shade(LEATHER, 0.25), 0, extra='opacity="0.6"')
+    return out
+
+
+def coins(x, y, scale=1.0, n=20, kind="pile", seed=0):
+    """Silver coins (see module doc, section 10)."""
+    n = max(0, int(n))
+    out = ""
+    if kind == "row":             # counted out in rows of 10 (count up by n)
+        for i in range(n):
+            r, c = divmod(i, 10)
+            out += _coin(-135 + c * 30, -16 - r * 34, 13, 0.45)
+    elif kind == "stacks":        # stacks of 5
+        for i in range(n):
+            s_, k = divmod(i, 5)
+            out += _coin(-60 + s_ * 34, -10 - k * 7, 14, 0.6)
+    elif kind == "pouch":
+        out += _coin_pouch(True)
+        for i in range(min(n, 6)):
+            out += _coin(46 + i * 11, -6 - (i % 2) * 6, 11, 0.6)
+    elif kind == "pile":
+        rng = random.Random(seed)
+        placed = 0
+        row = 0
+        while placed < n:
+            w = max(1, 7 - row)
+            for j in range(w):
+                if placed >= n:
+                    break
+                out += _coin((j - (w - 1) / 2) * 22 + rng.uniform(-4, 4), -10 - row * 10 + rng.uniform(-2, 2), 13, 0.62)
+                placed += 1
+            row += 1
+    else:
+        raise ValueError(f"coins: kind must be pile / row / stacks / pouch, not {kind!r}")
+    return _place(out, x, y, scale)
+
+
+# ---------------------------------------------------------------------- Egyptian scenery
+def _pyramid(cx, w, h, col, lit, haze=0.0):
+    out = _p(f"M{_f(cx - w / 2)},0 L{_f(cx)},{_f(-h)} L{_f(cx + w / 2)},0 Z", col, 4)
+    out += _p(f"M{_f(cx)},{_f(-h)} L{_f(cx + w / 2)},0 L{_f(cx + w * 0.12)},0 Z", lit, 0)
+    d = f"M{_f(cx - w / 2)},0 L{_f(cx)},{_f(-h)} L{_f(cx + w / 2)},0 Z"
+    lines = ""
+    for k in range(1, 12):
+        yy = -h * k / 12
+        lines += _line(cx - w / 2 * (1 - k / 12), yy, cx + w / 2 * (1 - k / 12), yy, sw=1.8,
+                       color=S.shade(col, -0.18), extra='opacity="0.5"')
+    out += _clip(_uid("pyr", cx, w, h), d, lines)
+    out += _p(d, sw=4)
+    out += _p(f"M{_f(cx - w * 0.04)},{_f(-h * 0.92)} L{_f(cx)},{_f(-h)} L{_f(cx + w * 0.04)},{_f(-h * 0.92)} Z", P["gold"], 2.4)
+    return out
+
+
+def _pyramids(n=3, haze=0.0, ground=True):
+    sand = S.mix(P["sand"], P["sky_day"], 0.6 * haze)
+    lit = S.mix(P["sand_light"], P["sky_day"], 0.6 * haze)
+    out = ""
+    specs = [(-420, 520, 330), (180, 820, 520), (640, 380, 240)][:max(1, min(3, n))]
+    for cx, w, h in sorted(specs, key=lambda s: -s[2]):
+        out += _pyramid(cx, w, h, sand, lit)
+    if ground:
+        out += _p("M-760,0 Q-300,-16 0,-6 Q400,-14 900,0 L900,24 L-760,24 Z", S.shade(sand, -0.08), 3)
+    return out
+
+
+def pyramids(x, y, scale=1.0, n=3, haze=0.0, facing=1, ground=True):
+    """The pyramids on the horizon (see module doc, section 10)."""
+    return _place(_pyramids(n, _clamp(haze), ground), x, y, scale, facing, filt="wobble")
+
+
+def _papyrus(x, y, h, k=1.0, sway=0.0):
+    out = ""
+    for j, (dx, hh, a) in enumerate(((-10, h, -8), (0, h * 1.15, 2), (12, h * 0.9, 10), (-20, h * 0.75, -16))):
+        tx, ty = x + dx * k + sway * 8 + math.sin(math.radians(a)) * hh, y - hh * k
+        out += _line(x + dx * k * 0.3, y, tx, ty, sw=3.2 * k, color=S.shade(PAPYRUS, -0.25))
+        umb = f"M{_f(tx)},{_f(ty + 4 * k)} L{_f(tx - 22 * k)},{_f(ty - 16 * k)} Q{_f(tx)},{_f(ty - 30 * k)} {_f(tx + 22 * k)},{_f(ty - 16 * k)} Z"
+        out += _p(umb, PAPYRUS if j % 2 else S.shade(PAPYRUS, 0.15), 2.6 * k)
+        for q in (-14, -5, 5, 14):
+            out += _line(tx, ty, tx + q * k, ty - 22 * k, sw=1.4 * k, color=S.shade(PAPYRUS, -0.35), extra='opacity="0.7"')
+    return out
+
+
+def _nile(x0, x1, y, width=150.0, phase=0.0, seed=0, reeds=True, s=1.0):
+    rng = random.Random(seed)
+    n = max(6, int((x1 - x0) / (120 * s)))
+    top, bot = [], []
+    for i in range(n + 1):
+        xx = x0 + (x1 - x0) * i / n
+        top.append((xx, y - width * 0.5 + 6 * s * math.sin(i * 1.1 + seed)))
+        bot.append((xx, y + width * 0.5 + 8 * s * math.sin(i * 0.9 + seed + 1)))
+    d = _sm(top, closed=False) + " " + " ".join(f"L{_f(px)},{_f(py)}" for px, py in reversed(bot)) + " Z"
+    gid = _uid("nile", x0, x1, y, width)
+    out = f'<defs>{S.lin_grad(gid, [(0, S.shade(NILE, 0.35)), (0.5, NILE), (1, S.shade(NILE, -0.12))], 0, 0, 0, 1)}</defs>'
+    bank = _sm([(x, yy - 16 * s) for x, yy in top], closed=False) + " " + " ".join(
+        f"L{_f(px)},{_f(py + 26 * s)}" for px, py in reversed(bot)) + " Z"
+    out += _p(bank, S.mix(P["grass"], P["sand"], 0.35), 3 * s)
+    out += _p(d, f"url(#{gid})", 0)
+    inner = ""
+    L = 90 * s
+    for j in range(int((x1 - x0) / L) + 3):
+        for r in range(3):
+            xx = x0 + ((j * L + r * L * 0.37 + phase * L) % (x1 - x0 + L)) - L / 2
+            yy = y + (r - 1) * width * 0.28
+            inner += _p(f"M{_f(xx)},{_f(yy)} q{_f(14 * s)},{_f(-5 * s)} {_f(30 * s)},0", sw=3 * s, stroke=P["foam"],
+                        extra='opacity="0.8"')
+    for _ in range(int((x1 - x0) / (260 * s))):
+        lx, ly = rng.uniform(x0, x1), y + rng.uniform(-0.3, 0.35) * width
+        inner += _ell(lx, ly, 18 * s, 7 * s, P["leaf"], 2 * s)
+        if rng.random() < 0.5:
+            inner += _ell(lx + 6 * s, ly - 6 * s, 6 * s, 5 * s, "#f2c6d6", 1.8 * s)
+    out += _clip(gid + "c", d, inner)
+    out += _p(d, "none", 3.6 * s)
+    if reeds:
+        for i in range(int((x1 - x0) / (170 * s))):
+            xx = x0 + (i + rng.uniform(0.1, 0.9)) * 170 * s
+            k = min(n, max(0, int((xx - x0) / (x1 - x0) * n)))
+            out += _papyrus(xx, bot[k][1] + 10 * s, rng.uniform(70, 110), s * rng.uniform(0.8, 1.05))
+    return out
+
+
+def nile(x0, x1, y, width=150.0, scale=1.0, phase=0.0, seed=0, reeds=True):
+    """The Nile: a wide river band in absolute stage coordinates (see module doc, section 10)."""
+    return _place(_nile(x0, x1, y, width * scale, phase, seed, reeds, scale), 0, 0, 1.0)
+
+
+def papyrus(x, y, scale=1.0, sway=0.0):
+    """A clump of papyrus (anchor bottom centre), ~130 px tall."""
+    return _place(_papyrus(0, 0, 100, 1.0, sway), x, y, scale)
+
+
+def _lotus_column(height=420, col=None):
+    col = col or "#efe2c4"
+    out = _rect(-46, -24, 92, 24, S.shade(col, -0.1), 3.6, rx=4)
+    out += _p(f"M-30,-24 L-34,{-height + 70} L34,{-height + 70} L30,-24 Z", col, 4)
+    for k in range(1, 4):         # fluting
+        out += _line(-30 + k * 15, -30, -32 + k * 16, -height + 76, sw=1.8, color=S.shade(col, -0.2), extra='opacity="0.7"')
+    for yy in (-height + 92, -height + 108):
+        out += _rect(-36, yy, 72, 9, (LAPIS_P if yy % 2 else CARNELIAN_P), 2.4, rx=2)
+    cap = f"M-34,{-height + 72} Q-74,{-height + 30} -66,{-height + 4} L66,{-height + 4} Q74,{-height + 30} 34,{-height + 72} Z"
+    out += _p(cap, "#7fa24f", 4)
+    for j in range(-3, 4):
+        out += _p(f"M{j * 9},{-height + 70} Q{j * 18},{-height + 30} {j * 19},{-height + 6}", sw=2.4,
+                  stroke=("#3f6fa8", "#e9d9ae")[j % 2], extra='opacity="0.85"')
+    out += _rect(-72, -height - 16, 144, 22, S.shade(col, -0.05), 3.6, rx=3)
+    return out
+
+
+def egypt_column(x, y, scale=1.0, height=420):
+    """A painted papyrus column (see module doc, section 10)."""
+    return _place(_lotus_column(height), x, y, scale)
+
+
+def _egypt_house(variant=0):
+    wall, dark = "#efe2c4", "#d8c49a"
+    out = ""
+    if variant % 2 == 0:          # plain whitewashed house: flat roof, high small windows, a painted door
+        out += _p("M-280,0 L-280,-420 L300,-420 L300,0 Z", wall, 4)
+        out += _p("M300,0 L300,-420 L350,-450 L350,-24 Z", dark, 4)
+        out += _p("M-280,-420 L-230,-450 L350,-450 L300,-420 Z", S.shade(wall, 0.08), 4)
+        out += _rect(-290, -432, 600, 18, S.shade(dark, -0.05), 3.4, rx=3)
+        for xx in (-200, 150):
+            out += _rect(xx, -330, 60, 34, "#4a3a34", 3.4, rx=2)
+            for k in (1, 2):
+                out += _line(xx + k * 20, -330, xx + k * 20, -296, sw=3, color=wall)
+        out += _rect(-60, -260, 130, 260, "#5a3a2a", 4, rx=4)
+        out += _rect(-74, -286, 158, 28, LAPIS_P, 3.4, rx=3)
+        for xx in range(-62, 80, 18):
+            out += _circ(xx, -272, 4, P["gold"], 0)
+        out += _rect(-60, -260, 130, 260, "none", 4, rx=4)
+        out += _p("M-280,-80 Q0,-70 300,-84", sw=6, stroke="#d8c49a", extra='opacity="0.6"')
+        for xx, yy in ((-250, -60), (240, -40), (-150, -200), (210, -230)):
+            out += _ell(xx, yy, 14, 6, S.shade(wall, -0.12), 0, extra='opacity="0.6"')
+        return out
+    # villa with a columned porch (Potiphar's house)
+    out += _p("M-420,0 L-420,-470 L420,-470 L420,0 Z", wall, 4)
+    out += _rect(-440, -490, 880, 26, S.shade(dark, -0.05), 3.6, rx=3)
+    out += _rect(-300, -360, 600, 360, "#6b5442", 4)
+    out += _rect(-60, -260, 120, 260, "#3e322b", 4, rx=4)
+    for xx in (-240, 240):
+        out += _rect(xx - 30, -300, 60, 40, "#4a3a34", 3.2, rx=2)
+    out += _rect(-320, -380, 640, 26, P["terracotta"], 3.6, rx=3)
+    for xx in range(-300, 320, 40):
+        out += _p(f"M{xx},-376 l10,10 l10,-10", sw=2.4, stroke=P["gold"])
+    for xx in (-330, -110, 110, 330):
+        out += _g(_lotus_column(380), f"translate({xx},0) scale(0.9)")
+    out += _rect(-440, -12, 880, 14, S.shade(dark, -0.1), 3.4, rx=3)
+    return out
+
+
+def egypt_house(x, y, scale=1.0, variant=0, facing=1):
+    """An Egyptian house (see module doc, section 10)."""
+    return _place(_egypt_house(variant), x, y, scale, facing, filt="wobble")
+
+
+# ---------------------------------------------------------------------- grain, granary
+def _grain_heap(w, h, seed=0):
+    rng = random.Random(seed)
+    d = f"M{_f(-w / 2)},0 Q{_f(-w * 0.22)},{_f(-h * 1.05)} 0,{_f(-h)} Q{_f(w * 0.22)},{_f(-h * 1.05)} {_f(w / 2)},0 Z"
+    inner = ""
+    for _ in range(int(w * h / 260) + 6):
+        gx, gy = rng.uniform(-w / 2, w / 2), rng.uniform(-h, 0)
+        inner += _ell(gx, gy, 3.6, 2.2, WHEAT_DARK, 0, extra=f'transform="rotate({rng.uniform(-50, 50):.0f} {_f(gx)} {_f(gy)})"')
+    inner += _p(f"M{_f(-w * 0.18)},{_f(-h * 0.8)} Q0,{_f(-h * 0.98)} {_f(w * 0.16)},{_f(-h * 0.84)}", sw=6,
+                stroke=S.shade(WHEAT, 0.35), extra='opacity="0.8"')
+    return _p(d, WHEAT, 0) + _clip(_uid("gheap", w, h, seed), d, inner) + _p(d, sw=3.8)
+
+
+def _grain_sack(open_=False, seed=0):
+    col = P["sackcloth"]
+    out = _sack(1.0, col, seed) if not open_ else ""
+    if open_:
+        r = random.Random(seed)
+        pts = [(-26, -78), (-46, -60), (-54, -28), (-50, -4), (0, 2), (50, -4), (54, -28), (46, -60), (26, -78)]
+        out += _p(_sm(pts, closed=False) + " Z", col, 4)
+        out += _p("M-34,-80 Q0,-104 34,-80 Q0,-66 -34,-80 Z", WHEAT, 3.4)
+        for k in range(8):
+            gx = r.uniform(-24, 24)
+            out += _ell(gx, -82 - r.uniform(0, 10), 3.4, 2.2, WHEAT_DARK, 0)
+        out += _p("M-30,-78 Q-40,-90 -48,-80", sw=7, stroke=INK) + _p("M-30,-78 Q-40,-90 -48,-80", sw=3.4, stroke=col)
+        out += _ell(60, -4, 26, 7, WHEAT, 2.4)
+    for k in (-1, 1):
+        out += _p(f"M{k * 8},-56 l0,26 M{k * 8 - 8},-44 l16,0", sw=3, stroke=S.shade(col, -0.4), extra='opacity="0.5"')
+    return out
+
+
+def grain_sacks(x, y, scale=1.0, n=1, open_=False, facing=1):
+    """Grain sacks (see module doc, section 10): n 1..6 in a little stack."""
+    pos = [(0, 0, 0), (-70, 0, 1), (70, 0, 2), (-35, -66, 3), (35, -66, 4), (0, -132, 5)]
+    out = ""
+    for i, (dx, dy, sd) in enumerate(pos[:max(1, min(6, int(n)))]):
+        out += _g(_grain_sack(open_ and i == 0, sd), f"translate({dx},{dy}) scale(0.9)")
+    return _place(out, x, y, scale, facing)
+
+
+def _silo(cx, h, fill, k=1.0):
+    w = 150 * k
+    d = (f"M{_f(cx - w / 2)},0 L{_f(cx - w / 2)},{_f(-h * 0.55)} Q{_f(cx - w / 2)},{_f(-h)} {_f(cx)},{_f(-h)} "
+         f"Q{_f(cx + w / 2)},{_f(-h)} {_f(cx + w / 2)},{_f(-h * 0.55)} L{_f(cx + w / 2)},0 Z")
+    out = _p(d, MUD, 4)
+    out += _p(f"M{_f(cx - w * 0.3)},{_f(-h * 0.85)} Q{_f(cx)},{_f(-h * 0.97)} {_f(cx + w * 0.2)},{_f(-h * 0.9)}", sw=6,
+              stroke=S.shade(MUD, 0.3), extra='opacity="0.7"')
+    # a cutaway window showing the grain level inside
+    wx0, wx1, wy0, wy1 = cx - w * 0.26, cx + w * 0.26, -h * 0.72, -16
+    win = f"M{_f(wx0)},{_f(wy1)} L{_f(wx0)},{_f(wy0 + 20)} Q{_f(cx)},{_f(wy0 - 14)} {_f(wx1)},{_f(wy0 + 20)} L{_f(wx1)},{_f(wy1)} Z"
+    lev = wy1 - (wy1 - wy0) * _clamp(fill)
+    inner = _rect(wx0 - 4, wy0 - 30, wx1 - wx0 + 8, wy1 - wy0 + 40, "#5a4434", 0)
+    if fill > 0:
+        inner += _p(f"M{_f(wx0 - 4)},{_f(lev + 6)} Q{_f(cx)},{_f(lev - 12)} {_f(wx1 + 4)},{_f(lev + 6)} L{_f(wx1 + 4)},{_f(wy1 + 4)} "
+                    f"L{_f(wx0 - 4)},{_f(wy1 + 4)} Z", WHEAT, 2.4)
+        for j in range(6):
+            inner += _ell(cx - w * 0.2 + j * w * 0.08, lev + 10 + (j % 2) * 8, 3, 2, WHEAT_DARK, 0)
+    out += _clip(_uid("silo", cx, h, round(fill, 3)), win, inner) + _p(win, sw=3.4)
+    out += _p(f"M{_f(cx - 22 * k)},{_f(-h + 6)} L{_f(cx - 18 * k)},{_f(-h - 14)} L{_f(cx + 18 * k)},{_f(-h - 14)} "
+              f"L{_f(cx + 22 * k)},{_f(-h + 6)}", "#8a6a45", 3.4)
+    return out
+
+
+def _granary(fill=1.0):
+    fill = _clamp(fill)
+    out = ""
+    # back wall of the yard
+    out += _p("M-410,0 L-410,-150 L410,-150 L410,0 Z", S.shade(MUD, 0.12), 4)
+    for xx in range(-390, 400, 52):
+        out += _line(xx, -150, xx, -6, sw=1.8, color=MUD_DARK, extra='opacity="0.5"')
+    # three domed silos (their windows show the level rising)
+    for cx, h, k, lag in ((-250, 340, 1.0, 0.0), (0, 400, 1.12, 0.12), (250, 340, 1.0, 0.24)):
+        out += _silo(cx, h, (fill - lag) / (1 - lag) if fill > lag else 0.0, k)
+    # a ladder against the middle silo
+    out += _line(70, -10, 108, -300, sw=7, color=P["wood_dark"]) + _line(100, -6, 138, -296, sw=7, color=P["wood_dark"])
+    for k in range(1, 8):
+        t = k / 8
+        out += _line(70 + 38 * t, -10 - 290 * t, 100 + 38 * t, -6 - 290 * t, sw=5, color=P["wood"])
+    # heaps in the yard 'like mountains': they grow with fill
+    if fill > 0.05:
+        out += _g(_grain_heap(260 * (0.4 + 0.6 * fill), 150 * fill, 1), "translate(-140,6)")
+        out += _g(_grain_heap(320 * (0.4 + 0.6 * fill), 210 * fill, 2), "translate(110,10)")
+    if fill > 0.5:
+        out += _g(_grain_heap(160 * fill, 90 * (fill - 0.3), 3), "translate(-330,12)")
+    for i in range(int(fill * 6 + 0.01)):
+        out += _g(_grain_sack(False, i), f"translate({-360 + i * 34},{20 + (i % 2) * 8}) scale(0.55)")
+    return out
+
+
+def granary(x, y, scale=1.0, fill=1.0, facing=1):
+    """Pharaoh's storehouses (see module doc, section 10)."""
+    return _place(_granary(fill), x, y, scale, facing)
+
+
+def grain_heap(x, y, scale=1.0, size=1.0, seed=0):
+    """A heap of golden grain (anchor bottom centre), ~300 x 200 px at size 1."""
+    return _place(_grain_heap(300 * (0.4 + 0.6 * _clamp(size, 0, 3)), 200 * _clamp(size, 0, 3), seed), x, y, scale)
+
+
+# ---------------------------------------------------------------------- royal things
+def _egypt_throne():
+    """Gilded Egyptian throne with lion legs, a high back behind the sitter and a footstool. Anchor: the floor under
+    pharaoh(pose='sit_throne', throne=False); seat top EGYPT_SEAT_Y."""
+    g, gd = P["gold"], _GOLD_DARK
+    out = ""
+    out += _rect(64, -26, 86, 22, g, 3.4, rx=4) + _rect(70, -22, 74, 8, LAPIS_P, 0, rx=2)        # footstool
+    for xx in (-70, 46):          # lion legs
+        out += _p(f"M{xx - 9},{-46} L{xx - 7},-18 Q{xx - 10},-4 {xx + 12},-2 Q{xx + 18},-8 {xx + 9},-18 L{xx + 9},-64 Z", g, 3.4)
+        out += _p(f"M{xx},-8 l4,0 m3,0 l4,0", sw=1.8, stroke=gd)
+    back = "M-96,-50 L-96,-300 Q-96,-322 -74,-322 L-60,-322 Q-40,-322 -40,-300 L-40,-50 Z"
+    out += _p(back, g, 4)
+    feathers = ""
+    for k in range(10):
+        yy = -300 + k * 24
+        feathers += _p(f"M-96,{yy} Q-68,{yy + 18} -40,{yy}", sw=7, stroke=(LAPIS_P, CARNELIAN_P, "#3b8b89")[k % 3])
+    out += _clip(_uid("ethr"), back, feathers)
+    out += _p(back, sw=4)
+    out += _rect(-102, -58, 160, 22, g, 4, rx=6)
+    for xx in range(-90, 50, 16):
+        out += _rect(xx, -54, 8, 14, (LAPIS_P if (xx // 16) % 2 else CARNELIAN_P), 0, rx=2)
+    out += _p("M-98,-56 Q-100,-73 -78,-73 L44,-73 Q60,-71 56,-56 Z", "#e8d6aa", 3.4)
+    out += _rect(-16, -134, 12, 76, g, 3.2, rx=4) + _rect(-26, -144, 84, 18, g, 3.6, rx=8)
+    out += _circ(58, -135, 12, g, 3.4) + _circ(62, -137, 2.2, INK, 0)
+    return _g(out, "translate(16,0)")
+
+
+def egypt_throne(x, y, scale=1.0, facing=1):
+    """Pharaoh's gilded throne (see module doc, section 10)."""
+    return _place(_egypt_throne(), x, y, scale, facing)
+
+
+def signet_ring(x, y, scale=1.0, rot=0.0):
+    """Pharaoh's signet ring (Gen 41:42): the gold ring with a carved blue stone of royal_seal(kind='ring')."""
+    return _place(_signet_ring(), x, y, scale, 1, rot)
+
+
+def _chain_loop(state="held"):
+    out = ""
+    if state == "held":           # hanging from two hands: a U of gold links with a pendant
+        pts = [(-70 + 140 * i / 24, 150 * math.sin(math.pi * i / 24) ** 1.3) for i in range(25)]
+        pend = (0, 172)
+    else:                          # lying in a loose loop
+        pts = [(80 * math.cos(2 * math.pi * i / 26) * 1.2, 30 * math.sin(2 * math.pi * i / 26)) for i in range(26)]
+        pend = (0, 44)
+    for i, (px, py) in enumerate(pts):
+        out += _ell(px, py, 7.5, 5, P["gold"], 2.2, extra=f'transform="rotate({(i % 2) * 70} {_f(px)} {_f(py)})"')
+    out += _circ(pend[0], pend[1], 18, P["gold"], 3) + _circ(pend[0], pend[1], 8, LAPIS_P, 0)
+    out += _circ(pend[0] - 5, pend[1] - 5, 3, HILITE, 0)
+    return out
+
+
+def gold_chain(x, y, scale=1.0, state="held"):
+    """Joseph's gold chain (see module doc, section 10)."""
+    return _place(_chain_loop(state), x, y, scale)
+
+
+# ---------------------------------------------------------------------- the prison
+def _prison_window(light=1.0, wall=True):
+    out = ""
+    if wall:
+        rng = random.Random(4)
+        for r in range(6):
+            for c in range(5):
+                xx, yy = -230 + c * 96 + (48 if r % 2 else 0), -170 + r * 58
+                out += _rect(xx, yy, 92, 54, rng.choice(("#a8998a", "#9a8c7e", "#b3a596")), 3, rx=10)
+    out += _rect(-74, -64, 148, 128, "#5a4a42", 4, rx=6)
+    out += _rect(-62, -52, 124, 104, "#cfe0e6", 0, rx=4)
+    out += _p("M-62,20 Q-20,6 20,14 Q50,20 62,10 L62,52 L-62,52 Z", "#bfd6a0", 0, extra='opacity="0.8"')
+    for xx in (-36, -12, 12, 36):
+        out += _rect(xx - 5, -58, 10, 116, "#6e6a66", 3)
+    out += _rect(-62, -10, 124, 9, "#6e6a66", 3)
+    if light > 0:
+        gid = _uid("pbeam", round(light, 2))
+        out += f'<defs>{S.lin_grad(gid, [(0, P["glow"], 0.55 * light), (1, P["glow"], 0)], 0, 0, 0.4, 1)}</defs>'
+        out += _p("M-60,50 L60,50 L280,520 L-60,520 Z", f"url(#{gid})", 0)
+    return out
+
+
+def prison_window(x, y, scale=1.0, light=1.0, wall=True, facing=1):
+    """A small high barred window with a beam of light (see module doc, section 10)."""
+    return _place(_prison_window(_clamp(light), wall), x, y, scale, facing)
+
+
+def _prison_bars(w=300, h=400, open_=0.0):
+    out = _rect(-w / 2 - 18, -h - 18, w + 36, h + 18, "#7a6a5a", 4, rx=6)
+    out += _rect(-w / 2, -h, w, h, "#3e322b", 3, rx=4)
+    gate = ""
+    for k in range(7):
+        xx = -w / 2 + 14 + k * (w - 28) / 6
+        gate += _rect(xx - 6, -h + 4, 12, h - 6, "#6e6a66", 3, rx=4)
+    for yy in (-h + 30, -h / 2, -40):
+        gate += _rect(-w / 2 + 4, yy, w - 8, 12, "#6e6a66", 3, rx=4)
+    gate += _rect(w / 2 - 40, -h / 2 - 22, 26, 34, "#8e8a86", 3, rx=4)
+    k = 1 - 0.85 * _clamp(open_)
+    out += _g(gate, f"translate({_f(-w / 2)},0) scale({k:.3f},1) translate({_f(w / 2)},0)")
+    return out
+
+
+def prison_bars(x, y, scale=1.0, width=300, height=400, open_=0.0, facing=1):
+    """A barred prison door in a stone frame (anchor bottom centre); open_ 0..1 swings it open (hinge left)."""
+    return _place(_prison_bars(width, height, open_), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- animals: camel, donkey, cows
+def _gait(phase, off, A, lift, duty=0.6):
+    """Foot x offset and lift for one leg of a walk cycle (stance moves the foot back, swing lifts it forward)."""
+    u = (phase + off) % 1.0
+    if u < duty:
+        t = u / duty
+        return A * (1 - 2 * t), 0.0
+    t = (u - duty) / (1 - duty)
+    return -A + 2 * A * _smooth(t), lift * math.sin(math.pi * t)
+
+
+def _camel(pose="stand", phase=0.0, load=True, bridle=True, eyes="open"):
+    coat, dark = "#d9ad72", "#b48650"
+    light = S.shade(coat, 0.3)
+    walk = pose == "walk"
+    bob = -4 * math.sin(4 * math.pi * phase) if walk else 0.0
+    out = ""
+    # pace: both legs of one side move together (far side half a cycle later)
+    legs = [((-62, -190), -66, True, True, 0.5), ((72, -190), 80, False, True, 0.5),
+            ((-80, -188), -84, True, False, 0.0), ((56, -188), 60, False, False, 0.0)]
+    for (hip, fx, hind, far, off) in legs:
+        dx, lf = _gait(phase, off, 34, 26) if walk else (0.0, 0.0)
+        hip_ = (hip[0], hip[1] + bob)
+        out += _qleg(hip_, fx + dx, 40 if hind else 37, 15, coat, hind=hind, far=far, hoof="pad", knob=1.3,
+                     bend=0.5 if hind else 0.35, ground=-lf)
+    body = ""
+    sw_ = 6 * math.sin(2 * math.pi * phase) if walk else 0
+    body += _p(f"M-118,-222 Q{-136 + sw_},-190 {-130 + sw_},-160", sw=7, stroke=INK) + \
+        _p(f"M-118,-222 Q{-136 + sw_},-190 {-130 + sw_},-160", sw=3, stroke=coat)
+    body += _ell(-130 + sw_, -156, 6, 11, dark, 3)
+    hb = 3 * math.sin(2 * math.pi * phase + 1) if walk else 0
+    neck = [(92, -222), (138, -210), (172, -226 + hb), (192, -262 + hb), (202, -306 + hb)]
+    body += _band(neck, 50, 34, coat)
+    body += _p(_sm([(122, -214), (156, -214), (182, -238 + hb)], closed=False), sw=3, stroke=dark, extra='opacity="0.35"')
+    bd = _CAMEL_BACK + [(118, -230), (128, -202), (116, -174), (70, -158), (0, -154), (-70, -158), (-110, -170),
+                        (-128, -184)]
+    belly = _p(_sm([(-120, -184), (0, -178), (124, -186), (124, -140), (-120, -140)]), light, 0)
+    shine = _p("M-30,-286 Q-10,-306 16,-306", sw=7, stroke=light, extra='opacity="0.75"')
+    shine += _p("M-56,-246 Q0,-232 56,-246", sw=3, stroke=dark, extra='opacity="0.3"')
+    body += _body(bd, coat, shine, belly, "camelj")
+    if load:
+        body += _camel_load()
+    head = ""
+    head += _ell(196, -342, 9, 13, coat, 3.2, extra='transform="rotate(-30 196 -342)"')
+    head += _ell(197, -341, 4, 7, "#d7a98a", 0, extra='transform="rotate(-30 197 -341)"')
+    hd = [(198, -334), (214, -352), (240, -354), (262, -342), (276, -324), (278, -306), (266, -296), (240, -298),
+          (214, -304), (200, -316)]
+    head += _p(_sm(hd), coat, 4)
+    head += _p("M262,-300 Q272,-290 282,-302", S.shade(coat, -0.06), 3)
+    head += _p("M266,-322 Q270,-326 274,-322", sw=2.6)
+    head += _dot_eye(232, -332, 4.6, eyes if eyes in ("open", "closed", "happy") else "open")
+    head += _p("M226,-338 l-4,-6 M231,-340 l-1,-7 M236,-339 l2,-6", sw=2)
+    head += _blush(240, -316, 7, 4)
+    head += _p("M258,-306 Q264,-302 270,-306", sw=2.4)
+    if bridle:                    # a red halter with tassels and a lead rope hanging forward
+        head += _p("M214,-350 Q206,-322 214,-300 M214,-304 Q244,-292 270,-300", sw=8, stroke=INK)
+        head += _p("M214,-350 Q206,-322 214,-300 M214,-304 Q244,-292 270,-300", sw=4.4, stroke=CARNELIAN_P)
+        for xx in (230, 250):
+            head += _p(f"M{xx},-296 l-2,14 l6,0 Z", P["gold"], 1.8)
+        head += _tube(f"M268,-298 Q{CAMEL_LEAD[0] - 10},{(CAMEL_LEAD[1] - 298) / 2 + 30} {CAMEL_LEAD[0]},{CAMEL_LEAD[1]}",
+                      4.5, P["wood_light"], 2.2)
+    body += _g(head, f"translate(0,{_f(hb)})") if hb else head
+    out += _g(body, f"translate(0,{_f(bob)})") if bob else body
+    return out
+
+
+def _camel_load():
+    """Saddle blanket over the hump, rolled rugs and bulging bundles on both flanks, a spice bag."""
+    out = ""
+    out += _p("M-96,-236 Q-60,-260 -40,-286 Q0,-322 40,-286 Q60,-260 96,-240 L92,-190 Q0,-170 -92,-190 Z",
+              CARNELIAN_P, 4)
+    for k, col in enumerate((P["gold"], LAPIS_P, P["gold"])):
+        y0 = -204 + k * 8
+        out += _p(f"M-92,{y0} Q0,{y0 + 18} 92,{y0 - 2}", sw=4, stroke=col)
+    for xx in range(-84, 96, 18):
+        out += _line(xx, -186 + abs(xx) * 0.02, xx, -174, sw=2.6, color=P["gold"])
+    out += _g(_sack(1.0, P["sackcloth"], 4), "translate(-72,-180) rotate(8) scale(0.72)")     # bundles on the flanks
+    out += _p("M-96,-226 Q-72,-214 -48,-226", sw=4, stroke=CORD)
+    out += _g(_sack(1.0, "#b98552", 6), "translate(70,-176) rotate(-6) scale(0.7)")         # spice bag
+    for xx in (52, 70, 88):
+        out += _p(f"M{xx},-182 l-2,14 l7,0 Z", P["gold"], 1.8)
+    out += _rect(-34, -330, 70, 30, "#5f8a85", 3.6, rx=14)                    # a rolled rug on the hump
+    for xx in (-20, 0, 20):
+        out += _line(xx, -330, xx, -300, sw=3, color="#e8d6aa")
+    out += _ell(-34, -315, 9, 15, S.shade("#5f8a85", -0.2), 3)
+    out += _p("M-44,-300 Q0,-280 46,-300", sw=4, stroke=CORD)
+    return out
+
+
+def camel(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, load=True, bridle=True, eyes="open"):
+    """A caravan camel (see module doc, section 10)."""
+    if pose in ("walk_a", "walk_b"):
+        pose, phase = "walk", (0.0 if pose == "walk_a" else 0.5)
+    if pose not in ("stand", "walk"):
+        raise ValueError(f"camel: pose must be stand / walk / walk_a / walk_b, not {pose!r}")
+    return _place(_camel(pose, phase % 1.0, load, bridle, eyes), x, y, scale, facing)
+
+
+def _donkey(pose="stand", phase=0.0, sacks=2):
+    coat, light, dark = "#aaa39b", "#e2d9cb", "#5e554e"
+    walk = pose == "walk"
+    bob = -3 * math.sin(4 * math.pi * phase) if walk else 0.0
+    out = ""
+    # walk: diagonal pairs (far hind + near front, then the others)
+    for (hip, fx, hind, far, off) in (((-58, -118), -62, True, True, 0.5), ((64, -118), 74, False, True, 0.0),
+                                      ((-74, -116), -78, True, False, 0.0), ((50, -116), 54, False, False, 0.5)):
+        dx, lf = _gait(phase, off, 26, 18) if walk else (0.0, 0.0)
+        out += _qleg((hip[0], hip[1] + bob), fx + dx, 30 if hind else 28, 13 if far else 14, coat, hind=hind, far=far,
+                     bend=0.6 if hind else 0.4, ground=-lf)
+    b = ""
+    b += _p("M-96,-166 Q-110,-126 -106,-96", sw=7, stroke=INK) + _p("M-96,-166 Q-110,-126 -106,-96", sw=3, stroke=coat)
+    b += _p("M-106,-106 Q-118,-86 -106,-76 Q-94,-86 -106,-106 Z", dark, 3)
+    bd = [(-102, -146), (-88, -178), (-40, -188), (10, -182), (60, -190), (92, -172), (102, -142), (88, -112),
+          (40, -98), (-20, -96), (-76, -106)]
+    belly = _p(_sm([(-90, -118), (0, -118), (95, -122), (95, -80), (-90, -80)]), light, 0)
+    b += _body(bd, coat, "", belly, "donkj")
+    if sacks:
+        b += _p("M-60,-196 Q0,-212 60,-198 L56,-172 Q0,-160 -56,-172 Z", CARNELIAN_P, 3.6)     # saddle cloth
+        b += _p("M-56,-180 Q0,-168 56,-182", sw=3, stroke=P["gold"])
+        b += _g(_grain_sack(False, 1), "translate(-34,-104) rotate(6) scale(0.82)")
+        if sacks > 1:
+            b += _g(_grain_sack(False, 2), "translate(30,-100) rotate(-6) scale(0.82)")
+        b += _tube("M-56,-190 Q-30,-176 -34,-176 M56,-190 Q30,-174 30,-174", 4, CORD, 2)
+    b += _p("M58,-180 Q80,-220 102,-240 L134,-214 Q106,-182 96,-132 Z", coat, 4)
+    b += _p("M66,-186 Q86,-224 106,-246", sw=12, stroke=INK) + _p("M66,-186 Q86,-224 106,-246", sw=6, stroke=dark)
+    nod = 4 * math.sin(2 * math.pi * phase) if walk else 0
+    h = ""
+    for ex, rot in ((110, -16), (126, 12)):
+        h += _ell(ex, -268, 10, 34, coat, 3.6, extra=f'transform="rotate({rot} {ex} -240)"')
+        h += _ell(ex, -278, 4.5, 18, "#d7b2a8", 0, extra=f'transform="rotate({rot} {ex} -240)"')
+        h += _p(f"M{ex - 9},-292 Q{ex},-308 {ex + 9},-292 Z", dark, 2.5, extra=f'transform="rotate({rot} {ex} -240)"')
+    h += _ell(128, -214, 26, 30, coat, 4)
+    h += _ell(142, -186, 26, 19, light, 3.8, extra='transform="rotate(20 142 -186)"')
+    h += _circ(148, -186, 2.6, INK, 0) + _circ(158, -182, 2.6, INK, 0)
+    h += _dot_eye(136, -220, 4.4) + _blush(142, -204, 6, 3.5)
+    h += _p("M144,-174 Q150,-170 156,-174", sw=2.5)
+    b += _g(h, f"translate(0,{_f(nod)})") if nod else h
+    out += _g(b, f"translate(0,{_f(bob)})") if bob else b
+    return out
+
+
+def donkey(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, sacks=2):
+    """A pack donkey (see module doc, section 10)."""
+    if pose in ("walk_a", "walk_b"):
+        pose, phase = "walk", (0.0 if pose == "walk_a" else 0.5)
+    if pose not in ("stand", "walk"):
+        raise ValueError(f"donkey: pose must be stand / walk / walk_a / walk_b, not {pose!r}")
+    return _place(_donkey(pose, phase % 1.0, int(sacks)), x, y, scale, facing)
+
+
+def _cow(kind="fat", pose="stand", phase=0.0, mouth=0.0):
+    fat = kind == "fat"
+    coat = "#f3ead8" if fat else "#e2d4ba"
+    patch = "#9b6542" if fat else "#8a6a52"
+    muzzle = "#f0b2b0"
+    walk = pose == "walk"
+    out = ""
+    k = 1.0 if fat else 0.86
+    hy = -100 if fat else -128                     # hip height: the thin cows stand on long bony legs
+    bob = -3 * math.sin(4 * math.pi * phase) if walk else 0.0
+    for (hx, fx, hind, far, off) in ((-70, -74, True, True, 0.5), (74, 84, False, True, 0.0), (-90, -94, True, False, 0.0),
+                                     (56, 62, False, False, 0.5)):
+        dx, lf = _gait(phase, off, 26, 18) if walk else (0.0, 0.0)
+        w0, w1 = (38, 21) if fat else (22, 13)
+        out += _qleg((hx * k, hy + bob + (0 if hind or fat else -2)), fx * k + dx, w0, w1, coat, hind=hind, far=far,
+                     hoof="cloven", bend=0.5 if hind else 0.3, ground=-lf, knob=0.0 if fat else 0.9)
+    b = ""
+    b += _p(f"M{-118 * k},{hy - 52} Q{-136 * k},{hy - 12} {-130 * k},{hy + 22}", sw=7, stroke=INK)
+    b += _p(f"M{-118 * k},{hy - 52} Q{-136 * k},{hy - 12} {-130 * k},{hy + 22}", sw=3, stroke=coat)
+    b += _p(f"M{-130 * k},{hy + 14} Q{-142 * k},{hy + 32} {-130 * k},{hy + 40} Q{-118 * k},{hy + 32} {-130 * k},{hy + 14} Z", patch, 3)
+    if fat:
+        bd = [(-128, -124), (-118, -172), (-70, -196), (-10, -194), (50, -198), (104, -184), (132, -148),
+              (124, -100), (84, -72), (20, -60), (-50, -64), (-104, -84)]
+        pt = _ell(-62, -150, 44, 30, patch, 0) + _ell(46, -118, 34, 28, patch, 0) + _ell(-104, -104, 18, 16, patch, 0)
+        belly = _p(_sm([(-110, -94), (0, -96), (110, -96), (110, -40), (-110, -40)]), S.shade(coat, 0.3), 0)
+        pt += _p("M-40,-178 Q0,-192 40,-180", sw=8, stroke=HILITE, extra='opacity="0.5"')
+        b += _body(bd, coat, pt, belly, "cowfat")
+        b += _ell(-22, -64, 15, 8, muzzle, 3)
+    else:
+        bd = [(-108, -150), (-100, -186), (-60, -196), (-10, -188), (40, -196), (84, -190), (104, -160), (96, -136),
+              (60, -128), (0, -124), (-60, -128), (-96, -134)]
+        pt = _ell(-50, -170, 26, 16, patch, 0) + _ell(40, -160, 20, 14, patch, 0)
+        for j in range(4):        # ribs and bony hips (thin, not sad-scary: a comic 'hungry' cow)
+            xx = -24 + j * 16
+            pt += _p(f"M{xx},-180 Q{xx + 6},-160 {xx},-140", sw=2.6, stroke=S.shade(coat, -0.3), extra='opacity="0.7"')
+        pt += _ell(-80, -186, 12, 8, S.shade(coat, 0.2), 0)
+        b += _body(bd, coat, pt, "", "cowthin")
+    hx, hyy = (140, -150) if fat else (124, -176)
+    if pose == "graze":
+        hx, hyy = hx + 10, hyy + 90
+    head = ""
+    head += _tube(f"M{hx - 22},{hyy - 40} Q{hx - 36},{hyy - 56} {hx - 30},{hyy - 68}", 8, "#efe2c0", 3)
+    head += _tube(f"M{hx + 20},{hyy - 42} Q{hx + 34},{hyy - 56} {hx + 28},{hyy - 68}", 8, "#efe2c0", 3)
+    head += _ell(hx - 36, hyy - 24, 19, 9, coat, 3.4, extra=f'transform="rotate(-20 {hx - 36} {hyy - 24})"')
+    head += _ell(hx + 34, hyy - 26, 19, 9, coat, 3.4, extra=f'transform="rotate(20 {hx + 34} {hyy - 26})"')
+    hw = 1.0 if fat else 0.86
+    head += _p(_sm([(hx - 26 * hw, hyy - 38), (hx + 20 * hw, hyy - 40), (hx + 30 * hw, hyy - 4), (hx + 20 * hw, hyy + 24),
+                    (hx - 20 * hw, hyy + 24), (hx - 32 * hw, hyy - 4)]), coat, 4)
+    head += _ell(hx, hyy - 28, 15, 10, patch, 0, extra='opacity="0.9"')
+    mo = _clamp(mouth)
+    head += _ell(hx, hyy + 28, 30 * hw, 19, muzzle, 3.8)
+    if mo > 0:
+        head += _ell(hx, hyy + 38, 14 * hw, 4 + 9 * mo, P["mouth_inside"], 2.6)
+        head += _ell(hx, hyy + 42 + 4 * mo, 7, 3 + 2 * mo, "#e8857c", 0)
+    head += _ell(hx - 10, hyy + 26, 3.4, 4, S.shade(muzzle, -0.5), 0) + _ell(hx + 10, hyy + 26, 3.4, 4, S.shade(muzzle, -0.5), 0)
+    if fat:
+        head += _dot_eye(hx - 13, hyy - 8, 4.6, "happy") + _dot_eye(hx + 13, hyy - 8, 4.6, "happy")
+    else:                         # big round hungry eyes
+        head += _ell(hx - 12, hyy - 8, 8, 9, "#fbf6ea", 2.4) + _ell(hx + 12, hyy - 8, 8, 9, "#fbf6ea", 2.4)
+        head += _dot_eye(hx - 10, hyy - 6, 4.2) + _dot_eye(hx + 14, hyy - 6, 4.2)
+    head += _blush(hx - 22, hyy + 8, 6, 3.5) + _blush(hx + 22, hyy + 8, 6, 3.5)
+    b += head
+    out += _g(b, f"translate(0,{_f(bob)})") if bob else b
+    return out
+
+
+def cow(x, y, scale=1.0, facing=1, kind="fat", pose="stand", phase=0.0, mouth=0.0):
+    """Pharaoh's dream cows (see module doc, section 10)."""
+    if kind not in ("fat", "thin"):
+        raise ValueError(f"cow: kind must be 'fat' or 'thin', not {kind!r}")
+    if pose in ("walk_a", "walk_b"):
+        pose, phase = "walk", (0.0 if pose == "walk_a" else 0.5)
+    if pose not in ("stand", "walk", "graze"):
+        raise ValueError(f"cow: pose must be stand / walk / walk_a / walk_b / graze, not {pose!r}")
+    return _place(_cow(kind, pose, phase % 1.0, mouth), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- chariot
+_CH_R = 80                        # wheel radius; the axle is at y=-_CH_R, the car floor at CHARIOT_STAND[1]
+
+
+def _wheel(cx, cy, r, phase=0.0, col=None):
+    col = col or P["gold"]
+    out = _circ(cx, cy, r, "none", 15, stroke=INK) + _circ(cx, cy, r, "none", 8, stroke=S.shade(P["wood"], 0.05))
+    for k in range(6):
+        a = 2 * math.pi * (k / 6 + phase / 6)
+        out += _tube(f"M{_f(cx)},{_f(cy)} L{_f(cx + (r - 4) * math.cos(a))},{_f(cy + (r - 4) * math.sin(a))}", 6, P["wood_light"], 2.4)
+    out += _circ(cx, cy, r * 0.2, col, 3.2)
+    out += _circ(cx, cy, r, "none", 2.0, stroke=S.shade(P["wood"], 0.4), extra='opacity="0.6"')
+    return out
+
+
+_CAR = "M-66,-96 L82,-96 Q92,-180 90,-252 Q78,-272 58,-262 Q0,-226 -56,-214 Q-68,-210 -66,-196 Z"
+
+
+def _chariot(part="all", wheel=0.0, horse=True, phase=0.0):
+    r = _CH_R
+    out = ""
+    if part in ("all", "back"):
+        hx, hk = 380, 0.94
+        if horse:
+            pose = "walk_a" if (phase % 1.0) < 0.5 else "walk_b"
+            out += _g(_equine("horse", pose), f"translate({hx},0) scale({hk})")
+            out += _p("M352,-250 Q392,-266 444,-244 L436,-218 Q392,-234 356,-226 Z", LAPIS_P, 3.4)     # saddle pad
+            for xx in (366, 386, 406, 426):
+                out += _p(f"M{xx},-226 l-2,14 l7,0 Z", P["gold"], 1.8)
+            ex, ey = hx + 138 * hk, -374 * hk                          # the ears: a red plume between them
+            out += _p(f"M{_f(ex - 6)},{_f(ey + 18)} Q{_f(ex - 14)},{_f(ey - 30)} {_f(ex + 4)},{_f(ey - 50)} "
+                      f"Q{_f(ex + 6)},{_f(ey - 20)} {_f(ex + 4)},{_f(ey + 18)} Z", CARNELIAN_P, 3)
+            mx, my = hx + 190 * hk, -282 * hk                          # bridle and reins to the front rail
+            out += _p(f"M{_f(hx + 132 * hk)},{_f(-346 * hk)} L{_f(mx)},{_f(my)}", sw=7, stroke=INK)
+            out += _p(f"M{_f(hx + 132 * hk)},{_f(-346 * hk)} L{_f(mx)},{_f(my)}", sw=3.5, stroke=CARNELIAN_P)
+            out += _p(f"M{_f(mx)},{_f(my)} Q{_f(hx + 60)},{_f(-300)} 86,-236", sw=2.8, stroke=S.shade(LEATHER, -0.1))
+        out += _wheel(-14, -r - 4, r - 6, wheel, _GOLD_DARK)                                       # far wheel
+        out += _tube(f"M60,-120 Q220,-150 {hx + 20},-236", 10, P["wood"], 3)                           # pole
+        out += _p("M-62,-96 L66,-96 L74,-238 Q66,-252 50,-246 Q0,-212 -52,-202 Z", S.shade(P["gold"], -0.18), 4)
+        out += _rect(-70, -166, 64, 18, P["wood_light"], 3.4, rx=6) + _rect(-62, -150, 12, 54, P["wood"], 3)  # seat
+    if part in ("all", "front"):
+        out += _p(_CAR, P["gold"], 0)
+        deco = ""
+        for k in range(7):
+            yy = -104 - k * 24
+            deco += _p(f"M-80,{yy + 20} L100,{yy - 34}", sw=8, stroke=(LAPIS_P, CARNELIAN_P, "#3b8b89")[k % 3], extra='opacity="0.85"')
+        deco += _p("M-66,-214 Q0,-228 58,-264", sw=10, stroke=S.shade(P["gold"], 0.25))
+        out += _clip(_uid("char2"), _CAR, deco)
+        out += _p(_CAR, sw=4)
+        out += _rect(-74, -104, 166, 16, P["wood"], 3.4, rx=5)
+        out += _wheel(6, -r, r, wheel)
+    return out
+
+
+def chariot(x, y, scale=1.0, facing=1, part="all", wheel=0.0, horse=True, phase=0.0):
+    """Joseph's chariot with its horse (see module doc, section 10)."""
+    if part not in ("all", "back", "front"):
+        raise ValueError(f"chariot: part must be all / back / front, not {part!r}")
+    return _place(_chariot(part, wheel % 1.0, horse, phase), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- dreams: vine, baskets, bubble
+def _grapevine(grow=1.0):
+    g = _clamp(grow)
+    out = _tube("M0,0 Q-10,-60 6,-120 Q18,-160 0,-190", 12, "#8a5a3a", 3.4)
+    br = [("M4,-120 Q60,-150 100,-200", (100, -200)), ("M2,-150 Q-60,-180 -96,-226", (-96, -226)),
+          ("M0,-188 Q10,-240 30,-280", (30, -280))]
+    for i, (d, tip) in enumerate(br):
+        t = _clamp(g / 0.4 - i * 0.25)
+        if t <= 0:
+            continue
+        x0, y0 = (float(v) for v in d[1:].split(" ")[0].split(","))
+        out += _tube(d, 7, "#8a5a3a", 3) if t >= 1 else _g(_tube(d, 7, "#8a5a3a", 3),
+                                                           f"translate({_f(x0)},{_f(y0)}) scale({t:.3f}) translate({_f(-x0)},{_f(-y0)})")
+        if t < 1:
+            continue
+        if g > 0.3:               # leaves
+            lk = _clamp((g - 0.3) / 0.2)
+            for j, (lx, ly) in enumerate(((tip[0] * 0.5, tip[1] * 0.75), (tip[0] * 0.85, tip[1] * 0.9))):
+                out += _g(_leaf(lx, ly, 26 * lk, j + i), "")
+        if 0.5 < g <= 0.75:      # blossoms
+            for j in range(4):
+                out += _circ(tip[0] + (j - 1.5) * 8, tip[1] + 16 + (j % 2) * 8, 5, "#f4ead0", 2)
+        if g > 0.7:               # grapes: green, then ripe purple
+            ripe = _clamp((g - 0.75) / 0.25)
+            col = S.mix("#a8c870", "#7a4a9a", ripe)
+            cx, cy = tip[0], tip[1] + 30
+            for row in range(4):
+                for j in range(4 - row):
+                    gx, gy = cx + (j - (3 - row) / 2) * 15, cy + row * 13
+                    out += _circ(gx, gy, 8, col, 2.4) + _circ(gx - 3, gy - 3, 2.2, HILITE, 0, extra='opacity="0.8"')
+    return out
+
+
+def _leaf(x, y, r, seed=0):
+    if r <= 0:
+        return ""
+    d = (f"M{_f(x)},{_f(y + r)} Q{_f(x - r * 1.1)},{_f(y + r * 0.2)} {_f(x - r * 0.6)},{_f(y - r * 0.7)} "
+         f"Q{_f(x)},{_f(y - r * 0.4)} {_f(x + r * 0.6)},{_f(y - r * 0.7)} Q{_f(x + r * 1.1)},{_f(y + r * 0.2)} {_f(x)},{_f(y + r)} Z")
+    return _p(d, P["leaf"] if seed % 2 else S.shade(P["leaf"], 0.12), 2.6) + _line(x, y + r, x, y - r * 0.4, sw=1.6,
+                                                                                   color=P["leaf_dark"])
+
+
+def grapevine(x, y, scale=1.0, grow=1.0, facing=1):
+    """The cupbearer's dream vine (see module doc, section 10)."""
+    return _place(_grapevine(grow), x, y, scale, facing)
+
+
+def _bread_stack(n=3, birds=0):
+    out = ""
+    for k in range(max(1, min(3, int(n)))):
+        y0 = -k * 40
+        body = f"M-70,{y0 - 38} L70,{y0 - 38} Q66,{y0 - 6} 56,{y0} L-56,{y0} Q-66,{y0 - 6} -70,{y0 - 38} Z"
+        weave = "".join(f"M{xx},{y0 - 36} L{xx * 0.85:.1f},{y0} " for xx in range(-60, 70, 14))
+        out += _p(body, WICKER, 0) + _clip(_uid("bst", k), body, _p(weave, sw=2, stroke=S.shade(WICKER, -0.3)))
+        out += _p(body, sw=3.6) + _tube(f"M-72,{y0 - 38} L72,{y0 - 38}", 7, S.shade(WICKER, 0.12), 3)
+    top = -max(1, min(3, int(n))) * 40 + 40 - 38
+    for dx, w in ((-34, 34), (4, 40), (40, 30)):
+        out += _ell(dx, top - 12, w, 16, "#e2b36a", 3)
+        out += _p(f"M{dx - w * 0.5},{top - 16} l8,-6 M{dx},{top - 18} l8,-6", sw=2.2, stroke="#a8743c")
+    out += _circ(-8, top - 30, 15, "#d99a4e", 3) + _p(f"M-18,{top - 34} q10,-8 20,0", sw=2, stroke="#a8743c")
+    for j in range(max(0, int(birds))):
+        bx = (-46, 40, -4)[j % 3]
+        out += _g(_songbird(0.0, "perch", ("brown", "blue", "yellow")[j % 3]), f"translate({bx},{top - 54}) scale(0.62)")
+    return out
+
+
+def bread_baskets(x, y, scale=1.0, n=3, birds=0):
+    """The baker's dream: n stacked flat baskets of bread (see module doc, section 10)."""
+    return _place(_bread_stack(n, birds), x, y, scale)
+
+
+def dream_bubble(x, y, w=600, h=380, tail=None, inner="", pop=1.0, fill="#fbf6ea", glow=True, seed=0):
+    """A soft cloud-shaped dream frame (absolute stage coordinates, see module doc, section 10)."""
+    k = _smooth(_clamp(pop))
+    if k <= 0:
+        return ""
+    rng = random.Random(seed)
+    circles = []
+    nb = 12
+    for i in range(nb):
+        a = 2 * math.pi * i / nb
+        rr = min(w, h) * rng.uniform(0.17, 0.22)
+        circles.append((x + (w / 2 - rr * 0.55) * math.cos(a), y + (h / 2 - rr * 0.55) * math.sin(a), rr))
+    core = _ell(x, y, w / 2 - min(w, h) * 0.1, h / 2 - min(w, h) * 0.1, fill, 0)
+    shape = "".join(_circ(cx, cy, r, fill, 0) for cx, cy, r in circles) + core
+    outline = "".join(_circ(cx, cy, r, fill, 9) for cx, cy, r in circles)
+    gl = ""
+    if glow:
+        gid = _uid("dbg", x, y, w, h)
+        gl = (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.8), (0.7, P["gold"], 0.25), (1, P["gold"], 0)])}</defs>'
+              + _ell(x, y, w * 0.68, h * 0.72, f"url(#{gid})", 0))
+    tl = ""
+    if tail:
+        tx, ty = tail
+        for j, t in enumerate((0.25, 0.55, 0.8)):
+            px, py = _lerp(x, tx, 0.55 + t * 0.45), _lerp(y + h * 0.3 * (1 if ty > y else -1), ty, t)
+            tl += _circ(px, py, 22 - j * 6, fill, 3.4)
+    cid = _uid("dbc", x, y, w, h, seed)
+    clipd = "".join(f"M{_f(cx - r)},{_f(cy)} a{_f(r)},{_f(r)} 0 1 0 {_f(2 * r)},0 a{_f(r)},{_f(r)} 0 1 0 {_f(-2 * r)},0 Z "
+                    for cx, cy, r in circles)
+    clipd += (f"M{_f(x - w / 2 + min(w, h) * 0.1)},{_f(y)} a{_f(w / 2 - min(w, h) * 0.1)},{_f(h / 2 - min(w, h) * 0.1)} 0 1 0 "
+              f"{_f(w - min(w, h) * 0.2)},0 a{_f(w / 2 - min(w, h) * 0.1)},{_f(h / 2 - min(w, h) * 0.1)} 0 1 0 "
+              f"{_f(-(w - min(w, h) * 0.2))},0 Z")
+    body = gl + tl + outline + shape + _clip(cid, clipd, inner)
+    if k < 1:
+        body = f'<g transform="translate({_f(x)},{_f(y)}) scale({k:.3f}) translate({_f(-x)},{_f(-y)})">{body}</g>'
+    return f'<g filter="url(#wobble-fine)">{body}</g>'
+
+
+# ---------------------------------------------------------------------- the children's toy
+def _toy(kind="horse", rot=0.0):
+    if kind == "ball":
+        out = _circ(0, -34, 34, "#f2c84b", 4)
+        out += _clip(_uid("ball"), "M-34,-34 A34,34 0 1 0 34,-34 A34,34 0 1 0 -34,-34 Z",
+                     _p("M-12,-68 Q14,-34 -12,0 L-40,0 L-40,-68 Z", "#d9534a", 0) +
+                     _p("M14,-68 Q40,-34 14,0 L40,0 L40,-68 Z", "#4f86c6", 0))
+        out += _circ(0, -34, 34, "none", 4) + _ell(-12, -50, 9, 5, HILITE, 0, extra='opacity="0.8" transform="rotate(-30 -12 -50)"')
+        return _g(out, f"rotate({rot:.1f} 0 -34)") if rot else out
+    if kind != "horse":
+        raise ValueError(f"toy: kind must be 'horse' or 'ball', not {kind!r}")
+    wood, red = "#e2a85e", "#d9534a"
+    out = _rect(-52, -30, 104, 12, P["wood"], 3.4, rx=5)
+    for xx in (-36, 36):
+        out += _circ(xx, -10, 12, red, 3.4) + _circ(xx, -10, 3, P["gold"], 0)
+    for xx in (-30, 26):
+        out += _rect(xx - 6, -64, 12, 38, wood, 3.2, rx=4)
+    out += _p("M-44,-62 Q-46,-96 0,-96 Q36,-96 40,-70 Q20,-56 -40,-56 Z", wood, 3.6)
+    out += _p("M24,-86 Q30,-128 48,-136 Q66,-138 70,-122 Q72,-108 58,-104 Q48,-100 42,-80 Z", wood, 3.6)
+    out += _p("M24,-90 Q20,-122 40,-140", sw=8, stroke=INK) + _p("M24,-90 Q20,-122 40,-140", sw=4, stroke=red)
+    out += _p("M-44,-84 Q-62,-80 -64,-58", sw=7, stroke=INK) + _p("M-44,-84 Q-62,-80 -64,-58", sw=3.4, stroke=red)
+    out += _circ(54, -122, 3, INK, 0) + _ell(48, -134, 5, 8, wood, 2.6, extra='transform="rotate(-20 48 -134)"')
+    out += _p("M-10,-80 Q4,-88 18,-80", sw=5, stroke="#4f86c6")
+    return _g(out, f"rotate({rot:.1f} 0 0)") if rot else out
+
+
+def toy(x, y, scale=1.0, facing=1, kind="horse", rot=0.0):
+    """The children's toy: a little wooden horse on wheels or a striped ball (see module doc, section 10)."""
+    return _place(_toy(kind, rot), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- fields (good years / famine)
+def _field(x0, x1, y, depth=120.0, ripe=1.0, dry=0.0, seed=0, s=1.0):
+    rng = random.Random(seed)
+    soil = S.mix("#b9935f", "#c9a77a", dry)
+    out = _p(f"M{_f(x0)},{_f(y - depth * 0.15)} L{_f(x1)},{_f(y - depth * 0.15)} L{_f(x1)},{_f(y + depth)} "
+             f"L{_f(x0)},{_f(y + depth)} Z", soil, 3 * s)
+    if dry > 0:                   # cracked dry earth
+        for _ in range(int((x1 - x0) / (60 * s))):
+            cx, cy = rng.uniform(x0, x1), y + rng.uniform(0.1, 0.9) * depth
+            pts = [(cx, cy)]
+            for j in range(3):
+                pts.append((pts[-1][0] + rng.uniform(-30, 30) * s, pts[-1][1] + rng.uniform(-10, 14) * s))
+            out += _p(_sm(pts, closed=False), sw=2.4 * s, stroke=S.shade(soil, -0.35), extra=f'opacity="{0.8 * dry:.2f}"')
+    col = S.mix(S.mix("#9fbf5a", WHEAT, ripe), "#c9b07a", dry)
+    rows = 4
+    for r in range(rows):
+        yy = y + depth * r / rows
+        k = (0.6 + 0.4 * r / rows) * s
+        hgt = (90 * (1 - 0.7 * dry)) * k
+        for i in range(int((x1 - x0) / (16 * k)) + 1):
+            xx = x0 + i * 16 * k + rng.uniform(-5, 5) * k
+            tip = (xx + rng.uniform(-6, 6) * k + 10 * dry * k, yy - hgt * rng.uniform(0.8, 1.1))
+            out += _line(xx, yy, tip[0], tip[1] + (hgt * 0.3 * dry), sw=2.4 * k, color=S.shade(col, -0.25))
+            if dry < 0.6:
+                out += _ell(tip[0], tip[1], 4 * k, 10 * k, col, 1.8 * k)
+    return out
+
+
+def field(x0, x1, y, depth=120.0, scale=1.0, ripe=1.0, dry=0.0, seed=0):
+    """A wheat field band in absolute stage coordinates (see module doc, section 10)."""
+    return _place(_field(x0, x1, y, depth * scale, _clamp(ripe), _clamp(dry), seed, scale), 0, 0, 1.0)

@@ -12,7 +12,11 @@ grey figure is a 330 px adult at the same scale; dashed blue boxes show document
 sailors) come from art/characters.py to check the props against them.
 David film: python3 tools/props_sheet.py david_items david_creatures david_camp valley
 Noah film: python3 tools/props_sheet.py noah_ark noah_animals noah_pairs noah_weather noah_items
+Joseph film: python3 tools/props_sheet.py joseph_items joseph_animals joseph_egypt
+Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
+uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
+import os
 import sys
 from pathlib import Path
 
@@ -29,6 +33,9 @@ from engine.paths import BUILD, FONT_BOLD  # noqa: E402
 from engine.scene import BOIL_TOKEN  # noqa: E402
 
 LABEL_H = 44
+OUT = Path(os.environ.get("PB_PREVIEW_DIR") or BUILD / "preview")   # PB_PREVIEW_DIR: write sheets elsewhere
+if os.environ.get("PB_RASTER_CACHE"):          # optional separate raster cache (e.g. a scratch dir you delete)
+    raster._RASTER_DIR = Path(os.environ["PB_RASTER_CACHE"])
 MAX_W = 2400
 
 
@@ -111,7 +118,7 @@ def render_sheet(name, title, rows):
     for mx, my in marks:
         d.line([mx - 11, my, mx + 11, my], fill=(214, 64, 52), width=3)
         d.line([mx, my - 11, mx, my + 11], fill=(214, 64, 52), width=3)
-    out = BUILD / "preview" / f"props_{name}.png"
+    out = OUT / f"props_{name}.png"
     out.parent.mkdir(parents=True, exist_ok=True)
     rgb.save(out)
     print(out, rgb.size)
@@ -703,12 +710,92 @@ def sheet_noah_pairs():
     return render_sheet("noah_pairs", "props — Noah: animal_pair(kind, ...) two by two (scale 0.5; anchor = the near animal)", rows)
 
 
+def sheet_joseph_items():
+    def c(label, fn, w=300, ax=150, ay=330, ref=None):
+        return _c(label, fn, w, ax, ay, (w - 40, ay, ref) if ref else None)
+    rows = [
+        (380, [c(f"held progress={pr:.2f}", lambda x, y, pr=pr: PR.coat_of_colours(x, y - 300, 1.0, progress=pr), 250, 125)
+               for pr in (0, 1 / 6, 2 / 6, 4 / 6, 1.0)]
+         + [c("held torn dirty", lambda x, y: PR.coat_of_colours(x, y - 300, 1.0, torn=True, dirty=True), 250, 125),
+            c("lying", lambda x, y: PR.coat_of_colours(x, y, 1.0, state="lying"), 330, 165),
+            c("lying torn dirty", lambda x, y: PR.coat_of_colours(x, y, 1.0, state="lying", torn=True, dirty=True), 330, 165)]),
+        (300, [c("folded", lambda x, y: PR.coat_of_colours(x, y - 60, 1.0, state="folded"), 230, 115, 290),
+               c("bundle torn dirty", lambda x, y: PR.coat_of_colours(x, y - 120, 1.0, state="bundle", torn=True, dirty=True), 260, 130, 290)]
+         + [c(f"sheaf bow={b}", lambda x, y, b=b: PR.wheat_sheaf(x, y, 1.0, bow=b), 210, 90, 290) for b in (0, 0.5, 1.0)]
+         + [c("sheaf glow=1", lambda x, y: PR.wheat_sheaf(x, y, 1.0, glow=1.0), 250, 125, 290),
+            c("sheaf rise=.5", lambda x, y: PR.wheat_sheaf(x, y, 1.0, rise=0.5), 260, 150, 290),
+            c("kind='bundle'", lambda x, y: PR.wheat_sheaf(x, y, 1.0, kind="bundle"), 280, 150, 290),
+            c("ripe=0 (green)", lambda x, y: PR.wheat_sheaf(x, y, 1.0, ripe=0.0), 200, 100, 290)]),
+        (240, [c(f"coins n={n} {k}", lambda x, y, n=n, k=k: PR.coins(x, y, 1.0, n=n, kind=k), 330, 165, 200)
+               for n, k in ((20, "pile"), (20, "row"), (15, "stacks"), (5, "pouch"))]
+         + [c("signet_ring", lambda x, y: PR.signet_ring(x, y - 60, 1.0), 170, 85, 200),
+            c("gold_chain held / lying", lambda x, y: PR.gold_chain(x - 50, y - 190, 0.8) + PR.gold_chain(x + 60, y - 30, 0.8, state="lying"), 280, 140, 200),
+            c("toy horse / ball", lambda x, y: PR.toy(x - 60, y, 1.0) + PR.toy(x + 80, y, 1.0, kind="ball"), 260, 120, 200)]),
+        (330, [c(f"grapevine grow={g}", lambda x, y, g=g: PR.grapevine(x, y, 1.0, grow=g), 230, 115, 300)
+               for g in (0.2, 0.45, 0.65, 0.85, 1.0)]
+         + [c(f"bread_baskets birds={b}", lambda x, y, b=b: PR.bread_baskets(x, y - 30, 1.0, birds=b), 230, 115, 300) for b in (0, 3)]
+         + [c("grain_sacks n=1 open / n=6", lambda x, y: PR.grain_sacks(x - 70, y, 0.9, n=1, open_=True) + PR.grain_sacks(x + 90, y, 0.6, n=6), 300, 150, 300)]),
+    ]
+    return render_sheet("joseph_items", "props — Joseph: coat, sheaves, coins, ring, chain, toy, dream vine and baskets, sacks", rows)
+
+
+def sheet_joseph_animals():
+    def c(label, fn, w=420, ax=170, ay=400, ref=False):
+        return _c(label, fn, w, ax, ay, (w - 40, ay, 1.0) if ref else None)
+    rows = [
+        (420, [c(f"camel walk phase={ph}", lambda x, y, ph=ph: PR.camel(x, y, 1.0, pose="walk", phase=ph), 440, 160) for ph in (0, 0.25, 0.5, 0.75)]
+         + [c("camel stand load=False", lambda x, y: PR.camel(x, y, 1.0, load=False, bridle=False), 440, 160)]),
+        (320, [c(f"donkey walk phase={ph}", lambda x, y, ph=ph: PR.donkey(x, y, 1.0, pose="walk", phase=ph), 330, 130, 300) for ph in (0, 0.25, 0.5, 0.75)]
+         + [c("donkey sacks=0", lambda x, y: PR.donkey(x, y, 1.0, sacks=0), 330, 130, 300), c("animal('donkey') (old)", lambda x, y: PR.animal(x, y, 1.0, kind="donkey"), 330, 130, 300)]),
+        (300, [c(f"cow fat {p}", lambda x, y, p=p: PR.cow(x, y, 1.0, pose=p), 360, 160, 280) for p in ("stand", "walk_a", "walk_b", "graze")]
+         + [c(f"cow thin {p}", lambda x, y, p=p: PR.cow(x, y, 1.0, kind="thin", pose=p, mouth=0.8 if p == "stand" else 0.0), 330, 140, 280) for p in ("stand", "walk_a")]),
+        (420, [c(f"chariot wheel={w} phase={ph}", lambda x, y, w=w, ph=ph: PR.chariot(x, y, 0.62, wheel=w, phase=ph), 560, 90, 400) for w, ph in ((0, 0), (0.5, 0.5))]
+         + [c("chariot back + ride (seated) + front", lambda x, y: PR.chariot(x, y, 0.62, part="back") + CH.joseph(
+             *PR.local_to_stage(x, y, 0.62, 1, *PR.CHARIOT_SEAT), 0.62, attire="ruler", pose="ride") + PR.chariot(x, y, 0.62, part="front"), 560, 90, 400),
+            c("cow thin graze", lambda x, y: PR.cow(x, y, 1.0, kind="thin", pose="graze"), 330, 140, 400)]),
+    ]
+    return render_sheet("joseph_animals", "props — Joseph: camel and donkey walk cycles, fat / thin cows, the chariot", rows)
+
+
+def sheet_joseph_egypt():
+    def c(label, fn, w=600, ax=300, ay=560, ref=None):
+        return _c(label, fn, w, ax, ay, (w - 60, ay, ref) if ref else None)
+
+    def sky(fn):
+        return lambda x, y: f'<rect x="{x - 400}" y="{y - 600}" width="1200" height="620" fill="{P["sky_day"]}"/>' + fn(x, y)
+    rows = [
+        (600, [c("pyramids (n=3) scale 0.6 / haze=.6 behind", sky(lambda x, y: PR.pyramids(x + 120, y - 120, 0.45, haze=0.6) + PR.pyramids(x, y, 0.6)), 760, 380),
+               c("egypt_house v0 (scale 0.7)", lambda x, y: PR.egypt_house(x, y, 0.7), 520, 260, 560, 0.7),
+               c("egypt_house v1 villa (scale 0.55)", lambda x, y: PR.egypt_house(x, y, 0.55, variant=1), 560, 280, 560, 0.55),
+               c("egypt_column", lambda x, y: PR.egypt_column(x, y, 1.0) + PR.palm_tree(x + 150, y, 0.9), 400, 120, 560, 1.0)]),
+        (520, [c(f"granary fill={f}", lambda x, y, f=f: PR.granary(x, y, 0.55, fill=f), 520, 260, 480, 0.55) for f in (0, 0.35, 0.7, 1.0)]),
+        (520, [c("egypt_throne + pharaoh(throne=False)", lambda x, y: PR.egypt_throne(x, y, 1.0) + CH.pharaoh(x, y, 1.0, pose="sit_throne", throne=False), 400, 180, 480),
+               c("prison_window light=1", lambda x, y: PR.prison_window(x, y - 300, 0.9), 520, 260, 480),
+               c("prison_bars open_=0 / .6", lambda x, y: PR.prison_bars(x - 110, y, 0.6) + PR.prison_bars(x + 130, y, 0.6, open_=0.6), 480, 240, 480, 0.6),
+               c("pit outside (rope=.6) / cutaway", lambda x, y: PR.pit(x - 120, y - 300, 0.7, rope=0.6) + PR.pit(x + 220, y - 380, 0.45, view="cutaway", rope=0.8), 620, 300, 480)]),
+        (340, [Cell("nile(x0, x1, y, width=150, phase) + papyrus + field(ripe) / field(dry=1)", lambda ox, oy: (
+            PR.nile(ox + 20, ox + 1100, oy + 150, 150, 1.0, phase=0.3) + PR.field(ox + 1140, ox + 1640, oy + 160, 120)
+            + PR.field(ox + 1680, ox + 2200, oy + 160, 120, dry=1.0)), 2220, [(20, 150)])]),
+        (520, [Cell("dream_bubble(... inner=7 fat cows, tail toward a sleeper) | inner=sheaves bowing", lambda ox, oy: (
+            CH.pharaoh(ox + 160, oy + 500, 0.6, pose="sleep") +
+            PR.dream_bubble(ox + 560, oy + 230, 640, 380, tail=(ox + 180, oy + 420),
+                            inner=PR.nile(ox + 200, ox + 900, oy + 380, 80, 0.6) + "".join(
+                                PR.cow(ox + 330 + i * 110, oy + 330 + (i % 2) * 22, 0.42, pose="walk", phase=i * 0.3) for i in range(4))) +
+            PR.dream_bubble(ox + 1500, oy + 250, 600, 400, tail=(ox + 1150, oy + 470), inner=
+                            PR.field(ox + 1200, ox + 1800, oy + 380, 80) + PR.wheat_sheaf(ox + 1500, oy + 390, 0.8, glow=1.0) +
+                            "".join(PR.wheat_sheaf(ox + 1500 + dx, oy + 400 + abs(dx) * 0.05, 0.6, -1 if dx > 0 else 1, bow=0.9)
+                                    for dx in (-220, -130, 130, 220)))), 2220, [])]),
+    ]
+    return render_sheet("joseph_egypt", "props — Joseph: Egypt (pyramids, houses, column, granary fill, throne, prison, pit, Nile, fields, dream bubbles)", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
           "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
           "lions": sheet_lions, "daniel": sheet_daniel, "david_items": sheet_david_items,
           "david_creatures": sheet_david_creatures, "david_camp": sheet_david_camp, "valley": sheet_valley,
           "noah_ark": sheet_noah_ark, "noah_weather": sheet_noah_weather, "noah_items": sheet_noah_items,
-          "noah_animals": sheet_noah_animals, "noah_pairs": sheet_noah_pairs}
+          "noah_animals": sheet_noah_animals, "noah_pairs": sheet_noah_pairs,
+          "joseph_items": sheet_joseph_items, "joseph_animals": sheet_joseph_animals, "joseph_egypt": sheet_joseph_egypt}
 
 
 def main():

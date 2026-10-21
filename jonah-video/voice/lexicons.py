@@ -38,7 +38,8 @@ ZV_FIX = {
     "肚子": "du4 zi5", "得救": "de2 jiu4", "湿漉漉": "shi1 lu4 lu4", "禁食": "jin4 shi2", "枯死": "ku1 si3",
     "热极了": "re4 ji2 le5", "发昏": "fa1 hun1", "划桨": "hua2 jiang3", "用力划桨": "yong4 li4 hua2 jiang3",
     "火辣辣": "huo3 la4 la4", "宽宽": "kuan1 kuan1", "粗粗": "cu1 cu1", "那条": "na4 tiao2",
-    "喜欢": "xi3 huan5", "不喜欢": "bu4 xi3 huan5", "愿意": "yuan4 yi4", "不愿意": "bu2 yuan4 yi4",
+    # a neutral-tone 欢 comes out like 喝/和, so 喜欢 gets the full tone
+    "喜欢": "xi3 huan1", "不喜欢": "bu4 xi3 huan1", "愿意": "yuan4 yi4", "不愿意": "bu2 yuan4 yi4",
     "过了": "guo4 le5", "睡着": "shui4 zhao2", "长大": "zhang3 da4",
     "做错了事": "zuo4 cuo4 le5 shi4", "又热又干": "you4 re4 you4 gan1",
 }
