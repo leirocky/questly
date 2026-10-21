@@ -62,7 +62,7 @@ SCENES = [
                 "Joseph about 17, the youngest Benjamin a small boy); Jacob gives Joseph a beautiful coat of many "
                 "colours (bands appear colour by colour as they are named); the ten older brothers frown, jealous.",
         "lines": [
-            ("N", "很久以前，有一个爸爸叫雅各。他有十二个儿子。"),
+            ("N", "很久以前，有一个爸爸，名字叫雅各。他有十二个儿子。"),
             ("N", "雅各最疼爱的，是第十一个儿子，约瑟。"),
             ("N", "他给约瑟做了一件彩色的衣服。红的、黄的、蓝的、绿的，好漂亮！"),
             ("N", "哥哥们看见了，心里酸溜溜的："),

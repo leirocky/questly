@@ -334,14 +334,15 @@ def _ref_times(text, toks, ts):
 
 
 # a stop's closure is silent, and a fricative (h, s, sh, x, f) is quiet, in fluent speech too
-_QUIET_INITIALS = ("b", "p", "d", "t", "g", "k", "j", "q", "z", "c", "f", "h", "s", "x")
+_STOP_INITIALS = ("b", "p", "d", "t", "g", "k", "j", "q", "z", "c")
+_QUIET_INITIALS = _STOP_INITIALS + ("f", "h", "s", "x")
 
 
 def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10, silence_gap=0.04):
     """True when a NO_BREAK word is read with a pause inside it (e.g. 大利乌 … 王, 耶 … 和华): between
     two of its characters, a run of frames below -40 dBFS longer than ``min_gap`` (``stop_gap``
     before a stop, affricate or fricative initial), or real silence (below -55 dBFS) for
-    ``silence_gap`` before any initial."""
+    ``silence_gap`` (``stop_gap`` before a stop or affricate, whose closure is silent: 雅 … 各)."""
     from voice import lexicons as LX
 
     ref = _norm(text)
@@ -368,7 +369,8 @@ def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10, silence_gap
                         best = max(best, run)
                     return best * 0.01
                 limit = stop_gap if syls[k].startswith(_QUIET_INITIALS) else min_gap
-                if longest(quiet) > limit or longest(silent) >= silence_gap:
+                s_limit = stop_gap if syls[k].startswith(_STOP_INITIALS) else silence_gap
+                if longest(quiet) > limit or longest(silent) >= s_limit:
                     return True
                 a = max(a, int(times[m.start() + k] * 100))
     return False
