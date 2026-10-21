@@ -50,7 +50,7 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.daniel.scenes.s05_prays import clamp, fig
 from stories.david.scenes.s08_saul import Actor, TightSprite, pop_k, pop_tf, pt, sparkle_dyn
-from stories.joseph.scenes.s08_egypt import ShadowSprite, f1, jdesign, jlib, keyed, mul_alpha, person_sprite, poly, rect
+from stories.joseph.scenes.s08_egypt import ShadowSprite, f1, jlib, mul_alpha, person_sprite, poly, rect
 
 SW, SH = 2600, 1350
 GY = 1060
@@ -171,7 +171,6 @@ def curtain_svg(sw):
     x0, y0, x1, y1 = WIN
     out = ""
     for side, xx in ((-1, x0 + 10), (1, x1 - 10)):
-        pts = [(xx - side * 4, y0 - 20), (xx + side * (-70), y0 - 20)]
         bot = y1 + 30
         d = (f"M{xx},{y0 - 24} L{xx - side * 120},{y0 - 24} Q{xx - side * (90 + 20 * sw)},{(y0 + bot) / 2} "
              f"{xx - side * (60 + 30 * sw)},{bot} L{xx + side * 6},{bot} Q{xx - side * 10 * sw},{(y0 + bot) / 2} {xx},{y0 - 24} Z")
@@ -212,7 +211,7 @@ def dream_base_svg():
     for gx in range(x - w // 2, x + w // 2, 120):
         inner += PR.grass_tuft(gx + 40, BACK_Y + 8, 0.45, variant=(gx // 120) % 3)
     inner += river_body(0.0, back=True)
-    return S.svg_doc(_loc(PR.dream_bubble(x, y, w, h, tail=(PH_X - 140, MATT_Y - 70), inner=inner, seed=12)),
+    return S.svg_doc(_loc(PR.dream_bubble(x, y, w, h, tail=(PH_X - 140, MATT_Y - 70), inner=inner, seed=12, glow=False)),
                      w=DPW, h=DPH)
 
 
@@ -286,7 +285,7 @@ class Dream:
         self.thin_stand = sp.add(PR.cow(ax, ay, CS, 1, "thin", "stand"))
         self.thin_open = sp.add(PR.cow(ax, ay, CS, 1, "thin", "stand", mouth=0.85))
         self.puff = sp.add(puff_markup(ax, ay - 40, 1.25))
-        self.splash = sp.add(splash_markup(ax, ay, 1.0))
+        self.splash = sp.add(splash_markup(ax, ay, 1.5))
         self.badges = [sp.add(badge_markup(n + 1, ax, ay - 30)) for n in range(7)]
 
     def _prep(self):
@@ -581,7 +580,6 @@ def build(ctx):
     good_t = [t_good + 0.11 * i for i in range(7)]
     t_bad = pt(ctx, 2, "七年大饥") - 0.1            # seven dry fields
     bad_t = [t_bad + 0.11 * i for i in range(7)]
-    t_bad_face = pt(ctx, 2, "接着") + 0.1
     t_store = pt(ctx, 2, "要趁") + 0.0              # the golden row glows
     t_gran = pt(ctx, 2, "把粮食") - 0.1             # granary appears, sacks hop in, it fills
     sack_t = [t_gran + 0.35 + 0.28 * i for i in range(3)]
@@ -725,13 +723,14 @@ def build(ctx):
     cam0 = Cam(1100, 640, 2000)
     camP = Cam(880, 760, 1440)                       # Pharaoh asleep
     camD = Cam(1270, 545, 1840)                      # the dream
-    camW = Cam(1080, 700, 1700)                      # waking
     camA = Cam(1330, 700, 1760)                      # wise men, cupbearer, Pharaoh
     camA2 = Cam(1560, 640, 1660)                     # the cupbearer remembers
     camB = Cam(1450, 612, 2040)                      # Joseph before the throne, the panel above
-    sc.camera = M.cam_keys([(0.0, cam0), (L0.start + 0.3, cam0), (t_dream - 0.2, camP), (t_fat - 0.3, camD),
-                            (t_dream_out, camD), (t_h0 + 0.2, camW), (t_shrug[0], camA), (t_idea, camA),
-                            (t_think + 0.4, camA2), (t_b0, camA2), (t_b1 + 0.6, camB), (T, Cam(1450, 618, 2010))],
+    camBc = Cam(1500, 730, 1600)                     # closer: Joseph bows, points up
+    sc.camera = M.cam_keys([(0.0, cam0), (L0.start - 0.2, cam0), (t_snug + 0.3, camP), (t_dream - 1.2, camP),
+                            (t_fat + 0.15, camD), (t_dream_out - 0.1, camD), (t_shrug[0] + 0.4, camA), (t_idea, camA),
+                            (t_think + 0.4, camA2), (t_b0, camA2), (t_b1 + 0.5, camBc), (t_panel - 0.3, camBc),
+                            (t_panel + 0.9, camB), (T, Cam(1450, 618, 2010))],
                            "sine")
     sc.fx = [FX.vignette(lambda t: 0.35 * bed_a(t), color=(14, 18, 40))]
 

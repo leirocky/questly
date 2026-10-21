@@ -45,7 +45,7 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.daniel.scenes.s05_prays import clamp, fig
 from engine import fx as FX
-from stories.david.scenes.s08_saul import Actor, TightSprite, WalkPath, pop_tf, pt, rays_svg, sparkle_dyn
+from stories.david.scenes.s08_saul import Actor, TightSprite, WalkPath, pt, rays_svg, sparkle_dyn
 
 SW, SH = 2700, 1300
 GY = 1060                      # ground line (feet) in both places
@@ -345,7 +345,6 @@ def fg_ext_svg():
 
 def boat_svg():
     """A little Nile sailboat (felucca) on the far water."""
-    x, y = 0, 0
     b = (f'<path d="M-62,-6 Q0,18 66,-10 L54,6 Q0,24 -50,8 Z" fill="{P["wood"]}" stroke="{INK}" stroke-width="3"/>'
          f'<path d="M-2,-6 L-2,-120" stroke="{INK}" stroke-width="4"/>'
          f'<path d="M0,-118 Q52,-60 44,-14 L0,-14 Z" fill="#f4ead2" stroke="{INK}" stroke-width="3"/>'
@@ -436,7 +435,7 @@ def _stones(x0, x1, y0, y1, seed, h=92, w=168):
 
 def cell_back_svg():
     """Everything behind the door gate and the guard: the dark corridor beyond the door."""
-    x0, x1 = DOOR_X - DOOR_W / 2, DOOR_X + DOOR_W / 2
+    x0 = DOOR_X - DOOR_W / 2
     yt = GY - DOOR_H
     defs = S.lin_grad("s8cor", [(0, "#5a4a3c"), (1, "#3a2f27")])
     b = rect(x0 - 200, yt - 60, DOOR_W + 400, DOOR_H + 80, "url(#s8cor)", 0)
@@ -586,23 +585,6 @@ def prisoner_fig(sp, kind, pose, expr=None, facing=-1, marks=True, s=KC):
 
 
 CELL_BREATHE = {"cup": (0.012, 3.1, 0.15), "bak": (0.013, 3.5, 0.55), "jos": (0.011, 3.0, 0.0)}
-
-
-def add_cell(sc, alpha=None, toff=0.0, s9=False):
-    """Static cell layers (corridor, wall with the door hole, floor). The gate, guard and figures are added by the
-    scenes. alpha(t) fades the cell in (s08)."""
-    al = (lambda m: mul_alpha(m, alpha)) if alpha is not None else (lambda m: m)
-    sc.add("cell_back", cell_back_svg(), wc=0.6, motion=al(None) if alpha else None)
-
-
-def add_cell_front(sc, alpha=None):
-    al = (lambda m: mul_alpha(m, alpha)) if alpha is not None else (lambda m: m)
-    sc.add("cell_wall", cell_wall_svg(), wc=0.8, motion=al(None) if alpha else None)
-
-
-def add_cell_floor(sc, alpha=None):
-    al = (lambda m: mul_alpha(m, alpha)) if alpha is not None else (lambda m: m)
-    sc.add("cell_floor", cell_floor_svg(), wc=0.8, motion=al(None) if alpha else None)
 
 
 def beam_base_alpha(t):
@@ -819,7 +801,6 @@ def build(ctx):
 
     n_c = int(round((JW - J0) / adv(K)))
     j0 = JW - n_c * adv(K)
-    lead_x0 = JW
     n_l = 40
     jwalk = WalkPath([(t_walk1, j0, JW, RATE), (t_lead_walk, JW, JW + n_l * adv(K), RATE)], [cw, jl], adv(K))
     sw_sched = []
@@ -892,7 +873,7 @@ def build(ctx):
     camB = Cam(1190, 712, 1740)                     # Potiphar and Joseph (keys)
     camC = Cam(1350, 700, 1860)                     # the guard comes
     sc.camera = M.cam_keys([(0.0, cam0), (L0.start + 0.2, cam0), (t_look + 0.6, camA), (t_pot_walk, camA),
-                            (t_give + 0.2, camB), (t_whisp, camB), (t_lead, camC), (t_x0 + 0.2, CAM_CELL),
+                            (t_give + 0.2, camB), (t_whisp, camB), (t_lead - 0.45, camC), (t_x0 + 0.3, CAM_CELL),
                             (t_lookc, CAM_CELL), (T - 1.3, CAM_CELL2), (T, CAM_CELL2)], "sine")
 
     # birds over the courtyard

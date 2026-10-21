@@ -32,7 +32,7 @@ from engine.scene import Scene
 from stories.david.scenes.s08_saul import Actor, pop_tf, pt, sparkle_dyn
 from stories.joseph.scenes import s08_egypt as E
 from stories.joseph.scenes.s08_egypt import (BAK_X, CAM_CELL2, CELL_BREATHE, CUP_X, GY, JC, KC, LOOK_UP_SOFT, SH, SW,
-                                             doc, f1, jfig, jlib, person_sprite, prisoner_fig)
+                                             doc, jfig, jlib, person_sprite, prisoner_fig)
 
 INK = P["ink"]
 CAM9 = Cam(1736, 640, 1910)          # Joseph and both prisoners, room for the bubbles
@@ -84,7 +84,6 @@ def build(ctx):
     L0, L1 = ctx.lines[:2]
     T8, t_gold8 = E.s08_clock()
     toff = T8 - 1.0                     # s09 t = 0 is s08's t = T8 - 1 (the cross-dissolve)
-    t_gold = t_gold8 - toff             # (negative: already glowing)
 
     # ---------------------------------------------------------------- beats
     t_wake = pt(ctx, 0, "有两个人") + 0.05          # the prisoners wake and stand
