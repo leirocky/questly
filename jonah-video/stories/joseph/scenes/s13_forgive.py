@@ -78,7 +78,7 @@ def build(ctx):
     t_cry = snap(when(ctx, "大哭起来") - 0.1)             # he weeps
     t_reveal = snap(L1.start - 0.05)                    # '我就是约瑟': headcloth off
     t_look = snap(L1.start + 0.5)                       # the brothers look up
-    t_scared = snap(L2.start + 0.05)                    # '吓坏了': they jump up and back
+    t_scared = snap(when(ctx, "吓坏了") - 0.15)          # "吓坏了": they jump up and back
     t_worry = snap(L2.start + 1.3)                      # Joseph's concerned face
     t_walk = snap(L2.end + 0.25)                        # he walks over to Judah
     WALK_P = 0.26

@@ -432,6 +432,10 @@ def front_svg():
     """Foreground frame: a big column at the hall's left edge and a potted palm in the street corner."""
     out = PR.egypt_column(30, SH + 40, 1.9, height=520)
     out += PR.papyrus(1325, 1180, 1.2) + PR.papyrus(4170, 1180, 1.1)
+    # by the storehouses: full sacks, a jar and a sheaf waiting at the roadside
+    out += PR.grain_sacks(3640, 1150, 1.05, n=3, open_=True) + PR.grain_sacks(3830, 1160, 0.9, n=2)
+    out += PR.jar(2480, 1150, 1.0) + PR.wheat_sheaf(2620, 1160, 0.75, -1, seed=4)
+    out += PR.grass_tuft(2900, 1150, 0.9, variant=1) + PR.grass_tuft(4020, 1140, 0.8, variant=2)
     return doc(out)
 
 
