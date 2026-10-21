@@ -1,4 +1,4 @@
-"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel and David picture-book videos.
+"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David and Noah picture-book videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -486,6 +486,163 @@ valley_points(x0, x1, y, scale=1.0) -> {'israel_camp', 'philistine_camp' (ground
 Constants: BRONZE, BRONZE_DARK, BRONZE_LIGHT, LEATHER, CORD, IRON, CREST_RED, WICKER, STONE_COLS, BEAR, BEAR_POSES,
 SHEEP_POSES, TENT_SIDES, KING_STOOL_Y, VALLEY_HILL_H.
 
+9. NOAH FILM (Genesis 6-9)                sheets: python3 tools/props_sheet.py noah_ark noah_animals noah_pairs
+--------------------------                        noah_weather noah_items (+ characters_noah_group.png)
+Person scale as everywhere (adult 330 px). Noah, his family and the child are in art/characters.py (NOAH FILM).
+God is never drawn as a person; the flood is water and weather only - never people or animals in danger.
+
+THE ARK
+ark(x, y, scale=1.0, facing=1, door=0.0, window=0.0, ramp=True, progress=1.0, floating=False, wet=False, glow=0.0,
+    lamps=0.0, blocks=None)
+    Anchor: grounded (floating=False) = the ground under the middle of the keel (the round bottom touches it there);
+    floating=True = the WATERLINE at the middle (the keel hangs ARK_DRAFT = 150 px below it: paint the sea in front).
+    A big warm picture-book boat-house, bow toward facing: a long round-bottomed hull of planks (nail pairs, a
+    rub strake, a teal painted band under the gunwale cap rail), a row of small square portholes (the middle deck),
+    a big side door, and on top a cabin of vertical boards (the third deck) with five small windows and one larger
+    window with two teal shutters near the top, under a wide shingled gable roof with a ridge cap.
+    ARK_LEN = 1915 px hull length at scale 1 (~6 adults; 2.5-3 houses). Use scale 0.25-0.6 in most shots.
+    BBox (-966, -1026, 990, 4) (ramp=False right 980); floating (-966, -876, 980, 152); progress .15 (-916, -626, 914, 12).
+    Geometry (local, scale 1, facing right, grounded; floating adds +ARK_DRAFT to every y):
+      ARK_DOOR = (150, -560, 410, -170)    door opening x0, top, x1, sill (390 px tall: an adult, the elephants at
+                                           scale <= 0.9 and a bowing giraffe fit)
+      ARK_RAMP = ((150, -170), (440, -170), (980, 0))  landing along the sill, top of the slope, foot on the ground
+      ARK_WINDOW = (-520, -860, -280, -630) the high window; ARK_WINDOW_STAND = (-400, -480): anchor for a person
+                                           inside looking out (head and hands show in the opening)
+      ARK_DECK_Y = -605 (top of the hull / cabin floor), ARK_ROOF_Y = -1010 (ridge, x -690..712; eaves y -868,
+      x -775..795: birds on the roof stand on the ridge)
+    Options:
+      door 0..1 ('closed' / 'open')  the plank door (Z brace, iron hinges) is hinged on its left jamb and swings out
+               toward the viewer (edge-on at ~.5, flat against the hull at 1); open shows a dark warm hold with straw
+               and a little hanging lamp. Quantise in steps of .1-.125 ('God shut the door': 1 -> 0 over ~1 s).
+      glow 0..1  a golden rim of light round the door edges + a soft halo (God shuts the door, 7:16).
+      window 0..1 ('closed' / 'open')  the two teal shutters swing open (flat against the wall at 1).
+      lamps 0..1  warm lamplight in the small cabin windows and the high window (night, inside life).
+      ramp       the plank ramp with cleats (grounded and finished only), in front of the hull, from the door down
+                 toward facing; ark_ramp_y() gives its surface.
+      progress 0..1  building in stages (quantise to ~0.05): 0-.12 the keel beam grows from the middle on wooden
+                 blocks; .06-.22 the curved ribs rise (fence-like skeleton) and the gunwale rail; .22-.55 the hull
+                 planks fill in from the keel up (the ribs still show above), with the dark door opening; .55-.8 the
+                 cabin posts, then its boards from the bottom up; .8-1 rafters, then the roof boards from the eaves
+                 up; a ladder leans on the hull while building (.2-1). Door panel / shutters / ramp appear at 1.
+      blocks     cradle blocks under the keel; None = while building (progress < 1, grounded) only.
+      wet        darker wood, soft highlight streaks on planks / wall / roof, drips from the gunwale and the eaves
+                 (in the rain, floating, just landed on Ararat).
+ark_points(x, y, scale=1.0, facing=1, floating=False) -> dict of stage points: 'door' (sill centre), 'door_box'
+    (x0, top, x1, sill), 'ramp_top', 'ramp_bottom', 'window_box', 'window_stand', 'windows' (5 small window boxes,
+    stern to bow), 'deck', 'roof' [stern end, bow end of the ridge], 'roof_mid', 'eaves', 'bow', 'stern', 'waterline'.
+ark_ramp_y(sx, x, y, scale=1.0, facing=1) -> stage y of the ramp surface at stage x (the ground y off the ramp):
+    animals walking up use y = ark_ramp_y(their x, ...) each frame.
+in_ark_door(markup, x, y, scale=1.0, facing=1, floating=False) -> markup clipped for someone going in at the door: the
+    doorway (down past the sill) plus everything on the ramp side of the bow-side jamb, so they vanish behind the
+    stern-side jamb. Draw it after the ark (same x, y, scale, facing).
+in_ark_window(markup, ...) -> clipped to the high window opening (Noah looking out: noah(*ark_points(...)['window_stand'],
+    scale, facing, pose='release_dove' / 'open_window' / 'hold_leaf'), drawn after the ark; open the shutters).
+in_ark_porthole(markup, i, ...) -> clipped to small cabin window i (0-4): a peeking animal / a bird.
+ANIMALS (two by two)
+ark_animal(x, y, scale=1.0, facing=1, kind='elephant', pose='stand', female=False, eyes='open', phase=0.0)
+    Anchor: the ground under the middle of the body (all feet on the ground line, also in walk frames). Friendly,
+    round picture-book animals in the style of lion() / bear() / sheep(): 4 px umber ink, dot eyes with highlights and
+    brows, rosy cheeks. female=True: a pink ribbon bow on the head, eyelashes and ~6% smaller (males: elephant tusks,
+    stag antlers, the green-headed mallard, the lion's mane - see animal_pair). eyes 'open' | 'closed' | 'happy'.
+    Walk: alternate walk_a / walk_b every ~0.3 s while moving x. ARK_ANIMALS, ARK_ANIMAL_POSES[kind].
+    kind       poses                                       bbox stand (male; female ~0.94x)   notes
+    elephant   stand walk_a walk_b trunk_up spray sleep    (-227, -413, 300, 2)  grey-blue, big pink-lined ear;
+               trunk_up (top -554): trumpeting with sound arcs; spray (top -674): a fountain of drops from the raised
+               trunk; sleep (-242, -331, 320, 16): lying, trunk curled, z's.
+    giraffe    stand walk_a walk_b bow                     (-145, -692, 218, 2)  ~2.1 x an adult; bow (-145, -418,
+               334, 2): neck lowered forward (to go in at the door / to drink).
+    zebra      stand walk_a walk_b                         (-145, -346, 190, 2)
+    horse      stand walk_a walk_b                         (-162, -376, 208, 2)  chestnut, dark mane, white blaze
+    deer       stand walk_a walk_b                         (-134, -395, 170, 2)  dappled; stag antlers (doe -316)
+    rabbit     stand hop sleep                             (-66, -169, 64, 2)    hop: phase 0 crouch (-66,-156,65,3),
+               .25 push-off (-91,-173,82,2), .5 in the air (-107,-186,88,-67: 67 px up), .75 landing on the front
+               paws (-86,-140,83,1); 4 frames ~0.08 s each while moving x ~70*scale per cycle. sleep (-66,-130,108,4)
+    turtle     stand walk_a walk_b                         (-95, -91, 122, 5)
+    duck       stand walk_a walk_b swim                    (-67, -117, 83, 1)    mallard drake (green head) / brown
+               duck; swim: anchor = the waterline (-78, -86, 83, 15)
+    monkey     stand walk_a walk_b wave sit                (-90, -175, 46, 3)    upright, curly tail
+    hippo      stand walk_a walk_b yawn                    (-209, -226, 256, 2)  lavender-grey, pink muzzle; yawn: a
+               big friendly yawn (blunt teeth)
+    fox        stand walk_a walk_b sit sleep               (-186, -182, 146, 2)  bushy white-tipped tail; sleep curled
+butterfly(x, y, scale=1.0, flap=0.0, color='orange', rot=0.0)   Anchor: body centre. flap 0..1 closes and reopens the
+    wings (cycle 0, .25, .5, .75 fast). BUTTERFLY_COLORS orange blue yellow pink purple. BBox (-47, -37, 47, 28).
+songbird(x, y, scale=1.0, facing=1, wing=0.0, pose='fly', color='blue', female=False)   Anchor: body centre. A small
+    round bird (blue / red / yellow / brown / green, SONGBIRD_COLORS) with the dove / gull wing cycle (wing -1..1,
+    cycle 1, .5, 0, -.5, -1, ...); pose 'perch' (feet at y~+32); female: duller colours. BBox wing 1 (-48, -70, 43,
+    19), wing -1 (-48, -30, 43, 42), perch (-48, -30, 43, 32).
+dove(..., leaf=False)   (section 5) leaf=True: a fresh olive leaf in the dove's beak (8:11), fly and stand.
+animal_pair(kind, x, y, scale=1.0, facing=1, pose='stand', phase=0.0, eyes='open', gap=None)
+    He and she side by side for the 'two by two' queue: the male at (x, y) in front, the female a little ahead
+    (toward facing, gap*scale, default per kind ~0.3 body lengths) and 18*scale higher (farther away), drawn first,
+    in the opposite walk frame (so they don't march in step) and with her bow. kind: PAIR_KINDS = ARK_ANIMALS + lion
+    (lion + lioness at 0.8 x lion() scale), bear, sheep, cow, goat, donkey, camel (these four only stand), dove,
+    songbird (flying; phase = wing phase 0..1). Unknown poses fall back to 'stand'. BBox walk_a e.g. elephant
+    (-227, -407, 422, 2), giraffe (-145, -692, 307, 1), zebra (-145, -346, 283, 2), lion (-182, -262, 319, 1),
+    rabbit (-66, -170, 108, 2), camel (-138, -367, 412, 1).
+WEATHER, WATER, LANDSCAPE
+rain(phase=0.0, intensity=0.6, x0=0, y0=0, x1=W, y1=H, angle=10, seed=0, color=None, drops=None, scale=1.0)
+    Absolute stage coordinates (a layer helper, no anchor): slanted pale streaks clipped to the box (x0, y0, x1, y1);
+    the count grows with intensity (0..1.5). intensity < 0.3 (or drops=True) draws separate outlined drops instead
+    ('drip, drip...'). phase 0..1 loops seamlessly (each streak falls once per cycle at its own speed): 6-8 phases
+    at ~0.06 s. Cost ~1.5 s per full-stage frame at intensity 1 -> render a small flipbook.
+puddle(x, y, scale=1.0, width=260, ripple=0.0, splash=0.0, sky=None)   Anchor: centre of the puddle on the ground.
+    Flat puddle reflecting the sky (sky colour), ripple 0..1 loops expanding rings, splash 0..1 a crown of water and
+    flying drops (rise to ~.5, falling and landing by 1). BBox (-137, -31, 135, 30); splash .5 top -63.
+flood_sea(x0, x1, level, phase=0.0, bottom=None, storm=0.0, seed=0, scale=1.0, foam=True)
+    Absolute coordinates: a wide body of water whose surface is at stage y = level, four wave bands to `bottom`
+    (default stage bottom), foam crests; phase 0..1 loops; storm 0..1 darkens it to slate and raises the waves.
+    Animate the rising flood by moving `level` (quantise ~10 px) and draw it in FRONT of hills / houses / Ararat
+    so they disappear under it; draw it in front of a floating ark (anchor at the waterline) to hide the keel.
+dark_cloud(x, y, scale=1.0, width=620, height=230, seed=0, light=0.0, flash=0.0)   Anchor: centre. A heavy slate
+    storm cloud with a lighter front bank; light 0..1 greys it, flash 0..1 a soft golden glow inside (distant
+    lightning, gentle). BBox (-379, -251, 384, 128) at the defaults.
+rainbow(x, y, scale=1.0, progress=1.0, radius=900, band=30, glow=True)   Anchor: centre of the arc on its base line.
+    Seven soft bands RAINBOW = red, orange, yellow, green, cyan, blue, violet (红橙黄绿青蓝紫) from the outside in;
+    progress 0..1 draws them ONE BAND AT A TIME in that order (band i sweeps in from the left foot over the top
+    during progress i/7 .. (i+1)/7): key band k as the narrator names it -> progress (k+1)/7. The feet fade out
+    (put clouds / hills over them); glow = a soft golden haze behind. BBox (-1038, -1024, 1036, -48). ~2 s per
+    frame (blur): render the 8 key values only.
+ararat(x, y, scale=1.0, snow=True, green=0.0, seed=0, facing=1)   Anchor: bottom centre. Mount Ararat: the big
+    snow-capped Greater Ararat (left) and the smaller Lesser Ararat (right, hazier), rocky ridges, a shady east side.
+    ARARAT_LEDGE = (-260, -640, 260): the saddle (x0, y, x1) on the big mountain's shoulder where the ark rests:
+    ark(x, y + ARARAT_LEDGE[1]*scale, ~0.25*scale, ramp=False, wet=True). green 0..1: grass and bushes return on the
+    lower slopes. BBox (-1038, -1083, 1010, 33). Mountain tops above the flood: draw flood_sea in front.
+football_field(x, y, scale=1.0, goals=True)   Anchor: bottom centre of the near touchline. A little green pitch in
+    perspective with mown stripes, white lines, centre circle, boxes, two goals with nets and a ball. FOOTBALL_LEN =
+    1000 px (near touchline at scale 1). Size comparison '比一个足球场还要长': the ark is ~137 m, a pitch ~100 m, so
+    draw ark(..., scale = pitch_scale * 1.37 * FOOTBALL_LEN / ARK_LEN, ramp=False). BBox (-502, -284, 500, 18).
+BUILDING AND FOOD
+saw(x, y, scale=1.0, facing=1, rot=0.0)        Anchor: the grip. Hand saw, blade toward +x. BBox (-29, -28, 172, 21).
+hammer(x, y, scale=1.0, facing=1, rot=0.0)     Anchor: the grip; handle toward +x, iron head across it at x~91.
+    BBox (-23, -34, 106, 25).
+plank(x, y, scale=1.0, rot=0.0, length=260, seed=0)   Anchor: centre. BBox (-133, -16, 132, 15).
+timber_pile(x, y, scale=1.0, facing=1, kind='mixed')  Anchor: bottom centre. 'logs' (round ends toward the viewer,
+    stacked 3-2-1) (-108, -212, 202, 3); 'planks' (six on two sleepers) (-117, -159, 156, 3); 'mixed' (logs with
+    planks on top) (-117, -235, 202, 3).
+sawhorse(x, y, scale=1.0, facing=1, plank=True)  Anchor: bottom centre. A-frame trestle (top -118) with a plank
+    across it. BBox (-137, -147, 197, 9); plank=False (-127, -121, 127, 9).
+nails(x, y, scale=1.0, box=True, n=9)   Anchor: bottom centre. An open box of nails + three loose ones (-57, -67, 138, 4);
+    box=False a few loose nails (-80, -20, 47, 5).
+pitch_bucket(x, y, scale=1.0, facing=1, brush=True)   Anchor: bottom centre. Wooden bucket of glossy black pitch
+    (6:14) with drips and a brush. BBox (-49, -185, 60, 2).
+food_basket(x, y, scale=1.0, kind='fruit')   Anchor: bottom centre, rim y=-56. kind 'fruit' (apples, pear, grapes)
+    (-70, -101, 69, 2), 'grain' (heaped grain and ears, top -130), 'veg' (carrots, a melon, greens, top -109),
+    'bread' (= bread_basket(handle=False)). sack() and jar() (section 3) are the food sacks and jars.
+hay(x, y, scale=1.0, facing=1, kind='bale')   Anchor: bottom centre. 'bale' (-83, -112, 94, 2), 'bundle' a sheaf
+    tied in the middle, lying (-93, -53, 97, -11), 'pile' a soft heap (-112, -76, 113, 2) - animal food / bedding.
+olive_branch(x, y, scale=1.0, facing=1, rot=0.0, leaves=5, olives=True)   Anchor: the cut end; the twig grows
+    toward +x. BBox (-5, -37, 146, 20). olive_leaf(x, y, scale=1.0, facing=1, rot=0.0): one leaf, anchor at its stem,
+    pointing +x, BBox (-2, -8, 45, 5) (the dove's leaf: dove(leaf=True)).
+altar(x, y, scale=1.0, fire=1.0, phase=0.0, smoke=True)   Anchor: bottom centre. A small heap of rounded field stones
+    with sticks on top (8:20); fire 0..1 a friendly flame with a warm glow, phase 0..1 flickers it (3-4 phases),
+    smoke = soft translucent wisps rising. BBox (-138, -422, 137, 4); fire=0 (-124, -158, 120, 4).
+Constants: TIMBER, TIMBER_LIGHT, TIMBER_DARK, PITCH, OLIVE_LEAF, OLIVE_LEAF_DARK, RAINBOW, BOW_PINK, RAIN_COL, HAY,
+ARK_*, ARARAT_LEDGE, FOOTBALL_LEN, ELEPHANT, GIRAFFE, RABBIT, TURTLE, DUCK, MONKEY, HIPPO, FOX (colours),
+ARK_ANIMALS, ARK_ANIMAL_POSES, PAIR_KINDS, BUTTERFLY_COLORS, SONGBIRD_COLORS.
+RENDER COST (2112 x 1188 layer, uncached): ark ~1.2 s, noah_family ~1.0 s, an animal / pair ~1 s, flood_sea ~1.2 s,
+rain (intensity 1, full stage) ~1.6 s, ararat ~1.5 s, rainbow ~2 s - same range as the existing library; quantise
+every option into a small flipbook (see RENDERING COST above).
+
 Helpers / constants
 -------------------
 local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
@@ -497,7 +654,8 @@ are the internal up-scales of the house / ziggurat drawings (informational). Dan
 LION_POSES, DEN_FLOOR_Y, DEN_INNER, DEN_OPENING, DEN_HOLE, DEN_STONE_R, WINDOW_OPENING, WINDOW_FLOOR_Y, WINDOW_WALL,
 SHUTTER; in_den_hole(...).
 Contact sheets of everything: ``python3 tools/props_sheet.py [fish ship items castor plants creatures
-buildings daniel]`` -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
+buildings daniel david_items ... noah_ark noah_animals noah_pairs noah_weather noah_items]``
+-> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
 """
 import hashlib
 import math
@@ -2539,8 +2697,13 @@ def gull(x, y, scale=1.0, facing=1, wing=0.0, pose="fly"):
     return _place(_bird("gull", wing, pose), x, y, scale * 0.82, facing)
 
 
-def dove(x, y, scale=1.0, facing=1, wing=0.0, pose="fly"):
-    return _place(_bird("dove", wing, pose), x, y, scale * 0.75, facing)
+def dove(x, y, scale=1.0, facing=1, wing=0.0, pose="fly", leaf=False):
+    body = _bird("dove", wing, pose)
+    if leaf:                  # Genesis 8:11: a freshly plucked olive leaf in its beak (Noah film)
+        hx, hy = (34, -30) if pose == "stand" else (40, -20)
+        body += _g(_olive_leaf(40, OLIVE_LEAF, 28), f"translate({hx + 22},{hy + 1})")
+        body += _circ(hx + 23, hy + 1, 3, P["wood"], 1.8)
+    return _place(body, x, y, scale * 0.75, facing)
 
 
 FISH_COLORS = {"orange": "#f0a04b", "yellow": "#f2cf5b", "pink": "#e98f9f", "teal": "#5fb3a8",
@@ -4854,3 +5017,1943 @@ def _valley(x0, x1, y, s=1.0, part="all", camps=True, brook_=True, seed=0, botto
 
 def valley_elah(x0, x1, y, scale=1.0, part="all", camps=True, brook=True, seed=0, bottom=None, wave=0.0):
     return _place(_valley(x0, x1, y, scale, part, camps, brook, seed, bottom, wave), 0, 0, 1.0, filt="wobble")
+
+
+# ====================================================================== 9. Noah film (Genesis 6-9)
+# The ark, animals two by two, rain / flood / rainbow, building tools and food (module doc section 9).
+TIMBER = "#b37b49"
+TIMBER_LIGHT = "#d3a06a"
+TIMBER_DARK = "#7c4e2c"
+PITCH = "#3e322b"
+OLIVE_LEAF = "#8ea66b"
+OLIVE_LEAF_DARK = "#5f7647"
+RAINBOW = ("#e86a5c", "#f29a4c", "#f5d05c", "#8cc463", "#5dbcb4", "#5f92d6", "#9c7bc8")     # 红橙黄绿青蓝紫
+BOW_PINK = "#ec90a8"
+RAIN_COL = "#b8d3e2"
+
+
+def _nail_line(pts, sw=2.0, col=None):
+    return _p(_sm(pts, closed=False), sw=sw, stroke=col or TIMBER_DARK, extra='opacity="0.7"')
+
+
+def _bow(cx, cy, k=1.0, col=BOW_PINK, rot=0.0):
+    """Little ribbon bow (the 'she' of an animal pair): two loops, two short tails, a round knot."""
+    out = _p(f"M0,0 Q{_f(-16 * k)},{_f(-14 * k)} {_f(-20 * k)},{_f(-2 * k)} Q{_f(-16 * k)},{_f(10 * k)} 0,0 Z", col, 3)
+    out += _p(f"M0,0 Q{_f(16 * k)},{_f(-14 * k)} {_f(20 * k)},{_f(-2 * k)} Q{_f(16 * k)},{_f(10 * k)} 0,0 Z", col, 3)
+    out += _p(f"M{_f(-2 * k)},{_f(2 * k)} L{_f(-8 * k)},{_f(14 * k)} M{_f(2 * k)},{_f(2 * k)} L{_f(8 * k)},{_f(14 * k)}",
+              sw=3.2 * max(0.7, k), stroke=S.shade(col, -0.25))
+    out += _circ(0, 0, 4.5 * k, S.shade(col, -0.1), 2.4)
+    return _g(out, f"translate({_f(cx)},{_f(cy)}) rotate({rot:.1f})")
+
+
+# ---------------------------------------------------------------------- tools and timber
+def _olive_leaf(length=44.0, col=None, rot=0.0):
+    """A slim pointed olive leaf, stem end at (0, 0), pointing +x (then rotated by rot)."""
+    col = col or OLIVE_LEAF
+    L, w = length, length * 0.2
+    d = f"M0,0 Q{_f(L * 0.35)},{_f(-w * 1.3)} {_f(L)},{_f(-w * 0.15)} Q{_f(L * 0.4)},{_f(w * 1.05)} 0,0 Z"
+    out = _p(d, col, 2.6) + _p(f"M{_f(L * 0.05)},0 Q{_f(L * 0.5)},{_f(-w * 0.2)} {_f(L * 0.92)},{_f(-w * 0.12)}",
+                                sw=1.5, stroke=S.shade(col, 0.45), extra='opacity="0.9"')
+    out += _ell(L * 0.45, -w * 0.45, L * 0.18, w * 0.18, S.shade(col, 0.55), 0, extra='opacity="0.6"')
+    return _g(out, f"rotate({rot:.1f})") if rot else out
+
+
+def _olive_sprig(leaves=5, olives=True, length=110.0):
+    """A small olive twig: stem end at (0, 0), growing toward +x, slim silver-green leaves in pairs."""
+    out = _tube(f"M0,0 Q{_f(length * 0.5)},{_f(-length * 0.08)} {_f(length)},{_f(-length * 0.04)}", 4, TIMBER, 2.2)
+    for i in range(leaves):
+        t = (i + 1) / (leaves + 0.6)
+        px, py = length * t, -length * 0.08 * math.sin(math.pi * t) * 0.9
+        side = -1 if i % 2 == 0 else 1
+        L = 44 * (1.0 - 0.25 * t)
+        out += _g(_olive_leaf(L, OLIVE_LEAF if i % 2 else S.mix(OLIVE_LEAF, "#c9d3b0", 0.35), side * 38 - 6),
+                  f"translate({_f(px)},{_f(py)})")
+    out += _g(_olive_leaf(40, OLIVE_LEAF, -6), f"translate({_f(length * 0.97)},{_f(-length * 0.04)})")
+    if olives:
+        for (t, dy) in ((0.42, 12), (0.7, 11)):
+            out += _ell(length * t, dy, 6, 7.5, "#5c4a63", 2.2) + _circ(length * t - 2, dy - 3, 1.8, HILITE, 0)
+    return out
+
+
+def olive_branch(x, y, scale=1.0, facing=1, rot=0.0, leaves=5, olives=True):
+    return _place(_olive_sprig(leaves, olives), x, y, scale, facing, rot)
+
+
+def olive_leaf(x, y, scale=1.0, facing=1, rot=0.0):
+    return _place(_olive_leaf(44), x, y, scale, facing, rot)
+
+
+def _saw_shape():
+    """Hand saw: wooden grip around (0, 0), the blade runs +x to ~170 with teeth along its lower edge."""
+    blade = "M22,-14 L168,-4 Q174,4 166,12.8 " + " ".join(
+        f"L{_f(30 + (14 - i) * 9 + 4.5)},{_f(19.5)} L{_f(30 + (14 - i) * 9)},{_f(12.5)}" for i in range(15)) + " L22,14 Z"
+    out = _p(blade, IRON, 3.2)
+    out += _p("M30,-8 L160,-1", sw=3, stroke=S.shade(IRON, 0.45), extra='opacity="0.8"')
+    out += _circ(150, 3, 3, S.shade(IRON, -0.3), 0)
+    grip = "M-26,-22 Q-30,-2 -22,20 L26,18 L26,-18 Q8,-30 -26,-22 Z"
+    out += _p(grip, TIMBER, 3.4)
+    out += _p("M-14,-10 Q-16,2 -10,10 L12,9 L12,-10 Q0,-14 -14,-10 Z", PITCH, 2.6, extra='opacity="0.85"')
+    out += _circ(18, -8, 2.5, CREAM, 0) + _circ(18, 8, 2.5, CREAM, 0)
+    return out
+
+
+def saw(x, y, scale=1.0, facing=1, rot=0.0):
+    return _place(_saw_shape(), x, y, scale, facing, rot)
+
+
+def _hammer_shape():
+    """Hammer: grip at (0, 0), the wooden handle runs +x to 84, a stubby iron head across it at x~92."""
+    out = _tube("M-14,0 L86,0", 10, TIMBER_LIGHT, 3.2)
+    out += _p("M-10,-2 L40,-2", sw=2.4, stroke=S.shade(TIMBER_LIGHT, 0.4), extra='opacity="0.7"')
+    out += _rect(78, -28, 26, 52, S.shade(IRON, -0.1), 3.4, rx=5)
+    out += _rect(80, -32, 22, 10, S.shade(IRON, 0.15), 3, rx=3)
+    out += _line(84, -20, 84, 14, sw=2.4, color=S.shade(IRON, 0.45), extra='opacity="0.8"')
+    return out
+
+
+def hammer(x, y, scale=1.0, facing=1, rot=0.0):
+    return _place(_hammer_shape(), x, y, scale, facing, rot)
+
+
+def _plank_shape(length=260.0, w=26.0, col=None, seed=0):
+    """One plank, centred on (0, 0), along x."""
+    col = col or TIMBER
+    rng = random.Random(seed)
+    L = length / 2
+    out = _rect(-L, -w / 2, length, w, col, 3.4, rx=4)
+    for k in range(2):
+        yy = -w / 2 + w * (0.33 + 0.33 * k) + rng.uniform(-2, 2)
+        x0 = -L + rng.uniform(10, 40)
+        out += _p(f"M{_f(x0)},{_f(yy)} Q{_f(0)},{_f(yy + rng.uniform(-3, 3))} {_f(L - rng.uniform(10, 40))},{_f(yy)}",
+                  sw=1.8, stroke=S.shade(col, -0.25), extra='opacity="0.7"')
+    kx = rng.uniform(-L * 0.5, L * 0.5)
+    out += _ell(kx, 0, 7, 3.5, S.shade(col, -0.2), 1.6)
+    out += _line(-L + 4, -w / 2 + 3, L - 4, -w / 2 + 3, sw=2, color=S.shade(col, 0.35), extra='opacity="0.7"')
+    return out
+
+
+def plank(x, y, scale=1.0, rot=0.0, length=260, seed=0):
+    return _place(_plank_shape(length, 26, None, seed), x, y, scale, 1, rot)
+
+
+def _log_end(cx, cy, r, col=None):
+    col = col or TIMBER
+    out = _circ(cx, cy, r, S.shade(col, 0.3), 3.4)
+    out += _circ(cx, cy, r * 0.62, "none", 1.8, stroke=S.shade(col, -0.1)) + _circ(cx, cy, r * 0.28, "none", 1.8,
+                                                                                 stroke=S.shade(col, -0.1))
+    out += _circ(cx, cy, r, "none", r * 0.18, stroke=S.shade(col, -0.25), extra='opacity="0.8"')
+    out += _circ(cx, cy, r, "none", 3.4)
+    return out
+
+
+def _timber_pile(kind="mixed"):
+    out = ""
+    if kind in ("logs", "mixed"):
+        # side view: logs stacked 3-2-1, their round ends toward the viewer, long bodies receding to the right
+        rows = [(-70, -34, 34), (0, -34, 34), (70, -34, 34), (-35, -94, 33), (35, -94, 33)]
+        if kind == "logs":
+            rows.append((0, -152, 32))
+        for cx, cy, r in rows:
+            out += _p(f"M{_f(cx)},{_f(cy - r)} L{_f(cx + 130)},{_f(cy - r - 26)} L{_f(cx + 130)},{_f(cy + r - 26)} "
+                      f"L{_f(cx)},{_f(cy + r)} Z", TIMBER_DARK, 3.4)
+            out += _p(f"M{_f(cx + 20)},{_f(cy - r * 0.4 - 4)} L{_f(cx + 120)},{_f(cy - r * 0.4 - 24)}", sw=2,
+                      stroke=S.shade(TIMBER_DARK, 0.3), extra='opacity="0.6"')
+        for cx, cy, r in rows:
+            out += _log_end(cx, cy, r)
+    if kind in ("planks", "mixed"):
+        base = -128 if kind == "mixed" else 0
+        n = 4 if kind == "mixed" else 6
+        for i in range(n):
+            yy = base - 13 - i * 26
+            dx = (i % 2) * 18 - 9
+            out += _g(_plank_shape(250, 26, TIMBER if i % 2 else TIMBER_LIGHT, seed=i), f"translate({_f(dx + 20)},{_f(yy)})")
+        if kind == "planks":
+            out += _rect(-80, -6, 16, 8, TIMBER_DARK, 2.4) + _rect(100, -6, 16, 8, TIMBER_DARK, 2.4)
+    return out
+
+
+def timber_pile(x, y, scale=1.0, facing=1, kind="mixed"):
+    return _place(_timber_pile(kind), x, y, scale, facing)
+
+
+def _sawhorse(plank_=True):
+    out = ""
+    for x0 in (-96, 96):
+        out += _tube(f"M{x0 - 22},0 L{x0},-108", 12, TIMBER_DARK, 3)
+    out += _rect(-120, -118, 240, 18, TIMBER, 3.4, rx=3)
+    for x0 in (-96, 96):
+        out += _tube(f"M{x0 + 22},0 L{x0},-108", 12, TIMBER, 3)
+        out += _line(x0 - 16, -46, x0 + 16, -46, sw=6, color=INK) + _line(x0 - 16, -46, x0 + 16, -46, sw=2.5,
+                                                                         color=TIMBER_LIGHT)
+    if plank_:
+        out += _g(_plank_shape(330, 26, TIMBER_LIGHT, seed=3), "translate(30,-131)")
+    return out
+
+
+def sawhorse(x, y, scale=1.0, facing=1, plank=True):
+    return _place(_sawhorse(plank), x, y, scale, facing)
+
+
+def _nails(n=9, box=True):
+    rng = random.Random(4)
+    out = ""
+
+    def nail(x, y, a, L=30):
+        tx, ty = x + L * math.cos(math.radians(a)), y + L * math.sin(math.radians(a))
+        return (_line(x, y, tx, ty, sw=6.5, color=INK) + _line(x, y, tx, ty, sw=3, color=S.shade(IRON, -0.05)) +
+                _ell(x, y, 6.5, 3, S.shade(IRON, 0.1), 2.2, extra=f'transform="rotate({a + 90:.0f} {_f(x)} {_f(y)})"'))
+    if box:
+        for i in range(n):
+            a = -90 + rng.uniform(-35, 35)
+            out += nail(-34 + 68 * i / max(1, n - 1) + rng.uniform(-4, 4), -58 + rng.uniform(-6, 4), a + 180, 34)
+        out += _p("M-50,-48 L50,-48 L46,0 L-46,0 Z", TIMBER, 3.6)
+        out += _line(-48, -24, 48, -24, sw=2.2, color=TIMBER_DARK, extra='opacity="0.7"')
+        out += _p("M-52,-50 L52,-50", sw=9, stroke=INK) + _p("M-52,-50 L52,-50", sw=4, stroke=TIMBER_LIGHT)
+        for i in range(3):
+            out += nail(64 + i * 22, -4 - (i % 2) * 6, rng.uniform(-20, 20) + (180 if i == 1 else 0), 28)
+    else:
+        for i in range(n):
+            out += nail(rng.uniform(-50, 50), -4 - rng.uniform(0, 10), rng.uniform(-30, 30) + rng.choice((0, 180)), 28)
+    return out
+
+
+def nails(x, y, scale=1.0, box=True, n=9):
+    return _place(_nails(n, box), x, y, scale)
+
+
+def _pitch_bucket(brush=True):
+    out = ""
+    if brush:
+        out += _tube("M10,-96 L54,-178", 8, TIMBER_LIGHT, 3)
+    body = "M-44,-86 L44,-86 L36,0 L-36,0 Z"
+    out += _p("M-46,-86 Q0,-128 46,-86", sw=5, stroke=INK) + _p("M-46,-86 Q0,-128 46,-86", sw=2.2, stroke=IRON)
+    out += _p(body, TIMBER, 3.6)
+    for yy in (-66, -18):
+        out += _p(f"M{_f(-42 + (yy + 86) * 0.09)},{_f(yy)} L{_f(42 - (yy + 86) * 0.09)},{_f(yy)}", sw=7, stroke=INK)
+        out += _p(f"M{_f(-42 + (yy + 86) * 0.09)},{_f(yy)} L{_f(42 - (yy + 86) * 0.09)},{_f(yy)}", sw=3.5,
+                  stroke=S.shade(IRON, -0.1))
+    out += _ell(0, -86, 44, 10, PITCH, 3.4)
+    out += _ell(-12, -88, 14, 3, "#8c7a6c", 0, extra='opacity="0.8"')                     # glossy pitch
+    out += _p("M-30,-80 Q-32,-62 -28,-52 Q-24,-60 -24,-80 Z", PITCH, 2.4)               # drips down the side
+    out += _p("M16,-80 Q16,-70 19,-64 Q22,-70 22,-80 Z", PITCH, 2.2)
+    if brush:
+        out += _p("M-6,-104 L18,-112 L22,-84 L2,-80 Z", PITCH, 3)                          # brush head in the pitch
+        out += _rect(4, -118, 20, 12, TIMBER_DARK, 2.6, rx=2, extra='transform="rotate(-20 14 -112)"')
+    return out
+
+
+def pitch_bucket(x, y, scale=1.0, facing=1, brush=True):
+    return _place(_pitch_bucket(brush), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- food for people and animals
+def _fruit(cx, cy, kind, r=15):
+    if kind == "apple":
+        return (_circ(cx, cy, r, "#e0614f", 3) + _ell(cx - r * 0.35, cy - r * 0.35, r * 0.25, r * 0.16, HILITE, 0,
+                                                      extra='opacity="0.7"') +
+                _line(cx, cy - r, cx + 2, cy - r - 7, sw=2.6) + _olive_leaf_small(cx + 3, cy - r - 4))
+    if kind == "pear":
+        return _p(f"M{_f(cx)},{_f(cy - r * 1.3)} Q{_f(cx + r * 0.6)},{_f(cy - r * 0.6)} {_f(cx + r)},{_f(cy + r * 0.3)} "
+                  f"Q{_f(cx)},{_f(cy + r * 1.4)} {_f(cx - r)},{_f(cy + r * 0.3)} Q{_f(cx - r * 0.6)},{_f(cy - r * 0.6)} "
+                  f"{_f(cx)},{_f(cy - r * 1.3)} Z", "#c9cf5a", 3)
+    if kind == "grapes":
+        out = ""
+        for i, (dx, dy) in enumerate(((-8, -8), (8, -8), (0, 0), (-10, 6), (10, 6), (0, 12), (0, -16))):
+            out += _circ(cx + dx, cy + dy, 7.5, "#8a5aa8" if i % 2 else "#7a4c98", 2.2)
+        return out
+    if kind == "carrot":
+        return (_p(f"M{_f(cx - 8)},{_f(cy - 14)} L{_f(cx + 8)},{_f(cy - 14)} L{_f(cx + 1)},{_f(cy + 26)} Z", "#ee8a3c", 2.8) +
+                _p(f"M{_f(cx)},{_f(cy - 14)} q-8,-14 -4,-20 M{_f(cx)},{_f(cy - 14)} q6,-14 2,-22", sw=4,
+                   stroke=P["leaf"]))
+    if kind == "melon":
+        return (_ell(cx, cy, r * 1.5, r * 1.2, "#7fae55", 3) +
+                _p(f"M{_f(cx - r)},{_f(cy - r * 0.6)} Q{_f(cx)},{_f(cy - r * 1.2)} {_f(cx + r)},{_f(cy - r * 0.6)} "
+                   f"M{_f(cx - r * 1.3)},{_f(cy)} Q{_f(cx)},{_f(cy - r * 0.4)} {_f(cx + r * 1.3)},{_f(cy)}", sw=2.4,
+                   stroke=S.shade("#7fae55", -0.3)))
+    return ""
+
+
+def _olive_leaf_small(cx, cy):
+    return _g(_olive_leaf(14, P["leaf"], -30), f"translate({_f(cx)},{_f(cy)})")
+
+
+def _food_basket(kind="fruit"):
+    """Wicker basket (rim y=-56) heaped with food. kind: fruit | grain | veg | bread."""
+    if kind == "bread":
+        return _bread_basket(handle=False)
+    out = ""
+    if kind == "fruit":
+        out += _fruit(-30, -64, "pear") + _fruit(26, -66, "grapes") + _fruit(-6, -72, "apple", 16)
+        out += _fruit(40, -60, "apple", 13) + _fruit(-46, -60, "apple", 13)
+    elif kind == "grain":
+        out += _p("M-56,-56 Q-40,-92 0,-96 Q40,-92 56,-56 Z", "#e8c46a", 3.4)
+        rng = random.Random(2)
+        for _ in range(22):
+            gx, gy = rng.uniform(-44, 44), rng.uniform(-88, -62)
+            if abs(gx) < 52 - (gy + 96) * 0.1 and (gy + 96) > abs(gx) * 0.35:
+                out += _ell(gx, gy, 3.6, 2.2, "#c99a3c", 0, extra=f'transform="rotate({rng.uniform(-40, 40):.0f} {_f(gx)} {_f(gy)})"')
+        for xx in (-20, 6, 28):
+            out += _tube(f"M{xx},-70 Q{xx + 6},-110 {xx + 14},-126", 3, "#d9b25a", 1.8)
+            for k in range(4):
+                out += _ell(xx + 6 + k * 2.4, -100 - k * 7, 3.6, 6, "#e8c46a", 1.8)
+    elif kind == "veg":
+        out += _fruit(-34, -66, "carrot") + _fruit(-18, -70, "carrot") + _fruit(18, -64, "melon", 16)
+        out += _p("M-4,-58 Q-8,-90 14,-92 Q30,-88 26,-60 Z", "#8cbf5a", 3) + _p("M10,-62 L10,-88", sw=2,
+                                                                                 stroke=S.shade("#8cbf5a", -0.3))
+    body = "M-60,-58 L60,-58 Q58,-22 46,-4 Q44,0 36,0 L-36,0 Q-44,0 -46,-4 Q-58,-22 -60,-58 Z"
+    weave = ""
+    for k, yy in enumerate(range(-50, 0, 10)):
+        off = 7 if k % 2 else 0
+        for xx in range(-70 + off, 70, 14):
+            weave += f"M{xx},{yy} q7,-5 14,0 "
+    for xx in range(-48, 56, 16):
+        weave += f"M{xx},-56 L{xx * 0.78:.1f},-2 "
+    out += _p(body, WICKER, 0) + _clip(_uid("fbsk", kind), body, _p(weave, sw=2.0, stroke=S.shade(WICKER, -0.3)))
+    out += _p(body, sw=3.8)
+    out += _tube("M-62,-58 L62,-58", 9, S.shade(WICKER, 0.12), 3.2)
+    return out
+
+
+def food_basket(x, y, scale=1.0, kind="fruit"):
+    return _place(_food_basket(kind), x, y, scale)
+
+
+HAY = "#e6c060"
+
+
+def _hay(kind="bale"):
+    out = ""
+    rng = random.Random({"bale": 1, "bundle": 2, "pile": 3}.get(kind, 0))
+    dk = S.shade(HAY, -0.28)
+    if kind == "bale":
+        out += _p("M-80,-92 L-58,-108 L92,-108 L80,-92 Z", S.shade(HAY, 0.2), 3.6)
+        out += _p("M80,-92 L92,-108 L92,-14 L80,0 Z", S.shade(HAY, -0.12), 3.6)
+        out += _rect(-80, -92, 160, 92, HAY, 3.6, rx=8)
+        for _ in range(26):
+            x0, y0 = rng.uniform(-72, 70), rng.uniform(-84, -8)
+            out += _line(x0, y0, x0 + rng.uniform(10, 22), y0 + rng.uniform(-3, 3), sw=1.8, color=dk, extra='opacity="0.6"')
+        for xx in (-36, 36):
+            out += _p(f"M{xx},-92 L{xx},0 M{xx},-92 L{xx + 12},-108", sw=5, stroke=TIMBER_DARK)
+        for _ in range(8):
+            x0 = rng.uniform(-70, 70)
+            out += _line(x0, -92, x0 + rng.uniform(-8, 8), -104 - rng.uniform(0, 8), sw=2, color=dk)
+    elif kind == "bundle":           # a sheaf tied in the middle (anchor: bottom centre of the lying sheaf)
+        out += _p("M-90,-30 Q-60,-58 -10,-40 Q60,-62 96,-34 Q60,-6 -10,-20 Q-60,-2 -90,-30 Z", HAY, 3.4)
+        for _ in range(16):
+            x0, y0 = rng.uniform(-80, 80), rng.uniform(-44, -18)
+            out += _line(x0, y0, x0 + rng.uniform(12, 24), y0 + rng.uniform(-3, 3), sw=1.8, color=dk, extra='opacity="0.6"')
+        out += _ell(-8, -30, 9, 18, TIMBER_DARK, 3)
+    else:                            # pile: a soft heap of loose hay
+        out += _p("M-110,0 Q-90,-46 -40,-64 Q0,-84 44,-62 Q96,-44 112,0 Z", HAY, 3.6)
+        for _ in range(34):
+            x0, y0 = rng.uniform(-90, 90), rng.uniform(-60, -8)
+            if abs(x0) < 100 + y0 * 1.1:
+                out += _line(x0, y0, x0 + rng.uniform(-14, 14), y0 + rng.uniform(-6, 6), sw=1.8, color=dk, extra='opacity="0.6"')
+        for _ in range(9):
+            x0 = rng.uniform(-80, 80)
+            yt = -60 + abs(x0) * 0.45
+            out += _line(x0, yt + 4, x0 + rng.uniform(-10, 10), yt - 12, sw=2, color=dk)
+    return out
+
+
+def hay(x, y, scale=1.0, facing=1, kind="bale"):
+    return _place(_hay(kind), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the altar (Genesis 8:20)
+def _flame(phase=0.0, k=1.0):
+    ph = 2 * math.pi * phase
+    sway = 8 * math.sin(ph)
+    h = 92 * k * (1 + 0.08 * math.sin(2 * ph))
+    outer = (f"M{_f(-34 * k)},0 Q{_f(-40 * k)},{_f(-h * 0.45)} {_f(-10 * k + sway * 0.4)},{_f(-h * 0.7)} "
+             f"Q{_f(-4 * k)},{_f(-h * 0.88)} {_f(sway)},{_f(-h)} Q{_f(14 * k + sway * 0.5)},{_f(-h * 0.7)} "
+             f"{_f(26 * k)},{_f(-h * 0.55)} Q{_f(40 * k)},{_f(-h * 0.3)} {_f(34 * k)},0 Z")
+    hi = h * 0.62
+    inner = (f"M{_f(-18 * k)},0 Q{_f(-20 * k)},{_f(-hi * 0.5)} {_f(sway * 0.6)},{_f(-hi)} "
+             f"Q{_f(18 * k)},{_f(-hi * 0.5)} {_f(18 * k)},0 Z")
+    return _p(outer, "#f3a243", 3.2) + _p(inner, "#fbd66b", 0) + _ell(0, -8 * k, 10 * k, 6 * k, "#fff0b8", 0)
+
+
+def _altar(fire=1.0, phase=0.0, smoke=True):
+    out = ""
+    fire = _clamp(fire)
+    if fire > 0:
+        gid = _uid("altglow", round(fire, 2))
+        out += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.85 * fire), (1, P["glow"], 0)])}</defs>'
+                f'<ellipse cx="0" cy="-150" rx="{_f(170 * (0.6 + 0.4 * fire))}" ry="{_f(150 * (0.6 + 0.4 * fire))}" '
+                f'fill="url(#{gid})"/>')
+    if smoke and fire > 0:
+        ph = phase * 2 * math.pi
+        for j in range(3):
+            yy = -230 - j * 70 - 30 * ((phase + j / 3) % 1)
+            xx = 16 * math.sin(ph + j * 1.7) + j * 10
+            r = 22 + j * 9
+            out += _circ(xx, yy, r * 0.8, "#efeae2", 0, extra=f'opacity="{0.45 - 0.1 * j:.2f}"')
+            out += _p(f"M{_f(xx - r * 0.6)},{_f(yy + r * 0.2)} q{_f(r * 0.4)},{_f(-r * 0.7)} {_f(r * 0.9)},{_f(-r * 0.3)}",
+                      sw=2.4, stroke=S.shade("#e7e1d6", -0.3), extra=f'opacity="{0.5 - 0.1 * j:.2f}"')
+    stones = [(-78, -26, 36, 26), (-18, -24, 38, 25), (44, -26, 38, 27), (92, -22, 26, 22), (-100, -20, 22, 20),
+              (-52, -72, 36, 24), (10, -74, 38, 26), (66, -70, 32, 24), (-20, -114, 46, 20), (40, -112, 34, 19)]
+    for i, (cx, cy, rx, ry) in enumerate(stones):
+        col = STONE_COLS[i % len(STONE_COLS)]
+        out += _p(S.blob(cx, cy, rx, ry, 0.08, 9, seed=i + 3), col, 3.6)
+        out += _ell(cx - rx * 0.3, cy - ry * 0.45, rx * 0.35, ry * 0.18, HILITE, 0, extra='opacity="0.45"')
+    # sticks on top
+    for x0, x1, yy in ((-56, 56, -134), (-48, 50, -142), (-30, 60, -128)):
+        out += _tube(f"M{x0},{yy} L{x1},{yy - 8}", 9, TIMBER_DARK, 3)
+    if fire > 0:
+        out += _g(_flame(phase, 0.55 + 0.45 * fire), "translate(4,-136)")
+    return out
+
+
+def altar(x, y, scale=1.0, fire=1.0, phase=0.0, smoke=True):
+    return _place(_altar(fire, phase, smoke), x, y, scale)
+
+
+# ---------------------------------------------------------------------- weather and water
+def _raindrop_d(x, y, s):
+    return (f"M{_f(x)},{_f(y - 1.6 * s)} C{_f(x + 0.3 * s)},{_f(y - 1.0 * s)} {_f(x + 0.85 * s)},{_f(y - 0.45 * s)} "
+            f"{_f(x + 0.85 * s)},{_f(y + 0.3 * s)} A{_f(0.85 * s)},{_f(0.85 * s)} 0 0 1 {_f(x - 0.85 * s)},{_f(y + 0.3 * s)} "
+            f"C{_f(x - 0.85 * s)},{_f(y - 0.45 * s)} {_f(x - 0.3 * s)},{_f(y - 1.0 * s)} {_f(x)},{_f(y - 1.6 * s)} Z")
+
+
+def rain(phase=0.0, intensity=0.6, x0=0, y0=0, x1=None, y1=None, angle=10.0, seed=0, color=None, drops=None,
+         scale=1.0):
+    """Rain layer in absolute stage coordinates (see module doc)."""
+    x1 = S.W if x1 is None else x1
+    y1 = S.H if y1 is None else y1
+    it = _clamp(intensity, 0.0, 1.5)
+    col = color or RAIN_COL
+    drops = it < 0.3 if drops is None else drops
+    rng = random.Random(seed)
+    span_y = (y1 - y0) + 240
+    tan = math.tan(math.radians(angle))
+    n = int(((x1 - x0) * span_y) / (2112 * 1188) * (60 + 900 * it) / max(0.4, scale))
+    out = []
+    for _ in range(n):
+        bx = rng.uniform(x0 - 100, x1 + 100)
+        by = rng.uniform(0, span_y)
+        v = rng.uniform(0.75, 1.25)
+        yy = (by + phase * span_y * v) % span_y + y0 - 120
+        xx = bx - (yy - y0) * tan
+        L = (40 + 70 * it) * rng.uniform(0.6, 1.2) * scale
+        if drops:
+            s = rng.uniform(8, 12) * scale
+            out.append(f'<path d="{_raindrop_d(xx, yy, s)}" fill="{col}" stroke="{S.shade(col, -0.35)}" '
+                       f'stroke-width="{_f(1.8 * scale)}" opacity="0.9"/>')
+        else:
+            op = rng.uniform(0.45, 0.85)
+            out.append(f'<path d="M{_f(xx)},{_f(yy)} l{_f(-L * tan)},{_f(L)}" stroke="{col}" '
+                       f'stroke-width="{_f(rng.uniform(2.2, 4.0) * scale)}" stroke-linecap="round" opacity="{op:.2f}"/>')
+    cid = _uid("rainclip", x0, y0, x1, y1)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0)}" y="{_f(y0)}" width="{_f(x1 - x0)}" height="{_f(y1 - y0)}"/>'
+            f'</clipPath><g clip-path="url(#{cid})">{"".join(out)}</g>')
+
+
+def _puddle(w=260.0, ripple=0.0, splash=0.0, sky=None):
+    sky = sky or "#cfe3ea"
+    h = w * 0.2
+    out = _ell(0, 0, w / 2 + 6, h / 2 + 4, S.shade(P["earth"], -0.15), 0, extra='opacity="0.45"')
+    pd = f"M{_f(-w / 2)},0 Q{_f(-w / 2)},{_f(-h / 2)} {_f(-w * 0.1)},{_f(-h / 2)} Q{_f(w * 0.25)},{_f(-h * 0.62)} " \
+         f"{_f(w / 2)},{_f(-h * 0.1)} Q{_f(w * 0.48)},{_f(h * 0.5)} 0,{_f(h / 2)} Q{_f(-w / 2)},{_f(h * 0.5)} {_f(-w / 2)},0 Z"
+    gid = _uid("pudg", w)
+    out += (f'<defs>{S.lin_grad(gid, [(0, S.shade(sky, 0.3)), (1, S.shade(sky, -0.2))])}</defs>'
+            f'<path d="{pd}" fill="url(#{gid})" {_st(3.2, S.shade(sky, -0.5))}/>')
+    out += _ell(-w * 0.18, -h * 0.15, w * 0.16, h * 0.12, HILITE, 0, extra='opacity="0.6"')
+    rp = ripple % 1.0
+    inner = ""
+    for j in range(3):
+        t = (rp + j / 3) % 1.0
+        cx = [(-w * 0.2), (w * 0.18), (0)][j]
+        inner += _ell(cx, 0, 12 + t * w * 0.22, (12 + t * w * 0.22) * 0.25, "none", 2.2,
+                      stroke=S.shade(sky, 0.55), extra=f'opacity="{0.9 * (1 - t):.2f}"')
+    out += _clip(_uid("pudc", w, round(rp, 3)), pd, inner)
+    sp = _clamp(splash)
+    if sp > 0:
+        a = math.sin(math.pi * sp)
+        out += _ell(0, -2, w * 0.2 * (0.6 + 0.4 * sp), h * 0.22 * (0.6 + 0.4 * sp), "none", 2.6,
+                    stroke=S.shade(sky, 0.5), extra=f'opacity="{1 - 0.6 * sp:.2f}"')
+        crown = ""
+        for k in range(-3, 4):
+            if k == 0:
+                continue
+            hgt = (36 - 6 * abs(k)) * a + 4
+            bx = k * w * 0.05 * (0.6 + 0.6 * sp)
+            tx_, ty_ = bx * 1.5, -hgt
+            crown += (f'<path d="M{_f(bx - 6)},0 Q{_f(bx * 1.25)},{_f(-hgt * 0.5)} {_f(tx_ - 3)},{_f(ty_ + 6)} '
+                      f'L{_f(tx_ + 3)},{_f(ty_ + 6)} Q{_f(bx * 1.2 + 4)},{_f(-hgt * 0.4)} {_f(bx + 6)},0 Z" '
+                      f'fill="{S.shade(sky, 0.25)}" {_st(2.2, S.shade(sky, -0.45))}/>')
+            crown += f'<circle cx="{_f(tx_)}" cy="{_f(ty_)}" r="5.5" fill="{S.shade(sky, 0.25)}" {_st(2.2, S.shade(sky, -0.45))}/>'
+        out += f'<g opacity="{0.4 + 0.6 * a:.2f}">{crown}</g>' if a > 0.05 else ""
+        for k in range(8):
+            ang = math.radians(-160 + k * 140 / 7)
+            dist = w * (0.12 + 0.42 * sp)
+            dx = math.cos(ang) * dist
+            dy = math.sin(ang) * dist * 0.9 + w * 0.6 * sp * sp * 0.8
+            if dy < h * 0.4:
+                s = 9 * (1 - 0.35 * sp)
+                out += f'<path d="{_raindrop_d(dx, dy - 4, s)}" fill="{S.shade(sky, 0.2)}" {_st(2, S.shade(sky, -0.45))}/>'
+    return out
+
+
+def puddle(x, y, scale=1.0, width=260, ripple=0.0, splash=0.0, sky=None):
+    return _place(_puddle(width, ripple, splash, sky), x, y, scale)
+
+
+def flood_sea(x0, x1, level, phase=0.0, bottom=None, storm=0.0, seed=0, scale=1.0, foam=True):
+    """Wide flood water in absolute stage coordinates (see module doc)."""
+    bottom = S.H + 60 if bottom is None else bottom
+    st = _clamp(storm)
+    ph = 2 * math.pi * (phase % 1.0)
+    calm = [P["sea_light"], P["sea"], S.mix(P["sea"], P["sea_deep"], 0.5), P["sea_deep"]]
+    rough = [P["storm_sea_light"], S.mix(P["storm_sea_light"], P["storm_sea"], 0.5), P["storm_sea"],
+             S.shade(P["storm_sea"], -0.2)]
+    cols = [S.mix(a, b, st) for a, b in zip(calm, rough)]
+    out = []
+    bands = [(0, 9, 260, 0.6), (34, 13, 320, 1.0), (92, 17, 380, 1.5), (176, 22, 460, 2.1)]
+    for i, (dy, amp, wl, sp) in enumerate(bands):
+        y = level + dy * scale
+        a = amp * scale * (1 + 1.6 * st)
+        wlen = wl * scale
+        d = S.wave_band(y, a, wlen, ph * (1 if i % 2 == 0 else -1) + i * 1.3, x0=x0 - 40, x1=x1 + 40, bottom=bottom,
+                        jitter=0, seed=seed + i)
+        out.append(f'<path d="{d}" fill="{cols[i]}" {_st(3.4 * scale)}/>' if i == 0 else
+                   f'<path d="{d}" fill="{cols[i]}" {_st(3.0 * scale, S.shade(cols[i], -0.35))}/>')
+        if foam:
+            fl = S.wave_line(y - a * 0.25, a * 0.7, wlen, ph * (1 if i % 2 == 0 else -1) + i * 1.3 + 0.5, x0=x0 - 40,
+                             x1=x1 + 40)
+            out.append(f'<path d="{fl}" fill="none" stroke="{P["foam"]}" stroke-width="{_f((3 + 2 * st) * scale)}" '
+                       f'stroke-linecap="round" stroke-dasharray="{_f(wlen * 0.22)} {_f(wlen * 0.3)}" opacity="{0.55 + 0.3 * st:.2f}"/>')
+    cid = _uid("floodc", x0, x1, bottom)
+    body = "".join(out)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0)}" y="{_f(level - 200 * scale)}" width="{_f(x1 - x0)}" '
+            f'height="{_f(bottom - level + 200 * scale)}"/></clipPath><g filter="url(#wobble)"><g clip-path="url(#{cid})">{body}</g></g>')
+
+
+def _dark_cloud(w=620.0, h=230.0, seed=0, light=0.0, flash=0.0):
+    base = S.mix(P["storm_cloud"], P["storm_cloud_light"], _clamp(light))
+    under = S.shade(base, -0.25)
+    out = S.cloud(0, 0, w, h, fill=base, seed=seed, puffs=6, sw=4, shade_fill=under)
+    lite = S.shade(base, 0.12)                     # a lighter front bank of puffs gives the cloud depth
+    out += S.cloud(-w * 0.08, h * 0.12, w * 0.62, h * 0.55, fill=lite, seed=seed + 11, puffs=4, sw=3)
+    rng = random.Random(seed)
+    for _ in range(4):
+        cx, cy = rng.uniform(-w * 0.32, w * 0.3), rng.uniform(-h * 0.5, -h * 0.1)
+        out += _p(f"M{_f(cx - 30)},{_f(cy)} Q{_f(cx)},{_f(cy - 18)} {_f(cx + 34)},{_f(cy - 4)}", sw=3,
+                  stroke=S.shade(base, 0.3), extra='opacity="0.6"')
+    if flash > 0:
+        gid = _uid("cloudflash", w, h)
+        out += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.75), (0.6, P["glow"], 0.25), (1, P["glow"], 0)])}</defs>'
+                f'<ellipse cx="0" cy="{_f(-h * 0.05)}" rx="{_f(w * 0.42)}" ry="{_f(h * 0.42)}" fill="url(#{gid})" '
+                f'opacity="{_clamp(flash):.2f}"/>')
+    return out
+
+
+def dark_cloud(x, y, scale=1.0, width=620, height=230, seed=0, light=0.0, flash=0.0):
+    return _place(_dark_cloud(width, height, seed, light, flash), x, y, scale, 1, filt="wobble")
+
+
+def _rainbow(progress=1.0, r=900.0, band=30.0, glow=True):
+    pr = _clamp(progress) * 7
+    out = ""
+    if glow and pr > 0:
+        out += f'<path d="M{_f(-r - band)},0 A{_f(r + band)},{_f(r + band)} 0 0 1 {_f(r + band)},0" fill="none" ' \
+               f'stroke="{P["glow"]}" stroke-width="{_f(band * 9)}" opacity="{0.35 * min(1, pr / 7):.2f}" filter="url(#blur-md)"/>'
+    for i, col in enumerate(RAINBOW):
+        f = _clamp(pr - i)
+        if f <= 0:
+            continue
+        rr = r - i * band
+        a = math.pi * (1 - f)                     # the band sweeps in from the left foot over the top to the right
+        ex, ey = rr * math.cos(a), -rr * math.sin(a)
+        large = 0
+        d = f"M{_f(-rr)},0 A{_f(rr)},{_f(rr)} 0 {large} 1 {_f(ex)},{_f(ey)}"
+        out += f'<path d="{d}" fill="none" stroke="{col}" stroke-width="{_f(band + 1.5)}" stroke-linecap="butt" ' \
+               f'opacity="0.92"/>'
+    mid = _uid("rbmask", r, band)
+    lid = _uid("rbfade", r, band)
+    span = r + band
+    mask = (f'<defs><linearGradient id="{lid}" x1="0" y1="0" x2="0" y2="1">'
+            f'<stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="0.72" stop-color="#fff" stop-opacity="1"/>'
+            f'<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+            f'<mask id="{mid}" maskUnits="userSpaceOnUse" x="{_f(-span * 1.6)}" y="{_f(-span * 1.6)}" '
+            f'width="{_f(span * 3.2)}" height="{_f(span * 1.7)}"><rect x="{_f(-span * 1.6)}" y="{_f(-span * 1.1)}" '
+            f'width="{_f(span * 3.2)}" height="{_f(span * 1.1)}" fill="url(#{lid})"/></mask></defs>')
+    return mask + f'<g mask="url(#{mid})">{out}</g>'
+
+
+def rainbow(x, y, scale=1.0, progress=1.0, radius=900, band=30, glow=True):
+    return _place(_rainbow(progress, radius, band, glow), x, y, scale, 1, filt=None)
+
+
+# ---------------------------------------------------------------------- the ark
+ARK_DOOR = (150, -560, 410, -170)          # door opening x0, top, x1, sill (local, grounded, facing right)
+ARK_WINDOW = (-520, -860, -280, -630)      # the high window opening x0, top, x1, sill
+ARK_WINDOW_STAND = (-400, -480)            # anchor for a person standing inside at the high window
+ARK_RAMP = ((150, -170), (440, -170), (980, 0))   # landing start, top of the slope, foot on the ground
+ARK_DECK_Y = -605                          # floor of the top deck (cabin) / top of the hull
+ARK_ROOF_Y = -1010                         # roof ridge
+ARK_LEN = 1915                             # hull length (stern -950 .. bow +965)
+ARK_DRAFT = 150                            # floating=True: the keel sits this far below the waterline
+ARK_HULL = "#a36b40"
+ARK_CABIN = "#c99060"
+ARK_ROOF = "#87523a"
+ARK_BAND = "#4f8f8a"
+
+
+def _ark_sheer(x):
+    return -610 - 40 * (abs(x) / 950) ** 4
+
+
+def _ark_keel(x):
+    ax = abs(x)
+    if ax <= 900:
+        return -300 * (ax / 900) ** 3
+    return -300 - (ax - 900) * 4
+
+
+def _ark_hull_pts():
+    top = [(x, _ark_sheer(x)) for x in [-950 + i * (1915 / 24) for i in range(25)]]
+    bow = [(978, -560), (968, -450), (940, -370)]
+    keel = [(x, _ark_keel(x)) for x in [900 - i * 75 for i in range(25)]]
+    stern = [(-930, -380), (-955, -470), (-962, -565)]
+    return top + bow + keel + stern
+
+
+def _ark_row_y(x, t):
+    k = _ark_keel(max(-900, min(900, x)))
+    return k + (_ark_sheer(x) - k) * t
+
+
+def _ark_ramp():
+    (lx0, ly), (tx, ty), (bx, by) = ARK_RAMP
+    th = 22
+    out = ""
+    for px in (640, 860):                                  # posts under the slope
+        yy = ty + (by - ty) * (px - tx) / (bx - tx)
+        if yy < -12:
+            out += _rect(px - 9, yy, 18, -yy, TIMBER_DARK, 3.2)
+    dep = 46                                               # the walking surface recedes toward the hull
+    deck = [(lx0 - 10, ly - dep), (tx + 12, ty - dep), (bx + 4, by - dep * 0.7), (bx + 10, by), (tx, ty), (lx0 - 10, ly)]
+    out += _p(_poly(deck), TIMBER_LIGHT, 3.4)
+    for k in (0.33, 0.66):                                  # board seams along the ramp
+        a_ = [(lx0 - 10, ly - dep * k), (tx + 12 * k, ty - dep * k), (bx + 10 - 6 * k, by - dep * 0.7 * k)]
+        out += _p(_poly(a_, closed=False), sw=2.2, stroke=TIMBER_DARK, extra='opacity="0.6"')
+    surf = [(lx0 - 10, ly), (tx, ty), (bx + 10, by)]
+    under = [(bx + 10, by + 4), (bx - 26, by + 4), (tx + 6, ty + th), (lx0 - 10, ly + th)]
+    d = _poly(surf + under)
+    out += _p(d, TIMBER, 3.6)
+    L = math.hypot(bx - tx, by - ty)
+    n = int(L / 64)
+    for i in range(1, n):                                   # cleats across the boards so the animals don't slip
+        t = i / n
+        cx, cy = tx + (bx - tx) * t, ty + (by - ty) * t
+        out += _p(f"M{_f(cx)},{_f(cy - 3)} L{_f(cx + 8)},{_f(cy - dep * (1 - 0.3 * t) + 4)}", sw=6, stroke=INK)
+        out += _p(f"M{_f(cx)},{_f(cy - 3)} L{_f(cx + 8)},{_f(cy - dep * (1 - 0.3 * t) + 4)}", sw=2.6, stroke=TIMBER_DARK)
+    for xx in range(int(lx0) + 30, int(tx), 60):
+        out += _line(xx, ly + 3, xx, ly + th - 3, sw=2, color=TIMBER_DARK, extra='opacity="0.7"')
+    return out
+
+
+def _ark_door_svg(door, glow, glow_only=False):
+    x0, top, x1, sill = ARK_DOOR
+    w, h = x1 - x0, sill - top
+    out = ""
+    if glow_only:
+        return _ark_door_glow(x0, top, w, h, glow)
+    op = _clamp(door)
+    gid = _uid("arkin", round(op, 3))
+    out += (f'<defs>{S.rad_grad(gid, [(0, "#8a5a36"), (0.6, "#4e3426"), (1, "#3a281f")], cx=0.5, cy=0.8, r=0.8)}</defs>'
+            f'<rect x="{x0}" y="{top}" width="{w}" height="{h}" fill="url(#{gid})"/>')
+    if op > 0:                                              # straw on the floor, a post and a lamp glow inside
+        out += _p(f"M{x0 + 6},{sill - 2} Q{x0 + w * 0.3},{sill - 26} {x0 + w * 0.6},{sill - 12} Q{x0 + w * 0.8},{sill - 24} "
+                  f"{x1 - 6},{sill - 4} Z", "#c9a050", 0, extra='opacity="0.8"')
+        out += _rect(x0 + w * 0.62, top + 10, 16, h - 20, "#3a281f", 0, extra='opacity="0.7"')
+        out += _line(x0 + w * 0.32, top, x0 + w * 0.32, top + 40, sw=3, color="#2a1d16")
+        out += _g(_lantern_body(True, False, _uid("arklamp")), f"translate({_f(x0 + w * 0.32)},{_f(top + 40)}) scale(0.62)")
+    # frame
+    out += _rect(x0 - 16, top - 18, w + 32, 22, TIMBER_DARK, 3.4, rx=4)
+    out += _rect(x0 - 14, top - 4, 16, h + 4, TIMBER_DARK, 3, rx=2) + _rect(x1 - 2, top - 4, 16, h + 4, TIMBER_DARK, 3, rx=2)
+    out += _rect(x0 - 20, sill - 4, w + 40, 16, TIMBER_LIGHT, 3.4, rx=4)
+    # the panel, hinged on the left jamb, swinging out toward the viewer
+    th = math.pi * 0.96 * op
+    fx = x0 + w * math.cos(th) - 18 * math.sin(th)
+    e = 30 * math.sin(th)
+    if abs(fx - x0) > 3:
+        pts = [(x0, top + 2), (fx, top + 2 - e), (fx, sill - 2 + e * 0.6), (x0, sill - 2)]
+        face = ARK_CABIN if th <= math.pi / 2 else S.shade(ARK_CABIN, -0.15)
+        out += _p(_poly(pts), face, 4)
+        for k in range(1, 5):
+            a, b = _lerp2(pts[0], pts[1], k / 5), _lerp2(pts[3], pts[2], k / 5)
+            out += _line(a[0], a[1] + 4, b[0], b[1] - 4, sw=2.2, color=S.shade(face, -0.3))
+        for t in (0.14, 0.86):
+            a, b = _lerp2(pts[0], pts[3], t), _lerp2(pts[1], pts[2], t)
+            out += _p(_poly([(a[0], a[1] - 9), (b[0], b[1] - 9), (b[0], b[1] + 9), (a[0], a[1] + 9)]),
+                      S.shade(face, -0.12), 3)
+        a, b = _lerp2(pts[0], pts[3], 0.86), _lerp2(pts[1], pts[2], 0.14)        # Z brace
+        out += _p(f"M{_f(a[0])},{_f(a[1])} L{_f(b[0])},{_f(b[1])}", sw=16, stroke=INK)
+        out += _p(f"M{_f(a[0])},{_f(a[1])} L{_f(b[0])},{_f(b[1])}", sw=9, stroke=S.shade(face, -0.12))
+        for t in (0.14, 0.86):
+            a = _lerp2(pts[0], pts[3], t)
+            out += _circ(a[0] + 4, a[1], 6, S.shade(IRON, -0.2), 2.2)
+        if abs(fx - x0) > 40:
+            k = _lerp2(pts[1], pts[2], 0.5)
+            out += _circ(k[0] - 16 * (1 if th <= math.pi / 2 else -1), k[1], 9, S.shade(IRON, -0.15), 2.6)
+    return out
+
+
+def _ark_door_glow(x0, top, w, h, glow):
+    out = ""
+    g_ = _clamp(glow)
+    if g_ > 0:
+        out += (f'<rect x="{x0 - 8}" y="{top - 8}" width="{w + 16}" height="{h + 12}" fill="none" stroke="{P["glow"]}" '
+                f'stroke-width="{_f(30 * g_)}" opacity="{0.55 * g_:.2f}" filter="url(#blur-md)"/>'
+                f'<rect x="{x0 - 1}" y="{top - 1}" width="{w + 2}" height="{h + 2}" fill="none" stroke="{P["gold"]}" '
+                f'stroke-width="{_f(7 * g_ + 1)}" opacity="{0.9 * g_:.2f}"/>')
+    return out
+
+
+def _ark_shutter(sx, op, x0, top, x1, sill, col):
+    """One window shutter hinged at the left (sx=-1) or right (sx=1) jamb; op 0 closed .. 1 flat on the wall."""
+    hw = (x1 - x0) / 2
+    hx = x0 if sx < 0 else x1
+    th = math.pi * _clamp(op)
+    fx = hx - sx * (hw * math.cos(th) + 14 * math.sin(th))
+    e = 16 * math.sin(th)
+    pts = [(hx, top + 2), (fx, top + 2 - e), (fx, sill - 2 + e * 0.7), (hx, sill - 2)]
+    face = col if th <= math.pi / 2 else S.shade(col, -0.12)
+    out = _p(_poly(pts), face, 3.6)
+    for k in (0.33, 0.66):
+        a, b = _lerp2(pts[0], pts[1], k), _lerp2(pts[3], pts[2], k)
+        out += _line(a[0], a[1] + 6, b[0], b[1] - 6, sw=2.2, color=S.shade(face, -0.3))
+    for t in (0.2, 0.8):
+        a, b = _lerp2(pts[0], pts[3], t), _lerp2(pts[1], pts[2], t)
+        out += _p(_poly([(a[0], a[1] - 6), (b[0], b[1] - 6), (b[0], b[1] + 6), (a[0], a[1] + 6)]), S.shade(face, 0.12), 2.6)
+    return out
+
+
+def _ark_window_svg(op, glow=0.0):
+    x0, top, x1, sill = ARK_WINDOW
+    w, h = x1 - x0, sill - top
+    gid = _uid("arkwin", round(glow, 2))
+    out = (f'<defs>{S.rad_grad(gid, [(0, S.mix("#6b4c36", P["glow"], 0.6 * glow)), (1, "#3e2c22")], cy=0.7, r=0.8)}</defs>'
+           f'<rect x="{x0}" y="{top}" width="{w}" height="{h}" fill="url(#{gid})"/>')
+    out += _rect(x0 - 26, top - 24, w + 52, 22, TIMBER_DARK, 3.4, rx=4)
+    out += _rect(x0 - 12, top - 4, 12, h + 4, TIMBER_DARK, 3) + _rect(x1, top - 4, 12, h + 4, TIMBER_DARK, 3)
+    out += _rect(x0 - 24, sill - 2, w + 48, 18, TIMBER_LIGHT, 3.4, rx=4)
+    out += _ark_shutter(-1, op, x0, top, x1, sill, ARK_BAND) + _ark_shutter(1, op, x0, top, x1, sill, ARK_BAND)
+    return out
+
+
+def _ark(door=0.0, window=0.0, ramp=True, progress=1.0, floating=False, wet=False, glow=0.0, lamps=0.0,
+         blocks=None):
+    p = _clamp(progress)
+    done = p >= 0.999
+    hull_c = S.shade(ARK_HULL, -0.16) if wet else ARK_HULL
+    cab_c = S.shade(ARK_CABIN, -0.14) if wet else ARK_CABIN
+    roof_c = S.shade(ARK_ROOF, -0.14) if wet else ARK_ROOF
+    keel_t = _clamp(p / 0.12)
+    ribs_t = _clamp((p - 0.06) / 0.16)
+    plank_t = _clamp((p - 0.22) / 0.33)
+    cabin_t = _clamp((p - 0.55) / 0.25)
+    roof_t = _clamp((p - 0.8) / 0.2)
+    if blocks is None:
+        blocks = (not floating) and not done
+    out = ""
+    hull_pts = _ark_hull_pts()
+    hull_d = _sm(hull_pts, closed=True, tension=0.6)
+    # ---- cradle blocks under the keel (building on dry land)
+    if blocks:
+        for bx in (-720, -450, -180, 180, 450, 720):
+            ky = _ark_keel(bx)
+            if ky < -14:
+                for j, yy in enumerate(range(0, int(-ky) - 6, 30)):
+                    out += _rect(bx - 44 + (j % 2) * 8, -yy - 28, 88, 28, TIMBER_DARK if j % 2 else TIMBER, 3.2, rx=3)
+    # ---- keel and ribs (seen above the planking while building)
+    if not done:
+        if ribs_t > 0:
+            xs = list(range(-840, 861, 120))
+            n = max(1, int(round(len(xs) * ribs_t)))
+            xs = sorted(xs, key=abs)[:n]
+            for rx in xs:
+                ky, sy = _ark_keel(rx), _ark_sheer(rx)
+                bow = 26 if rx > 0 else -26
+                out += _tube(f"M{_f(rx)},{_f(ky)} Q{_f(rx + bow * abs(rx) / 900)},{_f((ky + sy) / 2)} {_f(rx)},{_f(sy)}",
+                             16, TIMBER_DARK, 3.4)
+            if ribs_t >= 1:
+                out += _tube("M960,-380 Q982,-520 966,-650", 18, TIMBER_DARK, 3.4)
+                out += _tube("M-940,-390 Q-966,-520 -952,-650", 18, TIMBER_DARK, 3.4)
+                out += _tube(_sm([(x, _ark_sheer(x) + 6) for x in range(-950, 966, 80)], closed=False), 12, TIMBER, 3.2)
+        if keel_t > 0:
+            L = 900 * keel_t
+            pts = [(x, _ark_keel(x) - 8) for x in [-L + i * (2 * L / 20) for i in range(21)]]
+            out += _tube(_sm(pts, closed=False), 22, TIMBER, 3.6)
+    # ---- hull planking (fills from the keel upward while building)
+    if plank_t > 0:
+        hull = _p(hull_d, hull_c, 0)
+        inner = ""
+        rows = 9
+        for r in range(rows):
+            t0, t1 = r / rows, (r + 1) / rows
+            if r % 2:
+                top_ = [(x, _ark_row_y(x, t1)) for x in range(-980, 1001, 60)]
+                bot = [(x, _ark_row_y(x, t0)) for x in range(1000, -981, -60)]
+                inner += _p(_poly(top_ + bot), S.shade(hull_c, 0.07), 0)
+            seam = [(x, _ark_row_y(x, t1)) for x in range(-980, 1001, 40)]
+            inner += _p(_sm(seam, closed=False), sw=2.6, stroke=S.shade(hull_c, -0.35), extra='opacity="0.8"')
+            rng = random.Random(r)
+            x = -950 + rng.uniform(0, 200)
+            while x < 960:                                  # butt joints and nail pairs
+                ya, yb = _ark_row_y(x, t0), _ark_row_y(x, t1)
+                inner += _line(x, ya - 3, x, yb + 3, sw=2.2, color=S.shade(hull_c, -0.35), extra='opacity="0.7"')
+                for yy in (ya + (yb - ya) * 0.3, ya + (yb - ya) * 0.7):
+                    inner += _circ(x + 7, yy, 2.2, S.shade(hull_c, -0.45), 0)
+                x += rng.uniform(220, 360)
+        # wale (rub strake) and the painted band under the gunwale
+        band_a = [(x, _ark_row_y(x, 0.86)) for x in range(-980, 1001, 40)]
+        band_b = [(x, _ark_row_y(x, 0.95)) for x in range(1000, -981, -40)]
+        inner += _p(_poly(band_a + band_b), ARK_BAND, 2.6)
+        for k in range(-940, 960, 64):
+            yy = (_ark_row_y(k, 0.86) + _ark_row_y(k, 0.95)) / 2
+            inner += _circ(k, yy, 5, S.shade(ARK_BAND, 0.45), 0)
+        inner += _tube(_sm([(x, _ark_row_y(x, 0.5)) for x in range(-980, 1001, 40)], closed=False), 14,
+                       S.shade(hull_c, -0.2), 3)
+        # portholes on the middle deck
+        for wx in range(-780, 820, 140):
+            if 90 < wx < 470:
+                continue
+            wy = _ark_row_y(wx, 0.72)
+            inner += _rect(wx - 24, wy - 22, 48, 42, TIMBER_DARK, 3.2, rx=6)
+            inner += _rect(wx - 16, wy - 15, 32, 28, "#3e2c22", 0, rx=4)
+            inner += _line(wx - 16, wy - 1, wx + 16, wy - 1, sw=2.4, color=TIMBER_DARK)
+        # the door
+        x0, top, x1, sill = ARK_DOOR
+        if done:
+            inner += _ark_door_svg(door, 0.0)
+        else:
+            inner += _rect(x0, top, x1 - x0, sill - top, "#3e2c22", 0)
+            inner += _rect(x0 - 14, top - 18, x1 - x0 + 28, 20, TIMBER_DARK, 3, rx=3)
+        if wet:                                             # a soft sheen along the planks
+            for k in range(3):
+                pts = [(x, _ark_row_y(x, 0.2 + 0.27 * k) - 6) for x in range(-700 + 80 * k, 640 - 60 * k, 40)]
+                inner += _p(_sm(pts, closed=False), sw=7, stroke=HILITE, extra='opacity="0.28"')
+        inner += _p(hull_d, sw=4.2)
+        ycut = 30 - 700 * plank_t
+        cid = _uid("arkhull", round(p, 4), wet, door, glow)
+        rid = _uid("arkcut", round(p, 4), wet)
+        out += (f'<clipPath id="{cid}"><path d="{hull_d}"/></clipPath><clipPath id="{rid}"><rect x="-1100" y="{_f(ycut)}" '
+                f'width="2200" height="1200"/></clipPath><g clip-path="url(#{rid})">{hull}'
+                f'<g clip-path="url(#{cid})">{inner}</g>{_p(hull_d, sw=4.2)}</g>')
+        if plank_t < 1:
+            out += _clip(_uid("arkcutl", round(p, 4)), hull_d,
+                         _p(_sm([(x, ycut) for x in range(-1000, 1020, 60)], closed=False), sw=4, stroke=INK))
+        else:                                               # gunwale cap rail
+            out += _tube(_sm([(x, _ark_sheer(x) + 2) for x in range(-955, 972, 55)], closed=False), 12,
+                         S.shade(hull_c, 0.2), 3.4)
+    # ---- the cabin (third deck)
+    cx0, cx1, cbot, ctop = -700, 720, ARK_DECK_Y + 4, -880
+    if cabin_t > 0:
+        posts = list(range(cx0, cx1 + 1, 237))
+        if cabin_t < 1 or not done:
+            for px in posts:
+                out += _rect(px - 10, ctop, 20, cbot - ctop, TIMBER_DARK, 3.2)
+            out += _rect(cx0 - 14, ctop - 8, cx1 - cx0 + 28, 20, TIMBER_DARK, 3.2)
+        wall = _rect(cx0, ctop, cx1 - cx0, cbot - ctop, cab_c, 0)
+        for bx in range(cx0 + 36, cx1, 36):
+            wall += _line(bx, ctop, bx, cbot, sw=2.2, color=S.shade(cab_c, -0.28), extra='opacity="0.75"')
+            if (bx // 36) % 3 == 0:
+                wall += _circ(bx - 18, ctop + 30, 2, S.shade(cab_c, -0.4), 0) + _circ(bx - 18, cbot - 26, 2,
+                                                                                  S.shade(cab_c, -0.4), 0)
+        for wx in (-120, 70, 260, 450, 630):                # small windows: animals can peek out
+            wall += _rect(wx - 34, -812, 68, 62, TIMBER_DARK, 3.2, rx=4)
+            wall += _rect(wx - 25, -804, 50, 46, "#3e2c22", 0, rx=3)
+            if lamps > 0:
+                wall += _rect(wx - 25, -804, 50, 46, P["glow"], 0, rx=3, extra=f'opacity="{0.75 * _clamp(lamps):.2f}"')
+        wall += _rect(cx0, cbot - 22, cx1 - cx0, 22, S.shade(cab_c, -0.12), 0)
+        wall += _rect(cx0, ctop, cx1 - cx0, 26, PITCH, 0, extra='opacity="0.25"')          # shade under the eaves
+        if done:
+            wall += _ark_window_svg(window, 0.8 * _clamp(lamps))
+        else:
+            x0, top, x1, sill = ARK_WINDOW
+            wall += _rect(x0, top, x1 - x0, sill - top, "#3e2c22", 0)
+        if wet:
+            wall += _p(f"M{cx0 + 40},{ctop + 60} L{cx1 - 60},{ctop + 50}", sw=8, stroke=HILITE, extra='opacity="0.25"')
+        wall += _rect(cx0, ctop, cx1 - cx0, cbot - ctop, "none", 4)
+        ycut = cbot + 4 - (cbot - ctop + 12) * cabin_t
+        rid = _uid("arkcab", round(p, 4), wet, window, lamps)
+        out += (f'<clipPath id="{rid}"><rect x="-1100" y="{_f(ycut)}" width="2200" height="900"/></clipPath>'
+                f'<g clip-path="url(#{rid})">{wall}</g>')
+    # ---- the roof
+    if roof_t > 0:
+        ex0, ex1, ey = -775, 795, -868
+        rx0, rx1, ry = -690, 712, ARK_ROOF_Y
+        if not done:
+            for k in range(9):
+                t = k / 8
+                a = (_lerp(ex0, ex1, t), ey)
+                b = (_lerp(rx0, rx1, t), ry)
+                out += _tube(f"M{_f(a[0])},{_f(a[1])} L{_f(b[0])},{_f(b[1])}", 12, TIMBER_DARK, 3)
+            out += _tube(f"M{rx0},{ry} L{rx1},{ry}", 16, TIMBER_DARK, 3.2)
+        rd = f"M{ex0},{ey} L{ex1},{ey} Q{ex1 + 6},{ey - 10} {rx1 + 10},{ry + 4} L{rx0 - 10},{ry + 4} Q{ex0 - 6},{ey - 10} {ex0},{ey} Z"
+        roof = _p(rd, roof_c, 0)
+        sh = ""
+        nrow = 6
+        for r in range(nrow):
+            t = (r + 0.5) / nrow
+            yy = _lerp(ey, ry, t)
+            xa, xb = _lerp(ex0, rx0, t), _lerp(ex1, rx1, t)
+            d = f"M{_f(xa - 20)},{_f(yy)}"
+            n = int((xb - xa) / 46)
+            for i in range(n + 1):
+                d += f" q{_f((xb - xa) / n / 2)},{_f(16)} {_f((xb - xa) / n)},0"
+            sh += _p(d, sw=2.6, stroke=S.shade(roof_c, -0.35), extra='opacity="0.8"')
+            sh += _p(d.replace("q", "q").replace(f"M{_f(xa - 20)},{_f(yy)}", f"M{_f(xa - 20)},{_f(yy + 4)}"), sw=3,
+                     stroke=S.shade(roof_c, 0.2), extra='opacity="0.35"')
+        if wet:
+            sh += _p(f"M{ex0 + 80},{ey - 40} L{ex1 - 140},{ey - 60}", sw=10, stroke=HILITE, extra='opacity="0.3"')
+        roof += _clip(_uid("arkroofc", wet, round(p, 3)), rd, sh) + _p(rd, sw=4.2)
+        roof += _tube(f"M{rx0 - 18},{ry} L{rx1 + 18},{ry}", 20, S.shade(roof_c, -0.2), 3.6)        # ridge cap
+        roof += _tube(f"M{ex0 - 6},{ey + 2} L{ex1 + 6},{ey + 2}", 10, S.shade(roof_c, 0.15), 3)    # eave board
+        ycut = ey + 14 - (ey - ry + 40) * roof_t
+        rid = _uid("arkroof", round(p, 4), wet)
+        out += (f'<clipPath id="{rid}"><rect x="-1100" y="{_f(ycut)}" width="2200" height="900"/></clipPath>'
+                f'<g clip-path="url(#{rid})">{roof}</g>')
+    # ---- a ladder leaning on the hull while building
+    if 0.2 < p < 0.999:
+        lx = -560
+        a, b = (lx - 120, 0), (lx + 10, -660)
+        for off in (-22, 22):
+            out += _tube(f"M{_f(a[0] + off)},{_f(a[1])} L{_f(b[0] + off)},{_f(b[1])}", 9, TIMBER_LIGHT, 3)
+        for k in range(1, 12):
+            t = k / 12
+            q = _lerp2(a, b, t)
+            out += _line(q[0] - 22, q[1], q[0] + 22, q[1], sw=8, color=INK) + _line(q[0] - 22, q[1], q[0] + 22, q[1], sw=4,
+                                                                                    color=TIMBER_LIGHT)
+    if wet and plank_t >= 1:                                # drips from the gunwale and the eaves
+        for k, wx in enumerate((-820, -520, -180, 120, 480, 760)):
+            yy = _ark_sheer(wx) + 30 + (k % 2) * 16
+            out += f'<path d="{_raindrop_d(wx, yy, 7)}" fill="{P["sea_pale"]}" {_st(2.2)}/>'
+        if roof_t >= 1:
+            for k, wx in enumerate((-640, -300, 40, 380, 700)):
+                out += f'<path d="{_raindrop_d(wx, -836 + (k % 2) * 18, 7)}" fill="{P["sea_pale"]}" {_st(2.2)}/>'
+    if ramp and done and not floating:
+        out += _ark_ramp()
+    if done and glow > 0:
+        out += _ark_door_svg(door, glow, glow_only=True)
+    if floating:
+        out = _g(out, f"translate(0,{ARK_DRAFT})")
+    return out
+
+
+def ark(x, y, scale=1.0, facing=1, door=0.0, window=0.0, ramp=True, progress=1.0, floating=False, wet=False,
+        glow=0.0, lamps=0.0, blocks=None):
+    if isinstance(door, str):
+        door = {"closed": 0.0, "open": 1.0}[door]
+    if isinstance(window, str):
+        window = {"closed": 0.0, "open": 1.0}[window]
+    return _place(_ark(door, window, ramp, progress, floating, wet, glow, lamps, blocks), x, y, scale, facing)
+
+
+def _ark_local(lx, ly, floating):
+    return (lx, ly + (ARK_DRAFT if floating else 0))
+
+
+def ark_points(x, y, scale=1.0, facing=1, floating=False):
+    """Stage coordinates of the ark's key places (see module doc)."""
+    def st(lx, ly):
+        return local_to_stage(x, y, scale, facing, *_ark_local(lx, ly, floating))
+
+    def box(b):
+        (ax, ay), (bx, by) = st(b[0], b[1]), st(b[2], b[3])
+        return (min(ax, bx), ay, max(ax, bx), by)
+    x0, top, x1, sill = ARK_DOOR
+    return {"door": st((x0 + x1) / 2, sill), "door_box": box(ARK_DOOR), "ramp_top": st(*ARK_RAMP[1]),
+            "ramp_bottom": st(*ARK_RAMP[2]), "window_box": box(ARK_WINDOW), "window_stand": st(*ARK_WINDOW_STAND),
+            "windows": [box((wx - 25, -804, wx + 25, -758)) for wx in (-120, 70, 260, 450, 630)],
+            "deck": st(0, ARK_DECK_Y), "roof": [st(-690, ARK_ROOF_Y), st(712, ARK_ROOF_Y)], "roof_mid": st(10, ARK_ROOF_Y),
+            "eaves": [st(-775, -868), st(795, -868)], "bow": st(965, -655), "stern": st(-950, -650),
+            "waterline": y if floating else y - ARK_DRAFT * scale}
+
+
+def ark_ramp_y(sx, x, y, scale=1.0, facing=1):
+    """Stage y of the ramp surface (landing + slope) at stage x for an ark drawn at (x, y, scale, facing),
+    grounded. Outside the ramp it returns the ground line y."""
+    lx = (sx - x) / scale * (1 if facing >= 0 else -1)
+    (l0, ly), (tx, ty), (bx, by) = ARK_RAMP
+    if l0 <= lx <= tx:
+        return y + ly * scale
+    if tx < lx <= bx:
+        return y + (ty + (by - ty) * (lx - tx) / (bx - tx)) * scale
+    return y
+
+
+def _ark_clip_markup(markup, region_local, x, y, scale, facing, floating, tag):
+    sx = scale * (1 if facing >= 0 else -1)
+    off = ARK_DRAFT if floating else 0
+    cid = _uid("arkclip", tag, region_local, x, y, scale, facing, floating)
+    return (f'<clipPath id="{cid}"><path d="{region_local}" transform="translate({_f(x)},{_f(y)}) scale({sx:.4f},{scale:.4f}) '
+            f'translate(0,{off})"/></clipPath><g clip-path="url(#{cid})">{markup}</g>')
+
+
+def in_ark_door(markup, x, y, scale=1.0, facing=1, floating=False):
+    """Clip figure markup to what shows of someone going in at the door: the doorway (down to the ramp) plus
+    everything on the ramp side of the right-hand jamb (see module doc)."""
+    x0, top, x1, sill = ARK_DOOR
+    reg = f"M{x0},{top} L{x1},{top} L{x1},-3000 L3000,-3000 L3000,3000 L{x0},3000 L{x0},{sill + 40} Z"
+    return _ark_clip_markup(markup, reg, x, y, scale, facing, floating, "door")
+
+
+def in_ark_window(markup, x, y, scale=1.0, facing=1, floating=False):
+    """Clip figure markup to the high window opening (someone inside looking out, see module doc)."""
+    x0, top, x1, sill = ARK_WINDOW
+    reg = f"M{x0},{top} L{x1},{top} L{x1},{sill} L{x0},{sill} Z"
+    return _ark_clip_markup(markup, reg, x, y, scale, facing, floating, "window")
+
+
+def in_ark_porthole(markup, i, x, y, scale=1.0, facing=1, floating=False):
+    """Clip markup to the i-th small cabin window (0-4, stern to bow): a bird / a giraffe head peeking out."""
+    wx = (-120, 70, 260, 450, 630)[i % 5]
+    reg = f"M{wx - 25},-804 L{wx + 25},-804 L{wx + 25},-758 L{wx - 25},-758 Z"
+    return _ark_clip_markup(markup, reg, x, y, scale, facing, floating, f"port{i}")
+
+
+# ---------------------------------------------------------------------- Mount Ararat, the football pitch
+ARARAT_LEDGE = (-260, -640, 260)           # x0, y, x1 of the saddle where the ark comes to rest (local, scale 1)
+
+
+def _ararat(snow=True, green=0.0, seed=0):
+    rng = random.Random(seed)
+    rock, rock_d, rock_l = "#a49184", "#7f6e64", "#c9b8a8"
+    g_ = _clamp(green)
+    out = ""
+    # Lesser Ararat (right, behind)
+    small = [(160, 0), (330, -380), (480, -700), (560, -760), (650, -690), (820, -420), (1000, 0)]
+    sd = _sm(small, tension=0.55)
+    out += _p(sd, S.mix(rock, P["sky_day"], 0.25), 0) + _clip(_uid("ararat2", seed), sd, _p(_sm(
+        [(560, -770), (660, -690), (830, -420), (1010, 10), (640, 10), (600, -400)], tension=0.6), rock_d, 0,
+        extra='opacity="0.25"')) + _p(sd, sw=4)
+    out += _p(_sm([(470, -690), (560, -760), (650, -690), (610, -640), (565, -666), (520, -630)], tension=0.6),
+              "#f4f1ea", 3) if snow else ""
+    # Greater Ararat (left, big, with the saddle on its right shoulder)
+    big = [(-1000, 0), (-820, -420), (-640, -860), (-520, -1040), (-430, -1080), (-330, -1000), (-260, -760),
+           (-200, -660), (0, -640), (220, -650), (300, -560), (520, -260), (720, 0)]
+    bd = _sm(big, tension=0.55)
+    inner = ""
+    for k in range(7):                                   # rocky ridges running down
+        x0 = -760 + k * 190 + rng.uniform(-40, 40)
+        inner += _p(f"M{_f(x0 + 160)},{_f(-900 + abs(k - 2) * 90)} Q{_f(x0 + 60)},{_f(-500)} {_f(x0 - 20)},{_f(-80)}",
+                    sw=3, stroke=rock_d, extra='opacity="0.55"')
+    inner += _ell(-380, -560, 260, 340, rock_l, 0, extra='opacity="0.35" filter="url(#soft)"')
+    inner += _p(_sm([(-430, -1090), (-300, -980), (-200, -660), (100, -620), (360, -400), (760, 20), (-60, 20),
+                     (-260, -300), (-360, -700)], tension=0.6), rock_d, 0, extra='opacity="0.32"')     # shady east flanks
+    for k in range(9):                                   # little rock ledges
+        lx_, ly_ = rng.uniform(-820, 560), rng.uniform(-820, -120)
+        inner += _p(f"M{_f(lx_)},{_f(ly_)} q{_f(24)},{_f(-8)} {_f(50)},{_f(2)}", sw=3, stroke=rock_d, extra='opacity="0.6"')
+    if g_ > 0:                                           # grass returning on the lower slopes
+        gd = S.hill(-1100, 1100, 40, 420 * g_, seed=3, bottom=60, bumps=4)
+        inner += _p(gd, S.mix(P["grass"], rock, 0.25), 0, extra=f'opacity="{0.4 + 0.6 * g_:.2f}"')
+        for _ in range(int(14 * g_)):
+            tx, ty = rng.uniform(-850, 650), rng.uniform(-160 * g_, -10)
+            inner += _p(S.blob(tx, ty - 22, 26, 20, 0.1, 8, seed=rng.randint(0, 99)), P["leaf_dark"], 2.6)
+    if snow:
+        cap = [(-700, -860), (-600, -980), (-520, -1040), (-430, -1080), (-330, -1000), (-280, -880), (-340, -905),
+               (-400, -850), (-470, -920), (-540, -840), (-610, -900)]
+        inner += _p(_sm(cap, tension=0.7), "#f6f3ec", 3)
+        inner += _p("M-560,-1000 Q-500,-1030 -440,-1060", sw=5, stroke=HILITE, extra='opacity="0.8"')
+    out += _p(bd, rock, 0) + _clip(_uid("ararat", snow, round(g_, 2), seed), bd, inner) + _p(bd, sw=4.4)
+    return out
+
+
+def ararat(x, y, scale=1.0, snow=True, green=0.0, seed=0, facing=1):
+    return _place(_ararat(snow, green, seed), x, y, scale, facing, filt="wobble")
+
+
+FOOTBALL_LEN = 1000                        # length of the pitch's near touchline at scale 1
+
+
+def _football_field(goals=True):
+    W0, W1, D = 1000, 800, 280
+    line = "#fbf6ea"
+    pitch = f"M{-W0 / 2},0 L{W0 / 2},0 L{W1 / 2},{-D} L{-W1 / 2},{-D} Z"
+    inner = ""
+    n = 10
+    for i in range(n):                                    # mown stripes
+        if i % 2:
+            continue
+        a0, a1 = i / n, (i + 1) / n
+        pts = [(-W0 / 2 + W0 * a0, 0), (-W0 / 2 + W0 * a1, 0), (-W1 / 2 + W1 * a1, -D), (-W1 / 2 + W1 * a0, -D)]
+        inner += _p(_poly(pts), S.shade(P["grass"], 0.12), 0)
+    m = 18
+
+    def pp(u, v):          # u 0..1 along, v 0..1 depth (0 = near)
+        w = _lerp(W0, W1, v) - 2 * m
+        return (-w / 2 + w * u, -m * 0.6 - (D - 1.2 * m) * v)
+    def ln(pts, closed=False):
+        return _p(_poly([pp(*q) for q in pts], closed), sw=4, stroke=line)
+    inner += ln([(0, 0), (1, 0), (1, 1), (0, 1)], True) + ln([(0.5, 0), (0.5, 1)])
+    cc = [pp(0.5 + 0.075 * math.cos(a) * (1.0), 0.5 + 0.28 * math.sin(a)) for a in [i * math.pi / 12 for i in range(24)]]
+    inner += _p(_poly(cc), sw=4, stroke=line) + _circ(*pp(0.5, 0.5), 4, line, 0)
+    for side in (0, 1):
+        s0 = 0 if side == 0 else 1
+        k = 1 if side == 0 else -1
+        inner += ln([(s0, 0.2), (s0 + k * 0.15, 0.2), (s0 + k * 0.15, 0.8), (s0, 0.8)])
+        inner += ln([(s0, 0.36), (s0 + k * 0.055, 0.36), (s0 + k * 0.055, 0.64), (s0, 0.64)])
+    out = _p(pitch, P["grass"], 0) + _clip(_uid("pitch"), pitch, inner) + _p(pitch, sw=4)
+    out += _p(f"M{-W0 / 2},0 L{W0 / 2},0 L{W0 / 2},16 L{-W0 / 2},16 Z", P["grass_dark"], 3.4)
+    if goals:
+        for side in (-1, 1):
+            gx = side * (W0 + W1) / 4 + side * 2
+            gy = -D / 2
+            net = ""
+            for k in range(6):
+                net += _line(gx + side * k * 5, gy - 50 + k * 4, gx + side * k * 5, gy + 30 - k * 2, sw=1.4,
+                             color="#d9d6cc")
+            for k in range(5):
+                net += _line(gx, gy - 46 + k * 18, gx + side * 28, gy - 30 + k * 12, sw=1.4, color="#d9d6cc")
+            out += net
+            out += _p(f"M{_f(gx)},{_f(gy + 38)} L{_f(gx)},{_f(gy - 52)} L{_f(gx - side * 4)},{_f(gy - 54)} "
+                      f"L{_f(gx - side * 4)},{_f(gy + 34)}", sw=8, stroke=INK)
+            out += _p(f"M{_f(gx)},{_f(gy + 38)} L{_f(gx)},{_f(gy - 52)}", sw=4, stroke=line)
+            out += _p(f"M{_f(gx)},{_f(gy - 52)} L{_f(gx + side * 30)},{_f(gy - 36)} L{_f(gx + side * 30)},{_f(gy + 26)} "
+                      f"L{_f(gx)},{_f(gy + 38)}", sw=3, stroke=INK, extra='fill="none"')
+    out += _circ(*pp(0.56, 0.38), 9, line, 2.6)            # a ball
+    return out
+
+
+def football_field(x, y, scale=1.0, goals=True):
+    return _place(_football_field(goals), x, y, scale)
+
+
+# ---------------------------------------------------------------------- animals two by two
+ARK_ANIMALS = ("elephant", "giraffe", "zebra", "horse", "deer", "rabbit", "turtle", "duck", "monkey", "hippo", "fox")
+ARK_ANIMAL_POSES = {
+    "elephant": ("stand", "walk_a", "walk_b", "trunk_up", "spray", "sleep"),
+    "giraffe": ("stand", "walk_a", "walk_b", "bow"),
+    "zebra": ("stand", "walk_a", "walk_b"),
+    "horse": ("stand", "walk_a", "walk_b"),
+    "deer": ("stand", "walk_a", "walk_b"),
+    "rabbit": ("stand", "hop", "sleep"),
+    "turtle": ("stand", "walk_a", "walk_b"),
+    "duck": ("stand", "walk_a", "walk_b", "swim"),
+    "monkey": ("stand", "walk_a", "walk_b", "wave", "sit"),
+    "hippo": ("stand", "walk_a", "walk_b", "yawn"),
+    "fox": ("stand", "walk_a", "walk_b", "sit", "sleep"),
+}
+_SIZE = {"elephant": 1.22, "giraffe": 1.0, "zebra": 0.92, "horse": 1.0, "deer": 0.9, "rabbit": 0.95, "turtle": 0.9,
+         "duck": 0.95, "monkey": 0.95, "hippo": 1.05, "fox": 1.0}
+_NAIL = "#f1e8d6"
+_FEET4 = {"stand": (0, 0, 0, 0), "walk_a": (30, 30, -30, -26), "walk_b": (-26, -26, 30, 34)}
+_LIFT4 = {"stand": (0, 0, 0, 0), "walk_a": (0, 0, 7, 0), "walk_b": (0, 8, 0, 0)}
+
+
+def _a_eye(ex, ey, r, eyes="open", female=False, brow=None, browk=1.0):
+    k = {"open": "open", "closed": "closed", "happy": "happy"}.get(eyes, "open")
+    out = _dot_eye(ex, ey, r, k)
+    if female and k == "open":
+        for i, (dx, dy) in enumerate(((-1.0, -1.15), (-0.2, -1.55), (0.6, -1.35))):
+            out += _line(ex + dx * r * 0.9, ey + dy * r * 0.75, ex + dx * r * 1.35 - 1, ey + dy * r * 1.05 - 3,
+                         sw=max(1.8, r * 0.3))
+    if brow:
+        out += _p(f"M{_f(ex - r * 1.3)},{_f(ey - r * 2.0 * browk)} Q{_f(ex)},{_f(ey - r * 2.7 * browk)} "
+                  f"{_f(ex + r * 1.3)},{_f(ey - r * 2.1 * browk)}", sw=max(2.2, r * 0.38), stroke=brow)
+    return out
+
+
+def _col_leg(top, foot_x, w0, w1, col, lift=0.0, nails=_NAIL, far=False):
+    """Stout column leg (elephant, hippo) from the body point `top` to a flat foot on the ground at foot_x."""
+    if far:
+        col = S.shade(col, -0.16)
+    tx, ty = top
+    gy = -lift - (4 if far else 0)
+    d = (f"M{_f(tx - w0 / 2)},{_f(ty)} Q{_f((tx + foot_x) / 2 - w0 * 0.55)},{_f((ty + gy) / 2)} {_f(foot_x - w1 / 2)},{_f(gy - 6)} "
+         f"Q{_f(foot_x - w1 / 2)},{_f(gy)} {_f(foot_x - w1 / 2 + 6)},{_f(gy)} L{_f(foot_x + w1 / 2 - 6)},{_f(gy)} "
+         f"Q{_f(foot_x + w1 / 2)},{_f(gy)} {_f(foot_x + w1 / 2)},{_f(gy - 6)} "
+         f"Q{_f((tx + foot_x) / 2 + w0 * 0.5)},{_f((ty + gy) / 2)} {_f(tx + w0 / 2)},{_f(ty)}")
+    out = _p(d + " Z", col, 0) + _p(d, sw=3.8)
+    if nails:
+        for k in (-0.28, 0.02, 0.32):
+            nx = foot_x + k * w1
+            out += _p(f"M{_f(nx - 6)},{_f(gy)} Q{_f(nx - 6)},{_f(gy - 10)} {_f(nx)},{_f(gy - 10)} Q{_f(nx + 6)},{_f(gy - 10)} "
+                      f"{_f(nx + 6)},{_f(gy)} Z", nails, 2.4)
+    return out
+
+
+def _zs(cx, cy, k=1.0):
+    out = ""
+    for j, (dx, dy, sz) in enumerate(((0, 0, 14), (22, -26, 18), (50, -58, 22))):
+        x0, y0, h = cx + dx * k, cy + dy * k, sz * k / 2
+        out += _p(f"M{_f(x0 - h)},{_f(y0 - h)} L{_f(x0 + h)},{_f(y0 - h)} L{_f(x0 - h)},{_f(y0 + h)} L{_f(x0 + h)},{_f(y0 + h)}",
+                  sw=3.2, stroke=P["ink_soft"])
+    return out
+
+
+# ---- elephant
+ELEPHANT = {"body": "#a9afbd", "shade": "#8d93a2", "ear_in": "#e8b7b6", "tusk": "#f6efdf"}
+
+
+def _elephant(pose="stand", female=False, eyes="open"):
+    C = ELEPHANT
+    col, far = C["body"], S.shade(C["body"], -0.16)
+    out = ""
+    if pose == "sleep":
+        out += _p(S.blob(-20, -100, 170, 96, 0.03, 12, seed=5), col, 4)
+        out += _ell(-40, -40, 140, 26, S.shade(col, 0.15), 0, extra='opacity="0.6"')
+        for fx in (-120, 60):
+            out += _p(f"M{fx - 44},0 Q{fx - 44},-36 {fx},-36 Q{fx + 44},-36 {fx + 44},0 Z", col, 3.6)
+            for k in (-16, 0, 16):
+                out += _p(f"M{fx + k - 6},0 Q{fx + k - 6},-9 {fx + k},-9 Q{fx + k + 6},-9 {fx + k + 6},0 Z", _NAIL, 2.2)
+        out += _circ(-188, -120, 9, col, 3)
+        out += _tube("M170,-70 Q230,-56 238,-24 Q240,0 214,-2 Q196,-6 204,-22 Q214,-34 222,-22", 30, col, 4)
+        out += _circ(140, -110, 66, col, 4)
+        ear = "M126,-170 Q60,-176 54,-110 Q56,-52 116,-50 Q100,-110 126,-170 Z"
+        out += _p(ear, col, 3.8) + _p("M114,-154 Q74,-152 72,-110 Q74,-74 106,-66 Q96,-110 114,-154 Z", C["ear_in"], 0)
+        out += _a_eye(162, -116, 7, "closed", female, S.shade(col, -0.45)) + _blush(176, -94, 10, 6)
+        if not female:
+            out += _tube("M186,-70 Q206,-60 214,-74", 9, C["tusk"], 3)
+        else:
+            out += _bow(120, -172, 1.0, rot=-15)
+        out += _zs(200, -200, 1.0)
+        return out
+    walk = pose if pose in _FEET4 else "stand"
+    fx = (-85, 95, -115, 70)
+    fx = tuple(a + b for a, b in zip(fx, _FEET4[walk]))
+    lift = _LIFT4[walk]
+    bob = 5 if walk != "stand" else 0
+    out += _tube(f"M-158,{-236 + bob} Q-176,{-200 + bob} -176,{-150 + bob}", 7, far, 3.2)
+    out += _p(f"M-184,{-154 + bob} Q-176,{-126 + bob} -168,{-154 + bob} Z", S.shade(col, -0.4), 2.6)
+    out += _col_leg((-80, -170 + bob), fx[0], 58, 54, col, lift[0], far=True)
+    out += _col_leg((96, -170 + bob), fx[1], 56, 52, col, lift[1], far=True)
+    out += _p(S.blob(-15, -215 + bob, 150, 112, 0.03, 12, seed=2), col, 4)
+    out += _ell(-20, -132 + bob, 120, 28, S.shade(col, 0.15), 0, extra='opacity="0.6"')
+    out += _p(f"M-130,{-260 + bob} Q-90,{-318 + bob} -20,{-322 + bob}", sw=4, stroke=S.shade(col, 0.3), extra='opacity="0.6"')
+    out += _col_leg((-112, -150 + bob), fx[2], 64, 58, col, lift[2])
+    out += _col_leg((72, -150 + bob), fx[3], 60, 56, col, lift[3])
+    hx, hy = 128, -262 + bob
+    up = pose in ("trunk_up", "spray")
+    if up:
+        trunk = [(hx + 46, hy + 14), (hx + 92, hy - 10), (hx + 112, hy - 70), (hx + 96, hy - 124), (hx + 116, hy - 146)]
+    else:
+        trunk = [(hx + 44, hy + 22), (hx + 76, hy + 56), (hx + 90, hy + 108), (hx + 86, hy + 150), (hx + 104, hy + 160)]
+    out += _band(trunk, 46, 24, col)
+    tip = trunk[-1]
+    out += _ell(tip[0] + 2, tip[1], 12, 9, S.shade(col, -0.1), 3, extra=f'transform="rotate({-60 if up else 30} {_f(tip[0])} {_f(tip[1])})"')
+    for k in range(1, 4):
+        q = _lerp2(trunk[0], trunk[2], k / 4)
+        out += _p(f"M{_f(q[0] - 12)},{_f(q[1] - (6 if up else -4))} q12,{'-6' if up else '6'} 24,0", sw=2.4,
+                  stroke=S.shade(col, -0.3), extra='opacity="0.6"')
+    out += _circ(hx, hy, 74, col, 4)
+    if up:
+        out += _p(f"M{hx + 22},{hy + 36} Q{hx + 34},{hy + 56} {hx + 52},{hy + 36} Z", P["mouth_inside"], 3)
+    else:
+        out += _p(f"M{hx + 18},{hy + 40} Q{hx + 32},{hy + 50} {hx + 44},{hy + 38}", sw=3)
+    if not female:
+        out += _tube(f"M{hx + 48},{hy + 44} Q{hx + 64},{hy + 60} {hx + 78},{hy + 50}", 10, C["tusk"], 3)
+    ear = (f"M{hx - 10},{hy - 66} Q{hx - 104},{hy - 70} {hx - 104},{hy + 6} Q{hx - 100},{hy + 80} {hx - 30},{hy + 80} "
+           f"Q{hx - 46},{hy + 10} {hx - 10},{hy - 66} Z")
+    out += _p(ear, col, 3.8)
+    out += _p(f"M{hx - 20},{hy - 50} Q{hx - 88},{hy - 50} {hx - 88},{hy + 6} Q{hx - 84},{hy + 60} {hx - 38},{hy + 62} "
+              f"Q{hx - 50},{hy + 6} {hx - 20},{hy - 50} Z", C["ear_in"], 0)
+    out += _a_eye(hx + 24, hy - 20, 8, eyes, female, S.shade(col, -0.45))
+    out += _blush(hx + 40, hy + 12, 11, 7)
+    if female:
+        out += _bow(hx - 10, hy - 70, 1.1, rot=-10)
+    if up:
+        mx, my = trunk[-1]
+        if pose == "trunk_up":
+            for j, r in enumerate((26, 44)):
+                out += _p(f"M{_f(mx + r * 0.3)},{_f(my - r)} Q{_f(mx + r)},{_f(my - r * 0.6)} {_f(mx + r * 0.95)},{_f(my + r * 0.1)}",
+                          sw=3.4, stroke=P["ink_soft"])
+        else:
+            rng = random.Random(7)
+            for j in range(14):
+                t = j / 13
+                a = math.radians(-110 + 80 * t)
+                dist = 30 + 90 * rng.uniform(0.5, 1.0)
+                px, py = mx + 10 + math.cos(a) * dist * 0.8, my - 30 + math.sin(a) * dist + 60 * t * t
+                out += f'<path d="{_raindrop_d(px, py, rng.uniform(7, 10))}" fill="{P["sea_pale"]}" {_st(2.4)}/>'
+            for w_, c_ in ((22, INK), (16, P["sea_pale"])):
+                out += _p(f"M{_f(mx)},{_f(my - 8)} Q{_f(mx + 6)},{_f(my - 60)} {_f(mx + 40)},{_f(my - 96)}", sw=w_ * 0.6,
+                          stroke=c_, extra='opacity="0.9"')
+    return out
+
+
+# ---- giraffe
+GIRAFFE = {"coat": "#f3c768", "patch": "#c98142", "mane": "#a8602e", "muzzle": "#f7e0b0"}
+
+
+def _giraffe(pose="stand", female=False, eyes="open"):
+    C = GIRAFFE
+    col, pc = C["coat"], C["patch"]
+    walk = pose if pose in _FEET4 else "stand"
+    fx = tuple(a + b * 0.9 for a, b in zip((-74, 92, -98, 70), _FEET4[walk]))
+    lift = _LIFT4[walk]
+    out = ""
+    out += _tube("M-112,-336 Q-132,-300 -136,-238", 6, S.shade(col, -0.15), 3)
+    out += _p("M-144,-246 Q-136,-214 -126,-244 Z", C["mane"], 2.6)
+    for i, (hx, f_, hind) in enumerate(((-66, fx[0], True), (78, fx[1], False), (-86, fx[2], True), (58, fx[3], False))):
+        out += _qleg((hx, -300), f_, 38, 17, col, hind=hind, far=i < 2, ground=-lift[i], bend=0.4)
+    body = [(-122, -332), (-100, -374), (-30, -394), (60, -414), (112, -392), (126, -344), (100, -296), (20, -282),
+            (-70, -286), (-114, -304)]
+    bow = pose == "bow"
+    if bow:
+        neck = [(70, -380), (150, -372), (220, -344), (262, -322)]
+        head = (290, -318)
+    else:
+        neck = [(76, -380), (112, -470), (140, -560), (152, -604)]
+        head = (172, -628)
+    # neck (with patches) then body
+    nd_out = _band(neck, 62, 36, col)
+    nd_centre = neck
+    rng = random.Random(3)
+    patches = ""
+    bd = _sm(body)
+    for (cx, cy) in ((-80, -340), (-30, -366), (24, -350), (66, -380), (-64, -298), (-10, -310), (44, -312), (96, -340)):
+        patches += _p(S.blob(cx + rng.uniform(-4, 4), cy, 22, 18, 0.18, 7, seed=rng.randint(0, 99)), pc, 0)
+    body_svg = _p(bd, col, 0) + _clip(_uid("gbody", pose), bd, patches) + _p(bd, sw=4)
+    out += nd_out
+    npatch = ""
+    for k in range(1, 6):
+        q = _lerp2(nd_centre[0], nd_centre[-1], k / 6)
+        npatch += _p(S.blob(q[0] + rng.uniform(-6, 6), q[1], 14, 12, 0.2, 7, seed=rng.randint(0, 99)), pc, 0)
+    # clip neck patches to the neck band
+    left, right = [], []
+    n = len(neck)
+    for i, p_ in enumerate(neck):
+        q0, q1 = neck[max(0, i - 1)], neck[min(n - 1, i + 1)]
+        dx, dy = q1[0] - q0[0], q1[1] - q0[1]
+        ln = math.hypot(dx, dy) or 1
+        w = _lerp(62, 36, i / (n - 1)) / 2 - 3
+        left.append((p_[0] - dy / ln * w, p_[1] + dx / ln * w))
+        right.append((p_[0] + dy / ln * w, p_[1] - dx / ln * w))
+    ndp = _sm(left + list(reversed(right)), closed=True, tension=0.8)
+    out += _clip(_uid("gneck", pose), ndp, npatch)
+    # mane along the back of the neck
+    mane = []
+    for i in range(n - 1):
+        q0, q1 = neck[max(0, i - 1)], neck[min(n - 1, i + 1)]
+        dx, dy = q1[0] - q0[0], q1[1] - q0[1]
+        ln = math.hypot(dx, dy) or 1
+        mane.append((right[i][0] + dy / ln * 3, right[i][1] - dx / ln * 3))
+    out += _p(_sm(mane, closed=False), sw=13, stroke=INK) + _p(_sm(mane, closed=False), sw=7, stroke=C["mane"])
+    out += body_svg
+    # head
+    hx, hy = head
+    rot = 28 if bow else 18
+    hd = _g(_p("M-30,-14 Q-28,-30 -6,-30 Q30,-30 42,-6 Q48,14 30,20 Q0,26 -20,16 Q-34,6 -30,-14 Z", col, 4)
+            + _ell(30, 4, 18, 14, C["muzzle"], 3) + _circ(38, -2, 2.4, INK, 0)
+            + _p("M22,14 Q30,18 38,12", sw=2.6), f"translate({hx},{hy}) rotate({rot})")
+    horns = ""
+    for dx in (-14, 2):
+        a = _rot(hx + dx, hy - 28, hx, hy, rot)
+        b = _rot(hx + dx - 4, hy - 52, hx, hy, rot)
+        horns += _tube(f"M{_f(a[0])},{_f(a[1])} L{_f(b[0])},{_f(b[1])}", 8, col, 3) + _circ(b[0], b[1], 7, C["mane"], 2.8)
+    e1 = _rot(hx - 22, hy - 12, hx, hy, rot)
+    out += horns
+    out += _ell(e1[0] - 12, e1[1] - 2, 16, 7, col, 3, extra=f'transform="rotate({rot + 20} {_f(e1[0] - 12)} {_f(e1[1] - 2)})"')
+    out += hd
+    ex, ey = _rot(hx + 4, hy - 10, hx, hy, rot)
+    out += _a_eye(ex, ey, 6, eyes, female, S.shade(col, -0.5)) + _blush(ex + 10, ey + 14, 8, 5)
+    if female:
+        out += _bow(hx - 22, hy - 36, 0.9, rot=-20)
+    return out
+
+
+# ---- horse / zebra / deer
+_EQUINE = {
+    "horse": dict(coat="#c27d46", mane="#6a3f26", muzzle="#9a5f36", belly=None, hoof="#4e3a2e", stripes=None),
+    "zebra": dict(coat="#f7f2e8", mane="#3e3538", muzzle="#5a5052", belly=None, hoof="#3e3538", stripes="#3e3538"),
+    "deer": dict(coat="#c98a54", mane=None, muzzle="#7a5638", belly="#f3e2c4", hoof="#4e3a2e", stripes=None),
+}
+
+
+def _equine(kind="horse", pose="stand", female=False, eyes="open"):
+    C = _EQUINE[kind]
+    col = C["coat"]
+    deer = kind == "deer"
+    zebra = kind == "zebra"
+    walk = pose if pose in _FEET4 else "stand"
+    fx = tuple(a + b * 0.95 for a, b in zip((-86, 86, -108, 66), _FEET4[walk]))
+    lift = _LIFT4[walk]
+    lw0, lw1 = (26, 11) if deer else (32, 15)
+    top = -176 if deer else -170
+    out = ""
+    # tail
+    if zebra:
+        out += _tube("M-124,-214 Q-142,-180 -146,-140", 6, col, 3) + _p("M-156,-148 Q-146,-104 -136,-148 Z", C["mane"], 2.6)
+    elif deer:
+        out += _p("M-122,-224 Q-150,-236 -146,-206 Q-136,-196 -120,-206 Z", C["belly"], 3)
+    else:
+        out += _p("M-122,-214 Q-158,-208 -160,-150 Q-158,-112 -140,-104 Q-150,-150 -132,-180 Q-126,-196 -118,-200 Z",
+                  C["mane"], 3.4)
+    legs_col = col
+    for i, (hx, f_, hind) in enumerate(((-82, fx[0], True), (80, fx[1], False), (-98, fx[2], True), (64, fx[3], False))):
+        out += _qleg((hx, top), f_, lw0, lw1, legs_col, hind=hind, far=i < 2, ground=-lift[i], bend=0.5)
+        if zebra:
+            for k in range(3):
+                yy = -30 - k * 30 - (5 if i < 2 else 0) - lift[i]
+                xx = f_ + (hx - f_) * (k + 1) * 0.12
+                out += _line(xx - 8, yy, xx + 8, yy - 2, sw=5, color=C["stripes"], extra='opacity="0.9"')
+    body = [(-134, -196), (-122, -238), (-82, -254), (-24, -244), (30, -242), (86, -254), (120, -228), (130, -188),
+            (110, -152), (40, -140), (-40, -142), (-112, -152)]
+    if deer:
+        body = [(x * 0.92, y - 8) for x, y in body]
+    bd = _sm(body)
+    inner = ""
+    if C["belly"]:
+        inner += _ell(0, -150, 110, 22, C["belly"], 0)
+    if zebra:
+        for k in range(-5, 6):
+            x0 = k * 22
+            inner += _p(f"M{x0 - 6},-260 Q{x0 + 6},-210 {x0 - 2},-170", sw=9, stroke=C["stripes"])
+        inner += _p("M-128,-230 Q-100,-200 -126,-176 M-120,-238 Q-86,-210 -116,-170", sw=7, stroke=C["stripes"])
+    if deer:
+        rng = random.Random(4)
+        for _ in range(9):
+            inner += _circ(rng.uniform(-90, 70), rng.uniform(-236, -206), rng.uniform(3.5, 5.5), "#f6ead2", 0)
+    body_svg = _p(bd, col, 0) + (_clip(_uid("eqb", kind, pose), bd, inner) if inner else "") + _p(bd, sw=4)
+    # neck and head
+    if deer:
+        neck = [(70, -224), (98, -270), (116, -312), (122, -330)]
+        out += _band(neck, 52, 38, col)
+        hx, hy = 138, -338
+    else:
+        neck = [(80, -222), (112, -262), (138, -300), (150, -322)]
+        out += _band(neck, 62, 44, col)
+        hx, hy = 156, -324
+    if zebra:
+        for k in range(4):
+            q = _lerp2(neck[0], neck[-1], 0.15 + k * 0.22)
+            out += _p(f"M{_f(q[0] - 26)},{_f(q[1] - 2)} Q{_f(q[0])},{_f(q[1] - 8)} {_f(q[0] + 22)},{_f(q[1] + 12)}", sw=8,
+                      stroke=C["stripes"])
+    if C["mane"] and not zebra:                        # flowing mane
+        mane = [(hx - 14, hy - 22), (hx - 32, hy + 8), (hx - 52, hy + 42), (hx - 74, hy + 76), (hx - 88, hy + 100)]
+        out += _band(mane, 26, 16, C["mane"])
+        out += _p(f"M{hx - 2},{hy - 22} Q{hx + 14},{hy - 18} {hx + 16},{hy - 6} Q{hx},{hy - 10} {hx - 8},{hy - 12} Z",
+                  C["mane"], 2.6)
+        if female:
+            out += _bow(hx - 40, hy + 22, 0.9, rot=-30)
+    if zebra:                                           # short upright striped mane
+        mane = [(hx - 14, hy - 22), (hx - 34, hy + 6), (hx - 56, hy + 40), (hx - 80, hy + 74), (hx - 92, hy + 96)]
+        out += _band(mane, 26, 18, col)
+        for k in range(5):
+            q = _lerp2(mane[0], mane[-1], k / 4.5)
+            out += _line(q[0] - 6, q[1] - 8, q[0] + 6, q[1] + 6, sw=6, color=C["stripes"])
+    out += body_svg
+    if deer:
+        head = (f"M{hx - 22},{hy - 4} Q{hx - 18},{hy - 28} {hx + 6},{hy - 26} Q{hx + 28},{hy - 22} {hx + 46},{hy + 4} "
+                f"Q{hx + 54},{hy + 18} {hx + 40},{hy + 22} Q{hx + 10},{hy + 24} {hx - 12},{hy + 16} Q{hx - 26},{hy + 8} {hx - 22},{hy - 4} Z")
+    else:
+        head = (f"M{hx - 24},{hy - 20} Q{hx - 6},{hy - 32} {hx + 14},{hy - 22} Q{hx + 34},{hy - 6} {hx + 48},{hy + 30} "
+                f"Q{hx + 54},{hy + 50} {hx + 38},{hy + 56} Q{hx + 18},{hy + 60} {hx + 4},{hy + 40} Q{hx - 14},{hy + 14} {hx - 24},{hy - 20} Z")
+    # ears (behind the head) and antlers
+    if deer:
+        if not female:
+            ant = TIMBER_LIGHT
+            for dx, s_ in ((-10, 1), (6, 1)):
+                bx, by = hx + dx, hy - 22
+                out += _tube(f"M{bx},{by} Q{bx - 10},{by - 30} {bx - 4},{by - 62}", 7, ant, 2.8)
+                out += _tube(f"M{bx - 7},{by - 26} Q{bx - 26},{by - 38} {bx - 30},{by - 56}", 6, ant, 2.6)
+                out += _tube(f"M{bx - 5},{by - 46} Q{bx + 10},{by - 56} {bx + 12},{by - 72}", 6, ant, 2.6)
+        for dx, rot in ((-20, -40), (-6, -20)):
+            out += _ell(hx + dx - 10, hy - 26, 20, 9, col, 3.2, extra=f'transform="rotate({rot} {hx + dx} {hy - 18})"')
+            out += _ell(hx + dx - 10, hy - 26, 12, 4.5, "#e9b7a6", 0, extra=f'transform="rotate({rot} {hx + dx} {hy - 18})"')
+    else:
+        for dx in (-14, 0):
+            out += _p(f"M{hx + dx - 8},{hy - 22} L{hx + dx - 4},{hy - 50} L{hx + dx + 8},{hy - 24} Z", col, 3)
+            out += _p(f"M{hx + dx - 4},{hy - 26} L{hx + dx - 2},{hy - 42} L{hx + dx + 3},{hy - 27} Z",
+                      C["stripes"] or "#e9b7a6", 0)
+    out += _p(head, col, 4)
+    mx, my = (hx + 40, hy + 8) if deer else (hx + 34, hy + 42)
+    out += _clip(_uid("eqm", kind), head, _ell(mx + 6, my + 6, 24, 20, C["muzzle"], 0, extra='opacity="0.9"')) + _p(head, sw=4)
+    if kind == "horse":                                  # white blaze
+        out += _p(f"M{hx - 2},{hy - 22} Q{hx + 14},{hy + 2} {hx + 26},{hy + 26} Q{hx + 20},{hy + 30} {hx + 16},{hy + 22} "
+                  f"Q{hx + 4},{hy} {hx - 8},{hy - 18} Z", CREAM, 0)
+    if zebra:
+        for k in range(3):
+            out += _p(f"M{hx - 16 + k * 12},{hy - 20 + k * 6} Q{hx - 4 + k * 12},{hy - 4 + k * 10} {hx - 16 + k * 10},{hy + 10 + k * 10}",
+                      sw=6, stroke=C["stripes"])
+    if not C["mane"] or zebra:
+        pass
+    nx, ny = (hx + 48, hy + 6) if deer else (hx + 40, hy + 44)
+    out += _circ(nx, ny, 3.2 if deer else 3, INK, 0)
+    out += _p(f"M{nx - 12},{ny + 10} Q{nx - 6},{ny + 14} {nx},{ny + 10}", sw=2.6)
+    ex, ey = (hx + 8, hy - 8) if deer else (hx + 8, hy - 4)
+    out += _a_eye(ex, ey, 5.5, eyes, female, S.shade(col, -0.45) if not zebra else None)
+    out += _blush(ex + 12, ey + 14, 8, 5)
+    if female and (deer or zebra):
+        out += _bow(hx - 18, hy - 22, 0.9, rot=-20)
+    return out
+
+
+# ---- rabbit
+RABBIT = {"coat": "#d9c3a8", "belly": "#f6ecdc", "ear_in": "#efb1ad"}
+
+
+def _rabbit_head(cx, cy, rot=0.0, eyes="open", female=False, ears_back=0.0):
+    C = RABBIT
+    col = C["coat"]
+    out = ""
+    for dx, a in ((-8, -12 - 50 * ears_back), (10, 6 - 46 * ears_back)):
+        out += _g(_ell(0, -32, 11, 32, col, 3.4) + _ell(0, -32, 5.5, 22, C["ear_in"], 0),
+                  f"translate({_f(cx + dx)},{_f(cy - 20)}) rotate({_f(a)})")
+    out += _ell(cx, cy, 30, 27, col, 3.8)
+    out += _ell(cx + 18, cy + 10, 13, 10, C["belly"], 0)
+    out += _circ(cx + 28, cy + 4, 4, "#e8949c", 1.8)
+    out += _p(f"M{_f(cx + 20)},{_f(cy + 14)} Q{_f(cx + 24)},{_f(cy + 18)} {_f(cx + 28)},{_f(cy + 12)}", sw=2.2)
+    out += _a_eye(cx + 10, cy - 4, 5, eyes, female)
+    out += _blush(cx + 16, cy + 8, 6, 4)
+    if female:
+        out += _bow(cx - 2, cy - 26, 0.75)
+    return _g(out, f"rotate({rot:.1f} {_f(cx)} {_f(cy)})") if rot else out
+
+
+def _rabbit(pose="stand", female=False, eyes="open", phase=0.0):
+    C = RABBIT
+    col = C["coat"]
+    far = S.shade(col, -0.15)
+    out = ""
+    if pose == "sleep":
+        out += _cluster([(-52, -36, 13)], C["belly"], 3)
+        out += _p(S.blob(-4, -32, 56, 32, 0.04, 10, seed=1), col, 3.8)
+        out += _ell(-6, -10, 40, 9, C["belly"], 0, extra='opacity="0.7"')
+        out += _ell(40, -4, 18, 7, col, 3)
+        out += _rabbit_head(40, -40, 10, "closed", female, ears_back=1.0)
+        out += _zs(70, -86, 0.7)
+        return out
+    frame = int(round(_clamp(phase) * 4)) % 4 if pose == "hop" else -1
+    if frame in (-1, 0):                       # sitting / crouched (gather)
+        dy = 6 if frame == 0 else 0
+        out += _ell(28, -6, 10, 6, far, 2.8)
+        out += _cluster([(-52, -46 + dy, 13)], C["belly"], 3)
+        out += _p(S.blob(-6, -46 + dy, 46, 42 - dy, 0.04, 10, seed=2), col, 3.8)
+        out += _ell(-4, -40 + dy, 26, 22, C["belly"], 0, extra='opacity="0.6"')
+        out += _circ(-22, -34 + dy, 30, col, 3.6)
+        out += _ell(2, -7, 30, 8, col, 3.2)
+        out += _ell(34, -6, 10, 6, col, 2.8)
+        out += _rabbit_head(36, -92 + dy * 2, 0, eyes, female, ears_back=0.5 if frame == 0 else 0.0)
+    elif frame == 1:                           # push off: stretched up and forward, hind feet still down
+        out += _ell(-58, -8, 26, 7, far, 2.8)
+        out += _tube("M-40,-30 L-60,-8", 14, far, 3)
+        out += _cluster([(-52, -62, 13)], C["belly"], 3)
+        out += _g(_p(S.blob(0, 0, 54, 30, 0.04, 10, seed=3), col, 3.8)
+                  + _ell(4, 10, 36, 12, C["belly"], 0, extra='opacity="0.6"'), "translate(-4,-66) rotate(-24)")
+        out += _tube("M-30,-44 L-62,-10", 16, col, 3.2) + _ell(-66, -7, 28, 7, col, 3)
+        out += _tube("M34,-84 L58,-70", 9, col, 2.8)
+        out += _rabbit_head(54, -112, -10, eyes, female, ears_back=0.9)
+    elif frame == 2:                           # airborne, stretched out
+        out += _cluster([(-62, -98, 13)], C["belly"], 3)
+        out += _tube("M-36,-92 L-78,-82", 12, far, 3)
+        out += _g(_p(S.blob(0, 0, 58, 28, 0.04, 10, seed=4), col, 3.8)
+                  + _ell(4, 10, 40, 12, C["belly"], 0, extra='opacity="0.6"'), "translate(-6,-104) rotate(-6)")
+        out += _tube("M-40,-96 L-84,-86", 14, col, 3) + _ell(-90, -84, 20, 7, col, 3, extra='transform="rotate(10 -90 -84)"')
+        out += _tube("M34,-96 L62,-78", 9, col, 2.8)
+        out += _rabbit_head(60, -124, 0, eyes, female, ears_back=1.0)
+    else:                                      # landing on the front paws, hind legs up behind
+        out += _cluster([(-46, -96, 13)], C["belly"], 3)
+        out += _tube("M-30,-84 L-62,-104", 12, far, 3)
+        out += _g(_p(S.blob(0, 0, 54, 30, 0.04, 10, seed=5), col, 3.8)
+                  + _ell(4, 10, 36, 12, C["belly"], 0, extra='opacity="0.6"'), "translate(-2,-70) rotate(22)")
+        out += _tube("M-26,-82 L-66,-100", 15, col, 3) + _ell(-70, -102, 20, 7, col, 3, extra='transform="rotate(-20 -70 -102)"')
+        out += _tube("M34,-46 L44,-8", 10, col, 2.8) + _ell(48, -6, 11, 6, col, 2.6)
+        out += _rabbit_head(56, -66, 16, eyes, female, ears_back=0.7)
+    return out
+
+
+# ---- turtle
+TURTLE = {"shell": "#7ea35b", "pattern": "#a8c67c", "skin": "#b9cf8a", "rim": "#5e7e43"}
+
+
+def _turtle(pose="stand", female=False, eyes="open"):
+    C = TURTLE
+    skin, far = C["skin"], S.shade(C["skin"], -0.15)
+    walk = pose if pose in ("walk_a", "walk_b") else "stand"
+    lx = {"stand": (-50, 46, -34, 62), "walk_a": (-60, 58, -24, 50), "walk_b": (-40, 36, -44, 70)}[walk]
+    bob = -3 if walk != "stand" else 0
+    out = ""
+    for x_ in lx[2:]:
+        out += _ell(x_, -12, 17, 13, far, 3.2)
+    out += _p(f"M-84,{-26 + bob} L-104,{-18 + bob} L-84,{-14 + bob} Z", skin, 2.8)
+    hx, hy = 112, -56 + bob + (-4 if walk == "walk_a" else 0)
+    out += _band([(66, -36 + bob), (88, -46 + bob), (hx - 10, hy + 4)], 28, 24, skin)
+    out += _circ(hx, hy, 22, skin, 3.6)
+    out += _a_eye(hx + 6, hy - 6, 4.6, eyes, female) + _blush(hx + 12, hy + 6, 6, 4)
+    out += _p(f"M{hx + 8},{hy + 9} Q{hx + 14},{hy + 13} {hx + 20},{hy + 7}", sw=2.4)
+    if female:
+        out += _bow(hx - 6, hy - 22, 0.7)
+    for x_ in lx[:2]:
+        out += _ell(x_, -10, 19, 14, skin, 3.4)
+    shell = f"M-90,{-30 + bob} Q-84,{-94 + bob} 0,{-98 + bob} Q84,{-94 + bob} 90,{-30 + bob} Z"
+    inner = ""
+    for cx, cy, r in ((0, -66, 22), (-46, -52, 18), (46, -52, 18), (-24, -84, 12), (24, -84, 12), (-74, -38, 10), (74, -38, 10)):
+        pts = [(cx + r * math.cos(math.pi / 3 * k), cy + bob + r * 0.8 * math.sin(math.pi / 3 * k)) for k in range(6)]
+        inner += _p(_poly(pts), C["pattern"], 2.4, stroke=S.shade(C["shell"], -0.3))
+    inner += _ell(-30, -80 + bob, 22, 8, HILITE, 0, extra='opacity="0.35"')
+    out += _p(shell, C["shell"], 0) + _clip(_uid("tshell", walk), shell, inner) + _p(shell, sw=4)
+    out += _rect(-96, -36 + bob, 192, 16, C["rim"], 3.4, rx=8)
+    return out
+
+
+# ---- duck
+DUCK = {"m_head": "#3f8a5a", "m_breast": "#9a5a3e", "m_body": "#d2cec6", "m_wing": "#9a9188", "spec": "#4a6fb3",
+        "f_body": "#bf9264", "f_dark": "#8a6340", "bill_m": "#f2c14e", "bill_f": "#e59a52", "feet": "#f09a4a"}
+
+
+def _duck(pose="stand", female=False, eyes="open"):
+    C = DUCK
+    body_c = C["f_body"] if female else C["m_body"]
+    head_c = C["f_body"] if female else C["m_head"]
+    bill = C["bill_f"] if female else C["bill_m"]
+    out = ""
+    swim = pose == "swim"
+    tilt = {"walk_a": -4, "walk_b": 4}.get(pose, 0)
+    if not swim:
+        legs = {"stand": ((-8, -6), (10, 10)), "walk_a": ((-18, -24), (14, 22)), "walk_b": ((-4, 6), (6, -2))}.get(pose, ((-8, -6), (10, 10)))
+        for (hx, fx_), c in zip(legs, (S.shade(C["feet"], -0.15), C["feet"])):
+            out += _line(hx, -22, fx_, -4, sw=9, color=INK) + _line(hx, -22, fx_, -4, sw=4.5, color=c)
+            out += _p(f"M{fx_ - 8},0 L{fx_ + 18},0 L{fx_ + 2},-8 Z", c, 2.6)
+    g = ""
+    g += _p("M-52,-58 Q-74,-80 -66,-50 Q-60,-42 -46,-46 Z", C["f_dark"] if female else "#4a4446", 3)       # tail
+    if not female:
+        g += _p("M-58,-62 q-6,-12 4,-14", sw=3)
+    bd = "M-60,-50 Q-58,-80 -10,-78 Q30,-80 46,-60 Q56,-40 36,-22 Q0,-14 -40,-22 Q-62,-30 -60,-50 Z"
+    inner = ""
+    if female:
+        rng = random.Random(6)
+        for _ in range(14):
+            inner += _ell(rng.uniform(-52, 40), rng.uniform(-70, -30), 5, 3, C["f_dark"], 0, extra='opacity="0.7"')
+    else:
+        inner += _ell(34, -48, 26, 30, C["m_breast"], 0)
+    g += _p(bd, body_c, 0) + _clip(_uid("duckb", female), bd, inner) + _p(bd, sw=3.8)
+    wing = "M-40,-60 Q-6,-74 22,-56 Q10,-36 -24,-38 Q-46,-42 -40,-60 Z"
+    g += _p(wing, C["f_dark"] if female else C["m_wing"], 3.2)
+    g += _p("M-30,-46 L-6,-44 L-10,-38 L-32,-40 Z", C["spec"], 2)
+    hx, hy = 40, -98
+    g += _band([(28, -66), (34, -82), (hx, hy + 8)], 30, 28, head_c)
+    if not female:
+        g += _p("M23,-72 Q34,-68 46,-74", sw=6, stroke=CREAM)
+    g += _circ(hx, hy, 22, head_c, 3.6)
+    g += _p(f"M{hx + 16},{hy - 2} Q{hx + 40},{hy - 6} {hx + 46},{hy + 4} Q{hx + 40},{hy + 12} {hx + 16},{hy + 10} Z", bill, 3)
+    g += _p(f"M{hx + 20},{hy + 5} L{hx + 42},{hy + 5}", sw=1.8)
+    g += _a_eye(hx + 4, hy - 6, 4.4, eyes, female) + _blush(hx + 4, hy + 8, 6, 3.6)
+    if female:
+        g += _p(f"M{hx - 18},{hy - 4} Q{hx},{hy - 2} {hx + 14},{hy - 8}", sw=3, stroke=C["f_dark"])
+        g += _bow(hx - 8, hy - 20, 0.7)
+    if swim:
+        out += _g(g, "translate(0,32)")
+        out += _p("M-80,0 Q-60,-6 -40,0 T0,0 T40,0 T80,0", sw=3, stroke=S.shade(P["sea_light"], -0.3))
+        return out
+    out += _g(g, f"rotate({tilt} 0 -20)") if tilt else g
+    return out
+
+
+# ---- monkey
+MONKEY = {"fur": "#9a6a45", "face": "#f2cba2", "dark": "#74492e"}
+
+
+def _monkey(pose="stand", female=False, eyes="open"):
+    C = MONKEY
+    fur, face, far = C["fur"], C["face"], S.shade(C["fur"], -0.15)
+    out = ""
+    sit = pose == "sit"
+    base = 34 if sit else 0
+    # tail: a long curl
+    out += _tube(f"M-24,{-66 + base} Q-80,{-60 + base} -86,{-120 + base} Q-90,{-170 + base} -56,{-170 + base} "
+                 f"Q-36,{-166 + base} -42,{-146 + base} Q-48,{-132 + base} -60,{-140 + base}", 9, fur, 3.2)
+    if sit:
+        out += _ell(-6, -24, 46, 26, far, 3.6)
+        out += _ell(26, -10, 22, 10, face, 3)
+        out += _ell(-30, -10, 22, 10, S.shade(face, -0.08), 3)
+    else:
+        legs = {"stand": ((-12, -16), (12, 18)), "walk_a": ((-12, -30), (12, 30)), "wave": ((-12, -16), (12, 18)),
+                "walk_b": ((-12, 10), (12, -8))}[pose]
+        for (hx, fx_), c in zip(legs, (far, fur)):
+            out += _tube(f"M{hx},-56 Q{(hx + fx_) / 2 - 8},-30 {fx_},-14", 18, c, 3.4)
+            out += _ell(fx_ + 8, -7, 17, 8, face if c == fur else S.shade(face, -0.1), 3)
+    by = -88 + base
+    sw = {"walk_a": 1, "walk_b": -1}.get(pose, 0)
+    # far arm
+    out += _tube(f"M14,{by - 22} Q{24 + 10 * sw},{by + 4} {22 + 14 * sw},{by + 34}", 13, far, 3.2)
+    out += _circ(22 + 14 * sw, by + 38, 8, S.shade(face, -0.1), 2.8)
+    out += _ell(0, by, 32, 38, fur, 3.8)
+    out += _ell(6, by + 8, 20, 24, face, 0, extra='opacity="0.9"')
+    hx, hy = 8, by - 62
+    out += _circ(hx - 28, hy + 2, 14, fur, 3.2) + _circ(hx - 28, hy + 2, 7, face, 0)
+    out += _circ(hx, hy, 32, fur, 3.8)
+    out += _p(f"M{hx - 8},{hy - 16} Q{hx + 4},{hy - 26} {hx + 14},{hy - 14} Q{hx + 26},{hy - 26} {hx + 34},{hy - 10} "
+              f"Q{hx + 42},{hy + 14} {hx + 26},{hy + 24} Q{hx + 6},{hy + 30} {hx - 6},{hy + 16} Q{hx - 14},{hy} {hx - 8},{hy - 16} Z",
+              face, 3)
+    out += _a_eye(hx + 8, hy - 6, 4.8, eyes, female) + _a_eye(hx + 26, hy - 6, 4.8, eyes, female)
+    out += _circ(hx + 22, hy + 6, 2.2, INK, 0) + _circ(hx + 28, hy + 6, 2.2, INK, 0)
+    out += _p(f"M{hx + 12},{hy + 14} Q{hx + 22},{hy + 22} {hx + 32},{hy + 12}", sw=2.6)
+    out += _blush(hx + 4, hy + 10, 6, 4) + _blush(hx + 36, hy + 8, 5, 3.5)
+    if female:
+        out += _bow(hx - 10, hy - 30, 0.8)
+    # near arm
+    if pose == "wave":
+        out += _tube(f"M-14,{by - 22} Q-30,{by - 50} -26,{by - 86}", 13, fur, 3.2)
+        out += _ell(-26, by - 96, 10, 12, face, 2.8)
+        for k in (0, 1):
+            out += _p(f"M{-50 - 10 * k},{by - 110 + 4 * k} q-6,14 0,28", sw=2.6, stroke=P["ink_soft"])
+    elif sit:
+        out += _tube(f"M-14,{by - 20} Q-20,{by + 20} 4,{by + 34}", 13, fur, 3.2) + _circ(8, by + 36, 8, face, 2.8)
+    else:
+        out += _tube(f"M-14,{by - 22} Q{-26 - 10 * sw},{by + 4} {-24 - 14 * sw},{by + 34}", 13, fur, 3.2)
+        out += _circ(-24 - 14 * sw, by + 38, 8, face, 2.8)
+    return out
+
+
+# ---- hippo
+HIPPO = {"body": "#a597b8", "pink": "#e5b2ba", "dark": "#857a99"}
+
+
+def _hippo(pose="stand", female=False, eyes="open"):
+    C = HIPPO
+    col = C["body"]
+    walk = pose if pose in _FEET4 else "stand"
+    fx = tuple(a + b * 0.8 for a, b in zip((-100, 92, -126, 70), _FEET4[walk]))
+    lift = _LIFT4[walk]
+    bob = 4 if walk != "stand" else 0
+    out = ""
+    out += _p(f"M-178,{-130 + bob} L-196,{-118 + bob} L-180,{-108 + bob} Z", col, 2.8)
+    out += _col_leg((-96, -80 + bob), fx[0], 52, 50, col, lift[0], nails=C["pink"], far=True)
+    out += _col_leg((94, -80 + bob), fx[1], 50, 48, col, lift[1], nails=C["pink"], far=True)
+    out += _p(S.blob(-20, -122 + bob, 162, 90, 0.03, 12, seed=6), col, 4)
+    out += _ell(-20, -52 + bob, 130, 24, C["pink"], 0, extra='opacity="0.55"')
+    out += _p(f"M-140,{-170 + bob} Q-80,{-214 + bob} 0,{-212 + bob}", sw=4, stroke=S.shade(col, 0.3), extra='opacity="0.6"')
+    out += _col_leg((-122, -70 + bob), fx[2], 56, 54, col, lift[2], nails=C["pink"])
+    out += _col_leg((70, -70 + bob), fx[3], 54, 52, col, lift[3], nails=C["pink"])
+    hx, hy = 128, -150 + bob
+    yawn = pose == "yawn"
+    for ex_ in (hx - 22, hx + 2):
+        out += _ell(ex_, hy - 44, 9, 12, col, 3) + _ell(ex_, hy - 44, 4, 6, C["pink"], 0)
+    out += _ell(hx, hy, 54, 46, col, 4)
+    if yawn:
+        out += _p(f"M{hx + 20},{hy - 4} Q{hx + 96},{hy - 70} {hx + 128},{hy - 30} Q{hx + 120},{hy + 10} {hx + 40},{hy + 18} Z",
+                  col, 4)                                                    # upper jaw lifted
+        out += _p(f"M{hx + 30},{hy + 14} Q{hx + 118},{hy - 24} {hx + 120},{hy - 20} Q{hx + 136},{hy + 40} {hx + 70},{hy + 66} "
+                  f"Q{hx + 30},{hy + 66} {hx + 30},{hy + 14} Z", P["mouth_inside"], 3.6)
+        out += _ell(hx + 80, hy + 44, 30, 12, _TONGUE, 0)
+        out += _p(f"M{hx + 30},{hy + 36} Q{hx + 60},{hy + 90} {hx + 112},{hy + 50} Q{hx + 132},{hy + 40} {hx + 134},{hy + 24} "
+                  f"Q{hx + 130},{hy + 70} {hx + 80},{hy + 80} Q{hx + 40},{hy + 80} {hx + 30},{hy + 36} Z", C["pink"], 3.6)
+        for tx, ty in ((hx + 104, hy - 16), (hx + 66, hy - 2)):
+            out += _rect(tx - 6, ty, 12, 16, CREAM, 2.4, rx=5)
+        out += _circ(hx + 116, hy - 48, 3.4, INK, 0)
+    else:
+        out += _ell(hx + 52, hy + 26, 62, 46, C["pink"], 4)
+        out += _ell(hx + 78, hy - 6, 6, 4, S.shade(C["pink"], -0.45), 0) + _ell(hx + 100, hy + 2, 6, 4, S.shade(C["pink"], -0.45), 0)
+        out += _p(f"M{hx + 30},{hy + 46} Q{hx + 66},{hy + 62} {hx + 102},{hy + 44}", sw=3.2)
+        out += _ell(hx + 50, hy + 20, 16, 6, HILITE, 0, extra='opacity="0.4"')
+    ex, ey = hx + 16, hy - 24
+    out += _ell(ex, ey + 2, 13, 12, col, 3)
+    out += _a_eye(ex + 2, ey, 6, "closed" if yawn else eyes, female)
+    out += _blush(hx + 20, hy + 8, 10, 6)
+    if female:
+        out += _bow(hx - 12, hy - 58, 0.9)
+    return out
+
+
+# ---- fox
+FOX = {"coat": "#e3874a", "white": "#f7efe0", "sock": "#5e4436"}
+
+
+def _fox_head(hx, hy, eyes, female, rot=0.0):
+    C = FOX
+    col = C["coat"]
+    out = ""
+    for dx, k in ((-26, 0.9), (-4, 1.0)):
+        out += _p(f"M{hx + dx - 12},{hy - 14} L{hx + dx - 4},{hy - 14 - 38 * k} L{hx + dx + 14},{hy - 18} Z", col, 3.2)
+        out += _p(f"M{hx + dx - 6},{hy - 18} L{hx + dx - 3},{hy - 12 - 28 * k} L{hx + dx + 8},{hy - 20} Z", C["sock"], 0)
+    hd = f"M{hx - 34},{hy - 6} Q{hx - 30},{hy - 30} {hx - 2},{hy - 28} Q{hx + 24},{hy - 24} {hx + 50},{hy + 6} " \
+         f"Q{hx + 44},{hy + 16} {hx + 20},{hy + 20} Q{hx - 20},{hy + 30} {hx - 34},{hy - 6} Z"
+    out += _p(hd, col, 0) + _clip(_uid("foxh"), hd, _p(f"M{hx - 10},{hy + 30} Q{hx + 6},{hy + 2} {hx + 52},{hy + 4} L{hx + 52},{hy + 40} Z",
+                                                      C["white"], 0)) + _p(hd, sw=3.8)
+    out += _circ(hx + 50, hy + 4, 5, INK, 0)
+    out += _p(f"M{hx + 30},{hy + 14} Q{hx + 36},{hy + 18} {hx + 42},{hy + 12}", sw=2.4)
+    out += _a_eye(hx + 10, hy - 8, 5, eyes, female) + _blush(hx + 14, hy + 6, 6, 4)
+    if female:
+        out += _bow(hx - 16, hy - 26, 0.75)
+    return _g(out, f"rotate({rot:.1f} {hx} {hy})") if rot else out
+
+
+def _fox(pose="stand", female=False, eyes="open"):
+    C = FOX
+    col = C["coat"]
+    out = ""
+    if pose == "sleep":
+        out += _p(S.blob(0, -36, 70, 36, 0.04, 10, seed=8), col, 3.8)
+        out += _band([(-60, -30), (-40, -2), (20, 4), (70, -4), (88, -20)], 44, 28, col)
+        out += _p("M70,-26 Q96,-26 96,-14 Q90,2 66,2 Z", C["white"], 3)
+        out += _fox_head(30, -46, "closed", female, rot=14)
+        out += _zs(70, -100, 0.7)
+        return out
+    if pose == "sit":
+        out += _band([(-40, -20), (-90, -12), (-120, -30), (-128, -60)], 44, 34, col)
+        out += _p("M-118,-46 Q-138,-60 -128,-84 Q-112,-74 -110,-56 Z", C["white"], 3)
+        out += _ell(-20, -36, 46, 36, col, 3.8)
+        out += _ell(10, -6, 26, 9, col, 3)
+        out += _tube("M20,-70 L22,-8", 13, C["sock"], 3) + _tube("M36,-70 L40,-8", 13, C["sock"], 3)
+        out += _p("M0,-110 Q34,-120 44,-90 Q46,-60 30,-50 Q10,-60 0,-110 Z", col, 3.8)
+        out += _p("M22,-104 Q40,-100 40,-80 Q34,-62 24,-62 Q18,-80 22,-104 Z", C["white"], 0)
+        out += _fox_head(34, -128, "open" if eyes == "open" else eyes, female)
+        return out
+    walk = pose if pose in _FEET4 else "stand"
+    fx = tuple(a + b * 0.55 for a, b in zip((-48, 52, -62, 40), _FEET4[walk]))
+    lift = tuple(v * 0.6 for v in _LIFT4[walk])
+    out += _band([(-60, -84), (-110, -80), (-150, -64), (-170, -40)], 46, 36, col)
+    out += _p("M-150,-50 Q-172,-60 -184,-36 Q-170,-20 -152,-34 Z", C["white"], 3)
+    for i, (hx, f_, hind) in enumerate(((-44, fx[0], True), (46, fx[1], False), (-56, fx[2], True), (36, fx[3], False))):
+        out += _qleg((hx, -70), f_, 18, 10, C["sock"], hind=hind, far=i < 2, ground=-lift[i], bend=0.6)
+    bd = [(-74, -84), (-56, -106), (0, -110), (44, -106), (76, -92), (80, -66), (50, -54), (-20, -52), (-66, -60)]
+    out += _p(_sm(bd), col, 3.8)
+    out += _p("M46,-66 Q70,-70 76,-90 Q86,-70 70,-56 Z", C["white"], 0)
+    out += _band([(54, -96), (74, -114), (86, -122)], 40, 34, col)
+    out += _fox_head(92, -128, eyes, female)
+    return out
+
+
+def _ark_animal(kind="elephant", pose="stand", female=False, eyes="open", phase=0.0):
+    if kind not in ARK_ANIMAL_POSES:
+        raise ValueError(f"ark_animal: unknown kind {kind!r}; choose from {ARK_ANIMALS}")
+    if pose not in ARK_ANIMAL_POSES[kind]:
+        raise ValueError(f"ark_animal: {kind} has no pose {pose!r}; choose from {ARK_ANIMAL_POSES[kind]}")
+    if kind == "elephant":
+        body = _elephant(pose, female, eyes)
+    elif kind == "giraffe":
+        body = _giraffe(pose, female, eyes)
+    elif kind in _EQUINE:
+        body = _equine(kind, pose, female, eyes)
+    elif kind == "rabbit":
+        body = _rabbit(pose, female, eyes, phase)
+    elif kind == "turtle":
+        body = _turtle(pose, female, eyes)
+    elif kind == "duck":
+        body = _duck(pose, female, eyes)
+    elif kind == "monkey":
+        body = _monkey(pose, female, eyes)
+    elif kind == "hippo":
+        body = _hippo(pose, female, eyes)
+    else:
+        body = _fox(pose, female, eyes)
+    k = _SIZE[kind] * (0.94 if female and kind not in ("duck",) else 1.0)
+    return _upscale(body, k) if abs(k - 1) > 1e-6 else body
+
+
+def ark_animal(x, y, scale=1.0, facing=1, kind="elephant", pose="stand", female=False, eyes="open", phase=0.0):
+    return _place(_ark_animal(kind, pose, female, eyes, phase), x, y, scale, facing)
+
+
+# ---- butterflies and small birds
+BUTTERFLY_COLORS = {"orange": ("#f2a03c", "#7a4a2e"), "blue": ("#79acd9", "#3f5f8a"), "yellow": ("#f5d05c", "#9a7a2e"),
+                    "pink": ("#ee9ab0", "#9a4f68"), "purple": ("#a88ad0", "#5f4a86")}
+
+
+def _butterfly(flap=0.0, color="orange"):
+    c, d = BUTTERFLY_COLORS[color] if color in BUTTERFLY_COLORS else (color, S.shade(color, -0.5))
+    k = 0.18 + 0.82 * abs(math.cos(math.pi * _clamp(flap)))
+    out = ""
+    for sx in (-1, 1):
+        wing = (f"M0,-2 Q{_f(sx * 20)},-40 {_f(sx * 40)},-34 Q{_f(sx * 50)},-20 {_f(sx * 36)},-4 Z "
+                f"M0,0 Q{_f(sx * 30)},4 {_f(sx * 30)},20 Q{_f(sx * 22)},34 {_f(sx * 6)},20 Z")
+        g = _p(wing, c, 2.8) + _circ(sx * 28, -24, 5, CREAM, 0) + _circ(sx * 18, 14, 4, CREAM, 0)
+        g += _p(f"M{_f(sx * 40)},-34 Q{_f(sx * 50)},-20 {_f(sx * 36)},-4", sw=5, stroke=d)
+        out += _g(g, f"scale({k:.3f},1)")
+    out += _ell(0, 2, 4.5, 16, P["ink"], 0)
+    out += _p("M-1,-12 Q-6,-26 -12,-30 M1,-12 Q6,-26 12,-30", sw=2)
+    out += _circ(-12, -30, 2.4, INK, 0) + _circ(12, -30, 2.4, INK, 0)
+    return out
+
+
+def butterfly(x, y, scale=1.0, flap=0.0, color="orange", rot=0.0):
+    return _place(_butterfly(flap, color), x, y, scale, 1, rot)
+
+
+SONGBIRD_COLORS = {"blue": ("#5f92d6", "#f2a35a"), "red": ("#d9574a", "#f0b07a"), "yellow": ("#f2cf4e", "#f7e7a8"),
+                   "brown": ("#a87a54", "#ead6b8"), "green": ("#7fb55a", "#f0e2a0")}
+
+
+def _songbird(wing=0.0, pose="fly", color="blue", female=False):
+    back, breast = SONGBIRD_COLORS[color] if color in SONGBIRD_COLORS else (color, S.shade(color, 0.5))
+    if female:
+        back, breast = S.mix(back, "#b8ab9c", 0.45), S.mix(breast, "#e8ddd0", 0.45)
+    out = ""
+    if pose == "perch":
+        for lx in (-4, 6):
+            out += _line(lx, 14, lx + 1, 30, sw=5, color=INK) + _line(lx, 14, lx + 1, 30, sw=2, color="#e8a070")
+    sh = (-4, -8)
+    if pose == "fly":
+        ang, lf, br, arch = _flap(wing)
+        out += _wing((sh[0] + 6, sh[1] - 3), ang - 16, 52 * lf * 0.8, S.shade(back, -0.18), None, True, 20, max(0.32, br * 0.9), arch, "sf")
+    out += _p("M-22,-2 L-46,-10 L-44,6 Z", back, 3)
+    out += _p(S.blob(0, 0, 24, 18, 0.03, 9, seed=1), back, 3.4)
+    out += _clip(_uid("sbb", color, female), S.blob(0, 0, 24, 18, 0.03, 9, seed=1), _ell(10, 8, 18, 14, breast, 0))
+    out += _p(S.blob(0, 0, 24, 18, 0.03, 9, seed=1), sw=3.4)
+    out += _circ(20, -14, 13, back, 3.4)
+    out += _clip(_uid("sbh", color, female), "M7,-14 A13,13 0 1 0 33,-14 A13,13 0 1 0 7,-14 Z", _ell(26, -6, 9, 8, breast, 0))
+    out += _circ(20, -14, 13, "none", 3.4)
+    out += _p("M31,-17 L42,-13 L31,-9 Z", "#e8b04a", 2.4)
+    out += _dot_eye(24, -17, 3) + _blush(24, -8, 4, 2.6)
+    if pose == "fly":
+        out += _wing(sh, ang, 58 * lf, back, None, True, 22, br, arch, "sn")
+    else:
+        out += _p("M-14,-6 Q2,-12 14,-2 Q4,8 -14,4 Z", S.shade(back, -0.1), 3)
+    return out
+
+
+def songbird(x, y, scale=1.0, facing=1, wing=0.0, pose="fly", color="blue", female=False):
+    return _place(_songbird(wing, pose, color, female), x, y, scale, facing)
+
+
+# ---- pairs
+_PAIR_DX = {"elephant": 150, "giraffe": 110, "zebra": 110, "horse": 120, "deer": 110, "rabbit": 50, "turtle": 70,
+            "duck": 50, "monkey": 50, "hippo": 140, "fox": 80, "lion": 150, "bear": 140, "sheep": 90, "cow": 120,
+            "goat": 90, "donkey": 110, "camel": 140, "dove": 70, "songbird": 50}
+# where the ribbon bow goes on the existing library animals (local, scale 1, facing right)
+_OLD_BOW = {"sheep": (70, -132), "cow": (124, -188), "goat": (94, -198), "donkey": (116, -236), "camel": (214, -354),
+            "bear": (160, -214), "lion": (128, -300)}
+PAIR_KINDS = ARK_ANIMALS + ("lion", "bear", "sheep", "cow", "goat", "donkey", "camel", "dove", "songbird")
+_OTHER_WALK = {"walk_a": "walk_b", "walk_b": "walk_a"}
+
+
+def _one(kind, x, y, scale, facing, pose, female, eyes, phase):
+    if kind in ARK_ANIMALS:
+        p_ = pose if pose in ARK_ANIMAL_POSES[kind] else ("stand" if pose != "hop" else "stand")
+        return ark_animal(x, y, scale, facing, kind, p_, female, eyes, phase)
+    bow = ""
+    if female and kind in _OLD_BOW:
+        bx, by = _OLD_BOW[kind]
+        if kind in ("lion", "bear") and pose in ("walk_a", "walk_b"):
+            by += 6
+        bow = _place(_bow(bx, by, 1.0), x, y, scale * (0.8 if kind == "lion" else 1.0), facing)
+    if kind == "lion":
+        p_ = pose if pose in LION_POSES else "stand"
+        k = 0.8
+        return lion(x, y, scale * k, facing, pose=p_, variant=1 if female else 0, eyes=eyes if eyes != "happy" else "happy") + bow
+    if kind == "bear":
+        p_ = pose if pose in BEAR_POSES else "stand"
+        return bear(x, y, scale, facing, pose=p_) + bow
+    if kind == "sheep":
+        p_ = pose if pose in SHEEP_POSES else "stand"
+        return sheep(x, y, scale, facing, variant=3 if female else 0, pose=p_) + bow
+    if kind in ("cow", "goat", "donkey", "camel"):
+        return animal(x, y, scale, facing, kind=kind) + bow
+    if kind == "dove":
+        return dove(x, y, scale, facing, wing=(phase * 2 - 1) if pose != "stand" else 0.0, pose="stand" if pose == "stand" else "fly")
+    if kind == "songbird":
+        return songbird(x, y, scale, facing, wing=(phase * 2 - 1), pose="perch" if pose == "stand" else "fly",
+                        color="blue", female=female)
+    raise ValueError(f"animal_pair: unknown kind {kind!r}; choose from {PAIR_KINDS}")
+
+
+def animal_pair(kind, x, y, scale=1.0, facing=1, pose="stand", phase=0.0, eyes="open", gap=None):
+    """Two of a kind (he and she) side by side for the 'two by two' queue (see module doc)."""
+    if kind not in PAIR_KINDS:
+        raise ValueError(f"animal_pair: unknown kind {kind!r}; choose from {PAIR_KINDS}")
+    sx = 1 if facing >= 0 else -1
+    dx = (_PAIR_DX[kind] if gap is None else gap) * scale
+    dy = (-18 if kind not in ("dove", "songbird") else -40) * scale
+    fpose = _OTHER_WALK.get(pose, pose)
+    fphase = (phase + 0.5) % 1.0
+    if kind in ("dove", "songbird") and pose != "stand":
+        fphase = (phase + 0.35) % 1.0
+    back = _one(kind, x + sx * dx, y + dy, scale * 0.96, facing, fpose, True, eyes, fphase)
+    front = _one(kind, x, y, scale, facing, pose, False, eyes, phase)
+    return back + front

@@ -1,7 +1,8 @@
 """People library: Jonah, sailors, the ship's captain, the king of Nineveh and townspeople; for the Daniel film
 (stories/daniel) also Daniel, King Darius (king(attire='darius')), the jealous officials and the palace guards; for
 the David film (stories/david) David, Goliath, his shield-bearer, Israelite / Philistine soldiers, King Saul
-(king(attire='saul')), Eliab and Jesse (section DAVID FILM at the end of this docstring).
+(king(attire='saul')), Eliab and Jesse (section DAVID FILM); for the Noah film (stories/noah) Noah, his wife, Shem,
+Ham, Japheth, their wives, noah_family() and a modern child in a raincoat (section NOAH FILM at the end).
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -454,6 +455,116 @@ Constants (David film): DAVID_POSES, GOLIATH_POSES, SOLDIER_POSES, SOLDIER_SIDES
 KING_EXTRA_POSES, ELIAB_POSES, JESSE_POSES, DAVID_EXPRESSIONS, ALL_EXPRESSIONS, GOLIATH_SPEAR_LEN; colours
 DAVID_TUNIC, DAVID_SKIN, DAVID_HAIR, GOLIATH_SKIN, GOLIATH_TUNIC, SAUL_TUNIC, SAUL_HAIR, BRONZE (+ _DARK / _LIGHT),
 LEATHER, CORD, MAIL. God is never drawn: show him as light (art.style / engine.fx), never as a figure.
+
+NOAH FILM (Genesis 6-9, stories/noah)                       sheets: python3 tools/character_sheet.py noah
+=====================================
+Same rig and conventions as above (anchor = ground under the pelvis, between the feet; facing; scale; marks; bboxes
+(l, t, r, b) at scale 1 / facing 1 measured from renders, wobble included). hand_positions / body_points work for
+every function here (for child(pose='jump') subtract CHILD_JUMP*scale from their y).
+SCALE: at the same ``scale`` Noah is ~333 px tall (head centre (2, -282)), his wife ~314, the sons 339-349, the
+daughters-in-law 311-321, the child ~223 (head centre (2, -179)). Put them all on one ground line with one scale.
+New expressions (NOAH_EXPRESSIONS; every function accepts them): determined (lowered brows, firm closed smile),
+amazed (big shining eyes, raised brows, open delighted 'oh!' mouth). Also useful: kind, happy, puzzled, worried,
+peaceful, surprised, laugh (DAVID_EXPRESSIONS / EXPRESSIONS).
+
+noah(x, y, scale=1.0, facing=1, pose='stand', expr=None, phase=0.0, item='sack', dove=False, sawhorse=True,
+     marks=True)
+----------------------------------------------------------------------------------------------------------
+Noah: a kind, sturdy, lively grandfather - long wavy white beard (beard kind 'long', moustache curling up into a
+smile), bushy grey brows, smile wrinkles at the eyes, a grey tuft at the temple, a pale sage-cream head-cloth
+(NOAH_CLOTH) with a green band (NOAH_BAND) and a flap down the back, a warm brown robe (NOAH_ROBE) with an ochre
+hem band and cuffs (NOAH_TRIM), a rope belt, sandals. Never orange / teal (Jonah) or blue (Daniel).
+  pose          bbox (l, t, r, b)        natural expr  notes (hands [far, near] at scale 1)
+  stand         (-69, -333, 60, 0)       kind          hands (47, -122), (-37, -121)
+  walk_a/walk_b (-90, -332, 84, 1) / (-69, -335, 105, 0)   happy   planted-foot stride frames; walk_c
+  walk_c        (-67, -337, 59, 0)       happy         the passing frame (feet together): cycle a, c, b, c every
+                                                       ~0.2 s while moving x (or a/b only, as the other films)
+  talk          (-69, -334, 65, 0)       happy         near hand open, palm up (48, -171)
+  pray          (-67, -334, 57, 0)       peaceful      standing, palms together (48, -204), face lifted
+  kneel_pray    (-91, -290, 52, 5)       peaceful
+  point_up      (-66, -334, 93, 0)       determined    finger up to heaven (81, -305)
+  scratch_head  (-69, -368, 81, 0)       puzzled       hand on top of the head, other fist on the hip, a '?' mark
+                                                       (marks=False hides it): "a boat here, so far from the sea?"
+  nod           (-67, -329, 70, 0)       kind          head bowed 22 deg: alternate with 'stand' (~0.3 s) to nod yes
+  saw           (-57, -300, 377, 6)      determined    leaning over a plank on a low sawhorse in front (the trestle
+                                                       stands at x+236*scale, plank top ~-103); the saw slides along
+                                                       its blade: phase 0 pulled back, .5 pushed forward, 1 back
+                                                       (flipbook 0, .25, .5, .75 at ~0.12 s; sawdust specks when
+                                                       marks). sawhorse=False: only the saw in the hand
+                                                       (-57, -300, 230, 0), for sawing a plank of your own.
+  hammer        phase 0 (-122, -366, 175, 0), .5 (-59, -392, 175, 0), 1 (-59, -332, 192, 0)   determined
+                                                       hammer raised behind the head (0) .. swung down so the head
+                                                       strikes the nail (1); the far hand holds the nail at NOAH_NAIL
+                                                       = (146, -250) (put the hull / plank there); impact ticks at
+                                                       phase >= .85. Flipbook e.g. 0, .35, .7, 1, 1 (hold), .5 ...
+  carry         item='sack' (-129, -333, 61, 0) / 'hay' (-145, ...): a sack / a hay sheaf on the shoulder behind
+                the head, steadied by the near hand; item='basket' (fruit), 'grain', 'veg' (-65, -333, 87, 0) or
+                'jar' (amphora, right 77): held in both hands in front of the chest. CARRY_ITEMS. natural happy
+  carry_walk_a/_b  the same carrying while walking (stride frames, bbox like carry with walk_a / walk_b legs)
+  open_window   (-75, -334, 82, 0)       happy         both arms up, palms out, pushing the shutters open
+  release_dove  (-67, -334, 135, 0)      kind          both arms reaching forward-up, open hands (120, -261),
+                                                       (57, -275); dove=True puts a white dove (wings up) just
+                                                       leaving the hands (top -371). Use props.dove for the flight.
+  hold_leaf     (-67, -380, 81, 0)       amazed        far hand raised (61, -316) holding an olive twig up
+  cheer         (-101, -334, 106, 0)     happy         both arms up
+  wave          (-69, -334, 109, 0)      happy         far hand up, open; phase 0..1 swings the forearm (+-18 deg),
+                                                       wave marks beside the hand (flipbook 0, .25, .5, .75)
+
+noah_wife(...), shem(...), ham(...), japheth(...), daughter_in_law(x, y, scale, facing, variant=0..2, ...)
+--------------------------------------------------------------------------------------------------------
+Same signature and the SAME pose list as noah() (FAMILY_POSES = NOAH_POSES), including saw / hammer / carry
+(item default 'basket' for the women, 'sack' for the men) and the dove / sawhorse options:
+  noah_wife          plum-rose robe, cream veil with a rose edge, golden sash, smile wrinkles (head (2, -265))
+  shem               eldest: blue robe with cream trim, dark curly hair and a full dark beard (head (2, -293))
+  ham                terracotta robe, golden headband, black curly hair, short black beard, deep-brown skin
+                     (head (2, -296), the tallest and broadest son)
+  japheth            youngest: leaf-green robe, ginger curls and stubble, fair skin (head (2, -287))
+  daughter_in_law    0 (Shem's wife) saffron robe, teal veil; 1 (Ham's) lilac robe, coral veil, brown skin;
+                     2 (Japheth's) rose-pink robe, sky-blue veil (heads (2, -268) / (2, -271) / (2, -263))
+  stand bboxes: wife (-52, -314, 53, 0), shem (-53, -345, 61, 0), ham (-64, -349, 64, 0), japheth (-51, -339, 58, 0),
+  daughters-in-law (-54, -321, 54, 0) (union). Other poses: like Noah's, scaled to their height (e.g. saw / hammer
+  extend to x +377 / +175; women's carry with a basket (-48, -317, 87, 0)).
+family_member(name, x, y, scale=1.0, facing=1, **kw): any of FAMILY = ('noah', 'noah_wife', 'shem', 'ham',
+  'japheth', 'daughter_in_law0', 'daughter_in_law1', 'daughter_in_law2') by name.
+
+noah_family(x, y, scale=1.0, facing=1, pose='stand', expr=None, gap=150, items=None, marks=True)
+---------------------------------------------------------------------------------------------
+All eight at once, drawn back to front in one <g>. Anchor x = 85*scale left of Noah's feet (the middle of the group)
+for the portrait; pose (FAMILY_GROUP_POSES) is given to everybody.
+  group portrait  stand / cheer / pray / talk / wave / nod / kneel_pray: front row daughter_in_law0 (-255),
+                  noah_wife (-85), Noah (+85, facing left toward his wife), daughter_in_law2 (+255); back row (36-40 px
+                  higher, 0.97 x) daughter_in_law1 (-340), Shem (-170), Ham (0), Japheth (+170) - every face shows.
+                  Left half faces right, right half faces left (facing=-1 mirrors the whole group).
+                  bbox stand (-392, -378, 306, 4), cheer (-431, -379, 343, 4), kneel_pray (-423, -334, 337, 9).
+  walking line    walk_a / walk_b / carry_walk_a / carry_walk_b: a procession toward `facing`, Noah leading AT x, the
+                  others behind him every gap*scale px (wife, Shem, his wife, Ham, his wife, Japheth, his wife);
+                  neighbours alternate stride frames. carry_*: items (list, cycled) default sack, basket, sack, grain,
+                  hay, veg, sack, jar. bbox (-1109, -351, 105, 1) at gap 150 (mirror for facing=-1). Flip walk_a /
+                  walk_b every ~0.25 s while moving x.
+
+child(x, y, scale=1.0, facing=1, pose='stand', expr=None, hood=False, boots=True, coat=None, phase=0.0, marks=True)
+-----------------------------------------------------------------------------------------------------------------
+A little modern child (5-6 years, the story's listener) for the opening and the ending: a sunny yellow raincoat
+(CHILD_COAT; coat='#7fb6d6' etc. for another colour) with toggle buttons, red rubber boots (CHILD_BOOTS;
+boots=False shows bare legs and sandals), short brown hair; hood=True puts the hood up (otherwise it hangs at the
+back). On the _CHILD rig (citizen(kind='child') size, 223 px). CHILD_POSES:
+  stand        (-42, -223, 43, 4)    happy
+  walk_a/_b    (-57, -224, 57, 1) / (-48, -226, 71, 0)
+  peek_window  (-38, -223, 66, 4)    amazed   standing on tiptoe at a window, both hands on the sill in front at
+                                              (54, -147), (46, -140): put the sill top ~ y-140*scale, nose ~ x+40
+  splash       (-84, -204, 80, 3)    laugh    landing in a puddle: knees bent, arms flung up and out (pair with
+                                              props.puddle(x, y, scale, splash=...))
+  jump         (-65, -260, 60, -44)  laugh    in the air: the soles CHILD_JUMP = 46 px above the anchor's ground
+                                              line (alternate jump / splash for jumping in puddles)
+  point_up     (-54, -222, 60, 3)    amazed   pointing at the rainbow
+  wave         (-45, -223, 55, 4)    happy    far hand up; phase swings it (as Noah's wave)
+  smile_up     (-57, -221, 40, 4)    happy    face lifted, hands clasped at the chest
+  cheer        (-69, -222, 72, 3)    laugh
+  (hood=True adds ~2-3 px at the top.)
+
+Constants (Noah film): NOAH_POSES, FAMILY_POSES, FAMILY_GROUP_POSES, CARRY_ITEMS, FAMILY, CHILD_POSES, CHILD_JUMP,
+NOAH_NAIL, NOAH_EXPRESSIONS; colours NOAH_ROBE, NOAH_TRIM, NOAH_CLOTH, NOAH_BAND, NOAH_SKIN, NOAH_BEARD, CHILD_COAT,
+CHILD_BOOTS. God is never drawn as a person (golden light only, see ART_GUIDE.md).
 """
 import hashlib
 import math
@@ -891,7 +1002,7 @@ def _hair_cap(R, col, style="short", front=-28, back=165, line=-0.42):
     return f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
 
 
-_MOUSTACHED = ("full", "white", "captain", "assyrian", "assyrian_short", "trim", "pointed")
+_MOUSTACHED = ("full", "white", "captain", "assyrian", "assyrian_short", "trim", "pointed", "long")
 
 
 def _beard(R, col, kind):
@@ -948,6 +1059,18 @@ def _beard(R, col, kind):
             s += _line(f"M{fmt((x0 - w0 / 2) * R)},{fmt(y0 * R)} q{fmt(w0 / 4 * R)},{fmt(0.06 * R)} {fmt(w0 / 2 * R)},0 "
                        f"t{fmt(w0 / 2 * R)},0", w=2.4, col=grey)
         return s
+    if kind == "long":         # Noah film: a long, wavy grandfather's beard flowing down onto the chest
+        pts = [(-0.86 * R, -0.02 * R), (-0.97 * R, 0.62 * R), (-0.86 * R, 1.22 * R), (-0.58 * R, 1.72 * R),
+               (-0.30 * R, 1.98 * R), (-0.04 * R, 2.16 * R), (0.10 * R, 2.02 * R), (0.32 * R, 2.08 * R),
+               (0.52 * R, 1.80 * R), (0.80 * R, 1.30 * R), (0.95 * R, 0.56 * R), (0.70 * R, 0.66 * R),
+               (0.20 * R, 0.86 * R), (-0.30 * R, 0.74 * R), (-0.62 * R, 0.25 * R)]
+        s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+        dark = shade(col, -0.2)
+        for x0, y0, x1, y1 in ((-0.55, 0.95, -0.38, 1.62), (-0.10, 1.05, -0.04, 1.86), (0.38, 1.02, 0.30, 1.70),
+                               (-0.76, 0.55, -0.70, 1.10)):
+            s += _line(f"M{fmt(x0 * R)},{fmt(y0 * R)} Q{fmt((x0 + 0.12) * R)},{fmt((y0 + y1) / 2 * R)} "
+                       f"{fmt(x1 * R)},{fmt(y1 * R)}", w=2.2, col=dark)
+        return s
     if kind == "pointed":      # an official: neat beard ending in a soft point, a curl row across it
         pts = [(-0.86 * R, 0.0), (-0.88 * R, 0.55 * R), (-0.50 * R, 1.10 * R), (0.08 * R, 1.62 * R),
                (0.52 * R, 1.16 * R), (0.90 * R, 0.55 * R), (0.70 * R, 0.66 * R), (0.20 * R, 0.84 * R),
@@ -969,6 +1092,12 @@ def _moustache(R, col, kind):
     if kind not in _MOUSTACHED:
         return ""
     mx, my = 0.18 * R, 0.45 * R
+    if kind == "long":         # Noah: a full moustache whose ends curl up a little (a smiling grandfather)
+        w = 0.30 * R
+        return (f'<path d="M{fmt(mx - w)},{fmt(my - 0.02 * R)} Q{fmt(mx - 0.20 * R)},{fmt(my - 0.10 * R)} '
+                f'{fmt(mx)},{fmt(my - 0.03 * R)} Q{fmt(mx + 0.20 * R)},{fmt(my - 0.12 * R)} {fmt(mx + w)},{fmt(my - 0.05 * R)} '
+                f'Q{fmt(mx + 0.22 * R)},{fmt(my + 0.11 * R)} {fmt(mx)},{fmt(my + 0.10 * R)} '
+                f'Q{fmt(mx - 0.22 * R)},{fmt(my + 0.12 * R)} {fmt(mx - w)},{fmt(my - 0.02 * R)} Z" fill="{col}" {_st(2.4)}/>')
     w = 0.22 * R
     return (f'<path d="M{fmt(mx - w)},{fmt(my + 0.08 * R)} Q{fmt(mx - 0.13 * R)},{fmt(my - 0.05 * R)} '
             f'{fmt(mx)},{fmt(my)} Q{fmt(mx + 0.13 * R)},{fmt(my - 0.05 * R)} {fmt(mx + w)},{fmt(my + 0.08 * R)} '
@@ -2126,7 +2255,8 @@ def _head_svg(D, st, ps, expr, marks=True):
     if D.get("ponytail"):
         s += _tube([(-0.60 * R, -0.55 * R), (-1.0 * R, -0.28 * R)], 0.16 * R, D.get("ribbon", P["terracotta"]),
                    ow=2.4)
-    face, over = _face(R, skin, expr, ps["look"], mouth=not moustache, tremble=marks, brow_w=D.get("brow_w", 3.4))
+    face, over = _face(R, skin, expr, ps["look"], mouth=not moustache, tremble=marks, brow_w=D.get("brow_w", 3.4),
+                       brow_col=D.get("brow_col", INK))
     s += face
     mouth_kind = EXPRS[expr]["mouth"]
     if beard:
@@ -2890,6 +3020,10 @@ def _mouth_extra(R, kind, P_, mx, my):
     if kind == "pout":              # cross frown with a pushed-out lower lip
         return (_line(f"M{P_(-0.12, 0.07)} Q{P_(0, -0.04)} {P_(0.12, 0.07)}", w=3.4) +
                 _line(f"M{P_(-0.05, 0.13)} Q{P_(0, 0.15)} {P_(0.05, 0.13)}", w=2.2, col=P["ink_soft"]))
+    if kind == "awe":               # Noah film: open, delighted 'oh!' smile
+        d = (f"M{P_(-0.13, 0.0)} Q{P_(0, 0.03)} {P_(0.13, 0.0)} Q{P_(0.12, 0.26)} {P_(0, 0.27)} "
+             f"Q{P_(-0.12, 0.26)} {P_(-0.13, 0.0)} Z")
+        return f'<path d="{d}" fill="{MI}" {_st(2.8)}/>' + _ell(mx, my + 0.19 * R, 0.07 * R, 0.045 * R, TONGUE)
     if kind == "sneer":             # lopsided grin showing teeth (cartoon-smug, not scary)
         d = (f"M{P_(-0.15, 0.03)} Q{P_(0.03, 0.08)} {P_(0.19, -0.07)} Q{P_(0.14, 0.13)} {P_(0.0, 0.14)} "
              f"Q{P_(-0.12, 0.12)} {P_(-0.15, 0.03)} Z")
@@ -3865,3 +3999,486 @@ def jesse(x, y, scale=1.0, facing=1, pose="stand", expr=None, marks=True):
     e = expr or ps["expr"]
     inner, _ = _figure(_jesse_design(pose), _JESSE_M, ps, e, _fsign(facing), marks)
     return _wrap_out(inner, x, y, scale, facing, f"jesse-{pose}")
+
+
+# ======================================================================= Noah film (Genesis 6-9)
+# Noah, his wife, Shem, Ham, Japheth and their wives, noah_family(), and a modern child in a raincoat
+# (module doc section "NOAH FILM").
+
+EXPRS.update({
+    "determined": dict(eyes="dot", brow=(0.08, -0.04, 0.02), mouth="firm"),
+    "amazed":     dict(eyes="big", brow=(-0.05, -0.04, -0.15), mouth="awe"),
+})
+NOAH_EXPRESSIONS = ("determined", "amazed")
+
+NOAH_ROBE = "#8c5b3e"
+NOAH_TRIM = "#d6a447"
+NOAH_CLOTH = "#e6e3c6"
+NOAH_BAND = "#6f9068"
+NOAH_SKIN = "#e8b08a"
+NOAH_BEARD = "#eeeae2"
+CHILD_COAT = "#f2c43c"
+CHILD_BOOTS = "#d4523f"
+
+NOAH_POSES = ("stand", "walk_a", "walk_b", "walk_c", "talk", "pray", "kneel_pray", "point_up", "scratch_head", "nod",
+              "saw", "hammer", "carry", "carry_walk_a", "carry_walk_b", "open_window", "release_dove", "hold_leaf",
+              "cheer", "wave")
+FAMILY_POSES = NOAH_POSES
+CARRY_ITEMS = ("sack", "hay", "basket", "grain", "veg", "jar")
+
+_NH_POSES = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3)), expr="kind"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -40, -30), ("fk", 26, 42)), expr="happy"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 44), ("fk", -24, -14)), expr="happy"),
+    "walk_c": _P(t=3, legs=((5, 1), (-8, -16)), arms=(("fk", 4, 8), ("fk", 2, 8)), expr="happy"),
+    "talk": _P(h=-2, arms=(("fk", 12, 6), ("fk", 30, 82)), hands=("fist", "open"), expr="happy"),
+    "pray": _P(h=-14, arms=(("ik", "torso", 1.55, 0.66, 1), ("ik", "torso", 1.55, 0.66, 1)), hands=("none", "pray"),
+               expr="peaceful", look=(0.02, -0.05)),
+    "kneel_pray": dict(POSES["kneel_pray"]),
+    "point_up": _P(h=-16, legs=((5, 2), (-5, -2)), arms=(("fk", 132, 162), ("fk", -10, -4)), hands=("point", "fist"),
+                   look=(0.03, -0.10), expr="determined"),
+    "scratch_head": _P(h=10, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", -1.15, 0.05, -1), ("ik", "head", -0.92, -0.52, -1)),
+                       hands=("fist", "fist"), expr="puzzled"),
+    "nod": _P(h=22, arms=(("fk", 14, 8), ("fk", -8, -3)), expr="kind"),
+    "open_window": _P(h=-18, arms=(("fk", 146, 164), ("fk", -150, -172)), hands=("palm", "palm"), expr="happy",
+                      look=(0.02, -0.06)),
+    "release_dove": _P(h=-12, arms=(("fk", 104, 122), ("fk", 112, 132)), hands=("open", "open"), expr="kind",
+                       look=(0.03, -0.06)),
+    "hold_leaf": _P(h=-12, legs=((6, 2), (-5, -2)), arms=(("fk", 150, 170), ("fk", 22, 48)), hands=("fist", "open"),
+                    expr="amazed", look=(0.03, -0.08)),
+    "cheer": dict(POSES["cheer"]),
+}
+_NH_NATURAL = {"kneel_pray": "peaceful", "cheer": "happy", "saw": "determined", "hammer": "determined",
+               "carry": "happy", "carry_walk_a": "happy", "carry_walk_b": "happy", "wave": "happy"}
+
+
+def _nh_saw_pose(phase):
+    """Leaning over a plank on a sawhorse in front; the saw slides along its blade (phase 0 back, .5 forward)."""
+    st_ = -22 * math.cos(2 * math.pi * phase)
+    hx, hy = _NH_SAW_HAND[0] + _NH_SAW_DIR[0] * st_, _NH_SAW_HAND[1] + _NH_SAW_DIR[1] * st_
+    return _P(t=24, h=10, drop=16, legs=(("ik", 30, 1), ("ik", -34, 1)), reach=1.1,
+              arms=(("ik", "abs", 112, -122, 1), ("ik", "abs", hx, hy, 1)), hands=("open", "none"),
+              look=(0.04, 0.08), expr="determined")
+
+
+_NH_SAW_DIR = (0.866, 0.5)          # the saw blade slants 30 deg down toward facing
+_NH_SAW_HAND = (134, -147)          # grip at mid-stroke (anchor coords, y up negative)
+_NH_TRESTLE = (236, 0.72)           # sawhorse x and scale (its plank top ends up at y ~ -103)
+
+
+_NH_SHOULDER = (14, -266)
+NOAH_NAIL = (146, -250)              # hammer pose: where the nail head is (anchor coords at scale 1, facing 1)
+_NH_HAMMER_ANG = (-168.0, -62.0)     # handle direction (screen degrees) raised .. at the strike
+
+
+def _nh_hammer_ease(p):
+    return _clamp01(p) ** 1.6
+
+
+def _nh_hammer_arm(phase):
+    p = _nh_hammer_ease(phase)
+    a = math.radians(_NH_HAMMER_ANG[1])
+    hd = (math.cos(a), math.sin(a))
+    face = (-hd[1], hd[0])                        # the head's front end (local +y) points along this
+    strike = (NOAH_NAIL[0] - 91 * hd[0] - 26 * face[0], NOAH_NAIL[1] - 91 * hd[1] - 26 * face[1])
+    raised = (_NH_SHOULDER[0] - 24, _NH_SHOULDER[1] - 92)
+    v0, v1 = _sub(raised, _NH_SHOULDER), _sub(strike, _NH_SHOULDER)
+    a0, a1 = math.atan2(v0[1], v0[0]), math.atan2(v1[1], v1[0])
+    r0, r1 = _len(v0), _len(v1)
+    aa, rr = a0 + (a1 - a0) * p, r0 + (r1 - r0) * p
+    return _NH_SHOULDER[0] + rr * math.cos(aa), _NH_SHOULDER[1] + rr * math.sin(aa)
+
+
+def _clamp01(v):
+    return max(0.0, min(1.0, float(v)))
+
+
+def _nh_hammer_pose(phase):
+    hx, hy = _nh_hammer_arm(phase)
+    return _P(t=6, h=-2, legs=(("ik", 30, 1), ("ik", -26, 1)),
+              arms=(("ik", "abs", NOAH_NAIL[0] + 18, NOAH_NAIL[1] + 8, 1), ("ik", "abs", hx, hy, -1)), hands=("fist", "none"),
+              expr="determined", look=(0.04, 0.02))
+
+
+def _nh_carry_pose(item, walk=None):
+    legs = {None: ((3, 1), (-3, -1)), "a": ((24, 8), (-20, -34)), "b": ((-20, -34), (24, 8))}[walk]
+    t = 4 if walk else 2
+    if item in ("sack", "hay"):           # on the shoulder, steadied by the near hand behind the head
+        swing = {None: ("fk", 12, 8), "a": ("fk", -30, -20), "b": ("fk", 26, 40)}[walk]
+        return _P(t=t, legs=legs, arms=(swing, ("ik", "headw", -1.25, 0.25, -1)), hands=("fist", "fist"),
+                  expr="happy")
+    return _P(t=t, legs=legs, arms=(("ik", "body", 58, -58, 1), ("ik", "body", 30, -54, 1)), hands=("none", "none"),
+              expr="happy")
+
+
+def _nh_items(D, pose, phase, item, dove, sawhorse, marks):
+    """Hooks (behind, mid, front) for held things."""
+    PR = _prp()
+    skin = D["skin"]
+    behind = mid = front = None
+    if pose in ("carry", "carry_walk_a", "carry_walk_b"):
+        if item in ("sack", "hay"):
+            def mid(st):
+                c = (st["Hc"][0] - 1.15 * st["m"]["R"], st["Hc"][1] + 0.70 * st["m"]["R"])
+                if item == "sack":
+                    body = f'<g transform="translate({fmt(c[0] + 6)},{fmt(c[1] + 50)}) rotate(-62) scale(0.8)">{PR._sack(1.0, None, 3)}</g>'
+                else:
+                    body = f'<g transform="translate({fmt(c[0] - 4)},{fmt(c[1] + 36)}) rotate(-34) scale(1.05)">{PR._hay("bundle")}</g>'
+                return body
+        else:
+            def front(st):
+                W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+                cx = (W0[0] + W1[0]) / 2
+                if item == "jar":
+                    y = (W0[1] + W1[1]) / 2 + 6
+                    s_ = f'<g transform="translate({fmt(cx)},{fmt(y)}) scale(0.62)">{PR._amphora()}</g>'
+                else:
+                    k = 0.62
+                    kind = {"basket": "fruit", "grain": "grain", "veg": "veg"}[item]
+                    y = max(W0[1], W1[1]) + 50 * k
+                    s_ = f'<g transform="translate({fmt(cx)},{fmt(y)}) scale({k})">{PR._food_basket(kind)}</g>'
+                return s_ + _fist(W0, hr, skin, 0, 2) + _fist(W1, hr, skin, 0, 2)
+    elif pose == "saw":
+        def front(st):
+            G = st["ground"]
+            W = st["arms"][1][2]
+            hr = st["m"]["hr"]
+            s_ = ""
+            blade = f'<g transform="translate({fmt(W[0])},{fmt(W[1])}) rotate(30) scale(0.85)">{PR._saw_shape()}</g>'
+            tx, tk = _NH_TRESTLE
+            ptop = 131 * tk + 13 * tk
+            cut = (_NH_SAW_HAND[0] + _NH_SAW_DIR[0] * (-_NH_SAW_HAND[1] - ptop) / _NH_SAW_DIR[1], G - ptop)
+            if sawhorse:
+                horse = f'<g transform="translate({tx},{fmt(G)}) scale({tk})">{PR._sawhorse(False)}</g>'
+                s_ += horse + blade
+                # the plank's front face covers the blade where it is in the cut
+                s_ += (f'<g transform="translate({fmt(tx + 30 * tk)},{fmt(G - 131 * tk)}) scale({tk})">'
+                       f'{PR._plank_shape(330, 26, PR.TIMBER_LIGHT, 3)}</g>')
+                if marks:
+                    for k, (dx, dy) in enumerate(((-8, 26), (6, 40), (-16, 52), (10, 64))):
+                        s_ += f'<circle cx="{fmt(cut[0] + dx)}" cy="{fmt(cut[1] + dy)}" r="{2.6 + (k % 2)}" fill="#e8c890"/>'
+            else:
+                s_ += blade
+            s_ += _fist(W, hr, skin, 2, 0)
+            return s_
+    elif pose == "hammer":
+        def front(st):
+            W = st["arms"][1][2]
+            hr = st["m"]["hr"]
+            ang = _NH_HAMMER_ANG[0] + (_NH_HAMMER_ANG[1] - _NH_HAMMER_ANG[0]) * _nh_hammer_ease(phase)
+            s_ = f'<g transform="translate({fmt(W[0])},{fmt(W[1])}) rotate({fmt(ang)})">{_prp()._hammer_shape()}</g>'
+            s_ += _fist(W, hr, skin)
+            G = st["ground"]
+            nail = (NOAH_NAIL[0], G + NOAH_NAIL[1])
+            s_ += (f'<path d="M{fmt(nail[0])},{fmt(nail[1])} L{fmt(nail[0] + 26)},{fmt(nail[1])}" {_st(6.5)}/>'
+                   f'<path d="M{fmt(nail[0])},{fmt(nail[1])} L{fmt(nail[0] + 26)},{fmt(nail[1])}" {_st(3, "#9a9e9c")}/>')
+            if marks and phase >= 0.85:
+                hp = nail
+                for a in (-50, -10, 30, 70):
+                    v = _rot((1, 0), a)
+                    s_ += _line(f"M{_pt(_add(hp, _mul(v, 30)))} L{_pt(_add(hp, _mul(v, 46)))}", w=3.2, col=MARK)
+            return s_
+    elif pose == "release_dove" and dove:
+        def front(st):
+            W0, W1 = st["arms"][0][2], st["arms"][1][2]
+            c = ((W0[0] + W1[0]) / 2 + 18, min(W0[1], W1[1]) - 34)
+            return f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate(-16) scale(0.62)">{PR._bird("dove", 0.9, "fly")}</g>'
+    elif pose == "hold_leaf":
+        def front(st):
+            W, hr = st["arms"][0][2], st["m"]["hr"]
+            return (f'<g transform="translate({fmt(W[0] + 2)},{fmt(W[1] + 4)}) rotate(-78) scale(0.62)">'
+                    f'{PR._olive_sprig(3, False, 80)}</g>' + _fist(W, hr, skin))
+    elif pose == "scratch_head" and marks:
+        def front(st):
+            Hc, R = st["Hc"], st["m"]["R"]
+            x0, y0 = Hc[0] + 1.25 * R, Hc[1] - 1.45 * R
+            return (_line(f"M{fmt(x0 - 9)},{fmt(y0 - 6)} Q{fmt(x0 - 6)},{fmt(y0 - 22)} {fmt(x0 + 8)},{fmt(y0 - 20)} "
+                          f"Q{fmt(x0 + 20)},{fmt(y0 - 14)} {fmt(x0 + 10)},{fmt(y0 - 2)} Q{fmt(x0 + 1)},{fmt(y0 + 6)} {fmt(x0 + 1)},{fmt(y0 + 14)}",
+                          w=4.2, col=MARK) + f'<circle cx="{fmt(x0 + 1)}" cy="{fmt(y0 + 26)}" r="3.4" fill="{MARK}"/>')
+    elif pose == "wave" and marks:
+        def front(st):
+            W = st["arms"][0][2]
+            s_ = ""
+            for k in (0, 1):
+                r = 26 + 14 * k
+                s_ += _line(f"M{fmt(W[0] + r)},{fmt(W[1] - r * 0.6)} Q{fmt(W[0] + r * 1.15)},{fmt(W[1])} {fmt(W[0] + r)},{fmt(W[1] + r * 0.6)}",
+                            w=2.8, col=MARK)
+            return s_
+    return behind, mid, front
+
+
+def _nh_pose(pose, phase=0.0, item="sack"):
+    if pose == "saw":
+        return _nh_saw_pose(phase)
+    if pose == "hammer":
+        return _nh_hammer_pose(phase)
+    if pose == "carry":
+        return _nh_carry_pose(item)
+    if pose in ("carry_walk_a", "carry_walk_b"):
+        return _nh_carry_pose(item, pose[-1])
+    if pose == "wave":
+        f = 168 + 18 * math.sin(2 * math.pi * phase)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"),
+                  expr="happy")
+    return dict(_NH_POSES[pose])
+
+
+# ---------------------------------------------------------------- designs
+def _aged(R, skin, hair=None):
+    """Grandparent touches in the head frame: smile wrinkles at the eye corners, a soft forehead line and, with
+    hair, a grey tuft at the temple joining the beard."""
+    lc = shade(skin, -0.32)
+    s = ""
+    if hair:
+        s += f'<path d="{smooth_path([(-0.78 * R, -0.30 * R), (-0.56 * R, -0.24 * R), (-0.50 * R, 0.05 * R), (-0.62 * R, 0.30 * R), (-0.86 * R, 0.22 * R)])}" fill="{hair}" {_st(2.6)}/>'
+    for dy in (-0.04, 0.07):
+        s += _line(f"M{fmt(-0.30 * R)},{fmt((0.02 + dy) * R)} l{fmt(-0.12 * R)},{fmt(dy * 0.8 * R)}", w=2.0, col=lc)
+    s += _line(f"M{fmt(0.62 * R)},{fmt(0.04 * R)} l{fmt(0.12 * R)},{fmt(-0.03 * R)}", w=2.0, col=lc)
+    s += _line(f"M{fmt(-0.05 * R)},{fmt(-0.40 * R)} Q{fmt(0.22 * R)},{fmt(-0.45 * R)} {fmt(0.50 * R)},{fmt(-0.40 * R)}",
+               w=2.0, col=lc, extra='opacity="0.8"')
+    return s
+
+
+def _noah_hat(R):
+    return _aged(R, NOAH_SKIN, "#e7e1d8") + _cloth_cap(R, NOAH_CLOTH, edge=NOAH_BAND)
+
+
+def _wife_hat(R):
+    F = _FAMILY["wife"]
+    return _aged(R, F["skin"]) + _cloth_cap(R, F["veil"], edge=F["veil_edge"])
+
+
+_FAMILY = {
+    "noah": dict(robe=NOAH_ROBE, trim=NOAH_TRIM, skin=NOAH_SKIN, hair="#e4ddd0", beard=("long", NOAH_BEARD),
+                 hat=("custom", _noah_hat), tail=(NOAH_CLOTH, None), belt="#d9b77a",
+                 m=_metrics(_ADULT, 1.0, 1.1), brow_w=5.0, brow_col="#9a9088"),
+    "wife": dict(robe="#98587a", trim="#e8c8a0", skin="#e6ad88", hair="#d9d2c8", veil="#efe2cc", veil_edge="#c98a9a",
+                 sash="#e0b25a", m=_metrics(_ADULT, 0.94, 0.96)),
+    "shem": dict(robe="#4d6e9c", trim="#e9dcc0", skin="#dfa47c", hair="#4a2f1f", hair_style="curly",
+                 beard=("full", "#4a2f1f"), belt="#e9dcc0", m=_metrics(_ADULT, 1.04, 1.04)),
+    "ham": dict(robe="#b5553a", trim="#e0b25a", skin="#9a6342", hair="#2a201b", hair_style="curly",
+                beard=("short", "#2a201b"), hat=("headband", "#e0b25a"), belt="#e0b25a", m=_metrics(_ADULT, 1.05, 1.1)),
+    "japheth": dict(robe="#6e9a4c", trim="#ead9a8", skin="#f0c49e", hair="#b0602e", hair_style="curly",
+                    beard=("stubble", "#b0602e"), belt="#c9a46a", m=_metrics(_ADULT, 1.02, 0.98)),
+    "dil0": dict(robe="#e0a33c", trim="#8a5a3c", skin="#e2a77e", hair="#4a2f1f", veil="#3f8f8a", veil_edge="#2f6f6a",
+                 sash="#3f8f8a", m=_metrics(_ADULT, 0.95, 0.92)),
+    "dil1": dict(robe="#a88cc8", trim="#f0e3cf", skin="#b07850", hair="#2a201b", veil="#e07a5f", veil_edge="#b85a44",
+                 sash="#e07a5f", m=_metrics(_ADULT, 0.96, 0.95)),
+    "dil2": dict(robe="#e39aa6", trim="#f6ecd8", skin="#f0c09a", hair="#8a4a2a", veil="#7fb6d6", veil_edge="#5a90b4",
+                 sash="#7fb6d6", m=_metrics(_ADULT, 0.93, 0.9)),
+}
+
+
+def _family_design(who):
+    F = _FAMILY[who]
+    robe = F["robe"]
+    D = dict(robe=robe, sleeve=robe, hem_col=F["trim"], cuff=F["trim"], skin=F["skin"], leg=F["skin"], hem=0.92,
+             hem_w=11, hair=F["hair"], hair_style=F.get("hair_style", "short"))
+    if "veil" in F:
+        D.update(hat=("veil", F["veil"], F["veil_edge"]), veil=F["veil"], ears=False, sash=F["sash"], sash_tail=True,
+                 hem_col=shade(robe, -0.2), cuff=shade(robe, -0.2))
+    else:
+        D.update(rope_belt=F["belt"], beard=F["beard"], neck_v=F["trim"])
+        if F.get("hat"):
+            D["hat"] = F["hat"]
+        if F.get("tail"):
+            D.update(tail=F["tail"], ears=False)
+    if F.get("brow_w"):
+        D["brow_w"] = F["brow_w"]
+    if F.get("brow_col"):
+        D["brow_col"] = F["brow_col"]
+    if who == "wife":
+        D["hat"] = ("custom", _wife_hat)
+    return D
+
+
+def _family_figure(who, x, y, scale, facing, pose, expr, phase, item, dove, sawhorse, marks, label):
+    if pose not in NOAH_POSES:
+        raise ValueError(f"{label}: unknown pose {pose!r}; choose from {NOAH_POSES}")
+    if item not in CARRY_ITEMS:
+        raise ValueError(f"{label}: unknown item {item!r}; choose from {CARRY_ITEMS}")
+    if expr is not None and expr not in EXPRS:
+        raise ValueError(f"{label}: unknown expr {expr!r}; choose from {ALL_EXPRESSIONS + NOAH_EXPRESSIONS}")
+    ps = _nh_pose(pose, phase, item)
+    if pose in _NH_NATURAL:
+        ps["expr"] = _NH_NATURAL[pose]
+    D = _family_design(who)
+    D["behind"], D["mid"], D["front"] = _nh_items(D, pose, phase, item, dove, sawhorse, marks)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _FAMILY[who]["m"], ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"{label}-{pose}")
+
+
+def noah(x, y, scale=1.0, facing=1, pose="stand", expr=None, phase=0.0, item="sack", dove=False, sawhorse=True,
+         marks=True):
+    """Noah: a kind, sturdy grandfather with a long white beard (see module doc, 'NOAH FILM')."""
+    return _family_figure("noah", x, y, scale, facing, pose, expr, phase, item, dove, sawhorse, marks, "noah")
+
+
+def noah_wife(x, y, scale=1.0, facing=1, pose="stand", expr=None, phase=0.0, item="basket", dove=False, sawhorse=True,
+              marks=True):
+    """Noah's wife (see module doc, 'NOAH FILM')."""
+    return _family_figure("wife", x, y, scale, facing, pose, expr, phase, item, dove, sawhorse, marks, "noah_wife")
+
+
+def shem(x, y, scale=1.0, facing=1, pose="stand", expr=None, phase=0.0, item="sack", dove=False, sawhorse=True,
+         marks=True):
+    """Shem, Noah's eldest son (see module doc, 'NOAH FILM')."""
+    return _family_figure("shem", x, y, scale, facing, pose, expr, phase, item, dove, sawhorse, marks, "shem")
+
+
+def ham(x, y, scale=1.0, facing=1, pose="stand", expr=None, phase=0.0, item="sack", dove=False, sawhorse=True,
+        marks=True):
+    """Ham, Noah's second son (see module doc, 'NOAH FILM')."""
+    return _family_figure("ham", x, y, scale, facing, pose, expr, phase, item, dove, sawhorse, marks, "ham")
+
+
+def japheth(x, y, scale=1.0, facing=1, pose="stand", expr=None, phase=0.0, item="sack", dove=False, sawhorse=True,
+            marks=True):
+    """Japheth, Noah's youngest son (see module doc, 'NOAH FILM')."""
+    return _family_figure("japheth", x, y, scale, facing, pose, expr, phase, item, dove, sawhorse, marks, "japheth")
+
+
+def daughter_in_law(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, phase=0.0, item="basket",
+                    dove=False, sawhorse=True, marks=True):
+    """The sons' wives: variant 0 Shem's (teal veil), 1 Ham's (coral veil), 2 Japheth's (sky-blue veil)."""
+    return _family_figure(f"dil{variant % 3}", x, y, scale, facing, pose, expr, phase, item, dove, sawhorse, marks,
+                          f"daughter_in_law{variant % 3}")
+
+
+FAMILY = ("noah", "noah_wife", "shem", "ham", "japheth", "daughter_in_law0", "daughter_in_law1", "daughter_in_law2")
+
+
+def family_member(name, x, y, scale=1.0, facing=1, **kw):
+    """Any of the eight by name (FAMILY): e.g. family_member('ham', ...) or 'daughter_in_law1'."""
+    if name.startswith("daughter_in_law"):
+        return daughter_in_law(x, y, scale, facing, variant=int(name[-1]), **kw)
+    fn = {"noah": noah, "noah_wife": noah_wife, "shem": shem, "ham": ham, "japheth": japheth}.get(name)
+    if fn is None:
+        raise ValueError(f"family_member: unknown name {name!r}; choose from {FAMILY}")
+    return fn(x, y, scale, facing, **kw)
+
+
+# (name, dx, dy, facing) of the group portrait at scale 1: back row (sons) first, then the front row
+_GROUP = [("daughter_in_law1", -340, -36, 1), ("shem", -170, -36, 1), ("ham", 0, -40, 1), ("japheth", 170, -36, -1),
+          ("daughter_in_law0", -255, 0, 1), ("noah_wife", -85, 0, 1), ("noah", 85, 4, -1),
+          ("daughter_in_law2", 255, 0, -1)]
+_LINE = ["noah", "noah_wife", "shem", "daughter_in_law0", "ham", "daughter_in_law1", "japheth", "daughter_in_law2"]
+FAMILY_GROUP_POSES = ("stand", "cheer", "pray", "talk", "wave", "nod", "kneel_pray", "walk_a", "walk_b",
+                      "carry_walk_a", "carry_walk_b")
+
+
+def noah_family(x, y, scale=1.0, facing=1, pose="stand", expr=None, gap=150, items=None, marks=True):
+    """All eight together (see module doc): a group portrait, or a walking line for the walk poses."""
+    if pose not in FAMILY_GROUP_POSES:
+        raise ValueError(f"noah_family: unknown pose {pose!r}; choose from {FAMILY_GROUP_POSES}")
+    sx = 1 if facing >= 0 else -1
+    out = ""
+    if pose.startswith("walk") or pose.startswith("carry_walk"):
+        other = {"walk_a": "walk_b", "walk_b": "walk_a", "carry_walk_a": "carry_walk_b",
+                 "carry_walk_b": "carry_walk_a"}[pose]
+        default_items = ["sack", "basket", "sack", "grain", "hay", "veg", "sack", "jar"]
+        for i in reversed(range(8)):             # Noah leads; the last in line is drawn first
+            name = _LINE[i]
+            p_ = pose if i % 2 == 0 else other
+            kw = dict(pose=p_, expr=expr, marks=marks)
+            if pose.startswith("carry"):
+                kw["item"] = (items or default_items)[i % len(items or default_items)]
+            out += family_member(name, x - sx * i * gap * scale, y, scale, facing, **kw)
+        return f'<g data-who="noah_family-{pose}">{out}</g>'
+    for name, dx, dy, f in _GROUP:
+        f_ = f * sx
+        out += family_member(name, x + sx * dx * scale, y + dy * scale, scale * (0.97 if dy < 0 else 1.0), f_,
+                             pose=pose, expr=expr, marks=marks)
+    return f'<g data-who="noah_family-{pose}">{out}</g>'
+
+
+# ---------------------------------------------------------------- the child (opening and ending scenes)
+CHILD_POSES = ("stand", "walk_a", "walk_b", "peek_window", "splash", "jump", "point_up", "wave", "smile_up", "cheer")
+_CH_POSES = {
+    "stand": _P(arms=(("fk", 12, 8), ("fk", -10, -4)), expr="happy"),
+    "walk_a": dict(POSES["walk_a"], expr="happy"),
+    "walk_b": dict(POSES["walk_b"], expr="happy"),
+    "peek_window": _P(t=6, h=-8, arms=(("ik", "abs", 54, -142, 1), ("ik", "abs", 42, -138, 1)), hands=("open", "open"),
+                      expr="amazed", look=(0.05, -0.05)),
+    "splash": _P(drop=18, legs=(("ik", 26, 1), ("ik", -24, 1)), arms=(("fk", 118, 138), ("fk", -114, -136)),
+                 hands=("open", "open"), expr="laugh"),
+    "jump": _P(h=-6, legs=((58, -10), (20, -70)), arms=(("fk", 140, 160), ("fk", -136, -160)), hands=("open", "open"),
+               expr="laugh"),
+    "point_up": _P(h=-18, legs=((5, 2), (-5, -2)), arms=(("fk", 136, 164), ("fk", -10, -4)), hands=("point", "fist"),
+                   look=(0.03, -0.10), expr="amazed"),
+    "smile_up": _P(h=-22, arms=(("ik", "torso", 1.45, 0.62, 1), ("ik", "torso", 1.45, 0.62, 1)), hands=("none", "pray"),
+                   look=(0.03, -0.10), expr="happy"),
+    "cheer": dict(POSES["cheer"], expr="laugh"),
+}
+CHILD_JUMP = 46          # pose='jump': the soles are this many px (x scale) above the anchor's ground line
+
+
+def _hood(R, col):
+    s = _cloth_cap(R, col, edge=shade(col, -0.18))
+    s += _line(f"M{fmt(-0.20 * R)},{fmt(-1.02 * R)} Q{fmt(-0.70 * R)},{fmt(-0.62 * R)} {fmt(-0.92 * R)},{fmt(0.10 * R)}",
+               w=2.2, col=shade(col, -0.25))
+    return s
+
+
+def _child_design(ps_legs, hood, boots, coat):
+    c = coat
+    D = dict(robe=c, sleeve=c, hem_col=shade(c, -0.12), cuff=shade(c, -0.15), skin="#f2c29c", leg="#f2c29c", hem=0.62,
+             flare_k=1.15, hem_w=8, hair="#5a3a24", hair_style="short", sandal=CHILD_BOOTS, neck_v=shade(c, -0.15))
+    if hood:
+        D.update(hat=("custom", lambda R: _hood(R, c)), hat_h=0.16, ears=False)
+
+    def buttons(st):
+        tp, m = st["tp"], st["m"]
+        s_ = ""
+        for k in (0.82, 0.52, 0.22, -0.12):
+            p = tp(0.42 * m["ww"], k * m["T"])
+            s_ += f'<circle cx="{fmt(p[0])}" cy="{fmt(p[1])}" r="3.6" fill="{shade(c, -0.35)}"/>'
+        if not hood:                     # the hood hanging down the back
+            q = tp(-0.80 * m["shw"], m["T"] - 6)
+            s_ += _ell(q[0] - 2, q[1] + 4, 11, 12, shade(c, -0.06), sw=3)
+        return s_
+    D["mid"] = buttons
+    if boots:
+        def legwear(st, i):
+            H, K, A, a1, a2 = st["legs"][i]
+            fl, lw = st["m"]["fl"], st["m"]["lw"]
+            col = CHILD_BOOTS if i == 1 else shade(CHILD_BOOTS, -0.15)
+            ds = _nrm(_sub(A, K))
+            fa = _ang(_rot(ds, -90))
+            if ps_legs[i][0] == "ik":
+                fa = max(-90.0, min(0.0, fa))
+            top = _sub(A, _mul(ds, 0.55 * _len(_sub(A, K))))
+            s_ = _tube([top, A], lw + 8, col, ow=3.2)
+
+            def q(x, y_):
+                v = _rot((x * fl, y_ * fl), fa)
+                return (A[0] + v[0], A[1] + v[1])
+            pts = [q(-0.46, -0.30), q(-0.50, 0.40), q(1.10, 0.40), q(1.12, 0.06), q(0.70, -0.18), q(0.10, -0.40)]
+            s_ += f'<path d="{smooth_path(pts, tension=0.6)}" fill="{col}" {_st(3.2)}/>'
+            s_ += _line(f"M{_pt(q(-0.48, 0.30))} L{_pt(q(1.10, 0.30))}", w=3.0, col=shade(col, -0.35))
+            s_ += _line(f"M{_pt(_add(top, (-(lw + 6) / 2, 3)))} L{_pt(_add(top, ((lw + 6) / 2, 3)))}", w=2.2,
+                        col=shade(col, 0.35))
+            return s_
+        D["legwear"] = legwear
+    return D
+
+
+def child(x, y, scale=1.0, facing=1, pose="stand", expr=None, hood=False, boots=True, coat=None, phase=0.0,
+          marks=True):
+    """A little modern child in a raincoat and rubber boots (opening / ending, see module doc)."""
+    if pose not in CHILD_POSES:
+        raise ValueError(f"child: unknown pose {pose!r}; choose from {CHILD_POSES}")
+    if expr is not None and expr not in EXPRS:
+        raise ValueError(f"child: unknown expr {expr!r}; choose from {ALL_EXPRESSIONS + NOAH_EXPRESSIONS}")
+    if pose == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * phase)
+        ps = _P(h=-4, arms=(("fk", 146, f), ("fk", -10, -4)), hands=("open", "fist"), expr="happy")
+    else:
+        ps = dict(_CH_POSES[pose])
+    D = _child_design(ps["legs"], hood, boots, coat or CHILD_COAT)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _CHILD, ps, e, _fsign(facing), marks)
+    if pose == "jump":
+        inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
+    return _wrap_out(inner, x, y, scale, facing, f"child-{pose}")

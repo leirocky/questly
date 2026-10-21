@@ -91,3 +91,13 @@ Owner feedback on v1: unnatural pauses in the male voices, narration too fast, t
 - Published: owner approved; PR #10 merged to main (b58bafb). The stories page now has all three films.
 - Known leftovers reported by agents (not fixed): `valley_elah` hill edges show ink artefacts at the backdrop ends (worked around in scenes); David has no plain sit pose; bench numbers measured under heavy load.
 - Next executable task: none required. Optional: owner playback check on a phone; the next story in the SCRIPT_STYLE.md style.
+### David revision after owner review (2026-10-19)
+- Owner notes: David's voice too old; 卫 sometimes wei2; 耶和华 split; male voices slow and choppy. Fixes: David = Kokoro 33 (owner's pick of 5 auditions, sent as a labelled mp4 because the m4a would not play for them); `voice/tts.py` rejects takes whose name-final 4th tone rises (`_wrong_tone`), counts real silence (< -55 dBFS, 40 ms) as a break and allows fricative onsets, adds 耶和华 to every story's NO_BREAK, rejects near-empty ZipVoice clips (short line + high speed + long prompt; they crashed the recogniser), and tries 3 more settings. Male voices 3.9-4.4 chars/s (narrator 4.0); keep ZipVoice speed ~1.0 and set pace with the prompt speed.
+- Film 5:24 (323.70 s), fully re-rendered; score refitted by the composer agent (bars cut, 13/13 test_score variants pass); all music checks pass; mid-transition frames viewed. Repo copy 96.0 MB.
+- Published: owner approved; PR #11 merged to main (0bfe3ec).
+### 挪亚方舟 (2026-10-20) — fourth film, SCRIPT_STYLE.md narration
+- Story project `jonah-video/stories/noah/` (14 scenes / 43 lines; voices N narrator and G = Jonah's God voice; Noah has no lines, as in Genesis). Owner approved the narration preview (sent as an mp4).
+- Work: 1 agent for characters/props (noah + family of eight, child, ark with door/window/ramp/build progress/floating, 11 ark animals + animal_pair, rain, flood_sea, rainbow(progress), ararat, altar...; existing outputs verified identical by 26,191 markup hashes + pixel compare; note the intermediate checkpoint a8f7778 had a moustache regression, fixed in 2af4793), 4 scene agents, 1 composer agent (all checks + 13/13 test_score variants).
+- Executed here: `build.py voice/check --story noah` (mean CER 0.032; one 挪亚 break retaken), `build.py all --story noah` (music 0 failed checks, mix -16.0 LUFS / -1.72 dBTP), mid-transition frames and a 1-per-10 s overview viewed. Output `jonah-video/output/noah_story.mp4`: 1080p, 269.0 s, 80 MB (committed as built).
+- Stories page on the branch has the Noah card (poster, 10 chapters); not published until the owner approves a PR.
+- Background jobs: a leading `cd` is dropped from background Bash commands here — wrap them in `bash -c 'cd ... && ...'`.

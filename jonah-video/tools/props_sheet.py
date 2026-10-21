@@ -11,6 +11,7 @@ grey figure is a 330 px adult at the same scale; dashed blue boxes show document
 (fish mouth box, ship cutaway interior / bed, castor shade, booth seat). Characters (Jonah, the king,
 sailors) come from art/characters.py to check the props against them.
 David film: python3 tools/props_sheet.py david_items david_creatures david_camp valley
+Noah film: python3 tools/props_sheet.py noah_ark noah_animals noah_pairs noah_weather noah_items
 """
 import sys
 from pathlib import Path
@@ -569,10 +570,145 @@ def sheet_valley():
     return render_sheet("valley", "props — valley_elah backdrop (Israel left, Philistines right)", rows)
 
 
+# ------------------------------------------------------------------ Noah film (Genesis 6-9)
+def _c(label, fn, w, ax, ay, ref=None):
+    ov = (lambda ox, oy: person_ref(ox + ref[0], oy + ref[1], ref[2])) if ref else ""
+    return Cell(label, lambda ox, oy: fn(ox + ax, oy + ay), w, [(ax, ay)], ov)
+
+
+def sheet_noah_ark():
+    def ark_cell(label, w=1180, k=0.55, ref=True, ax=560, ay=620, bg=None, **kw):
+        def art(ox, oy):
+            b = bg(ox, oy) if bg else ""
+            return b + PR.ark(ox + ax, oy + ay, k, **kw)
+        ov = (lambda ox, oy: person_ref(ox + ax + 640 * k, oy + ay, k)) if ref else ""
+        return Cell(label, art, w, [(ax, ay)], ov)
+
+    def sea(ox, oy):
+        return PR.flood_sea(ox, ox + 1180, oy + 560, phase=0.2, bottom=oy + 680)
+
+    def overlay(ox, oy):
+        pts = PR.ark_points(ox + 560, oy + 620, 0.55)
+        return (box(*pts["door_box"]) + box(*pts["window_box"], color="#d53a7b") +
+                "".join(box(*b, color="#2a9d5c") for b in pts["windows"]) +
+                f'<circle cx="{pts["window_stand"][0]:.0f}" cy="{pts["window_stand"][1]:.0f}" r="8" fill="#d53a7b"/>'
+                f'<path d="M{pts["ramp_top"][0]:.0f},{pts["ramp_top"][1]:.0f} L{pts["ramp_bottom"][0]:.0f},{pts["ramp_bottom"][1]:.0f}" '
+                f'stroke="#3a7bd5" stroke-width="3" stroke-dasharray="10 6"/>')
+    rows = [
+        (680, [ark_cell("ark() closed, ramp (+adult at 0.55)"),
+               Cell("ark door='open' window='open' + ark_points (boxes) + in_ark_door / in_ark_window", lambda ox, oy:
+                    PR.ark(ox + 560, oy + 620, 0.55, door=1, window=1)
+                    + PR.in_ark_door(PR.animal_pair("zebra", ox + 760, PR.ark_ramp_y(ox + 760, ox + 560, oy + 620, 0.55), 0.55, -1, pose="walk_a"), ox + 560, oy + 620, 0.55)
+                    + PR.in_ark_door(PR.ark_animal(ox + 640, oy + 620 - 170 * 0.55, 0.55, -1, kind="rabbit"), ox + 560, oy + 620, 0.55)
+                    + PR.in_ark_window(CH.noah(*PR.ark_points(ox + 560, oy + 620, 0.55)["window_stand"], 0.55, 1, pose="release_dove"), ox + 560, oy + 620, 0.55)
+                    + PR.dove(ox + 460, oy + 140, 0.55, 1, wing=0.5), 1180, [(560, 620)], overlay)]),
+        (680, [ark_cell("floating=True wet=True on flood_sea (anchor = waterline)", bg=sea, floating=True, wet=True, ramp=False, ay=560, ref=False),
+               ark_cell("door=0.5 glow=1 lamps=1 (God shuts the door)", door=0.5, glow=1.0, lamps=1.0)]),
+        (500, [ark_cell(f"progress={p_}", w=590, k=0.28, ax=290, ay=440, ref=False, progress=p_) for p_ in (0.06, 0.15, 0.3, 0.45)]),
+        (500, [ark_cell(f"progress={p_}", w=590, k=0.28, ax=290, ay=440, ref=False, progress=p_) for p_ in (0.6, 0.75, 0.9, 1.0)]),
+    ]
+    return render_sheet("noah_ark", "props — Noah: the ark (scale 0.55 / 0.28), building progress, door / window / floating", rows)
+
+
+def sheet_noah_weather():
+    def sky(ox, oy, w, h, c):
+        return f'<rect x="{ox}" y="{oy}" width="{w}" height="{h}" fill="{c}"/>'
+    rows = [
+        (420, [Cell(f"rain intensity={it} phase=0", lambda ox, oy, it=it: sky(ox, oy, 470, 420, P["storm_sky"]) +
+                    PR.rain(0.0, it, ox, oy, ox + 470, oy + 420, seed=1), 470, []) for it in (0.2, 0.5, 1.0)]
+         + [Cell("dark_cloud seed 0 / light .6 + flash", lambda ox, oy: sky(ox, oy, 700, 420, P["storm_sky"]) +
+                 PR.dark_cloud(ox + 220, oy + 150, 0.6) + PR.dark_cloud(ox + 480, oy + 290, 0.6, seed=2, light=0.6, flash=0.8), 700, [])]),
+        (360, [Cell(f"flood_sea storm={st} phase={ph}", lambda ox, oy, st=st, ph=ph: sky(ox, oy, 700, 360, P["sky_day"] if st == 0 else P["storm_sky"]) +
+                    PR.flood_sea(ox, ox + 700, oy + 120, phase=ph, bottom=oy + 360, storm=st), 700, [(0, 120)]) for st, ph in ((0, 0), (0, 0.5), (1, 0.25))]),
+        (380, [_c(f"puddle splash={sp} ripple={rp}", lambda x, y, sp=sp, rp=rp: PR.puddle(x, y, 1.0, splash=sp, ripple=rp), 350, 175, 300)
+               for sp, rp in ((0, 0), (0, 0.5), (0.3, 0.2), (0.6, 0.4), (1.0, 0.6))]
+         + [_c("rain drops=True (drip)", lambda x, y: sky(x - 175, y - 300, 350, 380, P["sky_day"]) + PR.rain(0.3, 0.15, x - 175, y - 300, x + 175, y + 80, seed=2), 350, 175, 300)]),
+        (560, [_c(f"rainbow progress={pr}", lambda x, y, pr=pr: sky(x - 300, y - 530, 600, 560, P["sky_day"]) + PR.rainbow(x, y, 0.55, progress=pr), 600, 300, 530)
+               for pr in (0.2, 0.5, 0.75, 1.0)]),
+        (640, [_c("ararat (scale 0.4) + ark 0.1 on ARARAT_LEDGE", lambda x, y: sky(x - 470, y - 640, 940, 640, P["sky_day"]) + PR.ararat(x, y, 0.4)
+                  + PR.ark(x, y + PR.ARARAT_LEDGE[1] * 0.4, 0.1, wet=True, ramp=False), 940, 470, 620),
+               _c("ararat green=1 snow / flood_sea covering", lambda x, y: sky(x - 470, y - 640, 940, 640, P["sky_day"]) + PR.ararat(x, y, 0.4, green=1.0)
+                  + PR.flood_sea(x - 470, x + 470, y - 330, phase=0.3, bottom=y + 20), 940, 470, 620)]),
+    ]
+    return render_sheet("noah_weather", "props — Noah: rain, clouds, flood_sea, puddle, rainbow, Mount Ararat", rows)
+
+
+def sheet_noah_items():
+    rows = [
+        (300, [_c("saw / hammer", lambda x, y: PR.saw(x - 60, y - 160) + PR.hammer(x - 40, y - 60), 300, 120, 260),
+               _c("plank / timber_pile planks", lambda x, y: PR.plank(x, y - 200) + PR.timber_pile(x - 20, y, 0.9, kind="planks"), 360, 170, 260),
+               _c("timber_pile mixed / logs", lambda x, y: PR.timber_pile(x - 80, y, 0.75) + PR.timber_pile(x + 110, y, 0.6, kind="logs"), 360, 160, 260),
+               _c("sawhorse plank=True", lambda x, y: PR.sawhorse(x, y), 360, 170, 260),
+               _c("nails box / loose", lambda x, y: PR.nails(x - 50, y) + PR.nails(x + 90, y, box=False), 300, 120, 260),
+               _c("pitch_bucket", lambda x, y: PR.pitch_bucket(x, y), 220, 100, 260)]),
+        (300, [_c(f"food_basket {k}", lambda x, y, k=k: PR.food_basket(x, y, kind=k), 230, 115, 260) for k in ("fruit", "grain", "veg", "bread")]
+         + [_c("sack / jar (existing)", lambda x, y: PR.sack(x - 50, y) + PR.jar(x + 60, y - 82), 260, 120, 260),
+            _c("hay bale / bundle / pile", lambda x, y: PR.hay(x - 150, y, 0.8) + PR.hay(x + 30, y - 120, 0.8, kind="bundle") + PR.hay(x + 100, y, 0.8, kind="pile"), 420, 220, 260)]),
+        (360, [_c(f"altar fire={f} phase={ph}", lambda x, y, f=f, ph=ph: PR.altar(x, y, fire=f, phase=ph), 280, 140, 330) for f, ph in ((1, 0), (1, 0.33), (1, 0.66), (0, 0))]
+         + [_c("olive_branch / olive_leaf (x2)", lambda x, y: PR.olive_branch(x - 120, y - 140, 1.4) + PR.olive_leaf(x - 60, y - 40, 2.0), 300, 150, 330),
+            _c("dove leaf=True (x1.4)", lambda x, y: PR.dove(x, y - 200, 1.4, wing=0.5, leaf=True) + PR.dove(x, y - 60, 1.4, pose="stand", leaf=True), 280, 140, 330)]),
+        (380, [_c("football_field (scale 0.7)", lambda x, y: PR.football_field(x, y, 0.7), 760, 380, 340),
+               _c("football_field 0.42 vs ark (FOOTBALL_LEN x 1.37)", lambda x, y: PR.football_field(x, y, 0.42)
+                  + PR.ark(x - 30, y - 140, 0.42 * 1.37 * PR.FOOTBALL_LEN / PR.ARK_LEN, ramp=False), 760, 380, 340)]),
+    ]
+    return render_sheet("noah_items", "props — Noah: tools, timber, food, altar, olive, football pitch", rows)
+
+
+def sheet_noah_animals():
+    def c(kind, pose, female=False, w=300, ax=150, ay=440, k=0.62, phase=0.0, ref=False):
+        lab = f"{kind} {pose}" + (" female" if female else "") + (f" ph={phase}" if pose == "hop" else "")
+        return _c(lab, lambda x, y: PR.ark_animal(x, y, k, kind=kind, pose=pose, female=female, phase=phase), w, ax, ay,
+                  (w - 40, ay, k) if ref else None)
+    rows = [
+        (480, [c("elephant", p, f, w=330, ax=140) for p, f in (("stand", False), ("stand", True), ("walk_a", False), ("walk_b", False),
+                                                              ("trunk_up", False), ("spray", True))]
+         + [c("giraffe", "stand", False, w=260, ax=100, ref=True)]),
+        (480, [c("giraffe", p, f, w=300, ax=110) for p, f in (("stand", True), ("walk_a", False), ("walk_b", False), ("bow", False))]
+         + [c("elephant", "sleep", False, w=330, ax=150), c("elephant", "sleep", True, w=330, ax=150)]),
+        (300, [c(kd, p, f, w=290, ax=130, ay=270) for kd in ("zebra", "horse", "deer") for p, f in (("stand", False), ("stand", True))]
+         + []),
+        (300, [c(kd, p, False, w=290, ax=130, ay=270) for kd in ("zebra", "horse", "deer") for p in ("walk_a", "walk_b")]),
+        (220, [c("rabbit", "stand", f, w=170, ax=80, ay=190, k=1.0) for f in (False, True)]
+         + [c("rabbit", "hop", False, w=200, ax=90, ay=190, k=1.0, phase=ph) for ph in (0, 0.25, 0.5, 0.75)]
+         + [c("rabbit", "sleep", True, w=200, ax=90, ay=190, k=1.0)]
+         + [c("turtle", p, f, w=220, ax=100, ay=190, k=1.0) for p, f in (("stand", False), ("walk_a", True), ("walk_b", False))]),
+        (220, [c("duck", p, f, w=170, ax=70, ay=190, k=1.0) for p, f in (("stand", False), ("stand", True), ("walk_a", False), ("walk_b", True), ("swim", False))]
+         + [c("monkey", p, f, w=170, ax=90, ay=200, k=0.9) for p, f in (("stand", False), ("stand", True), ("walk_a", False), ("walk_b", False), ("wave", True), ("sit", False))]),
+        (260, [c("hippo", p, f, w=300, ax=120, ay=230, k=0.7) for p, f in (("stand", False), ("stand", True), ("walk_a", False), ("yawn", False))]
+         + [c("fox", p, f, w=220, ax=115, ay=230, k=0.9) for p, f in (("stand", False), ("stand", True), ("walk_a", False), ("sit", False), ("sleep", True))]),
+        (200, [_c(f"butterfly flap={fl}", lambda x, y, fl=fl, col=col: PR.butterfly(x, y - 80, 1.4, flap=fl, color=col), 170, 85, 180)
+               for fl, col in ((0, "orange"), (0.25, "blue"), (0.5, "yellow"), (0.75, "pink"))]
+         + [_c(f"songbird {col} wing={wg}", lambda x, y, col=col, wg=wg: PR.songbird(x, y - 90, 1.6, wing=wg, color=col), 200, 100, 180)
+            for col, wg in (("blue", 1), ("red", 0), ("yellow", -1), ("green", 0.5))]
+         + [_c("songbird perch / female", lambda x, y: PR.songbird(x - 40, y - 80, 1.6, pose="perch") + PR.songbird(x + 50, y - 80, 1.6, pose="perch", female=True), 230, 115, 180)]),
+    ]
+    return render_sheet("noah_animals", "props — Noah: ark_animal kinds x poses (female=True: bow + lashes, smaller)", rows)
+
+
+def sheet_noah_pairs():
+    def c(kind, pose="walk_a", w=400, ax=170, ay=380, k=0.5):
+        return _c(f"{kind} {pose}", lambda x, y: PR.animal_pair(kind, x, y, k, pose=pose), w, ax, ay)
+    kinds = list(PR.PAIR_KINDS)
+    rows = []
+    row = []
+    for kd in kinds:
+        big = kd in ("elephant", "giraffe", "camel", "hippo", "lion")
+        row.append(c(kd, "walk_a" if kd not in ("rabbit",) else "hop", w=440 if big else 300, ax=170 if big else 120,
+                     ay=380, k=0.5 if kd != "giraffe" else 0.45))
+        if sum(cc.w for cc in row) > 1900:
+            rows.append((420, row))
+            row = []
+    if row:
+        rows.append((420, row))
+    return render_sheet("noah_pairs", "props — Noah: animal_pair(kind, ...) two by two (scale 0.5; anchor = the near animal)", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
           "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
           "lions": sheet_lions, "daniel": sheet_daniel, "david_items": sheet_david_items,
-          "david_creatures": sheet_david_creatures, "david_camp": sheet_david_camp, "valley": sheet_valley}
+          "david_creatures": sheet_david_creatures, "david_camp": sheet_david_camp, "valley": sheet_valley,
+          "noah_ark": sheet_noah_ark, "noah_weather": sheet_noah_weather, "noah_items": sheet_noah_items,
+          "noah_animals": sheet_noah_animals, "noah_pairs": sheet_noah_pairs}
 
 
 def main():

@@ -18,6 +18,9 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   phases), david_expr (close-ups), david_armor, goliath (poses, fall progress, lying), goliath_expr, soldiers_israel,
   soldiers_philistine, david_saul (king attire='saul', Eliab, Jesse, shield-bearer) and david_scale (boy / adult /
   giant on one ground line).
+  Noah film (python3 tools/character_sheet.py noah): noah_poses, noah_actions (saw / hammer phases, carry items,
+  options), noah_expr (close-ups), noah_family (wife, sons, daughters-in-law), noah_child (raincoat child) and
+  noah_group (noah_family portrait and walking line, scale check with the ark and animal pairs).
 """
 import json
 import sys
@@ -183,6 +186,7 @@ def sheets():
     out.append(("daniel_guards", "Palace guards — variants 0-3 x poses (scale 0.8)", items, 10, 230, 400, 0.8,
                 {"ground_pad": 20}))
     out += david_sheets()
+    out += noah_sheets()
     return out
 
 
@@ -252,6 +256,88 @@ def david_sheets():
     out.append(("david_scale", "Scale check at scale 0.6: boy ~240, adult ~330, giant ~640 px at scale 1", items, 7,
                 330, 520, 0.6, {"ground_pad": 20}))
     return out
+
+
+def noah_sheets():
+    """Sheets for the Noah film (Genesis 6-9)."""
+    out = []
+    PR = C._prp()
+    items = [("jonah (compare)", _j("stand"))]
+    items += [(p, lambda x, y, s, p=p: C.noah(x, y, s, pose=p)) for p in C.NOAH_POSES]
+    out.append(("noah_poses", "Noah — poses (scale 1; Jonah for comparison)", items, 7, 300, 430, 1.0, {"ground_pad": 26}))
+    items = [(f"saw phase={ph}", lambda x, y, s, ph=ph: C.noah(x - 60 * s, y, s, pose="saw", phase=ph)) for ph in (0, 0.25, 0.5)]
+    items += [(f"hammer phase={ph}", lambda x, y, s, ph=ph: C.noah(x - 40 * s, y, s, pose="hammer", phase=ph)) for ph in (0, 0.4, 0.7, 1.0)]
+    items += [("saw sawhorse=False", lambda x, y, s: C.noah(x - 40 * s, y, s, pose="saw", sawhorse=False))]
+    items += [(f"carry item={it}", lambda x, y, s, it=it: C.noah(x, y, s, pose="carry", item=it)) for it in C.CARRY_ITEMS]
+    items += [("carry_walk_a sack", lambda x, y, s: C.noah(x, y, s, pose="carry_walk_a")),
+              ("release_dove dove=True", lambda x, y, s: C.noah(x, y, s, pose="release_dove", dove=True)),
+              ("wave phase=0.5 / facing -1", lambda x, y, s: C.noah(x, y, s, -1, pose="wave", phase=0.5)),
+              ("marks=False scratch_head", lambda x, y, s: C.noah(x, y, s, pose="scratch_head", marks=False))]
+    out.append(("noah_actions", "Noah — saw / hammer phases, carry items, options (scale 0.9)", items, 8, 290, 420, 0.9,
+                {"ground_pad": 26}))
+    exprs = ("kind", "happy", "puzzled", "determined", "amazed", "worried", "peaceful", "surprised")
+    items = [(e, lambda x, y, s, e=e: C.noah(x, y, s, expr=e)) for e in exprs]
+    items += [(f"wife {e}", lambda x, y, s, e=e: C.noah_wife(x, y + 10 * s, s, expr=e)) for e in ("kind", "amazed")]
+    items += [(f"{n} {e}", lambda x, y, s, n=n, e=e: C.family_member(n, x, y + 14 * s, s, expr=e))
+              for n, e in (("shem", "happy"), ("ham", "determined"), ("japheth", "laugh"), ("daughter_in_law0", "kind"),
+                           ("daughter_in_law1", "happy"), ("daughter_in_law2", "amazed"))]
+    out.append(("noah_expr", "Noah-film expressions (close-ups, scale 1.5)", items, 8, 290, 360, 1.5,
+                {"clip_cells": True, "ground_pad": -190}))
+    items = []
+    for n in C.FAMILY[1:]:
+        for p in ("stand", "walk_a", "talk", "carry", "cheer", "pray"):
+            items.append((f"{n.replace('daughter_in_law', 'dil')} {p}",
+                          lambda x, y, s, n=n, p=p: C.family_member(n, x, y, s, pose=p)))
+    for n in ("shem", "ham", "japheth"):
+        items.append((f"{n} saw", lambda x, y, s, n=n: C.family_member(n, x - 50 * s, y, s, pose="saw", phase=0.5)))
+        items.append((f"{n} hammer", lambda x, y, s, n=n: C.family_member(n, x - 30 * s, y, s, pose="hammer", phase=1.0)))
+    out.append(("noah_family", "Noah's family — wife, Shem, Ham, Japheth, daughters-in-law 0-2 (scale 0.75)", items, 12, 190,
+                330, 0.75, {"ground_pad": 18}))
+    items = [(p, lambda x, y, s, p=p: C.child(x, y, s, pose=p)) for p in C.CHILD_POSES]
+    items += [("hood=True stand", lambda x, y, s: C.child(x, y, s, hood=True)),
+              ("hood=True peek_window", lambda x, y, s: C.child(x, y, s, pose="peek_window", hood=True)),
+              ("coat='#7fb6d6' splash", lambda x, y, s: C.child(x, y, s, pose="splash", coat="#7fb6d6") + PR.puddle(x, y + 4 * s, s, splash=0.4)),
+              ("wave phase=.5 facing -1", lambda x, y, s: C.child(x, y, s, -1, pose="wave", phase=0.5)),
+              ("adult citizen (compare)", lambda x, y, s: C.citizen(x, y, s, kind="child"))]
+    out.append(("noah_child", "child() — raincoat and boots (scale 1.2)", items, 8, 250, 380, 1.2, {"ground_pad": 22}))
+    return out
+
+
+def noah_group():
+    """The family portrait and walking line, and the scale check with the ark and the animals."""
+    PR = C._prp()
+    W, H = 2200, 64 + 520 + 430 + 640
+    top = 64
+    body = ""
+    labels = []
+    gy = top + 470
+    body += C.noah_family(560, gy, 0.85, pose="stand") + C.noah_family(1660, gy, 0.85, pose="cheer")
+    labels.append((20, top + 480, "noah_family(x, y, 0.85) pose='stand'  |  pose='cheer'  (x = Noah's anchor)"))
+    gy2 = gy + 400
+    body += C.noah_family(900, gy2, 0.6, pose="carry_walk_a") + C.noah_family(1240, gy2, 0.5, -1, pose="walk_b")
+    labels.append((20, gy2 + 10, "carry_walk_a line (0.6, facing 1, Noah leads at x=900)  |  walk_b (0.5, facing -1, Noah at x=1240)"))
+    gy3 = gy2 + 590
+    sc = 0.55
+    ax = 900
+    body += PR.ark(ax, gy3, sc, door=1)
+    rx = PR.ark_points(ax, gy3, sc)["ramp_bottom"][0]
+    body += PR.animal_pair("giraffe", rx + 330, gy3, sc, -1, pose="walk_a")
+    body += PR.animal_pair("elephant", rx + 120, gy3, sc, -1, pose="walk_b")
+    body += PR.animal_pair("zebra", rx - 70, PR.ark_ramp_y(rx - 70, ax, gy3, sc), sc, -1, pose="walk_a")
+    body += PR.animal_pair("rabbit", rx + 560, gy3, sc, -1, pose="hop", phase=0.25)
+    body += C.noah(ax - 760 * sc, gy3, sc, 1, pose="point_up") + C.child(ax - 1050 * sc, gy3, sc, 1)
+    body += PR.animal_pair("sheep", rx + 700, gy3, sc, -1, pose="walk_a")
+    labels.append((20, gy3 + 10, "scale check at 0.55: ark(door=1), Noah, child, giraffe / elephant / zebra on the ramp / rabbit / sheep"))
+    svg = S.svg_doc(f'<rect x="0" y="{gy3 - 640}" width="{W}" height="660" fill="#cfe3e4"/>' + body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Noah film — family group, walking line, scale with the ark and animals")
+    font = ImageFont.truetype(str(FONT_REGULAR), 22)
+    for x0, y0, text in labels:
+        d.text((x0, y0), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_noah_group.png"
+    sheet.save(path)
+    return path
 
 
 # ---------------------------------------------------------------- compositions
@@ -373,6 +459,11 @@ def measure():
         jobs.append(("eliab", p, lambda x, y, p=p: C.eliab(x, y, pose=p)))
     for p in C.JESSE_POSES:
         jobs.append(("jesse", p, lambda x, y, p=p: C.jesse(x, y, pose=p)))
+    for name in C.FAMILY:
+        for p in C.NOAH_POSES:
+            jobs.append((name, p, lambda x, y, p=p, name=name: C.family_member(name, x, y, pose=p)))
+    for p in C.CHILD_POSES:
+        jobs.append(("child", p, lambda x, y, p=p: C.child(x, y, pose=p)))
     for v in range(4):
         for p in C.OFFICIAL_POSES:
             jobs.append(("official", p, lambda x, y, p=p, v=v: C.official(x, y, variant=v, pose=p)))
@@ -418,6 +509,8 @@ def main():
         print(path)
     if not filt or any(f in "compositions" for f in filt):
         print(compositions())
+    if not filt or any(f in "noah_group" for f in filt):
+        print(noah_group())
     raster.close()
 
 
