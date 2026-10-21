@@ -13,7 +13,7 @@ Three picture-book pages on one 7200 x 1188 stage (hard page cuts on the narrati
           earth cut open in front, the dry stone-lined pit.  line 3 '他们剥下约瑟的彩衣，'  Joseph stands in his plain
           under-tunic (coat='torn') and the coat tumbles through the air (whoosh trail) and lands on the grass (dust);
           '把他丢进一个干枯的坑里。'  Joseph hops over the opening, holds the rope and is let down into the shaft hand over
-          hand (Judah holds the rope at the rim) - he lands with a little dust puff; the rope is pulled up.
+          hand (Levi holds the rope at the rim) - he lands with a little dust puff; the rope is pulled up.
           '坑里一滴水也没有。'  he scuffs the dry sandy floor: a dust puff, dust motes in the shaft.
           line 4 (Y) '哥哥！放我出去！'  Joseph calls up (call_up, worried, sound arcs rising); the brothers at the rim turn
           away. The last frame (Joseph standing sad at the bottom, brothers turned away) is s06's first frame.
@@ -50,8 +50,9 @@ PS = 0.9                  # pit scale
 FLOOR = GC + PR.PIT_DEPTH * PS
 P3_W = 3400
 P3_BROS = [  # variant, x (page-local), facing while watching the pit
-    (0, PX - 470, 1), (3, PX - 300, 1), (1, PX + 520, -1), (2, PX + 680, -1), (6, PX + 840, -1), (9, PX + 990, -1)]
-COAT_LAND = (PX + 380, GS + 2)
+    (2, PX - 300, 1), (3, PX + 520, -1), (0, PX + 670, -1), (1, PX + 820, -1), (6, PX + 970, -1), (9, PX + 1120, -1)]
+ROPER = 2                 # Levi holds the rope (s05 lowering, s06 pulling up); Judah (3) sells him in s06
+COAT_LAND = (PX + 400, GS + 2)
 
 
 def doc(body, defs="", w=SW, h=SH):
@@ -175,7 +176,12 @@ def p3_land_markup(ox, w=P3_W):
 
 def p3_pit_markup(ox):
     """The dry, stone-lined pit in cross-section (the props cutaway, its soil blended into the page's)."""
-    return PR.pit(ox + PX, GC, PS, view="cutaway", width=240)
+    x = ox + PX
+    cid = f"p3pitclip{ox}"
+    d = (f"M{x - 215},{GC - 60} L{x + 215},{GC - 60} L{x + 215},{GC + 4} L{x + 158},{GC + 4} L{x + 158},{FLOOR + 2} "
+         f"L{x - 158},{FLOOR + 2} L{x - 158},{GC + 4} L{x - 215},{GC + 4} Z")
+    return (f'<clipPath id="{cid}"><path d="{d}"/></clipPath>'
+            f'<g clip-path="url(#{cid})">{PR.pit(x, GC, PS, view="cutaway", width=240)}</g>')
 
 
 def p3_props_markup(ox):
@@ -233,8 +239,8 @@ def p1_background():
                       "#d9c08c", sw=3, extra='opacity="0.85"'), filter="wobble")
     out += PR.olive_tree(1500, 990, 0.62, seed=5) + PR.olive_tree(2550, 985, 0.7, seed=6)
     out += PR.bush(2080, 1000, 0.5, variant=1) + PR.bush(1250, 1005, 0.45, variant=0)
-    out += family_tent(430, GY, 0.85, lamp=False)
-    out += PR.jar(800, GY - 4, 0.7) + PR.sack(740, GY - 2, 0.6)
+    out += family_tent(250, GY, 0.85, lamp=False)
+    out += PR.jar(700, GY - 6, 0.6) + PR.sack(650, GY - 2, 0.5)
     return doc(out)
 
 
@@ -309,17 +315,17 @@ def build(ctx):
     t_settle = snap(L4.end + 0.35)
 
     # ---------------- camera (hard page cuts)
-    JW0 = 1040                                              # Joseph's spot on page 1
+    JW0 = 1090                                              # Joseph's spot on page 1
     n_w = int((t_cut2 - t_walk) / WALK_P) + 1
     step = 80.0
-    C1a = Cam(980, 700, 1460)
-    C1b = Cam(JW0 + n_w * step * 0.62 + 120, 700, 1460)
+    C1a = Cam(980, 740, 1320)
+    C1b = Cam(JW0 + n_w * step * 0.62 + 120, 740, 1320)
     C2a = Cam(OX2 + 1250, 640, 1700)
     C2b = Cam(OX2 + 1056, 594, 2112)
     C2c = Cam(OX2 + 1290, 650, 1640)
     C3a = Cam(OX3 + PX + 250, 520, 1500)
     C3b = Cam(OX3 + PX + 120, 620, 1560)
-    C3e = Cam(OX3 + 1000, 600, 1900)
+    C3e = Cam(OX3 + 1000, 530, 1800)
     page1 = cam_path([(0, C1a), (t_walk + 0.2, C1a), (t_cut2, C1b)])
     page2 = cam_path([(0, C2a), (t_see + 0.2, C2a), (t_comes + 1.2, C2b), (L1.end + 0.1, C2b), (t_cut3, C2c)])
     page3 = cam_path([(0, C3a), (t_drop - 0.2, C3a), (t_hang + 0.9, C3b), (t_dry + 0.8, C3b), (L4.start - 0.3, C3e),
@@ -343,7 +349,7 @@ def build(ctx):
            motion=lambda t: Tf(dx=-7 * t))
 
     # =============================================================== page 1: Jacob sends Joseph
-    JX = 820
+    JX = 880
 
     def jac(pose, expr=None):
         return C.ground_shadow(JX, GY, SC, 120) + C.jacob(JX, GY, SC, 1, pose=pose, expr=expr)
@@ -471,11 +477,12 @@ def build(ctx):
     # =============================================================== page 3: the coat, the pit
     def bro3(v, x, f, pose, expr):
         return p3_bro(OX3, v, x, f, pose, expr)
-    # brothers (Judah, v3, holds the rope)
-    others = [b for b in P3_BROS if b[0] != 3]
+    # brothers (Levi, v2, holds the rope)
+    others = [b for b in P3_BROS if b[0] != ROPER]
     left = [b for b in others if b[1] < PX]
     right = [b for b in others if b[1] > PX]
-    for name, grp, z, ph in (("b3_left", left, 2.4, 0.2), ("b3_right", right, 2.4, 0.5)):
+    for name, grp, z, ph in ((("b3_right", right, 2.4, 0.5),) if not left else
+                             (("b3_left", left, 2.4, 0.2), ("b3_right", right, 2.4, 0.5))):
         cx = OX3 + sum(b[1] for b in grp) / len(grp)
         fr = ["".join(bro3(v, x, f, "cross_arms", "angry") for v, x, f in grp),
               "".join(bro3(v, x, f, "stand", "neutral") for v, x, f in grp),
@@ -487,16 +494,16 @@ def build(ctx):
                bumps=[dip(snap(t_hang + ph), SC, (cx, GS), 4), dip(snap(t_away + ph * 0.4), SC, (cx, GS), 6),
                       stomp(snap(t_coat_land + 0.05), SC, (cx, GS), 5)],
                breathe=(0.008, 2.9, ph), extra=show(t_cut3))
-    jv, jx3, jf = [b for b in P3_BROS if b[0] == 3][0]
+    jv, jx3, jf = [b for b in P3_BROS if b[0] == ROPER][0]
     jfr3 = [bro3(jv, jx3, jf, "cross_arms", "angry"), bro3(jv, jx3, jf, "pull", "determined"),
             bro3(jv, jx3, jf, "stand", "neutral"), bro3(jv, jx3, -jf, "stand", "neutral"),
             bro3(jv, jx3, jf, "stand", blink_expr("neutral"))]
     jb3 = with_blinks([(0, 0), (snap(t_drop + 0.2), 1), (t_rope_up + 0.45, 2), (t_away, 3)], {2: 4}, [t_dry + 0.6])
-    sprite(sc, "judah", 2.45, [doc(f) for f in jfr3], (OX3 + jx3, GS), base=jb3, docf=doc,
+    sprite(sc, "roper", 2.45, [doc(f) for f in jfr3], (OX3 + jx3, GS), base=jb3, docf=doc,
            bumps=[dip(snap(t_drop + 0.2), SC, (OX3 + jx3, GS), 6), dip(t_rope_up + 0.45, SC, (OX3 + jx3, GS), 6),
                   dip(t_away, SC, (OX3 + jx3, GS), 6)],
            breathe=(0.01, 2.7, 0.1), extra=show(t_cut3))
-    # the rope: from Judah's fists to the rim, then down the shaft to Joseph's hand
+    # the rope: from the roper's fists to the rim, then down the shaft to Joseph's hand
     fists = C.hand_positions(C.brothers, OX3 + jx3, GS, SC, jf, variant=jv, pose="pull")
     rx = OX3 + PX + ROPE_X_OFF
     rim = (OX3 + PX - 118, GC - 6)
