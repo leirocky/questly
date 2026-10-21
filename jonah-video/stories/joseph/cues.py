@@ -568,8 +568,8 @@ def question(c):
     t_fall = pic(c, "thud", "小朋友")
     if t_fall is not None:
         sg, q = seg_at(c, segs, t_fall)
-        thump(sg, q, vel=46, kit=False)
-        sg.add("pz_lo", q, _dq(sg, q, 0.5), top(sg, q, 43, 55, 0), 50, "bass", "h")
+        thump(sg, q, vel=56)
+        sg.add("pz_lo", q, _dq(sg, q, 0.5), top(sg, q, 43, 55, 0), 58, "bass", "h")
         sg.sync("she stumbles back hugging it", q, t_fall)
     t_cloud = pic(c, "pop", "小朋友")
     if t_cloud is not None:
@@ -592,7 +592,7 @@ def question(c):
     for sg in segs:
         sg.expr(["pz_hi", "pz_lo", "celesta"], [(0, -12), (sg.n_q, -12)])
         sg.expr(["hand", "okit"], [(0, -13), (sg.n_q, -13)])
-        sg.expr(["timp", "pz_cb"], [(0, -12), (sg.n_q, -12)])
+        sg.expr(["timp", "pz_cb"], [(0, -10), (sg.n_q, -10)])
 
 
 def coat(c):
@@ -656,13 +656,18 @@ def coat(c):
     for k, q in enumerate(qs12):                          # twelve sons: twelve harp notes up the chord
         nq = qs12[k + 1] if k + 1 < 12 else a.n_q
         ts = a.chord_at(q + 1e-3).tones(55, 100)
-        a.add("harp", q, _dq(a, q, max(0.25, nq - q)), ts[min(k, len(ts) - 1)], 36 + k, "arp", "h")
+        a.add("harp", q, _dq(a, q, max(0.25, nq - q)), ts[min(k, len(ts) - 1)], 54 if k in (0, 11) else 34 + k,
+              "arp", "h")
+        if k in (0, 11):                                  # the first son, and little Benjamin: a pluck and a glint
+            a.add("pz_hi", q, _dq(a, q, 0.25), top(a, q, 62, 74), 58, "arp", "h")
+            if k == 11:
+                a.add("glock", q, _dq(a, q, 1.0), top(a, q, 86, 98), 50, "arp", "h")
     if None not in sons:
         a.sync("son 1 pops up", qs12[0], sons[0])
         a.sync("son 12 (Benjamin) pops up", qs12[11], sons[11])
     a.duck(2.0, parts=["vc"])
     a.expr(["vc"], [(0, -14), (1, -11), (8, -11)])
-    a.expr(["harp"], [(0, -11), (8, -11)])
+    a.expr(["harp", "pz_hi", "glock"], [(0, -11), (8, -11)])
     a.expr(["vla", "vln2", "vln1", "cb"], [(0, -17), (2, -15), (8, -15)])
     # Jacob loved Joseph, his eleventh son, most: Joseph's theme on the clarinet, harp
     b.mel("clar", bars(JOSEPH, 0, 2), vel=58)
@@ -726,15 +731,15 @@ def coat(c):
     f.expr(["pz_lo"], [(0, -12), (4, -12)])
     # their hearts went sour: the jealousy motif (bassoon), plucked basses, a low clarinet's grumbling question
     jealous(j, 0, 0, vel=60)
-    jealous(j, 4, 1, vel=58)
+    j.mel("bsn", JEALOUS[1].replace("A3:1:s", "A3:1"), q=4, vel=58)
     j.mel("pz_cb", "E2:1:s r:1 B1:1:s r:1 | A1:1:s r:1 B1:1:s r:1", vel=54, role="bass")
     j.add("hand", 0, 0.25, 77, 46, "perc", "h")
-    j.mel("clar", "r:4 | r:2 D#4:1/2:s F#4:1/2:s A4:1/2:s B4:1/2:s", vel=50)
+    j.mel("clar", "r:4 | r:2 D#4:1/2:s F#4:1/2:s A4:1/2:s B4:1/2", vel=50)
     j.pad(["vla", "vln2"], 2, 52, 67, vel=32, bass_ref=(40, 52))
-    j.expr(["bsn"], [(0, -10), (6, -11), (8, -16)])
+    j.expr(["bsn"], [(0, -12), (6, -12), (8, -16)])
     j.expr(["clar"], [(0, -13), (6, -13), (8, -18)])
     j.expr(["pz_cb", "hand"], [(0, -11), (6, -12), (8, -16)])
-    j.expr(["vla", "vln2"], [(0, -18), (8, -18)])
+    j.expr(["vla", "vln2"], [(0, -15), (6, -15), (8, -14)])
 
 
 def dream(c):
@@ -874,7 +879,6 @@ def pit(c):
     p.prog("Am:4 | Em:2 B7:2@E-minor+")
     e.prog("Em:2")
     s.sync("'剥下约瑟的彩衣': C (the coat torn off)", 0, t_strip, kind="change")
-    s.sync("'剥下约瑟的彩衣': the coat motif falls", 0, t_strip)
     # father sent Joseph to see his brothers far away: the theme in G, walking pizzicato
     a.mel("clar", bars(JOSEPH, 0, 2), vel=56, transpose=5)
     walk(a, "pz_lo", 0, 8, 43, 62, vel=50)
@@ -949,7 +953,7 @@ def pit(c):
             sg.expr(["pz_lo", "hand"], [(0, -12), (sg.n_q, -12)])
     # 'brothers! let me out!': the sad motif on a solo oboe
     e.pad(["vla", "vln2"], 2, 48, 64, vel=34, bass_part="vc", bass_lo=40, bass_hi=52)
-    e.expr(["vla", "vln2", "vc"], [(0, -16), (2, -18)])
+    e.expr(["vla", "vln2", "vc"], [(0, -14), (2, -16)])
 
 
 def sold(c):
@@ -1191,10 +1195,6 @@ def prison(c):
     t_light = pic(c, "chime", "能解梦的", lo=t_god - 0.1, hi=c.dur - 0.3)    # he points up: the light glows
     q_l = qpos(s, c, t_light) if t_light is not None else 0.0
     harp_roll(s, q_l, ["Bb2", "F3", "Bb3", "D4", "F4", "Bb4"], vel=42)
-    if t_light is not None and q_l > 0.02:
-        s.sync("the window light glows ('是上帝')", q_l, t_light)
-    else:
-        s.sync("'是上帝': the harp", 0, t_god)
     for kk, what in enumerate(("the cupbearer's dream bubble", "the baker's dream bubble")):
         t = pic(c, "pop", "在监牢里", kk, hi=t_solve)
         if t is not None:
@@ -1299,6 +1299,8 @@ def pharaoh(c):
     else:
         th.mel("vln_mel", "A5:1/2:s F5:1/2:s D5:1/2:s F5:1/2:s A5:1/2:s D6:1/2:s", vel=52)
     th.mel("pz_hi", "D5:1:s A4:1:s F4:1:s", vel=44, role="arp")
+    th.pad(["trem_hi", "trem_hi"], 2, 69, 86, vel=34, bass_ref=(38, 50))
+    th.expr(["trem_hi"], [(0, -17), (3, -18)])
     th.expr(["vln_mel"], [(0, -12), (3, -12)])
     th.expr(["pz_hi"], [(0, -11), (3, -11)])
     # 吃掉了! gulp-gulp-gulp (on the picture; without it, on the word): plucked basses, bassoon, a woodblock
@@ -1308,10 +1310,10 @@ def pharaoh(c):
     for k, t in enumerate(gulps[:4]):
         sg, q = seg_at(c, (th, g, n), t)
         ch = sg.chord_at(q + 1e-3)
-        sg.add("pz_cb", q, _dq(sg, q, 0.25), ch.bass_note(33, 45), 60 - 2 * k, "bass", "h")
+        sg.add("pz_cb", q, _dq(sg, q, 0.25), ch.bass_note(33, 45), (62, 54, 50, 44)[k], "bass", "h")
         nm = low[k] if midi(low[k]) % 12 in ch.pcset else name_of(top(sg, q, 40, 52, 0))
-        sg.add("bsn", q, _dq(sg, q, 0.25), nm, 54 - 2 * k, "harmony", "s")
-        drum(sg, q, 77 if k % 2 == 0 else 76, 52 - 2 * k)
+        sg.add("bsn", q, _dq(sg, q, 0.25), nm, (56, 50, 47, 40)[k], "harmony", "s")
+        drum(sg, q, 77, (54, 48, 45, 38)[k])          # each gulp a little smaller
         if k == 0:
             sg.add("tuba", q, _dq(sg, q, 0.5), ch.bass_note(29, 41), 58, "bass", "h")
             sg.add("timp", q, _dq(sg, q, 0.5), timp_pitch(ch, midi("A2")), 54, "timp", "h")
@@ -1323,24 +1325,25 @@ def pharaoh(c):
         sg_.expr(["okit", "hand"], [(0, -12), (sg_.n_q, -12)])
     g.expr(["vla", "vln2"], [(0, -18), (2, -18)])
     # Pharaoh wakes with a start; nobody could explain the dream: three wise men shrug, one after another
-    t_wake = pic(c, "cloth", "没有人能解", lo=t_none - 0.4, hi=t_jo - 1.5)
-    if t_wake is not None:
-        sg, q = seg_at(c, (g, n), t_wake)
+    wake = picture(c, "cloth", t_gulp + 0.3, t_none + 0.4) or []
+    if wake:                                              # the last rustle before the throne hall: he sits up
+        sg, q = seg_at(c, (g, n), wake[-1])
         pluck_chord(sg, q, vel=54, lo=55, hi=67)
         sg.add("timp", q, _dq(sg, q, 0.5), timp_pitch(sg.chord_at(q + 1e-3), midi("D3")), 46, "timp", "h")
-        sg.sync("Pharaoh wakes with a start", q, t_wake)
-    shrugs = [pic(c, "cloth", "没有人能解", k, lo=t_none, hi=t_jo - 0.3) for k in (1, 2, 3)]
-    if None in shrugs or n.q_of(c.t0 + shrugs[-1]) > 1.8:
+    cand = picture(c, "cloth", c.ls(c.find("没有人能解")) - 0.3) or []
+    shrugs = [t for t in cand if t_none + 0.3 <= t <= t_jo - 0.3][:3]
+    if len(shrugs) < 3 or n.q_of(c.t0 + shrugs[-1]) > n.n_q - 1.6:
         q_sh = [0.5, 0.9, 1.3]
         shrugs = [None, None, None]
     else:
         q_sh = [n.q_of(c.t0 + t) for t in shrugs]
-    for k, (q, nm) in enumerate(zip(q_sh, ["D3", "G3", "Bb3"])):
-        n.add("bsn", q, 0.25, nm, 54 - 2 * k, "melody", "s")
-        n.add("pz_lo", q, 0.25, top(n, q, 43, 55, 0), 46, "bass", "s")
+    for k, q in enumerate(q_sh):                          # each shrug a little higher: 'hm?'
+        n.add("bsn", q, 0.25, top(n, q, 50, 60, k), 60 if k == 0 else 52, "harmony", "s")
+        n.add("pz_lo", q, 0.25, top(n, q, 43, 55, 0), 58 if k == 0 else 48, "bass", "h")
     if shrugs[0] is not None:
-        n.sync("the first wise man shrugs", q_sh[0], shrugs[0])
-    n.mel("bsn", "r:5/2 E3:1/2:s C#3:1:s", vel=50)
+        pluck_chord(n, q_sh[0], vel=54, lo=55, hi=67)
+        n.sync(f"the first wise man shrugs (cloth #{cand.index(shrugs[0])})", q_sh[0], shrugs[0])
+    n.mel("bsn", "r:3 E3:1/2:s C#3:1/2:s", vel=50)
     n.pad(["vla", "vln2"], 2, 52, 69, vel=32, bass_ref=(31, 43))
     n.mel("cb", "G1:2 A1:2", vel=36, role="bass")
     t_idea = pic(c, "sparkle", "没有人能解", lo=t_none, hi=t_jo + 0.6)     # the cupbearer's idea (a gold star)
@@ -1478,15 +1481,17 @@ def ruler(c):
     b.expr("okit", [(0, -14), (8, -14)])
     b.expr(STR, [(0, -16), (8, -16)])
     # he walks out and hops into the great chariot: Em7 A7, a snare roll, a thump as he lands
-    roll(k, 0.2, k.n_q - 0.05, 38, 18, 32, rate=12)
+    t_land = pic(c, "thud", "约瑟穿上了", lo=t_chariot, hi=t_go - 0.05)
+    q_end = k.n_q - 0.45 if t_land is None else min(k.n_q - 0.45, k.q_of(c.t0 + t_land) - 0.45)
+    if q_end > 0.6:
+        roll(k, 0.2, q_end, 38, 18, 30, rate=12)
     k.pad(["vla", "vln2", "vln1"], 3, 57, 76, vel=36, bass_part="vc", bass_lo=50, bass_hi=62)
     k.mel("cb", "E2:1 A2:1", vel=38, role="bass")
-    t_land = pic(c, "thud", "约瑟穿上了", lo=t_chariot, hi=t_go - 0.05)
     if t_land is not None:
         sg, q = seg_at(c, (k, p), t_land)
         thump(sg, q, vel=50)
         sg.sync("Joseph lands in the chariot", q, t_land)
-    k.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -17), (2, -15)])
+    k.expr(["vla", "vln2", "vln1", "vc", "cb"], [(0, -14), (2, -14)])
     k.expr("okit", [(0, -14), (2, -12)])
     k.expr(["timp", "pz_cb"], [(0, -11), (2, -11)])
     # the horse sets off (the herald's horn on the picture): the processional; the brass enters after the horn call
@@ -1495,15 +1500,16 @@ def ruler(c):
     oompah(p, 0, 8, vel=50, bass="tuba", blo=33, bhi=45)
     snare(p, 0, 8, vel=30)
     for q in (0, 4):
-        p.add("timp", q, 0.5, timp_pitch(p.chord_at(q + 1e-3), midi("D3")), 50 if q == 0 else 44, "timp", "h")
-        p.add("okit", q, 1, 36, 48 if q == 0 else 40, "perc", "h")
+        p.add("timp", q, 0.5, timp_pitch(p.chord_at(q + 1e-3), midi("D3")), 56 if q == 0 else 44, "timp", "h")
+        p.add("okit", q, 1, 36, 54 if q == 0 else 40, "perc", "h")
+    pluck_chord(p, 0, vel=56, lo=62, hi=74)
     t_silo = pic(c, "grow", "七年丰收", lo=t_go, hi=t_mount - 0.3)      # the granary silos fill: a harp sweep up
     if t_silo is not None:
         q = qpos(p, c, t_silo)
         gliss_in(p, "harp", q, 0.6, midi("A3"), midi("A5"), v0=28, v1=40, scale=ChordTones(p.chord_at(q + 1e-3)))
     p.pad(["vla", "vln2", "vln1"], 3, 55, 74, vel=34, bass_ref=(33, 45))
     p.duck(3.5, parts=["brass", "flute"])
-    p.expr(["brass", "flute"], [(0, -13), (8, -14)])
+    p.expr(["brass", "flute"], [(0, -15), (8, -16)])
     p.expr(["tuba", "pz_hi"], [(0, -13), (8, -14)])
     p.expr(["timp", "harp"], [(0, -10), (8, -12)])
     p.expr("okit", [(0, -12), (8, -13)])
@@ -1522,7 +1528,7 @@ def ruler(c):
         m.sync("the top of the grain mountain glints", q_top, t_top)
     strings(m, vel=42, lo=57, hi=76)
     m.duck(2.5, parts=["vln_mel", "flute"])
-    m.expr(["vln_mel", "flute"], [(0, -15), (4, -15)])
+    m.expr(["vln_mel", "flute"], [(0, -17), (4, -17)])
     m.expr(["timp", "glock"], [(0, -12), (4, -12)])
     m.expr(STR, [(0, -15), (4, -14)])
 
@@ -1739,11 +1745,13 @@ def end(c):
     for kk, (q, nm) in enumerate(zip(qp, ["D5", "E5", "C#5"])):
         q_end = qp[kk + 1] if kk < 2 else a.n_q
         a.add("clar", q, q_end - q, nm, 46, "melody")
-        a.add("pz_hi", q, _dq(a, q, 0.5), top(a, q, 62, 74), 50, "arp", "h")
-        a.add("harp", q, _dq(a, q, 1.0), top(a, q, 50, 62, 0), 44, "arp", "h")
+        a.add("pz_hi", q, _dq(a, q, 0.5), top(a, q, 62, 74), 62 if kk == 0 else 58, "arp", "h")
+        if kk == 0:
+            a.add("celesta", q, _dq(a, q, 1.0), top(a, q, 74, 86), 48, "arp", "h")
+        a.add("harp", q, _dq(a, q, 1.0), top(a, q, 50, 62, 0), 52, "arp", "h")
         if have and abs(a.t(q) - (c.t0 + panels[kk])) < 0.03:
             a.sync(f"panel {kk + 1} pops onto the string", q, panels[kk])
-    a.expr(["pz_hi", "harp"], [(0, -12), (6, -12)])
+    a.expr(["pz_hi", "harp", "celesta"], [(0, -10), (6, -10)])
     a.pad(["vla", "vln2", "vln1"], 3, 50, 69, vel=34, bass_part="vc", bass_lo=40, bass_hi=52)
     a.expr(["clar"], [(0, -15), (6, -15)])
     a.expr(["vla", "vln2", "vln1", "vc"], [(0, -16), (6, -17)])
@@ -1857,4 +1865,60 @@ REQUIRED_HITS = [
 # None, index, offset s, kind, what)): the scenes' own sound-effect cues, keyed to the animation.  Filled in as the
 # scenes are drawn.
 PICTURE_HITS = [
+    ("s01_title", "sparkle", "圣经绘本", 0, 0.0, "hit", "the coat twinkles ('彩衣')"),
+    ("s02_question", "cloth", "小朋友", 0, 0.0, "hit", "the sister grabs the toy horse"),
+    ("s02_question", "thud", "小朋友", 0, 0.0, "hit", "she stumbles back hugging it"),
+    ("s02_question", "pop", "小朋友", 0, 0.0, "hit", "the little storm cloud pops up ('很久很久')"),
+    ("s02_question", "sparkle", "今天的故事里", 0, 0.0, "hit", "the coat's sparkle burst ('很了不起的事')"),
+    ("s03_coat", "pop", "很久以前", 0, 0.0, "hit", "son 1 pops up"),
+    ("s03_coat", "pop", "很久以前", 11, 0.0, "hit", "son 12 (Benjamin) pops up"),
+    ("s03_coat", "sparkle", "雅各最疼爱的", 0, 0.0, "hit", "the warm heart ('最疼爱的')"),
+    ("s03_coat", "sparkle", "红", 0, 0.0, "hit", "colour band 1 (红)"),
+    ("s03_coat", "sparkle", "红", 1, 0.0, "hit", "colour band 2 (黄)"),
+    ("s03_coat", "sparkle", "红", 2, 0.0, "hit", "colour band 3 (蓝)"),
+    ("s03_coat", "sparkle", "红", 3, 0.0, "hit", "colour band 4 (绿)"),
+    ("s03_coat", "chime", "红", 0, 0.0, "hit", "'好漂亮': Joseph wears the coat (D major)"),
+    ("s04_dream", "chime", "有一天晚上", 0, 0.0, "hit", "the dream bubble opens"),
+    ("s04_dream", "grow", "我梦见", 0, 0.0, "hit", "Joseph's sheaf stands up"),
+    ("s04_dream", "sparkle", "我梦见", 0, 0.0, "hit", "the sheaf glows"),
+    ("s04_dream", "chime", "我梦见", 0, 0.0, "hit", "the sheaves bow: the glow"),
+    ("s04_dream", "thud", "哥哥们听了", 0, 0.0, "hit", "the brothers stamp ('更生气了')"),
+    ("s05_pit", "sparkle", "哥哥们远远看见", 0, 0.0, "hit", "the coat glints far away"),
+    ("s05_pit", "whoosh", "他们剥下", 0, 0.0, "hit", "the coat flies (a swish)"),
+    ("s05_pit", "cloth", "他们剥下", 0, 0.0, "hit", "the coat lands on the grass"),
+    ("s05_pit", "thud", "他们剥下", 0, 0.0, "hit", "Joseph lands in the pit"),
+    ("s05_pit", "thud", "他们剥下", 1, 0.0, "hit", "he scuffs the dry floor (dust)"),
+    ("s08_egypt", "thud", "在埃及", 0, 0.0, "hit", "the grain sack drops on the pile (咚)"),
+    ("s08_egypt", "coins", "约瑟做事很认真", 0, 0.0, "hit", "the master gives him the keys"),
+    ("s08_egypt", "coins", "约瑟做事很认真", 1, 0.0, "hit", "he holds the keys up (jingle)"),
+    ("s08_egypt", "coins", "后来，约瑟被人冤枉", 0, 0.0, "hit", "the keys fall (clink)"),
+    ("s08_egypt", "thud", "后来，约瑟被人冤枉", 0, 0.0, "hit", "the prison gate clangs shut"),
+    ("s09_prison", "pop", "在监牢里", 0, 0.0, "hit", "the cupbearer's dream bubble"),
+    ("s09_prison", "pop", "在监牢里", 1, 0.0, "hit", "the baker's dream bubble"),
+    ("s09_prison", "sparkle", "在监牢里", 0, 0.0, "hit", "it all came true (the sunny bubble)"),
+    ("s10_pharaoh", "chime", None, 0, 0.0, "hit", "the dream bubble blooms"),
+    ("s10_pharaoh", "gulp", None, 0, 0.0, "hit", "gulp 1 ('吃掉了')"),
+    ("s10_pharaoh", "gulp", None, 1, 0.0, "hit", "gulp 2"),
+    ("s10_pharaoh", "gulp", None, 2, 0.0, "hit", "gulp 3"),
+    ("s10_pharaoh", "gulp", None, 3, 0.0, "hit", "gulp 4"),
+    ("s10_pharaoh", "cloth", "没有人能解", 0, 0.0, "hit", "the first wise man shrugs"),
+    ("s10_pharaoh", "sparkle", "没有人能解", 0, 0.0, "hit", "the cupbearer's idea (a gold star)"),
+    ("s10_pharaoh", "sparkle", "上帝告诉你", 0, 0.0, "hit", "the golden fields glint ('七年大丰收')"),
+    ("s10_pharaoh", "sparkle", "上帝告诉你", 1, 0.0, "hit", "the golden row glows ('要趁丰收的时候')"),
+    ("s10_pharaoh", "thud", "上帝告诉你", 0, 0.0, "hit", "sack 1 lands in the granary"),
+    ("s10_pharaoh", "thud", "上帝告诉你", 1, 0.0, "hit", "sack 2 lands in the granary"),
+    ("s11_ruler", "sparkle", "上帝和你同在", 0, 0.0, "hit", "the ring's glint ('管理全埃及')"),
+    ("s11_ruler", "sparkle", "约瑟穿上了", 0, 0.0, "hit", "the robes (sparkle burst)"),
+    ("s11_ruler", "sparkle", "约瑟穿上了", 1, 0.0, "hit", "the gold chain's twinkle"),
+    ("s11_ruler", "thud", "约瑟穿上了", 0, 0.0, "hit", "Joseph lands in the chariot"),
+    ("s11_ruler", "horn", "约瑟穿上了", 0, 0.1, "hit", "the horse sets off with the herald's horn: the processional"),
+    ("s11_ruler", "sparkle", "七年丰收", 0, 0.0, "hit", "the top of the grain mountain glints"),
+    ("s14_end", "pop", "约瑟被卖", 0, 0.0, "hit", "panel 1 pops onto the string ('被卖')"),
+    ("s14_end", "pop", "约瑟被卖", 1, 0.0, "hit", "panel 2 ('被冤枉')"),
+    ("s14_end", "pop", "约瑟被卖", 2, 0.0, "hit", "panel 3 ('被关进监牢')"),
+    ("s14_end", "chime", "约瑟被卖", 0, 0.0, "hit", "the golden light in the panels"),
+    ("s14_end", "sparkle", "上帝可以", 0, 0.0, "hit", "they hug: the cloud turns sunny"),
+    ("s14_end", "chime", "上帝可以", 0, 0.0, "hit", "the picture of Joseph and his brother glows up"),
+    ("s14_end", "sparkle", "上帝可以", 1, 0.0, "hit", "she shares the toy horse"),
+    ("s14_end", "chime", "上帝可以", 1, 0.0, "hit", "the end card"),
 ]
