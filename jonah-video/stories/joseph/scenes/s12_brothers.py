@@ -40,10 +40,10 @@ INK = P["ink"]
 G = 960                     # everybody's ground line
 SC = 0.9                    # everybody's scale
 # ---- Canaan
-X0 = 1760                   # the leading brother in the caravan
-LINE = [(0, 0), (3, -132), ("donkey", -290), (1, -450), (2, -582), (4, -714), ("donkey", -872), (5, -1032),
-        (6, -1164), (7, -1296), (8, -1428), (9, -1560)]
-JACOB = (470, 902, 0.82)    # Jacob (back plane, by the tents); Benjamin beside him
+X0 = 1850                   # the leading brother in the caravan
+LINE = [(0, 0), (3, -120), ("donkey", -272), (1, -425), (2, -545), (4, -665), ("donkey", -817), (5, -970),
+        (6, -1090), (7, -1210), (8, -1330), (9, -1450)]
+JACOB = (300, 960, 0.9)     # Jacob at the tents on the left; Benjamin beside him
 # ---- the hall
 HALL_L = 2470               # the hall's left wall (a doorway in it)
 CHX = 4240                  # Joseph's seat (faces left)
@@ -70,13 +70,28 @@ def brother_pos(k):
 # ============================================================================ Canaan backdrop
 
 
+SUN = (1420, 250)
+
+
 def canaan_sky_svg():
-    defs = S.lin_grad("sky12", [(0, "#e9c88e"), (0.55, "#f3dcae"), (1, "#f8e8c6")])
+    """A hot, dusty famine sky: ochre to pale cream, thin dust streaks, a big sun."""
+    defs = S.lin_grad("sky12", [(0, "#dd9c5c"), (0.45, "#efc283"), (0.8, "#f6dcab"), (1, "#f8e6c2")])
     defs += S.rad_grad("sun12", [(0, "#fff0c0", 0.95), (0.3, "#f9cf7a", 0.55), (1, "#f9cf7a", 0)])
     body = f'<rect x="-20" y="-20" width="2420" height="900" fill="url(#sky12)"/>'
-    body += (f'<circle cx="1480" cy="210" r="520" fill="url(#sun12)"/>'
-             f'<circle cx="1480" cy="210" r="96" fill="#f8c35a" stroke="#e48f3a" stroke-width="6" filter="url(#wobble)"/>')
+    body += f'<circle cx="{SUN[0]}" cy="{SUN[1]}" r="560" fill="url(#sun12)"/>'
+    rng = random.Random(5)
+    for i in range(9):
+        x, y, w = rng.uniform(-100, 2200), rng.uniform(90, 560), rng.uniform(260, 520)
+        body += (f'<path d="M{f1(x)},{f1(y)} q{f1(w * 0.5)},-14 {f1(w)},0" fill="none" stroke="#f9e2b4" '
+                 f'stroke-width="{rng.randint(9, 16)}" stroke-linecap="round" opacity="0.7"/>')
+    body += (f'<circle cx="{SUN[0]}" cy="{SUN[1]}" r="104" fill="#f8c35a" stroke="#e48f3a" stroke-width="6" '
+             f'filter="url(#wobble)"/><circle cx="{SUN[0] - 30}" cy="{SUN[1] - 30}" r="34" fill="#fbd884" opacity="0.8"/>')
     return doc(body, defs)
+
+
+def sun_rays_svg():
+    d = S.rays(SUN[0], SUN[1], 140, 420, n=14, width_deg=8)
+    return doc(f'<path d="{d}" fill="#fbd27a" opacity="0.55" filter="url(#soft)"/>')
 
 
 def canaan_land_svg():
@@ -95,9 +110,6 @@ def canaan_land_svg():
             y += rng.uniform(4, 18)
             d += f" L{f1(x)},{f1(y)}"
         out += f'<path d="{d}" fill="none" stroke="#9a7046" stroke-width="2.6" opacity="0.65"/>'
-    # Jacob's tents
-    out += PR.tent(230, 860, 0.62, 1, flag=False) + PR.tent(700, 850, 0.5, -1, flag=False)
-    out += bare_tree(2120, 900, 1.0) + bare_tree(90, 880, 0.75)
     for x, y, v in ((980, 1110, 1), (1600, 1150, 2), (300, 1140, 0), (2250, 1080, 1)):
         out += PR.grass_tuft(x, y, 0.7, variant=v)
     return doc(out, defs)
@@ -119,6 +131,13 @@ def bare_tree(x, y, s):
         tx, ty = x1 + 26 * s * math.cos(r - 0.6), y1 + 26 * s * math.sin(r - 0.6)
         out += f'<path d="M{f1(x1)},{f1(y1)} L{f1(tx)},{f1(ty)}" stroke="{dark}" stroke-width="{f1(4 * s)}" stroke-linecap="round"/>'
     return S.g(out, filter="wobble-fine")
+
+
+def canaan_props_svg():
+    """Jacob's tents and the bare trees (in front of the field band)."""
+    out = PR.tent(-60, 860, 0.5, -1, flag=False) + PR.tent(250, 884, 0.66, 1, flag=False)
+    out += bare_tree(2150, 905, 1.0) + bare_tree(660, 830, 0.62) + bare_tree(1250, 800, 0.45)
+    return doc(out)
 
 
 def canaan_field_svg(dry):
@@ -223,6 +242,40 @@ def hall_back_svg():
     return doc(S.g(out, filter="wobble"), defs)
 
 
+BANNERS = [(3045, 214), (4100, 214)]
+
+
+def banner_svg(x, y):
+    """A long red-and-gold cloth banner hanging from the frieze (it sways a little)."""
+    w, h = 96, 330
+    out = f'<rect x="{x - w / 2 - 10}" y="{y - 8}" width="{w + 20}" height="16" rx="6" fill="{P["wood"]}" stroke="{INK}" stroke-width="4"/>'
+    body = f"M{x - w / 2},{y} L{x + w / 2},{y} L{x + w / 2},{y + h} L{x},{y + h + 40} L{x - w / 2},{y + h} Z"
+    out += S.path(body, "#c0473b", sw=4)
+    for k, yy in enumerate((y + 40, y + 120, y + 200, y + 280)):
+        out += f'<rect x="{x - w / 2 + 3}" y="{yy}" width="{w - 6}" height="14" fill="#e8c25a"/>'
+    out += (f'<circle cx="{x}" cy="{y + 160}" r="24" fill="#e8c25a" stroke="{INK}" stroke-width="3"/>'
+            f'<circle cx="{x}" cy="{y + 160}" r="10" fill="#3f6fa8"/>')
+    for k in range(7):
+        xx = x - w / 2 + 8 + k * (w - 16) / 6
+        yy = y + h + 40 * (1 - abs(xx - x) / (w / 2))
+        out += f'<path d="M{f1(xx)},{f1(yy - 4)} l0,22" stroke="#e8c25a" stroke-width="5" stroke-linecap="round"/>'
+    return doc(S.g(out, filter="wobble-fine"))
+
+
+def add_banners(sc, ctx, z=10.2):
+    """The banners sway on GLOBAL film time, so s12's end and s13's start match in the cross-dissolve."""
+    for i, (x, y) in enumerate(BANNERS):
+        sc.add(f"banner{i}", banner_svg(x, y), z=z, seed=125 + i,
+               motion=lambda t, x=x, y=y, i=i: Tf(rot=1.6 * math.sin(2 * math.pi * ((ctx.start + t) / 3.4 + 0.37 * i)),
+                                                  px=x, py=y))
+
+
+def hall_light_svg():
+    """Daylight falling in through the doorway (static, shared with s13 so the dissolve matches)."""
+    return doc(f'<path d="M2600,350 L2800,350 L3150,{G + 20} L2650,{G + 20} Z" fill="#fff3c8" opacity="0.45" '
+               f'filter="url(#blur-md)"/>')
+
+
 def hall_front_svg():
     """Foreground: a big column at the far left of the hall shot and a jar of grain at the right."""
     out = PR.egypt_column(2700, SH + 60, 1.85, height=520)
@@ -290,23 +343,24 @@ def build(ctx):
     t_jrise = snap(L2.start + 1.2)                      # Joseph's sheaf stands up and glows
     t_sbow = snap(L2.at("哥哥们的麦捆") + 0.1)           # the sheaves bow
     t_true = snap(L2.at("现在真的发生了") + 0.05)          # it has come true
-    t_bub_out = L2.end + 0.25
+    t_bub_out = min(L2.end - 0.3, T - 1.6)          # the bubble fades
+    t_back = t_true + 0.5                               # the camera settles back on the hall shot
 
     # ---- camera ----
-    CA = Cam(1000, 600, 1950)
-    CA2 = Cam(1240, 600, 1950)
+    CA = Cam(1010, 636, 1860)
+    CA2 = Cam(1250, 636, 1860)
     CJ = Cam(3880, 640, 1640)                           # closer: Joseph and the front brothers
     CW = Cam(3640, 594, 2080)                           # the dream and the bowing brothers together
 
     def cam(t):
         if t < t_dip:
             u = M.progress(t, t_go - 0.2, t_dip + 0.3, "sine")
-            c = Cam(M.lerp(CA.x, CA2.x, u), 600, 1950)
+            c = Cam(M.lerp(CA.x, CA2.x, u), CA.y, CA.w)
         else:
             c = CH
             k1 = M.progress(t, t_rise - 0.3, t_rise + 1.0, "sine") * (1 - M.progress(t, t_bub - 0.6, t_bub + 0.6, "sine"))
             c = Cam(M.lerp(c.x, CJ.x, k1), M.lerp(c.y, CJ.y, k1), M.lerp(c.w, CJ.w, k1))
-            k2 = M.progress(t, t_bub - 0.3, t_bub + 1.0, "sine") * (1 - M.progress(t, t_bub_out - 0.2, t_bub_out + 1.2, "sine"))
+            k2 = M.progress(t, t_bub - 0.3, t_bub + 1.0, "sine") * (1 - M.progress(t, t_back, min(T - 0.8, t_back + 1.5), "sine"))
             c = Cam(M.lerp(c.x, CW.x, k2), M.lerp(c.y, CW.y, k2), M.lerp(c.w, CW.w, k2))
         return clamp_cam(c, SW, SH)
     sc.camera = cam
@@ -326,10 +380,13 @@ def build(ctx):
            z=0.2, wc=0, blend="screen",
            motion=lambda t: Tf(alpha=0.35 + 0.65 * M.progress(t, t_famine, t_famine + 1.6, "sine")
                                + 0.08 * math.sin(2 * math.pi * t / 1.7)))
+    sc.add("c_rays", sun_rays_svg(), z=0.1, wc=0, blend="screen",
+           motion=lambda t: Tf(rot=4 * t, px=SUN[0], py=SUN[1], alpha=0.6 + 0.4 * M.progress(t, t_famine, t_famine + 1.5)))
     sc.add("c_land", canaan_land_svg(), z=1, seed=102)
     drys = [0.0, 0.25, 0.5, 0.75, 1.0]
     sc.add("c_field", [canaan_field_svg(d) for d in drys], z=1.1, seed=103,
            frame_at=lambda t: float(min(4, max(0, int((t - t_famine) / 0.3) + 1))) if t >= t_famine else 0.0)
+    sc.add("c_props", canaan_props_svg(), z=1.12, seed=108)
     sc.add("c_shimmer", [shimmer_svg(k) for k in range(3)], z=1.15, wc=0, frame_at=lambda t: float(int(t * 5) % 3),
            motion=lambda t: Tf(alpha=0.7 * M.progress(t, t_famine + 0.3, t_famine + 1.5, "sine")
                                * (1 - M.progress(t, t_dip, t_dip + 0.1))))
@@ -353,11 +410,11 @@ def build(ctx):
            motion=M.combine(M.breathe(0.015, 2.5, pivot=(bx, jy)), dip(snap(t_go + 0.4), js, (bx, jy), 4)))
 
     # the empty jar topples over at '没有粮食吃'
-    jar_x, jar_y = X0 + 150, G - 2
+    jar_x, jar_y = 150, G - 2
     sc.add("jar", doc(C.ground_shadow(jar_x, jar_y, 1.0, 90) + PR.jar(jar_x, jar_y, 0.95)), z=1.5, seed=106,
-           motion=lambda t: Tf(rot=-84 * M.ease("bounce")(M.progress(t, t_empty, t_empty + 0.55, "linear")),
-                               px=jar_x - 38, py=jar_y))
-    sc.add("jar_dust", [doc(puff_markup(jar_x - 120, jar_y - 18, 70 + 20 * k, 26 + 6 * k, seed=k)) for k in range(3)],
+           motion=lambda t: Tf(rot=84 * M.ease("bounce")(M.progress(t, t_empty, t_empty + 0.55, "linear")),
+                               px=jar_x + 38, py=jar_y))
+    sc.add("jar_dust", [doc(puff_markup(jar_x + 120, jar_y - 18, 70 + 20 * k, 26 + 6 * k, seed=k)) for k in range(3)],
            z=1.55, wc=0.6, frame_at=lambda t: float(min(2, max(0, int((t - t_empty - 0.35) / 0.12)))),
            motion=lambda t: Tf(alpha=M.progress(t, t_empty + 0.3, t_empty + 0.4) * (1 - M.progress(t, t_empty + 0.8, t_empty + 1.2))))
 
@@ -415,10 +472,9 @@ def build(ctx):
 
     # ============================================================== the hall
     sc.add("h_back", hall_back_svg(), z=10, seed=120)
-    sc.add("h_light", doc(f'<path d="M2600,350 L2800,350 L3150,{G + 20} L2650,{G + 20} Z" fill="#fff3c8" opacity="0.5" '
-                          f'filter="url(#blur-md)"/>'), z=10.1, wc=0, blend="screen",
-           motion=lambda t: Tf(alpha=0.8 + 0.2 * math.sin(2 * math.pi * t / 3.1)))
+    sc.add("h_light", hall_light_svg(), z=10.1, wc=0, blend="screen")
     sc.add("h_seat", seat_svg(), z=10.5, seed=121)
+    add_banners(sc, ctx)
     # servants by the grain sacks (they stay; s13 sends them out)
     for i in range(len(SERVANTS)):
         x = SERVANTS[i][0]
@@ -498,11 +554,11 @@ def build(ctx):
     BX, BY, BW, BH = 3590, 318, 1560, 380
     head = C.body_points(C.joseph, JX, G, s, -1, pose="stand", attire="ruler")["head_top"]
     tail = (head[0] + 30, head[1] - 40)
-    sheaf_y = BY + 150
+    sheaf_y = BY + 100
     sx_list = []
     for k in range(10):
         x, y, s_, v = brother_pos(k)
-        sx_list.append((x + 40 * s, sheaf_y - (16 if FORM[k][1] else 0), 0.4 if FORM[k][1] else 0.43, k))
+        sx_list.append((x + 40 * s, sheaf_y - (18 if FORM[k][1] else 0), 0.5 if FORM[k][1] else 0.54, k))
     sx_list.sort(key=lambda e: e[1])
 
     def bubble(rise, glow, bowk):
@@ -510,7 +566,7 @@ def build(ctx):
         inner += S.path(S.hill(BX - BW, BX + BW, sheaf_y + 4, 16, seed=3, bottom=BY + BH, bumps=4), "#e7cf86", sw=3)
         for i, (x, y, sz, k) in enumerate(sx_list):
             inner += PR.wheat_sheaf(x, y, sz, 1, bow=bowk, seed=k)
-        inner += PR.wheat_sheaf(JX - 10, sheaf_y + 6, 0.5, -1, rise=rise, glow=glow, seed=12)
+        inner += PR.wheat_sheaf(JX - 10, sheaf_y + 6, 0.62, -1, rise=rise, glow=glow, seed=12)
         return doc(PR.dream_bubble(BX, BY, BW, BH, tail=tail, inner=inner, seed=4))
     bstates = [(0.35, 0.0, 0.0), (0.6, 0.3, 0.0), (0.85, 0.65, 0.0), (1.0, 1.0, 0.0)]
     bstates += [(1.0, 1.0, k / 8) for k in range(1, 9)]

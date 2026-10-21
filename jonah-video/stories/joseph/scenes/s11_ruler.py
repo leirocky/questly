@@ -687,7 +687,7 @@ def build(ctx):
             u = (t - t_jump) / (t_land - t_jump)
             ex, ey = CX0 + PR.CHARIOT_STAND[0] * s - J_STOP, PR.CHARIOT_STAND[1] * s
             tf = Tf(dx=dxw(t) + ex * M.ease("inout")(u), dy=ey * u - 70 * math.sin(math.pi * u),
-                    rot=4 * math.sin(math.pi * u), px=J_STOP, py=G)
+                    rot=4 * math.sin(math.pi * u), px=JX, py=G)
         return tf
     sc.add("joseph", jfr, z=3.1, seed=53, frame_at=j_fa,
            motion=M.combine(j_motion, M.breathe(0.01, 3.0, pivot=pvj),
