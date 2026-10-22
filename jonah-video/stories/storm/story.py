@@ -31,8 +31,8 @@ LEXICON = {
     "安得烈": "an1 de2 lie4", "雅各": "ya3 ge4", "约翰": "yue1 han4", "撒网": "sa1 wang3", "枝子": "zhi1 zi5",
     "做窝": "zuo4 wo1", "长啊长": "zhang3 a5 zhang3", "亮晶晶": "liang4 jing1 jing1",
 }
-NO_BREAK = ["耶稣", "加利利", "门徒", "彼得", "安得烈", "雅各", "约翰", "芥菜种"]
-TONE_WATCH = "长"   # 长 (grow) must stay zhang3, not drift to chang2  # read in one breath (耶和华 is added for every story)
+NO_BREAK = ["耶稣", "加利利", "门徒", "彼得", "安得烈", "雅各", "约翰", "芥菜种"]  # read in one breath (耶和华 is added for every story)
+TONE_WATCH = "长"   # 长 (grow) must stay zhang3, not drift to chang2
 
 # Each scene: id (stories/storm/scenes/<id>.py), a note for illustrators and the composer, music mood,
 # optional transition into the scene ("fade" default, "fadeblack", "circleopen", "dippaper" = a page-turn dip
