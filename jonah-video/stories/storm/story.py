@@ -58,6 +58,7 @@ SCENES = [
                 "front); the sun goes down; Jesus turns to his disciples.",
         "lines": [
             ("N", "有一天，耶稣在加利利湖边，教导很多很多人。人太多了，耶稣就坐在船上讲故事。"),
+            ("N", "大家都安安静静地听，连小孩子也听得好认真。"),
             ("N", "天快黑了。耶稣对门徒说："),
             ("Z", "我们渡到湖的那一边去吧。"),
         ],
@@ -69,7 +70,8 @@ SCENES = [
                 "cushion and falls asleep; the boat rocks gently, first stars.",
         "lines": [
             ("N", "门徒们把船划开了。耶稣累了一整天，就在船尾，枕着枕头睡着了。"),
-            ("N", "小船在湖上轻轻地摇啊摇，摇啊摇。"),
+            ("N", "还有别的小船，也跟着他们一起出发。"),
+            ("N", "小船在湖上轻轻地摇啊摇，摇啊摇。星星一颗一颗地亮起来了。"),
         ],
     },
     {
@@ -78,7 +80,7 @@ SCENES = [
                 "into the boat and the water inside rises. Big and dramatic but never frightening for small "
                 "children; a new storm look (cold blue-grey with white foam), not the Jonah storm.",
         "lines": [
-            ("N", "忽然，起了一阵大风。呼——呼——！"),
+            ("N", "忽然，起了一阵大风。呼——呼——！乌云跑过来，把月亮都遮住了。"),
             ("N", "浪一个接一个打进船里，哗啦！哗啦！船里的水越来越多。"),
         ],
     },
@@ -88,7 +90,8 @@ SCENES = [
                 "water keeps coming; one clings to the mast, one holds the sail rope.",
         "lines": [
             ("N", "门徒们吓坏了。他们好多人是打鱼的，可是从来没见过这么大的风浪！"),
-            ("N", "他们拼命地舀水，可是水越舀越多。"),
+            ("M", "抓紧！快把水舀出去！"),
+            ("N", "他们拼命地舀水，可是水越舀越多。小船摇来摇去，好像就要沉下去了。"),
         ],
     },
     {
@@ -107,7 +110,7 @@ SCENES = [
         "lines": [
             ("N", "耶稣醒了，站起来，对着风和海说："),
             ("Z", "住了吧！静了吧！"),
-            ("N", "风立刻停了，湖面变得平平静静的，一点浪也没有了。"),
+            ("N", "风立刻停了，湖面变得平平静静的，一点浪也没有了。月亮出来了，星星又亮了。"),
         ],
     },
     {
@@ -125,6 +128,7 @@ SCENES = [
         "lines": [
             ("N", "门徒们又惊讶，又敬畏，彼此说："),
             ("M", "这到底是谁？连风和海都听他的话！"),
+            ("N", "这一天，门徒们才知道，耶稣不只是他们的好老师。"),
         ],
     },
     {
