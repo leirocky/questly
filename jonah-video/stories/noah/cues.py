@@ -604,7 +604,7 @@ def command(c):
     """'One day' (B-flat, the golden light: harp, celesta); God speaks -- soft pads only (B-flat Gm Eb F; choir
     'ooh', strings); Noah wonders: a bassoon question on '一只大船？', a far-away flute on '好远好远'; Noah obeys:
     Noah's theme b7-b8 on the horn (Gm C7 F), steady pizzicato steps on '一样一样'."""
-    c.gain(-1.4)
+    c.gain(-1.7)
     t_g = c.gap(c.find("挪亚，地上"))
     t_h = c.gap(c.find("挪亚心想"))
     t_o = c.gap(c.find("可是，挪亚还是"))
@@ -697,8 +697,8 @@ def build(c):
         drum(a, q, 76, 36 if q % 2 else 42)
     a.pad(["vla", "vln2"], 2, 55, 72, vel=36, bass_ref=(36, 48))
     a.duck(2.0, parts=["clar"])
-    a.expr(["pz_hi", "bsn"], [(0, -12), (6, -12), (8, -14)])
-    a.expr(["clar"], [(0, -13), (6, -13), (8, -16)])
+    a.expr(["pz_hi", "bsn"], [(0, -12), (6, -12), (8, -15)])
+    a.expr(["clar"], [(0, -13), (6, -13), (8, -17)])
     a.expr(["vla", "vln2"], [(0, -16), (8, -16)])
     a.expr("hand", [(0, -11), (8, -11)])
     # 锯木头，嘎吱嘎吱: the saw (a guiro stroke, a cello / bassoon push on 嘎, a pull on 吱)
@@ -1495,14 +1495,15 @@ def end(c):
     b = c.seg(t_b, t_q, 3, "4/4", "F major", nominal=100, label="end-promise")
     q = c.seg(t_q, t_w, 1, "4/4", "F major", nominal=88, label="end-animals")
     w = c.seg(t_w, t_f, 1, "4/4", "F major", nominal=110, label="end-question")
-    f = c.seg(t_f, c.dur, 1, "2/4", "F major", nominal=90, rit=0.3, label="end-final-chord")
+    # two bars: the closing pause after the question (kept in the timeline since the 2 s pause fix) rings on
+    f = c.seg(t_f, c.dur, 2, "2/4", "F major", nominal=80, rit=0.3, label="end-final-chord")
     for sg in (a, b, q, w):
         sg.duck(1.5)
     a.prog(" | ".join(NOAH_PROG[:2]))
     b.prog(" | ".join(NOAH_PROG[4:7]))
     q.prog("F:4")
     w.prog("Bb:2 Csus4:2")
-    f.prog("F:2")
+    f.prog("F:2 | F:2")
     f.sync("the final F major chord (after the question)", 0, t_f, kind="change")
     f.sync("the final chord: harp roll", 0, t_f)
     # next time you see a rainbow after the rain: the theme on the flute, harp
