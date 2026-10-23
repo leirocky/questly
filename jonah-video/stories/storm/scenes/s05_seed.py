@@ -15,7 +15,7 @@ Beats (syllable onsets measured in the voice clip, proportional fallback):
   '种在地里'        the hand tips; on '种' the seed drops into the dug hole in the garden bed (pop), the hand
                    withdraws; a little rain cloud drifts over and rains (rain), the sun comes out
   '长啊长'          on each '长' (and '啊') the plant shoots up a stage: sprout, young plant, leafy bush (grow)
-  '长得比所有的菜都大' it keeps growing on '长得', '比', '都', '大' into a big bushy tree with yellow flowers, towering
+  '长大了，比所有的菜都大' it keeps growing on '长大了', '比', '都', '大' into a big bushy tree with yellow flowers, towering
                    over the cabbages, leeks and carrots; the camera pulls back to the whole page
   '小鸟'           four songbirds fly in and land in the branches; '枝子上' their nests build twig by twig,
                    '做窝' eggs appear in them (pop); the tree sways, the birds bob
@@ -318,7 +318,7 @@ def build(ctx):
     t_g1 = at(1, "长啊长")
     t_g2 = at(1, "长啊长", 1)
     t_g3 = at(1, "长啊长", 2)
-    t_g4 = at(1, "长得")
+    t_g4 = at(1, "长大了")
     t_g5 = at(1, "比所有")
     t_veg = at(1, "所有的菜")
     t_g6 = at(1, "都大")
