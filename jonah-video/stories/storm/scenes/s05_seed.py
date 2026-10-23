@@ -560,7 +560,12 @@ def build(ctx):
           (t_open1, Cam(1200, 640, 1080), "inout"), (t_mz + 0.3, Cam(1180, 660, 1250), "sine"),
           (t_min2 - 0.15, Cam(1180, 662, 1260), "inout"), (t_min2 + 0.85, Cam(1160, 690, 1000), "sine"),
           (t_but - 0.1, Cam(1160, 695, 1000), "inout"), (t_it + 0.2, Cam(1170, 750, 1290), "inout"),
-          (t_g3, Cam(1160, 720, 1500), "inout"), (t_g5, Cam(1100, 650, 1850), "sine"),
+          (t_g3, Cam(1160, 720, 1500), "inout"),
+          # step back with each growth spurt (长大了 / 比所有 / 都大) and hold between them: a pull-back while the
+          # plant stands still would read as the plant shrinking
+          (t_g4 - 0.05, Cam(1160, 720, 1500), "inout"), (t_g4 + 0.45, Cam(1145, 695, 1640), "inout"),
+          (t_g5 - 0.05, Cam(1145, 695, 1640), "inout"), (t_g5 + 0.5, Cam(1105, 655, 1820), "inout"),
+          (t_g6 - 0.05, Cam(1105, 655, 1820), "inout"),
           (t_g7 + 0.2, Cam(1056, 600, 2070), "sine"), (t_birds - 0.1, Cam(1056, 600, 2050), "inout"),
           (t_branch - 0.1, Cam(1190, 470, 1300), "sine"), (t_close0 - 0.3, Cam(1195, 480, 1260), "inout"),
           (t_close1, Cam(1150, 590, 1560), "sine"), (t_smile + 0.7, Cam(845, 818, 1180), "sine"),
