@@ -24,6 +24,10 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   Joseph film (python3 tools/character_sheet.py joseph): joseph_poses, joseph_attires (coat progress, torn / None, slave,
   prisoner, ruler), joseph_expr (close-ups), joseph_brothers, joseph_jacob_pharaoh, joseph_egyptians (and traders),
   joseph_siblings (child(sibling=...)) and joseph_group (groups, hugs, the pit, the chariot, the caravan).
+  Storm film (python3 tools/character_sheet.py storm): storm_jesus (poses and options), storm_expr (close-ups),
+  storm_disciples (the twelve), storm_disciple_poses (poses and action phases), storm_villagers, storm_child (pyjamas)
+  and storm_group (Jesus with the twelve, crowds, the crew in the fishing boat: teaching, rowing, the storm, waking him,
+  the calm, scale checks).
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -196,6 +200,7 @@ def sheets():
     out += david_sheets()
     out += noah_sheets()
     out += joseph_sheets()
+    out += storm_sheets()
     return out
 
 
@@ -483,6 +488,173 @@ def joseph_group():
     return path
 
 
+def storm_sheets():
+    """Sheets for the Storm film (Mark 4:35-41)."""
+    out = []
+    items = [("jonah (compare)", _j("stand"))]
+    items += [(p, lambda x, y, s, p=p: C.jesus(x, y, s, pose=p)) for p in C.JESUS_POSES]
+    items += [("glow=1", lambda x, y, s: C.jesus(x, y, s, glow=1.0)),
+              ("sleep glow=.8", lambda x, y, s: C.jesus(x + 40 * s, y, s, pose="sleep", glow=0.8)),
+              ("sleep marks=False", lambda x, y, s: C.jesus(x + 40 * s, y, s, pose="sleep", marks=False)),
+              ("stand_command wind=1", lambda x, y, s: C.jesus(x, y, s, pose="stand_command", wind=1.0)),
+              ("walk_a wind=.6", lambda x, y, s: C.jesus(x, y, s, pose="walk_a", wind=0.6)),
+              ("wave phase=.5", lambda x, y, s: C.jesus(x, y, s, pose="wave", phase=0.5)),
+              ("facing=-1 teach", lambda x, y, s: C.jesus(x, y, s, -1, pose="teach")),
+              ("mantle=False", lambda x, y, s: C.jesus(x, y, s, mantle=False))]
+    out.append(("storm_jesus", "Jesus — poses and options (scale 0.85; red cross = anchor)", items, 8, 270, 400, 0.85,
+                {"ground_pad": 24}))
+    items = [(e, lambda x, y, s, e=e: C.jesus(x, y, s, expr=e)) for e in C.JESUS_EXPRESSIONS]
+    items += [(f"{n} {e}", lambda x, y, s, n=n, e=e: C.disciples(x, y + (C.body_points(C.jesus, 0, 0)["head"][1] -
+                                                                         C.body_points(C.disciples, 0, 0, variant=n)["head"][1]) * s,
+                                                                   s, variant=n, expr=e))
+              for n, e in (("peter", "happy"), ("peter", "panicked"), ("andrew", "scared"), ("james", "amazed"),
+                           ("john", "awed"), ("john", "tired"), ("peter", "ashamed"), ("james", "shout"))]
+    out.append(("storm_expr", "Storm-film expressions (close-ups, scale 1.4): Jesus; Peter, Andrew, James, John",
+                items, 9, 260, 360, 1.4, {"clip_cells": True, "ground_pad": -190}))
+    items = [(f"{v} {C.DISCIPLE_NAMES[v]}", lambda x, y, s, v=v: C.disciples(x, y, s, variant=v)) for v in range(12)]
+    items += [(f"'{n}' wet=True", lambda x, y, s, n=n: C.disciples(x, y, s, variant=n, wet=True, expr="tired"))
+              for n in ("peter", "andrew", "james", "john")]
+    out.append(("storm_disciples", "The twelve disciples (scale 0.8): 0-3 = 'peter', 'andrew', 'james', 'john' (the four "
+                "fishermen); wet=True for after the storm", items, 8, 250, 360, 0.8, {"ground_pad": 22}))
+    items = []
+    for i, p in enumerate(C.DISCIPLE_POSES):
+        items.append((f"v{i % 12} {p}", lambda x, y, s, i=i, p=p: C.disciples(x, y, s, variant=i % 12, pose=p, phase=0.3)))
+    items += [(f"row phase={ph}", lambda x, y, s, ph=ph: C.disciples(x, y, s, variant=1, pose="row", phase=ph))
+              for ph in (0, 0.25, 0.5, 0.75)]
+    items += [(f"bail phase={ph}", lambda x, y, s, ph=ph: C.disciples(x, y, s, variant=2, pose="bail", phase=ph))
+              for ph in (0, 0.35, 0.65, 0.8)]
+    items += [("bail item='bowl'", lambda x, y, s: C.disciples(x, y, s, variant=5, pose="bail", phase=0.35, item="bowl"))]
+    items += [(f"cast_net phase={ph}", lambda x, y, s, ph=ph: C.disciples(x, y, s, variant="peter", pose="cast_net", phase=ph))
+              for ph in (0, 0.5, 0.9, 1.0)]
+    items += [(f"haul_net phase={ph}", lambda x, y, s, ph=ph: C.disciples(x, y, s, variant="andrew", pose="haul_net", phase=ph))
+              for ph in (0, 0.5)]
+    items += [("scared shake=.25", lambda x, y, s: C.disciples(x, y, s, variant=9, pose="scared", shake=0.25)),
+              ("cling wind=1", lambda x, y, s: C.disciples(x, y, s, variant=0, pose="cling", wind=1.0, shake=0.5)),
+              ("wake_shake phase=.5", lambda x, y, s: C.disciples(x, y, s, variant=2, pose="wake_shake", phase=0.5))]
+    out.append(("storm_disciple_poses", "Disciples — poses and action phases (scale 0.72)", items, 9, 240, 360, 0.72,
+                {"ground_pad": 24}))
+    items = []
+    for k in C.VILLAGER_KINDS:
+        for v in range(6):
+            items.append((f"{k} {v}", lambda x, y, s, k=k, v=v: C.villager(x, y, s, kind=k, variant=v)))
+    for p in C.VILLAGER_POSES:
+        k = {"shoulders": "man", "carry": "woman", "carry_walk_a": "woman", "carry_walk_b": "man", "wave": "child",
+             "sit_listen": "child", "kneel": "elder", "nod": "elder", "listen": "woman"}.get(p, "man")
+        items.append((f"{k} {p}", lambda x, y, s, p=p, k=k: C.villager(x, y, s, kind=k, variant=2, pose=p)))
+    out.append(("storm_villagers", "Galilean villagers — kinds x variants 0-5, poses (scale 0.7)", items, 12, 180, 340,
+                0.7, {"ground_pad": 20}))
+    items = [(f"pyjamas {p}", lambda x, y, s, p=p: C.child(x, y, s, pose=p, outfit="pyjamas"))
+             for p in ("stand", "walk_a") + C.STORM_CHILD_POSES + ("peek_window", "wave")]
+    items += [("pyjamas hug_pillow scared", lambda x, y, s: C.child(x, y, s, pose="hug_pillow", outfit="pyjamas", expr="scared")),
+              ("pyjamas smile_up", lambda x, y, s: C.child(x, y, s, pose="smile_up", outfit="pyjamas")),
+              ("pyjamas pillow=False", lambda x, y, s: C.child(x, y, s, pose="sit_hug", outfit="pyjamas", pillow=False)),
+              ("raincoat pray", lambda x, y, s: C.child(x, y, s, pose="pray")),
+              ("little hug_pillow", lambda x, y, s: C.child(x, y, s, pose="hug_pillow", sibling="little"))]
+    out.append(("storm_child", "child(outfit='pyjamas') — the girl at home at night; the new poses (scale 1.1)", items, 8,
+                240, 330, 1.1, {"ground_pad": 22}))
+    return out
+
+
+def storm_group():
+    """Compositions: Jesus with the twelve, crowds, the crew in the fishing boat (teaching, rowing, the storm, waking him,
+    the calm), the child's room."""
+    PR = C._prp()
+    W, H = 2300, 64 + 4 * 600
+    top = 64
+    body = ""
+    labels = []
+    gy = top + 500
+    body += f'<rect x="0" y="{top}" width="{W}" height="600" fill="#e8d6ae"/>'
+    body += C.disciples_group(800, gy, 0.62, pose="walk_a", n=12, gap=62)
+    body += C.jesus(860, gy, 0.62, pose="walk_a")
+    body += C.villager_crowd(1500, gy, 0.6, pose="sit_listen", n=12, width=700, rows=3)
+    body += C.villager_crowd(2050, gy, 0.55, -1, pose="walk_a", n=6, width=380, rows=2, seed=3)
+    labels.append((20, gy + 14, "jesus walk_a + disciples_group(walk_a, gap 62) | villager_crowd(sit_listen) | villager_crowd(walk_a): going home"))
+    gy2 = gy + 600
+    k = 0.42
+    body += f'<rect x="0" y="{gy2 - 520}" width="{W}" height="600" fill="#f0c9a0"/>'
+    body += PR.calm_lake(0, W, gy2 - 30, bottom=gy2 + 80, time="dawn", scale=0.6)
+
+    def crew(bx, by, k, mode, phase=0.0):
+        pts = PR.boat_points(bx, by, k)
+        sail = {"teach": "furled", "row": "full", "storm": "flapping", "calm": "furled"}[mode]
+        out = PR.fishing_boat(bx, by, k, part="back", sail=sail, phase=phase, oars="out" if mode == "row" else "in",
+                              row=phase)
+        far_pose = {"teach": "sit", "row": "stand", "storm": "scared", "calm": "wonder"}[mode]
+        for i, (px, py) in enumerate(pts["far_stand"]):
+            out += C.disciples(px, py, k, 1 if i % 2 else -1, variant=4 + i,
+                               pose="whisper" if (mode == "calm" and i % 2) else far_pose, wet=mode in ("storm", "calm"),
+                               phase=(phase + 0.2 * i) % 1, shake=0.25 * (i % 4))
+        if mode == "teach":
+            out += C.jesus(*pts["stern_seat"], k, -1, pose="teach")
+        elif mode in ("row",):
+            out += C.jesus(*pts["sleep"], k, 1, pose="sleep", marks=False)
+        elif mode == "storm":
+            out += C.jesus(*pts["sleep"], k, 1, pose="sleep", glow=0.8)
+        else:
+            out += C.jesus(pts["stand"][0][0] - 40 * k, pts["stand"][0][1], k, 1, pose="turn_kind", glow=0.3)
+        if mode == "row":
+            for (sx, sy), v in zip(pts["seats"], (1, 2)):
+                out += C.disciples(sx, sy, k, -1, variant=v, pose="row", phase=phase)
+        near = {"teach": [("stand", 0), ("sit", 3), ("stand", 10), ("point", 11), ("stand", 9), ("wave", 2)],
+                "row": [None, ("stand", 3), None, ("point", 0), ("stand", 9), ("pull_rope", 11)],
+                "storm": [("bail", 1), ("bail", 3), ("pull_rope", 10), ("cling", 0), ("bail", 9), ("shout", 2)],
+                "calm": [None, ("wonder", 3), ("whisper", 10), ("wonder", 0), ("kneel", 9), ("whisper", 2)]}[mode]
+        for i, ((px, py), spec) in enumerate(zip(pts["stand"], near)):
+            if spec is None:
+                continue
+            pz, v = spec
+            f = -1 if i < 3 else 1
+            if pz == "cling":
+                px, py, f = pts["cling"][0], pts["cling"][1], 1
+            out += C.disciples(px, py, k, f, variant=v, pose=pz, phase=(phase + 0.3 * i) % 1, item="bowl" if i == 4 else "bucket",
+                               wet=mode in ("storm", "calm"), wind=1.0 if mode == "storm" else 0.0)
+        out += PR.fishing_boat(bx, by, k, part="front", oars="out" if mode == "row" else "in", row=phase,
+                               water=0.55 if mode == "storm" else 0.0, wet=mode in ("storm", "calm"), lantern=mode != "teach")
+        return out
+    body += crew(380, gy2, k, "teach") + crew(1150, gy2, k, "row", 0.25) + crew(1920, gy2, k, "calm")
+    labels.append((20, gy2 + 30, "in the boat (scale 0.42): Jesus teach on STERN_SEAT, crew | rowing (seats, oars out, phase .25), Jesus asleep | the calm: turn_kind, wonder, whisper, kneel"))
+    gy3 = gy2 + 600
+    body += PR.storm_sky(0, gy3 - 540, 1150, gy3 + 60, phase=0.3, rain=0.4, lightning=0.3, scale=0.6)
+    body += PR.storm_lake(0, 1150, gy3 - 120, phase=0.3, part="back", bottom=gy3 + 60, scale=0.55)
+    sb = (560, gy3 - 120 + PR.STORM_BOAT_DY * 0.55)
+    body += PR.boat_rock(crew(sb[0], sb[1], 0.4, "storm", 0.4), sb[0], sb[1], -5, 0, 0.4)
+    body += PR.storm_lake(0, 1150, gy3 - 120, phase=0.3, part="front", bottom=gy3 + 60, scale=0.55)
+    # waking Jesus: two disciples at the stern (BOAT_WAKE) and Jesus waking / commanding
+    k2 = 0.62
+    bx, by = 1500, gy3 - 10
+    body += f'<rect x="1150" y="{gy3 - 540}" width="1150" height="600" fill="#5a6c82"/>'
+    pts = PR.boat_points(bx, by, k2)
+    body += PR.fishing_boat(bx, by, k2, part="back", sail="none", oars="none")
+    body += C.jesus(*pts["sleep"], k2, 1, pose="sleep", marks=False)
+    body += C.disciples(*pts["wake"], k2, -1, variant="peter", pose="wake_shake", phase=0.5, wet=True)
+    body += C.disciples(pts["wake"][0] + 120 * k2, pts["wake"][1], k2, -1, variant="john", pose="shout", wet=True)
+    body += PR.fishing_boat(bx, by, k2, part="front", oars="none", wet=True, water=0.4)
+    body += C.jesus(2190, gy3 - 20, 0.62, -1, pose="stand_command", wind=1.0, glow=0.6)
+    labels.append((20, gy3 + 30, "the storm: storm_sky, storm_lake back / boat_rock(crew, -5 deg) / front | wake: disciples at BOAT_WAKE (wake_shake) | stand_command wind=1 glow .6"))
+    gy4 = gy3 + 600
+    body += f'<rect x="0" y="{gy4 - 540}" width="{W}" height="600" fill="#e9dcc4"/>'
+    body += PR.window_wind(330, gy4 - 160, 0.62, wind=1.0, phase=0.2, rattle=0.8)
+    body += C.child(250, gy4 - 10, 1.0, pose="hug_pillow", outfit="pyjamas", expr="scared")
+    body += PR.bed(760, gy4, 0.85) + C.child(730, gy4 + PR.BED_TOP * 0.85, 0.85, pose="sit_pray", outfit="pyjamas")
+    body += C.villager(1150, gy4, 0.8, kind="man", variant=2, pose="shoulders")
+    body += C.villager(1300, gy4, 0.8, -1, kind="woman", variant=4, pose="wave")
+    body += C.disciples(1500, gy4, 0.8, variant="peter", pose="haul_net", phase=0.2)
+    body += C.disciples(1840, gy4, 0.8, variant="john", pose="cast_net", phase=1.0)
+    body += C.jesus(2200, gy4, 0.8, -1, pose="point")
+    labels.append((20, gy4 + 14, "window_wind + child hug_pillow | bed + child sit_pray at BED_TOP | villager shoulders, wave | Peter haul_net, John cast_net | Jesus point"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Storm film — Jesus and the twelve, crowds, the crew in the fishing boat, the child's room")
+    font = ImageFont.truetype(str(FONT_REGULAR), 22)
+    for x0, y0, text in labels:
+        d.text((x0, y0), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_storm_group.png"
+    sheet.save(path)
+    return path
+
+
 # ---------------------------------------------------------------- compositions
 
 
@@ -656,6 +828,8 @@ def main():
         print(noah_group())
     if not filt or any(f in "joseph_group" for f in filt):
         print(joseph_group())
+    if not filt or any(f in "storm_group" for f in filt):
+        print(storm_group())
     raster.close()
 
 

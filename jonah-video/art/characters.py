@@ -5,7 +5,9 @@ the David film (stories/david) David, Goliath, his shield-bearer, Israelite / Ph
 Ham, Japheth, their wives, noah_family() and a modern child in a raincoat (section NOAH FILM); for the Joseph film
 (stories/joseph) Joseph (shepherd with the coat of many colours / slave / prisoner / ruler), Jacob, the brothers and
 Benjamin, brothers_group(), Pharaoh, Egyptians, the Ishmaelite traders, hug_pair() and the modern siblings
-(child(sibling=...)) (section JOSEPH FILM at the end).
+(child(sibling=...)) (section JOSEPH FILM); for the Storm film (stories/storm) Jesus, the twelve disciples,
+disciples_group(), the Galilean villagers, villager_crowd() and the girl in pyjamas (child(outfit='pyjamas')) (section
+STORM FILM at the end).
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -788,6 +790,187 @@ BROTHER_NAMES, BROTHERS_GROUP_POSES, PHARAOH_POSES, EGYPTIAN_KINDS, EGYPTIAN_POS
 SIBLING_POSES; colours JOSEPH_SKIN, JOSEPH_HAIR, COAT_BANDS, COAT_BASE, TUNIC, LINEN, EGYPT_SKIN, EGYPT_HAIR, LAPIS,
 CARNELIAN, JACOB_ROBE, PHARAOH_SKIN, BENJAMIN_TUNIC, SIB_DRESS, SIB_SHIRT, SIB_SHORTS. God is never drawn as a person:
 show his presence as soft golden light (engine.fx / art.style), never as a figure.
+
+STORM FILM (Mark 4:35-41, stories/storm)                     sheets: python3 tools/character_sheet.py storm
+========================================
+Same rig and conventions as above (anchor = ground under the pelvis, between the feet; facing; scale; marks; bboxes
+(l, t, r, b) at scale 1 / facing 1 measured from renders, wobble included). hand_positions / body_points work for every
+function here. Sheets: characters_storm_jesus / _expr / _disciples / _disciple_poses / _villagers / _child and
+characters_storm_group (Jesus with the twelve, crowds, the crew in the fishing boat, the child's room). New designs only:
+nothing here reuses the Jonah film's sailors; the boat, lake and sky are in art/props.py section 11.
+SCALE: at the same ``scale`` Jesus is ~342 px (head centre (2, -287)), the disciples 327-350 (John, the youngest, 327;
+Peter sturdy and broad; James the tallest, 350), villagers like the other films' adults (men ~337, women ~317, elders
+~327, children ~224), the pyjama girl ~225. The fishing boat (props.fishing_boat) is BOAT_LEN = 1500 px at scale 1
+(about 4.5 adults): draw boat and people at the SAME scale (0.35-0.6 in most shots) - 13 people fit in two rows.
+New expressions (STORM_EXPRESSIONS; every function accepts them): warm (soft smile, warm blush - Jesus' default),
+smile (^ eyes, smile, blush), calm (soft downcast eyes, serene smile - just woken, unafraid), gentle_question (raised
+soft brows, small open mouth, blush - '你们为什么这样害怕呢？'), command (level calm brows, speaking mouth - '住了吧！静了吧！',
+authoritative, never angry), panicked (wide frightened eyes, open shouting mouth, sweat drops, tremble marks), awed
+(big eyes looking up, small 'o', raised brows - reverent wonder). Also useful: kind, happy, sleepy, peaceful, scared,
+amazed, ashamed, tired, worried, shout.
+
+jesus(x, y, scale=1.0, facing=1, pose='stand', expr=None, glow=0.0, cushion=True, wind=0.0, phase=0.0, mantle=True,
+      marks=True)
+-------------------------------------------------------------------------------------------------------------------
+A kind, calm man of about thirty, drawn with respect (never comic, no halo): warm brown skin (JESUS_SKIN), dark
+shoulder-length hair with a soft side part (JESUS_HAIR), a short neat beard and moustache (the mouth always shows), a
+long cream robe (JESUS_ROBE) with a sand hem band and cuffs, a muted gold cloth belt with a knot, brown sandals, and a
+warm red mantle (JESUS_MANTLE) crossing the chest from the far shoulder and falling down his back.
+  glow 0..1   a very soft warm light round the whole figure (calm presence in the storm; a wide gradient, never a ring).
+              Adds up to ~(-160, -410, 180, 30) to the bbox at 1 - quantise (0, .3, .6, 1).
+  wind 0..1   the back of the mantle streams out behind (away from facing): stand_command in the wind (bbox left -137).
+  mantle      False: robe only.   cushion  sleep / wake: the stern cushion (props.boat_cushion) under the head.
+  pose (JESUS_POSES)  bbox                  natural expr     notes (hands [far, near] at scale 1)
+  stand          (-71, -342, 56, 0)      warm
+  walk_a/walk_b  (-90, -342, 84, 1) / (-67, -343, 98, 0)   warm   planted-foot stride frames (alternate ~0.25 s)
+  sit            (-74, -290, 116, 0)     warm      seated on a bench / the stern platform edge: the anchor is the FLOOR
+                                                   under his feet, the seat ~70 px above it (no seat is drawn: use
+                                                   props.STERN_SEAT, or your own bench / rock)
+  teach          (-74, -290, 116, 0)     smile     seated, near hand open in front (58, -172): telling the crowd
+  teach_stand    (-71, -342, 73, 0)      smile     standing, near hand open, palm up
+  sleep          (-237, -192, 96, 3)     sleepy    lying on his side, HEAD ON THE LEFT for facing=1, cheek on the cushion
+                                                   (centre JESUS_CUSHION_DX = -150 from the anchor), the mantle over his
+                                                   legs like a blanket, soft z's (marks=False: top -127; cushion=False:
+                                                   left -197). Head (-142, -78). In the boat: anchor at props.STERN_SLEEP
+  wake           (-237, -190, 129, 5)    calm      rising up on one elbow (far palm on the floor), head lifted (-99, -134),
+                                                   the same cushion, blanket and anchor as sleep (cut sleep -> wake)
+  stand_command  (-82, -343, 104, 0)     command   standing firm, far arm raised toward the wind and the waves, palm out
+                                                   (93, -299): '住了吧！静了吧！' (combine with wind=1 -> 0 and glow)
+  turn_kind      (-68, -341, 114, 0)     gentle_question  turned toward the disciples, both hands open, palms up
+                                                   (97, -160), (55, -176), head tilted
+  bless          (-71, -342, 71, 0)      warm      near hand raised, palm out (60, -256)
+  wave           (-71, -342, 110, 0)     smile     far hand up (67, -320); phase 0..1 swings the forearm (+-16 deg)
+  point          (-71, -342, 101, 0)     warm      near arm pointing forward (77, -241): 'let us go across to the other side'
+  pray           (-71, -342, 55, 0)      peaceful  standing, palms together
+  JESUS_EXPRESSIONS lists the suitable ones (warm, kind, smile, calm, sleepy, gentle_question, command, peaceful, happy).
+
+disciples(x, y, scale=1.0, facing=1, variant=0, pose='stand', expr=None, phase=0.0, shake=0.0, item='bucket', wind=0.0,
+          wet=False, oar=True, net=True, marks=True)      (disciple() is the same function)
+----------------------------------------------------------------------------------------------------------------------
+The twelve, as fishermen and working men: knee-length tunics with two woven stripes above the hem, short ROLLED
+sleeves (a rolled band shows), a knotted cloth belt in a contrasting colour, BARE FEET, sun-browned skin; most wear a
+fisherman's kerchief knotted at the back of the head (two short tails that stream in the wind). variant 0-11
+(DISCIPLE_NAMES) or a name for the four fishermen (DISCIPLE_LOOKS):
+  0 'peter'   sturdy and broad (metrics 1.03 x 1.18), curly hair and a full CURLY beard streaked with grey, slate-teal
+              tunic with gold stripes, rust-red kerchief and belt                             head (2, -289)
+  1 'andrew'  Peter's brother (same skin and hair), a short square beard, honey-sand tunic, teal kerchief    (2, -280)
+  2 'james'   the tallest (350 px), full black beard, wine tunic, cream kerchief, gold belt                  (2, -294)
+  3 'john'    the youngest: beardless, light-brown curls, a thin ochre headband with tails, sage tunic        (2, -272)
+  4-11        Philip (dusty rose, wrap cap), Bartholomew (dusty blue, full brown beard, headband), Matthew (lilac
+              with gold stripes, trim beard, cream kerchief), Thomas (olive, stubble, deep-brown skin, bare curly head),
+              James son of Alphaeus (sand with brown stripes, pointed beard, teal wrap), Thaddaeus (rust-brown,
+              headband), Simon (slate grey, full black beard, sage kerchief), Judas (mustard, maroon wrap)
+  stand bboxes: union (-67, -350, 62, 0); John (-59, -327, 52, 0).
+  wet=True    darker tunic and kerchief, soaked patches and water drops (the storm and just after it).
+  wind 0..1   the kerchief tails stream back.
+  pose (DISCIPLE_POSES)  bbox (union)         natural expr  notes (hands [far, near] at scale 1)
+  stand          (-67, -350, 62, 0)       happy
+  walk_a/walk_b  (-85, -346, 80, 0) / (-71, -348, 109, 0)   happy   planted-foot stride frames
+  sit            (-72, -296, 113, -1)     happy     on a bench / thwart: anchor = floor under his feet, seat ~70 px up
+  row            (-130, -302, 127, 59)    happy     seated rowing with an oar: phase 0..1 = the stroke (0 catch: leaning
+                                                    forward, hands out (86, -158); .25 drive, blade deep; .5 finish:
+                                                    leaning back, hands at the chest; .75 recovery, blade lifted). The oar
+                                                    runs from the hands through the oarlock props.ROW_PIVOT = (40, -118)
+                                                    (anchor coords) to the blade below the anchor line (bottom 59 = the
+                                                    blade in the water). Rowers face the STERN: in props.fishing_boat(facing
+                                                    =f) sit them at boat_points()['seats'] with facing=-f and give the boat
+                                                    oars='out', row=<the same phase>. 6-8 phases at ~0.12 s per stroke.
+                                                    oar=False: hands only.
+  pull_rope      (-106, -514, 175, 1)     worried   leaning back, hauling the sail rope hand over hand: fists (70, -299),
+                                                    (43, -240); the rope runs up-forward 230 px past the top fist (to the
+                                                    yard: boat_points()['yard']) with a slack tail below
+  bail           (-71, -346, 237, 2)      worried   bailing with a bucket (item='bucket') or a clay bowl ('bowl'): phase 0
+                                                    scoop (bent low, hands (99, -66)), .35 lift (full, at the chest), .65
+                                                    throw over the side (arms up and forward, the vessel tipped, a water arc
+                                                    with drops flying out toward facing), 1 = 0. Face him toward the
+                                                    nearer gunwale. 6-8 phases at ~0.1 s.
+  cling          (-40, -322, 109, 1)      scared    knees bent, leaning in, both fists gripping a mast / post in front at
+                                                    (82, -267) and (85, -209): stand at boat_points()['cling'] facing the
+                                                    mast (props.BOAT_CLING). shake 0..1 jitters him and adds knee tremble
+  scared         (-101, -351, 89, 0)      scared    arms up by the face; shake 0..1 jitters (+-3.5 px, cycle 0 .25 .5 .75)
+  shout          (-58, -350, 140, -1)     shout     one hand at the mouth, the other arm flung forward: '抓紧！'
+  wake_shake     (-42, -332, 162, 1)      panicked  leaning forward, both hands on the shoulder of someone lying on a raised
+                                                    platform at chest height: hands (124, -251), (102, -233), shake arcs.
+                                                    In the boat: boat_points()['wake'] facing -f puts the hands on Jesus
+                                                    asleep at STERN_SLEEP ('老师！老师！'). phase 0..1 jitters the body
+                                                    (+-3.5 px): cycle 0, .25, .5, .75 for the shaking
+  wake_shake_low (-40, -277, 187, 1)      panicked  crouching, hands low (155, -80), (107, -109): someone asleep on the same
+                                                    floor (as captain 'wake')
+  wonder         (-128, -350, 127, -1)    amazed    both hands open and lifted a little, head up ('这到底是谁？')
+  whisper        (-53, -349, 91, -1)      awed      leaning in, hand by the mouth (pairs face to face ~110*scale apart)
+  kneel          (-90, -308, 55, 0)       awed      kneeling, palms together, face lifted
+  wave           (-70, -350, 127, 0)      happy     far hand up, phase swings it
+  point          (-67, -350, 106, 0)      happy
+  push           (-70, -305, 180, 2)      happy     leaning in, both palms forward (173, -171), (118, -190): pushing the boat
+                                                    off the beach (put the hull ~170*scale in front)
+  cast_net       (-175, -348, 220, -1)    happy     throwing a round cast net: phase 0 the gathered net swung back by the
+                                                    legs, .5 swinging forward at the hip, .85-1 released - the net flies open
+                                                    ahead (umbrella of mesh with lead weights, ~260 px ahead at 1) on a line
+                                                    from the near hand (props.fishing_net(kind='cast') for the net alone)
+  haul_net       (-108, -326, 275, 43)    laugh     leaning back hauling a heavy net full of flapping fish hand over hand:
+                                                    two lines from the fists to the net bag (centre ~(210, -10)); phase
+                                                    0..1 alternates the hands and flaps the fish (in a boat the bag hangs
+                                                    over the gunwale: the hull covers its lower half)
+DISCIPLE_EXPRESSIONS: happy, tired, scared, panicked, amazed, ashamed, awed, worried, shout, determined, kind.
+
+disciples_group(x, y, scale=1.0, facing=1, pose='stand', n=12, expr=None, gap=150, exprs=None, poses=None, phase=0.0,
+                marks=True)
+-------------------------------------------------------------------------------------------------------------------
+Several of the twelve at once (DISCIPLES_GROUP_POSES: stand, wonder, whisper, scared, kneel, wave, walk_a, walk_b, point,
+shout, sit). group: two rows centred on x (back row 34 px higher, 0.96 x: Bartholomew, Thaddaeus, James son of Alphaeus,
+Simon, Judas, Philip; front row Matthew, Thomas, Andrew, Peter (at x), James, John), the left half facing right, the right
+half left; whisper pairs whisperers with wonderers; poses (a list, cycled by variant) overrides pose per person; exprs
+likewise. line: walk_a / walk_b = a line walking toward facing, Peter leading AT x, the others every gap*scale behind,
+neighbours in opposite frames (Jesus walking with his friends: jesus(x + 60*scale, ...) in front). bbox group stand at
+scale 0.5: (-272, -182, 264, 0).
+
+villager(x, y, scale=1.0, facing=1, kind='man', variant=0, pose='stand', expr=None, phase=0.0, rider=None, marks=True)
+--------------------------------------------------------------------------------------------------------------------
+The Galilean lakeshore crowd (VILLAGER_KINDS): 'man' (long robe with two hem stripes, cloth belt with tails, beard
+varies, a head-cloth with a flap for variants 0, 1, 3, 4), 'woman' (long robe, soft veil), 'child' (knee tunic, rope
+belt; even variants boys with curls, odd variants girls with a ponytail and ribbon), 'elder' (white hair and beard,
+shawl, stooped with a stick when standing / walking; odd variants a wrapped cap). variant 0-5 (mod 6): plum, teal, sand-gold,
+olive, brick, indigo robes with contrasting stripes and veils; skins from light to deep brown. Not the Nineveh citizens.
+  pose (VILLAGER_POSES)   man                    woman                  child                 elder
+  stand          (-69, -337, 60, 0)     (-53, -317, 52, 0)     (-54, -224, 43, 0)    (-50, -327, 70, 3)   happy
+  walk_a/walk_b  (-90, -337, 84, 1) / (-68, -339, 104, 0) ...  walking home: alternate every ~0.25 s; happy
+  listen         (-68, -337, 55, 0)     hand at the chin, head up toward the speaker; kind
+  sit            (-74, -231, 120, 3)    on the ground, knees up, hands on the knees; happy
+  sit_listen     (-61, -232, 118, 2)    sitting, chin on the hand, looking up (children at the front); kind
+  kneel          (-92, -295, 51, 5)     kneeling, palms together; kind
+  wave           (-69, -339, 109, 0)    far hand up, phase swings it (waving goodbye as the boat leaves); happy
+  cheer / point / nod   arms up / pointing / head bowed 22 deg (alternate with stand to nod)
+  carry, carry_walk_a/_b  (-65, -337, 87, 0)  a basket of fruit in both hands (going home at sunset)
+  shoulders      (-66, -401, 58, 0)     kind='man' only: a little child (rider = its variant, default variant+1) rides
+                                         on his shoulders - its laughing face and waving arm rise behind and above his
+                                         head; his back arm is raised holding it (his face stays clear)
+villager_crowd(x, y, scale=1.0, facing=1, n=12, pose='stand', width=900, rows=3, seed=0, poses=None, expr=None,
+               phase=0.0, marks=True)
+  A mixed crowd of n villagers in up to `rows` rows centred on x, spread over width*scale; each row behind is 46*scale
+  higher and 6% smaller (drawn first); children go to the front; walk poses alternate frames; listen / sit_listen / sit
+  / kneel / nod / walk face `facing`, other poses face the middle; with n >= 8 a father in the back row carries a child
+  (pose stand / listen / wave / cheer). VILLAGER_CROWD_POSES.
+
+child(..., outfit=None, pillow=True)  - the girl at home at night (opening and ending)
+-------------------------------------------------------------------------------------
+child() keeps every earlier look and output by default. outfit='pyjamas' (CHILD_OUTFITS): a little girl (~5, 225 px) in
+periwinkle pyjamas with yellow stars (top and trousers, CHILD's rig), dark hair in a bob with a bun and a yellow bobble,
+bare feet. All CHILD_POSES / SIBLING_POSES work in pyjamas, plus STORM_CHILD_POSES (they work for every outfit /
+sibling too):
+  hug_pillow  (-44, -225, 67, 0)   worried   standing, hugging her star pillow (props.pillow) to her chest
+                                             (pillow=False: arms only); pass expr='scared' for the rattling window
+  sit_hug     (-45, -165, 85, 3)   worried   sitting (knees up) hugging the pillow - on the floor, or on the bed:
+                                             child(x, y + props.BED_TOP*scale, ...) on props.bed(x', y, scale)
+  pray        (-57, -225, 39, 0)   peaceful  standing, hands folded, eyes closed
+  kneel_pray  (-68, -202, 38, 0)   peaceful  kneeling by the bed
+  sit_pray    (-59, -167, 88, 3)   peaceful  sitting, hands folded (on the bed)
+  (also smile_up / happy / kind for the warm calm ending, peek_window at props.window_wind)
+
+Constants (Storm film): JESUS_POSES, JESUS_EXPRESSIONS, JESUS_CUSHION_DX, DISCIPLE_NAMES, DISCIPLE_LOOKS, DISCIPLE_POSES,
+DISCIPLE_EXPRESSIONS, DISCIPLES_GROUP_POSES, BAIL_ITEMS, VILLAGER_KINDS, VILLAGER_POSES, VILLAGER_CROWD_POSES,
+STORM_CHILD_POSES, CHILD_OUTFITS, STORM_EXPRESSIONS; colours JESUS_SKIN, JESUS_HAIR, JESUS_ROBE, JESUS_TRIM,
+JESUS_MANTLE, JESUS_SASH, PYJAMA, PYJAMA_STAR. Boat geometry (seats, stern platform, oarlocks) lives in art/props.py
+section 11 (fishing_boat, boat_points, ROW_PIVOT, row_hands).
 """
 import hashlib
 import math
@@ -1241,7 +1424,8 @@ def _hair_cap(R, col, style="short", front=-28, back=165, line=-0.42):
     return f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
 
 
-_MOUSTACHED = ("full", "white", "captain", "assyrian", "assyrian_short", "trim", "pointed", "long")
+_MOUSTACHED = ("full", "white", "captain", "assyrian", "assyrian_short", "trim", "pointed", "long",
+               "jesus", "curly", "fisher")   # the last three: Storm film
 
 
 def _beard(R, col, kind):
@@ -1310,6 +1494,8 @@ def _beard(R, col, kind):
             s += _line(f"M{fmt(x0 * R)},{fmt(y0 * R)} Q{fmt((x0 + 0.12) * R)},{fmt((y0 + y1) / 2 * R)} "
                        f"{fmt(x1 * R)},{fmt(y1 * R)}", w=2.2, col=dark)
         return s
+    if kind in ("jesus", "curly", "fisher"):    # Storm film: see _storm_beard
+        return _storm_beard(R, col, kind)
     if kind == "pointed":      # an official: neat beard ending in a soft point, a curl row across it
         pts = [(-0.86 * R, 0.0), (-0.88 * R, 0.55 * R), (-0.50 * R, 1.10 * R), (0.08 * R, 1.62 * R),
                (0.52 * R, 1.16 * R), (0.90 * R, 0.55 * R), (0.70 * R, 0.66 * R), (0.20 * R, 0.84 * R),
@@ -4712,9 +4898,12 @@ def _child_design(ps_legs, hood, boots, coat):
 
 
 def child(x, y, scale=1.0, facing=1, pose="stand", expr=None, hood=False, boots=True, coat=None, phase=0.0,
-          marks=True, sibling=None, toy=None):
+          marks=True, sibling=None, toy=None, outfit=None, pillow=True):
     """A little modern child in a raincoat and rubber boots (opening / ending, see module doc); Joseph film:
-    sibling='big' / 'little' (play clothes), the poses tug / sulk / sorry / hug / share and toy='horse' / 'ball'."""
+    sibling='big' / 'little' (play clothes), the poses tug / sulk / sorry / hug / share and toy='horse' / 'ball';
+    Storm film: outfit='pyjamas' (the girl at home at night) and the poses of STORM_CHILD_POSES."""
+    if outfit is not None or pose in STORM_CHILD_POSES:
+        return _child_storm(x, y, scale, facing, pose, expr, phase, marks, outfit, pillow, sibling, hood, boots, coat)
     if sibling is not None or toy is not None or pose in SIBLING_POSES:
         return _child_joseph(x, y, scale, facing, pose, expr, hood, boots, coat, phase, marks, sibling, toy)
     if pose not in CHILD_POSES:
@@ -5856,3 +6045,997 @@ def _child_joseph(x, y, scale, facing, pose, expr, hood, boots, coat, phase, mar
     if pose == "jump":
         inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
     return _wrap_out(inner, x, y, scale, facing, f"child{'-' + sibling if sibling else ''}-{pose}")
+
+
+# ======================================================================= Storm film (Mark 4:35-41)
+# Jesus, his twelve disciples (Peter, Andrew, James and John are the four fishermen), the Galilean villagers on the
+# lakeshore, disciples_group(), and child(outfit='pyjamas') with the night-time poses. Module doc section "STORM FILM".
+
+EXPRS.update({
+    "warm":            dict(eyes="dot", brow=(-0.03, 0.02, -0.05), mouth="smile", blush=True),
+    "smile":           dict(eyes="arc", brow=(-0.06, 0.03, -0.05), mouth="smile", blush=True),
+    "calm":            dict(eyes="down", brow=(-0.04, 0.03, 0.0), mouth="smile"),
+    "gentle_question": dict(eyes="dot", brow=(-0.06, 0.02, -0.08), mouth="small_open", blush=True, look=(0.02, 0.0)),
+    "command":         dict(eyes="dot", brow=(-0.03, 0.0, -0.06), mouth="call"),
+    "panicked":        dict(eyes="fear", brow=(-0.14, 0.06, -0.10), mouth="shout", sweat=3, tremble=True),
+    "awed":            dict(eyes="big", brow=(-0.10, 0.03, -0.14), mouth="small_o", look=(0.02, -0.04)),
+})
+STORM_EXPRESSIONS = ("warm", "smile", "calm", "gentle_question", "command", "panicked", "awed")
+
+JESUS_SKIN = "#c88e66"
+JESUS_HAIR = "#4a3122"
+JESUS_ROBE = "#f0e6d0"
+JESUS_TRIM = "#d9c59c"
+JESUS_MANTLE = "#b24f47"
+JESUS_SASH = "#c9a25e"
+_JESUS_M = _metrics(_ADULT, 1.02, 1.0)
+
+
+# ---------------------------------------------------------------- beards and headwear (head frame)
+def _storm_beard(R, col, kind):
+    """'jesus' a short neat rounded beard along the jaw; 'curly' Peter's full curly beard with grey streaks;
+    'fisher' a short square fisherman's beard. All three get the default moustache (see _MOUSTACHED)."""
+    if kind == "jesus":
+        L = 1.13
+        pts = [(-0.86 * R, -0.02 * R), (-0.90 * R, 0.52 * R), (-0.60 * R, (L - 0.20) * R), (-0.12 * R, (L - 0.02) * R),
+               (0.16 * R, L * R), (0.50 * R, (L - 0.10) * R), (0.80 * R, 0.70 * R), (0.92 * R, 0.50 * R),
+               (0.70 * R, 0.62 * R), (0.20 * R, 0.80 * R), (-0.30 * R, 0.70 * R), (-0.62 * R, 0.25 * R)]
+        s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+        lite = shade(col, 0.22)
+        for x0, y0, x1, y1 in ((-0.62, 0.42, -0.50, 0.80), (-0.25, 0.86, -0.12, 1.02), (0.36, 0.86, 0.46, 0.98)):
+            s += _line(f"M{fmt(x0 * R)},{fmt(y0 * R)} Q{fmt((x0 + 0.08) * R)},{fmt((y0 + y1) / 2 * R)} "
+                       f"{fmt(x1 * R)},{fmt(y1 * R)}", w=2.0, col=lite, extra='opacity="0.8"')
+        return s
+    if kind == "curly":
+        circ = []
+        for i in range(9):
+            a = math.radians(178 - i * 21.5)
+            rr = 0.98 * R
+            cx, cy = 0.05 * R + rr * math.cos(a) * 0.95, 0.40 * R + rr * math.sin(a) * 0.82
+            if cy < 0.05 * R:
+                continue
+            circ.append((cx, cy, (0.24 if i % 2 else 0.21) * R))
+        circ += [(-0.78 * R, 0.10 * R, 0.17 * R), (0.86 * R, 0.42 * R, 0.15 * R), (0.12 * R, 1.25 * R, 0.2 * R)]
+        s = _union_circles(circ, col, 2.8)
+        s += f'<path d="{smooth_path([(-0.62 * R, 0.25 * R), (-0.30 * R, 0.72 * R), (0.20 * R, 0.84 * R), (0.70 * R, 0.66 * R), (0.55 * R, 0.95 * R), (-0.40 * R, 0.95 * R)])}" fill="{col}"/>'
+        grey = mix(col, "#ece8e0", 0.72)
+        for k, (x, y, r) in enumerate(circ):
+            c_ = grey if k % 2 == 1 else shade(col, 0.25)
+            s += _line(f"M{fmt(x - 0.45 * r)},{fmt(y + 0.1 * r)} Q{fmt(x - 0.15 * r)},{fmt(y - 0.6 * r)} {fmt(x + 0.4 * r)},"
+                       f"{fmt(y - 0.2 * r)}", w=2.2, col=c_)
+        return s
+    if kind == "fisher":
+        L = 1.06
+        pts = [(-0.86 * R, 0.0), (-0.90 * R, 0.60 * R), (-0.66 * R, (L - 0.08) * R), (0.10 * R, L * R),
+               (0.62 * R, (L - 0.06) * R), (0.86 * R, 0.62 * R), (0.70 * R, 0.66 * R), (0.20 * R, 0.82 * R),
+               (-0.30 * R, 0.70 * R), (-0.62 * R, 0.25 * R)]
+        s = f'<path d="{smooth_path(pts, tension=0.8)}" fill="{col}" {_st(3.2)}/>'
+        dark = shade(col, -0.2)
+        for x0 in (-0.55, -0.15, 0.30):
+            s += _line(f"M{fmt(x0 * R)},{fmt(0.86 * R)} l{fmt(0.03 * R)},{fmt(0.13 * R)}", w=2.0, col=dark)
+        return s
+    return ""
+
+
+def _jesus_hair(R):
+    """Dark shoulder-length hair: a soft cap with a side part and a wave over the temple; the back hangs behind the
+    head (D['long_hair'])."""
+    col = JESUS_HAIR
+    pts = [(0.93 * R, -0.36 * R), (0.84 * R, -0.84 * R), (0.32 * R, -1.13 * R), (-0.40 * R, -1.11 * R),
+           (-0.98 * R, -0.74 * R), (-1.14 * R, -0.08 * R), (-1.13 * R, 0.58 * R), (-1.02 * R, 1.08 * R),
+           (-0.80 * R, 1.16 * R), (-0.76 * R, 0.82 * R), (-0.62 * R, 0.46 * R), (-0.58 * R, -0.04 * R),
+           (-0.36 * R, -0.40 * R), (0.10 * R, -0.52 * R), (0.52 * R, -0.46 * R)]
+    s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
+    lite = shade(col, 0.36)
+    s += _line(f"M{fmt(0.20 * R)},{fmt(-1.08 * R)} Q{fmt(0.42 * R)},{fmt(-0.86 * R)} {fmt(0.62 * R)},{fmt(-0.50 * R)}",
+               w=2.2, col=lite)
+    for x0, y0, x1, y1 in ((-0.30, -0.96, -0.84, -0.30), (-0.62, -0.62, -0.98, 0.70), (0.02, -1.0, -0.40, -0.52),
+                           (-0.86, -0.20, -1.02, 1.06)):
+        s += _line(f"M{fmt(x0 * R)},{fmt(y0 * R)} Q{fmt((x0 + x1) / 2 * R - 0.1 * R)},{fmt((y0 + y1) / 2 * R)} "
+                   f"{fmt(x1 * R)},{fmt(y1 * R)}", w=2.0, col=lite, extra='opacity="0.85"')
+    return s
+
+
+def _fisher_cloth(R, col, wind=0.0):
+    """A fisherman's kerchief: a cloth over the top of the head, tied in a knot at the back with two short tails
+    (they stream back in the wind, wind 0..1)."""
+    s = ""
+    k0 = (-1.02 * R, -0.22 * R)
+    for dy0, dx1, dy1 in ((0.0, -0.46, 0.36), (0.06, -0.30, 0.66)):
+        a = math.radians(-14 + 70 * (1 - wind) - 8 * wind)
+        L = (0.62 if dy0 == 0 else 0.70) * R
+        e = (k0[0] - L * math.cos(a) * (1 if dy0 == 0 else 0.85), k0[1] + dy0 * R + L * math.sin(a))
+        m = ((k0[0] + e[0]) / 2 + dx1 * 0.1 * R, (k0[1] + e[1]) / 2 - 0.05 * R * wind)
+        s += _tube(_spline_pts([k0, m, e], steps=4), 0.15 * R, shade(col, -0.06), ow=2.4)
+    pts = [(0.95 * R, -0.36 * R), (0.82 * R, -0.86 * R), (0.25 * R, -1.15 * R), (-0.45 * R, -1.08 * R),
+           (-0.98 * R, -0.66 * R), (-1.12 * R, -0.12 * R), (-0.96 * R, 0.10 * R), (-0.64 * R, -0.18 * R),
+           (-0.20 * R, -0.48 * R), (0.45 * R, -0.52 * R)]
+    s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
+    s += _line(f"M{fmt(-0.20 * R)},{fmt(-1.00 * R)} Q{fmt(-0.70 * R)},{fmt(-0.70 * R)} {fmt(-0.92 * R)},{fmt(-0.24 * R)}",
+               w=2.2, col=shade(col, -0.22))
+    s += _line(f"M{fmt(0.40 * R)},{fmt(-1.02 * R)} Q{fmt(0.10 * R)},{fmt(-0.80 * R)} {fmt(-0.10 * R)},{fmt(-0.56 * R)}",
+               w=2.0, col=shade(col, -0.18), extra='opacity="0.8"')
+    s += f'<circle cx="{fmt(k0[0])}" cy="{fmt(k0[1])}" r="{fmt(0.17 * R)}" fill="{shade(col, -0.04)}" {_st(2.6)}/>'
+    return s
+
+
+def _kerchief(col, wind=0.0, extra=None):
+    def hat(R):
+        return _fisher_cloth(R, col, wind) + (extra(R) if extra else "")
+    return hat
+
+
+# ---------------------------------------------------------------- worn things (body-frame hooks)
+def _hem_stripes(col, gap=(14, 24, 34)):
+    """Two thin woven stripes just above the hem (the disciples' fishermen's tunics)."""
+    def deco(st, polys):
+        s = ""
+        Hm, um = st["Hm"], st["um"]
+        for d0, d1 in ((gap[0], gap[0] + 5), (gap[1], gap[1] + 9)):
+            for poly in polys[-1:]:
+                s += _poly(_band(poly, Hm, um, -d1, -d0), col, sw=0)
+        return s
+    return deco
+
+
+def _rolled_sleeves(col):
+    """A rolled band where the short sleeve ends (fishermen roll their sleeves up)."""
+    def deco(st, i, Sx, E, W):
+        sl = 0.42
+        mid = _lerp(Sx, E, min(1.0, sl * 2))
+        dv = _nrm(_sub(E, Sx))
+        nv = (-dv[1], dv[0])
+        aw = st["m"]["aw"]
+        a, b = _add(mid, _mul(nv, aw * 0.62)), _sub(mid, _mul(nv, aw * 0.62))
+        return _tube([a, b], 7.5, col, ow=2.4)
+    return deco
+
+
+def _mantle_drape(col, wind=0.0, lying=False):
+    """Behind the body: the mantle falling from the far shoulder down the back (streams out behind in the wind)."""
+    def behind(st):
+        m, tp = st["m"], st["tp"]
+        if lying:
+            return ""
+        T, ww, shw = m["T"], m["ww"], m["shw"]
+        top0, top1 = tp(-0.15 * ww, T + 4), tp(-1.05 * shw, T - 12)
+        L = 0.62 * (m["th"] + m["sh"]) + 0.55 * T
+        if st["mode"] == "feet" and not any(len(s_) for s_ in st["robe"][2:]):
+            pass
+        ang = 4 + 58 * wind                       # 0 hangs down the back, 1 streams back
+        L *= 1 - 0.30 * wind
+        d = _dv(-ang)
+        base = _add(top1, _mul(d, L))
+        if base[1] > st["ground"] - 14:            # never below the ground line
+            L *= (st["ground"] - 14 - top1[1]) / max(1.0, base[1] - top1[1])
+            base = _add(top1, _mul(d, L))
+        side = _rot(d, 90)
+        w0, w1 = 0.55 * shw, 0.95 * shw
+        pts = [top0, top1, _add(_lerp(top1, base, 0.55), _mul(side, -0.10 * w1)), _add(base, _mul(side, -0.40 * w1)),
+               _add(_add(base, _mul(side, 0.08 * w1)), _mul(d, -10 * wind)), _add(base, _mul(side, 0.55 * w1)),
+               _add(_lerp(top0, base, 0.55), _mul(side, 0.45 * w1))]
+        s = f'<path d="{smooth_path(pts, tension=0.75)}" fill="{shade(col, -0.10)}" {_st()}/>'
+        for t in (0.35, 0.7):
+            a, b = _lerp(top1, _add(base, _mul(side, -0.3 * w1)), t), _lerp(top0, _add(base, _mul(side, 0.45 * w1)), t)
+            q = _lerp(a, b, 0.5)
+            s += _line(f"M{_pt(_lerp(top1, q, 0.3))} Q{_pt(q)} {_pt(_add(q, _mul(d, 0.25 * L)))}", w=2.2,
+                       col=shade(col, -0.28), extra='opacity="0.7"')
+        return s
+    return behind
+
+
+def _mantle_band(col, trim):
+    """Over the robe: the mantle crossing the chest from the far shoulder down to the near hip, covering the far
+    shoulder (clipped to the body)."""
+    def mid(st):
+        m, tp, pel, f, u = st["m"], st["tp"], st["pel"], st["f"], st["u"]
+        T, ww, shw = m["T"], m["ww"], m["shw"]
+        A = tp(-0.95 * shw, T - 4)
+        B = tp(0.95 * ww, -0.02 * T)
+        dv = _nrm(_sub(B, A))
+        n = (-dv[1], dv[0])
+        c = _lerp(A, B, 0.5)
+        s = ""
+        polys = [st["robe"][0]]
+        lim = ww + 3
+        for poly in st["robe"][1:]:
+            b = _band(poly, pel, u, -18, 400)
+            if len(b) > 2:
+                polys.append(b)
+        for poly in polys:
+            b = _band(poly, c, n, -26, 24)
+            if len(b) > 2:
+                b = _clip(b, _sub(pel, _mul(f, lim)), f)
+            if len(b) > 2:
+                b = _clip(b, _add(pel, _mul(f, lim + 4)), _mul(f, -1))
+            if len(b) > 2:
+                s += _poly(b, col, sw=3.0)
+                for off in (-17,):
+                    s += _poly(_band(b, c, n, off - 2.5, off + 2.5), trim, sw=0, extra='opacity="0.9"')
+        s += _line(f"M{_pt(_add(c, _mul(n, -8)))} Q{_pt(_add(_lerp(A, B, 0.75), _mul(n, -2)))} {_pt(_add(B, _mul(n, -6)))}",
+                   w=2.2, col=shade(col, -0.25), extra='opacity="0.7"')
+        return s
+    return mid
+
+
+def _blanket(col, trim):
+    """Lying down: the mantle drawn over the legs like a blanket (sleep / wake)."""
+    def front(st):
+        legs = st["legs"]
+        pts = []
+        for (H, K, A, a1, a2) in legs:
+            pts += [H, K, _lerp(K, A, 0.85)]
+        pts.append(st["tp"](0.2 * st["m"]["ww"], 0.32 * st["m"]["T"]))
+        pts.append(st["tp"](-0.9 * st["m"]["ww"], 0.32 * st["m"]["T"]))
+        hull = _hull(pts)
+        floor = st["ground"] - OW
+        hull = [(x, min(y, floor)) for x, y in hull]
+        poly = _rounded(_hull(hull), 18)
+        poly = [(x, min(y + 6, floor)) for x, y in poly]
+        s = _poly(poly, col, sw=OW)
+        ys = [p[1] for p in poly]
+        top = min(ys)
+        xs = sorted(p[0] for p in poly)
+        x0, x1 = xs[0], xs[-1]
+        cid = _clip_id("blanket", _d(poly))
+        inner = ""
+        for k in range(1, 4):
+            xx = x0 + (x1 - x0) * k / 4
+            inner += _line(f"M{fmt(xx - 10)},{fmt(top)} Q{fmt(xx + 8)},{fmt((top + floor) / 2)} {fmt(xx - 4)},{fmt(floor)}",
+                           w=2.4, col=shade(col, -0.22), extra='opacity="0.7"')
+        inner += _line(f"M{fmt(x0)},{fmt(floor - 10)} L{fmt(x1)},{fmt(floor - 10)}", w=6, col=trim, extra='opacity="0.9"')
+        s += f'<clipPath id="{cid}"><path d="{_d(poly)}"/></clipPath><g clip-path="url(#{cid})">{inner}</g>'
+        s += _poly(poly, "none", sw=OW)
+        return s
+    return front
+
+
+def _soft_glow(level, kind="stand"):
+    """A very soft warm light round the whole figure (calm presence; never a halo ring)."""
+    def behind(st):
+        if level <= 0:
+            return ""
+        xs = [p[0] for p in st["ext"]]
+        ys = [p[1] for p in st["ext"]]
+        cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+        rx = (max(xs) - min(xs)) * 0.95 + 120
+        ry = (max(ys) - min(ys)) * 0.75 + 120
+        gid = _clip_id("jglow", round(level, 3), round(cx), round(cy), round(rx), round(ry))
+        return (f'<defs><radialGradient id="{gid}" cx="0.5" cy="0.5" r="0.5">'
+                f'<stop offset="0" stop-color="{P["glow"]}" stop-opacity="0.95"/>'
+                f'<stop offset="0.45" stop-color="{P["gold"]}" stop-opacity="0.38"/>'
+                f'<stop offset="1" stop-color="{P["gold"]}" stop-opacity="0"/></radialGradient></defs>'
+                f'<ellipse cx="{fmt(cx)}" cy="{fmt(cy)}" rx="{fmt(rx)}" ry="{fmt(ry)}" fill="url(#{gid})" '
+                f'opacity="{min(1.0, level):.2f}"/>')
+    return behind
+
+
+
+
+
+# ---------------------------------------------------------------- Jesus
+JESUS_POSES = ("stand", "walk_a", "walk_b", "sit", "teach", "teach_stand", "sleep", "wake", "stand_command",
+               "turn_kind", "bless", "wave", "point", "pray")
+_SEAT = dict(lap=True, legs=((86, 4), (82, 2)), hem=0.97, flare=-8)
+_JZ = {
+    "stand": _P(arms=(("fk", 12, 6), ("fk", -8, -3)), expr="warm"),
+    "walk_a": _P(t=3, legs=((24, 8), (-20, -34)), arms=(("fk", -30, -22), ("fk", 22, 36)), expr="warm"),
+    "walk_b": _P(t=3, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 40), ("fk", -20, -12)), expr="warm"),
+    "sit": _P(t=-2, arms=(("ik", "knee", 0, 0.25, 1), ("ik", "knee", 1, 0.25, 1)), expr="warm", **_SEAT),
+    "teach": _P(t=-2, h=-4, arms=(("ik", "knee", 0, 0.25, 1), ("fk", 56, 122)), hands=("fist", "open"), expr="smile",
+                **_SEAT),
+    "teach_stand": _P(h=-3, arms=(("fk", 12, 6), ("fk", 34, 96)), hands=("fist", "open"), expr="smile"),
+    "sleep": _P(t=-72, h=-6, ground="body", flat_back=True, legs=(("ik", 40, 1), ("ik", 58, 1)),
+                arms=(("ik", "pillow", 1.05, 0, 1), ("ik", "pillow", 0.10, 0, 1)), hands=("open", "none"),
+                far_front=True, near_hidden=True, tail=(-40, -92), expr="sleepy", marks=("zzz",), hem=0.97, flare=-6),
+    "wake": _P(t=-38, h=-14, ground="body", flat_back=True, legs=(("ik", 92, 1), ("ik", 108, 1)),
+               arms=(("ik", "ground", -10, 0, -1), ("fk", 36, 70)), hands=("ground", "open"), far_front=False,
+               expr="calm", hem=0.97, flare=-6, look=(0.03, -0.03)),
+    "stand_command": _P(t=-3, h=-10, legs=((11, 3), (-10, -4)), arms=(("fk", 122, 146), ("fk", -26, -16)),
+                        hands=("palm", "open"), expr="command", look=(0.03, -0.05)),
+    "turn_kind": _P(t=2, h=8, legs=((8, 3), (-7, -3)), arms=(("fk", 22, 70), ("fk", 30, 82)), hands=("open", "open"),
+                    expr="gentle_question"),
+    "bless": _P(h=-4, arms=(("fk", 12, 6), ("fk", 80, 138)), hands=("fist", "palm"), expr="kind"),
+    "point": _P(h=-6, legs=((6, 2), (-5, -2)), arms=(("fk", 12, 6), ("fk", 96, 100)), hands=("fist", "point"),
+                expr="warm", look=(0.03, -0.03)),
+    "pray": _P(h=-12, arms=(("ik", "torso", 1.55, 0.66, 1), ("ik", "torso", 1.55, 0.66, 1)), hands=("none", "pray"),
+               expr="peaceful", look=(0.02, -0.05)),
+}
+JESUS_EXPRESSIONS = ("warm", "kind", "smile", "calm", "sleepy", "gentle_question", "command", "peaceful", "happy")
+JESUS_CUSHION_DX = -150        # sleep / wake: the cushion centre is this far from the anchor (toward the head side)
+
+
+def _jesus_pose(pose, phase):
+    if pose == "wave":
+        f = 166 + 16 * math.sin(2 * math.pi * phase)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"),
+                  expr="smile")
+    return dict(_JZ[pose])
+
+
+def _wave_marks(st):
+    W = st["arms"][0][2]
+    s_ = ""
+    for k in (0, 1):
+        r = 26 + 14 * k
+        s_ += _line(f"M{fmt(W[0] + r)},{fmt(W[1] - r * 0.6)} Q{fmt(W[0] + r * 1.15)},{fmt(W[1])} {fmt(W[0] + r)},"
+                    f"{fmt(W[1] + r * 0.6)}", w=2.8, col=MARK)
+    return s_
+
+
+def _jesus_design(pose, glow, cushion, wind, mantle):
+    lying = pose in ("sleep", "wake")
+    D = dict(robe=JESUS_ROBE, sleeve=JESUS_ROBE, hem_col=JESUS_TRIM, hem_w=10, cuff=JESUS_TRIM, skin=JESUS_SKIN,
+             leg=JESUS_SKIN, hem=0.93, flare_k=1.0, hair=None, hat=("custom", _jesus_hair), hat_h=0.14,
+             beard=("jesus", JESUS_HAIR), ears=False, sash=JESUS_SASH, sash_tail=True,
+             neck_v=shade(JESUS_ROBE, -0.12), sandal=SANDAL)
+    behind = [_soft_glow(glow)] if glow > 0 else []
+    mids, fronts = [], []
+    if mantle and not lying:
+        behind.append(_mantle_drape(JESUS_MANTLE, wind))
+        mids.append(_mantle_band(JESUS_MANTLE, shade(JESUS_MANTLE, 0.30)))
+    if lying and mantle:
+        fronts.append(_blanket(JESUS_MANTLE, shade(JESUS_MANTLE, 0.30)))
+    if pose == "wave":
+        fronts.append(_wave_marks)
+    D["behind"] = _hooks(*[b for b in behind if b])
+    D["mid"] = _hooks(*mids)
+    D["front"] = _hooks(*fronts)
+    return D
+
+
+def jesus(x, y, scale=1.0, facing=1, pose="stand", expr=None, glow=0.0, cushion=True, wind=0.0, phase=0.0,
+          mantle=True, marks=True):
+    """Jesus: a kind, calm man of about thirty (see module doc, 'STORM FILM')."""
+    _check_js(pose, JESUS_POSES + ("walk",), "jesus")
+    _check_js_expr(expr, "jesus")
+    pose = "walk_a" if pose == "walk" else pose
+    ps = _jesus_pose(pose, phase)
+    D = _jesus_design(pose, _clamp01(glow), cushion, _clamp01(wind), mantle)
+    e = expr or ps["expr"]
+    inner, bbox = _figure(D, _JESUS_M, ps, e, _fsign(facing), marks)
+    if pose in ("sleep", "wake") and cushion:
+        inner = f'<g transform="translate({JESUS_CUSHION_DX},0)">{_prp()._boat_cushion()}</g>' + inner
+    return _wrap_out(inner, x, y, scale, facing, f"jesus-{pose}")
+
+
+# ---------------------------------------------------------------- the twelve disciples
+DISCIPLE_NAMES = ("Peter", "Andrew", "James", "John", "Philip", "Bartholomew", "Matthew", "Thomas",
+                  "James son of Alphaeus", "Thaddaeus", "Simon", "Judas")
+DISCIPLE_LOOKS = {"peter": 0, "andrew": 1, "james": 2, "john": 3}
+_DISCIPLES = [
+    # Peter: sturdy fisherman, grey-streaked curly hair and beard, slate-teal tunic, rust kerchief
+    dict(tunic="#3f7282", stripe="#e6c27a", belt="#c0623f", skin="#cf9570", hair="#4a3428", style="curly",
+         beard=("curly", "#5e4636"), hat=("kerchief", "#c0623f"), k=1.03, wide=1.18),
+    # Andrew: Peter's brother (same skin and hair), short square beard, honey-sand tunic, teal kerchief
+    dict(tunic="#c9a86a", stripe="#3f7282", belt="#3f7282", skin="#cf9570", hair="#4a3428", style="curly",
+         beard=("fisher", "#4a3428"), hat=("kerchief", "#4f9a94"), k=1.0, wide=1.02),
+    # James son of Zebedee: tall, full dark beard, wine tunic, cream kerchief
+    dict(tunic="#8b4a5c", stripe="#efe0c0", belt="#e0b25a", skin="#d9a37a", hair="#2a1f1a", style="short",
+         beard=("full", "#2a1f1a"), hat=("kerchief", "#ece0c4"), k=1.05, wide=1.0),
+    # John: the youngest, beardless, light-brown curls, sage tunic, a thin ochre headband
+    dict(tunic="#77a063", stripe="#f0e4c4", belt="#d9a03c", skin="#ebb894", hair="#8a5530", style="curly",
+         beard=None, hat=("band", "#d9a03c"), k=0.97, wide=0.94, curls=True),
+    dict(tunic="#c4877e", stripe="#f0dcc0", belt="#7a5a8a", skin="#c68a62", hair="#241b17", style="short",
+         beard=("short", "#241b17"), hat=("wrap", "#e0b25a", "#a8743c"), k=1.0, wide=1.0),
+    dict(tunic="#5f7fa6", stripe="#e8d6aa", belt="#c0623f", skin="#e2a77e", hair="#5a3a24", style="curly",
+         beard=("full", "#5a3a24"), hat=("headband", "#c0623f"), k=1.01, wide=1.06),
+    dict(tunic="#8f78ad", stripe="#e8c25a", belt="#e8c25a", skin="#dca57c", hair="#3a2a22", style="short",
+         beard=("trim", "#3a2a22"), hat=("kerchief", "#efe2c4"), k=0.99, wide=0.98),
+    dict(tunic="#7b8a48", stripe="#efe0c0", belt="#a8743c", skin="#9a6342", hair="#1f1915", style="curly",
+         beard=("stubble", "#1f1915"), hat=None, k=1.0, wide=1.0),
+    dict(tunic="#cdb07f", stripe="#8a5a3a", belt="#8a5a3a", skin="#d39a72", hair="#2a201b", style="short",
+         beard=("pointed", "#2a201b"), hat=("wrap", "#4f9a94", "#3b7d7b"), k=1.02, wide=0.98),
+    dict(tunic="#9c5a3c", stripe="#f0d890", belt="#d9a03c", skin="#c98f68", hair="#3a2618", style="curly",
+         beard=("short", "#3a2618"), hat=("headband", "#d9a03c"), k=0.99, wide=1.04),
+    dict(tunic="#6c7a86", stripe="#e6d6b2", belt="#b5553a", skin="#e2a882", hair="#241b17", style="short",
+         beard=("full", "#241b17"), hat=("kerchief", "#a8bb8a"), k=1.03, wide=1.06),
+    dict(tunic="#b8923a", stripe="#7a3a3a", belt="#7a3a3a", skin="#c68a62", hair="#2f2420", style="curly",
+         beard=("short", "#2f2420"), hat=("wrap", "#8a3c4a", "#6a2c3a"), k=1.0, wide=1.0),
+]
+DISCIPLE_POSES = ("stand", "walk_a", "walk_b", "sit", "row", "pull_rope", "bail", "cling", "scared", "shout",
+                  "wake_shake", "wake_shake_low", "wonder", "whisper", "kneel", "wave", "point", "push", "cast_net",
+                  "haul_net")
+DISCIPLE_EXPRESSIONS = ("happy", "tired", "scared", "panicked", "amazed", "ashamed", "awed", "worried", "shout",
+                        "determined", "kind")
+BAIL_ITEMS = ("bucket", "bowl")
+
+
+def _disciple_index(variant):
+    if isinstance(variant, str):
+        v = DISCIPLE_LOOKS.get(variant.lower())
+        if v is None:
+            raise ValueError(f"disciples: unknown variant {variant!r}; use 0-11 or one of {tuple(DISCIPLE_LOOKS)}")
+        return v
+    return int(variant) % 12
+
+
+def _john_curls(R):
+    return _joseph_curls(R, "#8a5530")
+
+
+def _disciple_design(v, wind=0.0, wet=False):
+    d = _DISCIPLES[v]
+    tunic = d["tunic"]
+    if wet:
+        tunic = shade(tunic, -0.16)
+    D = dict(robe=tunic, sleeve=tunic, hem_col=shade(tunic, -0.22), hem_w=8, skin=d["skin"], leg=d["skin"], hem=0.60,
+             flare_k=0.85, sleeve_len=0.42, sash=d["belt"], sash_tail=True, hair=d["hair"], hair_style=d["style"],
+             beard=d["beard"], neck_v=shade(tunic, 0.25), bare=True, robe_deco=_hem_stripes(d["stripe"]),
+             arm_deco=_rolled_sleeves(shade(tunic, 0.12)), wet=wet)
+    hat = d.get("hat")
+    if hat:
+        if hat[0] == "kerchief":
+            col = shade(hat[1], -0.18) if wet else hat[1]
+            D.update(hat=("custom", _kerchief(col, wind)), hat_h=0.16, ears=False)
+        elif hat[0] == "band":
+            D.update(hat=("custom", lambda R: _john_curls(R) + _headband(R, d["hat"][1], tails=True)), hat_h=0.12,
+                     hair=d["hair"])
+        else:
+            D["hat"] = hat
+    elif d.get("curls"):
+        D.update(hat=("custom", _john_curls), hat_h=0.12)
+    return D, _metrics(_ADULT, d["k"], d["wide"])
+
+
+# ---- rowing / bailing / net poses (anchor coordinates at scale 1, facing 1)
+def _row_pose(phase):
+    PR = _prp()
+    hx, hy = PR.row_hands(phase)
+    a = 2 * math.pi * phase
+    return _P(t=2 + 12 * math.cos(a), h=-4 - 6 * math.cos(a), lap=True, legs=((80, 18), (76, 14)), hem=0.97, flare=-8,
+              arms=(("ik", "abs", hx + 6, hy - 4, 1), ("ik", "abs", hx, hy, 1)), hands=("fist", "fist"), expr="happy")
+
+
+def _bail_keys(phase):
+    """(t, drop, far hand, near hand, tip) for the bail cycle: 0 scoop low, .35 lift, .65 throw over the side."""
+    keys = [(0.0, (38, 30, (96, -70), (78, -64), 0.0)),
+            (0.35, (6, 6, (70, -190), (54, -178), 0.05)),
+            (0.65, (-6, 0, (132, -262), (116, -250), 1.0)),
+            (1.0, (38, 30, (96, -70), (78, -64), 0.0))]
+    p = phase % 1.0
+    for (p0, k0), (p1, k1) in zip(keys, keys[1:]):
+        if p0 <= p <= p1:
+            t = (p - p0) / (p1 - p0)
+            t = t * t * (3 - 2 * t)
+            return tuple(_lerp(a, b, t) if isinstance(a, tuple) else a + (b - a) * t for a, b in zip(k0, k1))
+    return keys[0][1]
+
+
+def _bail_pose(phase):
+    t, drop, Wf, Wn, tip = _bail_keys(phase)
+    return _P(t=t, h=-6 if t < 20 else 4, drop=drop, legs=(("ik", 34, 1), ("ik", -30, 1)),
+              arms=(("ik", "abs", Wf[0], Wf[1], 1), ("ik", "abs", Wn[0], Wn[1], 1)), hands=("fist", "fist"),
+              expr="worried"), tip
+
+
+def _cast_pose(phase):
+    """Casting a round net: 0 wind-up (leaning back, the gathered net swung behind), .5 the swing (net at the hip),
+    1 release (arms flung forward-up, the net flying open ahead)."""
+    p = _clamp01(phase)
+    e = p * p * (3 - 2 * p)
+    t = -12 + 30 * e
+    fa = -62 + 172 * e            # far arm swings from low behind to forward-up
+    na = -48 + 150 * e
+    return _P(t=t, h=-8 + 4 * e, legs=((22, 6), (-20, -12)), arms=(("fk", fa, fa + 16), ("fk", na, na + 22)),
+              hands=("fist", "open" if p > 0.85 else "fist"), expr="happy", look=(0.03, -0.03))
+
+
+def _haul_pose(phase):
+    """Hauling a heavy full net hand over hand (phase 0..1 alternates the hands)."""
+    a = math.sin(2 * math.pi * phase)
+    return _P(t=-18, drop=16, legs=(("ik", 64, 0), ("ik", -22, 1)),
+              arms=(("ik", "abs", 96 + 14 * a, -150 - 22 * a, 1), ("ik", "abs", 84 - 14 * a, -128 + 22 * a, 1)),
+              hands=("fist", "fist"), expr="laugh")
+
+
+_DS = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3)), expr="happy"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -40, -30), ("fk", 26, 42)), expr="happy"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 44), ("fk", -24, -14)), expr="happy"),
+    "sit": _P(t=-2, arms=(("ik", "knee", 0, 0.25, 1), ("ik", "knee", 1, 0.25, 1)), expr="happy", **_SEAT),
+    "pull_rope": _P(t=-16, drop=12, legs=(("ik", 52, 0), ("ik", -22, 1)),
+                    arms=(("ik", "abs", 76, -306, 1), ("ik", "abs", 58, -246, 1)), expr="worried", look=(0.03, -0.06),
+                    h=-10),
+    "cling": _P(t=14, h=-4, drop=22, legs=(("ik", 36, 1), ("ik", -26, 1)),
+                arms=(("ik", "abs", 84, -262, 1), ("ik", "abs", 80, -206, 1)), hands=("fist", "fist"), expr="scared"),
+    "scared": _P(t=-4, legs=((10, 2), (-8, -4)),
+                 arms=(("ik", "headw", 1.15, 0.45, 1), ("ik", "headw", -1.15, 0.45, -1)), hands=("open", "open"),
+                 expr="scared"),
+    "shout": _P(t=6, h=-8, legs=((10, 3), (-8, -3)), arms=(("fk", 112, 134), ("ik", "head", 1.02, 0.52, 1)),
+                hands=("open", "open"), expr="shout"),
+    "wake_shake": _P(t=18, h=-2, legs=(("ik", 30, 1), ("ik", -24, 1)), drop=8,
+                     arms=(("ik", "abs", 122, -246, 1), ("ik", "abs", 100, -232, 1)), hands=("open", "open"),
+                     expr="panicked", look=(0.04, 0.03)),
+    "wake_shake_low": _P(t=40, h=-12, drop=40, legs=(("ik", 56, 1), ("ik", -26, 1)),
+                         arms=(("ik", "abs", 150, -82, 1), ("ik", "abs", 112, -104, 1)), hands=("open", "open"),
+                         expr="panicked"),
+    "wonder": _P(h=-8, legs=((8, 3), (-7, -3)), arms=(("fk", 40, 118), ("fk", -36, -112)), hands=("open", "open"),
+                 expr="amazed", look=(0.02, -0.04)),
+    "whisper": dict(POSES["whisper"], expr="awed"),
+    "kneel": _P(t=-2, h=-14, arms=(("ik", "torso", 1.45, 0.62, 1), ("ik", "torso", 1.45, 0.62, 1)),
+                hands=("none", "pray"), expr="awed", look=(0.02, -0.06), **_KNEEL),
+    "point": _P(legs=((5, 2), (-5, -2)), arms=(("fk", 14, 8), ("fk", 88, 92)), hands=("fist", "point"),
+                expr="happy"),
+    "push": _P(t=28, drop=24, legs=(("ik", 52, 1), ("ik", -56, 0)), arms=(("fk", 84, 90), ("fk", 78, 86)),
+               hands=("palm", "palm"), expr="happy"),
+}
+
+
+def _disciple_pose(pose, phase):
+    if pose == "row":
+        return _row_pose(phase), None
+    if pose == "bail":
+        ps, tip = _bail_pose(phase)
+        return ps, tip
+    if pose == "cast_net":
+        return _cast_pose(phase), None
+    if pose == "haul_net":
+        return _haul_pose(phase), None
+    if pose == "wave":
+        f = 168 + 18 * math.sin(2 * math.pi * phase)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"),
+                  expr="happy"), None
+    return dict(_DS[pose]), None
+
+
+def _oar_front(D, phase):
+    def front(st):
+        PR = _prp()
+        G = st["ground"]
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        s = PR._oar_svg(phase, (0.0, G))
+        return s + _fist(W0, hr, D["skin"]) + _fist(W1, hr, D["skin"])
+    return front
+
+
+def _bail_front(D, phase, item, tip, marks):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        c = ((W0[0] + W1[0]) / 2 + 8, (W0[1] + W1[1]) / 2 + 10)
+        full = 0.0 if phase % 1.0 < 0.08 else (1.0 if phase % 1.0 < 0.62 else max(0.0, 1 - (phase % 1.0 - 0.62) * 4))
+        s = PR._bail_vessel(item, water=full, tip=tip, splash=marks and 0.6 < phase % 1.0 < 0.9)
+        s = f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate({fmt(-70 * tip)})">{s}</g>'
+        return s + _fist(W0, hr, D["skin"]) + _fist(W1, hr, D["skin"])
+    return front
+
+
+def _rope_front(D):
+    def front(st):
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        dv = _nrm(_sub(W0, W1))
+        top = _add(W0, _mul(dv, 230))
+        tail = [W1, _add(W1, (-14, 40)), _add(W1, (-30, 90)), _add(W1, (-22, 150))]
+        s = _tube(_spline_pts(tail, steps=4), 6, _prp().ROPE, ow=2.2)
+        s += _tube([_add(W1, _mul(dv, -4)), top], 6, _prp().ROPE, ow=2.2)
+        return s + _fist(W1, hr, D["skin"]) + _fist(W0, hr, D["skin"])
+    return front
+
+
+def _cling_front(D):
+    def front(st):
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        return _fist(W1, hr, D["skin"]) + _fist(W0, hr, D["skin"])
+    return front
+
+
+def _net_cast_front(D, phase):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        p = _clamp01(phase)
+        if p < 0.85:            # the gathered net hanging from the hands, swinging with the arms
+            c = (W0[0], W0[1] + 4)
+            s = (f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate({fmt(40 - 70 * p)}) scale(0.9)">'
+                 f'{PR._net_bundle()}</g>')
+            return s + _fist(W0, hr, D["skin"]) + _fist(W1, hr, D["skin"])
+        k = (p - 0.85) / 0.15
+        c = (W0[0] + 150 + 110 * k, W0[1] - 70 + 30 * k)
+        s = _tube([W1, _lerp(W1, c, 0.5), c], 3.0, PR.ROPE, ow=1.8)
+        s += f'<g transform="translate({fmt(c[0])},{fmt(c[1])})">{PR._net_fly(0.45 + 0.55 * k)}</g>'
+        return s
+    return front
+
+
+def _net_haul_front(D, phase):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        G = st["ground"]
+        end = (190, G - 60)
+        s = ""
+        for W in (W0, W1):
+            s += _tube([W, _lerp(W, end, 0.5), end], 5, PR.ROPE, ow=2.0)
+        s += f'<g transform="translate({fmt(end[0] + 20)},{fmt(end[1] - 10)}) scale(0.75)">{PR._net_full(phase)}</g>'
+        return s + _fist(W0, hr, D["skin"]) + _fist(W1, hr, D["skin"])
+    return front
+
+
+def _shake_marks(st, phase):
+    s = ""
+    for (Sx, E, W) in st["arms"][:1]:
+        for k in (0, 1):
+            r = 18 + 12 * k
+            c = (W[0] + 6, W[1] - 4)
+            s += _line(f"M{fmt(c[0] - r)},{fmt(c[1] - r * 0.9)} Q{fmt(c[0])},{fmt(c[1] - r * 1.3)} {fmt(c[0] + r)},"
+                       f"{fmt(c[1] - r * 0.9)}", w=2.8, col=MARK, extra='opacity="0.85"')
+    return s
+
+
+def disciples(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, phase=0.0, shake=0.0, item="bucket",
+              wind=0.0, wet=False, oar=True, net=True, marks=True):
+    """One of the twelve disciples (variant 0-11 or 'peter' / 'andrew' / 'james' / 'john'), see module doc."""
+    _check_js(pose, DISCIPLE_POSES + ("walk",), "disciples")
+    _check_js_expr(expr, "disciples")
+    if item not in BAIL_ITEMS:
+        raise ValueError(f"disciples: unknown item {item!r}; choose from {BAIL_ITEMS}")
+    pose = "walk_a" if pose == "walk" else pose
+    v = _disciple_index(variant)
+    D, m = _disciple_design(v, _clamp01(wind), wet)
+    ps, tip = _disciple_pose(pose, phase)
+    fronts = []
+    if pose == "row" and oar:
+        fronts.append(_oar_front(D, phase))
+    elif pose == "bail":
+        fronts.append(_bail_front(D, phase, item, tip, marks))
+    elif pose == "pull_rope":
+        fronts.append(_rope_front(D))
+    elif pose == "cling":
+        fronts.append(_cling_front(D))
+    elif pose == "cast_net" and net:
+        fronts.append(_net_cast_front(D, phase))
+    elif pose == "haul_net" and net:
+        fronts.append(_net_haul_front(D, phase))
+    elif pose == "wave" and marks:
+        fronts.append(_wave_marks)
+    if pose in ("wake_shake", "wake_shake_low") and marks:
+        fronts.append(lambda st: _shake_marks(st, phase))
+    if pose in ("scared", "cling") and marks and shake:
+        fronts.append(lambda st: _tremble_lines(st, shake))
+    D["front"] = _hooks(*fronts)
+    if v == 3 and ps["expr"] in ("happy",):
+        ps["expr"] = "happy"
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    jit = shake if pose in ("scared", "cling") else (phase if pose in ("wake_shake", "wake_shake_low") else 0.0)
+    if jit:
+        inner = f'<g transform="translate({fmt(3.5 * math.sin(2 * math.pi * jit))},0)">{inner}</g>'
+    return _wrap_out(inner, x, y, scale, facing, f"disciple{v}-{pose}")
+
+
+disciple = disciples
+
+# (variant, dx, dy, facing): back row (higher, 0.96 x) first, then the front row - every face shows
+_DG = [(5, -330, -34, 1), (9, -165, -34, 1), (8, 0, -36, 1), (10, 165, -34, -1), (11, 330, -34, -1), (4, 480, -30, -1),
+       (6, -480, 0, 1), (7, -320, 0, 1), (1, -160, 0, 1), (0, 0, 2, 1), (2, 160, 0, -1), (3, 320, 0, -1)]
+DISCIPLES_GROUP_POSES = ("stand", "wonder", "whisper", "scared", "kneel", "wave", "walk_a", "walk_b", "point", "shout",
+                         "sit")
+
+
+def disciples_group(x, y, scale=1.0, facing=1, pose="stand", n=12, expr=None, gap=150, exprs=None, poses=None,
+                    phase=0.0, marks=True):
+    """Several disciples at once (see module doc): a two-row group, or a line for the walk poses."""
+    _check_js(pose, DISCIPLES_GROUP_POSES, "disciples_group")
+    sx = 1 if facing >= 0 else -1
+    n = max(1, min(12, int(n)))
+    out = ""
+    if pose.startswith("walk"):
+        other = {"walk_a": "walk_b", "walk_b": "walk_a"}[pose]
+        for i in reversed(range(n)):
+            p_ = pose if i % 2 == 0 else other
+            e = exprs[i % len(exprs)] if exprs else expr
+            out += disciples(x - sx * i * gap * scale, y, scale, facing, variant=i, pose=p_, expr=e, marks=marks)
+        return f'<g data-who="disciples_group-{pose}">{out}</g>'
+    members = sorted(_DG, key=lambda g_: (g_[2] > -10, g_[1]))
+    members = [g_ for g_ in members if g_[0] < n]
+    for i, (v, dx, dy, f) in enumerate(members):
+        p_ = poses[v % len(poses)] if poses else pose
+        if pose == "whisper":
+            p_ = "whisper" if (f > 0) == (v % 2 == 0) else "wonder"
+        e = exprs[v % len(exprs)] if exprs else expr
+        k = 0.96 if dy < 0 else 1.0
+        out += disciples(x + sx * dx * scale, y + dy * scale, scale * k, f * sx, variant=v, pose=p_, expr=e,
+                         phase=(phase + 0.13 * v) % 1.0, marks=marks)
+    return f'<g data-who="disciples_group-{pose}">{out}</g>'
+
+
+# ---------------------------------------------------------------- Galilean villagers (the lakeshore crowd)
+VILLAGER_KINDS = ("man", "woman", "child", "elder")
+VILLAGER_POSES = ("stand", "walk_a", "walk_b", "listen", "sit", "sit_listen", "kneel", "wave", "cheer", "point",
+                  "shoulders", "carry", "carry_walk_a", "carry_walk_b", "nod")
+_VL = [
+    dict(robe="#8f6a9c", trim="#f0d890", skin="#d9a37a", hair="#2f2420", cloth="#efe2c4", veil="#e9d3a8"),
+    dict(robe="#4f8a8a", trim="#e6c27a", skin="#c68a62", hair="#241b17", cloth="#d9a03c", veil="#e9b8a8"),
+    dict(robe="#c4a25e", trim="#5a6f9a", skin="#e2a882", hair="#4a2f1f", cloth="#e8dcc0", veil="#a8c4d8"),
+    dict(robe="#7a8f5a", trim="#e9d6aa", skin="#a46b47", hair="#1f1915", cloth="#b5553a", veil="#f0e0b8"),
+    dict(robe="#b5605a", trim="#f0e4c4", skin="#dca57c", hair="#3a2618", cloth="#5f8aa8", veil="#c9b0d9"),
+    dict(robe="#5f6f98", trim="#f0d890", skin="#cf9570", hair="#2a201b", cloth="#e0b25a", veil="#f2c4a0"),
+]
+
+
+def _villager_design(kind, variant):
+    c = _VL[int(variant) % 6]
+    robe = c["robe"]
+    D = dict(robe=robe, sleeve=robe, hem_col=shade(robe, -0.2), hem_w=9, cuff=shade(robe, -0.2), skin=c["skin"],
+             leg=c["skin"], hem=0.92, flare_k=1.0, hair=c["hair"], hair_style="curly",
+             robe_deco=_hem_stripes(c["trim"], gap=(16, 26, 36)), sandal=SANDAL)
+    m = _ADULT
+    if kind == "man":
+        D.update(beard=(("full", "short", "fisher", "stubble", "trim", "jesus")[int(variant) % 6], c["hair"]),
+                 sash=c["trim"], sash_tail=True)
+        if int(variant) % 3 != 2:
+            D.update(hat=("headcloth", c["cloth"], shade(c["cloth"], -0.3)), tail=(c["cloth"], shade(c["cloth"], -0.3)),
+                     ears=False)
+        m = _metrics(_ADULT, 1.0 + 0.015 * (int(variant) % 3 - 1), 1.0 + 0.04 * (int(variant) % 2))
+    elif kind == "woman":
+        veil = c["veil"]
+        D.update(hat=("veil", veil, shade(veil, -0.25)), veil=veil, ears=False, sash=c["trim"], sash_tail=True,
+                 hair_style="short")
+        m = _metrics(_ADULT, 0.95, 0.92)
+    elif kind == "child":
+        girl = int(variant) % 2 == 1
+        D.update(hem=0.58, flare_k=0.9, sleeve_len=0.55, rope_belt=c["trim"], hair_style="short" if girl else "curly",
+                 robe_deco=_hem_stripes(c["trim"], gap=(10, 18, 26)))
+        if girl:
+            D.update(ponytail=c["hair"], ribbon=c["cloth"])
+        m = _CHILD
+    else:                       # elder
+        D.update(hair="#e4ddd0", beard=("white", "#ece6da"), shawl=c["trim"], shawl_trim=shade(c["trim"], -0.25),
+                 brow_w=4.6, brow_col="#9a9088")
+        if int(variant) % 2:
+            D.update(hat=("wrap", c["cloth"], shade(c["cloth"], -0.25)))
+        m = _metrics(_ADULT, 0.97, 1.0)
+    return D, m
+
+
+_VG = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3)), expr="happy"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -40, -30), ("fk", 26, 42)), expr="happy"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 28, 44), ("fk", -24, -14)), expr="happy"),
+    "listen": _P(h=-8, arms=(("fk", 8, 3), ("ik", "head", 0.30, 1.05, 1)), expr="kind", look=(0.03, -0.04)),
+    "sit": _P(t=-3, legs=(("ik", 80, 1), ("ik", 90, 1)), arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)),
+              expr="happy", **_SEATED),
+    "sit_listen": _P(t=4, h=-10, legs=(("ik", 76, 1), ("ik", 86, 1)),
+                     arms=(("ik", "knee", 0, 0.20, 1), ("ik", "head", 0.32, 1.02, 1)), expr="kind",
+                     look=(0.03, -0.05), **_SEATED),
+    "kneel": _P(t=-2, h=-12, arms=(("ik", "torso", 1.45, 0.62, 1), ("ik", "torso", 1.45, 0.62, 1)),
+                hands=("none", "pray"), expr="kind", look=(0.02, -0.05), **_KNEEL),
+    "cheer": dict(POSES["cheer"]),
+    "point": _P(legs=((5, 2), (-5, -2)), arms=(("fk", 14, 8), ("fk", 88, 92)), hands=("fist", "point"),
+                expr="happy"),
+    "shoulders": _P(h=-4, arms=(("fk", 12, 8), ("ik", "headw", -1.02, -0.90, -1)),
+                    hands=("fist", "fist"), expr="happy", look=(0.02, -0.03)),
+    "nod": _P(h=22, arms=(("fk", 14, 8), ("fk", -8, -3)), expr="kind"),
+}
+
+
+def _villager_pose(pose, phase, kind):
+    if pose == "wave":
+        f = 168 + 18 * math.sin(2 * math.pi * phase)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"),
+                  expr="happy")
+    if pose == "carry":
+        return _nh_carry_pose("basket")
+    if pose in ("carry_walk_a", "carry_walk_b"):
+        return _nh_carry_pose("basket", pose[-1])
+    return dict(_VG[pose])
+
+
+def _rider_child(variant):
+    """The little child riding on the father's shoulders: drawn BEHIND the father, the seat hidden behind his head,
+    so the child's body and waving arm rise above it (the father's raised hands hold its legs)."""
+    def behind(st):
+        Hc, R = st["Hc"], st["m"]["R"]
+        D, m = _villager_design("child", variant)
+        ps = _P(t=-2, h=-6, lap=True, legs=((62, 4), (56, -2)), hem=0.97, flare=-8,
+                arms=(("fk", 150, 170), ("fk", 40, 70)), hands=("open", "fist"), expr="laugh")
+        saved = dict(_LAST)
+        inner, bb = _figure(D, _metrics(_CHILD, 0.86, 1.0), ps, "laugh", 1, True)
+        pel = _LAST["pelvis"]
+        _LAST.clear()
+        _LAST.update(saved)
+        tx, ty = Hc[0] - pel[0] - 0.25 * R, Hc[1] + 0.15 * R - pel[1]
+        return f'<g transform="translate({fmt(tx)},{fmt(ty)})">{inner}</g>'
+    return behind
+
+
+def villager(x, y, scale=1.0, facing=1, kind="man", variant=0, pose="stand", expr=None, phase=0.0, rider=None,
+             marks=True):
+    """Galilean villagers on the lakeshore: men, women, children and elders (see module doc, 'STORM FILM')."""
+    if kind not in VILLAGER_KINDS:
+        raise ValueError(f"villager: unknown kind {kind!r}; choose from {VILLAGER_KINDS}")
+    _check_js(pose, VILLAGER_POSES + ("walk",), "villager")
+    _check_js_expr(expr, "villager")
+    pose = "walk_a" if pose == "walk" else pose
+    if pose == "shoulders" and kind not in ("man",):
+        raise ValueError("villager: pose 'shoulders' is for kind='man' (a father with a child on his shoulders)")
+    D, m = _villager_design(kind, variant)
+    ps = _villager_pose(pose, phase, kind)
+    fronts = []
+    if pose.startswith("carry"):
+        b, mi, fr = _carry_hooks(D, "carry", "basket")
+        fronts.append(fr)
+    if pose == "wave" and marks:
+        fronts.append(_wave_marks)
+    if pose == "shoulders":
+        rv = int(variant) + 1 if rider is None else rider
+        D["behind"] = _rider_child(rv)
+
+        D["hat"] = None
+        D.pop("tail", None)
+        D["ears"] = True
+    if kind == "elder" and pose in ("stand", "walk_a", "walk_b", "listen", "nod"):
+        ps["t"] = ps["t"] + 8
+        if pose != "listen":
+            ps["arms"] = (ps["arms"][0], ("fk", 22, 30))
+            fronts.insert(0, _cane)
+    D["front"] = _hooks(*fronts)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"villager-{kind}{int(variant) % 6}-{pose}")
+
+
+# ---------------------------------------------------------------- the modern child at night (child(outfit=...))
+STORM_CHILD_POSES = ("hug_pillow", "sit_hug", "pray", "kneel_pray", "sit_pray")
+CHILD_OUTFITS = ("pyjamas",)
+PYJAMA = "#8fa6d8"
+PYJAMA_STAR = "#f4d77a"
+_SC_POSES = {
+    "hug_pillow": _P(t=4, h=6, legs=((6, 2), (-5, -2)), arms=(("ik", "body", -2, -50, 1), ("ik", "body", 46, -12, 1)),
+                     hands=("open", "open"), expr="worried", look=(0.04, 0.0)),
+    "sit_hug": _P(t=2, h=8, legs=(("ik", 66, 1), ("ik", 76, 1)),
+                  arms=(("ik", "body", 2, -52, 1), ("ik", "body", 46, -16, 1)), hands=("open", "open"),
+                  expr="worried", **_SEATED),
+    "pray": _P(h=-6, arms=(("ik", "torso", 1.45, 0.62, 1), ("ik", "torso", 1.45, 0.62, 1)), hands=("none", "pray"),
+               expr="peaceful", look=(0.02, -0.04)),
+    "kneel_pray": dict(POSES["kneel_pray"]),
+    "sit_pray": _P(t=-2, h=-4, legs=(("ik", 70, 1), ("ik", 80, 1)),
+                   arms=(("ik", "torso", 1.5, 0.66, 1), ("ik", "torso", 1.5, 0.66, 1)), hands=("none", "pray"),
+                   expr="peaceful", **_SEATED),
+}
+
+
+def _pyjama_design(base):
+    c = PYJAMA
+    D = dict(robe=c, sleeve=c, hem_col=shade(c, -0.1), hem_w=6, cuff=shade(c, -0.12), skin="#f0c09a", leg="#f0c09a",
+             hem=0.36, flare_k=0.7, hair="#3a2618", hair_style="short", sandal="#f0e6d6", neck_v="#f6ecd8",
+             hat=("custom", _pigtails), hat_h=0.12, ears=False, bare=True)
+
+    def stars(st, polys):
+        m, tp = st["m"], st["tp"]
+        s = ""
+        for fx, uy in ((-0.4, 0.75), (0.45, 0.45), (-0.1, 0.15), (0.5, -0.12), (-0.45, -0.18)):
+            p = tp(fx * m["ww"], uy * m["T"] if uy > 0 else uy * (m["th"] + m["sh"]) * 0.6)
+            s += _star_pts(p, 5.5)
+        return s
+    D["robe_deco"] = stars
+
+    def legwear(st, i):
+        H, K, A, a1, a2 = st["legs"][i]
+        col = c if i == 1 else shade(c, -0.12)
+        s_ = _tube([H, K, _lerp(K, A, 0.86)], st["m"]["lw"] + 9, col, ow=3.2)
+        for t in (0.3, 0.75):
+            s_ += _star_pts(_lerp(H, K, t) if t < 0.5 else _lerp(K, A, t - 0.25), 4.5)
+        cuff = _lerp(K, A, 0.80)
+        dv = _nrm(_sub(A, K))
+        nv = (-dv[1], dv[0])
+        w = (st["m"]["lw"] + 9) / 2
+        s_ += _line(f"M{_pt(_add(cuff, _mul(nv, w)))} L{_pt(_sub(cuff, _mul(nv, w)))}", w=2.2, col=shade(c, -0.3))
+        return s_
+    D["legwear"] = legwear
+    return D
+
+
+def _star_pts(c, r):
+    pts = []
+    for k in range(10):
+        a = -math.pi / 2 + k * math.pi / 5
+        rr = r if k % 2 == 0 else r * 0.45
+        pts.append((c[0] + rr * math.cos(a), c[1] + rr * math.sin(a)))
+    return _poly(pts, PYJAMA_STAR, sw=0)
+
+
+def _pigtails(R):
+    """The pyjama girl's hair: a soft bob with a side fringe and two little bunches tied with yellow bobbles."""
+    col = "#3a2618"
+    s = ""
+    for (cx, cy) in ((-1.08 * R, 0.10 * R),):
+        s += _ell(cx, cy, 0.30 * R, 0.36 * R, col, sw=3.0)
+        s += f'<circle cx="{fmt(cx + 0.18 * R)}" cy="{fmt(cy - 0.24 * R)}" r="{fmt(0.09 * R)}" fill="{PYJAMA_STAR}" {_st(2.2)}/>'
+    pts = [(0.92 * R, -0.36 * R), (0.80 * R, -0.86 * R), (0.25 * R, -1.12 * R), (-0.45 * R, -1.06 * R),
+           (-0.98 * R, -0.66 * R), (-1.10 * R, 0.02 * R), (-0.95 * R, 0.42 * R), (-0.70 * R, 0.30 * R),
+           (-0.62 * R, -0.10 * R), (-0.20 * R, -0.42 * R), (0.20 * R, -0.30 * R), (0.55 * R, -0.42 * R)]
+    s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+    s += _line(f"M{fmt(0.10 * R)},{fmt(-1.02 * R)} Q{fmt(-0.30 * R)},{fmt(-0.80 * R)} {fmt(-0.70 * R)},{fmt(-0.30 * R)}",
+               w=2.0, col=shade(col, 0.3))
+    return s
+
+
+def _pillow_front(D, pose, k=0.52):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        c = ((W0[0] + W1[0]) / 2 - 2, (W0[1] + W1[1]) / 2 + 2)
+        s = f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate(-38) scale({k})">{PR._pillow(hug=1.0)}</g>'
+        return s + _hand(W0, (0.3, 1.0), "open", D["skin"], hr) + _hand(W1, (0.4, 1.0), "open", D["skin"], hr)
+    return front
+
+
+def _child_storm(x, y, scale, facing, pose, expr, phase, marks, outfit, pillow, sibling, hood, boots, coat):
+    if outfit is not None and outfit not in CHILD_OUTFITS:
+        raise ValueError(f"child: unknown outfit {outfit!r}; choose from {CHILD_OUTFITS}")
+    allp = CHILD_POSES + SIBLING_POSES + STORM_CHILD_POSES
+    if pose not in allp:
+        raise ValueError(f"child: unknown pose {pose!r}; choose from {allp}")
+    _check_js_expr(expr, "child")
+    if pose in _SC_POSES:
+        ps = dict(_SC_POSES[pose])
+    elif pose == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * phase)
+        ps = _P(h=-4, arms=(("fk", 146, f), ("fk", -10, -4)), hands=("open", "fist"), expr="happy")
+    elif pose in _SIB_POSES:
+        ps = dict(_SIB_POSES[pose])
+    else:
+        ps = dict(_CH_POSES[pose])
+    if outfit == "pyjamas":
+        D, m = _pyjama_design(ps), _metrics(_CHILD, 1.0, 0.96)
+    elif sibling is not None:
+        D, m = _sibling_design(sibling)
+    else:
+        D, m = _child_design(ps["legs"], hood, boots, coat or CHILD_COAT), _CHILD
+    if pose in ("hug_pillow", "sit_hug") and pillow:
+        D["front"] = _pillow_front(D, pose)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    if pose == "jump":
+        inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
+    return _wrap_out(inner, x, y, scale, facing, f"child-{outfit or sibling or 'raincoat'}-{pose}")
+
+
+VILLAGER_CROWD_POSES = ("stand", "listen", "sit", "sit_listen", "wave", "cheer", "walk_a", "walk_b", "nod", "kneel")
+
+
+def villager_crowd(x, y, scale=1.0, facing=1, n=12, pose="stand", width=900, rows=3, seed=0, poses=None, expr=None,
+                   phase=0.0, marks=True):
+    """A lakeshore crowd of n villagers (mixed kinds and colours) in up to `rows` rows centred on x (see module doc).
+    The front row stands on y; each row behind is 46*scale higher and 6% smaller, drawn first. pose (or the list
+    poses, cycled) is given to everyone; walk poses alternate frames so nobody marches in step; children are put in
+    the front row; one father in the back carries a child on his shoulders when n >= 8 and pose is stand / listen /
+    wave / cheer."""
+    _check_js(pose, VILLAGER_CROWD_POSES, "villager_crowd")
+    import random as _random
+    rng = _random.Random(seed)
+    sx = 1 if facing >= 0 else -1
+    rows = max(1, int(rows))
+    people = []
+    kinds = ["child", "woman", "man", "elder", "man", "woman", "child", "man", "woman", "elder", "child", "man"]
+    for i in range(int(n)):
+        k = kinds[(i + seed) % len(kinds)]
+        people.append((k, (i * 5 + seed) % 6))
+    people.sort(key=lambda p_: 0 if p_[0] == "child" else 1)          # children to the front
+    per = max(1, -(-len(people) // rows))
+    out = ""
+    shoulders_done = False
+    for r in reversed(range(rows)):
+        grp = people[r * per:(r + 1) * per]
+        if not grp:
+            continue
+        k_r = scale * (1 - 0.06 * r)
+        y_r = y - 46 * scale * r
+        for j, (kind, v) in enumerate(grp):
+            u = (j + 0.5) / len(grp) - 0.5
+            px = x + sx * (u * width * scale + (r % 2) * 40 * scale + rng.uniform(-14, 14) * scale)
+            p_ = poses[(j + r) % len(poses)] if poses else pose
+            if p_ in ("walk_a", "walk_b") and (j + r) % 2:
+                p_ = "walk_b" if p_ == "walk_a" else "walk_a"
+            if p_.startswith("walk") or pose in ("listen", "sit_listen", "sit", "kneel", "nod"):
+                f_ = sx                    # everybody looks the same way (toward the speaker / where they go)
+            else:
+                f_ = sx if u < 0 else -sx  # a chatting crowd: the two halves face each other
+            if (not shoulders_done and r == rows - 1 and kind == "man" and n >= 8 and
+                    p_ in ("stand", "listen", "wave", "cheer")):
+                p_, shoulders_done = "shoulders", True
+            kw = dict(kind=kind, variant=v, pose=p_, expr=expr, phase=(phase + 0.21 * j) % 1.0, marks=marks)
+            out += villager(px, y_r + rng.uniform(-6, 6) * scale, k_r, f_, **kw)
+    return f'<g data-who="villager_crowd-{pose}">{out}</g>'
