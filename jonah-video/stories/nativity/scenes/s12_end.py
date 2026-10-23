@@ -195,7 +195,7 @@ def build(ctx):
 
     # ---------------- the thought bubble (heart and '?')
     bsvg, bc = bubble_svg()
-    b_in, b_out = snap(t_q - 0.25), snap(t_end + 0.45)
+    b_in, b_out = snap(t_q - 0.25), snap(t_end + 1.2)   # keep the thought up through the answer pause
 
     def bub_m(t):
         if t < b_in or t > b_out + 0.4:
@@ -213,7 +213,7 @@ def build(ctx):
 
     # ---------------- end card
     ex, ey = END
-    t_card = snap(t_end + 0.75)
+    t_card = snap(t_end + 1.8)   # the script leaves the child 2 s to answer: the card comes late in it
     sc.add("endcard", end_card_svg(), z=20, wc=0, motion=M.keys(
         [(t_card, {"alpha": 0, "s": 0.95, "dy": 16}), (t_card + 0.6, {"alpha": 1, "s": 1.0, "dy": 0})], "out",
         pivot=(ex, ey - 50)))
