@@ -9,7 +9,10 @@ Benjamin, brothers_group(), Pharaoh, Egyptians, the Ishmaelite traders, hug_pair
 disciples_group(), the Galilean villagers, villager_crowd() and the girl in pyjamas (child(outfit='pyjamas')) (section
 STORM FILM); for the Nativity film (stories/nativity) Mary, Joseph the carpenter, baby_jesus(), toddler_jesus(), the
 angels and angel_choir(), the shepherds, the wise men, the Bethlehem townsfolk and townsfolk_crowd(), and the boy in
-a Christmas jumper (child(outfit='jumper')) (section NATIVITY FILM at the end).
+a Christmas jumper (child(outfit='jumper')) (section NATIVITY FILM); for the Lost Sheep film (stories/lost_sheep) new
+poses for the same Jesus, the tax collectors, sinner(), the Pharisees and pharisees_group(), the shepherd of the parable
+(parable_shepherd, shepherd_points), the village neighbours and musician(), the modern parent() and the girl lost in the
+supermarket (child(outfit='dungarees' / 'cloud_pyjamas', toy='lamb')) (section LOST SHEEP FILM at the end).
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -1250,6 +1253,276 @@ JOSEPH_C_SKIN, JOSEPH_C_HAIR, JOSEPH_C_TUNIC, JOSEPH_C_CLOAK, JOSEPH_C_STRIPE, J
 BABY_BAND, TODDLER_TUNIC, ANGEL_ROBE, ANGEL_GOLD, ANGEL_WING, ANGEL_FEATHER, LAMPLIGHT, STAFF_WOOD, JUMPER, JUMPER_KNIT,
 JUMPER_TROUSERS, JUMPER_SOCKS. Baby and toddler Jesus and the angels are drawn with respect; God the Father is never
 drawn - his glory is light only (props.glory / heaven_light / the_star).
+
+LOST SHEEP FILM (Luke 15:1-7, stories/lost_sheep)              sheets: python3 tools/character_sheet.py lost_sheep
+=================================================
+Same rig and conventions as above (anchor = ground under the pelvis, between the feet; seated poses: the seat touches the
+ground at the anchor; facing; scale; marks; bboxes (l, t, r, b) at scale 1 / facing 1 measured from renders, wobble
+included). hand_positions / body_points work for every function here. Sheets (each <= 2000 px wide): characters_lost_sheep_
+jesus / _tax / _sinners / _pharisees / _shepherd / _shepherd_night / _village / _modern / _expr, characters_lost_sheep_group
+(line-up, the meal, counting at sunset, the search, found, carried home, the party) and characters_lost_sheep_modern_group
+(the supermarket, found, holding hands, bedtime). New designs with this film's palette - a warm, earthy courtyard for the
+outer story; poppy-coral, mint, saffron, lavender and sky blue for Jesus's spring storybook world - nothing reuses the
+Nativity shepherds or townsfolk or the other films' villagers. Only Jesus is the same person as in 耶稣平静风浪 (same design,
+new poses). The flock, the little lamb, the owl, the places and the props are in art/props.py section 13.
+SCALE: at the same ``scale`` Jesus ~342 (head (2, -287)), the shepherd ~380 with his crook (head (2, -282), crook top -377),
+tax collectors ~356 with head-cloth / cap, the woman ~314, the labourer ~345 (broad), the young man ~329, the Pharisees ~354
+(head-cloth and prayer box), neighbours like the other films' adults (men ~340, women ~319, children ~224, elders ~322), mum
+~318, dad ~339, the girl ~225; props.cloud_sheep ~134 tall and 190 long, props.little_lamb ~120 tall. One ground line, one
+scale.
+New expressions (LOST_SHEEP_EXPRESSIONS; every function accepts them): stern (level, lowered brows, flat mouth - proper,
+not angry), disdain (heavy lids, nose-up look, small frown: '看不起'), mutter (narrowed eyes, frowning brows, small open
+mouth - grumbling to each other), ponder (eyes up to the side, one brow raised, flat mouth - thinking), softened (eyes
+down, gentle smile, blush - the Pharisees at the end), touched (big shining eyes, raised soft brows, smile, blush - 'warm'),
+relieved (eyes closed, big smile, blush), teary (big wet eyes, wobbly mouth, blush; the functions of this film add one
+shining tear on the cheek, never streams), cheery (^ eyes, open smile, blush). Also useful: kind, warm, smile, laugh,
+joyful, happy, worried, puzzled, call, determined, tender, peaceful, sleepy.
+
+jesus(..., pose=<JESUS_LOST_SHEEP_POSES>, bread=True)  - the poses this film adds
+--------------------------------------------------------------------------------
+Same design and output for every Storm-film call (JESUS_POSES unchanged). New poses (natural expr in brackets):
+  welcome        (-144, -343, 137, 0)   both arms open wide, palms up (smile)
+  tell           (-71, -342, 113, 0)    storytelling: the near hand lifted forward, palm up, the far hand open (smile)
+  look_kind      (-71, -341, 58, 0)     hands loosely folded, head tilted down, kind eyes (kind)
+  laugh          (-75, -342, 55, 0)     head back, hand on the chest (laugh)
+  open_hands     (-71, -341, 102, 0)    both palms up in front of the chest (smile): THE STORY PAGE comes out of these hands -
+                                        props.story_page at the midpoint of body_points(jesus, ..., pose='open_hands')['hands']
+  On the floor at the low table (the anchor is the seat on the floor, knees up - props.low_table hides the legs):
+  sit_ground     (-74, -235, 121, 2)    hands on the knees (warm)
+  sit_eat        (-66, -234, 121, 2)    breaking a round flatbread at the table: phase 0 whole loaf in both hands .. .5 torn
+                                        .. 1 the halves apart, crumbs (smile; bread=False: hands only); hands about
+                                        (72, -100), (46, -94) above the seat
+  sit_offer      (-63, -235, 121, 2)    holding a piece of bread out toward facing, the other half in the far hand (warm)
+  sit_laugh / sit_tell / sit_look_kind / sit_point / sit_open_hands   (about (-82..-66, -236, 121, 2))
+  sit_welcome    (-145, -235, 135, 2)   arms open while seated
+JESUS_EXPRESSIONS + kind, laugh, smile suit him; he is never comic.
+
+tax_collector(x, y, scale=1.0, facing=1, variant=0, pose='stand', expr=None, phase=0.0, bag=None, ledger=None, item=None,
+              marks=True)
+--------------------------------------------------------------------------------------------------------------------
+The tax collectors at the meal (Luke 15:1): richer clothes than anyone at the table, never villains. variant (mod 3):
+  0  plump, short black beard, mulberry robe with gold hem / cuffs / collar, saffron sash and rings, a cream head-cloth with a
+     gold cord: THE ONE WITH THE MONEY BAG (a fat leather purse at the belt; bag=None means variant 0 only, bag=True / False
+     forces it) AND THE TAX LEDGER (a hinged wax tablet tucked under the arm in stand / walk; ledger=None = variant 0)
+  1  tall and thin, a pointed beard, a saffron robe with a diamond pattern, a teal sash and a round teal cap
+  2  a younger man with a neat beard, a teal robe with cream stripes, a brick sash, rings
+  pose (TAX_COLLECTOR_POSES)  bbox (union of variants)  natural expr  notes
+  stand          (-68, -356, 64, 0)       neutral
+  walk_a/walk_b  (-93, -356, 87, 1) / (-69, -358, 105, 0)   'walk' + phase (<.5 a)
+  wave           (-68, -356, 114, 0)      happy      phase swings the hand
+  count          (-67, -355, 90, 0)       neutral    the ledger open in both hands with coins on it (standing)
+  stand_laugh    (-74, -356, 57, 0)       laugh      stand_warm (-67, -356, 62, 0) touched, hand on the heart
+  Seated on the floor at the low table (anchor = the seat; hands at table height ~80-96 above it):
+  sit            (-73, -245, 124, 3)      neutral    hands on the knees
+  sit_eat        (-63, -245, 124, 3)      happy      a cup (item='cup', default 0 and 2) or bread ('bread', default 1) at the
+                                                     table in the far hand, a piece of bread at the mouth in the near hand
+  laugh          (-90, -245, 124, 3)      laugh      leaning back, hands on the belly
+  listen         (-47, -246, 124, 3)      kind       leaning forward, chin on the hand
+  smile          (-63, -244, 124, 3)      happy      hands folded on the table
+  warm           (-63, -244, 124, 3)      touched    hand on the heart ('their faces light up')
+  toast          (-71, -245, 124, 3)      cheery     a cup raised
+  sit_count      (-52, -243, 124, 3)      neutral    counting coins on the open ledger at the table (variant 0: the opening)
+
+sinner(x, y, scale=1.0, facing=1, kind='woman', variant=0, pose='stand', expr=None, phase=0.0, item=None, marks=True)
+(outcast() is the same function)
+--------------------------------------------------------------------------------------------------------------------
+The people nobody liked (Luke 15:1-2 'sinners'): poor and a bit rough - mended clothes with stitched patches and a frayed
+hem, bare feet - but kind faces. SINNER_KINDS (variant 0 / 1 = two colourings):
+  'woman'      a faded rose (or sage) dress, a loose orange (or magenta) head-scarf knotted at the nape over dark curls, a
+               gold hoop earring, bangles, lashes                                          stand (-62, -314, 51, 0)
+  'labourer'   big and broad (metrics 1.04 x 1.3), a rough brown (or slate) short tunic, bare forearms, a red (or ochre)
+               bandana, stubble, a rope belt                                               stand (-67, -345, 67, 0)
+  'young_man'  lanky, a messy mop of curls, freckles, a faded blue (or ochre) short tunic   stand (-58, -329, 54, 0)
+  The same poses as the tax collectors (SINNER_POSES = GUEST_POSES, no count): stand / walk / wave / stand_laugh / stand_warm
+  and the seated sit / sit_eat / laugh / listen / smile / warm / toast (seated bboxes about (-100..-34, -241..-216, 115, 2);
+  natural expr kind / happy for stand / walk / sit). item 'cup' / 'bread' for sit_eat / toast.
+
+pharisee(x, y, scale=1.0, facing=1, variant=0, pose='stand', expr=None, phase=0.0, marks=True)
+----------------------------------------------------------------------------------------------
+The Pharisees: proper, stern, never ugly or monstrous. Long robes (to just above the feet) with a contrasting hem band and
+long blue-and-cream tassels at the hem corners, a striped cream prayer shawl (its two ends hang down the front with two
+stripes and corner tassels; the rest down the back to the knees), a cream head-cloth with a flap, and on the forehead the
+small dark leather prayer box (tefillin) on its strap. variant (mod 3): 0 the elder (tall, a long white beard, indigo robe,
+bushy grey brows), 1 stout with a full black beard (wine robe), 2 tall with a neat pointed brown beard (olive robe).
+  pose (PHARISEE_POSES)   bbox (union)              natural expr  notes
+  stand                   (-83, -353, 64, 0)        stern      hands clasped in front
+  walk_a/walk_b           (-90, -355, 86, 0) / (-78, -356, 72, 0)   stern   ('walk' + phase)
+  stand_frown             (-87, -354, 58, 0)        disdain    hands behind the back, chin up ('看不起')
+  arms_folded             (-86, -354, 66, 0)        stern
+  whisper                 (-67, -352, 92, 0)        mutter     leaning in, hand by the mouth: two face to face ~110*scale apart
+  look_at_each_other      (-78, -353, 62, 0)        ponder     stroking the beard, eyes toward facing (two facing each other)
+  think                   (-83, -352, 66, 0)        ponder     hand on the chin, head down
+  soften                  (-83, -352, 66, 0)        softened   hand on the heart, head tilted: thoughtful at the end
+  grumble                 (-77, -352, 93, 0)        disdain    one hand gesturing at the meal, head shaking with phase (loop)
+pharisees_group(x, y, scale=1.0, facing=1, pose='stand_frown', poses=None, exprs=None, gap=105, phase=0.0, marks=True)
+  All three, drawn back to front, centred on x: variant 0 in front at x, 1 and 2 a step behind on either side (all facing
+  `facing`). pose 'whisper': 1 (left) and 0 whisper face to face, 2 behind with arms folded; 'look_at_each_other': 1 and 0
+  face each other, 2 thinks; 'walk_a' / 'walk_b': a line with 0 leading at x, the others behind in alternate frames.
+  PHARISEES_GROUP_POSES; poses / exprs (lists, indexed by variant) override per person. bbox at scale 1: stand_frown
+  (-190, -354, 161, 0), whisper (-139, -354, 233, 0).
+
+parable_shepherd(x, y, scale=1.0, facing=1, pose='stand', expr=None, phase=0.0, crook=True, lantern=False, glow=1.0,
+                 lamb=None, lamb_eyes='open', marks=True)
+------------------------------------------------------------------------------------------------------------------
+The shepherd in Jesus's story: a friendly man of about thirty with a big smile and a short curly chestnut beard, a cream
+head-cloth with a blue woven band and a striped flap, a poppy-coral knee tunic (LS_SHEPHERD_TUNIC) with a cream zigzag above
+the hem, a rolled cream blanket with brown stripes across the chest, a leather satchel, a navy sash, sandals and a long
+honey-wood crook with a round hook (crook=False: none). Not a Nativity shepherd (no fleece vest, no earth tones).
+  lantern=True   a little lit hand lantern with a warm glow (glow 0..1; 0 = the lantern without its glow - put
+                 props.lantern_light on a 'screen' layer instead): hanging from the far hand while walking / climbing /
+                 stepping / pushing / carrying, raised in look_around and listen, set down on the ground behind him in
+                 kneel_hug, lift, call, worried, puzzled, knock, wave, cheer, dance and count.
+  lamb           None = the pose decides (kneel_hug, lift, carry*, knock draw the little lamb, the others do not); True puts
+                 the lamb on his shoulders in stand / walk / cheer / dance / wave / point / listen / look_around too (his near
+                 hand then holds its legs at his chest); False never draws it. lamb_eyes 'open' | 'happy' | 'closed'.
+  pose (PARABLE_SHEPHERD_POSES)  bbox (crook, no lantern)   natural expr   notes
+  stand          (-69, -377, 64, 2)       warm       the crook planted in the near hand
+  walk_a/_b/_c   (-89, -377, 83, 2) / (-62, -378, 100, 2) / (-64, -380, 67, 2)   warm   planted-foot stride frames and the
+                                                     passing frame; pose='walk' + phase 0..1 cycles a, c, b, c (~0.2 s each)
+  lead_a/lead_b  (-89, -344, 220, 1)      happy      walking ahead of the flock, the crook pointing the way, the far hand
+                                                     waving 'come along'; 'lead' + phase (<.5 a)
+  count          (-69, -333, 279, 0)      happy      counting 'under the rod': the crook held out over the passing sheep,
+                                                     its hook end tapping down - phase 0 raised .. .5 touching .. 1 raised;
+                                                     the far hand counts on its fingers (see the counting recipe)
+  count_again    (-55, -372, 111, 3)      puzzled    leaning forward, a finger pointing down the line ('我再数一遍！')
+  puzzled        (-69, -378, 106, 3)      puzzled    scratching his head, the crook leaning on him, a '?' (marks)
+  worried        (-66, -378, 109, 3)      worried    hands on the cheeks ('少了一只小羊！')
+  call           (-73, -379, 100, 2)      call       head up, hands cupped round the mouth, call arcs ('小羊！小羊！')
+  look_around    (-68, -377, 91, 2)       worried    peering, a hand at the brow; phase >= .5 turns him to look back
+  climb_a/_b     (-51, -345, 133, -4)     determined climbing a slope: the far (a) / near (b) foot raised onto ground
+                                                     PARABLE_SHEPHERD_CLIMB = 44 px higher, the crook planted ahead on it;
+                                                     'climb' + phase (<.5 a)
+  step_a/_b      (-71, -333, 119, 32)     determined crossing on stepping stones: a long stride (a) / balanced on one foot,
+                                                     the other knee up (b); the crook planted in the stream ahead (its foot
+                                                     32 px below the anchor line); 'step' + phase
+  push_through   (-64, -325, 270, 1)      determined leaning into the thorns, pushing the branches aside with the crook
+                                                     (draw props.thorn_bush part='back' before him and part='front' after)
+  listen         (-88, -376, 88, 1)       worried    hand cupped at the ear, sound arcs: '忽然，他听见了：咩——'
+  kneel_hug      (-177, -287, 153, 5)     tender     kneeling, hugging the little lamb (nuzzle) in front of him; the crook laid
+                                                     down behind him
+  lift           (-177, -335, 150, 0)     joyful     lifting the lamb: phase 0 at the chest .. 1 up beside his head
+  carry_a/_b/_c  (-89, -377, 121, 3) / (-71, -378, 108, 2) / (-74, -380, 114, 3)   joyful   the lamb across his shoulders,
+                                                     its legs gathered in his near hand at the chest, walking (the classic
+                                                     image); 'carry' + phase cycles a, c, b, c. With lantern=True the lantern
+                                                     hangs from the far hand and the crook is left out.
+  carry_stand    (-80, -377, 108, 2)      joyful     the same, standing (at the party)
+  knock          (-76, -379, 152, 3)      happy      the lamb on his shoulders, knocking at a door with the far fist; phase
+                                                     0..1 moves the fist (knock marks when it touches)
+  cheer          (-100, -469, 105, 0)     joyful     both arms up, the crook raised high
+  dance          (-107, -343, 104, -9)    joyful     a happy hop: phase <.5 one knee up, >= .5 the other, lifted 10-18 px
+  point          (-69, -378, 100, 1)      happy      wave (-69, -377, 110, 2) happy (phase swings the hand)
+PARABLE_SHEPHERD_EXPRESSIONS: kind, warm, happy, puzzled, worried, call, determined, tender, relieved, joyful, cheery, laugh.
+shepherd_points(x, y, scale=1.0, facing=1, pose='stand', phase=0.0, **kw) -> body_points() plus 'lamb' (the little lamb's
+  on_shoulders anchor), 'lantern' (the far hand = the lantern's handle) and 'crook_top'.
+
+neighbour(x, y, scale=1.0, facing=1, kind='man', variant=0, pose='stand', expr=None, phase=0.0, item=None, marks=True)
+-------------------------------------------------------------------------------------------------------------------
+The shepherd's friends and neighbours (Luke 15:6), a new village look in this film's party colours: short-sleeved tunics
+in saffron, mint, coral, lavender, sky blue and leaf green with a cream zigzag above the hem and a contrasting woven sash.
+NEIGHBOUR_KINDS: 'man' (a round felt cap with a rolled brim over curls, beard varies), 'woman' (a patterned head-scarf
+tied at the back with two tails, a bun), 'child' (knee tunic; odd variants girls with a ponytail), 'elder' (white hair and
+beard, a woolly shawl, a stick when standing / walking). variant 0-5 (mod 6) colours and skin tones.
+  pose (NEIGHBOUR_POSES)  bbox man / woman (others similar)   natural expr  notes
+  stand          (-52, -347, 60, 0) / (-57, -319, 52, 0)    happy
+  walk_a/walk_b  (-89, -341, 83, 1) / (-64, -343, 101, 0)   happy      'walk' + phase
+  wave           phase swings the hand              cheer (-100, -339, 105, 0) joyful, arms up
+  clap           (-54, -340, 114, 0)                joyful     phase 0..1: hands apart .. together (clap ticks) .. apart
+  dance          (-125, -346, 84, -8)               joyful     phase <.5 / >= .5 alternate knees, hopping
+  laugh / sing (arms open, 'ah') / listen / point
+  open_door      (-58, -341, 123, 0)                surprised  answering the knock: a hand on the door, the far hand up
+                                                               (item='lamp' puts a lit clay lamp in it)
+  hold_lantern   (-54, -340, 211, 0)                happy      a lit lantern held up with its glow
+  carry_dish     (-51, -341, 98, 0)                 happy      a dish of fruit, bread and grapes for the party
+  item (NEIGHBOUR_ITEMS) 'lantern' / 'lamp' / 'dish' / None adds the thing to other poses (walking with a lantern...).
+musician(x, y, scale=1.0, facing=1, instrument='lyre', variant=0, pose='play', expr=None, phase=0.0, marks=True)
+  A village musician (MUSICIAN_INSTRUMENTS): 'lyre' (a man strumming a small lyre held against his chest), 'tambourine'
+  (a woman shaking it up high, jingle ticks), 'flute' (a man playing a wooden pipe). MUSICIAN_POSES play / stand / walk_a /
+  walk_b / dance; phase 0..1 loops the playing (4 frames at ~0.12 s) and floats little notes (marks). bbox lyre play
+  (-52, -336, 158, 0), tambourine (-63, -346, 129, 0), flute (-54, -347, 150, 0).
+
+parent(x, y, scale=1.0, facing=1, kind='mum', pose='stand', expr=None, phase=0.0, marks=True)
+---------------------------------------------------------------------------------------------
+The modern mum or dad of the opening (s02). 'mum': copper hair in a ponytail, a coral top under an open mint cardigan,
+jeans, cream sneakers, a yellow tote bag; 'dad': short dark hair, round glasses, stubble, a striped mustard jumper, jeans,
+brown shoes. PARENT_POSES (bbox mum / dad):
+  stand (-63, -318, 50, 2) / (-52, -339, 58, 3) kind; walk_a / walk_b, run_a / run_b ('walk' / 'run' + phase) - run is
+  worried; look_around (-67, -318, 58, 3) worried, a hand on the head (phase >= .5 looks back); call (-75, -317, 63, 3) a
+  hand cupped at the mouth, call arcs; smile; push (-60, -316, 116, 2) both hands on a trolley handle at PARENT_HANDLE =
+  (92, -150): props.trolley(tx, y, s, f) with parent(tx + (props.TROLLEY_HANDLE[0] - PARENT_HANDLE[0])*s*f, y, s, f,
+  pose='push') - the trolley ahead of the parent;
+  kneel_hug (-85, -278, 121, 5) / (-94, -297, 122, 6) relieved: kneeling with the arms round the child -
+  hug_pair(x, y, s, f, a=(parent, dict(kind='mum', pose='kneel_hug')), b=(child, dict(outfit='dungarees',
+  pose='relieved_hug')), gap=PARENT_HUG_GAP) (the child at x + 88*s*f facing back, drawn first);
+  hold_hand / hold_hand_walk_a / hold_hand_walk_b: the near hand low at PARENT_HAND = (42, -134), holding the child's hand:
+  child(x + dx*s*f, y + dy*s, s, f, pose='hold_hand'...) with (dx, dy) = CHILD_HOLD[kind] = mum (75, -3), dad (69, -10).
+
+child(..., outfit='dungarees' / 'cloud_pyjamas', toy='lamb')  - the girl lost in the supermarket and at bedtime
+--------------------------------------------------------------------------------------------------------------
+child() keeps every earlier look and output. LOST_SHEEP_OUTFITS: 'dungarees' a little girl (~5, 225 px) with copper hair in
+two puffy bunches with mint bobbles, freckles, a buttercup striped t-shirt, mint dungarees with a little lamb on the bib
+pocket and red-coral sneakers; 'cloud_pyjamas' the same girl at bedtime in lilac pyjamas with little cream clouds, barefoot.
+toy='lamb' (CHILD_TOYS) her soft toy lamb (props.toy_lamb). Every earlier pose works in both outfits; the new
+LOST_SHEEP_CHILD_POSES work for every outfit / sibling too:
+  lost           (-57, -225, 43, 0)    teary     lost in the busy shop: a hand at the mouth, the other at the chest, looking
+                                                 round with one shining tear; phase >= .5 turns her to look back
+  relieved_hug   (-56, -226, 63, 0)    relieved  arms up round a kneeling parent's neck (see parent kneel_hug)
+  hug_toy        (-49, -225, 54, 0)    peaceful  hugging the toy lamb to her chest (toy defaults to 'lamb')
+  sit_hug_toy    (-50, -165, 90, 5)    peaceful  sitting, knees up, hugging it: on the bed: child(bx + CHILD_BED_SIT_DX*s*f,
+                                                 by + props.KID_BED_TOP*s, s, f, ...) between props.kid_bed(bx, by, s, f,
+                                                 part='back') and part='front'
+  lie_hug_toy    (-141, -82, 80, 19)   peaceful  lying in bed hugging it, head on the LEFT for facing=1: child(bx +
+                                                 CHILD_BED_LIE[0]*s*f, by + CHILD_BED_LIE[1]*s, ...) between the bed's parts
+                                                 (pass expr='sleepy' to sleep, 'kind' / 'happy' awake)
+  hold_hand      (-60, -225, 40, 0)    happy     the far hand raised at CHILD_HAND = (-30, -130) to hold a parent's hand;
+                                                 hold_hand_walk_a / _b the same walking
+  yawn           (-64, -226, 46, 0)    sleepy    stretching one arm up, a hand at the mouth
+  toy='lamb' with stand / walk / hold_hand / lost / yawn: the toy hangs from her near hand.
+
+Constants (Lost Sheep film): JESUS_LOST_SHEEP_POSES, GUEST_POSES, TAX_COLLECTOR_POSES, SINNER_KINDS, SINNER_POSES,
+PHARISEE_POSES, PHARISEES_GROUP_POSES, PARABLE_SHEPHERD_POSES, PARABLE_SHEPHERD_EXPRESSIONS, PARABLE_SHEPHERD_CLIMB,
+PARABLE_SHEPHERD_STEP, NEIGHBOUR_KINDS, NEIGHBOUR_POSES, NEIGHBOUR_ITEMS, MUSICIAN_INSTRUMENTS, MUSICIAN_POSES, PARENT_KINDS,
+PARENT_POSES, PARENT_HAND, PARENT_HANDLE, PARENT_HUG_GAP, LOST_SHEEP_CHILD_POSES, LOST_SHEEP_OUTFITS, CHILD_TOYS, CHILD_HAND,
+CHILD_HOLD, CHILD_BED_SIT_DX, CHILD_BED_LIE, LOST_SHEEP_EXPRESSIONS; colours LS_SHEPHERD_TUNIC, LS_SHEPHERD_TRIM,
+LS_SHEPHERD_CLOTH, LS_SHEPHERD_BAND, LS_SHEPHERD_SKIN, LS_SHEPHERD_HAIR, LS_BLANKET, LS_BLANKET_STRIPE, LS_CROOK, LS_LEATHER,
+PHYLACTERY, TASSEL_BLUE, LS_CHILD_HAIR, LS_DUNGAREE, LS_TEE, LS_SNEAKER, LS_PYJAMA, LS_PYJAMA_DOT, LS_TEAR.
+
+NOTES FOR SCENE ILLUSTRATORS (Lost Sheep)
+  THE MEAL (s03, s11): courtyard(x0, x1, y, s, part='back') -> for each guest a floor_cushion(gx, sy, s) and the guest at
+    (gx, sy - CUSHION_TOP*s) (or straight on the floor at sy) with sy = table_y - LOW_TABLE_DEPTH*s, guests ~130-150*s
+    apart, the ones at the table's ends facing inward -> low_table(tx, table_y, s, width=...) (it hides their legs; their
+    hands rest on its back half) -> the Pharisees standing at the edge (pharisees_group, 'whisper' / 'stand_frown' ...;
+    s11 'look_at_each_other' -> 'soften') -> courtyard(part='front'). Jesus 'sit_eat' (phase 0 -> 1 breaks the bread),
+    tax collector 0 'sit_count' at first, guests 'laugh' / 'listen' / 'warm' / 'toast'. Static layers: courtyard back + table.
+  THE STORY PAGE (s04 / s11): hands = body_points(jesus, x, y, s, f, pose='open_hands' or 'sit_open_hands')['hands'];
+    props.story_page((h0x + h1x) / 2, min(h0y, h1y), w, h, inner=<the spring hills in page coordinates>, unfold=u, glow=.6)
+    with u 0 -> 1 over ~1.2 s (8 pre-rendered frames) before the dippaper into s05; s11 plays it backwards.
+  THE SHEPHERD WITH THE LAMB ON HIS SHOULDERS: parable_shepherd(x, y, s, f, pose='carry', phase=ph) draws both (the lamb's
+    body behind his head, its head beside his face, its legs in his near hand); lamb_eyes='happy' for the way home. To
+    animate the lamb separately: little_lamb(*shepherd_points(x, y, s, f, pose=p, lamb=False)['lamb'], 1.1*s, f,
+    pose='on_shoulders', part='back') -> parable_shepherd(..., pose=p, lamb=False) -> little_lamb(..., part='front').
+  THE FLOCK (s01, s05): spring_hills(part='back') + spring_hills(part='mid') -> flock(x0, x1, y_far, y_near, n=100,
+    scale=s*.8, top=spring_hills_points(x0, x1, y, s)['mid_top'], gaps=[(shepherd_x, y, 140*s)]) -> spring_hills(part=
+    'front') -> the shepherd 'lead' and the little lamb (in front, apart). Render the flock in 4 phases (it nibbles) or once.
+  THE COUNTING (s06): sheep_line(cx, y, s, -f, n=5, phase=ph) (the sheep walk past toward -f; the counted one is at cx at
+    phase 0) with parable_shepherd(cx - 270*s*f, y, s, f, pose='count', phase=(ph + .5) % 1) - his crook tip taps the
+    sheep's back as it passes; loop ph 0 -> 1 per sheep (6-8 frames, ~0.5 s) and show count_bubble(cx - 70*s*f, y - 430*s,
+    n, s, pop=...) with n = 1, 2, 3 ... 97, 98, 99; then 'count_again' (phase 0 -> 1 again), 'puzzled', 'worried'.
+  TIME OF DAY: give spring_sky / spring_hills / cloud_sheep / flock / little_lamb the same time (0 day, .35 sunset, .62 dusk,
+    1 moonlit night); quantise a transition (0, .2, .35, .5, .62, .8, 1) and cross-fade between the frames. The characters are
+    not tinted: at dusk / night give them a low-opacity blue-violet multiply layer if needed, and the lantern its glow.
+  THE SEARCH AT NIGHT (s07-s09): rocky_slope(part='back') -> little_lamb 'hide' / 'scared' (phase loop) behind the big rock ->
+    rocky_slope(part='front'); owl (blink / hoot); high_hills + high_path_points for 'climb' / 'walk' with lantern=True;
+    spring_hills(time=1) for 'step' on the stepping stones (spring_hills_points()['stones']: tops and perspective k);
+    thorn_bush(part='back') -> 'push_through' -> thorn_bush(part='front'); found: 'listen' -> 'kneel_hug' -> 'lift' -> 'carry'.
+  THE PARTY (s10): shepherd_village(part='back') -> shepherd_village(part='street', lanterns=1, phase=...) -> the shepherd
+    'knock' (lamb on his shoulders) at a village_house(door 0 -> 1) -> neighbours 'open_door' (item='lamp'), 'clap', 'cheer',
+    'dance', 'carry_dish', musicians; party_table; string_lanterns.
+  THE MODERN FRAME (s02, s12): supermarket(part='back') -> trolley + parent 'push' -> child 'lost' (phase flips her) ->
+    supermarket(part='front'); found: hug_pair(parent kneel_hug, child relieved_hug, gap=PARENT_HUG_GAP); s12: cosy_bedroom ->
+    kid_bed(part='back') -> child(outfit='cloud_pyjamas', pose='sit_hug_toy' / 'lie_hug_toy') -> kid_bed(part='front'); the
+    picture on the wall is the shepherd carrying the lamb home (props.picture_frame).
+  RENDER COST (2112 x 1188, uncached): every figure here 0.21-0.25 s (the shepherd with lantern 0.31, pharisees_group 0.25),
+    the same as jesus / shepherds (0.22 s). Backdrops: see art/props.py section 13 - keep them on static layers.
 """
 import hashlib
 import math
@@ -9043,3 +9316,1735 @@ def _child_nativity(x, y, scale, facing, pose, expr, phase, marks, outfit, pillo
     if pose == "jump":
         inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
     return _wrap_out(inner, x, y, scale, facing, f"child-{outfit or sibling or 'raincoat'}-{pose}")
+
+
+# ======================================================================= Lost Sheep film (Luke 15:1-7)
+# New poses for the Storm film's Jesus (the same person), the tax collectors, the people nobody liked (sinner()), the
+# Pharisees and pharisees_group(), the shepherd of the parable (parable_shepherd) and shepherd_points(), the village
+# neighbours and the musicians, the modern parent, and child(outfit='dungarees' / 'cloud_pyjamas', toy='lamb') with
+# the new poses. Module doc section "LOST SHEEP FILM". The flock, the little lamb, the owl, the places and the props
+# are in art/props.py section 13 (the shepherd draws the lamb from there).
+
+EXPRS.update({
+    "stern":    dict(eyes="dot", brow=(0.08, -0.03, 0.02), mouth="flat"),
+    "disdain":  dict(eyes="lidded", brow=(0.03, -0.05, -0.06), mouth="frown", look=(0.03, 0.02)),
+    "mutter":   dict(eyes="narrow", brow=(0.10, -0.05, 0.03), mouth="small_open", look=(0.05, 0.0)),
+    "ponder":   dict(eyes="dot", brow=(-0.03, 0.0, -0.05), brow2=(0.04, -0.02, 0.02), mouth="flat", look=(-0.03, -0.06)),
+    "softened": dict(eyes="down", brow=(-0.08, 0.04, -0.03), mouth="smile", blush=True),
+    "touched":  dict(eyes="big", brow=(-0.11, 0.05, -0.05), mouth="smile", blush=True, look=(0.02, -0.02)),
+    "relieved": dict(eyes="closed", brow=(-0.11, 0.05, -0.05), mouth="grin", blush=True),
+    "teary":    dict(eyes="big", brow=(-0.14, 0.06, -0.05), mouth="wobble", blush=True, look=(0.0, -0.02)),
+    "cheery":   dict(eyes="arc", brow=(-0.04, 0.02, -0.07), mouth="grin", blush=True),
+})
+LOST_SHEEP_EXPRESSIONS = ("stern", "disdain", "mutter", "ponder", "softened", "touched", "relieved", "teary", "cheery")
+
+# ---------------------------------------------------------------- palette
+LS_SHEPHERD_TUNIC = "#de6a4e"        # poppy-coral
+LS_SHEPHERD_TRIM = "#f3e3c2"
+LS_SHEPHERD_CLOTH = "#f1e6cc"
+LS_SHEPHERD_BAND = "#3f7fb5"
+LS_SHEPHERD_SKIN = "#d99c6c"
+LS_SHEPHERD_HAIR = "#6b3f24"
+LS_BLANKET = "#efe1c2"
+LS_BLANKET_STRIPE = "#9a6440"
+LS_CROOK = "#c99a5c"
+LS_LEATHER = "#9a6236"
+PHYLACTERY = "#4a362a"
+TASSEL_BLUE = "#4f78b8"
+LS_CHILD_HAIR = "#b8562c"           # the modern girl: copper hair in two bunches
+LS_DUNGAREE = "#7cc4a2"
+LS_TEE = "#f4cf55"
+LS_SNEAKER = "#e8705a"
+LS_PYJAMA = "#b7a8de"
+LS_PYJAMA_DOT = "#fbf6ea"
+LS_TEAR = "#cfe9f2"
+
+_PSH_M = _metrics(_ADULT, 1.0, 1.06)
+
+
+def _ls_check(pose, allowed, who):
+    if pose not in allowed:
+        raise ValueError(f"{who}: unknown pose {pose!r}; choose from {allowed}")
+
+
+def _ls_expr(expr, who):
+    if expr is not None and expr not in EXPRS:
+        raise ValueError(f"{who}: unknown expr {expr!r}; choose from {tuple(EXPRS)}")
+    return expr
+
+
+def _head_frame(st, body):
+    """Markup in the head frame (head centre, head tilt) of the figure being built."""
+    return f'<g transform="translate({_pt(st["Hc"])}) rotate({fmt(st["ha"])})">{body}</g>'
+
+
+def _teardrop_front(st):
+    """'teary': one shining tear at the inner lower lid and a glint on both eyes (never streams)."""
+    R = st["m"]["R"]
+    s = _drop(-0.06 * R, 0.30 * R, 0.085 * R, fill=LS_TEAR, sw=2.0)
+    for ex in (-0.10, 0.40):
+        s += _ell(ex * R + 0.04 * R, 0.13 * R, 0.07 * R, 0.035 * R, HI, extra='opacity="0.85"')
+    return _head_frame(st, s)
+
+
+def _sound_marks(st, k=1.0):
+    """Call arcs leaving the mouth toward facing (calling '小羊！')."""
+    R, Hc = st["m"]["R"], st["Hc"]
+    s = ""
+    c = (Hc[0] + 1.25 * R, Hc[1] + 0.35 * R)
+    for j, r in enumerate((0.32, 0.55, 0.80)):
+        rr = r * R * k
+        s += _line(f"M{fmt(c[0] + rr * 0.55)},{fmt(c[1] - rr * 0.85)} Q{fmt(c[0] + rr * 1.05)},{fmt(c[1])} "
+                   f"{fmt(c[0] + rr * 0.55)},{fmt(c[1] + rr * 0.85)}", w=3.0 - 0.3 * j, col=MARK, extra='opacity="0.85"')
+        st["ext"].append((c[0] + rr * 1.05, c[1], 2))
+    return s
+
+
+def _note_marks(c, phase, n=2, k=1.0):
+    """Little musical notes floating up from c (marks)."""
+    s = ""
+    for j in range(n):
+        ph = (phase + j / n) % 1.0
+        x = c[0] + (18 + 26 * j) * k + 10 * math.sin(2 * math.pi * ph) * k
+        y = c[1] - (20 + 70 * ph) * k
+        a = 1.0 - 0.6 * ph
+        s += (f'<g opacity="{a:.2f}"><ellipse cx="{fmt(x)}" cy="{fmt(y)}" rx="{fmt(6 * k)}" ry="{fmt(4.6 * k)}" '
+              f'transform="rotate(-20 {fmt(x)} {fmt(y)})" fill="{MARK}"/>'
+              + _line(f"M{fmt(x + 5 * k)},{fmt(y - 1 * k)} l0,{fmt(-20 * k)} q{fmt(6 * k)},{fmt(4 * k)} {fmt(9 * k)},{fmt(10 * k)}",
+                      w=2.4 * k, col=MARK) + "</g>")
+    return s
+
+
+# ---------------------------------------------------------------- Jesus: the poses this film adds (same design)
+JESUS_LOST_SHEEP_POSES = ("welcome", "tell", "look_kind", "laugh", "open_hands", "sit_ground", "sit_eat", "sit_offer",
+                          "sit_laugh", "sit_tell", "sit_look_kind", "sit_welcome", "sit_point", "sit_open_hands")
+_GSEAT = dict(legs=(("ik", 80, 1), ("ik", 90, 1)), **_SEATED)
+_JZ_LS = {
+    "welcome": _P(t=-2, h=-5, legs=((10, 3), (-9, -3)), arms=(("fk", 66, 104), ("fk", -62, -100)), hands=("open", "open"),
+                  expr="smile"),
+    "tell": _P(h=-6, legs=((6, 2), (-5, -2)), arms=(("fk", 26, 66), ("fk", 72, 124)), hands=("open", "open"),
+               expr="smile", look=(0.03, -0.03)),
+    "look_kind": _P(h=10, arms=(("ik", "torso", 1.25, 0.22, 1), ("ik", "torso", 1.25, 0.22, 1)), hands=("none", "fist"),
+                    expr="kind", look=(0.03, 0.04)),
+    "laugh": _P(t=-3, h=-12, arms=(("fk", 12, 6), ("ik", "torso", 0.55, 0.74, 1)), hands=("fist", "open"), expr="laugh"),
+    "open_hands": _P(h=8, arms=(("ik", "abs", 80, -190, 1), ("ik", "abs", 60, -182, 1)), hands=("open", "open"),
+                     expr="smile", look=(0.03, 0.04)),
+    "sit_ground": _P(t=-3, arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)), expr="warm", **_GSEAT),
+    "sit_eat": _P(t=2, h=10, arms=(("ik", "abs", 72, -100, 1), ("ik", "abs", 46, -94, 1)), hands=("fist", "fist"),
+                  expr="smile", look=(0.03, 0.05), **_GSEAT),
+    "sit_offer": _P(t=4, h=2, arms=(("ik", "abs", 54, -96, 1), ("fk", 74, 90)), hands=("fist", "fist"), expr="warm",
+                    **_GSEAT),
+    "sit_laugh": _P(t=-7, h=-12, arms=(("ik", "knee", 0, 0.25, 1), ("ik", "torso", 0.55, 0.74, 1)), hands=("fist", "open"),
+                    expr="laugh", **_GSEAT),
+    "sit_tell": _P(t=-2, h=-6, arms=(("fk", 30, 70), ("fk", 70, 124)), hands=("open", "open"), expr="smile",
+                   look=(0.03, -0.03), **_GSEAT),
+    "sit_look_kind": _P(t=0, h=10, arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)), expr="kind",
+                        look=(0.03, 0.04), **_GSEAT),
+    "sit_welcome": _P(t=-3, h=-4, arms=(("fk", 64, 104), ("fk", -60, -98)), hands=("open", "open"), expr="smile", **_GSEAT),
+    "sit_point": _P(t=-2, h=-4, arms=(("ik", "knee", 0, 0.25, 1), ("fk", 88, 94)), hands=("fist", "point"), expr="warm",
+                    **_GSEAT),
+    "sit_open_hands": _P(t=2, h=10, arms=(("ik", "abs", 86, -118, 1), ("ik", "abs", 62, -110, 1)), hands=("open", "open"),
+                         expr="smile", look=(0.03, 0.05), **_GSEAT),
+}
+
+
+def _bread_front(D, pose, phase=0.0, k=1.0, item="bread"):
+    """Things held by a seated guest / Jesus: bread broken in two (phase 0 whole .. 1 apart), a piece held out, a cup."""
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        skin = D["skin"]
+        s = ""
+        if pose == "sit_eat_jesus":
+            ph = _clamp01(phase)
+            c = ((W0[0] + W1[0]) / 2, (W0[1] + W1[1]) / 2 + 2)
+            if ph < 0.15:
+                s += f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) scale({0.85 * k:.3f})">{PR._ls_bread("loaf")}</g>'
+            else:
+                s += f'<g transform="translate({fmt(W1[0] + 6)},{fmt(W1[1] + 4)}) rotate(-14) scale({0.85 * k:.3f})">{PR._ls_bread("half_l")}</g>'
+                s += f'<g transform="translate({fmt(W0[0] - 4)},{fmt(W0[1] + 2)}) rotate(10) scale({0.85 * k:.3f})">{PR._ls_bread("half_r")}</g>'
+                if ph > 0.5:
+                    for j in range(3):
+                        s += _ell(c[0] - 8 + 9 * j, c[1] + 22 + 7 * (j % 2), 2.6, 2.0, "#e8c27a", sw=1.4)
+            s += _fist(W0, hr, skin) + _fist(W1, hr, skin)
+        elif pose == "sit_offer":
+            s += f'<g transform="translate({fmt(W1[0] + 14)},{fmt(W1[1] - 2)}) rotate(-8) scale({0.8 * k:.3f})">{PR._ls_bread("half_l")}</g>'
+            s += f'<g transform="translate({fmt(W0[0] + 4)},{fmt(W0[1] + 2)}) rotate(12) scale({0.8 * k:.3f})">{PR._ls_bread("half_r")}</g>'
+            s += _fist(W1, hr, skin) + _fist(W0, hr, skin)
+        elif pose == "sit_eat":                      # guest: cup / bread at the table, a piece of bread at the mouth
+            if item == "cup":
+                s += f'<g transform="translate({fmt(W0[0] + 2)},{fmt(W0[1] + 14)}) scale({0.7 * k:.3f})">{PR._ls_cup(True)}</g>'
+            else:
+                s += f'<g transform="translate({fmt(W0[0] + 8)},{fmt(W0[1] + 4)}) rotate(8) scale({0.7 * k:.3f})">{PR._ls_bread("half_r")}</g>'
+            s += f'<g transform="translate({fmt(W1[0] + 7)},{fmt(W1[1] - 4)}) rotate(-30) scale({0.55 * k:.3f})">{PR._ls_bread("piece")}</g>'
+            s += _fist(W0, hr, skin) + _fist(W1, hr, skin)
+        elif pose == "toast":
+            s += f'<g transform="translate({fmt(W1[0] + 3)},{fmt(W1[1] + 12)}) rotate(8) scale({0.72 * k:.3f})">{PR._ls_cup(True)}</g>'
+            s += _fist(W1, hr, skin)
+        return s
+    return front
+
+
+_jesus_storm = jesus
+
+
+def jesus(x, y, scale=1.0, facing=1, pose="stand", expr=None, glow=0.0, cushion=True, wind=0.0, phase=0.0,
+          mantle=True, marks=True, bread=True):
+    """Jesus: a kind, calm man of about thirty (see module doc, 'STORM FILM'; the poses of JESUS_LOST_SHEEP_POSES and
+    bread=... are in 'LOST SHEEP FILM'). Every Storm-film call draws exactly what it did before."""
+    if pose not in JESUS_LOST_SHEEP_POSES:
+        if pose not in JESUS_POSES + ("walk",):
+            raise ValueError(f"jesus: unknown pose {pose!r}; choose from {JESUS_POSES + JESUS_LOST_SHEEP_POSES}")
+        return _jesus_storm(x, y, scale, facing, pose=pose, expr=expr, glow=glow, cushion=cushion, wind=wind,
+                            phase=phase, mantle=mantle, marks=marks)
+    _check_js_expr(expr, "jesus")
+    ps = dict(_JZ_LS[pose])
+    if pose == "sit_eat":
+        ph = _clamp01(phase)
+        ps["arms"] = (("ik", "abs", 72 + 16 * ph, -100 + 2 * ph, 1), ("ik", "abs", 46 - 8 * ph, -94 - 2 * ph, 1))
+    D = _jesus_design(pose, _clamp01(glow), cushion, _clamp01(wind), mantle)
+    if bread and pose in ("sit_eat", "sit_offer"):
+        D["front"] = _hooks(D["front"], _bread_front(D, "sit_eat_jesus" if pose == "sit_eat" else pose, phase))
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _JESUS_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"jesus-{pose}")
+
+
+# ---------------------------------------------------------------- the meal guests: tax collectors and sinners
+GUEST_POSES = ("stand", "walk", "walk_a", "walk_b", "wave", "sit", "sit_eat", "laugh", "listen", "smile", "warm", "toast",
+               "stand_laugh", "stand_warm")
+_GZ = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3)), expr="neutral"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -34, -24), ("fk", 24, 40)), expr="neutral"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 42), ("fk", -22, -12)), expr="neutral"),
+    "sit": _P(t=-3, arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)), expr="neutral", **_GSEAT),
+    "sit_eat": _P(t=2, h=4, arms=(("ik", "abs", 66, -92, 1), ("ik", "head", 0.62, 0.98, 1)), hands=("fist", "fist"),
+                  expr="happy", **_GSEAT),
+    "laugh": _P(t=-9, h=-14, arms=(("ik", "torso", 0.75, 0.42, 1), ("ik", "torso", 1.05, 0.24, 1)), hands=("open", "open"),
+                expr="laugh", **_GSEAT),
+    "listen": _P(t=12, h=-8, arms=(("ik", "knee", 0, 0.25, 1), ("ik", "head", 0.38, 1.10, 1)), hands=("fist", "fist"),
+                 expr="kind", look=(0.04, -0.04), **_GSEAT),
+    "smile": _P(t=2, h=6, arms=(("ik", "abs", 60, -84, 1), ("ik", "abs", 44, -80, 1)), hands=("none", "fist"),
+                expr="happy", **_GSEAT),
+    "warm": _P(t=2, h=8, arms=(("ik", "abs", 58, -84, 1), ("ik", "torso", 0.55, 0.72, 1)), hands=("fist", "open"),
+               expr="touched", **_GSEAT),
+    "toast": _P(t=-3, h=-8, arms=(("ik", "abs", 58, -84, 1), ("fk", 64, 152)), hands=("fist", "fist"), expr="cheery",
+                **_GSEAT),
+    "stand_laugh": _P(t=-4, h=-12, arms=(("ik", "torso", 0.8, 0.40, 1), ("ik", "torso", 1.1, 0.25, 1)), hands=("open", "open"),
+                      expr="laugh"),
+    "stand_warm": _P(h=8, arms=(("fk", 12, 6), ("ik", "torso", 0.55, 0.72, 1)), hands=("fist", "open"), expr="touched"),
+    "count": _P(h=12, arms=(("ik", "body", 64, -64, 1), ("ik", "body", 40, -56, 1)), hands=("fist", "fist"),
+                look=(0.03, 0.08), expr="neutral"),
+    "sit_count": _P(t=8, h=14, arms=(("ik", "abs", 76, -96, 1), ("ik", "abs", 48, -88, 1)), hands=("fist", "fist"),
+                    expr="neutral", look=(0.03, 0.07), **_GSEAT),
+}
+
+
+def _guest_pose(pose, phase):
+    if pose == "walk":
+        return dict(_GZ["walk_a" if (phase % 1.0) < 0.5 else "walk_b"])
+    if pose == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * phase)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"), expr="happy")
+    return dict(_GZ[pose])
+
+
+def _patches(cols, seed=0):
+    """Mended clothes: two or three stitched patches on the robe and frayed ticks along the hem (robe_deco)."""
+    def deco(st, polys):
+        m, tp = st["m"], st["tp"]
+        s = ""
+        spots = ((-0.45, 0.55, 15, 13), (0.35, -0.25, 13, 12), (-0.15, -0.70, 12, 11))[: 2 + seed % 2]
+        for i, (fx, uy, w, h) in enumerate(spots):
+            c = tp(fx * m["ww"], uy * m["T"] if uy > 0 else uy * (m["th"] + m["sh"]) * 0.5)
+            col = cols[i % len(cols)]
+            pts = [(c[0] - w / 2, c[1] - h / 2 + 1), (c[0] + w / 2, c[1] - h / 2), (c[0] + w / 2 - 1, c[1] + h / 2),
+                   (c[0] - w / 2 + 1, c[1] + h / 2 - 1)]
+            s += _poly(pts, col, sw=2.0)
+            s += _line(_d([(p[0] * 0.82 + c[0] * 0.18, p[1] * 0.82 + c[1] * 0.18) for p in pts]), w=1.4,
+                       col=shade(col, -0.35), extra='stroke-dasharray="2.5 2.5" opacity="0.9"')
+        Hm, um = st["Hm"], st["um"]
+        nv = (-um[1], um[0])
+        for poly in polys[-1:]:
+            e = _band_edge(poly, Hm, um, -1.5)
+            if len(e) == 2:
+                a, b = e
+                n = max(3, int(_len(_sub(b, a)) / 11))
+                for j in range(1, n):
+                    p = _lerp(a, b, j / n)
+                    s += _line(f"M{_pt(p)} L{_pt(_sub(_add(p, _mul(nv, 2)), _mul(um, 7 + 3 * (j % 2))))}", w=1.6,
+                               col=INK, extra='opacity="0.55"')
+        return s
+    return deco
+
+
+def _purse_mid(col="#a8743e"):
+    """A fat leather money bag hanging from the belt at the front hip, tied with a cord, a coin peeking out."""
+    def mid(st):
+        m, tp = st["m"], st["tp"]
+        lo = 6 if st["mode"] == "seat" else -2
+        c = tp(0.62 * m["ww"], lo - 18)
+        if st["mode"] == "seat":
+            c = tp(0.70 * m["ww"], lo + 2)
+        return f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) scale(0.62)">{_prp()._ls_purse(col)}</g>'
+    return mid
+
+
+def _tablet_front(D, pose, phase=0.0):
+    """The tax ledger (an open hinged wax tablet) and coins: carried under the arm, or held open for counting."""
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        s = ""
+        if pose in ("count", "sit_count"):
+            c = ((W0[0] + W1[0]) / 2 + 6, (W0[1] + W1[1]) / 2 + 4)
+            s += f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate(-6) scale(0.62)">{PR._ls_tablet(True)}</g>'
+            for j in range(3):
+                s += PR._coin(c[0] - 10 + 11 * j, c[1] - 26 - 5 * (j % 2), 7)
+            s += _fist(W0, hr, D["skin"]) + _fist(W1, hr, D["skin"])
+        else:                                        # closed, tucked under the near arm against the side
+            tp, m = st["tp"], st["m"]
+            c = tp(0.15 * m["ww"], 0.40 * m["T"])
+            s += f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate(-78) scale(0.55)">{PR._ls_tablet(False)}</g>'
+        return s
+    return front
+
+
+_TAX = [   # the tax collectors: richer clothes than anyone at the table (never villains)
+    dict(robe="#8a3f5c", trim="#e8c35a", sash="#e0a53a", skin="#e2a882", hair="#2a201b", beard=("short", "#2a201b"),
+         cloth="#f1e4c8", cord="#d9a03c", k=0.98, wide=1.30, pattern=None, rings=True),
+    dict(robe="#d9a03c", trim="#2f6f72", sash="#2f6f72", skin="#c98e66", hair="#3a2a22", beard=("pointed", "#3a2a22"),
+         cloth=None, cap="#2f6f72", k=1.06, wide=0.90, pattern=("#f3dc96", "diamond", 26), rings=False),
+    dict(robe="#2f6f6a", trim="#efe0b8", sash="#b5553a", skin="#d9a37a", hair="#4a2f1f", beard=("trim", "#4a2f1f"),
+         cloth=None, k=1.0, wide=1.0, pattern=None, stripes=("#efe0b8", 30, 5), rings=True),
+]
+TAX_COLLECTOR_POSES = GUEST_POSES + ("count", "sit_count")
+
+
+def _round_cap(col):
+    def hat(R):
+        pts = [(0.92 * R, -0.42 * R), (0.80 * R, -0.92 * R), (0.20 * R, -1.18 * R), (-0.50 * R, -1.10 * R),
+               (-0.96 * R, -0.66 * R), (-1.00 * R, -0.30 * R), (-0.40 * R, -0.52 * R), (0.30 * R, -0.56 * R)]
+        s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+        s += _tube(_spline_pts([(0.96 * R, -0.44 * R), (0.35 * R, -0.62 * R), (-0.40 * R, -0.56 * R), (-1.00 * R, -0.28 * R)]),
+                   0.16 * R, shade(col, -0.18), ow=2.4)
+        s += _line(f"M{fmt(-0.40 * R)},{fmt(-1.00 * R)} Q{fmt(0.10 * R)},{fmt(-1.12 * R)} {fmt(0.55 * R)},{fmt(-0.92 * R)}",
+                   w=2.0, col=shade(col, 0.25))
+        return s
+    return hat
+
+
+def _rings_deco(col=GOLD):
+    def deco(st, i, Sx, E, W):
+        if i != 1:
+            return ""
+        dv = _nrm(_sub(W, E))
+        p = _sub(W, _mul(dv, 3))
+        nv = (-dv[1], dv[0])
+        aw = st["m"]["aw"]
+        return _tube([_add(p, _mul(nv, aw * 0.5)), _sub(p, _mul(nv, aw * 0.5))], 3.2, col, ow=1.6)
+    return deco
+
+
+def _tax_design(v):
+    d = _TAX[v]
+    D = dict(robe=d["robe"], sleeve=d["robe"], hem_col=d["trim"], hem_w=10, cuff=d["trim"], skin=d["skin"], leg=d["skin"],
+             hem=0.95, flare_k=1.05, hair=d["hair"], hair_style="short", beard=d["beard"], sash=d["sash"], sash_tail=True,
+             neck_v=d["trim"], sandal=SANDAL_DARK, collar=d["trim"] if v == 0 else None)
+    if d.get("cloth"):
+        D.update(hat=("headcloth", d["cloth"], d["cord"]), tail=(d["cloth"], d["cord"]), ears=False)
+    elif d.get("cap"):
+        D.update(hat=("custom", _round_cap(d["cap"])), hat_h=0.16, ears=False)
+    if d.get("pattern"):
+        D["pattern"] = d["pattern"]
+    if d.get("stripes"):
+        D["stripes"] = d["stripes"]
+    if d.get("rings"):
+        D["arm_deco"] = _rings_deco()
+    return D, _metrics(_ADULT, d["k"], d["wide"])
+
+
+def tax_collector(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, phase=0.0, bag=None, ledger=None,
+                  item=None, marks=True):
+    """A tax collector at the meal (Luke 15:1), variant 0-2 (see module doc, 'LOST SHEEP FILM')."""
+    v = int(variant) % len(_TAX)
+    _ls_check(pose, TAX_COLLECTOR_POSES, "tax_collector")
+    _ls_expr(expr, "tax_collector")
+    ps = _guest_pose(pose, phase)
+    D, m = _tax_design(v)
+    mids, fronts = [], []
+    if (v == 0) if bag is None else bag:
+        mids.append(_purse_mid())
+    led = ledger if ledger is not None else (v == 0)
+    if pose in ("count", "sit_count"):
+        fronts.append(_tablet_front(D, pose, phase))
+    elif led and pose in ("stand", "walk", "walk_a", "walk_b"):
+        ps["arms"] = (ps["arms"][0], ("ik", "torso", 0.55, 0.42, 1))
+        fronts.append(_tablet_front(D, pose))
+    if pose in ("sit_eat", "toast"):
+        fronts.append(_bread_front(D, pose, phase, item=item or ("cup" if v != 1 else "bread")))
+    if pose == "wave" and marks:
+        fronts.append(_wave_marks)
+    D["mid"], D["front"] = _hooks(*mids), _hooks(*fronts)
+    e = expr or ps["expr"]
+    if e == "teary":
+        D["front"] = _hooks(D["front"], _teardrop_front)
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"tax_collector{v}-{pose}")
+
+
+SINNER_KINDS = ("woman", "labourer", "young_man")
+SINNER_POSES = GUEST_POSES
+
+
+def _scarf_hat(col, hair, earring=GOLD):
+    """A loose head-scarf knotted at the nape (two tails), curly dark hair showing at the brow, a gold hoop earring."""
+    def hat(R):
+        s = ""
+        hp = [(0.95 * R, -0.30 * R), (0.62 * R, -0.52 * R), (0.20 * R, -0.50 * R), (-0.30 * R, -0.46 * R),
+              (-0.62 * R, -0.18 * R), (-0.70 * R, 0.30 * R), (-0.55 * R, 0.62 * R), (-0.86 * R, 0.55 * R),
+              (-0.92 * R, -0.20 * R), (-0.30 * R, -0.80 * R), (0.55 * R, -0.80 * R)]
+        s += f'<path d="{smooth_path(hp)}" fill="{hair}" {_st(3.0)}/>'
+        for cx, cy in ((0.48, -0.50), (0.12, -0.50), (-0.30, -0.42), (-0.64, 0.10), (-0.62, 0.48)):
+            s += f'<circle cx="{fmt(cx * R)}" cy="{fmt(cy * R)}" r="{fmt(0.10 * R)}" fill="{hair}" {_st(2.2)}/>'
+        k0 = (-1.02 * R, 0.05 * R)
+        for (dx, dy) in ((-0.40, 0.62), (-0.18, 0.78)):
+            s += _tube(_spline_pts([k0, (k0[0] + dx * 0.5 * R, k0[1] + dy * 0.45 * R), (k0[0] + dx * R, k0[1] + dy * R)],
+                                   steps=4), 0.16 * R, shade(col, -0.06), ow=2.4)
+        sc = [(0.96 * R, -0.42 * R), (0.80 * R, -0.88 * R), (0.25 * R, -1.14 * R), (-0.45 * R, -1.08 * R),
+              (-0.98 * R, -0.70 * R), (-1.16 * R, -0.12 * R), (-1.02 * R, 0.16 * R), (-0.76 * R, -0.20 * R),
+              (-0.36 * R, -0.62 * R), (0.40 * R, -0.70 * R)]
+        s += f'<path d="{smooth_path(sc)}" fill="{col}" {_st(3.4)}/>'
+        for x0 in (-0.55, -0.10, 0.35):
+            s += f'<circle cx="{fmt(x0 * R)}" cy="{fmt(-0.92 * R)}" r="{fmt(0.06 * R)}" fill="{shade(col, 0.4)}"/>'
+        s += f'<circle cx="{fmt(k0[0])}" cy="{fmt(k0[1])}" r="{fmt(0.16 * R)}" fill="{shade(col, -0.05)}" {_st(2.4)}/>'
+        s += f'<circle cx="{fmt(-0.66 * R)}" cy="{fmt(0.56 * R)}" r="{fmt(0.11 * R)}" fill="none" stroke="{earring}" stroke-width="{fmt(0.05 * R)}"/>'
+        return s + _lashes(R, "dot")
+    return hat
+
+
+def _bandana_hat(col, hair):
+    def hat(R):
+        s = _hair_cap(R, hair, "curly")
+        s += _ear(R, "#c68a62")
+        pts = [(0.95 * R, -0.40 * R), (0.82 * R, -0.86 * R), (0.25 * R, -1.10 * R), (-0.45 * R, -1.04 * R),
+               (-0.96 * R, -0.64 * R), (-1.04 * R, -0.24 * R), (-0.60 * R, -0.46 * R), (0.20 * R, -0.58 * R)]
+        s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+        for x0, y0 in ((0.45, -0.85), (-0.05, -0.95), (-0.55, -0.80), (0.15, -0.70)):
+            s += f'<circle cx="{fmt(x0 * R)}" cy="{fmt(y0 * R)}" r="{fmt(0.05 * R)}" fill="{shade(col, 0.45)}"/>'
+        k0 = (-1.02 * R, -0.36 * R)
+        s += _tube([k0, (k0[0] - 0.36 * R, k0[1] + 0.20 * R)], 0.14 * R, col, ow=2.4)
+        s += _tube([k0, (k0[0] - 0.22 * R, k0[1] + 0.40 * R)], 0.14 * R, col, ow=2.4)
+        s += f'<circle cx="{fmt(k0[0])}" cy="{fmt(k0[1])}" r="{fmt(0.13 * R)}" fill="{col}" {_st(2.4)}/>'
+        return s
+    return hat
+
+
+def _mop_hat(col):
+    """The young man's messy mop of curls falling over the forehead, freckles."""
+    def hat(R):
+        circ = []
+        for i in range(10):
+            a = math.radians(-12 - i * 19)
+            circ.append((1.0 * R * math.cos(a) - 0.04 * R, 0.98 * R * math.sin(a) + 0.04 * R, (0.26 if i % 2 else 0.21) * R))
+        circ += [(0.62 * R, -0.62 * R, 0.20 * R), (0.30 * R, -0.70 * R, 0.22 * R), (-0.10 * R, -0.62 * R, 0.4 * R),
+                 (-0.60 * R, -0.30 * R, 0.4 * R), (0.78 * R, -0.42 * R, 0.14 * R)]
+        s = _union_circles(circ, col, 2.8)
+        for x, y, r in circ[:9]:
+            s += _line(f"M{fmt(x - 0.4 * r)},{fmt(y)} Q{fmt(x)},{fmt(y - 0.6 * r)} {fmt(x + 0.4 * r)},{fmt(y - 0.1 * r)}",
+                       w=1.8, col=shade(col, 0.3))
+        for fx, fy in ((-0.38, 0.30), (-0.26, 0.38), (-0.32, 0.44), (0.58, 0.30), (0.70, 0.36)):
+            s += f'<circle cx="{fmt(fx * R)}" cy="{fmt(fy * R)}" r="{fmt(0.025 * R)}" fill="#b0603e" opacity="0.7"/>'
+        return s + _ear(R, "#e8b08a")
+    return hat
+
+
+_SINNERS = {
+    "woman": [dict(robe="#d98a8a", patch=("#e9c35c", "#8fb0a0"), scarf="#e58a3a", hair="#2a1d17", skin="#c98a62",
+                   sash="#7a4a6a"),
+              dict(robe="#a8b86a", patch=("#d9604a", "#e8d6aa"), scarf="#c8467a", hair="#3a2618", skin="#e2ad85",
+                   sash="#5a6a9a")],
+    "labourer": [dict(robe="#8a6a4a", patch=("#b8946a", "#6f7d4a"), band="#b5553a", hair="#2a201b", skin="#c68a62",
+                      beard="#2a201b"),
+                 dict(robe="#6f7a8a", patch=("#a8946a", "#b8674a"), band="#d9a03c", hair="#4a3020", skin="#a46b47",
+                      beard="#2a1d17")],
+    "young_man": [dict(robe="#6f9aa8", patch=("#d9b366", "#c9714a"), hair="#8a4a28", skin="#e8b08a"),
+                  dict(robe="#c4a060", patch=("#7f9a8a", "#b8473c"), hair="#2a1d17", skin="#b07a52")],
+}
+
+
+def _sinner_design(kind, v):
+    d = _SINNERS[kind][v % 2]
+    D = dict(robe=d["robe"], sleeve=d["robe"], hem_col=shade(d["robe"], -0.16), hem_w=7, skin=d["skin"], leg=d["skin"],
+             hem=0.92, flare_k=1.0, hair=d["hair"], bare=True, robe_deco=_patches(d["patch"], v),
+             neck_v=shade(d["robe"], -0.2))
+    if kind == "woman":
+        D.update(hat=("custom", _scarf_hat(d["scarf"], d["hair"])), hat_h=0.16, ears=False, sash=d["sash"], sash_tail=True,
+                 hem=0.96, flare_k=1.1, brow_w=3.0, cuff=shade(d["robe"], -0.15), arm_deco=_rings_deco("#e9c35c"))
+        m = _metrics(_ADULT, 0.94, 0.9)
+    elif kind == "labourer":
+        D.update(hat=("custom", _bandana_hat(d["band"], d["hair"])), hat_h=0.12, ears=False, beard=("stubble", d["beard"]),
+                 hem=0.62, sleeve_len=0.42, rope_belt="#b89a6a", flare_k=0.9)
+        m = _metrics(_ADULT, 1.04, 1.30, aw=25, lw=19)
+    else:
+        D.update(hat=("custom", _mop_hat(d["hair"])), hat_h=0.14, ears=False, hem=0.66, sleeve_len=0.55,
+                 rope_belt="#9a7a52", flare_k=0.85)
+        m = _metrics(_ADULT, 0.98, 0.86)
+    return D, m
+
+
+def sinner(x, y, scale=1.0, facing=1, kind="woman", variant=0, pose="stand", expr=None, phase=0.0, item=None,
+           marks=True):
+    """The people nobody liked ('sinners', Luke 15:1-2): poor, rough, mended clothes, kind faces (see module doc,
+    'LOST SHEEP FILM'). outcast() is the same function."""
+    if kind not in SINNER_KINDS:
+        raise ValueError(f"sinner: unknown kind {kind!r}; choose from {SINNER_KINDS}")
+    _ls_check(pose, SINNER_POSES, "sinner")
+    _ls_expr(expr, "sinner")
+    ps = _guest_pose(pose, phase)
+    if pose in ("stand", "walk_a", "walk_b", "walk", "sit") and expr is None:
+        ps["expr"] = "kind" if kind != "labourer" else "happy"
+    D, m = _sinner_design(kind, int(variant))
+    fronts = []
+    if pose in ("sit_eat", "toast"):
+        fronts.append(_bread_front(D, pose, phase, item=item or ("bread" if kind != "woman" else "cup")))
+    if pose == "wave" and marks:
+        fronts.append(_wave_marks)
+    e = expr or ps["expr"]
+    if e == "teary":
+        fronts.append(_teardrop_front)
+    D["front"] = _hooks(*fronts)
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"sinner-{kind}{int(variant) % 2}-{pose}")
+
+
+outcast = sinner
+
+
+# ---------------------------------------------------------------- the Pharisees (stern, never monstrous)
+PHARISEE_POSES = ("stand", "walk", "walk_a", "walk_b", "stand_frown", "arms_folded", "whisper", "look_at_each_other",
+                  "think", "soften", "grumble")
+_PHARISEES = [
+    dict(robe="#3f4a78", trim="#e3c77a", shawl="#f0e7d2", band="#3f4a78", skin="#e2ad85", hair="#dcd5ca",
+         beard=("long", "#e6e0d6"), cloth="#e9dfc8", k=1.05, wide=0.94, old=True),
+    dict(robe="#7a2f3c", trim="#e8d4a2", shawl="#f2e9d6", band="#4a3a36", skin="#c98e66", hair="#2a201b",
+         beard=("full", "#2a201b"), cloth="#efe5d0", k=1.0, wide=1.20),
+    dict(robe="#4f6a4a", trim="#e9d9a8", shawl="#efe8d6", band="#3f6aa0", skin="#d9a37a", hair="#5a3a24",
+         beard=("pointed", "#5a3a24"), cloth="#e6dcc4", k=1.06, wide=1.0),
+]
+_PZ = {
+    "stand": _P(arms=(("ik", "torso", 1.30, 0.34, 1), ("ik", "torso", 1.30, 0.34, 1)), hands=("none", "fist"), expr="stern"),
+    "walk_a": _P(t=3, legs=((22, 8), (-18, -30)), arms=(("ik", "torso", 1.30, 0.34, 1), ("ik", "torso", 1.30, 0.34, 1)),
+                 hands=("none", "fist"), expr="stern"),
+    "walk_b": _P(t=3, legs=((-18, -30), (22, 8)), arms=(("ik", "torso", 1.30, 0.34, 1), ("ik", "torso", 1.30, 0.34, 1)),
+                 hands=("none", "fist"), expr="stern"),
+    "stand_frown": _P(t=-3, h=-6, arms=(("ik", "torso", -1.35, 0.32, -1), ("ik", "torso", -1.35, 0.32, -1)),
+                      hands=("none", "fist"), expr="disdain"),
+    "arms_folded": _P(t=-2, h=-2, legs=((8, 3), (-7, -3)), arms=(("ik", "torso", -0.15, 0.60, 1),
+                                                                ("ik", "torso", 1.25, 0.56, 1)),
+                      far_front=True, expr="stern"),
+    "whisper": _P(t=10, h=-2, legs=((8, 3), (-6, -2)), arms=(("ik", "torso", 1.2, 0.32, 1), ("ik", "head", 1.08, 0.50, 1)),
+                  hands=("fist", "open"), expr="mutter"),
+    "look_at_each_other": _P(t=3, h=-4, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", 1.25, 0.40, 1),
+                                                                       ("ik", "head", 0.40, 1.30, 1)),
+                             hands=("fist", "fist"), expr="ponder", look=(0.07, 0.04)),
+    "think": _P(h=12, arms=(("ik", "torso", 1.15, 0.42, 1), ("ik", "head", 0.28, 1.12, 1)), hands=("fist", "fist"),
+                expr="ponder"),
+    "soften": _P(h=12, arms=(("fk", 10, 5), ("ik", "torso", 0.55, 0.74, 1)), hands=("fist", "open"), expr="softened"),
+    "grumble": _P(t=4, h=4, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", -1.35, 0.32, -1), ("fk", 46, 72)),
+                  hands=("none", "open"), expr="disdain", marks=("shake",)),
+}
+
+
+def _phylactery_hat(cloth, band, aged=False, skin="#e2ad85"):
+    """A cream head-cloth, and on the forehead the small leather prayer box (tefillin) on its strap."""
+    def hat(R):
+        s = _aged(R, skin) if aged else ""
+        s += _cloth_cap(R, cloth, edge=shade(cloth, -0.16))
+        s += _tube(_spline_pts([(0.98 * R, -0.52 * R), (0.45 * R, -0.70 * R), (-0.24 * R, -0.66 * R), (-0.80 * R, -0.36 * R)]),
+                   0.07 * R, PHYLACTERY, ow=1.8)
+        bx, by, w = 0.46 * R, -0.84 * R, 0.38 * R
+        s += (f'<path d="M{fmt(bx - w / 2)},{fmt(by)} L{fmt(bx + w / 2)},{fmt(by - 0.02 * R)} L{fmt(bx + w / 2 + 0.06 * R)},'
+              f'{fmt(by - 0.10 * R)} L{fmt(bx - w / 2 + 0.06 * R)},{fmt(by - 0.09 * R)} Z" fill="{shade(PHYLACTERY, 0.25)}" {_st(2.2)}/>')
+        s += f'<rect x="{fmt(bx - w / 2)}" y="{fmt(by)}" width="{fmt(w)}" height="{fmt(0.32 * R)}" rx="{fmt(0.04 * R)}" fill="{PHYLACTERY}" {_st(2.4)}/>'
+        s += _line(f"M{fmt(bx - w / 2 + 0.05 * R)},{fmt(by + 0.05 * R)} l{fmt(0.10 * R)},0", w=1.6, col=shade(PHYLACTERY, 0.5),
+                   extra='opacity="0.8"')
+        return s
+    return hat
+
+
+def _shawl_mid(col, band):
+    """The prayer shawl's two ends hanging down the front over the robe, two stripes near each end, corner tassels."""
+    def mid(st):
+        m, tp, pel, f, u = st["m"], st["tp"], st["pel"], st["f"], st["u"]
+        T, ww = m["T"], m["ww"]
+        seat = st["mode"] == "seat"
+        lo = -0.15 * T if seat else -0.42 * T
+        s = ""
+        for (x0, x1, top) in ((0.18, 0.66, T - 6), (-0.92, -0.52, T - 10)):
+            pts = [tp(x0 * ww, top), tp(x1 * ww, top - 4), tp(x1 * ww + 2, lo), tp(x0 * ww - 2, lo)]
+            s += _poly(pts, col, sw=2.8)
+            for d0 in (14, 24):
+                a, b = tp(x0 * ww - 1, lo + d0), tp(x1 * ww + 1, lo + d0)
+                s += _line(f"M{_pt(a)} L{_pt(b)}", w=4.2, col=band)
+            for t in (0.15, 0.85):
+                p = _lerp(tp(x0 * ww, lo), tp(x1 * ww, lo), t)
+                q = _add(p, _mul(u, -16))
+                s += _line(f"M{_pt(p)} L{_pt(q)}", w=3.0, col=TASSEL_BLUE)
+                s += _line(f"M{_pt(_add(p, _mul(f, 2)))} L{_pt(_add(q, _mul(f, 3)))}", w=2.0, col=LS_SHEPHERD_TRIM)
+                st["ext"].append((q[0], q[1], 3))
+        return s
+    return mid
+
+
+def _shawl_drape(col, band):
+    """Behind: the prayer shawl hanging from the shoulders down the back to the knees, two stripes near its edge."""
+    def behind(st):
+        m, tp = st["m"], st["tp"]
+        T, ww, shw = m["T"], m["ww"], m["shw"]
+        top0, top1 = tp(-0.15 * ww, T + 4), tp(-1.05 * shw, T - 12)
+        L = 0.38 * (m["th"] + m["sh"]) + 0.55 * T
+        d = _dv(-6)
+        base = _add(top1, _mul(d, L))
+        if base[1] > st["ground"] - 30:
+            L *= (st["ground"] - 30 - top1[1]) / max(1.0, base[1] - top1[1])
+            base = _add(top1, _mul(d, L))
+        side = _rot(d, 90)
+        w1 = 0.95 * shw
+        pts = [top0, top1, _add(_lerp(top1, base, 0.55), _mul(side, -0.10 * w1)), _add(base, _mul(side, -0.40 * w1)),
+               _add(base, _mul(side, 0.55 * w1)), _add(_lerp(top0, base, 0.55), _mul(side, 0.45 * w1))]
+        s = f'<path d="{smooth_path(pts, tension=0.75)}" fill="{shade(col, -0.08)}" {_st()}/>'
+        for off in (16, 26):
+            a = _add(_add(base, _mul(side, -0.36 * w1)), _mul(d, -off))
+            b = _add(_add(base, _mul(side, 0.50 * w1)), _mul(d, -off))
+            s += _line(f"M{_pt(a)} L{_pt(b)}", w=4.0, col=band)
+        return s
+    return behind
+
+
+def _hem_tassels(st):
+    """Long blue-and-cream tassels at the corners of the robe's hem (Matthew 23:5)."""
+    hemp, Hm, um = st["hemp"], st["Hm"], st["um"]
+    nv = (-um[1], um[0])
+    near = [p for p in hemp if _dot(_sub(p, Hm), um) > -14]
+    if not near:
+        return ""
+    a = min(near, key=lambda p: _dot(p, nv))
+    b = max(near, key=lambda p: _dot(p, nv))
+    s = ""
+    floor = st["ground"] - 3
+    for p, sg in ((a, 1), (b, -1)):
+        p0 = _add(p, _mul(nv, 8 * sg))
+        p0 = _sub(p0, _mul(um, 8))
+        q = _add(p0, _mul(um, 26))
+        q = (q[0], min(q[1], floor))
+        s += _line(f"M{_pt(p0)} L{_pt(q)}", w=5.0, col=TASSEL_BLUE)
+        s += _line(f"M{_pt(_add(p0, (2, 0)))} L{_pt(_add(q, (2, -2)))}", w=2.0, col=LS_SHEPHERD_TRIM)
+        s += f'<circle cx="{fmt(p0[0])}" cy="{fmt(p0[1])}" r="3.4" fill="{TASSEL_BLUE}" {_st(1.6)}/>'
+    return s
+
+
+def _pharisee_design(v):
+    d = _PHARISEES[v]
+    D = dict(robe=d["robe"], sleeve=d["robe"], hem_col=d["trim"], hem_w=9, cuff=d["trim"], skin=d["skin"], leg=d["skin"],
+             hem=0.94, flare_k=1.1, hair=d["hair"], beard=d["beard"], ears=False,
+             hat=("custom", _phylactery_hat(d["cloth"], d["band"], d.get("old", False), d["skin"])), hat_h=0.16,
+             tail=(d["cloth"], None), neck_v=shade(d["shawl"], -0.1), sandal=SANDAL_DARK)
+    if d.get("old"):
+        D.update(brow_w=4.4, brow_col="#a39a90")
+    D["behind"] = _shawl_drape(d["shawl"], d["band"])
+    D["mid"] = _shawl_mid(d["shawl"], d["band"])
+    D["front"] = _hem_tassels
+    return D, _metrics(_ADULT, d["k"], d["wide"])
+
+
+def pharisee(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, phase=0.0, marks=True):
+    """A Pharisee, variant 0-2: stern and proper, never ugly (see module doc, 'LOST SHEEP FILM')."""
+    v = int(variant) % len(_PHARISEES)
+    _ls_check(pose, PHARISEE_POSES, "pharisee")
+    _ls_expr(expr, "pharisee")
+    if pose == "walk":
+        pose = "walk_a" if (phase % 1.0) < 0.5 else "walk_b"
+    ps = dict(_PZ[pose])
+    if pose == "grumble":
+        ps["h"] = 4 + 7 * math.sin(2 * math.pi * phase)
+    D, m = _pharisee_design(v)
+    if _PHARISEES[v].get("old") and pose in ("stand", "walk_a", "walk_b", "stand_frown"):
+        ps["t"] = ps["t"] + 4
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"pharisee{v}-{pose}")
+
+
+PHARISEES_GROUP_POSES = ("stand", "stand_frown", "arms_folded", "whisper", "look_at_each_other", "think", "soften",
+                         "grumble", "walk_a", "walk_b")
+
+
+def pharisees_group(x, y, scale=1.0, facing=1, pose="stand_frown", poses=None, exprs=None, gap=105, phase=0.0, marks=True):
+    """The three Pharisees together, drawn back to front, centred on x (see module doc, 'LOST SHEEP FILM')."""
+    _ls_check(pose, PHARISEES_GROUP_POSES, "pharisees_group")
+    sx = 1 if facing >= 0 else -1
+    # (variant, x in gaps, y offset, size, facing multiplier, pose) back to front
+    if pose == "whisper":
+        plan = [(2, 1.5, -10, 0.97, -1, "arms_folded"), (1, -0.7, -4, 0.98, 1, "whisper"), (0, 0.5, 0, 1.0, -1, "whisper")]
+    elif pose == "look_at_each_other":
+        plan = [(2, 1.55, -10, 0.97, -1, "think"), (1, -0.7, -4, 0.98, 1, "look_at_each_other"),
+                (0, 0.5, 0, 1.0, -1, "look_at_each_other")]
+    elif pose in ("walk_a", "walk_b"):
+        other = "walk_b" if pose == "walk_a" else "walk_a"
+        plan = [(2, -2.1, -6, 0.98, 1, pose), (1, -1.05, -3, 0.99, 1, other), (0, 0.0, 0, 1.0, 1, pose)]
+    else:
+        plan = [(1, -1.0, -10, 0.97, 1, pose), (2, 1.0, -8, 0.98, 1, pose), (0, 0.0, 0, 1.0, 1, pose)]
+    out = ""
+    for v, gx, gy, k, fm, p_ in plan:
+        if poses:
+            p_ = poses[v % len(poses)]
+        e_ = exprs[v % len(exprs)] if exprs else None
+        out += pharisee(x + sx * gx * gap * scale, y + gy * scale, scale * k, sx * fm, variant=v, pose=p_, expr=e_,
+                        phase=(phase + 0.3 * v) % 1.0, marks=marks)
+    return f'<g data-who="pharisees_group-{pose}">{out}</g>'
+
+
+# ---------------------------------------------------------------- the shepherd of the parable
+PARABLE_SHEPHERD_POSES = ("stand", "walk", "walk_a", "walk_b", "walk_c", "lead", "lead_a", "lead_b", "count",
+                          "count_again", "puzzled", "worried", "call", "look_around", "climb", "climb_a", "climb_b",
+                          "step", "step_a", "step_b", "push_through", "listen", "kneel_hug", "lift", "carry", "carry_a",
+                          "carry_b", "carry_c", "carry_stand", "knock", "cheer", "dance", "point", "wave")
+PARABLE_SHEPHERD_EXPRESSIONS = ("kind", "warm", "happy", "puzzled", "worried", "call", "determined", "tender", "relieved",
+                                "joyful", "cheery", "laugh")
+PARABLE_SHEPHERD_CLIMB = 44         # climb: the raised foot stands this many px (x scale) above the anchor's ground line
+PARABLE_SHEPHERD_STEP = 46          # step: the gap between the two stepping stones' tops in the stride (step_a)
+_SH_GRIP = ("fk", 34, 80)            # near hand on the planted crook
+_SH_LAMB_ARM = ("ik", "torso", 0.62, 0.86, 1)     # carry: the near hand gathers the lamb's legs at the chest
+_SHZ = {
+    "stand": _P(arms=(("fk", 12, 6), _SH_GRIP), expr="warm"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -30, -20), ("fk", 44, 82)), expr="warm"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 40), ("fk", 26, 70)), expr="warm"),
+    "walk_c": _P(t=3, legs=((5, 1), (-8, -16)), arms=(("fk", 4, 8), ("fk", 34, 76)), expr="warm"),
+    "lead_a": _P(t=5, h=-4, legs=((24, 8), (-20, -34)), arms=(("fk", -48, -86), ("fk", 64, 84)), hands=("open", "fist"),
+                 expr="happy"),
+    "lead_b": _P(t=5, h=-4, legs=((-20, -34), (24, 8)), arms=(("fk", -40, -78), ("fk", 64, 84)), hands=("open", "fist"),
+                 expr="happy"),
+    "count": None,
+    "count_again": _P(t=16, h=6, legs=((10, 3), (-8, -3)), arms=(("fk", 20, 40), ("ik", "abs", 118, -150, 1)),
+                      hands=("fist", "point"), expr="puzzled", look=(0.04, 0.06)),
+    "puzzled": _P(h=10, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", -1.15, 0.05, -1), ("ik", "head", -0.92, -0.52, -1)),
+                  hands=("fist", "fist"), expr="puzzled", marks=("q",)),
+    "worried": _P(t=2, h=6, legs=((6, 2), (-5, -2)), arms=(("ik", "head", 0.45, 0.92, 1), ("ik", "head", 0.92, 0.70, 1)),
+                  hands=("open", "open"), expr="worried", far_over_head=True),
+    "call": _P(t=-4, h=-12, legs=((10, 3), (-9, -3)), arms=(("ik", "head", 0.86, 0.36, 1), ("ik", "head", 0.92, 0.76, 1)),
+               hands=("fist", "cup"), expr="call", far_over_head=True, marks=("call",)),
+    "look_around": None,
+    "climb_a": _P(t=16, h=-8, legs=(("ik", 56, 1, PARABLE_SHEPHERD_CLIMB), ("ik", -34, 0)),
+                  arms=(("fk", -36, -24), ("fk", 84, 86)), expr="determined"),
+    "climb_b": _P(t=16, h=-8, legs=(("ik", -30, 0), ("ik", 58, 1, PARABLE_SHEPHERD_CLIMB)),
+                  arms=(("fk", 30, 46), ("fk", 84, 86)), expr="determined"),
+    "step_a": _P(t=8, h=4, legs=(("ik", 74, 0), ("ik", -62, 0)), arms=(("fk", -66, -100), ("fk", 80, 82)),
+                 hands=("fist", "fist"), expr="determined", look=(0.03, 0.06)),
+    "step_b": _P(t=4, h=6, legs=(("ik", 12, 0), (64, -18)), arms=(("fk", -72, -106), ("fk", 80, 80)),
+                 hands=("fist", "fist"), expr="determined", look=(0.03, 0.06)),
+    "push_through": _P(t=20, h=-6, drop=10, legs=(("ik", 44, 1), ("ik", -44, 0)), arms=(("fk", 104, 136), ("fk", 74, 100)),
+                       hands=("fist", "fist"), expr="determined"),
+    "listen": _P(h=-14, arms=(("fk", 20, 40), ("ik", "head", -0.66, 0.16, -1)), hands=("fist", "cup"),
+                 look=(0.03, -0.08), expr="worried", marks=("sound",)),
+    "kneel_hug": _P(t=12, h=20, arms=(("ik", "abs", 116, -100, 1), ("ik", "abs", 96, -72, 1)), hands=("open", "open"),
+                    expr="tender", **_KNEEL),
+    "lift": None,
+    "carry_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", 34, 74), _SH_LAMB_ARM), hands=("fist", "fist"),
+                  expr="joyful"),
+    "carry_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 22, 62), _SH_LAMB_ARM), hands=("fist", "fist"),
+                  expr="joyful"),
+    "carry_c": _P(t=3, legs=((5, 1), (-8, -16)), arms=(("fk", 28, 68), _SH_LAMB_ARM), hands=("fist", "fist"), expr="joyful"),
+    "carry_stand": _P(arms=(("fk", 28, 66), _SH_LAMB_ARM), hands=("fist", "fist"), expr="joyful"),
+    "knock": None,
+    "cheer": _P(h=-8, legs=((10, 4), (-8, -2)), arms=(("fk", 128, 150), ("fk", -132, -155)), hands=("open", "open"),
+                expr="joyful"),
+    "dance": None,
+    "point": _P(h=-4, legs=((5, 2), (-5, -2)), arms=(("fk", 20, 40), ("fk", 88, 92)), hands=("fist", "point"), expr="happy"),
+    "wave": None,
+}
+_SH_CROOK_HAND = {   # where the crook is: 'near' (planted, in the near hand), 'far' (planted, far hand), 'lean' (leaning
+    # against him behind the body), 'forward' (held out in front), 'tap' (counting), 'ground' (laid down), 'push'
+    "stand": "near", "walk_a": "near", "walk_b": "near", "walk_c": "near", "lead_a": "forward", "lead_b": "forward",
+    "count": "tap", "count_again": "far", "puzzled": "lean", "worried": "lean", "call": "lean", "look_around": "near",
+    "climb_a": "climb", "climb_b": "climb", "step_a": "step", "step_b": "step", "push_through": "push", "listen": "far",
+    "kneel_hug": "ground", "lift": "ground", "carry_a": "far", "carry_b": "far", "carry_c": "far", "carry_stand": "far",
+    "knock": "lean", "cheer": "raised", "dance": None, "point": "far", "wave": "near",
+}
+_SH_LANTERN_DOWN = ("kneel_hug", "lift", "cheer", "dance", "call", "worried", "puzzled", "knock", "wave", "count")
+_SH_LANTERN_ARM = {"walk_a": ("fk", 18, 30), "walk_b": ("fk", 14, 24), "walk_c": ("fk", 16, 26), "stand": ("fk", 16, 26),
+                   "look_around": ("fk", 62, 118), "listen": ("fk", 64, 116), "count_again": ("fk", 24, 34),
+                   "point": ("fk", 30, 50), "step_a": ("fk", -60, -96), "step_b": ("fk", -64, -100), "climb_a": ("fk", 40, 64),
+                   "climb_b": ("fk", 46, 70), "push_through": ("fk", 104, 136), "lead_a": ("fk", 18, 30),
+                   "lead_b": ("fk", 14, 24), "carry_a": ("fk", 18, 30), "carry_b": ("fk", 14, 24), "carry_c": ("fk", 16, 26),
+                   "carry_stand": ("fk", 16, 26)}
+_SH_LAMB_POSES = ("kneel_hug", "lift", "carry_a", "carry_b", "carry_c", "carry_stand", "knock")
+_SH_SHOULDER_OK = ("stand", "walk_a", "walk_b", "walk_c", "cheer", "dance", "wave", "point", "call", "look_around", "listen")
+
+
+def _sh_pose(pose, phase):
+    ph = phase % 1.0
+    if pose == "walk":
+        return _walk_phase_pose(_SHZ, ph), "walk_" + "acbc"[int(ph * 4 + 1e-6) % 4]
+    if pose == "lead":
+        k = "lead_a" if ph < 0.5 else "lead_b"
+        return dict(_SHZ[k]), k
+    if pose == "climb":
+        k = "climb_a" if ph < 0.5 else "climb_b"
+        return dict(_SHZ[k]), k
+    if pose == "step":
+        k = "step_a" if ph < 0.5 else "step_b"
+        return dict(_SHZ[k]), k
+    if pose == "count":
+        tap = 0.5 - 0.5 * math.cos(2 * math.pi * ph)            # 0 raised .. 1 touching the sheep's back
+        return _P(h=6, legs=((8, 3), (-6, -2)), arms=(("fk", 30, 108), ("ik", "abs", 76, -168 + 10 * tap, 1)),
+                  hands=("open", "fist"), expr="happy", look=(0.04, 0.05)), "count"
+    if pose == "look_around":
+        back = ph >= 0.5
+        return _P(flip=back, h=-8, legs=((8, 3), (-6, -2)), arms=(("ik", "head", 1.14, -0.28, 1), _SH_GRIP), reach=1.2,
+                  hands=("open", "fist"), expr="worried", look=(0.05, -0.02)), "look_around"
+    if pose == "lift":
+        k = _clamp01(ph if phase != 1.0 else 1.0)
+        y0 = -170 - 120 * k
+        return _P(t=-4 * k, h=-8 - 6 * k, legs=((10, 3), (-8, -3)), arms=(("ik", "abs", 96 - 24 * k, y0, 1),
+                                                                         ("ik", "abs", 70 - 20 * k, y0 + 6, 1)),
+                  hands=("open", "open"), expr="joyful", look=(0.03, -0.04 * k)), "lift"
+    if pose == "knock":
+        a = 0.5 - 0.5 * math.cos(2 * math.pi * ph)
+        return _P(t=2, legs=((8, 3), (-7, -3)), arms=(("fk", 84 + 12 * a, 118 - 26 * a), _SH_LAMB_ARM),
+                  hands=("fist", "fist"), expr="happy", marks=("knock",) if a > 0.75 else ()), "knock"
+    if pose == "dance":
+        a = ph < 0.5
+        if a:
+            return _P(t=-4, h=-8, legs=((66, -20), (-4, -2)), arms=(("fk", 140, 170), ("fk", -104, -150)),
+                      hands=("open", "open"), expr="joyful", ground="air"), "dance"
+        return _P(t=4, h=-6, legs=((4, 2), (-58, 10)), arms=(("fk", 104, 150), ("fk", -140, -170)),
+                  hands=("open", "open"), expr="joyful", ground="air"), "dance"
+    if pose == "wave":
+        f = 166 + 16 * math.sin(2 * math.pi * ph)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), _SH_GRIP), hands=("open", "fist"), expr="happy"), "wave"
+    return dict(_SHZ[pose]), pose
+
+
+def _ls_crook(bot, top, curl=1, w=7.0):
+    """The shepherd's long crook: a straight shaft from bot to top with a round hook curling to the side `curl`
+    (+1 = clockwise from the shaft direction); honey wood with a light grain line."""
+    d = _nrm(_sub(top, bot))
+    n = (-d[1], d[0])
+    n = _mul(n, -curl)
+    r = 20.0
+    c = _add(top, _mul(n, r))
+    pts = [bot, _lerp(bot, top, 0.5), top]
+    for k in range(1, 9):
+        a = math.pi * k / 8 * 1.12
+        v = _add(_mul(_mul(n, -1), math.cos(a)), _mul(d, math.sin(a)))
+        pts.append(_add(c, _mul(v, r)))
+    s = _tube(pts, w, LS_CROOK, ow=3.0)
+    s += _line(_d(pts[:3], closed=False), w=1.6, col=shade(LS_CROOK, 0.4), extra='opacity="0.75"')
+    s += f'<circle cx="{fmt(pts[-1][0])}" cy="{fmt(pts[-1][1])}" r="{fmt(w * 0.55)}" fill="{shade(LS_CROOK, -0.12)}" {_st(2.2)}/>'
+    return s
+
+
+def _sh_crook_svg(where, st, D, phase=0.0):
+    """Crook markup for the planted / held / laid-down placements and the hands drawn over it."""
+    W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+    G, R, Hc = st["ground"], st["m"]["R"], st["Hc"]
+    skin = D["skin"]
+    top_y = Hc[1] - 1.55 * R
+    if where in ("near", "far", "wave"):
+        W = W1 if where in ("near", "wave") else W0
+        return _ls_crook((W[0] + 2, G - 4), (W[0] + 2, top_y), curl=1) + _fist(W, hr, skin, 0.5)
+    if where == "forward":                     # lead: pointing the way ahead, the hook up in front
+        d = _nrm((1.0, -0.78))
+        return _ls_crook(_add(W1, _mul(d, -110)), _add(W1, _mul(d, 170)), curl=1) + _fist(W1, hr, skin)
+    if where == "tap":                         # count: held out over the passing sheep, the hook end tapping down
+        d = _nrm((1.0, 0.16))
+        return _ls_crook(_add(W1, _mul(d, -60)), _add(W1, _mul(d, 200)), curl=-1) + _fist(W1, hr, skin)
+    if where == "climb":                       # planted ahead, up on the higher ground
+        b = (W1[0] + 12, G - 4 - PARABLE_SHEPHERD_CLIMB)
+        return _ls_crook(b, _add(W1, _mul(_nrm(_sub(W1, b)), 100)), curl=-1) + _fist(W1, hr, skin)
+    if where == "step":                        # planted ahead in the stream for balance
+        b = (W1[0] + 16, G + 26)
+        return _ls_crook(b, _add(W1, _mul(_nrm(_sub(W1, b)), 96)), curl=-1) + _fist(W1, hr, skin)
+    if where == "push":                        # pushing the thorny branches aside
+        d = _nrm((1.0, -0.45))
+        return _ls_crook(_add(W1, _mul(d, -80)), _add(W1, _mul(d, 170)), curl=1) + _fist(W1, hr, skin)
+    if where == "raised":                      # cheer: held up high in the far hand
+        W = W0
+        return _ls_crook((W[0] + 4, W[1] + 110), (W[0] - 2, W[1] - 150), curl=1) + _fist(W, hr, skin)
+    return ""
+
+
+def _sh_crook_back(where):
+    def behind(st):
+        G, R, Hc, S = st["ground"], st["m"]["R"], st["Hc"], st["S"]
+        if where == "lean":                     # leaning against the far shoulder, its foot on the ground in front
+            top = (S[0][0] - 30, Hc[1] - 1.45 * R)
+            return _ls_crook((S[0][0] + 74, G - 4), top, curl=-1)
+        if where == "ground":                   # laid down behind him
+            return _ls_crook((-170, G - 6), (90, G - 10), curl=1, w=6.5)
+        return ""
+    return behind
+
+
+def _sh_lantern(where, glow, key):
+    """The little lit lantern: hanging from the far hand ('hang'), held up ('raised') or set down on the ground."""
+    def draw(st):
+        PR = _prp()
+        W0, hr = st["arms"][0][2], st["m"]["hr"]
+        G = st["ground"]
+        if where == "ground":
+            p = (-92, G - 2)
+            body = f'<g transform="translate({fmt(p[0])},{fmt(p[1] - 66)}) scale(0.9)">{PR._ls_lantern(1.0 if glow > 0 else 0.0, key)}</g>'
+            return body
+        p = (W0[0] + 1, W0[1] + 2)
+        return f'<g transform="translate({fmt(p[0])},{fmt(p[1])}) scale(0.9)">{PR._ls_lantern(1.0 if glow > 0 else 0.0, key)}</g>'
+    return draw
+
+
+def _sh_lantern_glow(where, glow):
+    def behind(st):
+        if glow <= 0:
+            return ""
+        W0 = st["arms"][0][2]
+        G = st["ground"]
+        c = (-92, G - 40) if where == "ground" else (W0[0] + 1, W0[1] + 44)
+        return _glow_disc(c, 230, 200, glow, "lsl", "#fff4cf", "#ffc861")
+    return behind
+
+
+def _sh_lamb(pose, phase, eyes):
+    """mid / front hooks drawing the little lamb (props.little_lamb geometry) with the shepherd."""
+    def mid(st):
+        PR = _prp()
+        if pose in ("carry_a", "carry_b", "carry_c", "carry_stand", "knock", "shoulders"):
+            N = st["N"]
+            a = _add(N, _mul(st["u"], 14))
+            tilt = math.degrees(math.atan2(st["u"][0], -st["u"][1]))
+            return (f'<g transform="translate({fmt(a[0])},{fmt(a[1])}) rotate({fmt(tilt)}) scale(1.1)">'
+                    f'{PR._little_lamb("on_shoulders", phase, eyes, part="back")}</g>')
+        if pose == "kneel_hug":
+            G = st["ground"]
+            return f'<g transform="translate(92,{fmt(G - 2)}) scale(-1.12,1.12)">{PR._little_lamb("nuzzle", phase, eyes)}</g>'
+        if pose == "lift":
+            W0, W1 = st["arms"][0][2], st["arms"][1][2]
+            c = ((W0[0] + W1[0]) / 2 + 4, (W0[1] + W1[1]) / 2 + 4)
+            return f'<g transform="translate({fmt(c[0])},{fmt(c[1])})">{PR._little_lamb("held", phase, eyes)}</g>'
+        return ""
+
+    def front(st):
+        PR = _prp()
+        hr = st["m"]["hr"]
+        s = ""
+        if pose in ("carry_a", "carry_b", "carry_c", "carry_stand", "knock", "shoulders"):
+            N = st["N"]
+            a = _add(N, _mul(st["u"], 14))
+            tilt = math.degrees(math.atan2(st["u"][0], -st["u"][1]))
+            s += (f'<g transform="translate({fmt(a[0])},{fmt(a[1])}) rotate({fmt(tilt)}) scale(1.1)">'
+                  f'{PR._little_lamb("on_shoulders", phase, eyes, part="front")}</g>')
+            W1 = st["arms"][1][2]
+            s += _fist(W1, hr, st["skin"])
+        elif pose == "kneel_hug":
+            W1, E1 = st["arms"][1][2], st["arms"][1][1]
+            s += _hand(W1, _nrm(_sub(W1, E1)), "open", st["skin"], hr)
+        elif pose == "lift":
+            for i in (0, 1):
+                W, E = st["arms"][i][2], st["arms"][i][1]
+                s += _hand(W, _nrm(_sub(W, E)), "open", st["skin"], hr)
+        return s
+    return mid, front
+
+
+def _shepherd_hat(R):
+    """Curly chestnut hair under a cream head-cloth with a blue woven band, tied back; smile lines."""
+    s = ""
+    for cx, cy, r in ((0.62, -0.46, 0.13), (0.38, -0.52, 0.12), (-0.62, 0.30, 0.16), (-0.66, 0.02, 0.15)):
+        s += f'<circle cx="{fmt(cx * R)}" cy="{fmt(cy * R)}" r="{fmt(r * R)}" fill="{LS_SHEPHERD_HAIR}" {_st(2.4)}/>'
+    s += _cloth_cap(R, LS_SHEPHERD_CLOTH, edge=None)
+    s += _tube(_spline_pts([(0.98 * R, -0.42 * R), (0.45 * R, -0.62 * R), (-0.20 * R, -0.60 * R), (-0.70 * R, -0.34 * R),
+                            (-0.80 * R, 0.10 * R)]), 0.15 * R, LS_SHEPHERD_BAND, ow=2.4)
+    for x0, y0 in ((0.70, -0.52), (0.25, -0.62), (-0.25, -0.58)):
+        s += f'<circle cx="{fmt(x0 * R)}" cy="{fmt(y0 * R)}" r="{fmt(0.035 * R)}" fill="{LS_SHEPHERD_TRIM}"/>'
+    s += _line(f"M{fmt(0.62 * R)},{fmt(0.06 * R)} l{fmt(0.11 * R)},{fmt(-0.04 * R)}", w=1.8, col=shade(LS_SHEPHERD_SKIN, -0.3))
+    return s
+
+
+def _zigzag_deco(col):
+    def deco(st, polys):
+        Hm, um = st["Hm"], st["um"]
+        nv = (-um[1], um[0])
+        s = ""
+        for poly in polys[-1:]:
+            e = _band_edge(poly, Hm, um, -20)
+            if len(e) == 2:
+                a, b = sorted(e, key=lambda p: _dot(p, nv))
+                n = max(4, int(_len(_sub(b, a)) / 13))
+                pts = []
+                for j in range(n + 1):
+                    p = _lerp(a, b, j / n)
+                    pts.append(_add(p, _mul(um, 5 if j % 2 else -5)))
+                s += _line(_d(pts, closed=False), w=3.2, col=col)
+        return s
+    return deco
+
+
+def _blanket_mid(st):
+    """A cream wool blanket with brown stripes rolled across the chest from the near shoulder to the far hip; the
+    leather satchel strap."""
+    m, tp, pel, f, u = st["m"], st["tp"], st["pel"], st["f"], st["u"]
+    T, ww, shw = m["T"], m["ww"], m["shw"]
+    seat = st["mode"] == "seat"
+    a = tp(0.80 * shw, T - 8)
+    b = tp(-0.98 * ww, 0.10 * T if not seat else 0.30 * T)
+    s = _tube([a, _lerp(a, b, 0.5), b], 17, LS_BLANKET, ow=3.0)
+    for t in (0.22, 0.5, 0.78):
+        p = _lerp(a, b, t)
+        dv = _nrm(_sub(b, a))
+        nv = (-dv[1], dv[0])
+        s += _line(f"M{_pt(_add(p, _mul(nv, 8)))} L{_pt(_sub(p, _mul(nv, 8)))}", w=3.4, col=LS_BLANKET_STRIPE)
+    return s
+
+
+def _satchel_mid(st):
+    m, tp = st["m"], st["tp"]
+    seat = st["mode"] == "seat"
+    c = tp(-0.85 * m["ww"], -0.05 * m["T"] if not seat else 0.12 * m["T"])
+    s = _tube([tp(-0.6 * m["shw"], m["T"] - 6), (c[0] + 4, c[1] - 12)], 4.2, LS_LEATHER, ow=2.0)
+    body = [(c[0] - 18, c[1] - 14), (c[0] + 18, c[1] - 14), (c[0] + 20, c[1] + 10), (c[0] + 10, c[1] + 22), (c[0] - 12, c[1] + 22),
+            (c[0] - 20, c[1] + 8)]
+    s += f'<path d="{smooth_path(body, tension=0.7)}" fill="{shade(LS_LEATHER, 0.2)}" {_st(3.0)}/>'
+    s += f'<path d="{smooth_path([(c[0] - 19, c[1] - 15), (c[0] + 19, c[1] - 15), (c[0] + 12, c[1] + 4), (c[0] - 12, c[1] + 4)], tension=0.7)}" fill="{LS_LEATHER}" {_st(2.6)}/>'
+    s += f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1] + 2)}" r="3.2" fill="{GOLD}" {_st(1.6)}/>'
+    return s
+
+
+def _shepherd_marks(st, pose):
+    s = ""
+    R, Hc = st["m"]["R"], st["Hc"]
+    if pose == "puzzled":
+        s += _question_mark(Hc, R)
+        st["ext"].append((Hc[0] + 1.3 * R, Hc[1] - 1.9 * R, 4))
+    elif pose == "call":
+        s += _sound_marks(st)
+    elif pose == "knock":
+        s += _knock_marks(st)
+    return s
+
+
+def _psh_design(pose, crook_where, lantern, glow, lamb_on, phase, eyes, marks):
+    D = dict(robe=LS_SHEPHERD_TUNIC, sleeve=LS_SHEPHERD_TUNIC, hem_col=shade(LS_SHEPHERD_TUNIC, -0.18), hem_w=8,
+             cuff=LS_SHEPHERD_TRIM, skin=LS_SHEPHERD_SKIN, leg=LS_SHEPHERD_SKIN, hem=0.70, flare_k=0.95, sleeve_len=0.78,
+             hat=("custom", _shepherd_hat), hat_h=0.12, tail=(LS_SHEPHERD_CLOTH, LS_SHEPHERD_BAND), ears=False,
+             beard=("short", LS_SHEPHERD_HAIR), sash="#355f8a", sash_tail=True, neck_v=LS_SHEPHERD_TRIM,
+             robe_deco=_zigzag_deco(LS_SHEPHERD_TRIM), sandal=LS_LEATHER)
+    behinds, mids, fronts = [], [_satchel_mid, _blanket_mid], []
+    lamb_mid = lamb_front = None
+    if lamb_on:
+        lamb_mid, lamb_front = _sh_lamb(lamb_on, phase, eyes)
+        mids.append(lamb_mid)
+    lw = None
+    if lantern:
+        lw = "ground" if pose in _SH_LANTERN_DOWN else "hang"
+        behinds.append(_sh_lantern_glow(lw, glow))
+    if crook_where in ("lean", "ground"):
+        behinds.append(_sh_crook_back(crook_where))
+    if lantern and lw == "ground":
+        behinds.append(_sh_lantern("ground", glow, "g"))
+    if crook_where and crook_where not in ("lean", "ground") and not (crook_where == "raised" and lamb_on):
+        cw = crook_where
+
+        def crook_front(st, cw=cw):
+            return _sh_crook_svg(cw, st, D, phase)
+        fronts.append(crook_front)
+    if lantern and lw == "hang":
+        def lant(st):
+            return _sh_lantern("hang", glow, "h")(st) + _fist(st["arms"][0][2], st["m"]["hr"], D["skin"])
+        fronts.append(lant)
+    if lamb_front:
+        def lf(st):
+            st["skin"] = D["skin"]
+            return lamb_front(st)
+        fronts.append(lf)
+    if marks and pose in ("puzzled", "call", "knock"):
+        fronts.append(lambda st: _shepherd_marks(st, pose))
+    if marks and pose == "wave":
+        fronts.append(_wave_marks)
+    D["behind"], D["mid"], D["front"] = _hooks(*behinds), _hooks(*mids), _hooks(*fronts)
+    return D
+
+
+def parable_shepherd(x, y, scale=1.0, facing=1, pose="stand", expr=None, phase=0.0, crook=True, lantern=False, glow=1.0,
+                     lamb=None, lamb_eyes="open", marks=True):
+    """The shepherd in Jesus's story: a friendly man of about thirty who loves every one of his hundred sheep (see module
+    doc, 'LOST SHEEP FILM')."""
+    _ls_check(pose, PARABLE_SHEPHERD_POSES, "parable_shepherd")
+    _ls_expr(expr, "parable_shepherd")
+    if pose == "carry":
+        q = int((phase % 1.0) * 4 + 1e-6) % 4
+        pose = ("carry_a", "carry_c", "carry_b", "carry_c")[q]
+    ps, key = _sh_pose(pose, phase)
+    key = key or pose
+    lamb_on = None
+    want = (key in _SH_LAMB_POSES) if lamb is None else bool(lamb)
+    if want:
+        if key in _SH_LAMB_POSES:
+            lamb_on = key
+        elif key in _SH_SHOULDER_OK:
+            lamb_on = "shoulders"
+            ps["arms"] = (ps["arms"][0], _SH_LAMB_ARM)
+            ps["hands"] = (ps["hands"][0], "fist")
+    where = _SH_CROOK_HAND.get(key, "near") if crook else None
+    if lamb_on == "shoulders" and where in ("near", "wave"):
+        where = "lean" if key == "wave" else "far"
+    if lantern:
+        lw = "ground" if key in _SH_LANTERN_DOWN else "hang"
+        if lw == "hang":
+            if where == "far":
+                where = None if key in ("carry_a", "carry_b", "carry_c", "carry_stand", "walk_a", "walk_b", "walk_c",
+                                        "stand") and lamb_on else "lean"
+            ps["arms"] = (_SH_LANTERN_ARM.get(key, ("fk", 16, 26)), ps["arms"][1])
+            ps["hands"] = ("fist", ps["hands"][1])
+    D = _psh_design(key, where, lantern, _clamp01(glow) if lantern else 0.0, lamb_on, phase, lamb_eyes, marks)
+    e = expr or ps["expr"]
+    if e == "teary":
+        D["front"] = _hooks(D["front"], _teardrop_front)
+    inner, _ = _figure(D, _PSH_M, ps, e, _fsign(facing), marks)
+    if key == "dance":
+        hop = 10 + 8 * abs(math.sin(2 * math.pi * phase))
+        inner = _reanchor(inner, 0, hop)
+    return _wrap_out(inner, x, y, scale, facing, f"parable_shepherd-{key}")
+
+
+def shepherd_points(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, **kw):
+    """Stage points of parable_shepherd(x, y, scale, facing, pose=..., phase=..., **kw): body_points() plus 'lamb' (the
+    little lamb's on_shoulders anchor = the base of his neck, for carry / carry_stand / knock or lamb=True), 'lantern'
+    (the lantern's handle in the far hand) and 'crook_top' (approximate top of the crook when it is planted)."""
+    bp = body_points(parable_shepherd, x, y, scale, facing, pose=pose, phase=phase, **kw)
+    head, sh = bp["head"], bp["shoulders"]
+    mid = ((sh[0][0] + sh[1][0]) / 2, (sh[0][1] + sh[1][1]) / 2)
+    k = 28.0 / (_PSH_M["neck"] + _PSH_M["sdrop"])            # the lamb rests 28 px (x scale) above the shoulder line
+    bp["lamb"] = (mid[0] + (head[0] - mid[0]) * k, mid[1] + (head[1] - mid[1]) * k)
+    bp["lantern"] = bp["hands"][0]
+    bp["crook_top"] = (bp["hands"][1][0], head[1] - 1.55 * 44 * scale)
+    return bp
+
+
+# ---------------------------------------------------------------- the neighbours and the musicians (the party)
+NEIGHBOUR_KINDS = ("man", "woman", "child", "elder")
+NEIGHBOUR_POSES = ("stand", "walk", "walk_a", "walk_b", "wave", "cheer", "clap", "dance", "laugh", "sing", "listen",
+                   "open_door", "hold_lantern", "carry_dish", "point")
+NEIGHBOUR_ITEMS = ("lantern", "dish", "lamp", None)
+_NB = [   # tunic, sash, skin, hair, head (cap / scarf colour)
+    dict(robe="#e8a93a", sash="#3f7fb5", skin="#d9a37a", hair="#2f2420", head="#c4553a"),
+    dict(robe="#7fc4a4", sash="#e2735a", skin="#c68a62", hair="#241b17", head="#f2d36b"),
+    dict(robe="#e2735a", sash="#f2d36b", skin="#e2ad85", hair="#5a3a24", head="#6fa8d6"),
+    dict(robe="#9b8cc4", sash="#e8a93a", skin="#a46b47", hair="#1f1915", head="#e2735a"),
+    dict(robe="#6fa8d6", sash="#e8a93a", skin="#dca57c", hair="#3a2618", head="#9b8cc4"),
+    dict(robe="#a6b85a", sash="#c4553a", skin="#cf9570", hair="#2a201b", head="#e8a93a"),
+]
+_NZ = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3)), expr="happy"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -36, -26), ("fk", 24, 40)), expr="happy"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 42), ("fk", -22, -12)), expr="happy"),
+    "cheer": _P(h=-8, legs=((10, 4), (-8, -2)), arms=(("fk", 128, 150), ("fk", -132, -155)), hands=("open", "open"),
+                expr="joyful"),
+    "laugh": _P(t=-4, h=-12, arms=(("ik", "torso", 0.8, 0.40, 1), ("ik", "torso", 1.1, 0.25, 1)), hands=("open", "open"),
+                expr="laugh"),
+    "sing": _P(h=-12, legs=((6, 2), (-5, -2)), arms=(("fk", 40, 100), ("fk", -36, -96)), hands=("open", "open"),
+               expr="sing", look=(0.02, -0.05)),
+    "listen": _P(h=-8, arms=(("fk", 8, 3), ("ik", "head", 0.30, 1.05, 1)), expr="kind", look=(0.03, -0.04)),
+    "open_door": _P(t=-2, h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 60, 128), ("ik", "abs", 90, -190, 1)),
+                    hands=("open", "palm"), expr="surprised"),
+    "hold_lantern": _P(h=-6, arms=(("fk", 64, 132), ("fk", -8, -3)), hands=("fist", "fist"), expr="happy"),
+    "carry_dish": _P(t=2, arms=(("ik", "abs", 74, -178, 1), ("ik", "abs", 44, -170, 1)), hands=("open", "open"),
+                     expr="happy"),
+    "point": _P(legs=((5, 2), (-5, -2)), arms=(("fk", 14, 8), ("fk", 88, 92)), hands=("fist", "point"), expr="happy"),
+}
+
+
+def _nb_pose(pose, phase):
+    ph = phase % 1.0
+    if pose == "walk":
+        return dict(_NZ["walk_a" if ph < 0.5 else "walk_b"])
+    if pose == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * ph)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"), expr="happy")
+    if pose == "clap":
+        a = 0.5 + 0.5 * math.cos(2 * math.pi * ph)           # 1 apart .. 0 together
+        return _P(h=-6, legs=((6, 2), (-5, -2)), arms=(("ik", "abs", 74 + 20 * a, -214, 1), ("ik", "abs", 62 - 14 * a, -206, 1)),
+                  hands=("open", "open"), expr="joyful", marks=("clap",) if a < 0.2 else ())
+    if pose == "dance":
+        if ph < 0.5:
+            return _P(t=-4, h=-8, legs=((60, -16), (-4, -2)), arms=(("fk", 140, 168), ("fk", -100, -146)),
+                      hands=("open", "open"), expr="joyful")
+        return _P(t=4, h=-6, legs=((4, 2), (-54, 8)), arms=(("fk", 100, 146), ("fk", -140, -168)),
+                  hands=("open", "open"), expr="joyful")
+    return dict(_NZ[pose])
+
+
+def _cap_hat(col, hair):
+    def hat(R):
+        s = _hair_cap(R, hair, "curly")
+        pts = [(0.86 * R, -0.52 * R), (0.70 * R, -0.98 * R), (0.10 * R, -1.20 * R), (-0.55 * R, -1.08 * R),
+               (-0.92 * R, -0.70 * R), (-0.92 * R, -0.46 * R), (-0.30 * R, -0.66 * R), (0.30 * R, -0.68 * R)]
+        s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+        s += _tube(_spline_pts([(0.90 * R, -0.54 * R), (0.30 * R, -0.72 * R), (-0.40 * R, -0.66 * R), (-0.94 * R, -0.46 * R)]),
+                   0.12 * R, shade(col, 0.35), ow=2.2)
+        s += f'<circle cx="{fmt(-0.20 * R)}" cy="{fmt(-1.22 * R)}" r="{fmt(0.09 * R)}" fill="{shade(col, -0.15)}" {_st(2.2)}/>'
+        return s
+    return hat
+
+
+def _nb_scarf(col, hair):
+    def hat(R):
+        s = f'<circle cx="{fmt(-1.02 * R)}" cy="{fmt(-0.30 * R)}" r="{fmt(0.30 * R)}" fill="{hair}" {_st(2.8)}/>'
+        pts = [(0.96 * R, -0.36 * R), (0.80 * R, -0.88 * R), (0.25 * R, -1.14 * R), (-0.45 * R, -1.08 * R),
+               (-0.98 * R, -0.68 * R), (-1.02 * R, -0.30 * R), (-0.70 * R, -0.10 * R), (-0.62 * R, -0.36 * R),
+               (-0.20 * R, -0.52 * R), (0.45 * R, -0.54 * R)]
+        s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.4)}/>'
+        for k in range(4):
+            x0 = (-0.62 + 0.36 * k) * R
+            s += _line(f"M{fmt(x0)},{fmt(-0.70 * R)} l{fmt(0.10 * R)},{fmt(-0.14 * R)} l{fmt(0.10 * R)},{fmt(0.14 * R)}", w=2.0,
+                       col=shade(col, 0.45))
+        s += _tube([(-0.92 * R, -0.12 * R), (-1.30 * R, 0.30 * R)], 0.12 * R, col, ow=2.2)
+        s += _tube([(-0.92 * R, -0.12 * R), (-1.12 * R, 0.42 * R)], 0.12 * R, col, ow=2.2)
+        return s + _lashes(R, "dot")
+    return hat
+
+
+def _neighbour_design(kind, v):
+    c = _NB[v % 6]
+    D = dict(robe=c["robe"], sleeve=c["robe"], hem_col=shade(c["robe"], -0.18), hem_w=8, cuff=shade(c["robe"], -0.18),
+             skin=c["skin"], leg=c["skin"], hem=0.9, flare_k=1.0, hair=c["hair"], hair_style="curly", sash=c["sash"],
+             sash_tail=True, sandal=SANDAL, robe_deco=_zigzag_deco(shade(c["robe"], 0.45)), neck_v=shade(c["robe"], 0.35))
+    if kind == "man":
+        D.update(hat=("custom", _cap_hat(c["head"], c["hair"])), hat_h=0.22, ears=False,
+                 beard=(("short", "fisher", "stubble", "jesus", "trim", "carpenter")[v % 6], c["hair"]))
+        m = _metrics(_ADULT, 1.0 + 0.015 * (v % 3 - 1), 1.0 + 0.06 * (v % 2))
+    elif kind == "woman":
+        D.update(hat=("custom", _nb_scarf(c["head"], c["hair"])), hat_h=0.16, ears=False, hem=0.96, flare_k=1.1, brow_w=3.0)
+        m = _metrics(_ADULT, 0.95, 0.92)
+    elif kind == "child":
+        girl = v % 2 == 1
+        D.update(hem=0.62, flare_k=0.9, sleeve_len=0.55, hair_style="short" if girl else "curly", sash=None,
+                 rope_belt=c["sash"])
+        if girl:
+            D.update(ponytail=c["hair"], ribbon=c["head"])
+        m = _CHILD
+    else:
+        D.update(hair="#e6e0d6", beard=("white", "#ece6da"), shawl=c["head"], shawl_trim=shade(c["head"], -0.25), brow_w=4.4,
+                 brow_col="#9a9088")
+        m = _metrics(_ADULT, 0.97, 1.0)
+    return D, m
+
+
+def _nb_items(D, pose, item, phase):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        s = ""
+        if pose == "hold_lantern" or item in ("lantern", "lamp") and pose not in ("carry_dish",):
+            if item == "lamp":
+                s += f'<g transform="translate({fmt(W0[0] - 4)},{fmt(W0[1] - 6)}) scale(0.62)">{PR._oil_lamp(True, _clip_id("nbl", round(W0[0]), round(W0[1])))}</g>'
+                s += _glow_disc((W0[0] + 10, W0[1] - 30), 110, 90, 0.8, "nblamp", P["glow"], LAMPLIGHT)
+                s += _hand(W0, (0.0, 1.0), "open", D["skin"], hr)
+            else:
+                s += _glow_disc((W0[0], W0[1] + 44), 150, 130, 0.75, "nblant", "#fff4cf", "#ffc861")
+                s += f'<g transform="translate({fmt(W0[0])},{fmt(W0[1] + 2)}) scale(0.8)">{PR._ls_lantern(1.0, "nb")}</g>'
+                s += _fist(W0, hr, D["skin"])
+        if pose == "carry_dish" or item == "dish":
+            c = ((W0[0] + W1[0]) / 2, min(W0[1], W1[1]) - 2)
+            s += f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) scale(0.62)">{PR._ls_dish()}</g>'
+            s += _hand(W0, (0.0, -1.0), "open", D["skin"], hr) + _hand(W1, (0.0, -1.0), "open", D["skin"], hr)
+        return s
+    return front
+
+
+def _clap_marks(st):
+    W0, W1 = st["arms"][0][2], st["arms"][1][2]
+    c = ((W0[0] + W1[0]) / 2, (W0[1] + W1[1]) / 2)
+    s = ""
+    for a in (-60, -20, 20):
+        v = _dv(180 + a)
+        s += _line(f"M{_pt(_add(c, _mul(v, 22)))} L{_pt(_add(c, _mul(v, 36)))}", w=2.8, col=MARK)
+    return s
+
+
+def neighbour(x, y, scale=1.0, facing=1, kind="man", variant=0, pose="stand", expr=None, phase=0.0, item=None, marks=True):
+    """The shepherd's friends and neighbours in his village (Luke 15:6) (see module doc, 'LOST SHEEP FILM')."""
+    if kind not in NEIGHBOUR_KINDS:
+        raise ValueError(f"neighbour: unknown kind {kind!r}; choose from {NEIGHBOUR_KINDS}")
+    _ls_check(pose, NEIGHBOUR_POSES, "neighbour")
+    if item not in NEIGHBOUR_ITEMS:
+        raise ValueError(f"neighbour: unknown item {item!r}; choose from {NEIGHBOUR_ITEMS}")
+    _ls_expr(expr, "neighbour")
+    ps = _nb_pose(pose, phase)
+    D, m = _neighbour_design(kind, int(variant))
+    fronts = []
+    if pose in ("hold_lantern", "carry_dish") or item:
+        if item and pose not in ("hold_lantern", "carry_dish", "open_door"):
+            if item in ("lantern", "lamp"):
+                ps["arms"] = (("fk", 64, 132) if item == "lamp" else ("fk", 18, 30), ps["arms"][1])
+            elif item == "dish":
+                ps["arms"] = (("ik", "abs", 74, -178, 1), ("ik", "abs", 44, -170, 1))
+        if pose == "open_door" and item in ("lantern", "lamp"):
+            pass
+        fronts.append(_nb_items(D, pose, item or ("lantern" if pose == "hold_lantern" else "dish"), phase))
+    if marks and "clap" in ps["marks"]:
+        fronts.append(_clap_marks)
+    if marks and pose == "wave":
+        fronts.append(_wave_marks)
+    if kind == "elder" and pose in ("stand", "walk_a", "walk_b", "walk", "listen"):
+        ps["t"] = ps["t"] + 7
+        if pose != "listen":
+            ps["arms"] = (ps["arms"][0], ("fk", 22, 30))
+            fronts.insert(0, _cane)
+    D["front"] = _hooks(*fronts)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    if pose == "dance":
+        inner = _reanchor(inner, 0, 8 + 6 * abs(math.sin(2 * math.pi * phase)))
+    return _wrap_out(inner, x, y, scale, facing, f"neighbour-{kind}{int(variant) % 6}-{pose}")
+
+
+MUSICIAN_INSTRUMENTS = ("lyre", "tambourine", "flute")
+MUSICIAN_POSES = ("play", "walk_a", "walk_b", "stand", "dance")
+
+
+def musician(x, y, scale=1.0, facing=1, instrument="lyre", variant=0, pose="play", expr=None, phase=0.0, marks=True):
+    """A village musician at the party: lyre, tambourine or flute; phase 0..1 loops the playing (see module doc)."""
+    if instrument not in MUSICIAN_INSTRUMENTS:
+        raise ValueError(f"musician: unknown instrument {instrument!r}; choose from {MUSICIAN_INSTRUMENTS}")
+    _ls_check(pose, MUSICIAN_POSES, "musician")
+    _ls_expr(expr, "musician")
+    ph = phase % 1.0
+    kind = {"lyre": "man", "tambourine": "woman", "flute": "man"}[instrument]
+    v = int(variant) + {"lyre": 0, "tambourine": 1, "flute": 2}[instrument]
+    D, m = _neighbour_design(kind, v)
+    legs = {"walk_a": ((24, 8), (-20, -34)), "walk_b": ((-20, -34), (24, 8)), "dance": ((52, -14), (-4, -2)) if ph < 0.5
+            else ((4, 2), (-48, 8))}.get(pose, ((6, 2), (-5, -2)))
+    sw = math.sin(2 * math.pi * ph)
+    if instrument == "lyre":
+        ps = _P(h=8, legs=legs, arms=(("ik", "abs", 70, -218, 1), ("ik", "abs", 58 + 10 * sw, -168 - 8 * sw, 1)),
+                hands=("fist", "open"), expr="cheery", look=(0.03, 0.05))
+    elif instrument == "tambourine":
+        up = 0.5 + 0.5 * sw
+        ps = _P(h=-8, legs=legs, arms=(("fk", 110 + 30 * up, 150 + 14 * up), ("fk", 40, 96)), hands=("fist", "open"),
+                expr="joyful")
+    else:
+        ps = _P(h=-2, legs=legs, arms=(("ik", "head", 1.00, 0.74, 1), ("ik", "head", 1.72, 1.38, 1)),
+                hands=("fist", "fist"), expr="peaceful", look=(0.03, 0.02))
+
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        s = ""
+        if instrument == "lyre":
+            s += f'<g transform="translate({fmt(W0[0] - 30)},{fmt(W0[1] - 4)}) rotate(-8) scale(0.72)">{PR._ls_lyre()}</g>'
+            s += _fist(W0, hr, D["skin"]) + _hand(W1, (0.6, 0.8), "open", D["skin"], hr)
+            if marks:
+                s += _note_marks((W0[0] + 30, W0[1] - 10), ph)
+        elif instrument == "tambourine":
+            s += f'<g transform="translate({fmt(W0[0])},{fmt(W0[1] - 4)}) rotate({fmt(-20 + 26 * sw)}) scale(0.72)">{PR._ls_tambourine(ph)}</g>'
+            s += _fist(W0, hr, D["skin"])
+            if marks:
+                for a in (-50, 0, 50):
+                    v_ = _dv(180 + a + 20 * sw)
+                    s += _line(f"M{_pt(_add(W0, _mul(v_, 52)))} L{_pt(_add(W0, _mul(v_, 66)))}", w=2.6, col=MARK)
+        else:
+            a, b = W0, W1
+            d = _nrm(_sub(b, a))
+            s += _tube([_sub(a, _mul(d, 34)), _add(b, _mul(d, 24))], 7, "#c99a5c", ow=2.6)
+            for t in (0.35, 0.55, 0.75, 0.95):
+                p = _lerp(a, b, t)
+                s += f'<circle cx="{fmt(p[0])}" cy="{fmt(p[1])}" r="1.8" fill="{INK}"/>'
+            s += _fist(W0, hr, D["skin"]) + _fist(W1, hr, D["skin"])
+            if marks:
+                s += _note_marks((W1[0] + 20, W1[1] - 10), ph)
+        return s
+    D["front"] = front
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    if pose == "dance":
+        inner = _reanchor(inner, 0, 8 + 6 * abs(sw))
+    return _wrap_out(inner, x, y, scale, facing, f"musician-{instrument}-{pose}")
+
+
+# ---------------------------------------------------------------- the modern parent (opening)
+PARENT_KINDS = ("mum", "dad")
+PARENT_POSES = ("stand", "walk", "walk_a", "walk_b", "run", "run_a", "run_b", "look_around", "call", "kneel_hug",
+                "hold_hand", "hold_hand_walk_a", "hold_hand_walk_b", "push", "smile")
+PARENT_HAND = (42, -134)        # hold_hand: the near hand (anchor coords at scale 1, facing 1) - see the child recipe
+PARENT_HANDLE = (92, -150)       # push: both hands on the trolley handle here (props.trolley(handle=...))
+PARENT_HUG_GAP = 88             # hug_pair(..., a=(parent, kneel_hug), b=(child, relieved_hug), gap=PARENT_HUG_GAP)
+_PAZ = {
+    "stand": _P(arms=(("fk", 12, 6), ("fk", -8, -3)), expr="kind"),
+    "walk_a": _P(t=3, legs=((24, 8), (-20, -34)), arms=(("fk", -30, -22), ("fk", 22, 38)), expr="kind"),
+    "walk_b": _P(t=3, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 40), ("fk", -20, -12)), expr="kind"),
+    "run_a": _P(t=14, legs=((58, 22), (-24, -118)), arms=(("fk", -82, -42), ("fk", 62, 128)), expr="worried"),
+    "run_b": _P(t=14, legs=((-24, -118), (58, 22)), arms=(("fk", 62, 128), ("fk", -60, -20)), expr="worried"),
+    "look_around": _P(h=-6, legs=((8, 3), (-6, -2)), arms=(("ik", "torso", 1.0, 0.0, -1), ("ik", "head", -0.70, -0.70, -1)),
+                      hands=("fist", "open"), expr="worried", look=(0.05, -0.03), far_over_head=False),
+    "call": _P(t=-3, h=-10, legs=((10, 3), (-9, -3)), arms=(("fk", 12, 6), ("ik", "head", 0.92, 0.76, 1)),
+               hands=("fist", "cup"), expr="call", marks=("call",)),
+    "kneel_hug": _P(t=6, h=10, arms=(("ik", "abs", 104, -190, 1), ("ik", "abs", 90, -168, 1)), hands=("open", "open"),
+                    expr="relieved", **_KNEEL),
+    "hold_hand": _P(h=6, arms=(("fk", 12, 6), ("ik", "abs", PARENT_HAND[0], PARENT_HAND[1], 1)), hands=("fist", "fist"),
+                    expr="kind", look=(0.02, 0.06)),
+    "hold_hand_walk_a": _P(t=3, legs=((24, 8), (-20, -34)), arms=(("fk", -30, -22), ("ik", "abs", PARENT_HAND[0],
+                                                                                    PARENT_HAND[1], 1)),
+                           hands=("fist", "fist"), expr="kind", look=(0.02, 0.06)),
+    "hold_hand_walk_b": _P(t=3, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 40), ("ik", "abs", PARENT_HAND[0],
+                                                                                 PARENT_HAND[1], 1)),
+                           hands=("fist", "fist"), expr="kind", look=(0.02, 0.06)),
+    "push": _P(t=8, legs=((14, 4), (-12, -6)), arms=(("ik", "abs", PARENT_HANDLE[0] + 8, PARENT_HANDLE[1] - 4, 1),
+                                                    ("ik", "abs", PARENT_HANDLE[0], PARENT_HANDLE[1], 1)),
+               hands=("fist", "fist"), expr="kind"),
+    "smile": _P(h=6, arms=(("ik", "torso", 1.2, 0.25, 1), ("ik", "torso", 1.2, 0.25, 1)), hands=("none", "fist"),
+                expr="happy"),
+}
+
+
+def _mum_hair(R):
+    col = "#a8502c"
+    s = (f'<path d="{smooth_path([(-0.78 * R, -0.50 * R), (-1.30 * R, -0.40 * R), (-1.52 * R, 0.20 * R), (-1.40 * R, 0.80 * R), (-1.12 * R, 0.62 * R), (-1.05 * R, 0.0)])}" '
+         f'fill="{col}" {_st(3.2)}/>')
+    s += _ell(-1.02 * R, -0.42 * R, 0.14 * R, 0.10 * R, "#7cc4a2", sw=2.4)
+    pts = [(0.94 * R, -0.30 * R), (0.80 * R, -0.86 * R), (0.25 * R, -1.14 * R), (-0.45 * R, -1.08 * R),
+           (-0.98 * R, -0.66 * R), (-1.08 * R, 0.0), (-0.92 * R, 0.46 * R), (-0.70 * R, 0.30 * R),
+           (-0.62 * R, -0.12 * R), (-0.10 * R, -0.36 * R), (0.35 * R, -0.52 * R), (0.62 * R, -0.36 * R)]
+    s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+    s += _line(f"M{fmt(0.30 * R)},{fmt(-1.06 * R)} Q{fmt(-0.20 * R)},{fmt(-0.86 * R)} {fmt(-0.70 * R)},{fmt(-0.20 * R)}",
+               w=2.0, col=shade(col, 0.3))
+    return s + _lashes(R, "dot")
+
+
+def _dad_hair(R):
+    col = "#3a2a20"
+    s = _hair_cap(R, col, "short", line=-0.50)
+    s += (f'<path d="M{fmt(0.90 * R)},{fmt(-0.46 * R)} Q{fmt(0.60 * R)},{fmt(-0.36 * R)} {fmt(0.20 * R)},{fmt(-0.56 * R)} '
+          f'Q{fmt(0.55 * R)},{fmt(-0.78 * R)} {fmt(0.90 * R)},{fmt(-0.46 * R)} Z" fill="{col}" {_st(2.4)}/>')
+    # round glasses
+    for cx in (-0.10, 0.40):
+        s += f'<circle cx="{fmt(cx * R)}" cy="{fmt(0.04 * R)}" r="{fmt(0.17 * R)}" fill="none" {_st(2.6)}/>'
+    s += _line(f"M{fmt(0.07 * R)},{fmt(0.02 * R)} L{fmt(0.23 * R)},{fmt(0.02 * R)}", w=2.4)
+    s += _line(f"M{fmt(-0.27 * R)},{fmt(0.0)} L{fmt(-0.80 * R)},{fmt(-0.06 * R)}", w=2.4)
+    return s + _ear(R, "#e8b48c")
+
+
+def _trousers_legwear(col, shoe, shoe_k=1.0, feet=(None, None)):
+    def legwear(st, i):
+        H, K, A, a1, a2 = st["legs"][i]
+        fl, lw = st["m"]["fl"], st["m"]["lw"]
+        c = col if i == 1 else shade(col, -0.12)
+        s_ = _tube([H, K, _lerp(K, A, 0.92)], lw + 9, c, ow=3.2)
+        ds = _nrm(_sub(A, K))
+        fa = max(-90.0, min(20.0, _ang(_rot(ds, -90)))) if feet[i] is None else feet[i]
+        sc = shoe if i == 1 else shade(shoe, -0.12)
+
+        def q(x, y_):
+            v = _rot((x * fl * shoe_k, y_ * fl * shoe_k), fa)
+            return (A[0] + v[0], A[1] + v[1])
+        pts = [q(-0.42, -0.26), q(-0.48, 0.40), q(1.10, 0.40), q(1.12, 0.10), q(0.70, -0.14), q(0.10, -0.34)]
+        s_ += f'<path d="{smooth_path(pts, tension=0.6)}" fill="{sc}" {_st(3.0)}/>'
+        s_ += _line(f"M{_pt(q(-0.46, 0.30))} L{_pt(q(1.10, 0.30))}", w=3.4, col="#f6efe2")
+        return s_
+    return legwear
+
+
+def _parent_design(kind, feet=(None, None)):
+    if kind == "mum":
+        D = dict(robe="#7cc4a2", sleeve="#7cc4a2", tunic="#e8705a", hem_col=shade("#7cc4a2", -0.12), hem_w=6,
+                 cuff=shade("#7cc4a2", -0.15), skin="#efc29c", leg="#efc29c", hem=0.30, flare_k=0.6, hair=None,
+                 hat=("custom", _mum_hair), hat_h=0.12, ears=False, bare=True, neck_v="#e8705a", brow_w=3.0)
+        D["legwear"] = _trousers_legwear("#4f6fa0", "#f2e8d8", feet=feet)
+
+        def tote(st):
+            tp, m = st["tp"], st["m"]
+            a = st["S"][0]
+            c = tp(-1.1 * m["ww"], 0.05 * m["T"])
+            s = _tube([a, (c[0] + 6, c[1] - 30)], 4.5, "#c9a46a", ow=2.0)
+            body = [(c[0] - 26, c[1] - 30), (c[0] + 22, c[1] - 30), (c[0] + 26, c[1] + 26), (c[0] - 30, c[1] + 26)]
+            s += _poly(body, "#f2d36b", sw=3.0)
+            s += _line(f"M{fmt(c[0] - 18)},{fmt(c[1] - 6)} l30,0 M{fmt(c[0] - 18)},{fmt(c[1] + 6)} l30,0", w=2.2,
+                       col="#e8705a")
+            return s
+        D["behind"] = tote
+        return D, _metrics(_ADULT, 0.95, 0.9)
+    D = dict(robe="#e8a93a", sleeve="#e8a93a", hem_col=shade("#e8a93a", -0.12), hem_w=7, cuff=shade("#e8a93a", -0.15),
+             skin="#e8b48c", leg="#e8b48c", hem=0.26, flare_k=0.6, hair=None, hat=("custom", _dad_hair), hat_h=0.10,
+             ears=False, bare=True, neck_v="#f3e6c8", beard=("stubble", "#5a4030"),
+             stripes=("#f3e0b0", 34, 5))
+    D["legwear"] = _trousers_legwear("#3f5a7a", "#8a5a3a", feet=feet)
+    return D, _metrics(_ADULT, 1.03, 1.06)
+
+
+def parent(x, y, scale=1.0, facing=1, kind="mum", pose="stand", expr=None, phase=0.0, marks=True):
+    """The modern mum or dad of the opening (s02: the child lost in the supermarket) (see module doc)."""
+    if kind not in PARENT_KINDS:
+        raise ValueError(f"parent: unknown kind {kind!r}; choose from {PARENT_KINDS}")
+    _ls_check(pose, PARENT_POSES, "parent")
+    _ls_expr(expr, "parent")
+    ph = phase % 1.0
+    if pose == "walk":
+        pose = "walk_a" if ph < 0.5 else "walk_b"
+    elif pose == "run":
+        pose = "run_a" if ph < 0.5 else "run_b"
+    ps = dict(_PAZ[pose])
+    if pose == "look_around" and ph >= 0.5:
+        ps["flip"] = True
+    D, m = _parent_design(kind, ps["feet"])
+    fronts = []
+    if marks and pose == "call":
+        fronts.append(lambda st: _sound_marks(st, 0.9))
+    e = expr or ps["expr"]
+    if e == "teary":
+        fronts.append(_teardrop_front)
+    D["front"] = _hooks(*fronts)
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"parent-{kind}-{pose}")
+
+
+# ---------------------------------------------------------------- the modern child (child(outfit='dungarees', ...))
+LOST_SHEEP_CHILD_POSES = ("lost", "relieved_hug", "hug_toy", "sit_hug_toy", "lie_hug_toy", "hold_hand", "hold_hand_walk_a",
+                          "hold_hand_walk_b", "yawn")
+LOST_SHEEP_OUTFITS = ("dungarees", "cloud_pyjamas")
+CHILD_TOYS = ("lamb", "horse", "ball", None)
+CHILD_HAND = (-30, -130)        # hold_hand: the raised far hand (anchor coords, scale 1, facing 1)
+CHILD_HOLD = {"mum": (75, -3), "dad": (69, -10)}   # hold_hand: child(x + dx*s*f, y + dy*s, s, f, pose='hold_hand') beside
+#                                                 parent(x, y, s, f, kind=..., pose='hold_hand') - the two hands meet
+CHILD_BED_SIT_DX = 40           # sit_hug_toy on props.kid_bed(bx, by, s): child(bx + 40*s*f, by + KID_BED_TOP*s, s, f)
+CHILD_BED_LIE = (-40, -140)     # lie_hug_toy in props.kid_bed(bx, by, s): child(bx + -40*s*f, by - 140*s, s, f)
+_LC_POSES = {
+    "lost": None,
+    "relieved_hug": _P(t=4, h=-10, legs=((8, 3), (-7, -3)), arms=(("ik", "abs", 58, -196, 1), ("ik", "abs", 48, -184, 1)),
+                       hands=("open", "open"), expr="relieved", look=(0.02, -0.05)),
+    "hug_toy": _P(t=3, h=8, legs=((6, 2), (-5, -2)), arms=(("ik", "body", 0, -50, 1), ("ik", "body", 42, -14, 1)),
+                  hands=("open", "open"), expr="peaceful"),
+    "sit_hug_toy": _P(t=2, h=8, legs=(("ik", 66, 1), ("ik", 76, 1)), arms=(("ik", "body", 2, -52, 1), ("ik", "body", 44, -16, 1)),
+                      hands=("open", "open"), expr="peaceful", **_SEATED),
+    "lie_hug_toy": _P(t=-82, h=-4, ground="body", flat_back=True, legs=(("ik", 40, 1), ("ik", 54, 1)),
+                      arms=(("ik", "body", 26, -40, 1), ("ik", "body", 34, -14, 1)), hands=("open", "open"),
+                      expr="peaceful", hem=0.97, flare=-6, near_hidden=False),
+    "hold_hand": _P(h=-8, arms=(("ik", "abs", CHILD_HAND[0], CHILD_HAND[1], -1), ("fk", -8, -3)), hands=("fist", "fist"),
+                    expr="happy", look=(-0.02, -0.06)),
+    "hold_hand_walk_a": _P(t=3, h=-6, legs=((24, 8), (-20, -34)), arms=(("ik", "abs", CHILD_HAND[0], CHILD_HAND[1], -1),
+                                                                        ("fk", 22, 38)),
+                           hands=("fist", "fist"), expr="happy"),
+    "hold_hand_walk_b": _P(t=3, h=-6, legs=((-20, -34), (24, 8)), arms=(("ik", "abs", CHILD_HAND[0], CHILD_HAND[1], -1),
+                                                                        ("fk", -20, -12)),
+                           hands=("fist", "fist"), expr="happy"),
+    "yawn": _P(t=-3, h=-10, arms=(("fk", 150, 172), ("ik", "head", 0.40, 0.95, 1)), hands=("open", "open"), expr="sleepy"),
+}
+
+
+def _lc_pose(pose, phase):
+    if pose == "lost":
+        back = (phase % 1.0) >= 0.5
+        return _P(flip=back, t=2, h=-4, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", 1.25, 0.62, 1), ("ik", "head", 0.55, 0.90, 1)),
+                  hands=("fist", "fist"), expr="teary", look=(0.05, -0.03))
+    return dict(_LC_POSES[pose])
+
+
+def _bunches_hat(col, bobble, freckles=True, hairband=None):
+    """The modern girl: copper hair with a side fringe and two puffy bunches tied with bobbles; freckles."""
+    def hat(R):
+        s = ""
+        for (cx, cy, r) in ((-1.06 * R, 0.18 * R, 0.30 * R), (-0.30 * R, -0.98 * R, 0.0)):
+            if r:
+                s += _union_circles([(cx, cy, r), (cx - 0.16 * R, cy + 0.22 * R, 0.22 * R), (cx + 0.06 * R, cy + 0.30 * R, 0.18 * R)],
+                                    col, 2.8)
+                s += f'<circle cx="{fmt(cx + 0.20 * R)}" cy="{fmt(cy - 0.20 * R)}" r="{fmt(0.10 * R)}" fill="{bobble}" {_st(2.2)}/>'
+        pts = [(0.94 * R, -0.34 * R), (0.80 * R, -0.86 * R), (0.25 * R, -1.12 * R), (-0.45 * R, -1.06 * R),
+               (-0.98 * R, -0.66 * R), (-1.08 * R, 0.0), (-0.92 * R, 0.36 * R), (-0.70 * R, 0.26 * R),
+               (-0.62 * R, -0.14 * R), (-0.10 * R, -0.40 * R), (0.30 * R, -0.30 * R), (0.62 * R, -0.46 * R)]
+        s += f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+        s += _line(f"M{fmt(0.20 * R)},{fmt(-1.04 * R)} Q{fmt(-0.30 * R)},{fmt(-0.84 * R)} {fmt(-0.72 * R)},{fmt(-0.30 * R)}",
+                   w=2.0, col=shade(col, 0.3))
+        if hairband:
+            s += _tube(_spline_pts([(0.70 * R, -0.80 * R), (0.10 * R, -1.08 * R), (-0.55 * R, -1.00 * R), (-0.98 * R, -0.62 * R)]),
+                       0.12 * R, hairband, ow=2.2)
+        if freckles:
+            for fx, fy in ((-0.40, 0.30), (-0.28, 0.38), (-0.34, 0.44), (0.60, 0.30), (0.72, 0.36), (0.64, 0.42)):
+                s += f'<circle cx="{fmt(fx * R)}" cy="{fmt(fy * R)}" r="{fmt(0.022 * R)}" fill="#c0703e" opacity="0.75"/>'
+        return s + _lashes(R, "dot")
+    return hat
+
+
+def _dungaree_design():
+    c = LS_DUNGAREE
+    D = dict(robe=LS_TEE, sleeve=LS_TEE, sleeve_len=0.45, hem_col=LS_TEE, hem_w=4, skin="#f4c8a4", leg="#f4c8a4", hem=0.24,
+             flare_k=0.6, hair=None, hat=("custom", _bunches_hat(LS_CHILD_HAIR, "#7cc4a2")), hat_h=0.12, ears=False,
+             bare=True, neck_v=shade(LS_TEE, -0.12), stripes=("#f8e6a0", 15, 5))
+
+    def bib(st):
+        m, tp, pel, f, u = st["m"], st["tp"], st["pel"], st["f"], st["u"]
+        T, ww = m["T"], m["ww"]
+        seat = st["mode"] == "seat"
+        s = ""
+        for poly in st["robe"][:2]:
+            b = _band(poly, pel, u, -60, 0.62 * T)
+            if len(b) > 2:
+                s += _poly(b, c, sw=2.8)
+        p0 = [tp(-0.55 * ww, 0.60 * T), tp(0.62 * ww, 0.60 * T), tp(0.62 * ww, 0.10 * T), tp(-0.55 * ww, 0.10 * T)]
+        s += _poly(p0, c, sw=2.8)
+        pk = [tp(-0.10 * ww, 0.48 * T), tp(0.42 * ww, 0.48 * T), tp(0.42 * ww, 0.24 * T), tp(-0.10 * ww, 0.24 * T)]
+        s += _poly(pk, shade(c, 0.18), sw=2.2)
+        cc = _lerp(pk[0], pk[2], 0.5)
+        s += _union_circles([(cc[0] - 4, cc[1], 4.5), (cc[0] + 3, cc[1] - 2, 4.5), (cc[0] + 1, cc[1] + 3, 4)], "#fbf6ea", 1.4)
+        s += f'<circle cx="{fmt(cc[0] + 7)}" cy="{fmt(cc[1] + 1)}" r="2.4" fill="#f4c8a4" {_st(1.2)}/>'
+        for fx in (-0.42, 0.50):
+            a = tp(fx * ww, 0.58 * T)
+            b_ = tp(fx * ww * 1.05 + (-6 if fx < 0 else 4), T - 4)
+            s += _tube([a, b_], 6, c, ow=2.2)
+            s += f'<circle cx="{fmt(a[0])}" cy="{fmt(a[1])}" r="3.6" fill="#f2d36b" {_st(1.6)}/>'
+        return s
+    D["mid"] = bib
+
+    def legwear(st, i):
+        H, K, A, a1, a2 = st["legs"][i]
+        col = c if i == 1 else shade(c, -0.12)
+        s_ = _tube([H, K, _lerp(K, A, 0.78)], st["m"]["lw"] + 9, col, ow=3.2)
+        cuff = _lerp(K, A, 0.74)
+        dv = _nrm(_sub(A, K))
+        nv = (-dv[1], dv[0])
+        w = (st["m"]["lw"] + 9) / 2
+        s_ += _tube([_add(cuff, _mul(nv, w)), _sub(cuff, _mul(nv, w))], 6, shade(c, 0.2), ow=2.0)
+        fl = st["m"]["fl"]
+        fa = max(-90.0, min(20.0, _ang(_rot(dv, -90))))
+        sc = LS_SNEAKER if i == 1 else shade(LS_SNEAKER, -0.12)
+
+        def q(x, y_):
+            v = _rot((x * fl, y_ * fl), fa)
+            return (A[0] + v[0], A[1] + v[1])
+        pts = [q(-0.46, -0.30), q(-0.50, 0.40), q(1.12, 0.40), q(1.14, 0.06), q(0.70, -0.20), q(0.10, -0.40)]
+        s_ += f'<path d="{smooth_path(pts, tension=0.6)}" fill="{sc}" {_st(3.0)}/>'
+        s_ += _line(f"M{_pt(q(-0.48, 0.30))} L{_pt(q(1.12, 0.30))}", w=3.4, col="#fbf6ea")
+        return s_
+    D["legwear"] = legwear
+    return D
+
+
+def _cloud_pyjama_design():
+    c = LS_PYJAMA
+    D = dict(robe=c, sleeve=c, hem_col=shade(c, -0.1), hem_w=6, cuff="#fbf6ea", skin="#f4c8a4", leg="#f4c8a4", hem=0.36,
+             flare_k=0.7, hair=None, hat=("custom", _bunches_hat(LS_CHILD_HAIR, "#f4cf55", hairband=None)), hat_h=0.12,
+             ears=False, bare=True, neck_v="#fbf6ea")
+
+    def clouds(st, polys):
+        m, tp = st["m"], st["tp"]
+        s = ""
+        for fx, uy in ((-0.4, 0.72), (0.45, 0.40), (-0.1, 0.12), (0.5, -0.14), (-0.45, -0.22)):
+            p = tp(fx * m["ww"], uy * m["T"] if uy > 0 else uy * (m["th"] + m["sh"]) * 0.6)
+            s += _union_circles([(p[0] - 4, p[1] + 1, 3.6), (p[0] + 1, p[1] - 2, 4.2), (p[0] + 5, p[1] + 1, 3.4)], LS_PYJAMA_DOT, 0)
+        return s
+    D["robe_deco"] = clouds
+
+    def legwear(st, i):
+        H, K, A, a1, a2 = st["legs"][i]
+        col = c if i == 1 else shade(c, -0.12)
+        s_ = _tube([H, K, _lerp(K, A, 0.86)], st["m"]["lw"] + 9, col, ow=3.2)
+        for t in (0.35, 0.8):
+            p = _lerp(H, K, t) if t < 0.5 else _lerp(K, A, t - 0.25)
+            s_ += _union_circles([(p[0] - 3, p[1], 3.0), (p[0] + 2, p[1] - 2, 3.4)], LS_PYJAMA_DOT, 0)
+        cuff = _lerp(K, A, 0.80)
+        dv = _nrm(_sub(A, K))
+        nv = (-dv[1], dv[0])
+        w = (st["m"]["lw"] + 9) / 2
+        s_ += _line(f"M{_pt(_add(cuff, _mul(nv, w)))} L{_pt(_sub(cuff, _mul(nv, w)))}", w=2.2, col=shade(c, -0.3))
+        return s_
+    D["legwear"] = legwear
+    return D
+
+
+def _toy_lamb_front(D, pose, kind="lamb"):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        if kind != "lamb":
+            c = ((W0[0] + W1[0]) / 2, (W0[1] + W1[1]) / 2 + 10)
+            s = f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) scale(0.42)">{PR._toy(kind)}</g>'
+        else:
+            c = ((W0[0] + W1[0]) / 2 + 2, (W0[1] + W1[1]) / 2 + 4)
+            rot = -12 if pose != "lie_hug_toy" else 70
+            s = f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate({rot}) scale(0.56)">{PR._toy_lamb(hug=1.0)}</g>'
+        return s + _hand(W0, (0.3, 1.0), "open", D["skin"], hr) + _hand(W1, (0.4, 1.0), "open", D["skin"], hr)
+    return front
+
+
+def _child_lost_sheep(x, y, scale, facing, pose, expr, phase, marks, outfit, pillow, sibling, hood, boots, coat, toy, item):
+    allp = (CHILD_POSES + SIBLING_POSES + STORM_CHILD_POSES + NATIVITY_CHILD_POSES + LOST_SHEEP_CHILD_POSES)
+    if pose not in allp:
+        raise ValueError(f"child: unknown pose {pose!r}; choose from {allp}")
+    if outfit is not None and outfit not in CHILD_OUTFITS + LOST_SHEEP_OUTFITS:
+        raise ValueError(f"child: unknown outfit {outfit!r}; choose from {CHILD_OUTFITS + LOST_SHEEP_OUTFITS}")
+    if toy not in CHILD_TOYS:
+        raise ValueError(f"child: unknown toy {toy!r}; choose from {CHILD_TOYS}")
+    _ls_expr(expr, "child")
+    if outfit not in LOST_SHEEP_OUTFITS and pose not in LOST_SHEEP_CHILD_POSES and toy != "lamb":
+        raise ValueError("child: internal dispatch")
+    if pose in LOST_SHEEP_CHILD_POSES:
+        ps = _lc_pose(pose, phase)
+    elif pose in _NC_POSES:
+        ps = dict(_NC_POSES[pose])
+    elif pose in _SC_POSES:
+        ps = dict(_SC_POSES[pose])
+    elif pose == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * phase)
+        ps = _P(h=-4, arms=(("fk", 146, f), ("fk", -10, -4)), hands=("open", "fist"), expr="happy")
+    elif pose in _SIB_POSES:
+        ps = dict(_SIB_POSES[pose])
+    else:
+        ps = dict(_CH_POSES[pose])
+    if outfit == "dungarees":
+        D, m = _dungaree_design(), _metrics(_CHILD, 1.0, 0.98)
+    elif outfit == "cloud_pyjamas":
+        D, m = _cloud_pyjama_design(), _metrics(_CHILD, 1.0, 0.96)
+    elif outfit == "jumper":
+        D, m = _jumper_design(), _metrics(_CHILD, 1.0, 0.98)
+    elif outfit == "pyjamas":
+        D, m = _pyjama_design(ps), _metrics(_CHILD, 1.0, 0.96)
+    elif sibling is not None:
+        D, m = _sibling_design(sibling)
+    else:
+        D, m = _child_design(ps["legs"], hood, boots, coat or CHILD_COAT), _CHILD
+    fronts = [D.get("front")]
+    tk = toy if toy is not None else ("lamb" if pose in ("hug_toy", "sit_hug_toy", "lie_hug_toy") else None)
+    if pose in ("hug_toy", "sit_hug_toy", "lie_hug_toy"):
+        if tk:
+            fronts.append(_toy_lamb_front(D, pose, tk))
+    elif tk == "lamb" and pose in ("stand", "walk_a", "walk_b", "hold_hand", "lost", "yawn", "smile_up"):
+        def hang(st):
+            W, hr = st["arms"][1][2], st["m"]["hr"]
+            return (f'<g transform="translate({fmt(W[0] + 2)},{fmt(W[1] + 30)}) rotate(8) scale(0.46)">{_prp()._toy_lamb()}</g>'
+                    + _fist(W, hr, D["skin"]))
+        if pose in ("stand", "walk_a", "walk_b"):
+            ps["arms"] = (ps["arms"][0], ("fk", 10, 30))
+        fronts.append(hang)
+    elif pose in NATIVITY_CHILD_POSES:
+        fronts.append(_child_item_front(D, pose, item))
+    elif pose in ("hug_pillow", "sit_hug") and pillow:
+        fronts.append(_pillow_front(D, pose))
+    e = expr or ps["expr"]
+    if e == "teary":
+        fronts.append(_teardrop_front)
+    D["front"] = _hooks(*fronts)
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    if pose == "jump":
+        inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
+    return _wrap_out(inner, x, y, scale, facing, f"child-{outfit or sibling or 'raincoat'}-{pose}")
+
+
+_child_before_lost_sheep = child
+
+
+def child(x, y, scale=1.0, facing=1, pose="stand", expr=None, hood=False, boots=True, coat=None, phase=0.0,
+          marks=True, sibling=None, toy=None, outfit=None, pillow=True, item=None):
+    """A little modern child (see module doc: the raincoat child, the Joseph-film siblings, the Storm-film pyjamas, the
+    Nativity jumper and, for the Lost Sheep film, outfit='dungarees' / 'cloud_pyjamas', the poses of
+    LOST_SHEEP_CHILD_POSES and toy='lamb'). Every earlier call draws exactly what it did before."""
+    if outfit in LOST_SHEEP_OUTFITS or pose in LOST_SHEEP_CHILD_POSES or toy == "lamb":
+        return _child_lost_sheep(x, y, scale, facing, pose, expr, phase, marks, outfit, pillow, sibling, hood, boots, coat,
+                                 toy, item)
+    return _child_before_lost_sheep(x, y, scale, facing, pose, expr, hood, boots, coat, phase, marks, sibling, toy, outfit,
+                                    pillow, item)

@@ -16,6 +16,8 @@ Joseph film: python3 tools/props_sheet.py joseph_items joseph_animals joseph_egy
 Storm film: python3 tools/props_sheet.py storm_boat storm_lake storm_weather storm_items storm_story
 Nativity film: python3 tools/props_sheet.py nativity_stable nativity_animals nativity_places nativity_sky nativity_journey
   nativity_items nativity_home
+Lost Sheep film: python3 tools/props_sheet.py lost_sheep_hills lost_sheep_flock lost_sheep_lamb lost_sheep_places
+  lost_sheep_items lost_sheep_modern   (these sheets are <= 2000 px wide)
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -1183,6 +1185,206 @@ def sheet_nativity_home():
     return render_sheet("nativity_home", "props — Nativity: the living room, the Christmas tree, the child and the nativity set", rows)
 
 
+# ------------------------------------------------------------------ Lost Sheep film (sheets <= 2000 px wide)
+LS_DAY = "#cfe8f2"
+
+
+def _ls_world(ox, oy, w, h, t, sun=None, moon=None, stones=True, gy=None, flowers=1.0, seed=0, k=0.5):
+    gy = oy + h - 150 if gy is None else gy
+    s = PR.spring_sky(ox, oy, ox + w, oy + h, time=t, sun=sun, moon=moon, seed=seed, scale=k)
+    s += PR.spring_hills(ox, ox + w, gy, k, time=t, stones=stones, flowers=flowers, seed=seed)
+    return s
+
+
+def sheet_lost_sheep_hills():
+    def world(t, label_sun=None, moon=None):
+        def art(ox, oy):
+            return _ls_world(ox, oy, 980, 560, t, sun=(ox + 760, oy + 150) if label_sun else None,
+                             moon=(ox + 800, oy + 110) if moon else None)
+        return art
+    rows = [
+        (560, [Cell("spring_sky + spring_hills time=0 (day): far / mid hills, stream, stepping stones, meadow", world(0.0, True), 980, [(0, 410)]),
+               Cell("time=.35 'sunset' (sun=(x, y))", world(0.35, True), 980, [(0, 410)])]),
+        (560, [Cell("time=.62 'dusk' (lavender; stars begin)", world(0.62, False, True), 980, [(0, 410)]),
+               Cell("time=1 'night' (silver moonlit; moon=(x, y))", world(1.0, False, True), 980, [(0, 410)])]),
+        (300, [Cell(f"part='{p}' (day)", lambda ox, oy, p=p: f'<rect x="{ox}" y="{oy}" width="490" height="300" fill="{LS_DAY}"/>'
+                    + PR.spring_hills(ox, ox + 490, oy + 220, 0.3, part=p), 490, [(0, 220)]) for p in ("back", "mid", "front", "all")]),
+    ]
+    return render_sheet("lost_sheep_hills", "props — Lost Sheep: the spring storybook hills and sky through the day (time 0 / .35 / .62 / 1)", rows)
+
+
+def sheet_lost_sheep_flock():
+    def c(label, fn, w=245, ax=122, ay=220, bg=None):
+        return _nat_c(label, fn, w, ax, ay, bg=bg)
+
+    def hill(ox, oy, t=0.0):
+        x0, x1, gy = ox, ox + 1960, oy + 470
+        s = PR.spring_sky(ox, oy, x1, oy + 560, time=t, sun=(ox + 1700, oy + 120) if t < 0.5 else None,
+                          moon=(ox + 1700, oy + 110) if t > 0.5 else None, scale=0.5)
+        s += PR.spring_hills(x0, x1, gy, 0.55, time=t, part="back") + PR.spring_hills(x0, x1, gy, 0.55, time=t, part="mid", stream=False)
+        pts = PR.spring_hills_points(x0, x1, gy, 0.55)
+        s += PR.flock(x0 + 20, x1 - 20, gy - 150, gy + 60, n=100, scale=0.42, top=pts["mid_top"], time=t, seed=4, gaps=((ox + 980, gy + 40, 120),))
+        s += PR.spring_hills(x0, x1, gy, 0.55, time=t, part="front", stream=False, flowers=0.5)
+        s += CH.parable_shepherd(ox + 980, gy + 60, 0.42, 1, pose="lead_a" if t < 0.5 else "count")
+        return s
+    rows = [
+        (240, [c(f"cloud_sheep {p}", lambda x, y, p=p: PR.cloud_sheep(x, y, 0.9, pose=p, phase=0.25)) for p in PR.CLOUD_SHEEP_POSES if p != "walk"]
+         + [c("walk phase=.5", lambda x, y: PR.cloud_sheep(x, y, 0.9, pose="walk", phase=0.5))]),
+        (220, [c(f"variant {v}", lambda x, y, v=v: PR.cloud_sheep(x, y, 0.9, variant=v, pose="stand"), 196, 98, 200) for v in range(6)]
+         + [c(f"time={t}", lambda x, y, t=t: PR.cloud_sheep(x, y, 0.9, variant=1, pose="graze", time=t), 196, 98, 200,
+              bg=("#e9c39a" if t < 0.5 else "#6f7fa8")) for t in (0.35, 1.0)]
+         + [c(f"count_bubble pop={p}", lambda x, y, p=p: PR.count_bubble(x, y - 90, 98, 1.0, pop=p), 196, 98, 200) for p in (0.4, 1.0)]),
+        (560, [Cell("flock(n=100, top=spring_hills_points()['mid_top'], gaps=[...]) on the hillside + the shepherd leading", lambda ox, oy: hill(ox, oy), 1960, [(0, 470)])]),
+        (300, [Cell(f"sheep_line(n=5, phase={ph}) - anchor = the counting point", lambda ox, oy, ph=ph: f'<rect x="{ox}" y="{oy}" width="490" height="300" fill="#bfe3a0"/>'
+                    + PR.sheep_line(ox + 260, oy + 250, 0.5, -1, n=5, phase=ph), 490, [(260, 250)]) for ph in (0.0, 0.25, 0.5, 0.75)]),
+    ]
+    return render_sheet("lost_sheep_flock", "props — Lost Sheep: cloud_sheep (poses, variants, time), flock of 100, sheep_line, count_bubble", rows)
+
+
+def sheet_lost_sheep_lamb():
+    def c(label, fn, w=196, ax=98, ay=200, bg=None):
+        return _nat_c(label, fn, w, ax, ay, bg=bg)
+    poses = [p for p in PR.LITTLE_LAMB_POSES if p not in ("walk", "on_shoulders", "held")]
+    rows = [
+        (230, [c(p, lambda x, y, p=p: PR.little_lamb(x, y, 1.2, pose=p, phase=0.25)) for p in poses[:10]]),
+        (230, [c(p, lambda x, y, p=p: PR.little_lamb(x, y, 1.2, pose=p, phase=0.25)) for p in poses[10:]]
+         + [c("on_shoulders (anchor = neck)", lambda x, y: PR.little_lamb(x, y - 90, 1.2, pose="on_shoulders")),
+            c("on_shoulders part='back'", lambda x, y: PR.little_lamb(x, y - 90, 1.2, pose="on_shoulders", part="back")),
+            c("held", lambda x, y: PR.little_lamb(x, y - 80, 1.2, pose="held")),
+            c("scared phase=.5 time=.8", lambda x, y: PR.little_lamb(x, y, 1.2, pose="scared", phase=0.5, time=0.8), bg="#7a84a8"),
+            c("bleat time=1", lambda x, y: PR.little_lamb(x, y, 1.2, pose="bleat", time=1.0), bg="#4f6a8a"),
+            c("toy_lamb (the soft toy)", lambda x, y: PR.toy_lamb(x, y - 60, 1.3))]),
+        (230, [c(f"butterfly {col} flap={f}", lambda x, y, col=col, f=f: PR.spring_butterfly(x, y - 110, 1.2, flap=f, color=col))
+               for col, f in (("yellow", 0.0), ("yellow", 0.3), ("yellow", 0.5), ("blue", 0.0), ("pink", 0.2), ("white", 0.0), ("coral", 0.1))]
+         + [c(f"wildflower {k}", lambda x, y, k=k: PR.wildflower(x - 30, y, 2.0, kind=k) + PR.wildflower(x + 30, y, 1.6, kind=k, sway=0.6), 140, 70, 200)
+            for k in PR.LS_FLOWERS[:3]]),
+        (260, [c(f"owl blink={b} hoot={h}", lambda x, y, b=b, h=h: PR.owl(x, y - 40, 1.2, blink=b, hoot=h), 245, 122, 230, bg="#4f6a8a")
+               for b, h in ((0, 0), (1, 0), (0, 0.6), (0, 1))]
+         + [c("owl pose='look' time=.62", lambda x, y: PR.owl(x, y - 40, 1.2, -1, pose="look", time=0.62), 245, 122, 230, bg="#9a8ab8"),
+            c("owl branch=False", lambda x, y: PR.owl(x, y - 40, 1.2, branch=False), 245, 122, 230, bg="#4f6a8a"),
+            c("lamb chase + butterfly", lambda x, y: PR.little_lamb(x - 40, y, 1.0, pose="chase", phase=0.4) + PR.spring_butterfly(x + 70, y - 130, 0.8, flap=0.2), 245, 122, 230),
+            c("sniff_flower time=.35", lambda x, y: PR.little_lamb(x, y, 1.1, pose="sniff_flower", time=0.35), 245, 122, 230, bg="#efcfa0")]),
+    ]
+    return render_sheet("lost_sheep_lamb", "props — Lost Sheep: the little lamb (curl, tiny bell, light face), the butterfly, the owl, flowers", rows)
+
+
+def sheet_lost_sheep_places():
+    def slope(ox, oy, t, hide=True):
+        x0, x1, gy = ox, ox + 980, oy + 430
+        s = PR.spring_sky(ox, oy, x1, oy + 560, time=t, moon=(ox + 800, oy + 100), scale=0.5)
+        s += PR.rocky_slope(x0, x1, gy, 0.55, time=t, part="back", rock_x=ox + 600, bush_x=ox + 200)
+        if hide:
+            s += PR.little_lamb(ox + 690, gy - 26, 0.55, 1, pose="hide", time=t)
+            s += PR.owl(ox + 120, oy + 170, 0.5, 1, hoot=0.8, time=t)
+        s += PR.rocky_slope(x0, x1, gy, 0.55, time=t, part="front", rock_x=ox + 600, bush_x=ox + 200)
+        if not hide:
+            s += CH.parable_shepherd(ox + 260, gy + 40, 0.5, 1, pose="push_through", lantern=True)
+            s += PR.little_lamb(ox + 760, gy + 10, 0.55, -1, pose="bleat", time=t)
+        return s
+
+    def high(ox, oy):
+        x0, x1, gy = ox, ox + 980, oy + 380
+        s = PR.spring_sky(ox, oy, x1, oy + 560, time=1.0, moon=(ox + 830, oy + 90), scale=0.5)
+        s += PR.high_hills(x0, x1, gy, 0.5, time=1.0)
+        for i, (px, py, k) in enumerate(PR.high_path_points(x0, x1, gy, 0.5)):
+            s += f'<circle cx="{px:.1f}" cy="{py:.1f}" r="5" fill="#e8705a"/>'
+        px, py, k = PR.high_path_points(x0, x1, gy, 0.5)[3]
+        s += CH.parable_shepherd(px, py, 0.45 * k, -1, pose="walk_a", lantern=True)
+        return s
+
+    def village(ox, oy, part):
+        x0, x1, gy = ox, ox + 980, oy + 420
+        s = PR.spring_sky(ox, oy, x1, oy + 560, time=1.0, scale=0.5)
+        if part == "all":
+            s += PR.shepherd_village(x0, x1, gy - 200, 0.42, part="back")
+            s += PR.shepherd_village(x0, x1, gy, 0.42, part="street", lanterns=1.0, phase=0.25)
+            s += CH.parable_shepherd(ox + 330, gy + 60, 0.42, 1, pose="knock", phase=0.75)
+        else:
+            s += PR.shepherd_village(x0, x1, gy, 0.42, part="back")
+        return s
+    rows = [
+        (560, [Cell("rocky_slope (time .62 dusk) back / lamb hide behind the big rock / front; owl hoot", lambda ox, oy: slope(ox, oy, 0.62), 980, [(0, 430)]),
+               Cell("rocky_slope time=1, shepherd push_through the thorn bush with the lantern, lamb bleat", lambda ox, oy: slope(ox, oy, 1.0, False), 980, [(0, 430)])]),
+        (560, [Cell("high_hills time=1 (red dots = high_path_points), shepherd walking up with the lantern", high, 980, [(0, 380)]),
+               Cell("shepherd_village back + street (lanterns), the shepherd knocks", lambda ox, oy: village(ox, oy, "all"), 980, [(0, 420)])]),
+        (480, [_nat_c(f"village_house v{v} door={d}", lambda x, y, v=v, d=d: PR.village_house(x, y, 0.75, variant=v, door=d, time=1.0),
+                      392, 196, 440, bg="#3f5683") for v, d in ((0, 0.0), (1, 1.0), (2, 0.5), (3, 0.0))]
+         + [_nat_c("big_rock + thorn_bush (dusk)", lambda x, y: PR.thorn_bush(x - 90, y, 0.6, time=0.62) + PR.big_rock(x + 80, y, 0.6, time=0.62), 392, 196, 440, bg="#b8a6d0")]),
+    ]
+    return render_sheet("lost_sheep_places", "props — Lost Sheep: the rocky slope, the high hills and the winding path, the village at night", rows)
+
+
+def sheet_lost_sheep_items():
+    def c(label, fn, w=245, ax=122, ay=240, bg=None):
+        return _nat_c(label, fn, w, ax, ay, bg=bg)
+
+    def court(ox, oy, time="day"):
+        x0, x1, gy = ox, ox + 1960, oy + 460
+        s = PR.courtyard(x0, x1, gy, 0.5, time=time, part="back")
+        ty = gy + 40
+        k = 0.55
+        sy = ty - PR.LOW_TABLE_DEPTH * k
+        for i, (fn, kw, f) in enumerate(((CH.tax_collector, dict(variant=0, pose="sit_count"), 1), (CH.sinner, dict(kind="young_man", pose="listen"), 1),
+                                         (CH.jesus, dict(pose="sit_tell"), 1), (CH.sinner, dict(kind="woman", pose="smile"), -1),
+                                         (CH.tax_collector, dict(variant=1, pose="laugh"), -1))):
+            s += PR.floor_cushion(ox + 640 + i * 150, sy + 4, k, variant=i)
+            s += fn(ox + 640 + i * 150, sy - PR.CUSHION_TOP * k + 4, k, f, **kw)
+        s += PR.low_table(ox + 940, ty, k, width=900)
+        s += CH.pharisees_group(ox + 1600, gy + 30, 0.5, -1, pose="arms_folded")
+        s += PR.courtyard(x0, x1, gy, 0.5, time=time, part="front")
+        return s
+    rows = [
+        (600, [Cell("courtyard (back / front) + floor_cushion + guests on cushions behind low_table + pharisees_group", lambda ox, oy: court(ox, oy), 1960, [(0, 460)])]),
+        (250, [c("low_table(width=600)", lambda x, y: PR.low_table(x + 60, y, 0.55, width=600), 490, 245, 230)]
+         + [c(f"meal_food {k}", lambda x, y, k=k: PR.meal_food(x, y - 40, 1.6, kind=k), 147, 73, 230) for k in PR.MEAL_FOODS[:5]]
+         + [c("floor_cushion 0-3", lambda x, y: "".join(PR.floor_cushion(x - 165 + 110 * i, y - 20, 0.75, variant=i) for i in range(4)), 490, 245, 230)
+            ]),
+        (250, [c(f"meal_food {k}", lambda x, y, k=k: PR.meal_food(x, y - 40, 1.6, kind=k), 147, 73, 230) for k in PR.MEAL_FOODS[5:]]
+         + [c("floor_mat 0-2", lambda x, y: "".join(PR.floor_mat(x - 170 + 170 * i, y - 30, 0.5, variant=i) for i in range(3)), 490, 245, 230),
+            c("fig_tree (scale .35)", lambda x, y: PR.fig_tree(x, y, 0.35), 245, 122, 230),
+            c("ls_lantern lit 1 / 0", lambda x, y: PR.ls_lantern(x - 50, y - 130, 1.3) + PR.ls_lantern(x + 50, y - 130, 1.3, lit=0), 245, 122, 230, bg="#3f5683")]),
+        (330, [Cell("string_lanterns(n=6, sag=60, phase=.25)", lambda ox, oy: f'<rect x="{ox}" y="{oy}" width="735" height="330" fill="#3f5683"/>'
+                    + PR.string_lanterns(ox + 30, oy + 60, ox + 700, oy + 70, n=6, sag=60, phase=0.25), 735, [(30, 60)]),
+               _nat_c("party_table", lambda x, y: PR.party_table(x, y - 10, 0.75), 490, 245, 300)]
+         + [Cell(f"story_page unfold={u}", lambda ox, oy, u=u: PR.story_page(ox + 122, oy + 300, 220, 150,
+                 inner=PR.spring_sky(0, 0, 220, 150, scale=0.15) + PR.spring_hills(0, 220, 120, 0.12, flowers=0.5), unfold=u, glow=0.6), 245, [(122, 300)])
+            for u in (0.0, 0.45, 1.0)]),
+    ]
+    return render_sheet("lost_sheep_items", "props — Lost Sheep: the courtyard meal (table, food, cushions, mats, fig tree), lanterns, the party, the story page", rows)
+
+
+def sheet_lost_sheep_modern():
+    def c(label, fn, w=245, ax=122, ay=300, bg=None):
+        return _nat_c(label, fn, w, ax, ay, bg=bg)
+
+    def market(ox, oy):
+        x0, x1, gy = ox, ox + 980, oy + 480
+        s = PR.supermarket(x0, x1, gy, 0.5, part="back")
+        s += PR.trolley(ox + 300, gy + 30, 0.55, 1)
+        s += CH.parent(ox + 300 + (PR.TROLLEY_HANDLE[0] - CH.PARENT_HANDLE[0]) * 0.55, gy + 30, 0.55, 1, kind="mum", pose="push")
+        s += CH.child(ox + 720, gy + 60, 0.55, -1, outfit="dungarees", pose="lost")
+        s += PR.supermarket(x0, x1, gy, 0.5, part="front")
+        return s
+
+    def room(ox, oy):
+        x0, x1, gy = ox, ox + 980, oy + 470
+        s = PR.cosy_bedroom(x0, x1, gy, 0.5, glow=0.9)
+        bx = ox + 520
+        s += PR.kid_bed(bx, gy + 20, 0.62, 1, part="back")
+        s += CH.child(bx + CH.CHILD_BED_SIT_DX * 0.62, gy + 20 + PR.KID_BED_TOP * 0.62, 0.62, 1, outfit="cloud_pyjamas", pose="sit_hug_toy")
+        s += PR.kid_bed(bx, gy + 20, 0.62, 1, part="front")
+        return s
+    rows = [
+        (560, [Cell("supermarket back / mum push trolley (TROLLEY_HANDLE) / child lost / front", market, 980, [(0, 480)]),
+               Cell("cosy_bedroom (glow .9) + kid_bed back / child sit_hug_toy / kid_bed front", room, 980, [(0, 470)])]),
+        (360, [c("trolley full / empty", lambda x, y: PR.trolley(x - 100, y, 0.75) + PR.trolley(x + 130, y, 0.75, -1, full=False), 490, 245, 330),
+               c("kid_bed", lambda x, y: PR.kid_bed(x, y, 0.75), 490, 245, 330),
+               c("nightlight glow 1 / 0", lambda x, y: PR.nightlight(x - 60, y, 1.0) + PR.nightlight(x + 70, y, 1.0, glow=0), 245, 122, 330, bg="#b8acd8"),
+               c("picture_frame (the story picture)", lambda x, y: PR.picture_frame(x, y - 300, 0.8), 245, 122, 330)]),
+    ]
+    return render_sheet("lost_sheep_modern", "props — Lost Sheep: the supermarket and trolley, the cosy bedroom, bed, night light, the story picture", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
           "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
           "lions": sheet_lions, "daniel": sheet_daniel, "david_items": sheet_david_items,
@@ -1194,7 +1396,10 @@ SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor"
           "storm_items": sheet_storm_items, "storm_story": sheet_storm_story,
           "nativity_stable": sheet_nativity_stable, "nativity_animals": sheet_nativity_animals,
           "nativity_places": sheet_nativity_places, "nativity_sky": sheet_nativity_sky, "nativity_journey": sheet_nativity_journey,
-          "nativity_items": sheet_nativity_items, "nativity_home": sheet_nativity_home}
+          "nativity_items": sheet_nativity_items, "nativity_home": sheet_nativity_home,
+          "lost_sheep_hills": sheet_lost_sheep_hills, "lost_sheep_flock": sheet_lost_sheep_flock,
+          "lost_sheep_lamb": sheet_lost_sheep_lamb, "lost_sheep_places": sheet_lost_sheep_places,
+          "lost_sheep_items": sheet_lost_sheep_items, "lost_sheep_modern": sheet_lost_sheep_modern}
 
 
 def main():
