@@ -357,8 +357,16 @@ def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10, silence_gap
         syls = [s for _, ws in LX.contextual(w) for s in ws]
         for m in re.finditer(w, ref):
             a = int(times[m.start()] * 100)
-            while a < len(quiet) and quiet[a]:   # the recogniser can stamp a word before its onset
-                a += 1
+            # the recogniser can stamp a word before its onset, even in the tail of the previous word
+            # (面前！… 马利亚, 在 … 伯利恒): start at the first run of 80 ms of voice before the next stamp
+            nxt = int(times[m.start() + 1] * 100)
+            for f in range(a, min(nxt, len(quiet) - 8)):
+                if not quiet[f:f + 8].any():
+                    a = f
+                    break
+            else:
+                while a < len(quiet) and quiet[a]:
+                    a += 1
             for k in range(1, len(w)):
                 # from the previous character to a little into this one (often stamped before its onset)
                 b = int(times[m.start() + k] * 100) + 8
