@@ -15,8 +15,11 @@ poses for the same Jesus, the tax collectors, sinner(), the Pharisees and pharis
 supermarket (child(outfit='dungarees' / 'cloud_pyjamas', toy='lamb')) (section LOST SHEEP FILM); for the Zacchaeus film
 (stories/zacchaeus) Zacchaeus (zacchaeus(), zacchaeus_points()), new poses for the same Jesus, the people of Jericho
 (jericho_folk(), jericho_crowd()), the widow and the beggar (jericho_poor()), the boy in a tracksuit
-(child(outfit='tracksuit')) and the festival dad (parent(kind='dad', variant=1), parent_points()) (section ZACCHAEUS FILM at
-the end).
+(child(outfit='tracksuit')) and the festival dad (parent(kind='dad', variant=1), parent_points()) (section ZACCHAEUS FILM);
+for the Loaves film (stories/loaves) new poses for the same Jesus and the same disciples (Philip is disciples(variant=4) =
+'philip'), the boy with the five loaves and two fish (the_boy()), the Galilee crowd (galilee_folk(), galilee_crowd(),
+galilee_groups(), garden_beds()) and the two school children (child(outfit='school' / 'school_friend')) (section LOAVES
+FILM at the end).
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -1794,6 +1797,262 @@ NOTES FOR SCENE ILLUSTRATORS (Zacchaeus)
     zacchaeus 0.40-0.62 s, jericho_folk 0.47-0.67 s, jericho_crowd (14) 0.58-0.66 s, jericho_poor 0.64 s, the boy 0.54 s, the
     dad with the boy (lift / shoulders) 0.47-0.50 s - i.e. 0.75-1.1 x jesus, the same class as every other figure.
     Backdrops: see art/props.py section 14 - keep them on static layers.
+
+LOAVES FILM (John 6:1-14, Mark 6:30-44, stories/loaves)              sheets: python3 tools/character_sheet.py loaves
+=======================================================
+Same rig and conventions as above (anchor = ground under the pelvis, between the feet; seated-on-the-ground poses: the seat
+touches the ground at the anchor; facing; scale; marks; bboxes (l, t, r, b) at scale 1 / facing 1 measured from renders,
+wobble included). hand_positions / body_points work for every function here. Sheets (each <= 2000 px wide): characters_
+loaves_jesus / _disciples / _boy / _folk / _folk_poses / _modern / _expr, characters_loaves_crowds (running ahead, round
+Jesus, the groups on the slope, the garden beds from above) and characters_loaves_group (the line-up, Jesus teaching on the
+rock, the healing, Philip counting, Andrew bringing the boy, the boy's offering, the blessing and the breaking, handing out
+the bread, the garden-bed view, twelve full baskets, the modern lunch share). This film's look is new: a lush emerald
+hillside above the Sea of Galilee in warm amber late-afternoon light, then dusk (art/props.py section 15), and a Galilee
+crowd in colour families so the seated groups read as garden beds (Mark 6:40) - nothing reuses the Lost Sheep spring hills
+or villagers, the Jericho folk, the Nativity townsfolk or the Storm film's villagers. Jesus is the same person as in
+耶稣平静风浪, 迷失的羊 and 撒该爬上桑树 (same design, new poses); the disciples are the same twelve as in 耶稣平静风浪
+(same designs, new poses); Philip was already one of them: disciples(variant=4) = disciples(variant='philip') (dusty-rose
+tunic, a gold wrap cap, a short black beard), Andrew = 'andrew' (variant 1), Peter = 'peter'.
+SCALE: at the same ``scale`` Jesus ~342 (head (2, -287)), the disciples 327-350, the boy ~238 to the top of his curls (head
+(2, -190)) - a boy of about seven, clearly smaller than the men and a little taller than the modern five-year-olds; the
+crowd's men ~337, women ~317 (the mother with her baby the same), elders ~323, children ~226, the school girl ~223 and her
+friend ~232 (his cowlick); props.wicker_basket ~166 tall full (to an adult's thigh), props.lunch_basket ~95 with its handle.
+New expressions (LOAVES_EXPRESSIONS; every function accepts them): teach (warm, speaking - Jesus on the rock), thanks
+(eyes up, smile, blush - the blessing), concerned (worried brows, small open mouth - 'send them away to buy food'), count
+(looking down at the fingers, counting aloud), doubtful (one brow up, wobbly mouth - '这一点点怎么够呢？'), shy (eyes up
+from a lowered head, small smile, blush), hopeful (big eyes up, smile, blush - the boy offering), feverish (droopy eyes,
+flushed, a sweat drop), yum (eyes closed, grin, blush - eating). Also useful: warm, kind, smile, gentle_question,
+call_warm, awed, amazed, surprised, overjoyed, joyful, laugh, delighted, tired, worried, sad, ponder, relieved.
+
+jesus(..., pose=<JESUS_LOAVES_POSES>, item=None)  - the poses this film adds
+---------------------------------------------------------------------------
+Same design and output for every earlier call (JESUS_POSES, JESUS_LOST_SHEEP_POSES and JESUS_ZACCHAEUS_POSES unchanged; item
+is only for the new poses). item (JESUS_LOAVES_ITEMS) chooses what is in his hands; bread=False leaves them empty. New poses
+(natural expr; hands [far, near] about):
+  sit_teach         (-77, -290, 119, 0)   teach      seated on the teaching rock, the near hand lifted forward, palm up, the far
+                                                     hand open: anchor = the FLOOR under his feet, the seat 70 up (as 'sit' /
+                                                     'teach'): props.teaching_rock(x, y, s, f) + jesus(x, y, s, f,
+                                                     pose='sit_teach') at the SAME anchor (TEACH_ROCK_SEAT)
+  heal              (-58, -338, 106, 0)   kind       bending a little, the near palm resting gently on a head / shoulder at
+                                                     JESUS_HEAL_HAND = (98, -196), the far hand on his heart (see THE HEALING)
+  heal_low          (-92, -284, 135, 5)   kind       kneeling on both knees, leaning in, the near palm low at JESUS_HEAL_LOW_HAND
+                                                     = (124, -82): a child in its mother's lap, someone lying on a mat
+  look_up_bless     (-81, -340, 116, 0)   thanks     looking up to heaven, both hands lifting the boy's open basket (item None /
+                                                     'basket': five loaves and two fish) or one round loaf ('loaf') to about
+                                                     (83, -289); add glow=.3-.6 and light from above (God is never drawn)
+  break_bread       (-71, -341, 124, 0)   smile      looking down at his hands: phase 0 a whole loaf in both hands, .2-.5 torn
+                                                     (crumbs), .5-1 the halves drawn apart ((100, -210) / (26, -194) at 1) with
+                                                     crumbs falling; item='fish' breaks a fish
+  give_bread        (-61, -341, 112, 0)   warm       handing a piece of bread (item 'fish': a fish) forward at JESUS_GIVE_HAND =
+                                                     (122, -196), the rest of the loaf in the far hand: to a disciple 'receive'
+  ask               (-68, -341, 78, 0)    gentle_question  turned to Philip, the near hand open forward, the far hand on his
+                                                     chest: '我们到哪里买饼，给这些人吃呢？'
+  sit_down_gesture  (-65, -342, 127, 0)   call_warm  both hands forward, palms down; phase 0..1 lowers them and lifts them again
+                                                     ('叫大家都坐下来吧' - 3-4 frames, ~0.15 s)
+  smile_boy         (-46, -320, 139, 1)   smile      bending kindly to the boy, both hands low and open to receive his basket
+                                                     (about (116, -158), (82, -150)); item='basket' draws it in his hands
+JESUS_EXPRESSIONS + teach, thanks, kind, smile, call_warm suit him; he is never comic.
+
+disciples(..., pose=<DISCIPLE_LOAVES_POSES>, fill=None, food='bread', basket=True)  - the poses this film adds
+---------------------------------------------------------------------------------------------------------------
+Same designs and output for every earlier call (DISCIPLE_POSES unchanged; disciple() is the same function; variant may also
+be 'philip' = 4 for every pose now). fill 0..1 the big basket's contents in carry_basket* / receive / hand_out / gather (None =
+the pose's default: carry 1, receive .5, hand_out 1 - the never-ending basket - gather .5); food 'bread' | 'fish' what the
+hand holds in hand_out; basket=False leaves the basket out (hands only). New poses (bbox = union of the twelve; natural expr):
+  worried            (-58, -349, 66, 0)    worried    hands clasped at the chest
+  talk               (-59, -350, 86, -1)   concerned  the near hand open toward Jesus: '让大家到附近的村子里，自己买东西吃吧！'
+  count_fingers      (-58, -349, 97, 0)    count      Philip counting: the far palm up at the chest, the near forefinger touching
+                                                      it - phase 0, .33, .67 = one, two, three fingers (loop 3 frames, ~0.3 s)
+  shake_head         (-116, -350, 118, -1) doubtful   palms up, out to the sides ('impossible!'), shake marks; phase 0..1 sways
+                                                      him (4 frames, ~0.12 s): '就算花好多好多钱买饼，也不够...'
+  search             (-72, -350, 55, -1)   thoughtful a hand shading the eyes; phase >= .5 turns him to look the other way ('找啊找')
+  lead_boy           (-54, -349, 93, -1)   kind       Andrew: the far hand on the boy's shoulder / back, the near hand open toward
+                                                      Jesus ('这里有个小孩子'); lead_boy_walk_a / _b ('lead_boy_walk' + phase) the
+                                                      same walking: the_boy(x + 92*s*f, y - 6*s, s, f) = DISCIPLE_LEAD_BOY, drawn
+                                                      FIRST (Andrew's hand lies on him)
+  show_lunch         (-53, -349, 117, -1)  doubtful   holding the boy's open basket out at the chest, looking at the crowd
+  carry_basket       (-76, -351, 109, -1)  happy      a big wicker basket (DISCIPLE_BASKET_K = .62 x props.wicker_basket) held in
+                                                      front by its rim; carry_basket_walk_a / _b ('carry_basket_walk' + phase)
+  receive            (-55, -347, 122, -1)  awed       holding a basket out in both hands to Jesus 'give_bread' (half full)
+  hand_out           (-55, -342, 115, -1)  happy      a full basket on the far arm at the hip, the near hand offering bread (or a
+                                                      fish): phase 0 at the basket .. .5 held out at DISCIPLE_HAND_OUT = (124,
+                                                      -146) .. 1 back - the hand is never empty, the basket never runs out
+  gather             (-44, -273, 192, 1)   happy      stooping over a basket on the grass (its foot ~150 ahead), the near hand
+                                                      picking up a piece (phase 0 / 1 at the grass, .5 dropping it in the basket)
+  amazed             (-100, -351, 88, -1)  amazed     both hands at the cheeks
+disciples_group(..., pose=<DISCIPLES_GROUP_LOAVES_POSES>)  worried / talk / amazed / carry_basket / search: the same two-row
+  group with everyone in that pose ('carry_basket': the twelve with their twelve full baskets). Every earlier call unchanged.
+
+the_boy(x, y, scale=1.0, facing=1, pose='stand_basket', expr=None, phase=0.0, basket=None, marks=True)
+------------------------------------------------------------------------------------------------------
+The boy who brought five barley loaves and two small fish (John 6:9): about seven, kind and cheerful, a big mop of dark round
+curls with a curl over his forehead, warm brown skin, a sunny marigold knee tunic (BOY_TUNIC) with two teal stripes above the
+hem and a teal neck (BOY_TRIM), a brick-red sash with tails (BOY_SASH), barefoot. His little round basket
+(props.lunch_basket): basket None = the pose decides ('closed' in stand_basket / shy / look_up / walk, 'open' in offer_up,
+none in the others) | 'closed' (a striped cloth over it) | 'open' (five loaves and two fish) | 'empty' | False.
+  pose (BOY_POSES)  bbox                 natural expr  notes
+  stand            (-58, -254, 45, 0)    happy
+  walk_a / walk_b  (-55, -253, 55, 0) / (-49, -254, 71, -1)  happy  the basket swinging from the near hand ('walk' + phase)
+  stand_basket     (-53, -254, 50, 0)    happy      both hands on the handle, the basket in front of his knees
+  shy              (-40, -254, 65, 0)    shy        hugging the basket to his chest, head down, eyes up, one foot turned in
+  look_up          (-88, -245, 50, -1)   hopeful    head tipped back looking up at Jesus / Andrew, the basket by its handle
+  offer_up         (-62, -250, 113, 0)   hopeful    both hands lifting the open basket forward to Jesus: its rim centre at
+                                                    BOY_OFFER = (70, -132); jesus(x + 150*s*f, y, s, -f, pose='smile_boy')
+  watch            (-67, -251, 46, 0)    awed       hands clasped under the chin, watching the bread being shared
+  sit              (-63, -192, 84, 1)    happy      on the grass (the seat at the anchor)
+  sit_eat          (-57, -192, 83, 1)    yum        sitting, eating a piece of bread, the other half on his knee
+  pat_tummy        (-73, -252, 42, -1)   yum        standing, patting his full tummy (phase pats; 'pat' arcs with marks)
+  smile            (-53, -254, 48, 0)    smile      hands folded in front ('小男孩看着满满的篮子，笑了')
+  eyes_wide        (-93, -252, 86, -1)   surprised  hands up a little, eyes wide (at the twelve baskets)
+  cheer            (-71, -252, 74, 0)    overjoyed  arms up
+BOY_EXPRESSIONS that suit him: shy, hopeful, happy, smile, awed, surprised, yum, overjoyed, eager, delighted, kind.
+
+galilee_folk(x, y, scale=1.0, facing=1, kind='man', variant=0, pose='stand', expr=None, phase=0.0, food=None, marks=True)
+-----------------------------------------------------------------------------------------------------------------------
+The crowd by the Sea of Galilee: fishing and farming families with this film's look - long robes in COLOUR FAMILIES
+(GALILEE_FAMILIES = rose, saffron, sky, lilac, brick, cream = variant % 6; three shades = variant // 6 % 3; skin tones and
+hair vary with the variant) and, for the men and elders, a short woven shoulder mantle (a light tint, an accent stripe and a
+fringe). A group of one family reads as one colour patch (the garden beds). GALILEE_KINDS:
+  'man'           a twisted headband in the accent colour over curly hair, beards varying     stand (-51, -337, 59, 0)
+  'woman'         a soft head-shawl in the light tint with an accent edge falling down the back  (-53, -317, 52, 0)
+  'mother'        a woman with her baby asleep in a sling on her chest (a little cap); in stand / walk / run / listen / arrive /
+                  amazed / point her near hand holds the sling                               (-53, -317, 52, 0)
+  'child'         a knee tunic, barefoot; even variants boys (a curly mop), odd variants girls (a light headscarf with a
+                  coloured edge, tied at the back, a little flower)                                                      (-54, -236, 43, 0)
+  'elder'         white hair and beard under a woolly cap, the mantle, a walking stick when standing / walking   (-50, -323, 65, 4)
+  'lame'          THE MAN WITH THE CRUTCH: a crutch under his near arm, his lame leg lifted (stand / walk_a / walk_b,
+                  expr tired / determined) (-82, -338, 69, 5); sick_sit: sitting with the crutch on the grass beside him
+                  (-158, -223, 121, 13); healed: standing joyfully, the crutch held up high (-147, -397, 79, 0)
+  'fever_mother'  THE MOTHER WITH THE FEVERISH CHILD: sick_sit - sitting with her limp, flushed child (a damp cloth on its
+                  forehead) lying across her lap, its head toward her knees (-64, -214, 141, 5); healed - the child sits up in
+                  her lap laughing, arms up (-72, -219, 142, 5); other poses: a woman
+food (GALILEE_FOODS) 'bread' (None) | 'fish' | False: what sit_eat / receive / sit_receive hold.
+  pose (GALILEE_POSES)  bbox man / woman (children and elders similar, see the sheets)   natural expr  notes
+  stand / walk_a / walk_b    ('walk' + phase)                                             kind
+  run_a / run_b              (-120, -308, 124, 0) / (-92, -301, 145, 0)                   eager    ('run' + phase, ~0.15 s)
+  arrive                     (-46, -296, 127, 0)    tired      hands on the knees, panting - they got there before the boat
+  stand_listen               (-57, -337, 56, 0)     kind       hands folded, face up toward Jesus
+  sit / sit_listen           (-57, -231, 120, 3) / (-44, -232, 120, 3)   kind   on the grass; chin on the hand
+  sick_sit                   (-39, -223, 121, 2)    tired      sitting hunched, a hand on the chest
+  sick_lie                   (-216, -131, 151, 50)  feverish   lying on a woven mat, HEAD ON THE LEFT for facing=1, a little pillow
+                                                               and a damp cloth on the forehead; the mat lies on the anchor line
+  healed                     (-147, -338, 132, 0)   overjoyed  standing up, arms open wide
+  sit_eat / sit_laugh        (-52, -230, 120, 3) / (-79, -230, 121, 2)   yum / laugh   eating bread / leaning back laughing
+  pat_tummy / sit_pat_tummy  (-68, -339, 64, 0) / (-80, -232, 121, 2)    yum   patting a full tummy (phase pats)
+  point / amazed / cheer     (-55, -337, 101, 0) / (-97, -339, 87, 0) / (-101, -337, 106, 0)   eager / amazed / joyful
+  receive / sit_receive      (-56, -336, 93, 0) / (-42, -232, 120, 2)    delighted   both hands taking bread (seated: reaching up
+                                                               to a disciple's hand_out hand at about (104, -150))
+  wave                       (-55, -340, 97, 0)     happy      phase swings the hand
+
+galilee_crowd(x, y, scale=1.0, facing=1, n=12, pose='stand', width=1000, rows=3, seed=0, phase=0.0, gap=260, family=None,
+              children=True, depth=500, focus=None, marks=True)
+  A Galilee crowd of n people in up to `rows` rows centred on x over width*scale (each row behind 40*scale higher and 5%
+  smaller, drawn first; children in front). GALILEE_CROWD_POSES: 'run' / 'walk' - streaming along the shore toward facing
+  (staggered, alternate frames, elders walking, mothers holding the baby; give width ~1.5-2 x the stage for a long stream
+  and move the layer); 'arrive' - panting, pointing, waving; 'stand' / 'listen' / 'cheer' / 'amazed' / 'point' / 'wave' -
+  gathered round x with a gap of gap*scale in the middle for Jesus, the two halves facing the middle; 'sit' / 'sit_listen'
+  / 'sit_eat' / 'sit_laugh' / 'sit_pat_tummy' - seated rows facing facing (or focus = the x they face); family = a name of
+  GALILEE_FAMILIES (or its index) makes them one colour group; 'groups' = galilee_groups(x -+ width/2*scale, y - depth*scale,
+  y, ...); 'garden' = garden_beds(x -+ width/2*scale, y - depth*scale .. y).
+galilee_groups(x0, x1, y_far, y_near, scale=1.0, groups=None, pose='sit_listen', rows=4, k_far=0.42, seed=0, phase=0.0,
+               focus=None, per_group=(12, 7), mini=0.3, marks=True)
+  THE CROWD SITTING IN GROUPS ON THE GREEN GRASS (Mark 6:39-40), ABSOLUTE coordinates, drawn far to near: every group is a
+  little bed of seated people of ONE colour family (the families cycle), big beds (per_group[0], suggesting a hundred) and
+  small ones (per_group[1], suggesting fifty) alternating, in `rows` rows from y_far (k_far x scale) to y_near (scale); or
+  groups = [(x, y, k), ...] - e.g. props.lake_hillside_points()['groups'] (then x0..y_near are ignored). People face focus
+  (e.g. the teaching rock's x; None = the middle). pose 'sit_listen' | 'sit' | 'sit_eat' (eating, laughing, receiving) |
+  'sit_laugh' | 'sit_pat_tummy' | 'cheer'. Figures smaller than mini x scale (and under 0.18) are cheap tiny sitters.
+garden_beds(x0, y0, x1, y1, seed=0, rows=4, cols=None, lake=True, rock=True, beds=None, jesus_=True, helpers=True, time=0.0)
+  THE GARDEN BEDS ('从高处看，一组一组的人，就像一块一块的小花园'): the groups seen from high above - ABSOLUTE box, the SAME box
+  and seed / rows / cols / lake / rock as props.hillside_high underneath. Each bed (props.hillside_high_points()['beds'] or
+  beds = [(cx, cy, w, h, k), ...]) is filled with tiny heads and shoulders in rows (robes of one colour family per bed; dark
+  hair, head-shawls, headbands, white heads), about 60-110 people in a big bed; jesus_ puts Jesus (cream and red from above)
+  and the boy on the rock; helpers a few disciples with baskets between the beds. Clipped to the box.
+
+child(..., outfit='school' / 'school_friend', lunch=None)  - the lunch share (opening and ending)
+-----------------------------------------------------------------------------------------------
+child() keeps every earlier look and output. LOAVES_OUTFITS: 'school' a little girl (~5, 223 px, head (2, -179)) with black
+hair, a soft fringe and two short braids with red ribbon bows, a navy pinafore (SCHOOL_NAVY) over a white short-sleeved
+blouse with a round collar and a red bow, white knee socks and black shoes - not the pyjama girl, the jumper boy, the
+dungarees girl or the tracksuit boy; 'school_friend' her friend, a boy with short dark hair and a cowlick and round glasses,
+a white polo shirt with a navy collar and a red pocket badge, navy shorts, white socks, navy sneakers (~232 px). The poses
+CHILD_POSES, SIBLING_POSES, STORM_CHILD_POSES and LOST_SHEEP_CHILD_POSES work in both outfits; LOAVES_CHILD_POSES (sitting on
+the picnic blanket, anchor = the SEAT on the ground; both outfits; bbox about (-52..-28, -174..-160, 85, 5)):
+  sit_picnic      happy      hands on the knees, the lunchbox closed on her lap
+  open_lunchbox   happy      phase 0..1 lifts the lid (lunchbox on her lap at CHILD_LUNCHBOX = (40, -20) from the seat)
+  look_at_friend  concerned  turned to the friend (he has nothing), half a sandwich in her hand
+  hesitate        ponder     holding the sandwich half close in both hands, eyes down - should she?
+  share_half      kind       holding the half out to the friend: child(x + CHILD_SHARE_GAP*s*f, y, s, -f, outfit='school_friend',
+                             pose='receive_share') - their hands meet (CHILD_SHARE_GAP = 200)
+  receive_share   delighted  reaching out to take it
+  eat             yum        biting a sandwich half       smile  overjoyed, the half held up
+  no_lunch        sad        the friend: empty hands open in his lap, looking down at them
+  lunch           None = 'school' has the lunchbox on her lap (closed / open / half - one half given away) and the sandwich in
+                  her hand in the sharing poses, the friend only the half he receives; True / False forces the lunchbox.
+
+Constants (Loaves film): JESUS_LOAVES_POSES, JESUS_LOAVES_ITEMS, JESUS_HEAL_HAND, JESUS_HEAL_LOW_HAND, JESUS_GIVE_HAND,
+DISCIPLE_LOAVES_POSES, DISCIPLE_FOODS, DISCIPLE_LEAD_BOY, DISCIPLE_HAND_OUT, DISCIPLE_BASKET_K, DISCIPLES_GROUP_LOAVES_POSES,
+BOY_POSES, BOY_BASKETS, BOY_OFFER, GALILEE_KINDS, GALILEE_FAMILIES, GALILEE_POSES, GALILEE_FOODS, GALILEE_CROWD_POSES,
+FEVER_CHILD_DX, LOAVES_OUTFITS, LOAVES_CHILD_POSES, CHILD_SHARE_GAP, CHILD_LUNCHBOX, LOAVES_EXPRESSIONS; colours BOY_TUNIC,
+BOY_TRIM, BOY_SASH, BOY_SKIN, BOY_HAIR, SCHOOL_NAVY, SCHOOL_WHITE, SCHOOL_RED, SCHOOL_GIRL_SKIN, SCHOOL_GIRL_HAIR,
+SCHOOL_BOY_SKIN, SCHOOL_BOY_HAIR.
+
+NOTES FOR SCENE ILLUSTRATORS (Loaves)
+  THE RUNNING CROWD (s03): props.lakeshore_path(x0, x1, y, s, part='back', boat=bx) (the disciples' boat sails far out: move
+    bx slowly toward +x) -> lakeshore_path(part='path') -> galilee_crowd(x, y, s, f, n=12-16, pose='run', width=1.6*stage/s,
+    rows=2, phase=ph) on a layer that slides toward facing (phase flips every ~0.15 s; 2 frames) -> lakeshore_path(part=
+    'front'). '比船还先到了': cut to galilee_crowd(pose='arrive') on the hillside shore while far_boat comes in.
+  JESUS TEACHING ON THE ROCK (s03): galilee_sky + lake_hillside(part='back') + lake_hillside(part='mid', rock=False) ->
+    pts = props.lake_hillside_points(...); props.teaching_rock(x, y, s, f) and jesus(x, y, s, f, pose='sit_teach') at the SAME
+    (x, y, s, f) (pts['rock'] = (x, y, k): use scale s*k) -> the crowd galilee_crowd(..., pose='sit_listen', focus=x) or
+    galilee_groups(..., focus=x) -> lake_hillside(part='front'). The disciples stand near him (disciples 'stand' / 'worried').
+  THE HEALING (s03): jesus(x, y, s, f, pose='heal', glow=.3) with galilee_folk(x + 140*s*f, y, s, -f, kind='lame',
+    pose='sick_sit') - his palm rests on the man's head; then cut the man to 'healed' (the crutch up; sfx 'sparkle') and let
+    him walk off (walk_a / walk_b without the crutch: kind='man' with the same variant). The feverish child: galilee_folk(x,
+    y, s, f, kind='fever_mother', pose='sick_sit') with jesus(x + 230*s*f, y, s, -f, pose='heal_low') - his hand on the
+    child's forehead (the child's head lies toward her knees) -> cut her to pose='healed' (the child sits up laughing). The
+    sick on mats: galilee_folk(kind='child' / 'man', pose='sick_lie') -> 'healed'. Use a small soft glow, never a halo.
+  PHILIP COUNTING (s04): jesus(x, y, s, f, pose='ask') facing disciples(x + 170*s*f, y, s, -f, variant='philip',
+    pose='count_fingers', phase=...) (3 frames: one, two, three fingers; sfx none) -> 'shake_head' + phase (4 frames) on '摇摇头';
+    the others 'worried' / 'talk' (expr 'concerned'). The sun sinks: lake_hillside(time .5 -> .7).
+  ANDREW BRINGS THE BOY (s05): the_boy(x + DISCIPLE_LEAD_BOY[0]*s*f, y + DISCIPLE_LEAD_BOY[1]*s, s, f, pose='walk', phase=ph)
+    drawn FIRST, then disciples(x, y, s, f, variant='andrew', pose='lead_boy_walk', phase=ph) - his hand on the boy's back;
+    stop: the boy 'shy' / 'look_up', Andrew 'show_lunch' (the open basket) with expr 'doubtful' while he says '这一点点怎么
+    够呢？'. THE BOY OFFERING THE BASKET: the_boy(x, y, s, f, pose='offer_up') (basket open: five loaves, two fish) and
+    jesus(x + 150*s*f, y, s, -f, pose='smile_boy') - his hands under the basket; then jesus(..., pose='smile_boy',
+    item='basket') and the boy 'smile' (basket=False).
+  EVERYONE SITS (s06): jesus 'sit_down_gesture' + phase; the crowd settles: galilee_groups on lake_hillside_points()['groups']
+    (or galilee_crowd(pose='groups')). THE GARDEN-BED VIEW: props.hillside_high(x0, y0, x1, y1, time=t, seed=n) +
+    garden_beds(x0, y0, x1, y1, seed=n) on two static layers (the same box and seed!), a slow camera push; bring the beds in
+    one by one with an opacity tween per bed if you like (render garden_beds(beds=[one bed]) for each).
+  THE BLESSING AND THE BREAKING (s07): jesus(x, y, s, f, pose='look_up_bless', glow=.5) under props / scene light from above
+    (light only, God is never drawn); then pose='break_bread' with phase 0 -> 1 over ~1 s (6 frames; sfx 'crunch' quietly);
+    then 'give_bread' to disciples(x + 170*s*f, y, s, -f, pose='receive') - the bread / fish passes into his basket.
+  NEVER-ENDING BREAD (s07): disciples(x, y, s, f, pose='hand_out', phase=ph, fill=1) moving along a group: ph loops 0 -> 1 (6
+    frames, ~0.6 s per piece) - his basket stays heaped full and a new piece is always in his hand (food='fish' for a fish) -
+    with galilee_folk(x + 110*s*f, y + 10*s, s, -f, pose='sit_receive') taking it, then 'sit_eat'. Give every disciple his own
+    group and phase offset; add a few sparkles (FX) on the baskets, never a glow on the bread itself.
+  GATHERING INTO BASKETS (s08): props.bread_pieces on the grass; disciples(..., pose='gather', phase=ph, fill=f) - the hand
+    goes from the grass (0) to the basket (.5) and back (1); step fill .25 -> .5 -> .75 -> 1 over the line; then
+    'carry_basket_walk' + phase to the row; props.baskets_row(x, y, s, n=12) - twelve full baskets (count them: 6 + 6) - or
+    disciples_group(pose='carry_basket'); the boy 'eyes_wide' -> 'smile'; children galilee_folk(kind='child',
+    pose='sit_pat_tummy') (s08: '每个人都吃得饱饱的'). Dusk: time .8 -> 1 on the sky, hillside and baskets.
+  THE LUNCH SHARE (s02, s09): props.city_park(x0, x1, y, s, part='back') -> props.picnic_blanket(bx, y + 40*s, s,
+    part='back') -> child(cx, sy, s, 1, outfit='school', pose=...) and child(cx + CHILD_SHARE_GAP*s, sy, s, -1,
+    outfit='school_friend', pose=...) with sy on the blanket (y .. y - 90*s; anchors = the seats) -> picnic_blanket(part=
+    'front') -> city_park(part='front'). Beats: 'open_lunchbox' (phase 0 -> 1, 5 frames) / friend 'no_lunch' -> 'look_at_friend'
+    -> 'hesitate' -> 'share_half' + 'receive_share' -> both 'eat' -> both 'smile'. s09 adds a warm glow and a picture-book corner
+    with the_boy 'offer_up' and jesus 'smile_boy'.
+  TIME OF DAY: give galilee_sky / lake_hillside / lakeshore_path / hillside_high / teaching_rock / the props the same time (0
+    warm late afternoon, .5 golden hour, 1 dusk); quantise (0, .25, .5, .75, 1) and cross-fade. People are not tinted: at
+    dusk add a low-opacity rose-violet multiply layer over them if needed.
+  RENDER COST (2112 x 1188 layer, uncached, measured on this machine where jesus stand took 0.22 s): every figure here
+    0.21-0.24 s (jesus sit_teach / look_up_bless / break_bread 0.22-0.23, the disciples with baskets 0.23-0.24, the_boy 0.21-
+    0.22, galilee_folk 0.21-0.23, the school children 0.21) - the same class as every other figure; galilee_crowd (14)
+    0.26-0.35 s, galilee_groups on the hillside (~70 people at scale .6) 0.51 s, garden_beds (full stage, ~1800 heads) 1.14 s.
+    Backdrops (art/props.py section 15): galilee_sky + lake_hillside (all) 1.05 s, lakeshore_path + sky 0.75 s, hillside_high
+    1.4 s (+ garden_beds 2.2 s), city_park 0.88 s; teaching_rock, wicker_basket, picnic_blanket 0.21-0.24 s, baskets_row (12)
+    0.27 s. Keep the backdrops, the seated groups and the garden beds on static layers.
 """
 import hashlib
 import math
@@ -12882,3 +13141,1284 @@ def parent_points(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, **kw):
     h0, h1 = bp["hands"]
     bp["book"] = ((h0[0] + h1[0]) / 2, min(h0[1], h1[1]))
     return bp
+
+
+# ======================================================================= Loaves film (John 6:1-14, Mark 6:30-44)
+# The poses Jesus gains (the same person as in the Storm, Lost Sheep and Zacchaeus films), the poses the same disciples
+# gain (Philip is disciples(variant=4) = 'philip'), the boy with the five loaves and two fish (the_boy()), the Galilee
+# crowd (galilee_folk(), galilee_crowd(), galilee_groups(), garden_beds()) and the two school children
+# (child(outfit='school' / 'school_friend')). Module doc section "LOAVES FILM". The loaves, the fish, the baskets, the
+# hillside, the lakeshore, the high view and the park picnic are in art/props.py section 15.
+
+EXPRS.update({
+    "teach":     dict(eyes="dot", brow=(-0.02, 0.01, -0.06), mouth="small_open", blush=True),
+    "thanks":    dict(eyes="dot", brow=(-0.08, 0.03, -0.09), mouth="smile", blush=True, look=(0.02, -0.12)),
+    "concerned": dict(eyes="dot", brow=(-0.10, 0.04, -0.03), mouth="small_open", look=(0.03, -0.01)),
+    "count":     dict(eyes="dot", brow=(-0.04, 0.02, -0.08), mouth="small_open", look=(0.05, 0.07)),
+    "doubtful":  dict(eyes="dot", brow=(-0.10, 0.05, -0.02), brow2=(0.03, -0.03, 0.02), mouth="wave", look=(-0.03, 0.0)),
+    "shy":       dict(eyes="dot", brow=(-0.09, 0.04, -0.04), mouth="smile", blush=True, look=(0.03, -0.08)),
+    "hopeful":   dict(eyes="big", brow=(-0.08, 0.03, -0.10), mouth="smile", blush=True, look=(0.03, -0.09)),
+    "feverish":  dict(eyes="droop", brow=(-0.11, 0.05, 0.02), mouth="small_o", blush=True, sweat=1),
+    "yum":       dict(eyes="closed", brow=(-0.05, 0.02, -0.05), mouth="grin", blush=True),
+})
+LOAVES_EXPRESSIONS = ("teach", "thanks", "concerned", "count", "doubtful", "shy", "hopeful", "feverish", "yum")
+
+
+def _lf_held(st, body, at, rot=0.0, k=1.0):
+    """Local prop markup placed at `at` (body coords) rotated rot degrees and scaled k (inside a figure's hook)."""
+    return f'<g transform="translate({fmt(at[0])},{fmt(at[1])}) rotate({fmt(rot)}) scale({k:.3f})">{body}</g>'
+
+
+def _lf_mid(W0, W1, dy=0.0):
+    return ((W0[0] + W1[0]) / 2, (W0[1] + W1[1]) / 2 + dy)
+
+
+# ---------------------------------------------------------------- Jesus: the poses this film adds (same design)
+JESUS_LOAVES_POSES = ("sit_teach", "heal", "heal_low", "look_up_bless", "break_bread", "give_bread", "ask", "sit_down_gesture",
+                      "smile_boy")
+JESUS_LOAVES_ITEMS = ("basket", "loaf", "bread", "fish", None)
+JESUS_HEAL_HAND = (98, -196)       # heal: the near palm (anchor coords at scale 1, facing 1): rest it on a head / shoulder
+JESUS_HEAL_LOW_HAND = (124, -82)    # heal_low (kneeling): the near palm, low - a sick child on a mat, a child in a lap
+JESUS_GIVE_HAND = (122, -196)       # give_bread: the near hand with the bread held out
+_JZ_LF = {
+    "sit_teach": _P(t=-4, h=-6, arms=(("fk", 40, 72), ("fk", 70, 136)), hands=("open", "open"), expr="teach", look=(0.03, -0.03),
+                    **_SEAT),
+    "heal": _P(t=10, h=16, legs=((10, 3), (-8, -3)), arms=(("ik", "torso", 0.6, 0.62, 1), ("ik", "abs", JESUS_HEAL_HAND[0],
+                                                                                          JESUS_HEAL_HAND[1], 1)),
+               hands=("open", "open"), expr="kind", look=(0.04, 0.06)),
+    "heal_low": _P(t=30, h=8, arms=(("ik", "torso", 0.6, 0.66, 1), ("ik", "abs", JESUS_HEAL_LOW_HAND[0], JESUS_HEAL_LOW_HAND[1], 1)),
+                   hands=("open", "open"), expr="kind", look=(0.04, 0.07), **_KNEEL),
+    "look_up_bless": _P(t=-3, h=-24, legs=((6, 2), (-5, -2)), arms=(("ik", "abs", 100, -292, 1), ("ik", "abs", 66, -286, 1)),
+                        hands=("open", "open"), expr="thanks", look=(0.02, -0.06)),
+    "break_bread": None,
+    "give_bread": _P(t=6, h=8, legs=((8, 3), (-6, -2)), arms=(("ik", "abs", 44, -192, 1), ("ik", "abs", JESUS_GIVE_HAND[0],
+                                                                                            JESUS_GIVE_HAND[1], 1)),
+                     hands=("fist", "fist"), expr="warm", look=(0.04, 0.02)),
+    "ask": _P(t=2, h=8, legs=((8, 3), (-6, -2)), arms=(("ik", "torso", 0.55, 0.74, 1), ("fk", 36, 92)), hands=("open", "open"),
+              expr="gentle_question", look=(0.04, 0.0)),
+    "sit_down_gesture": None,
+    "smile_boy": _P(t=18, h=18, drop=8, legs=(("ik", 16, 1), ("ik", -14, 1)), arms=(("ik", "abs", 116, -158, 1), ("ik", "abs", 82, -150, 1)),
+                    hands=("open", "open"), expr="smile", look=(0.04, 0.07)),
+}
+
+
+def _jesus_lf_pose(pose, phase):
+    ph = _clamp01(phase)
+    if pose == "break_bread":
+        e = ph * ph * (3 - 2 * ph)
+        return _P(h=12, legs=((6, 2), (-5, -2)), arms=(("ik", "abs", 74 + 26 * e, -204 - 6 * e, 1), ("ik", "abs", 52 - 26 * e, -198 + 4 * e, 1)),
+                  hands=("fist", "fist"), expr="smile", look=(0.03, 0.07))
+    if pose == "sit_down_gesture":
+        lo = 14 * math.sin(math.pi * ph)
+        return _P(t=4, h=4, legs=((8, 3), (-7, -3)), arms=(("fk", 54 - lo, 74 - lo), ("fk", 40 - lo, 62 - lo)), hands=("open", "open"),
+                  expr="call_warm", look=(0.03, 0.02))
+    return dict(_JZ_LF[pose])
+
+
+def _jesus_lf_items(pose, phase, item, bread):
+    """The loaves, the fish and the boy's basket in Jesus's hands (front hook)."""
+    def front(st):
+        if not bread:
+            return ""
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        skin = JESUS_SKIN
+        s = ""
+        it = item
+        if pose == "look_up_bless":
+            it = it or "basket"
+            c = _lf_mid(W0, W1, -6)
+            if it == "basket":
+                s += _lf_held(st, PR._boy_basket("open", handle=False), (c[0], c[1] + 4), -4, 0.78)
+            else:
+                s += _lf_held(st, PR._barley_loaf("whole"), c, -6, 1.15)
+            s += _hand(W0, (0.2, -1.0), "open", skin, hr) + _hand(W1, (-0.2, -1.0), "open", skin, hr)
+        elif pose == "break_bread":
+            ph = _clamp01(phase)
+            fish = it == "fish"
+            if ph < 0.2:
+                c = _lf_mid(W0, W1, -4)
+                s += _lf_held(st, PR._dried_fish("whole") if fish else PR._barley_loaf("whole"), c, -6, 1.1)
+            elif ph < 0.5:
+                c = _lf_mid(W0, W1, -4)
+                s += _lf_held(st, PR._dried_fish("whole") if fish else PR._barley_loaf("half"), c, -6, 1.1)
+                for j in range(2):
+                    s += _ell(c[0] - 4 + 8 * j, c[1] + 20 + 6 * j, 2.4, 1.9, "#e8c27a", sw=1.3)
+            else:
+                a = (ph - 0.5) * 2
+                if fish:
+                    s += _lf_held(st, PR._dried_fish("half"), (W1[0] - 2, W1[1] - 6), 20, 1.05)
+                    s += _lf_held(st, PR._dried_fish("piece"), (W0[0] + 4, W0[1] - 6), -10, 1.2)
+                else:
+                    s += _lf_held(st, _lf_half(PR, -1), (W1[0] + 2, W1[1] - 4), -18 - 10 * a, 1.08)
+                    s += _lf_held(st, _lf_half(PR, 1), (W0[0] - 2, W0[1] - 4), 14 + 10 * a, 1.08)
+                c = _lf_mid(W0, W1)
+                for j in range(3):
+                    s += _ell(c[0] - 10 + 10 * j, c[1] + 24 + 9 * j + 8 * a, 2.6, 2.0, "#e8c27a", sw=1.3)
+            s += _fist(W0, hr, skin, 0, 2) + _fist(W1, hr, skin, 0, 2)
+        elif pose == "give_bread":
+            fish = it == "fish"
+            s += _lf_held(st, _lf_half(PR, 1), (W0[0] + 2, W0[1] - 6), 10, 1.0)
+            s += _lf_held(st, PR._dried_fish("whole") if fish else PR._barley_loaf("piece"), (W1[0] + 14, W1[1] - 4), -8 if fish else 0,
+                          1.0 if fish else 1.25)
+            s += _fist(W0, hr, skin) + _fist(W1, hr, skin)
+        elif pose == "smile_boy" and it == "basket":
+            c = _lf_mid(W0, W1, -4)
+            s += _lf_held(st, PR._boy_basket("open", handle=False), c, 0, 0.72)
+            s += _hand(W0, (0.3, -1.0), "open", skin, hr) + _hand(W1, (-0.3, -1.0), "open", skin, hr)
+        return s
+    return front
+
+
+def _lf_half(PR, side):
+    """One half of a torn barley loaf, the torn edge toward -side (local markup)."""
+    cid = _clip_id("lfhalf", side)
+    x = 0 if side > 0 else -40
+    return (f'<clipPath id="{cid}"><rect x="{x}" y="-40" width="40" height="80"/></clipPath>'
+            f'<g transform="translate({-8 * side},0)"><g clip-path="url(#{cid})">{PR._barley_loaf("broken")}</g></g>')
+
+
+_jesus_zacchaeus = jesus
+
+
+def jesus(x, y, scale=1.0, facing=1, pose="stand", expr=None, glow=0.0, cushion=True, wind=0.0, phase=0.0,
+          mantle=True, marks=True, bread=True, item=None):
+    """Jesus: a kind, calm man of about thirty (see module doc, 'STORM FILM'; the poses of JESUS_LOST_SHEEP_POSES and
+    bread=... are in 'LOST SHEEP FILM', JESUS_ZACCHAEUS_POSES in 'ZACCHAEUS FILM', JESUS_LOAVES_POSES and item=... in
+    'LOAVES FILM'). Every earlier call draws exactly what it did before."""
+    if pose not in JESUS_LOAVES_POSES:
+        allp = JESUS_POSES + ("walk",) + JESUS_LOST_SHEEP_POSES + JESUS_ZACCHAEUS_POSES
+        if pose not in allp:
+            raise ValueError(f"jesus: unknown pose {pose!r}; choose from "
+                             f"{JESUS_POSES + JESUS_LOST_SHEEP_POSES + JESUS_ZACCHAEUS_POSES + JESUS_LOAVES_POSES}")
+        if item is not None:
+            raise ValueError("jesus: item=... is for the poses of JESUS_LOAVES_POSES")
+        return _jesus_zacchaeus(x, y, scale, facing, pose=pose, expr=expr, glow=glow, cushion=cushion, wind=wind,
+                                phase=phase, mantle=mantle, marks=marks, bread=bread)
+    if item not in JESUS_LOAVES_ITEMS:
+        raise ValueError(f"jesus: unknown item {item!r}; choose from {JESUS_LOAVES_ITEMS}")
+    _check_js_expr(expr, "jesus")
+    ps = _jesus_lf_pose(pose, phase)
+    D = _jesus_design(pose, _clamp01(glow), cushion, _clamp01(wind), mantle)
+    if pose in ("look_up_bless", "break_bread", "give_bread", "smile_boy"):
+        D["front"] = _hooks(D["front"], _jesus_lf_items(pose, phase, item, bread))
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _JESUS_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"jesus-{pose}")
+
+
+# ---------------------------------------------------------------- the disciples: the poses this film adds (same people)
+DISCIPLE_LOAVES_POSES = ("worried", "talk", "count_fingers", "shake_head", "search", "lead_boy", "lead_boy_walk", "lead_boy_walk_a",
+                         "lead_boy_walk_b", "show_lunch", "carry_basket", "carry_basket_walk", "carry_basket_walk_a",
+                         "carry_basket_walk_b", "receive", "hand_out", "gather", "amazed")
+DISCIPLE_FOODS = ("bread", "fish")
+DISCIPLE_LEAD_BOY = (92, -6)          # lead_boy: the_boy(x + 96*s*f, y + 2*s, s, f) walks just ahead, Andrew's hand on his back
+DISCIPLE_HAND_OUT = (124, -146)      # hand_out at phase .5: the near hand with the bread, held out (anchor coords)
+DISCIPLE_BASKET_K = 0.62             # carry_basket: the big basket is drawn at 0.62 x its props.wicker_basket size
+_LF_WALK = {"a": ((24, 8), (-20, -34)), "b": ((-20, -34), (24, 8))}
+_DS_LF = {
+    "worried": _P(t=2, h=8, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", 1.35, 0.62, 1), ("ik", "torso", 1.35, 0.62, 1)),
+                  hands=("none", "fist"), expr="worried"),
+    "talk": _P(t=4, h=-2, legs=((8, 3), (-6, -2)), arms=(("fk", 12, 6), ("fk", 40, 96)), hands=("fist", "open"), expr="concerned"),
+    "search": None,
+    "lead_boy": _P(t=6, h=4, legs=((8, 3), (-7, -3)), arms=(("ik", "abs", 70, -150, 1), ("fk", 52, 112)), hands=("open", "open"),
+                   expr="kind", look=(0.03, 0.02)),
+    "show_lunch": _P(t=6, h=6, legs=((8, 3), (-6, -2)), arms=(("ik", "abs", 94, -188, 1), ("ik", "abs", 52, -182, 1)),
+                     hands=("open", "open"), expr="doubtful"),
+    "carry_basket": _P(t=-4, h=2, legs=((8, 3), (-6, -2)), arms=(("ik", "abs", 92, -164, 1), ("ik", "abs", 26, -160, 1)),
+                       hands=("fist", "fist"), expr="happy"),
+    "receive": _P(t=10, h=8, legs=((10, 3), (-8, -3)), arms=(("ik", "abs", 104, -182, 1), ("ik", "abs", 48, -176, 1)),
+                  hands=("fist", "fist"), expr="awed", look=(0.03, -0.02)),
+    "amazed": _P(t=-3, h=-6, legs=((8, 3), (-7, -3)), arms=(("ik", "headw", 0.98, 0.55, 1), ("ik", "headw", -0.98, 0.55, -1)),
+                 hands=("open", "open"), expr="amazed"),
+}
+
+
+def _disciple_lf_pose(pose, phase):
+    ph = phase % 1.0
+    if pose.endswith("_walk"):
+        pose = pose + ("_a" if ph < 0.5 else "_b")
+    if pose in ("lead_boy_walk_a", "lead_boy_walk_b"):
+        ps = dict(_DS_LF["lead_boy"], legs=_LF_WALK[pose[-1]], t=6)
+        return ps, pose
+    if pose in ("carry_basket_walk_a", "carry_basket_walk_b"):
+        ps = dict(_DS_LF["carry_basket"], legs=_LF_WALK[pose[-1]], t=-2)
+        return ps, pose
+    if pose == "count_fingers":
+        k = int(ph * 3) % 3                       # 1, 2, 3 fingers: the counting finger hops along the open hand
+        return _P(t=2, h=8, legs=((6, 2), (-5, -2)), arms=(("ik", "abs", 84, -236, 1), ("ik", "abs", 58 + 6 * k, -224 - 4 * k, 1)),
+                  hands=("palm", "point"), expr="count"), pose
+    if pose == "shake_head":
+        sw = 4 * math.sin(2 * math.pi * ph)
+        return _P(t=sw, h=4, legs=((8, 3), (-7, -3)), arms=(("fk", 22, 72), ("fk", -20, -70)), hands=("open", "open"),
+                  expr="doubtful", marks=("shake",)), pose
+    if pose == "search":
+        return _P(flip=ph >= 0.5, t=6, h=-4, legs=((8, 3), (-6, -2)), arms=(("fk", 14, 8), ("ik", "head", 1.05, -0.92, 1)),
+                  hands=("fist", "open"), expr="thoughtful", look=(0.05, -0.02)), pose
+    if pose == "hand_out":
+        e = math.sin(math.pi * ph)                 # 0 at the basket .. 1 held out .. 0 back
+        return _P(t=12 + 6 * e, h=10, legs=((10, 3), (-8, -3)), drop=4,
+                  arms=(("ik", "abs", 74, -150, 1), ("ik", "abs", 58 + 66 * e, -160 + 14 * e, 1)), hands=("fist", "fist"),
+                  expr="happy", look=(0.04, 0.05)), pose
+    if pose == "gather":
+        e = math.sin(math.pi * ph)
+        return _P(t=44, h=-6, drop=34, legs=(("ik", 40, 1), ("ik", -30, 1)),
+                  arms=(("ik", "abs", 116, -66, 1), ("ik", "abs", 78 + 30 * e, -16 - 52 * e, 1)), hands=("fist", "fist"),
+                  expr="happy", look=(0.04, 0.06)), pose
+    return dict(_DS_LF[pose]), pose
+
+
+def _disciple_lf_items(D, key, phase, fill, food, basket):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        skin = D["skin"]
+        G = st["ground"]
+        s = ""
+        if key.startswith("carry_basket") and basket:
+            k = DISCIPLE_BASKET_K
+            c = _lf_mid(W0, W1, 4)
+            s += _lf_held(st, PR._wicker_basket(1.0 if fill is None else fill, "mixed", seed=3), (c[0], c[1] - WICKER_RIM_Y_ * k), 0, k)
+            s += _fist(W0, hr, skin, 0, 2) + _fist(W1, hr, skin, 0, 2)
+        elif key == "receive" and basket:
+            k = 0.55
+            c = _lf_mid(W0, W1, 2)
+            s += _lf_held(st, PR._wicker_basket(0.5 if fill is None else fill, "mixed", seed=5), (c[0], c[1] - WICKER_RIM_Y_ * k), 0, k)
+            s += _fist(W0, hr, skin, 0, 2) + _fist(W1, hr, skin, 0, 2)
+        elif key == "show_lunch" and basket:
+            c = _lf_mid(W0, W1, -2)
+            s += _lf_held(st, PR._boy_basket("open", handle=False), c, -6, 0.74)
+            s += _hand(W0, (0.2, -1.0), "open", skin, hr) + _hand(W1, (-0.2, -1.0), "open", skin, hr)
+        elif key == "hand_out":
+            if basket:
+                k = 0.52
+                s += _lf_held(st, PR._wicker_basket(1.0 if fill is None else fill, "mixed", seed=7), (W0[0] - 14, W0[1] - WICKER_RIM_Y_ * k + 8), 0, k)
+                s += _fist(W0, hr, skin, 0, 2)
+            s += _lf_held(st, PR._dried_fish("whole") if food == "fish" else PR._barley_loaf("piece"), (W1[0] + 13, W1[1] - 4),
+                          -10 if food == "fish" else 0, 1.0 if food == "fish" else 1.25)
+            s += _fist(W1, hr, skin)
+        elif key == "gather":
+            if basket:
+                k = 0.52
+                s = _lf_held(st, PR._wicker_basket(0.5 if fill is None else fill, "mixed", seed=9), (150, G - 2), 0, k) + s
+                s += _fist(W0, hr, skin)
+            ph = phase % 1.0
+            s += _lf_held(st, PR._barley_loaf("piece"), (W1[0] + 6, W1[1] + 6), 20, 1.1)
+            s += _fist(W1, hr, skin)
+            if ph < 0.15 or ph > 0.85:
+                s += _lf_held(st, PR._barley_loaf("piece", seed=3), (W1[0] + 40, G - 6), -30, 1.0)
+        elif key.startswith("lead_boy"):
+            s += _hand(W0, (0.7, 0.7), "open", skin, hr)
+        return s
+    return front
+
+
+WICKER_RIM_Y_ = -104                 # = props.WICKER_RIM_Y (no import at module load: art.props is imported lazily)
+_disciples_storm = disciples
+
+
+def disciples(x, y, scale=1.0, facing=1, variant=0, pose="stand", expr=None, phase=0.0, shake=0.0, item="bucket",
+              wind=0.0, wet=False, oar=True, net=True, marks=True, fill=None, food="bread", basket=True):
+    """One of the twelve disciples (variant 0-11 or 'peter' / 'andrew' / 'james' / 'john' / 'philip'), see module doc
+    ('STORM FILM'; the poses of DISCIPLE_LOAVES_POSES and fill / food / basket are in 'LOAVES FILM'). Every earlier call
+    draws exactly what it did before."""
+    if isinstance(variant, str) and variant.lower() == "philip":
+        variant = 4
+    if pose not in DISCIPLE_LOAVES_POSES:
+        return _disciples_storm(x, y, scale, facing, variant=variant, pose=pose, expr=expr, phase=phase, shake=shake, item=item,
+                                wind=wind, wet=wet, oar=oar, net=net, marks=marks)
+    _check_js_expr(expr, "disciples")
+    if food not in DISCIPLE_FOODS:
+        raise ValueError(f"disciples: unknown food {food!r}; choose from {DISCIPLE_FOODS}")
+    v = _disciple_index(variant)
+    D, m = _disciple_design(v, _clamp01(wind), wet)
+    ps, key = _disciple_lf_pose(pose, phase)
+    D["front"] = _hooks(_disciple_lf_items(D, key, phase, fill, food, basket))
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"disciple{v}-{key}")
+
+
+disciple = disciples
+DISCIPLES_GROUP_LOAVES_POSES = ("worried", "talk", "amazed", "carry_basket", "search")
+_disciples_group_storm = disciples_group
+
+
+def disciples_group(x, y, scale=1.0, facing=1, pose="stand", n=12, expr=None, gap=150, exprs=None, poses=None,
+                    phase=0.0, marks=True):
+    """Several disciples at once (see module doc, 'STORM FILM'); for the Loaves film also DISCIPLES_GROUP_LOAVES_POSES
+    (worried / talk / amazed / carry_basket - the twelve with their twelve baskets - / search). Every earlier call draws
+    exactly what it did before."""
+    if pose in DISCIPLES_GROUP_LOAVES_POSES:
+        out = _disciples_group_storm(x, y, scale, facing, pose="stand", n=n, expr=expr, gap=gap, exprs=exprs,
+                                     poses=poses or [pose], phase=phase, marks=marks)
+        return out.replace('data-who="disciples_group-stand"', f'data-who="disciples_group-{pose}"', 1)
+    return _disciples_group_storm(x, y, scale, facing, pose=pose, n=n, expr=expr, gap=gap, exprs=exprs, poses=poses,
+                                  phase=phase, marks=marks)
+
+
+# ---------------------------------------------------------------- the boy with the five loaves and two fish
+BOY_TUNIC = "#f2b544"           # a sunny marigold knee tunic
+BOY_TRIM = "#3f8f8a"            # teal stripes at the hem and the neck
+BOY_SASH = "#c0503a"            # a brick-red sash with tails
+BOY_SKIN = "#d9a074"
+BOY_HAIR = "#3a2416"            # big dark curls
+BOY_POSES = ("stand", "walk", "walk_a", "walk_b", "stand_basket", "shy", "look_up", "offer_up", "watch", "sit", "sit_eat",
+             "pat_tummy", "smile", "eyes_wide", "cheer")
+BOY_BASKETS = ("closed", "open", "empty", None, False)
+BOY_OFFER = (70, -132)          # offer_up: the middle of the lifted basket's rim (anchor coords, scale 1, facing 1)
+_BOY_M = _metrics(_CHILD, 1.06, 1.0)
+_BOY_SEAT = dict(legs=(("ik", 60, 1), ("ik", 68, 1)), **_SEATED)
+_BZ = {
+    "stand": _P(arms=(("fk", 12, 6), ("fk", -8, -3)), expr="happy"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -30, -20), ("fk", 22, 34)), expr="happy"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 40), ("fk", 18, 30)), expr="happy"),
+    "stand_basket": _P(h=4, arms=(("ik", "abs", 26, -104, 1), ("ik", "abs", 16, -100, 1)), hands=("fist", "fist"), expr="happy"),
+    "shy": _P(t=4, h=16, legs=((6, 2), (-12, -6)), arms=(("ik", "abs", 36, -112, 1), ("ik", "abs", 20, -108, 1)), hands=("fist", "fist"),
+              expr="shy"),
+    "look_up": _P(t=-4, h=-24, arms=(("ik", "abs", 26, -104, 1), ("ik", "abs", 16, -100, 1)), hands=("fist", "fist"), expr="hopeful"),
+    "offer_up": _P(t=8, h=-22, legs=((10, 3), (-8, -3)), arms=(("ik", "abs", BOY_OFFER[0] + 22, BOY_OFFER[1] + 4, 1),
+                                                               ("ik", "abs", BOY_OFFER[0] - 20, BOY_OFFER[1] + 8, 1)),
+                   hands=("open", "open"), expr="hopeful", reach=1.1, look=(0.03, -0.04)),
+    "watch": _P(h=-10, arms=(("ik", "head", 0.30, 1.15, 1), ("ik", "head", 0.38, 1.12, 1)), hands=("fist", "fist"), expr="awed",
+                look=(0.03, -0.06)),
+    "sit": _P(t=-3, arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)), expr="happy", **_BOY_SEAT),
+    "sit_eat": _P(t=-2, h=4, arms=(("ik", "knee", 0, 0.20, 1), ("ik", "head", 0.82, 0.78, 1)), hands=("fist", "fist"), expr="yum",
+                  **_BOY_SEAT),
+    "pat_tummy": None,
+    "smile": _P(h=4, arms=(("ik", "torso", 1.15, 0.25, 1), ("ik", "torso", 1.15, 0.25, 1)), hands=("none", "fist"), expr="smile"),
+    "eyes_wide": _P(t=-4, h=-6, legs=((8, 3), (-7, -3)), arms=(("fk", 40, 110), ("fk", -36, -106)), hands=("open", "open"),
+                    expr="surprised"),
+    "cheer": _P(h=-8, legs=((10, 4), (-8, -2)), arms=(("fk", 130, 152), ("fk", -134, -156)), hands=("open", "open"), expr="overjoyed"),
+}
+_BOY_DEFAULT_BASKET = {"stand_basket": "closed", "shy": "closed", "look_up": "closed", "offer_up": "open", "walk_a": "closed",
+                       "walk_b": "closed"}
+
+
+def _boy_curls(R):
+    """The boy's hair: a big mop of dark round curls, a curl falling over the forehead."""
+    circ = [(-0.22 * R + 0.80 * R * math.cos(a), -0.42 * R + 0.74 * R * math.sin(a), 0.33 * R)
+            for a in [math.radians(d) for d in range(150, 400, 30)]]
+    circ += [(-0.18 * R, -0.78 * R, 0.60 * R), (-0.86 * R, 0.0, 0.34 * R), (-0.78 * R, 0.38 * R, 0.24 * R)]
+    circ = [c for c in circ if c[1] < 0.55 * R and not (c[0] > -0.40 * R and c[1] > -0.42 * R)]
+    s = _union_circles(circ, BOY_HAIR, 2.8)
+    for (x, y, r) in circ[::2]:
+        s += _line(f"M{fmt(x - 0.4 * r)},{fmt(y + 0.1 * r)} Q{fmt(x - 0.1 * r)},{fmt(y - 0.55 * r)} {fmt(x + 0.4 * r)},{fmt(y - 0.15 * r)}",
+                   w=2.0, col=shade(BOY_HAIR, 0.35))
+    s += _union_circles([(0.40 * R, -0.70 * R, 0.19 * R), (0.62 * R, -0.58 * R, 0.13 * R)], BOY_HAIR, 2.4)
+    return s + _ear(R, BOY_SKIN)
+
+
+def _boy_design():
+    D = dict(robe=BOY_TUNIC, sleeve=BOY_TUNIC, sleeve_len=0.48, hem_col=shade(BOY_TUNIC, -0.18), hem_w=7, skin=BOY_SKIN,
+             leg=BOY_SKIN, hem=0.60, flare_k=0.9, hair=None, hat=("custom", _boy_curls), hat_h=0.10, ears=False, bare=True,
+             sash=BOY_SASH, sash_tail=True, neck_v=BOY_TRIM, robe_deco=_hem_stripes(BOY_TRIM, gap=(10, 18, 26)))
+    return D
+
+
+def _boy_items(D, key, phase, basket):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        skin = D["skin"]
+        s = ""
+        if basket and key in ("stand_basket", "look_up"):
+            c = _lf_mid(W0, W1, 2)
+            s += _lf_held(st, PR._boy_basket(basket), (c[0], c[1] + 52 * 0.6), 0, 0.6)
+            s += _fist(W0, hr, skin) + _fist(W1, hr, skin)
+        elif basket and key == "shy":
+            c = _lf_mid(W0, W1, -2)
+            s += _lf_held(st, PR._boy_basket(basket, handle=True), (c[0] + 2, c[1] + 2), -4, 0.6)
+            s += _fist(W0, hr, skin, -2, 0) + _fist(W1, hr, skin, -2, 0)
+        elif basket and key == "offer_up":
+            c = _lf_mid(W0, W1, -4)
+            s += _lf_held(st, PR._boy_basket(basket, handle=False), c, -4, 0.62)
+            s += _hand(W0, (0.3, -1.0), "open", skin, hr) + _hand(W1, (-0.3, -1.0), "open", skin, hr)
+        elif basket and key in ("walk_a", "walk_b"):
+            s += _lf_held(st, PR._boy_basket(basket), (W1[0] + 2, W1[1] + 52 * 0.56), 4, 0.56)
+            s += _fist(W1, hr, skin)
+        elif key == "sit_eat":
+            s += _lf_held(st, PR._barley_loaf("piece"), (W1[0] + 8, W1[1] - 4), -20, 1.0)
+            s += _lf_held(st, _lf_half(PR, 1), (W0[0] + 4, W0[1] - 2), 12, 0.9)
+            s += _fist(W1, hr, skin) + _fist(W0, hr, skin)
+        return s
+    return front
+
+
+def _pat_marks(st):
+    """Two little 'pat pat' arcs beside the hand on the tummy."""
+    W = st["arms"][1][2]
+    s_ = ""
+    for k in (0, 1):
+        r = 12 + 8 * k
+        s_ += _line(f"M{fmt(W[0] + r)},{fmt(W[1] - r * 0.7)} Q{fmt(W[0] + r * 1.25)},{fmt(W[1])} {fmt(W[0] + r)},{fmt(W[1] + r * 0.7)}",
+                    w=2.6, col=MARK, extra='opacity="0.8"')
+    return s_
+
+
+def the_boy(x, y, scale=1.0, facing=1, pose="stand_basket", expr=None, phase=0.0, basket=None, marks=True):
+    """The boy who brought his lunch, five barley loaves and two small fish (John 6:9): about seven, kind and cheerful,
+    with a big mop of dark curls, a marigold knee tunic with teal stripes and a brick-red sash, barefoot (see module doc,
+    'LOAVES FILM'). basket: None (the pose decides) | 'closed' | 'open' | 'empty' | False (no basket)."""
+    if pose not in BOY_POSES:
+        raise ValueError(f"the_boy: unknown pose {pose!r}; choose from {BOY_POSES}")
+    if basket not in BOY_BASKETS:
+        raise ValueError(f"the_boy: unknown basket {basket!r}; choose from {BOY_BASKETS}")
+    _ls_expr(expr, "the_boy")
+    ph = phase % 1.0
+    key = ("walk_a" if ph < 0.5 else "walk_b") if pose == "walk" else pose
+    if key == "pat_tummy":
+        pat = 6 * math.sin(2 * math.pi * ph)
+        ps = _P(t=-6, h=-4, legs=((8, 3), (-7, -3)), arms=(("ik", "torso", 0.95 + pat * 0.01, 0.18, 1), ("ik", "torso", 0.85 + pat * 0.02, 0.32, 1)),
+                hands=("open", "open"), expr="yum")
+    else:
+        ps = dict(_BZ[key])
+    b = _BOY_DEFAULT_BASKET.get(key) if basket is None else basket
+    D = _boy_design()
+    D["front"] = _hooks(_boy_items(D, key, phase, b), _pat_marks if (marks and key == "pat_tummy") else None)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _BOY_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"the_boy-{key}")
+
+
+# ---------------------------------------------------------------- the Galilee crowd (fishing and farming families)
+GALILEE_KINDS = ("man", "woman", "mother", "child", "elder", "lame", "fever_mother")
+GALILEE_FAMILIES = ("rose", "saffron", "sky", "lilac", "brick", "cream")
+GALILEE_POSES = ("stand", "walk", "walk_a", "walk_b", "run", "run_a", "run_b", "arrive", "stand_listen", "sit", "sit_listen",
+                 "sick_sit", "sick_lie", "healed", "sit_eat", "sit_laugh", "pat_tummy", "sit_pat_tummy", "point", "amazed", "cheer",
+                 "receive", "sit_receive", "wave")
+GALILEE_FOODS = ("bread", "fish", None, False)
+FEVER_CHILD_DX = 4             # fever_mother sick_sit: the child lies across her lap, its head toward her knees
+_GLF = {   # colour families: three robe shades, the light mantle, the accent (stripes, bands, ribbons)
+    "rose": dict(robes=("#d9707a", "#e8909a", "#c55c6c"), mantle="#f6d2cc", accent="#8a3a4a"),
+    "saffron": dict(robes=("#e8a53a", "#f2c24e", "#d98c2e"), mantle="#fbe6b4", accent="#a0582a"),
+    "sky": dict(robes=("#4f9ec8", "#72bada", "#3a82ae"), mantle="#d6ecf4", accent="#2a5a80"),
+    "lilac": dict(robes=("#9a78c0", "#b698d6", "#7f62a6"), mantle="#eadff2", accent="#5a3a7a"),
+    "brick": dict(robes=("#c0603e", "#d67c4c", "#a64e36"), mantle="#f2d6be", accent="#6a3424"),
+    "cream": dict(robes=("#eadfc4", "#f2e8d0", "#dccca8"), mantle="#fbf6ea", accent="#4a6a9a"),
+}
+_GL_SKIN = ("#d9a379", "#c48a62", "#e8b48c", "#a8714c", "#cf9570", "#8f5a3b", "#e2ad85")
+_GL_HAIR = ("#2f2219", "#241a15", "#4a2f1f", "#1c1613", "#3a2618", "#5a3a24", "#2a201b")
+_GL_BEARDS = ("full", "short", "trim", "fisher", "stubble", "pointed")
+
+
+def _gl_colours(v):
+    v = int(v)
+    fam = _GLF[GALILEE_FAMILIES[v % 6]]
+    shade_i = (v // 6) % 3
+    j = (v * 5 + v // 6) % 7
+    return dict(robe=fam["robes"][shade_i], mantle=fam["mantle"], accent=fam["accent"], skin=_GL_SKIN[j], hair=_GL_HAIR[j],
+                beard=_GL_BEARDS[(v + v // 6) % 6])
+
+
+def _gl_cape(c):
+    """The crowd's look: a short woven mantle draped over both shoulders, with an accent stripe and a fringe (mid hook)."""
+    def mid(st):
+        m, tp = st["m"], st["tp"]
+        T, shw = m["T"], m["shw"]
+        pts = [tp(-1.08 * shw, T - 6), tp(-0.4 * shw, T + 2), tp(0.5 * shw, T + 2), tp(1.10 * shw, T - 8), tp(1.18 * shw, 0.62 * T),
+               tp(0.6 * shw, 0.50 * T), tp(0.0, 0.47 * T), tp(-0.7 * shw, 0.52 * T), tp(-1.16 * shw, 0.64 * T)]
+        s = f'<path d="{smooth_path(pts, tension=0.7)}" fill="{c["mantle"]}" {_st(3.0)}/>'
+        a, b, q = tp(-1.10 * shw, 0.70 * T), tp(1.12 * shw, 0.68 * T), tp(0.05 * shw, 0.56 * T)
+        s += _line(f"M{_pt(a)} Q{_pt(q)} {_pt(b)}", w=4.2, col=c["accent"], extra='opacity="0.9"')
+        for i in range(9):
+            u = i / 8
+            p0 = _lerp(_lerp(tp(-1.16 * shw, 0.64 * T), tp(0.0, 0.47 * T), min(1.0, u * 2)),
+                       _lerp(tp(0.0, 0.47 * T), tp(1.18 * shw, 0.62 * T), max(0.0, u * 2 - 1)), 1.0 if u > 0.5 else 0.0)
+            s += _line(f"M{_pt(p0)} l0,7", w=2.0, col=shade(c["mantle"], -0.3))
+        return s
+    return mid
+
+
+def _gl_band_hat(hair, band):
+    def hat(R):
+        s = _hair_cap(R, hair, "curly", line=-0.36)
+        s += _ear(R, "#c98f68")
+        s += _tube(_spline_pts([(0.98 * R, -0.46 * R), (0.45 * R, -0.66 * R), (-0.25 * R, -0.62 * R), (-0.95 * R, -0.30 * R)]), 0.17 * R, band,
+                   ow=2.4)
+        for t_ in (0.2, 0.45, 0.7):
+            x_ = 0.98 - 1.9 * t_
+            s += _line(f"M{fmt(x_ * R)},{fmt((-0.56 - 0.1 * math.sin(t_ * 3)) * R)} l{fmt(0.07 * R)},{fmt(0.12 * R)}", w=1.6,
+                       col=shade(band, 0.4))
+        return s
+    return hat
+
+
+def _gl_shawl_hat(hair, shawl, edge):
+    def hat(R):
+        s = (f'<path d="{smooth_path([(0.80 * R, -0.42 * R), (0.30 * R, -0.52 * R), (-0.30 * R, -0.42 * R), (-0.60 * R, -0.05 * R), (-0.55 * R, 0.3 * R), (-0.85 * R, 0.2 * R), (-0.8 * R, -0.4 * R), (-0.2 * R, -0.8 * R), (0.5 * R, -0.75 * R)])}" '
+             f'fill="{hair}" {_st(2.6)}/>')
+        s += _cloth_cap(R, shawl, edge=edge)
+        return s + _lashes(R, "dot")
+    return hat
+
+
+def _gl_scarf_hat(hair, scarf, band):
+    """A girl: dark hair under a small light headscarf with a coloured edge, tied at the back, two tails and a little
+    flower."""
+    def hat(R):
+        s = _tube([(-0.95 * R, -0.30 * R), (-1.30 * R, 0.05 * R), (-1.30 * R, 0.38 * R)], 0.13 * R, scarf, ow=2.2)
+        s += _tube([(-0.95 * R, -0.30 * R), (-1.16 * R, 0.18 * R), (-1.10 * R, 0.48 * R)], 0.12 * R, scarf, ow=2.2)
+        s += _hair_cap(R, hair, "short", line=-0.30)
+        pts = [(0.86 * R, -0.50 * R), (0.62 * R, -0.95 * R), (0.0, -1.16 * R), (-0.70 * R, -0.98 * R), (-1.02 * R, -0.40 * R),
+               (-0.40 * R, -0.62 * R), (0.30 * R, -0.66 * R)]
+        s += f'<path d="{smooth_path(pts)}" fill="{scarf}" {_st(3.0)}/>'
+        s += _tube(_spline_pts([(0.86 * R, -0.50 * R), (0.30 * R, -0.66 * R), (-0.40 * R, -0.62 * R), (-1.0 * R, -0.42 * R)]), 0.08 * R, band,
+                   ow=1.6)
+        s += f'<circle cx="{fmt(0.30 * R)}" cy="{fmt(-0.78 * R)}" r="{fmt(0.10 * R)}" fill="#fbf6ea" {_st(1.6)}/>'
+        s += f'<circle cx="{fmt(0.30 * R)}" cy="{fmt(-0.78 * R)}" r="{fmt(0.04 * R)}" fill="#f2c43c"/>'
+        return s + _ear(R, "#d9a379") + _lashes(R, "dot")
+    return hat
+
+
+def _gl_mop_hat(hair):
+    def hat(R):
+        circ = [(-0.25 * R + 0.72 * R * math.cos(a), -0.45 * R + 0.66 * R * math.sin(a), 0.30 * R)
+                for a in [math.radians(d) for d in range(160, 390, 32)]]
+        circ = [c for c in circ if c[1] < 0.4 * R and not (c[0] > -0.42 * R and c[1] > -0.44 * R)]
+        circ += [(-0.2 * R, -0.74 * R, 0.58 * R), (-0.86 * R, -0.02 * R, 0.30 * R)]
+        return _union_circles(circ, hair, 2.6) + _ear(R, "#c98f68")
+    return hat
+
+
+def _gl_wool_cap(cap):
+    def hat(R):
+        s = _hair_cap(R, "#ece6da", "curly", front=-40, back=170, line=-0.30)
+        dome = [(0.86 * R, -0.46 * R), (0.70 * R, -0.98 * R), (0.0, -1.20 * R), (-0.74 * R, -0.98 * R), (-0.92 * R, -0.44 * R)]
+        s += f'<path d="{smooth_path(dome + [(0.0, -0.58 * R)])}" fill="{cap}" {_st(3.0)}/>'
+        s += _tube(_spline_pts([(0.90 * R, -0.46 * R), (0.0, -0.62 * R), (-0.92 * R, -0.44 * R)]), 0.14 * R, shade(cap, 0.3), ow=2.2)
+        return s + _ear(R, "#d9a379")
+    return hat
+
+
+def _gl_design(kind, v):
+    c = _gl_colours(v)
+    if kind in ("woman", "mother", "fever_mother"):
+        D = dict(robe=c["robe"], sleeve=c["robe"], hem_col=shade(c["robe"], -0.2), hem_w=9, cuff=c["mantle"], skin=c["skin"],
+                 leg=c["skin"], hem=0.98, flare_k=1.1, hair=None, hat=("custom", _gl_shawl_hat(c["hair"], c["mantle"], c["accent"])),
+                 hat_h=0.12, ears=False, veil=c["mantle"], sash=c["accent"], sash_tail=True, sandal=SANDAL, brow_w=3.0)
+        m = _metrics(_ADULT, 0.95, 0.92)
+    elif kind == "child":
+        girl = v % 2 == 1
+        D = dict(robe=c["robe"], sleeve=c["robe"], hem_col=c["accent"], hem_w=6, skin=c["skin"], leg=c["skin"], hem=0.58, flare_k=0.9,
+                 sleeve_len=0.5, hair=None, sash=c["accent"], sash_tail=False, bare=True, neck_v=c["mantle"],
+                 hat=("custom", _gl_scarf_hat(c["hair"], c["mantle"], c["accent"]) if girl else _gl_mop_hat(c["hair"])), hat_h=0.10,
+                 ears=False)
+        m = _CHILD
+    elif kind == "elder":
+        D = dict(robe=c["robe"], sleeve=c["robe"], hem_col=shade(c["robe"], -0.2), hem_w=8, skin=c["skin"], leg=c["skin"], hem=0.95,
+                 flare_k=1.05, hair=None, hat=("custom", _gl_wool_cap(c["accent"])), hat_h=0.14, ears=False, beard=("white", "#ece6da"),
+                 sash=c["accent"], sash_tail=False, brow_w=4.4, brow_col="#9a9088", sandal=SANDAL)
+        D["mid"] = _gl_cape(c)
+        m = _metrics(_ADULT, 0.96, 1.0)
+    else:                                        # man, lame
+        D = dict(robe=c["robe"], sleeve=c["robe"], hem_col=shade(c["robe"], -0.2), hem_w=8, skin=c["skin"], leg=c["skin"],
+                 hem=0.93 if kind == "man" else 0.84, flare_k=1.0, hair=None, hat=("custom", _gl_band_hat(c["hair"], c["accent"])),
+                 hat_h=0.10, ears=False, beard=(c["beard"], c["hair"]), sash=c["accent"], sash_tail=True, sandal=SANDAL)
+        D["mid"] = _gl_cape(c)
+        m = _metrics(_ADULT, 1.0 + 0.015 * (v % 3 - 1), 1.0 + 0.05 * (v % 2))
+    return D, m, c
+
+
+_GSEAT_L = dict(legs=(("ik", 80, 1), ("ik", 90, 1)), **_SEATED)
+_GZ_LF = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3)), expr="kind"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -34, -24), ("fk", 24, 40)), expr="kind"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 42), ("fk", -22, -12)), expr="kind"),
+    "run_a": _P(t=14, h=-4, legs=((58, 22), (-24, -118)), arms=(("fk", -82, -42), ("fk", 62, 128)), hem=0.80, tail=-102, expr="eager"),
+    "run_b": _P(t=14, h=-4, legs=((-24, -118), (58, 22)), arms=(("fk", 62, 128), ("fk", -60, -20)), hem=0.80, tail=-102, expr="eager"),
+    "arrive": _P(t=34, h=-22, drop=22, legs=(("ik", 34, 1), ("ik", -22, 1)), arms=(("ik", "knee", 0, 0.05, 1), ("ik", "knee", 1, 0.05, 1)),
+                 hands=("open", "open"), expr="tired", look=(0.04, -0.06)),
+    "stand_listen": _P(h=-8, arms=(("ik", "torso", 1.2, 0.30, 1), ("ik", "torso", 1.2, 0.30, 1)), hands=("none", "fist"), expr="kind",
+                       look=(0.03, -0.05)),
+    "sit": _P(t=-3, arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)), expr="kind", **_GSEAT_L),
+    "sit_listen": _P(t=4, h=-6, arms=(("ik", "knee", 0, 0.30, 1), ("ik", "head", 0.30, 1.05, 1)), hands=("fist", "fist"), expr="kind",
+                     look=(0.03, -0.05), **_GSEAT_L),
+    "sick_sit": _P(t=12, h=24, arms=(("ik", "knee", 0, 0.20, 1), ("ik", "torso", 1.25, 0.40, 1)), hands=("fist", "open"), expr="tired",
+                   **_GSEAT_L),
+    "sick_lie": _P(t=-86, h=40, ground="body", flat_back=True, legs=(("ik", 110, 1), ("ik", 124, 1)),
+                   arms=(("fk", 6, 2), ("ik", "torso", 0.5, 0.62, 1)), hands=("open", "open"), tail=(-10, 5), expr="feverish",
+                   hem=0.90, flare=-4),
+    "healed": _P(t=-4, h=-10, legs=((10, 3), (-9, -3)), arms=(("fk", 76, 118), ("fk", -70, -112)), hands=("open", "open"),
+                 expr="overjoyed"),
+    "sit_eat": _P(t=-2, h=4, arms=(("ik", "knee", 0, 0.20, 1), ("ik", "head", 0.82, 0.80, 1)), hands=("fist", "fist"), expr="yum",
+                  **_GSEAT_L),
+    "sit_laugh": _P(t=-8, h=-12, arms=(("ik", "torso", 0.80, 0.30, 1), ("ik", "torso", 1.05, 0.20, 1)), hands=("open", "open"),
+                    expr="laugh", **_GSEAT_L),
+    "pat_tummy": None,
+    "sit_pat_tummy": None,
+    "point": _P(h=-4, legs=((5, 2), (-5, -2)), arms=(("fk", 14, 8), ("fk", 92, 96)), hands=("fist", "point"), expr="eager"),
+    "amazed": _P(t=-3, h=-6, legs=((8, 3), (-7, -3)), arms=(("ik", "headw", 0.98, 0.55, 1), ("ik", "headw", -0.98, 0.55, -1)),
+                 hands=("open", "open"), expr="amazed"),
+    "cheer": _P(h=-8, legs=((10, 4), (-8, -2)), arms=(("fk", 128, 150), ("fk", -132, -155)), hands=("open", "open"), expr="joyful"),
+    "receive": _P(t=6, h=10, legs=((8, 3), (-6, -2)), arms=(("ik", "torso", 2.5, 0.40, 1), ("ik", "torso", 1.9, 0.36, 1)),
+                  hands=("open", "open"), expr="delighted", look=(0.03, 0.03)),
+    "sit_receive": _P(t=6, h=-4, arms=(("ik", "abs", 104, -150, 1), ("ik", "abs", 82, -140, 1)), hands=("open", "open"),
+                      expr="delighted", look=(0.03, -0.04), **_GSEAT_L),
+}
+
+
+def _gl_pose(kind, pose, phase):
+    ph = phase % 1.0
+    key = pose
+    if pose in ("walk", "run"):
+        key = pose + ("_a" if ph < 0.5 else "_b")
+    if key == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * ph)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"), expr="happy"), key
+    if key == "pat_tummy":
+        pat = math.sin(2 * math.pi * ph)
+        return _P(t=-6, h=-4, legs=((8, 3), (-7, -3)), arms=(("ik", "torso", 0.95 + 0.06 * pat, 0.16, 1), ("ik", "torso", 0.85, 0.30, 1)),
+                  hands=("open", "open"), expr="yum"), key
+    if key == "sit_pat_tummy":
+        pat = math.sin(2 * math.pi * ph)
+        return _P(t=-10, h=-6, arms=(("ik", "torso", 0.95 + 0.06 * pat, 0.16, 1), ("ik", "torso", 0.85, 0.30, 1)), hands=("open", "open"),
+                  expr="yum", **_GSEAT_L), key
+    ps = dict(_GZ_LF[key])
+    if kind == "lame" and key in ("stand", "walk_a", "walk_b"):
+        legs = {"stand": ((6, 2), (-8, -40)), "walk_a": ((22, 6), (-14, -46)), "walk_b": ((-8, -4), (-4, -38))}[key]
+        ps.update(legs=legs, arms=(ps["arms"][0], ("ik", "abs", -18, -128, 1)), expr="tired" if key == "stand" else "determined", t=4)
+    if kind == "lame" and key == "healed":
+        ps.update(arms=(("fk", 150, 170), ("fk", -70, -112)))
+    return ps, key
+
+
+def _gl_crutch(st, ground_x=4):
+    """A wooden crutch under the near arm: a padded crosspiece in the armpit, a grip where the near hand is, its foot on
+    the ground ahead (body coords)."""
+    S1 = st["S"][1]
+    G = st["ground"]
+    top = (S1[0] + 6, S1[1] + 14)
+    bot = (ground_x, G - 2)
+    s = _tube([top, bot], 8, "#a8744a", ow=2.6)
+    d = _nrm(_sub(bot, top))
+    n_ = (-d[1], d[0])
+    s += _tube([_add(top, _mul(n_, 13)), _sub(top, _mul(n_, 13))], 9, "#c9a46a", ow=2.4)
+    return s
+
+
+def _gl_baby(c, sleeping=True):
+    """A baby in a sling: a pouch in the mantle colour, the little face with a cap peeking out (local, anchor = the pouch
+    centre, ~44 px)."""
+    s = _ell(0, 6, 24, 20, shade(c["mantle"], -0.05), sw=3.0)
+    s += _line("M-20,2 Q0,14 20,2", w=2.2, col=shade(c["mantle"], -0.25))
+    s += _ell(4, -12, 12.5, 12, "#efc29c", sw=2.6)
+    s += f'<path d="M-8,-16 Q-6,-28 6,-26 Q16,-24 16,-14 Q6,-20 -8,-16 Z" fill="{c["accent"]}" {_st(2.2)}/>'
+    if sleeping:
+        s += _line("M2,-11 q2,2 4,0 M9,-11 q2,2 4,0", w=1.6)
+    else:
+        s += f'<circle cx="4" cy="-11" r="1.6" fill="{EYE}"/><circle cx="11" cy="-11" r="1.6" fill="{EYE}"/>'
+        s += _line("M5,-6 q3,2 6,0", w=1.6)
+    s += _ell(13, -6, 2.6, 1.8, "#f0998a", extra='opacity="0.8"')
+    s += _ell(16, 0, 4.2, 3.6, "#efc29c", sw=1.8)
+    return s
+
+
+def _gl_child_in_lap(c, healed, marks):
+    """The feverish child in the mother's lap (nested rig figure): lying limp, flushed, a damp cloth on the forehead;
+    healed: sitting up, laughing, arms up. Returns (inner, last points)."""
+    v = 1
+    cc = dict(c)
+    D = dict(robe=c["mantle"], sleeve=c["mantle"], hem_col=c["accent"], hem_w=5, skin="#e8b48c", leg="#e8b48c", hem=0.58,
+             flare_k=0.9, sleeve_len=0.5, hair=None, bare=True, hat=("custom", _gl_mop_hat("#3a2618")), hat_h=0.1, ears=False)
+    m = _metrics(_CHILD, 0.80, 0.95)
+    if healed:
+        ps = _P(t=-4, h=-10, legs=(("ik", 52, 1), ("ik", 60, 1)), arms=(("fk", 130, 152), ("fk", -132, -155)), hands=("open", "open"),
+                expr="overjoyed", **_SEATED)
+    else:
+        ps = _P(t=-84, h=10, ground="body", flat_back=True, legs=(("ik", 60, 1), ("ik", 74, 1)), arms=(("fk", 4, 2), ("fk", -10, -4)),
+                hands=("open", "open"), expr="feverish", hem=0.9, flare=-4)
+
+        def cloth(st):
+            return _head_frame(st, f'<path d="M-6,{fmt(-0.70 * st["m"]["R"])} Q{fmt(0.4 * st["m"]["R"])},{fmt(-0.82 * st["m"]["R"])} '
+                                   f'{fmt(0.86 * st["m"]["R"])},{fmt(-0.40 * st["m"]["R"])} L{fmt(0.80 * st["m"]["R"])},{fmt(-0.24 * st["m"]["R"])} '
+                                   f'Q{fmt(0.3 * st["m"]["R"])},{fmt(-0.56 * st["m"]["R"])} -8,{fmt(-0.50 * st["m"]["R"])} Z" '
+                                   f'fill="#e6f2f4" {_st(2.2)}/>')
+        D["front"] = cloth
+    del v, cc
+    inner, bb, last = _nested(D, m, ps, ps["expr"], marks)
+    return inner, last
+
+
+def _gl_items(kind, D, c, key, phase, food, marks):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        skin = D["skin"]
+        G = st["ground"]
+        s = ""
+        if kind == "lame" and key in ("stand", "walk_a", "walk_b", "sick_sit"):
+            if key == "sick_sit":
+                s += _tube([(-150, G - 6), (60, G - 12)], 8, "#a8744a", ow=2.6) + _tube([(-150, G - 18), (-150, G + 6)], 9, "#c9a46a", ow=2.4)
+            else:
+                s += _gl_crutch(st, {"stand": 6, "walk_a": 20, "walk_b": -6}[key]) + _fist(W1, hr, skin)
+        if kind == "lame" and key == "healed":
+            top = (W0[0] + 6, W0[1] - 70)
+            s += _tube([(W0[0] - 8, W0[1] + 140), top], 8, "#a8744a", ow=2.6)
+            s += _tube([_add(top, (-13, 2)), _add(top, (13, -2))], 9, "#c9a46a", ow=2.4) + _fist(W0, hr, skin)
+        if food and key in ("sit_eat", "receive", "sit_receive"):
+            fish = food == "fish"
+            if key == "sit_eat":
+                s += _lf_held(st, PR._dried_fish("half") if fish else PR._barley_loaf("piece"), (W1[0] + 8, W1[1] - 4), -20, 1.0)
+                s += _fist(W1, hr, skin)
+            else:
+                cpt = _lf_mid(W0, W1, -6)
+                s += _lf_held(st, PR._dried_fish("whole") if fish else PR._barley_loaf("piece"), cpt, -6, 1.0 if fish else 1.2)
+                s += _hand(W1, (0.5, -0.9), "open", skin, hr)
+        if kind == "fever_mother" and key in ("sick_sit", "healed"):
+            healed = key == "healed"
+            inner, last = _gl_child_in_lap(c, healed, marks)
+            if healed:
+                s += f'<g transform="translate(40,{fmt(G - 58)})">{inner}</g>'
+            else:
+                s += f'<g transform="translate({FEVER_CHILD_DX},{fmt(G - 52)}) scale(-1,1)">{inner}</g>'
+            s += _hand(W0, (0.5, 0.8), "open", skin, hr) + _hand(W1, (0.5, -0.8), "open", skin, hr)
+        return s
+    return front
+
+
+def _gl_mother_mid(c, cape):
+    def mid(st):
+        m, tp = st["m"], st["tp"]
+        T, ww, shw = m["T"], m["ww"], m["shw"]
+        s = cape(st) if cape else ""
+        s += _tube([tp(-0.9 * shw, T - 2), tp(0.2 * ww, 0.5 * T), tp(0.85 * ww, 0.05 * T)], 9, c["accent"], ow=2.4)
+        p = tp(0.62 * ww, 0.40 * T)
+        s += f'<g transform="translate({fmt(p[0])},{fmt(p[1])}) rotate({fmt(st["ha"] * 0.3)})">{_gl_baby(c, sleeping=True)}</g>'
+        return s
+    return mid
+
+
+def galilee_folk(x, y, scale=1.0, facing=1, kind="man", variant=0, pose="stand", expr=None, phase=0.0, food=None, marks=True):
+    """The crowd by the Sea of Galilee: fishing and farming families with this film's look - long robes in colour families
+    (GALILEE_FAMILIES: rose, saffron, sky, lilac, brick, cream = variant % 6, three shades = variant // 6) with a short
+    woven shoulder mantle (accent stripe, fringe) - so the seated groups read as garden beds (see module doc, 'LOAVES
+    FILM'). GALILEE_KINDS man (a twisted headband), woman (a head-shawl with an accent edge), mother (a baby asleep in a
+    sling), child (boys a curly mop, girls a headscarf), elder (white beard, woolly cap), lame (the man with the crutch
+    who is healed), fever_mother (sick_sit / healed: her feverish child in her lap). food 'bread' | 'fish' | False for
+    sit_eat / receive / sit_receive (None = bread)."""
+    if kind not in GALILEE_KINDS:
+        raise ValueError(f"galilee_folk: unknown kind {kind!r}; choose from {GALILEE_KINDS}")
+    _ls_check(pose, GALILEE_POSES, "galilee_folk")
+    if food not in GALILEE_FOODS:
+        raise ValueError(f"galilee_folk: unknown food {food!r}; choose from {GALILEE_FOODS}")
+    _ls_expr(expr, "galilee_folk")
+    v = int(variant)
+    ps, key = _gl_pose(kind, pose, phase)
+    D, m, c = _gl_design(kind, v)
+    if kind == "mother":
+        D["mid"] = _gl_mother_mid(c, None)
+        if key in ("stand", "walk_a", "walk_b", "run_a", "run_b", "stand_listen", "arrive", "amazed", "point"):
+            ps["arms"] = (ps["arms"][0], ("ik", "torso", 0.95, 0.30, 1))
+    if kind == "fever_mother" and key in ("sick_sit", "healed"):
+        ps = _P(t=4 if key == "sick_sit" else -6, h=18 if key == "sick_sit" else -8, legs=(("ik", 118, 1), ("ik", 126, 1)),
+                arms=(("ik", "abs", 44, -76, 1), ("ik", "abs", 92, -50, 1)) if key == "sick_sit" else
+                (("ik", "abs", 26, -76, 1), ("ik", "abs", 58, -80, 1)), hands=("open", "open"),
+                expr="worried" if key == "sick_sit" else "joyful", **_SEATED)
+    if kind == "elder" and key in ("stand", "walk_a", "walk_b", "stand_listen"):
+        ps["t"] = ps["t"] + 7
+        ps["arms"] = (ps["arms"][0], ("fk", 22, 30))
+
+        def cane(st):
+            W = st["arms"][1][2]
+            return _staff_line(W[0] + 4, W[1] - 26, st["ground"] - 2, w=7.0, col="#8a5a36") + _fist(W, st["m"]["hr"], D["skin"])
+        D["front"] = cane
+    fronts = [D.get("front"), _gl_items(kind, D, c, key, phase, False if food is False else (food or "bread"), marks)]
+    if key == "sick_lie":
+        def mat(st):
+            G = st["ground"]
+            return (_poly([(-215, G + 2), (150, G + 2), (140, G - 12), (-205, G - 12)], "#c9a46a", sw=2.6) +
+                    _line(f"M-200,{fmt(G - 5)} L140,{fmt(G - 5)}", w=2, col="#9a7a4a") +
+                    _ell(-150, G - 20, 34, 13, c["mantle"], sw=2.4))
+        D["behind"] = _hooks(D.get("behind"), mat)
+
+        def cloth(st):
+            R = st["m"]["R"]
+            return _head_frame(st, f'<path d="M-6,{fmt(-0.70 * R)} Q{fmt(0.4 * R)},{fmt(-0.82 * R)} {fmt(0.86 * R)},{fmt(-0.40 * R)} '
+                                   f'L{fmt(0.80 * R)},{fmt(-0.24 * R)} Q{fmt(0.3 * R)},{fmt(-0.56 * R)} -8,{fmt(-0.50 * R)} Z" '
+                                   f'fill="#e6f2f4" {_st(2.2)}/>')
+        fronts.append(cloth)
+    if marks and key == "wave":
+        fronts.append(_wave_marks)
+    D["front"] = _hooks(*fronts)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"galilee_folk-{kind}{v % 18}-{key}")
+
+
+# ---------------------------------------------------------------- crowds, seated groups, the garden-bed view
+GALILEE_CROWD_POSES = ("run", "walk", "arrive", "stand", "listen", "cheer", "amazed", "point", "wave", "sit", "sit_listen", "sit_eat",
+                       "sit_laugh", "sit_pat_tummy", "groups", "garden")
+
+
+def galilee_crowd(x, y, scale=1.0, facing=1, n=12, pose="stand", width=1000, rows=3, seed=0, phase=0.0, gap=260, family=None,
+                  children=True, depth=500, focus=None, marks=True):
+    """A Galilee crowd of n people in up to `rows` rows centred on x over width*scale (each row behind 40*scale higher and 5%
+    smaller, drawn first; children in front). pose 'run' / 'walk': streaming along the shore toward facing (staggered,
+    alternate frames, elders walking, mothers holding the baby); 'arrive': panting, hands on knees; 'stand' / 'listen' /
+    'cheer' / 'amazed' / 'point' / 'wave': gathered round x, leaving a gap of gap*scale in the middle for Jesus, the two
+    halves facing the middle; 'sit' / 'sit_listen' / 'sit_eat' / 'sit_laugh' / 'sit_pat_tummy': seated rows facing
+    `facing` (or focus = an x they face). family = one of GALILEE_FAMILIES (or its index) makes them one colour group.
+    'groups': galilee_groups(x - width/2*scale, x + width/2*scale, y - depth*scale, y, scale, ...) - the hillside of
+    seated groups; 'garden': garden_beds(...) in the box (x -+ width/2*scale, y - depth*scale .. y) - the high-angle view."""
+    _ls_check(pose, GALILEE_CROWD_POSES, "galilee_crowd")
+    if pose == "groups":
+        return galilee_groups(x - width / 2 * scale, x + width / 2 * scale, y - depth * scale, y, scale, seed=seed, phase=phase,
+                              focus=focus if focus is not None else x, marks=marks)
+    if pose == "garden":
+        return garden_beds(x - width / 2 * scale, y - depth * scale, x + width / 2 * scale, y, seed=seed)
+    import random as _random
+    rng = _random.Random(seed)
+    sx = 1 if facing >= 0 else -1
+    rows = max(1, int(rows))
+    fam = None
+    if family is not None:
+        fam = GALILEE_FAMILIES.index(family) if isinstance(family, str) else int(family) % 6
+    kinds = ["man", "woman", "child", "elder", "man", "mother", "child", "woman", "man", "child", "woman", "man"]
+    if not children:
+        kinds = [k for k in kinds if k != "child"]
+    people = []
+    for i in range(int(n)):
+        kd = kinds[(i + seed) % len(kinds)]
+        v = (i * 7 + seed * 5) % 18
+        if fam is not None:
+            v = fam + 6 * ((i + seed) % 3)
+        people.append((kd, v))
+    if pose not in ("run", "walk"):
+        people.sort(key=lambda p_: 0 if p_[0] == "child" else 1)
+    per = max(1, -(-len(people) // rows))
+    out = ""
+    for r in reversed(range(rows)):
+        grp = people[r * per:(r + 1) * per]
+        if not grp:
+            continue
+        k_r = scale * (1 - 0.05 * r)
+        y_r = y - 40 * scale * r
+        for j, (kind, v) in enumerate(grp):
+            u = (j + 0.5) / len(grp) - 0.5
+            px = x + sx * (u * width * scale + (r % 2) * 40 * scale + rng.uniform(-16, 16) * scale)
+            ph = (phase + 0.37 * j + 0.5 * r) % 1.0
+            f_ = sx
+            p_ = pose
+            if pose in ("run", "walk"):
+                p_ = "walk" if (kind == "elder" or (pose == "walk")) else "run"
+                if kind == "elder" and pose == "run":
+                    p_ = "walk"
+                px += sx * rng.uniform(-30, 30) * scale
+            elif pose in ("stand", "listen", "cheer", "amazed", "point", "wave"):
+                side = -1 if px < x else 1
+                px += side * gap * 0.5 * scale * (1 - 0.2 * r)
+                f_ = -side
+                p_ = {"listen": ("stand_listen", "stand_listen", "stand", "point"),
+                      "stand": ("stand", "stand_listen", "stand", "wave"),
+                      "cheer": ("cheer", "cheer", "amazed", "wave"),
+                      "amazed": ("amazed", "amazed", "point", "cheer"),
+                      "point": ("point", "stand_listen", "point", "amazed"),
+                      "wave": ("wave", "cheer", "wave", "stand")}[pose][(j + r + seed) % 4]
+            elif pose.startswith("sit"):
+                if focus is not None:
+                    f_ = 1 if px < focus else -1
+                if pose == "sit_listen":
+                    p_ = ("sit_listen", "sit", "sit_listen", "sit_listen")[(j + r) % 4]
+                elif pose == "sit_eat":
+                    p_ = ("sit_eat", "sit_eat", "sit_laugh", "sit_eat", "sit_receive")[(j + r + seed) % 5]
+                elif pose == "sit_pat_tummy":
+                    p_ = ("sit_pat_tummy", "sit_laugh", "sit_pat_tummy", "sit")[(j + r) % 4]
+            elif pose == "arrive":
+                p_ = ("arrive", "arrive", "point", "wave")[(j + r) % 4]
+            if kind == "mother" and p_ in ("run",):
+                p_ = "run"
+            out += galilee_folk(px, y_r + rng.uniform(-4, 4) * scale, k_r, f_, kind=kind, variant=v, pose=p_, phase=ph, marks=marks)
+    return f'<g data-who="galilee_crowd-{pose}">{out}</g>'
+
+
+def _mini_sitter(c, k, facing=1, pose="sit", kind="man", seed=0):
+    """A tiny seated person for far groups (cheap: a robe mound, the mantle, a head with hair / head-cloth, little arms);
+    local, anchor = the seat on the ground, ~120*k px tall."""
+    sw = 2.4
+    robe, mantle, skin, hair = c["robe"], c["mantle"], c["skin"], c["hair"]
+    h = (0.72 if kind == "child" else 1.0)
+    s = ""
+    body = [(-34, 0), (40, 0), (34, -30 * h), (16, -70 * h), (-14, -72 * h), (-30, -40 * h)]
+    s += f'<path d="{smooth_path(body, tension=0.7)}" fill="{robe}" {_st(sw / max(k, 0.05))}/>'
+    s += f'<path d="M-20,{fmt(-60 * h)} Q2,{fmt(-44 * h)} 24,{fmt(-60 * h)} L18,{fmt(-74 * h)} L-14,{fmt(-76 * h)} Z" fill="{mantle}"/>'
+    s += _ell(30, -8, 14, 8, skin, sw=sw / max(k, 0.05))
+    hy = -94 * h
+    s += _ell(2, hy, 20 * h + 4, 19 * h + 4, skin, sw=sw / max(k, 0.05))
+    if kind in ("woman", "mother"):
+        s += f'<path d="M-22,{fmt(hy + 14)} Q-26,{fmt(hy - 26)} 4,{fmt(hy - 26)} Q24,{fmt(hy - 24)} 22,{fmt(hy - 6)} Q4,{fmt(hy - 14)} -10,{fmt(hy + 2)} L-6,{fmt(hy + 26)} Z" fill="{mantle}" {_st(sw / max(k, 0.05))}/>'
+    else:
+        s += f'<path d="M-22,{fmt(hy + 4)} Q-22,{fmt(hy - 26)} 4,{fmt(hy - 24)} Q22,{fmt(hy - 22)} 20,{fmt(hy - 8)} Q4,{fmt(hy - 12)} -12,{fmt(hy + 8)} Z" fill="{hair}"/>'
+        if kind == "man":
+            s += _line(f"M-20,{fmt(hy - 6)} Q2,{fmt(hy - 18)} 22,{fmt(hy - 10)}", w=6, col=c["accent"])
+    s += f'<circle cx="12" cy="{fmt(hy)}" r="2.6" fill="{EYE}"/>'
+    if pose == "eat":
+        s += _tube([(18, -62 * h), (26, hy + 14)], 9, robe, ow=sw / max(k, 0.05)) + _ell(26, hy + 12, 7, 6, "#d9a250", sw=1.6 / max(k, 0.05))
+    elif pose == "arms_up":
+        s += _tube([(14, -64 * h), (30, hy - 20)], 9, robe, ow=sw / max(k, 0.05)) + _ell(30, hy - 24, 6, 6, skin, sw=1.6 / max(k, 0.05))
+    if facing < 0:
+        s = f'<g transform="scale(-1,1)">{s}</g>'
+    return s
+
+
+def galilee_groups(x0, x1, y_far, y_near, scale=1.0, groups=None, pose="sit_listen", rows=4, k_far=0.42, seed=0, phase=0.0, focus=None,
+                   per_group=(12, 7), mini=0.3, marks=True):
+    """The crowd sitting in groups on the green slope (Mark 6:39-40) - ABSOLUTE coordinates, drawn far to near. Each
+    group is a little bed of people of ONE colour family (GALILEE_FAMILIES cycling), big beds (per_group[0] people,
+    suggesting a hundred) and small ones (per_group[1], suggesting fifty) alternating, in `rows` rows from y_far (people
+    at k_far x scale) to y_near (scale); or groups = [(x, y, k), ...] (e.g. props.lake_hillside_points()['groups']) to
+    place them yourself. People face focus (an x, e.g. Jesus's rock; None = the middle). pose 'sit_listen' | 'sit' |
+    'sit_eat' (eating, a few laughing and receiving) | 'sit_laugh' | 'sit_pat_tummy' | 'cheer' (arms up, seated people
+    laughing). Figures smaller than `mini` x scale are drawn as simple tiny sitters (cheap). ~1.5-3 s for a full stage:
+    a static layer (or 2-4 frames)."""
+    import random as _random
+    rng = _random.Random(seed)
+    focus = (x0 + x1) / 2 if focus is None else focus
+    if groups is None:
+        groups = []
+        for r in range(int(rows)):
+            u = r / max(1, rows - 1)
+            yy = y_far + (y_near - y_far) * (u ** 1.15)
+            k = k_far + (1 - k_far) * u
+            ng = max(2, int((x1 - x0) / (520 * scale * k)))
+            for j in range(ng):
+                gx = x0 + (x1 - x0) * (j + 0.5 + 0.35 * (r % 2) - 0.17) / ng
+                groups.append((gx, yy, k))
+    groups = sorted(groups, key=lambda g_: g_[1])
+    kinds = ["man", "woman", "child", "man", "mother", "elder", "woman", "child", "man", "woman"]
+    out = ""
+    for gi, (gx, gy, k) in enumerate(groups):
+        fam = (gi * 5 + seed) % 6
+        big = gi % 2 == 0
+        n = per_group[0] if big else per_group[1]
+        cols = 4 if big else 3
+        prow = -(-n // cols)
+        sk = scale * k
+        cells = []
+        for i in range(n):
+            rr, cc = divmod(i, cols)
+            px = gx + (cc - (cols - 1) / 2) * 66 * sk + (rr % 2) * 26 * sk + rng.uniform(-8, 8) * sk
+            py = gy + (rr - (prow - 1) / 2) * 30 * sk + rng.uniform(-4, 4) * sk
+            cells.append((py, px, i))
+        cells.sort()
+        for py, px, i in cells:
+            kind = kinds[(i + gi) % len(kinds)]
+            v = fam + 6 * ((i + gi) % 3)
+            f_ = 1 if px < focus else -1
+            ks = sk * (1 - 0.06 * ((py - gy) < 0))
+            if ks < mini * scale or ks < 0.18:
+                c = _gl_colours(v)
+                mp = "eat" if pose == "sit_eat" and i % 3 != 2 else ("arms_up" if pose == "cheer" and i % 2 else "sit")
+                body = _mini_sitter(c, ks, f_, mp, kind if kind != "elder" else "man", seed + i)
+                out += f'<g transform="translate({px:.1f},{py:.1f}) scale({ks:.4f})" filter="url(#wobble-fine)">{body}</g>'
+                continue
+            p_ = pose
+            if pose == "sit_listen":
+                p_ = ("sit_listen", "sit", "sit_listen", "sit_listen", "sit")[(i + gi) % 5]
+            elif pose == "sit_eat":
+                p_ = ("sit_eat", "sit_eat", "sit_laugh", "sit_eat", "sit_receive", "sit_eat")[(i + gi + seed) % 6]
+            elif pose == "sit_pat_tummy":
+                p_ = ("sit_pat_tummy", "sit_laugh", "sit_pat_tummy", "sit", "sit_pat_tummy")[(i + gi) % 5]
+            elif pose == "cheer":
+                p_ = ("sit_laugh", "sit_laugh", "sit", "sit_pat_tummy")[(i + gi) % 4]
+            if kind == "mother":
+                kind = "woman" if p_ in ("sit_eat", "sit_receive") else kind
+            if kind == "elder" and p_ in ("sit_pat_tummy",):
+                p_ = "sit"
+            out += galilee_folk(px, py, ks, f_, kind=kind, variant=v, pose=p_, phase=(phase + 0.29 * i) % 1.0, marks=marks)
+    return f'<g data-who="galilee_groups-{pose}">{out}</g>'
+
+
+def garden_beds(x0, y0, x1, y1, seed=0, rows=4, cols=None, lake=True, rock=True, beds=None, jesus_=True, helpers=True, time=0.0):
+    """THE GARDEN BEDS (Mark 6:40, '一块一块的小花园'): the seated groups seen from high above - ABSOLUTE box, the same box and
+    arguments as props.hillside_high(x0, y0, x1, y1, ...) underneath. Every bed (props.hillside_high_points()['beds'], or
+    beds = [(cx, cy, w, h, k), ...]) is filled with tiny heads and shoulders in rows - the robes of ONE colour family
+    per bed (GALILEE_FAMILIES cycling), the heads dark hair, head-shawls and headbands - so the groups read as colourful
+    patches on the green. jesus_=True puts Jesus (cream and red, from above) on the rock with the boy beside him;
+    helpers=True a few disciples walking between the beds with baskets. time is unused (the people are not tinted)."""
+    PR = _prp()
+    import random as _random
+    rng = _random.Random(seed)
+    pts = PR.hillside_high_points(x0, y0, x1, y1, rows, cols, seed, lake, rock)
+    beds = pts["beds"] if beds is None else beds
+    out = ""
+    for bi, (cx, cy, w, h, k) in enumerate(beds):
+        fam = _GLF[GALILEE_FAMILIES[(bi * 5 + seed) % 6]]
+        sp = 19 * k
+        nx, ny = max(2, int(w / sp)), max(2, int(h / (sp * 0.95)))
+        dots = []
+        for j in range(ny):
+            for i in range(nx):
+                px = cx - w / 2 + (i + 0.5 + 0.5 * (j % 2)) * w / (nx + 0.5) + rng.uniform(-2, 2) * k
+                py = cy - h / 2 + (j + 0.5) * h / ny + rng.uniform(-2, 2) * k
+                if abs((px - cx) / (w / 2)) ** 3 + abs((py - cy) / (h / 2)) ** 3 > 1.08:
+                    continue
+                dots.append((py, px))
+        dots.sort()
+        body = ""
+        for idx, (py, px) in enumerate(dots):
+            robe = fam["robes"][idx % 3]
+            body += _ell(px, py + 3.2 * k, 8.6 * k, 6.2 * k, robe, sw=1.6)
+            r_ = idx % 5
+            head = ("#2f2219", fam["mantle"], "#241a15", "#4a2f1f", "#ece6da")[r_]
+            body += f'<circle cx="{px:.1f}" cy="{py - 2.2 * k:.1f}" r="{5.0 * k:.2f}" fill="{head}" {_st(1.4)}/>'
+            if r_ == 0:
+                body += f'<path d="M{px - 4.6 * k:.1f},{py - 2.4 * k:.1f} l{9.2 * k:.1f},0" stroke="{fam["accent"]}" stroke-width="{2.2 * k:.2f}"/>'
+            if idx % 7 == 3:
+                body += f'<circle cx="{px + 7 * k:.1f}" cy="{py + 1 * k:.1f}" r="{2.4 * k:.2f}" fill="#efc29c"/>'
+        out += body
+    if jesus_ and rock:
+        rx, ry, rk = pts["rock"]
+        out += _ell(rx, ry - 2 * rk, 13 * rk, 9 * rk, JESUS_ROBE, sw=1.8)
+        out += f'<path d="M{rx - 11 * rk:.1f},{ry - 6 * rk:.1f} L{rx + 9 * rk:.1f},{ry + 4 * rk:.1f}" stroke="{JESUS_MANTLE}" stroke-width="{4.5 * rk:.2f}"/>'
+        out += f'<circle cx="{rx:.1f}" cy="{ry - 9 * rk:.1f}" r="{6.2 * rk:.2f}" fill="{JESUS_HAIR}" {_st(1.4)}/>'
+        out += _ell(rx + 22 * rk, ry + 2 * rk, 7 * rk, 5 * rk, BOY_TUNIC, sw=1.4)
+        out += f'<circle cx="{rx + 22 * rk:.1f}" cy="{ry - 3 * rk:.1f}" r="{4.4 * rk:.2f}" fill="{BOY_HAIR}" {_st(1.2)}/>'
+    if helpers and len(beds) > 3:
+        for j in range(4):
+            a, b = beds[(j * 3 + 1) % len(beds)], beds[(j * 3 + 2) % len(beds)]
+            px = (a[0] + a[2] / 2 + b[0] - b[2] / 2) / 2 if abs(a[1] - b[1]) < 4 else a[0] + a[2] / 2 + 14 * a[4]
+            py = a[1] + rng.uniform(-0.3, 0.3) * a[3]
+            k = a[4]
+            col = _DISCIPLES[(j * 3) % 12]["tunic"]
+            out += _ell(px, py + 3 * k, 9 * k, 6.5 * k, col, sw=1.6)
+            out += f'<circle cx="{px:.1f}" cy="{py - 2.4 * k:.1f}" r="{5.2 * k:.2f}" fill="{_DISCIPLES[(j * 3) % 12]["hair"]}" {_st(1.4)}/>'
+            out += _ell(px + 12 * k, py + 4 * k, 8 * k, 7 * k, "#d4a35a", sw=1.6) + _ell(px + 12 * k, py + 2.5 * k, 5.6 * k, 4.4 * k, "#efc678", sw=0)
+    cid = _clip_id("gbeds", round(x0), round(y0), round(x1), round(y1))
+    return (f'<clipPath id="{cid}"><rect x="{x0:.1f}" y="{y0:.1f}" width="{x1 - x0:.1f}" height="{y1 - y0:.1f}"/></clipPath>'
+            f'<g clip-path="url(#{cid})" data-who="garden_beds"><g filter="url(#wobble-fine)">{out}</g></g>')
+
+
+# ---------------------------------------------------------------- the school children (child(outfit='school' / 'school_friend'))
+LOAVES_OUTFITS = ("school", "school_friend")
+LOAVES_CHILD_POSES = ("sit_picnic", "open_lunchbox", "look_at_friend", "hesitate", "share_half", "receive_share", "eat", "smile", "no_lunch")
+SCHOOL_NAVY = "#34497e"          # the girl: a navy pinafore over a white blouse, a red bow, two braids with red ribbons
+SCHOOL_WHITE = "#f8f4ea"
+SCHOOL_RED = "#d9443a"
+SCHOOL_GIRL_SKIN = "#f2c8a0"
+SCHOOL_GIRL_HAIR = "#1f1a17"
+SCHOOL_BOY_SKIN = "#b8825a"      # the friend: a white polo with a navy collar, navy shorts, round glasses, a cowlick
+SCHOOL_BOY_HAIR = "#2a1d16"
+CHILD_SHARE_GAP = 200            # the two children side by side on the blanket: child(x, ...) and child(x + 200*s*f, ..., -f)
+_LFC_SEAT = dict(legs=(("ik", 58, 1), ("ik", 63, 1)), **_SEATED)
+_LFC = {
+    "sit_picnic": _P(t=-3, arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)), expr="happy", **_LFC_SEAT),
+    "open_lunchbox": None,
+    "look_at_friend": _P(t=4, h=-4, arms=(("ik", "abs", 58, -46, 1), ("ik", "abs", 40, -78, 1)), hands=("fist", "fist"), expr="concerned",
+                         look=(0.07, -0.01), **_LFC_SEAT),
+    "hesitate": _P(t=6, h=14, arms=(("ik", "abs", 46, -74, 1), ("ik", "abs", 32, -70, 1)), hands=("fist", "fist"), expr="ponder",
+                   look=(0.02, 0.06), **_LFC_SEAT),
+    "share_half": _P(t=10, h=-2, arms=(("ik", "knee", 0, 0.25, 1), ("fk", 72, 86)), hands=("fist", "fist"), expr="kind", look=(0.05, 0.0),
+                **_LFC_SEAT),
+    "receive_share": _P(t=10, h=-4, arms=(("ik", "knee", 0, 0.25, 1), ("fk", 70, 82)), hands=("fist", "open"), expr="delighted",
+                        look=(0.05, 0.0), **_LFC_SEAT),
+    "eat": _P(t=-2, h=4, arms=(("ik", "knee", 0, 0.25, 1), ("ik", "head", 0.82, 0.80, 1)), hands=("fist", "fist"), expr="yum", **_LFC_SEAT),
+    "smile": _P(t=-4, h=-6, arms=(("ik", "knee", 0, 0.25, 1), ("ik", "abs", 40, -88, 1)), hands=("fist", "fist"), expr="overjoyed",
+                **_LFC_SEAT),
+    "no_lunch": _P(t=8, h=18, arms=(("ik", "abs", 36, -32, 1), ("ik", "abs", 26, -30, 1)), hands=("open", "open"), expr="sad",
+                   look=(0.02, 0.07), **_LFC_SEAT),
+}
+CHILD_LUNCHBOX = (40, -20)       # open_lunchbox ...: the lunchbox on her lap (its bottom centre, from the seat anchor)
+
+
+def _lfc_pose(pose, phase):
+    if pose == "open_lunchbox":
+        ph = _clamp01(phase)
+        lid = 20 + (36 + 22 * ph) * 0.72
+        return _P(t=8, h=12, arms=(("ik", "abs", 64, -44, 1), ("ik", "abs", 28 + 6 * ph, -lid, 1)), hands=("fist", "fist"),
+                  expr="happy", look=(0.03, 0.07), **_LFC_SEAT)
+    return dict(_LFC[pose])
+
+
+def _school_girl_hat(R):
+    """Black hair with a side parting and a soft fringe, two short braids with red ribbon bows at the back."""
+    s = ""
+    for x0 in (-0.92, -0.62):
+        pts = _spline_pts([(x0 * R, 0.10 * R), ((x0 - 0.08) * R, 0.55 * R), ((x0 - 0.02) * R, 0.95 * R)])
+        s += _tube(pts, 0.19 * R, SCHOOL_GIRL_HAIR, ow=2.4)
+        for t_ in (0.3, 0.6):
+            p = pts[int(t_ * (len(pts) - 1))]
+            s += _line(f"M{fmt(p[0] - 0.08 * R)},{fmt(p[1])} l{fmt(0.16 * R)},{fmt(0.05 * R)}", w=1.6, col=shade(SCHOOL_GIRL_HAIR, 0.4))
+        bx, by = (x0 - 0.02) * R, 0.98 * R
+        s += _poly([(bx, by), (bx - 0.18 * R, by - 0.10 * R), (bx - 0.18 * R, by + 0.12 * R)], SCHOOL_RED, sw=1.8)
+        s += _poly([(bx, by), (bx + 0.18 * R, by - 0.10 * R), (bx + 0.18 * R, by + 0.12 * R)], SCHOOL_RED, sw=1.8)
+    s += _hair_cap(R, SCHOOL_GIRL_HAIR, "short", line=-0.30)
+    s += (f'<path d="M{fmt(0.10 * R)},{fmt(-0.98 * R)} Q{fmt(0.62 * R)},{fmt(-0.82 * R)} {fmt(0.84 * R)},{fmt(-0.36 * R)} '
+          f'Q{fmt(0.52 * R)},{fmt(-0.52 * R)} {fmt(0.22 * R)},{fmt(-0.48 * R)} Q{fmt(0.14 * R)},{fmt(-0.74 * R)} {fmt(0.10 * R)},{fmt(-0.98 * R)} Z" '
+          f'fill="{SCHOOL_GIRL_HAIR}" {_st(2.4)}/>')
+    s += _line(f"M{fmt(-0.05 * R)},{fmt(-1.02 * R)} Q{fmt(-0.30 * R)},{fmt(-0.70 * R)} {fmt(-0.70 * R)},{fmt(-0.38 * R)}", w=2.0,
+               col=shade(SCHOOL_GIRL_HAIR, 0.45))
+    return s + _ear(R, SCHOOL_GIRL_SKIN) + _lashes(R, "dot")
+
+
+def _school_boy_hat(R):
+    """Short dark hair with a cowlick sticking up and round glasses."""
+    s = _hair_cap(R, SCHOOL_BOY_HAIR, "short", line=-0.40)
+    s += (f'<path d="M{fmt(-0.10 * R)},{fmt(-1.02 * R)} Q{fmt(-0.06 * R)},{fmt(-1.40 * R)} {fmt(0.18 * R)},{fmt(-1.30 * R)} '
+          f'Q{fmt(0.02 * R)},{fmt(-1.22 * R)} {fmt(0.12 * R)},{fmt(-1.04 * R)} Z" fill="{SCHOOL_BOY_HAIR}" {_st(2.2)}/>')
+    for x0 in (0.46, 0.70):
+        s += _poly([(x0 * R, -0.52 * R), ((x0 + 0.10) * R, -0.44 * R), ((x0 + 0.02) * R, -0.40 * R)], SCHOOL_BOY_HAIR, sw=1.8)
+    s += _ear(R, SCHOOL_BOY_SKIN)
+    for ex in (-0.10, 0.40):
+        s += f'<circle cx="{fmt(ex * R)}" cy="{fmt(0.04 * R)}" r="{fmt(0.20 * R)}" fill="#e8f2f6" fill-opacity="0.35" {_st(2.4, "#3a3a52")}/>'
+    s += _line(f"M{fmt(0.10 * R)},{fmt(0.02 * R)} L{fmt(0.20 * R)},{fmt(0.02 * R)}", w=2.2, col="#3a3a52")
+    s += _line(f"M{fmt(-0.30 * R)},{fmt(0.02 * R)} L{fmt(-0.80 * R)},{fmt(-0.06 * R)}", w=2.2, col="#3a3a52")
+    return s
+
+
+def _school_legwear(sock_top=0.42, shoe="#2a2630", sole=None, shorts=None):
+    def legwear(st, i):
+        H, K, A, a1, a2 = st["legs"][i]
+        lw = st["m"]["lw"]
+        s_ = ""
+        if shorts:
+            col = shorts if i == 1 else shade(shorts, -0.12)
+            s_ += _tube([H, _lerp(H, K, 0.72)], lw + 10, col, ow=3.2)
+        ds = _nrm(_sub(A, K))
+        sk = SCHOOL_WHITE if i == 1 else shade(SCHOOL_WHITE, -0.08)
+        s_ += _tube([_lerp(K, A, sock_top), _lerp(K, A, 0.96)], lw + 2, sk, ow=2.6)
+        fl = st["m"]["fl"]
+        fa = max(-90.0, min(20.0, _ang(_rot(ds, -90))))
+        sc = shoe if i == 1 else shade(shoe, -0.15)
+
+        def q(x, y_):
+            v = _rot((x * fl, y_ * fl), fa)
+            return (A[0] + v[0], A[1] + v[1])
+        pts = [q(-0.44, -0.20), q(-0.48, 0.40), q(1.10, 0.40), q(1.12, 0.08), q(0.70, -0.14), q(0.10, -0.30)]
+        s_ += f'<path d="{smooth_path(pts, tension=0.6)}" fill="{sc}" {_st(3.0)}/>'
+        if sole:
+            s_ += _line(f"M{_pt(q(-0.46, 0.30))} L{_pt(q(1.10, 0.30))}", w=3.4, col=sole)
+        else:
+            s_ += _line(f"M{_pt(q(0.0, -0.18))} L{_pt(q(0.55, -0.10))}", w=2.4, col=shade(sc, 0.4))
+        return s_
+    return legwear
+
+
+def _school_design(outfit):
+    if outfit == "school":
+        D = dict(robe=SCHOOL_NAVY, sleeve=SCHOOL_WHITE, sleeve_len=0.40, hem_col=shade(SCHOOL_NAVY, 0.18), hem_w=4,
+                 skin=SCHOOL_GIRL_SKIN, leg=SCHOOL_GIRL_SKIN, hem=0.36, flare_k=0.85, hair=None, hat=("custom", _school_girl_hat),
+                 hat_h=0.10, ears=False, bare=True, robe_deco=_pleat_deco(shade(SCHOOL_NAVY, -0.25), 6))
+
+        def collar(st):
+            m, tp = st["m"], st["tp"]
+            T, ww = m["T"], m["ww"]
+            s = ""
+            for sg in (-1, 1):
+                p = [tp(0.05 * ww, T - 1), tp(sg * 0.62 * ww + 0.05 * ww, T - 3), tp(sg * 0.55 * ww + 0.05 * ww, T - 14), tp(0.05 * ww, T - 12)]
+                s += _poly(_rounded(p, 4), SCHOOL_WHITE, sw=2.4)
+            c = tp(0.08 * ww, T - 12)
+            s += _poly([c, (c[0] - 9, c[1] - 6), (c[0] - 9, c[1] + 6)], SCHOOL_RED, sw=1.8)
+            s += _poly([c, (c[0] + 9, c[1] - 6), (c[0] + 9, c[1] + 6)], SCHOOL_RED, sw=1.8)
+            s += f'<circle cx="{fmt(c[0])}" cy="{fmt(c[1])}" r="2.8" fill="{SCHOOL_RED}" {_st(1.4)}/>'
+            for fx in (-0.45, 0.55):
+                a = tp(fx * ww, T - 6)
+                b = tp(fx * ww * 0.9, 0.35 * T)
+                s += _line(f"M{_pt(a)} L{_pt(b)}", w=2.0, col=shade(SCHOOL_NAVY, 0.25))
+            return s
+        D["mid"] = collar
+        D["legwear"] = _school_legwear(0.40, "#2a2630")
+        return D, _metrics(_CHILD, 1.0, 0.98)
+    D = dict(robe=SCHOOL_WHITE, sleeve=SCHOOL_WHITE, sleeve_len=0.45, hem_col=SCHOOL_WHITE, hem_w=3, cuff=SCHOOL_NAVY, skin=SCHOOL_BOY_SKIN,
+             leg=SCHOOL_BOY_SKIN, hem=0.22, flare_k=0.55, hair=None, hat=("custom", _school_boy_hat), hat_h=0.30, ears=False, bare=True)
+
+    def polo(st):
+        m, tp = st["m"], st["tp"]
+        T, ww = m["T"], m["ww"]
+        s = ""
+        for sg in (-1, 1):
+            p = [tp(0.05 * ww, T - 1), tp(sg * 0.58 * ww + 0.05 * ww, T - 2), tp(sg * 0.40 * ww + 0.05 * ww, T - 13), tp(0.05 * ww, T - 9)]
+            s += _poly(_rounded(p, 3), SCHOOL_NAVY, sw=2.2)
+        a, b = tp(0.08 * ww, T - 9), tp(0.08 * ww, T - 26)
+        s += _line(f"M{_pt(a)} L{_pt(b)}", w=2.0, col=shade(SCHOOL_WHITE, -0.3))
+        for t_ in (0.35, 0.8):
+            q = _lerp(a, b, t_)
+            s += f'<circle cx="{fmt(q[0] + 2)}" cy="{fmt(q[1])}" r="1.8" fill="{SCHOOL_NAVY}"/>'
+        pk = tp(-0.40 * ww, 0.62 * T)
+        s += _poly([pk, (pk[0] + 10, pk[1]), (pk[0] + 10, pk[1] + 9), (pk[0], pk[1] + 9)], SCHOOL_RED, sw=1.4)
+        return s
+    D["mid"] = polo
+    D["legwear"] = _school_legwear(0.55, SCHOOL_NAVY, sole=SCHOOL_WHITE, shorts=SCHOOL_NAVY)
+    return D, _metrics(_CHILD, 1.0, 0.98)
+
+
+def _lfc_items(D, outfit, pose, phase, lunch):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        G = st["ground"]
+        skin = D["skin"]
+        s = ""
+        box = lunch if lunch is not None else (outfit == "school")
+        if box and pose in LOAVES_CHILD_POSES and pose not in ("no_lunch", "receive_share"):
+            state = "closed" if pose == "sit_picnic" else ("open" if pose in ("open_lunchbox", "look_at_friend", "hesitate") else "half")
+            lid = _clamp01(phase) if pose == "open_lunchbox" else None
+            s = _lf_held(st, PR._lunchbox(state, lid), (CHILD_LUNCHBOX[0], G + CHILD_LUNCHBOX[1]), -4, 0.72) + s
+        sand = pose in ("look_at_friend", "hesitate", "share_half", "eat", "smile") if outfit == "school" else pose in ("receive_share", "eat", "smile")
+        if lunch is False:
+            sand = False
+        if sand:
+            bite = 0.6 if pose in ("eat", "smile") else 0.0
+            if pose == "eat":
+                s += _lf_held(st, PR._sandwich_half(bite), (W1[0] + 6, W1[1] + 2), -60, 0.9)
+            elif pose == "share_half":
+                s += _lf_held(st, PR._sandwich_half(), (W1[0] + 14, W1[1] + 6), -20, 0.9)
+            elif pose == "receive_share":
+                s += _lf_held(st, PR._sandwich_half(), (W1[0] + 16, W1[1] + 6), 160, 0.9)
+            else:
+                s += _lf_held(st, PR._sandwich_half(bite), (W1[0] + 4, W1[1] + 4), -10, 0.9)
+            s += _fist(W1, hr, skin)
+            if pose == "hesitate":
+                s += _fist(W0, hr, skin)
+        if pose == "open_lunchbox":
+            s += _fist(W1, hr, skin) + _fist(W0, hr, skin)
+        return s
+    return front
+
+
+def _child_loaves(x, y, scale, facing, pose, expr, phase, marks, outfit, lunch):
+    allp = CHILD_POSES + SIBLING_POSES + STORM_CHILD_POSES + LOST_SHEEP_CHILD_POSES + LOAVES_CHILD_POSES
+    if pose not in allp:
+        raise ValueError(f"child: pose {pose!r} is not available for outfit {outfit!r}; choose from {allp}")
+    if outfit not in LOAVES_OUTFITS:
+        raise ValueError(f"child: the poses of LOAVES_CHILD_POSES are for outfit 'school' (default) or 'school_friend', not {outfit!r}")
+    _ls_expr(expr, "child")
+    if pose in LOAVES_CHILD_POSES:
+        ps = _lfc_pose(pose, phase)
+    elif pose in LOST_SHEEP_CHILD_POSES:
+        ps = _lc_pose(pose, phase)
+    elif pose in _SC_POSES:
+        ps = dict(_SC_POSES[pose])
+    elif pose == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * phase)
+        ps = _P(h=-4, arms=(("fk", 146, f), ("fk", -10, -4)), hands=("open", "fist"), expr="happy")
+    elif pose in _SIB_POSES:
+        ps = dict(_SIB_POSES[pose])
+    else:
+        ps = dict(_CH_POSES[pose])
+    D, m = _school_design(outfit)
+    fronts = [D.get("front"), _lfc_items(D, outfit, pose, phase, lunch)]
+    e = expr or ps["expr"]
+    if e == "teary":
+        fronts.append(_teardrop_front)
+    D["front"] = _hooks(*fronts)
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    if pose == "jump":
+        inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
+    return _wrap_out(inner, x, y, scale, facing, f"child-{outfit}-{pose}")
+
+
+_child_before_loaves = child
+
+
+def child(x, y, scale=1.0, facing=1, pose="stand", expr=None, hood=False, boots=True, coat=None, phase=0.0,
+          marks=True, sibling=None, toy=None, outfit=None, pillow=True, item=None, part=None, lunch=None):
+    """A little modern child (see module doc: the raincoat child, the Joseph-film siblings, the Storm-film pyjamas, the
+    Nativity jumper, the Lost Sheep girl, the Zacchaeus tracksuit and, for the Loaves film, outfit='school' / 'school_friend'
+    with the poses of LOAVES_CHILD_POSES and lunch=...). Every earlier call draws exactly what it did before."""
+    if outfit in LOAVES_OUTFITS or pose in LOAVES_CHILD_POSES:
+        return _child_loaves(x, y, scale, facing, pose, expr, phase, marks, outfit or "school", lunch)
+    if lunch is not None:
+        raise ValueError("child: lunch=... is for outfit 'school' / 'school_friend'")
+    return _child_before_loaves(x, y, scale, facing, pose, expr, hood, boots, coat, phase, marks, sibling, toy, outfit, pillow,
+                                item, part)

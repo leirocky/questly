@@ -43,6 +43,13 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   tracksuit boy and the festival dad), zacchaeus_group (scale line-up, the wall of backs, the tree with Jesus looking up, the
   crowd parting, the dinner, the coin glosses) and zacchaeus_modern_group (the festival, the shoulder lift, the sofa). These
   sheets are <= 2000 px wide.
+  Loaves film (python3 tools/character_sheet.py loaves): loaves_jesus (the poses Jesus gains, with the loaves, the fish and
+  the boy's basket), loaves_disciples (the poses the disciples gain: Philip counting, Andrew with the boy, the baskets),
+  loaves_boy (the_boy: poses and basket states), loaves_folk (galilee_folk: kinds x colour families), loaves_folk_poses (the
+  poses, the man with the crutch, the mother with the feverish child, the sick on mats), loaves_crowds (galilee_crowd modes,
+  galilee_groups, garden_beds), loaves_modern (child(outfit='school' / 'school_friend')), loaves_expr (close-ups) and
+  loaves_group (line-up, Jesus teaching on the rock, Philip counting, Andrew bringing the boy, the blessing, handing out
+  the bread, the garden-bed view, twelve full baskets, the lunch share). These sheets are <= 2000 px wide.
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -219,6 +226,7 @@ def sheets():
     out += nativity_sheets()
     out += lost_sheep_sheets()
     out += zacchaeus_sheets()
+    out += loaves_sheets()
     return out
 
 
@@ -1296,6 +1304,261 @@ def zacchaeus_modern_group():
     return path
 
 
+def loaves_sheets():
+    """Sheets for the Loaves film (each <= 2000 px wide so they can be viewed whole)."""
+    out = []
+    items = [("Storm stand (same Jesus)", lambda x, y, s: C.jesus(x, y, s))]
+    items += [(p, lambda x, y, s, p=p: C.jesus(x, y, s, pose=p, phase=0.6)) for p in C.JESUS_LOAVES_POSES]
+    items += [("break_bread phase=0", lambda x, y, s: C.jesus(x, y, s, pose="break_bread", phase=0.0)),
+              ("break_bread phase=.35", lambda x, y, s: C.jesus(x, y, s, pose="break_bread", phase=0.35)),
+              ("break_bread item='fish'", lambda x, y, s: C.jesus(x, y, s, pose="break_bread", phase=1.0, item="fish")),
+              ("look_up_bless item='loaf'", lambda x, y, s: C.jesus(x, y, s, pose="look_up_bless", item="loaf", glow=0.3)),
+              ("give_bread item='fish'", lambda x, y, s: C.jesus(x, y, s, pose="give_bread", item="fish")),
+              ("smile_boy item='basket'", lambda x, y, s: C.jesus(x, y, s, pose="smile_boy", item="basket")),
+              ("sit_down_gesture phase=.5", lambda x, y, s: C.jesus(x, y, s, pose="sit_down_gesture", phase=0.5)),
+              ("ask facing=-1", lambda x, y, s: C.jesus(x, y, s, -1, pose="ask"))]
+    out.append(("loaves_jesus", "Jesus — the poses this film adds (scale 0.8; sit_teach: anchor = the floor, seat 70 up = props.teaching_rock)",
+                items, 9, 220, 340, 0.8, {"ground_pad": 22}))
+    items = []
+    for p in C.DISCIPLE_LOAVES_POSES:
+        if p in ("lead_boy_walk", "carry_basket_walk"):
+            continue
+        v = {"count_fingers": "philip", "shake_head": "philip", "lead_boy": "andrew", "lead_boy_walk_a": "andrew",
+             "lead_boy_walk_b": "andrew", "show_lunch": "andrew", "talk": "peter", "worried": "james"}.get(p, (len(p) * 5) % 12)
+        items.append((f"{v} {p}", lambda x, y, s, p=p, v=v: C.disciples(x, y, s, variant=v, pose=p, phase=0.5)))
+    items += [("hand_out phase=0", lambda x, y, s: C.disciples(x, y, s, variant=6, pose="hand_out", phase=0.0)),
+              ("hand_out food='fish'", lambda x, y, s: C.disciples(x, y, s, variant=2, pose="hand_out", phase=0.5, food="fish")),
+              ("gather phase=0", lambda x, y, s: C.disciples(x, y, s, variant=8, pose="gather", phase=0.0)),
+              ("carry_basket fill=0", lambda x, y, s: C.disciples(x, y, s, variant=9, pose="carry_basket", fill=0.0)),
+              ("carry_basket fill=.5", lambda x, y, s: C.disciples(x, y, s, variant=10, pose="carry_basket", fill=0.5)),
+              ("count_fingers phase=0", lambda x, y, s: C.disciples(x, y, s, variant="philip", pose="count_fingers", phase=0.0)),
+              ("search phase=.6 (looks back)", lambda x, y, s: C.disciples(x, y, s, variant=7, pose="search", phase=0.6)),
+              ("lead_boy + the_boy", lambda x, y, s: C.the_boy(x + C.DISCIPLE_LEAD_BOY[0] * s - 40 * s, y, s, pose="walk_a")
+               + C.disciples(x - 40 * s, y, s, variant="andrew", pose="lead_boy"))]
+    out.append(("loaves_disciples", "The same disciples — the poses this film adds (scale 0.7; Philip = variant 4 = 'philip', Andrew = 1)",
+                items, 9, 220, 330, 0.7, {"ground_pad": 22}))
+    items = [(p, lambda x, y, s, p=p: C.the_boy(x, y - (0 if not p.startswith("sit") else 0), s, pose=p, phase=0.25)) for p in C.BOY_POSES
+             if p != "walk"]
+    items += [("basket='open'", lambda x, y, s: C.the_boy(x, y, s, pose="stand_basket", basket="open")),
+              ("basket='empty' look_up", lambda x, y, s: C.the_boy(x, y, s, pose="look_up", basket="empty")),
+              ("offer_up facing=-1", lambda x, y, s: C.the_boy(x, y, s, -1, pose="offer_up")),
+              ("jesus (scale)", lambda x, y, s: C.jesus(x, y, s))]
+    out.append(("loaves_boy", "the_boy — the boy with five barley loaves and two fish (scale 0.9; poses, basket states; Jesus for scale)",
+                items, 9, 220, 340, 0.9, {"ground_pad": 22}))
+    items = []
+    for k in ("man", "woman", "mother", "child", "elder"):
+        for v in range(6):
+            items.append((f"{k} {C.GALILEE_FAMILIES[v]}", lambda x, y, s, k=k, v=v: C.galilee_folk(x, y, s, kind=k, variant=v + 6 * (v % 3))))
+    out.append(("loaves_folk", "galilee_folk — kinds x colour families (GALILEE_FAMILIES: rose, saffron, sky, lilac, brick, cream) (scale 0.62)",
+                items, 10, 196, 270, 0.62, {"ground_pad": 20}))
+    items = []
+    for i, p in enumerate(C.GALILEE_POSES):
+        if p in ("walk", "run"):
+            continue
+        k = ("man", "woman", "child", "elder", "man", "woman", "child", "mother")[i % 8]
+        items.append((f"{k} {p}", lambda x, y, s, p=p, k=k, i=i: C.galilee_folk(x + (40 * s if p == "sick_lie" else 0), y, s, kind=k,
+                                                                                 variant=(i * 7) % 18, pose=p, phase=0.3)))
+    items += [("lame stand (crutch)", lambda x, y, s: C.galilee_folk(x, y, s, kind="lame", variant=11)),
+              ("lame walk_a", lambda x, y, s: C.galilee_folk(x, y, s, kind="lame", variant=11, pose="walk_a")),
+              ("lame sick_sit", lambda x, y, s: C.galilee_folk(x, y, s, kind="lame", variant=11, pose="sick_sit")),
+              ("lame healed (crutch up)", lambda x, y, s: C.galilee_folk(x, y, s, kind="lame", variant=11, pose="healed")),
+              ("fever_mother sick_sit", lambda x, y, s: C.galilee_folk(x - 30 * s, y, s, kind="fever_mother", variant=3, pose="sick_sit")),
+              ("fever_mother healed", lambda x, y, s: C.galilee_folk(x - 30 * s, y, s, kind="fever_mother", variant=3, pose="healed")),
+              ("child sick_lie (on a mat)", lambda x, y, s: C.galilee_folk(x + 30 * s, y, s, kind="child", variant=4, pose="sick_lie")),
+              ("child healed", lambda x, y, s: C.galilee_folk(x, y, s, kind="child", variant=4, pose="healed")),
+              ("mother run_a", lambda x, y, s: C.galilee_folk(x, y, s, kind="mother", variant=8, pose="run_a")),
+              ("child sit_receive fish", lambda x, y, s: C.galilee_folk(x, y, s, kind="child", variant=5, pose="sit_receive", food="fish"))]
+    out.append(("loaves_folk_poses", "galilee_folk — poses; the man with the crutch; the mother with the feverish child; the sick on mats (scale 0.62)",
+                items, 10, 196, 270, 0.62, {"ground_pad": 20}))
+    items = [(f"school {p}", lambda x, y, s, p=p: C.child(x - 20 * s, y - 40 * s, s, outfit="school", pose=p, phase=0.6))
+             for p in C.LOAVES_CHILD_POSES if p not in ("receive_share", "no_lunch")]
+    items += [(f"friend {p}", lambda x, y, s, p=p: C.child(x, y - 40 * s, s, -1, outfit="school_friend", pose=p, phase=0.5))
+              for p in ("no_lunch", "receive_share", "eat", "smile", "look_at_friend")]
+    items += [(f"{o} {p}", lambda x, y, s, o=o, p=p: C.child(x, y, s, outfit=o, pose=p, phase=0.2))
+              for o in C.LOAVES_OUTFITS for p in ("stand", "walk_a", "wave")]
+    items += [("open_lunchbox phase=0", lambda x, y, s: C.child(x - 20 * s, y - 40 * s, s, outfit="school", pose="open_lunchbox", phase=0.0))]
+    out.append(("loaves_modern", "child(outfit='school' / 'school_friend'): the lunch share (sitting on the blanket: anchor = the seat, 40*s above the line)",
+                items, 9, 220, 300, 0.8, {"ground_pad": 22}))
+    ex = ("teach", "thanks", "warm", "gentle_question", "kind", "smile")
+    items = [(f"jesus {e}", lambda x, y, s, e=e: C.jesus(x, y + 70 * s, s, expr=e)) for e in ex]
+    items += [(f"philip {e}", lambda x, y, s, e=e: C.disciples(x, y + 70 * s, s, variant="philip", expr=e)) for e in ("count", "doubtful", "concerned")]
+    items += [(f"andrew {e}", lambda x, y, s, e=e: C.disciples(x, y + 70 * s, s, variant="andrew", expr=e)) for e in ("doubtful", "amazed")]
+    items += [(f"boy {e}", lambda x, y, s, e=e: C.the_boy(x, y - 30 * s, s, pose="smile", expr=e)) for e in ("shy", "hopeful", "surprised", "yum", "overjoyed")]
+    items += [(f"folk {e}", lambda x, y, s, e=e: C.galilee_folk(x, y + 70 * s, s, kind="woman", variant=2, expr=e)) for e in ("feverish", "yum")]
+    items += [(f"girl {e}", lambda x, y, s, e=e: C.child(x, y - 103 * s, s, outfit="school", expr=e)) for e in ("ponder", "kind")]
+    out.append(("loaves_expr", "Loaves film expressions (close-ups): Jesus; Philip and Andrew; the boy; the crowd; the school girl", items, 8, 230, 300, 1.3,
+                {"clip_cells": True, "ground_pad": -150}))
+    return out
+
+
+def loaves_crowds():
+    """The Galilee crowd at scene scale: running along the shore, gathered round Jesus, sitting in coloured groups on the
+    slope (galilee_groups at lake_hillside_points()['groups']), and the garden-bed view from above."""
+    PR = C._prp()
+    W, H = 2000, 64 + 2 * 620
+    top = 64
+    body, labels = "", []
+    gy = top + 520
+    y0 = top
+    b = PR.galilee_sky(0, y0, 1000, gy, time=0.2, sun=(120, y0 + 80), scale=0.5)
+    b += PR.lakeshore_path(0, 1000, gy - 40, 0.5, time=0.2, part="back", boat=640) + PR.lakeshore_path(0, 1000, gy - 40, 0.5, time=0.2, part="path")
+    b += C.galilee_crowd(470, gy - 40, 0.48, 1, n=12, pose="run", width=1700, rows=2, seed=1, phase=0.3)
+    b += PR.lakeshore_path(0, 1000, gy - 40, 0.5, time=0.2, part="front")
+    body += _panel(0, y0, 1000, 560, b, "lc1")
+    b = PR.galilee_sky(1000, y0, 2000, gy, time=0.3, scale=0.5) + PR.lake_hillside(1000, 2000, gy + 10, 0.4, time=0.3, part="back")
+    b += PR.lake_hillside(1000, 2000, gy + 10, 0.4, time=0.3, part="mid", rock=False)
+    b += C.galilee_crowd(1500, gy - 10, 0.55, 1, n=14, pose="listen", width=760, rows=2, seed=2, gap=200)
+    b += C.jesus(1500, gy + 10, 0.58, 1, pose="teach_stand")
+    body += _panel(1000, y0, 1000, 560, b, "lc2")
+    labels.append((20, top + 570, "galilee_crowd('run') on lakeshore_path (boat=x: the disciples' boat far out) | galilee_crowd('listen', gap=200) round Jesus 'teach_stand'"))
+    gy2 = gy + 620
+    y0 = top + 620
+    s_ = 0.46
+    b = PR.galilee_sky(0, y0, 1000, gy2, time=0.45, sun=(860, y0 + 120), scale=0.4)
+    pts = PR.lake_hillside_points(0, 1000, gy2 - 60, s_)
+    b += PR.lake_hillside(0, 1000, gy2 - 60, s_, time=0.45, part="back", boat=760)
+    b += PR.lake_hillside(0, 1000, gy2 - 60, s_, time=0.45, part="mid")
+    rx, ry, rk = pts["rock"]
+    b += C.jesus(rx, ry, s_ * rk, 1, pose="sit_teach")
+    b += C.galilee_groups(0, 1000, 0, 0, s_, groups=pts["groups"], pose="sit_listen", focus=rx, seed=3)
+    b += PR.lake_hillside(0, 1000, gy2 - 60, s_, time=0.45, part="front")
+    body += _panel(0, y0, 1000, 560, b, "lc3")
+    b = PR.hillside_high(1000, y0, 2000, y0 + 560, time=0.4, seed=5) + C.garden_beds(1000, y0, 2000, y0 + 560, seed=5)
+    body += _panel(1000, y0, 1000, 560, b, "lc4")
+    labels.append((20, top + 1190, "lake_hillside + jesus 'sit_teach' at points()['rock'] + galilee_groups(groups=points()['groups']) | hillside_high + garden_beds (same box)"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Loaves film — the Galilee crowd: running ahead, round Jesus, sitting in groups like garden beds, seen from above")
+    font = ImageFont.truetype(str(FONT_REGULAR), 20)
+    for x0, y0_, text in labels:
+        d.text((x0, y0_), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_loaves_crowds.png"
+    sheet.save(path)
+    return path
+
+
+def loaves_group():
+    """Compositions: the line-up, Jesus teaching on the rock and the healing, Philip counting, Andrew bringing the boy,
+    the blessing, handing out the bread, the garden-bed view, twelve full baskets, the modern lunch share."""
+    PR = C._prp()
+    W, H = 2000, 64 + 5 * 560
+    top = 64
+    body, labels = "", []
+    # 1. line-up
+    gy = top + 500
+    b = PR.galilee_sky(0, top, W, gy, time=0.0, scale=0.5) + PR.lake_hillside(0, W, gy + 40, 0.35, time=0.0, part="back")
+    b += f'<rect x="0" y="{gy - 30}" width="{W}" height="90" fill="#5fb266"/>'
+    xs = 50
+    for fn, kw, w in ((C.jesus, {}, 150), (C.disciples, {"variant": "peter"}, 140), (C.disciples, {"variant": "andrew"}, 130),
+                      (C.disciples, {"variant": "philip"}, 130), (C.the_boy, {"pose": "stand_basket"}, 110),
+                      (C.galilee_folk, {"kind": "man", "variant": 0}, 130), (C.galilee_folk, {"kind": "woman", "variant": 1}, 115),
+                      (C.galilee_folk, {"kind": "mother", "variant": 2}, 125), (C.galilee_folk, {"kind": "child", "variant": 3}, 90),
+                      (C.galilee_folk, {"kind": "child", "variant": 10}, 90), (C.galilee_folk, {"kind": "elder", "variant": 4}, 130),
+                      (C.galilee_folk, {"kind": "lame", "variant": 5}, 130), (C.child, {"outfit": "school"}, 100),
+                      (C.child, {"outfit": "school_friend"}, 100)):
+        b += fn(xs, gy, 0.95, **kw)
+        xs += w * 0.95
+    b += PR.wicker_basket(xs + 60, gy, 0.95) + PR.lunch_basket(xs + 170, gy, 0.95, state="open")
+    body += _panel(0, top, W, 560, b, "lg1")
+    labels.append((20, gy + 14, "scale .95: Jesus, Peter, Andrew, Philip, THE BOY, Galilee man / woman / mother with baby / boy / girl / elder / the man with the crutch, the two school children; a big basket, the boy's basket"))
+    # 2. Jesus teaching on the rock | the healing
+    gy2 = gy + 560
+    y0 = gy2 - 500
+    b = PR.galilee_sky(0, y0, 1000, gy2, time=0.15, sun=(880, y0 + 90), scale=0.5)
+    b += PR.lake_hillside(0, 1000, gy2 + 20, 0.42, time=0.15, part="back") + PR.lake_hillside(0, 1000, gy2 + 20, 0.42, time=0.15, part="mid", rock=False, trees=False)
+    rx, k = 300, 0.6
+    b += PR.teaching_rock(rx, gy2 - 30, k, 1)
+    b += C.jesus(rx, gy2 - 30, k, 1, pose="sit_teach")
+    b += C.galilee_crowd(700, gy2 + 30, 0.5, -1, n=10, pose="sit_listen", width=520, rows=2, seed=3, focus=rx)
+    b += C.disciples(150, gy2 + 10, 0.55, 1, variant=3, pose="stand")
+    body += _panel(0, y0, 1000, 560, b, "lg2")
+    b = PR.galilee_sky(1000, y0, 2000, gy2, time=0.2, scale=0.5) + PR.lake_hillside(1000, 2000, gy2 + 20, 0.42, time=0.2, part="back")
+    b += PR.lake_hillside(1000, 2000, gy2 + 20, 0.42, time=0.2, part="mid", rock=False, trees=False)
+    k = 0.6
+    hx, hy = C.JESUS_HEAL_HAND
+    b += C.galilee_folk(1180 + 140 * k, gy2 + 20, k, -1, kind="lame", variant=11, pose="sick_sit")
+    b += C.jesus(1180, gy2 + 20, k, 1, pose="heal", glow=0.3)
+    b += C.galilee_folk(1560, gy2 + 20, k, -1, kind="lame", variant=11, pose="healed")
+    lx, ly = C.JESUS_HEAL_LOW_HAND
+    b += C.galilee_folk(1800, gy2 + 30, k, -1, kind="fever_mother", variant=3, pose="sick_sit")
+    b += C.jesus(1690, gy2 + 30, k, 1, pose="heal_low")
+    body += _panel(1000, y0, 1000, 560, b, "lg3")
+    labels.append((20, gy2 + 30, "teaching_rock -> jesus 'sit_teach' at the SAME anchor; the crowd sit_listen facing him | 'heal' on the man with the crutch -> 'healed' (crutch up); 'heal_low' with the feverish child"))
+    # 3. Philip counting | Andrew brings the boy -> the boy offers his basket
+    gy3 = gy2 + 560
+    y0 = gy3 - 500
+    b = PR.galilee_sky(0, y0, 1000, gy3, time=0.55, sun=(900, y0 + 200), scale=0.5) + PR.lake_hillside(0, 1000, gy3 + 20, 0.42, time=0.55, part="back")
+    b += PR.lake_hillside(0, 1000, gy3 + 20, 0.42, time=0.55, part="mid", rock=False)
+    k = 0.75
+    b += C.jesus(300, gy3 + 20, k, 1, pose="ask")
+    b += C.disciples(470, gy3 + 20, k, -1, variant="philip", pose="count_fingers", phase=0.7)
+    b += C.disciples(640, gy3 + 20, k, -1, variant="philip", pose="shake_head", phase=0.25)
+    b += C.disciples(800, gy3 + 24, k, -1, variant="james", pose="worried")
+    body += _panel(0, y0, 1000, 560, b, "lg4")
+    b = PR.galilee_sky(1000, y0, 2000, gy3, time=0.55, scale=0.5) + PR.lake_hillside(1000, 2000, gy3 + 20, 0.42, time=0.55, part="back")
+    b += PR.lake_hillside(1000, 2000, gy3 + 20, 0.42, time=0.55, part="mid", rock=False)
+    k = 0.75
+    ax = 1120
+    b += C.the_boy(ax + C.DISCIPLE_LEAD_BOY[0] * k, gy3 + 20 + C.DISCIPLE_LEAD_BOY[1] * k, k, 1, pose="walk_a")
+    b += C.disciples(ax, gy3 + 20, k, 1, variant="andrew", pose="lead_boy_walk_b")
+    bx = 1600
+    b += C.jesus(bx + 150 * k, gy3 + 20, k, -1, pose="smile_boy")
+    b += C.the_boy(bx, gy3 + 20, k, 1, pose="offer_up")
+    b += C.disciples(1880, gy3 + 24, k, -1, variant="andrew", pose="amazed")
+    body += _panel(1000, y0, 1000, 560, b, "lg5")
+    labels.append((20, gy3 + 30, "s04: jesus 'ask' -> Philip 'count_fingers' -> 'shake_head', James 'worried' | s05: Andrew 'lead_boy_walk' + the_boy at DISCIPLE_LEAD_BOY; the boy 'offer_up' -> Jesus 'smile_boy'"))
+    # 4. the blessing and the handing out | the garden-bed view
+    gy4 = gy3 + 560
+    y0 = gy4 - 500
+    b = PR.galilee_sky(0, y0, 1000, gy4, time=0.7, sun=(820, y0 + 260), scale=0.5) + PR.lake_hillside(0, 1000, gy4 + 20, 0.42, time=0.7, part="back")
+    b += PR.lake_hillside(0, 1000, gy4 + 20, 0.42, time=0.7, part="mid", rock=False)
+    k = 0.7
+    b += C.jesus(150, gy4 + 10, k, 1, pose="look_up_bless", glow=0.5)
+    b += C.jesus(330, gy4 + 10, k, 1, pose="break_bread", phase=0.8)
+    b += C.jesus(500, gy4 + 10, k, 1, pose="give_bread")
+    b += C.disciples(500 + 170 * k, gy4 + 10, k, -1, variant=0, pose="receive")
+    gx = 800
+    b += C.galilee_folk(gx + 110 * k, gy4 + 24, k, -1, kind="child", variant=2, pose="sit_receive")
+    b += C.galilee_folk(gx + 210 * k, gy4 + 30, k, -1, kind="woman", variant=8, pose="sit_eat")
+    b += C.disciples(gx, gy4 + 20, k, 1, variant=6, pose="hand_out", phase=0.5)
+    body += _panel(0, y0, 1000, 560, b, "lg6")
+    b = PR.hillside_high(1000, y0, 2000, gy4 + 60, time=0.5, seed=2) + C.garden_beds(1000, y0, 2000, gy4 + 60, seed=2)
+    body += _panel(1000, y0, 1000, 560, b, "lg7")
+    labels.append((20, gy4 + 30, "s07: 'look_up_bless' (glow) -> 'break_bread' -> 'give_bread' -> Peter 'receive'; 'hand_out' -> 'sit_receive' / 'sit_eat' | s06: hillside_high + garden_beds (the same box)"))
+    # 5. twelve full baskets | the modern lunch share
+    gy5 = gy4 + 560
+    y0 = gy5 - 500
+    b = PR.galilee_sky(0, y0, 1000, gy5, time=1.0, sun=(860, gy5 - 260), scale=0.5) + PR.lake_hillside(0, 1000, gy5 + 20, 0.42, time=1.0, part="back")
+    b += PR.lake_hillside(0, 1000, gy5 + 20, 0.42, time=1.0, part="mid", rock=False)
+    b += PR.baskets_row(500, gy5 - 20, 0.55, n=12, gap=150)
+    b += C.disciples(150, gy5 + 30, 0.6, 1, variant=5, pose="gather", phase=0.5)
+    b += C.disciples(850, gy5 + 30, 0.6, -1, variant=4, pose="carry_basket_walk_a")
+    b += C.the_boy(700, gy5 + 40, 0.6, -1, pose="eyes_wide")
+    b += PR.bread_pieces(330, gy5 + 40, 0.6, seed=4)
+    body += _panel(0, y0, 1000, 560, b, "lg8")
+    b = PR.city_park(1000, 2000, gy5 - 40, 0.5)
+    k = 0.75
+    bx = 1500
+    b += PR.picnic_blanket(bx, gy5 + 10, 0.6, width=620, part="back")
+    sy = gy5 - 40
+    b += C.child(bx - 110, sy, k, 1, outfit="school", pose="share_half")
+    b += C.child(bx - 110 + C.CHILD_SHARE_GAP * k, sy, k, -1, outfit="school_friend", pose="receive_share")
+    b += PR.picnic_blanket(bx, gy5 + 10, 0.6, width=620, part="front")
+    body += _panel(1000, y0, 1000, 560, b, "lg9")
+    labels.append((20, gy5 + 30, "s08: props.baskets_row (12 full baskets), 'gather', 'carry_basket_walk', the boy 'eyes_wide' (dusk, time 1) | s02/s09: city_park -> picnic_blanket -> the girl 'share_half' -> the friend 'receive_share'"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Loaves film — line-up, the teaching rock, the healing, Philip counting, the boy's lunch, the blessing, the garden beds, twelve baskets, sharing")
+    font = ImageFont.truetype(str(FONT_REGULAR), 20)
+    for x0, y0_, text in labels:
+        d.text((x0, y0_), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_loaves_group.png"
+    sheet.save(path)
+    return path
+
+
 # ---------------------------------------------------------------- compositions
 
 
@@ -1481,6 +1744,10 @@ def main():
         print(zacchaeus_group())
     if not filt or any(f in "zacchaeus_modern_group" for f in filt):
         print(zacchaeus_modern_group())
+    if not filt or any(f in "loaves_group" for f in filt):
+        print(loaves_group())
+    if not filt or any(f in "loaves_crowds" for f in filt):
+        print(loaves_crowds())
     raster.close()
 
 

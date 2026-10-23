@@ -20,6 +20,8 @@ Lost Sheep film: python3 tools/props_sheet.py lost_sheep_hills lost_sheep_flock 
   lost_sheep_items lost_sheep_modern   (these sheets are <= 2000 px wide)
 Zacchaeus film: python3 tools/props_sheet.py zacchaeus_tree zacchaeus_street zacchaeus_house zacchaeus_coins zacchaeus_grove
   zacchaeus_modern   (these sheets are <= 2000 px wide)
+Loaves film: python3 tools/props_sheet.py loaves_items loaves_baskets loaves_hillside loaves_shore loaves_high loaves_modern
+  (these sheets are <= 2000 px wide)
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -1564,6 +1566,141 @@ def sheet_zacchaeus_modern():
     return render_sheet("zacchaeus_modern", "props — Zacchaeus: the modern frame - the street festival and the cosy evening at home", rows)
 
 
+def _lfc(label, fn, w=245, ax=122, ay=300, bg=None, h=None, ref=None):
+    return _nat_c(label, fn, w, ax, ay, ref=ref, bg=bg, h=h)
+
+
+def _lf_scene(ox, oy, w, h, t, gy, sun=None, k=0.5):
+    return PR.galilee_sky(ox, oy, ox + w, gy + 40, time=t, sun=sun, scale=k) + \
+        f'<rect x="{ox}" y="{gy}" width="{w}" height="{oy + h - gy}" fill="{PR._lf_pal(t)["grass"][1]}"/>'
+
+
+def sheet_loaves_items():
+    g = "#cfe8c0"
+    rows = [
+        (220, [_lfc(f"barley_loaf {st}", lambda x, y, st=st: PR.barley_loaf(x, y - 90, 2.2, state=st), 245, 122, 210, bg=g) for st in PR.LOAF_STATES]
+         + [_lfc(f"dried_fish {st}", lambda x, y, st=st: PR.dried_fish(x, y - 90, 2.2, state=st), 245, 122, 210, bg=g) for st in PR.FISH_STATES[:3]]),
+        (300, [_lfc(f"lunch_basket {st}", lambda x, y, st=st: PR.lunch_basket(x, y - 20, 2.0, state=st), 245, 122, 290, bg=g) for st in PR.LUNCH_STATES]
+         + [_lfc("dried_fish pair", lambda x, y: PR.dried_fish(x, y - 120, 2.2, state="pair"), 245, 122, 290, bg=g),
+            _lfc("lunch_basket time=.5 / 1", lambda x, y: PR.lunch_basket(x - 55, y - 20, 1.2, state="open", time=0.5) + PR.lunch_basket(x + 55, y - 20, 1.2, state="open", time=1.0), 245, 122, 290, bg=g),
+            _lfc("galilee_flower x3 (x2)", lambda x, y: "".join(PR.galilee_flower(x - 70 + 70 * i, y - 30, 2.0, kind=k_) for i, k_ in enumerate(PR.LF_FLOWERS)), 245, 122, 290, bg=g),
+            _lfc("loaf rot / boy scale", lambda x, y: CH.the_boy(x - 40, y - 10, 0.9, pose="offer_up") + PR.barley_loaf(x + 70, y - 60, 1.4, rot=30), 245, 122, 290, bg=g, ref=None),
+            _lfc("teaching_rock (scale .5)", lambda x, y: PR.teaching_rock(x + 30, y - 20, 0.5), 245, 122, 290, bg=g)]),
+        (260, [_lfc(f"lunchbox {st}", lambda x, y, st=st: PR.lunchbox(x, y - 40, 2.0, state=st), 245, 122, 250, bg="#f3ecd8") for st in PR.LUNCHBOX_STATES]
+         + [_lfc("lunchbox lid=.5", lambda x, y: PR.lunchbox(x, y - 40, 2.0, state="open", lid=0.5), 245, 122, 250, bg="#f3ecd8"),
+            _lfc("sandwich_half bite 0 / .6", lambda x, y: PR.sandwich_half(x - 50, y - 60, 2.4) + PR.sandwich_half(x + 50, y - 60, 2.4, bite=0.6), 245, 122, 250, bg="#f3ecd8"),
+            _lfc("far_boat full / furled (0.1)", lambda x, y: PR.far_boat(x - 10, y - 150, 0.1) + PR.far_boat(x - 10, y - 30, 0.1, sail="furled"), 245, 122, 250, bg="#7fbcd0")]),
+    ]
+    return render_sheet("loaves_items", "props — Loaves: barley loaves and dried fish, the boy's little basket, the lunchbox and sandwich, flowers, the far boat", rows)
+
+
+def sheet_loaves_baskets():
+    def disc(ox, oy):
+        gy = oy + 360
+        s = _lf_scene(ox, oy, 980, 420, 0.8, gy - 60)
+        s += PR.baskets_row(ox + 560, gy - 10, 0.62, n=12)
+        s += CH.disciples(ox + 120, gy + 20, 0.62, 1, variant=5, pose="gather", phase=0.5)
+        s += PR.bread_pieces(ox + 250, gy + 26, 0.62, seed=2)
+        s += CH.disciples(ox + 900, gy + 20, 0.62, -1, variant=2, pose="carry_basket_walk_a")
+        return s
+    rows = [
+        (300, [_lfc(f"wicker_basket fill={f}", lambda x, y, f=f: PR.wicker_basket(x, y - 20, 1.4, fill=f), 245, 122, 290, bg="#cfe8c0") for f in (0.0, 0.25, 0.5, 0.75, 1.0)]
+         + [_lfc("food='bread'", lambda x, y: PR.wicker_basket(x, y - 20, 1.4, food="bread"), 245, 122, 290, bg="#cfe8c0"),
+            _lfc("bread_pieces n=9", lambda x, y: PR.bread_pieces(x, y - 60, 1.4, n=9, seed=1), 245, 122, 290, bg="#cfe8c0"),
+            _lfc("dusk time=1", lambda x, y: PR.wicker_basket(x, y - 20, 1.4, time=1.0), 245, 122, 290, bg="#9aa880")]),
+        (420, [Cell("baskets_row(n=12): '装满了十二个篮子' (6 + 6) with a disciple gathering and one carrying (time .8)", disc, 980, [(560, 350)]),
+               Cell("disciples carry_basket fill 0 / .5 / 1, receive, hand_out (person scale check)",
+                    lambda ox, oy: _lf_scene(ox, oy, 980, 420, 0.2, oy + 300) + "".join(
+                        CH.disciples(ox + 110 + 190 * i, oy + 380, 0.75, 1, variant=i * 2, pose=p, fill=f, phase=0.5)
+                        for i, (p, f) in enumerate((("carry_basket", 0.0), ("carry_basket", 0.5), ("carry_basket", 1.0), ("receive", 0.5), ("hand_out", 1.0)))),
+                    980, [(110, 380)])]),
+    ]
+    return render_sheet("loaves_baskets", "props — Loaves: the big wicker baskets (empty / half / full), the leftovers, twelve full baskets", rows)
+
+
+def sheet_loaves_hillside():
+    def hill(ox, oy, w, t, k=0.5, groups=False, boat=None):
+        gy = oy + 560
+        s = PR.galilee_sky(ox, oy, ox + w, gy - 200, time=t, sun=(ox + w * 0.82, oy + 90 + 140 * t), birds=2, scale=k)
+        s += PR.lake_hillside(ox, ox + w, gy - 40, k, time=t, part="back", boat=boat)
+        s += PR.lake_hillside(ox, ox + w, gy - 40, k, time=t, part="mid")
+        pts = PR.lake_hillside_points(ox, ox + w, gy - 40, k)
+        if groups:
+            rx, ry, rk = pts["rock"]
+            s += CH.jesus(rx, ry, k * rk, 1, pose="sit_teach")
+            s += CH.galilee_groups(0, 0, 0, 0, k, groups=pts["groups"], pose="sit_listen", focus=rx, seed=4)
+        s += PR.lake_hillside(ox, ox + w, gy - 40, k, time=t, part="front")
+        for gx, gyy, gk in ([] if groups else pts["groups"]):
+            s += f'<circle cx="{gx:.1f}" cy="{gyy:.1f}" r="{8 * gk:.1f}" fill="#3a7bd5" opacity="0.7"/>'
+        return s
+    rows = [
+        (600, [Cell("lake_hillside time 0 (warm late afternoon): back / mid / front, the teaching rock; blue dots = lake_hillside_points()['groups']",
+                    lambda ox, oy: hill(ox, oy, 1960, 0.0, boat=ox + 1300), 1960, [(0, 520)])]),
+        (600, [Cell("time .5 (golden hour) with Jesus 'sit_teach' at points()['rock'] and galilee_groups at points()['groups']",
+                    lambda ox, oy: hill(ox, oy, 980, 0.5, 0.42, True), 980, [(0, 520)]),
+               Cell("time 1 (dusk): violet hills, the lake glowing; the boat furled", lambda ox, oy: hill(ox, oy, 980, 1.0, 0.42, boat=ox + 700), 980, [(0, 520)])]),
+    ]
+    return render_sheet("loaves_hillside", "props — Loaves: the emerald hillside above the Sea of Galilee (galilee_sky + lake_hillside), afternoon -> golden -> dusk", rows)
+
+
+def sheet_loaves_shore():
+    def shore(ox, oy, w, t, crowd=False):
+        gy = oy + 500
+        s = PR.galilee_sky(ox, oy, ox + w, gy - 100, time=t, sun=(ox + 200, oy + 100), birds=3, scale=0.5)
+        s += PR.lakeshore_path(ox, ox + w, gy, 0.5, time=t, part="back", boat=ox + w * 0.62)
+        s += PR.lakeshore_path(ox, ox + w, gy, 0.5, time=t, part="path")
+        if crowd:
+            s += CH.galilee_crowd(ox + w / 2, gy, 0.48, 1, n=14, pose="run", width=w * 1.6, rows=2, seed=3, phase=0.4)
+        s += PR.lakeshore_path(ox, ox + w, gy, 0.5, time=t, part="front")
+        return s
+    rows = [
+        (620, [Cell("lakeshore_path time .2 (back / path / front), the disciples' boat far out (far_boat), the village on the bank",
+                    lambda ox, oy: shore(ox, oy, 1960, 0.2), 1960, [(0, 500)])]),
+        (620, [Cell("with galilee_crowd(pose='run') - '大家沿着湖边，跑啊跑'", lambda ox, oy: shore(ox, oy, 1960, 0.25, True), 1960, [(0, 500)])]),
+    ]
+    return render_sheet("loaves_shore", "props — Loaves: the lakeshore path - the crowd runs ahead of the boat", rows)
+
+
+def sheet_loaves_high():
+    def high(ox, oy, w, h, t, people=True, seed=2, rows=4, cols=None, lake=True):
+        s = PR.hillside_high(ox, oy, ox + w, oy + h, time=t, seed=seed, rows=rows, cols=cols, lake=lake)
+        if people:
+            s += CH.garden_beds(ox, oy, ox + w, oy + h, seed=seed, rows=rows, cols=cols, lake=lake)
+        else:
+            for (cx, cy, bw, bh, k) in PR.hillside_high_points(ox, oy, ox + w, oy + h, seed=seed)["beds"]:
+                s += f'<rect x="{cx - bw / 2:.1f}" y="{cy - bh / 2:.1f}" width="{bw:.1f}" height="{bh:.1f}" fill="none" stroke="#3a7bd5" stroke-width="3" stroke-dasharray="10 6"/>'
+        return s
+    rows = [
+        (640, [Cell("hillside_high + characters.garden_beds (time .4): '从高处看，一组一组的人，就像一块一块的小花园'", lambda ox, oy: high(ox, oy, 1180, 640, 0.4), 1180, []),
+               Cell("hillside_high alone; dashed = hillside_high_points()['beds']", lambda ox, oy: high(ox, oy, 780, 640, 0.4, False), 780, [])]),
+        (440, [Cell("rows=3, cols=4, lake=False (time .8)", lambda ox, oy: high(ox, oy, 980, 440, 0.8, seed=6, rows=3, cols=4, lake=False), 980, []),
+               Cell("dusk (time 1), seed 9", lambda ox, oy: high(ox, oy, 980, 440, 1.0, seed=9), 980, [])]),
+    ]
+    return render_sheet("loaves_high", "props — Loaves: the high-angle view of the hillside, the groups as garden beds", rows)
+
+
+def sheet_loaves_modern():
+    def park(ox, oy):
+        gy = oy + 560
+        s = PR.city_park(ox, ox + 1960, gy - 60, 0.5, part="back")
+        bx = ox + 980
+        s += PR.picnic_blanket(bx, gy, 0.62, width=620, part="back")
+        k = 0.7
+        s += CH.child(bx - 120, gy - 50, k, 1, outfit="school", pose="hesitate")
+        s += CH.child(bx - 120 + CH.CHILD_SHARE_GAP * k, gy - 50, k, -1, outfit="school_friend", pose="no_lunch")
+        s += PR.picnic_blanket(bx, gy, 0.62, width=620, part="front")
+        s += PR.city_park(ox, ox + 1960, gy - 60, 0.5, part="front")
+        return s
+    rows = [
+        (640, [Cell("city_park (back / front) -> picnic_blanket back -> the girl 'hesitate' (lunchbox on her lap), the friend 'no_lunch' -> blanket front", park, 1960, [(980, 560)])]),
+        (300, [_lfc("picnic_blanket (width 400)", lambda x, y: PR.picnic_blanket(x, y - 30, 0.8, width=400), 490, 245, 290, bg="#7ccb6a"),
+               _lfc("picnic_blanket color='#f08a7a'", lambda x, y: PR.picnic_blanket(x, y - 30, 0.8, width=400, color="#f08a7a"), 490, 245, 290, bg="#7ccb6a"),
+               _lfc("lunchbox (person scale) + girl sit_picnic", lambda x, y: CH.child(x - 30, y - 40, 0.9, outfit="school", pose="sit_picnic"), 490, 245, 290, bg="#7ccb6a"),
+               _lfc("city_park time / part all (0.25)", lambda x, y: PR.city_park(x - 240, x + 240, y - 50, 0.22), 490, 245, 290)]),
+    ]
+    return render_sheet("loaves_modern", "props — Loaves: the modern frame - a sunny city park, the picnic blanket, the lunchbox", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
           "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
           "lions": sheet_lions, "daniel": sheet_daniel, "david_items": sheet_david_items,
@@ -1581,7 +1718,9 @@ SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor"
           "lost_sheep_items": sheet_lost_sheep_items, "lost_sheep_modern": sheet_lost_sheep_modern,
           "zacchaeus_tree": sheet_zacchaeus_tree, "zacchaeus_street": sheet_zacchaeus_street,
           "zacchaeus_house": sheet_zacchaeus_house, "zacchaeus_coins": sheet_zacchaeus_coins,
-          "zacchaeus_grove": sheet_zacchaeus_grove, "zacchaeus_modern": sheet_zacchaeus_modern}
+          "zacchaeus_grove": sheet_zacchaeus_grove, "zacchaeus_modern": sheet_zacchaeus_modern,
+          "loaves_items": sheet_loaves_items, "loaves_baskets": sheet_loaves_baskets, "loaves_hillside": sheet_loaves_hillside,
+          "loaves_shore": sheet_loaves_shore, "loaves_high": sheet_loaves_high, "loaves_modern": sheet_loaves_modern}
 
 
 def main():
