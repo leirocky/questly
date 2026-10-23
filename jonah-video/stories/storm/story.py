@@ -67,7 +67,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s04_shore", "mood": "nineveh",
+        "id": "s04_shore", "transition": "dippaper", "mood": "nineveh",
         "note": "Mark 4:1-2. The lakeshore: green hills, a fishing village, nets drying; a big crowd gathers; Jesus "
                 "sits in a boat just off the shore and teaches (gestures, children listening at the front).",
         "lines": [
@@ -154,7 +154,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s13_who", "mood": "lesson",
+        "id": "s13_who", "transition": "dippaper", "mood": "lesson",
         "note": "4:41. The disciples look at each other in wonder and awe, whispering; the calm lake shines; the boat "
                 "glides on toward the far shore at dawn.",
         "lines": [
