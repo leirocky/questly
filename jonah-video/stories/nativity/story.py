@@ -49,7 +49,7 @@ NO_BREAK = ["耶稣", "马利亚", "约瑟", "伯利恒", "拿撒勒", "罗马"]
 # optional lead_in / tail seconds, and lines: (speaker, text[, pause_after_s]).
 SCENES = [
     {
-        "id": "s01_title", "mood": "title", "lead_in": 1.6, "tail": 1.6,
+        "id": "s01_title", "mood": "title", "lead_in": 1.6, "tail": 2.4,
         "note": "Title page: a little stable under a deep blue starry sky over the hills of Bethlehem, one big golden "
                 "star shining down on it, warm lamplight from inside, a few sheep on the hillside.",
         "lines": [("N", "圣经绘本：耶稣降生。")],
@@ -171,12 +171,12 @@ SCENES = [
             ("N", "忽然，那颗星星又出现了，在前面给他们带路！"),
             ("N", "星星一直走到伯利恒，停在了一座房子的上面。"),
             ("N", "博士们高兴极了！他们走进房子，看见了小耶稣和妈妈马利亚，就跪下来拜他。"),
-            ("N", "他们打开宝盒，送上了三样礼物：黄金、乳香，还有没药。"),
+            ("N", "他们打开宝盒，送上了三样礼物。黄金、乳香，还有没药。"),
             ("N", "乳香和没药，都是又香又贵重的香料。这些，都是送给王的宝贝！"),
         ],
     },
     {
-        "id": "s12_end", "transition": "dippaper", "mood": "end",
+        "id": "s12_end", "transition": "dippaper", "mood": "end", "tail": 5.5,   # the 2 s answer pause, the end card, a hold, the fade-out
         "note": "Ending: back to the modern child at the Christmas tree, placing a little nativity set under it; warm "
                 "light; the star on the tree glows; closing question with a pause.",
         "lines": [

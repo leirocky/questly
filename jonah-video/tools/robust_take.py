@@ -1,10 +1,12 @@
 """Retake one line (delete its .cache/tts wav and takes/ flac first, or this overwrites the cache). Generate takes of one line until the raw clip passes every check AND the processed line (as the voice stage makes
 it) is heard with every name right, by toneless pinyin; save it to the line's cache path.
-PB_STORY=<story> .venv/bin/python tools/robust_take.py <story> <speaker> 'text'"""
+PB_STORY=<story> .venv/bin/python tools/robust_take.py <story> <speaker> 'text' [--exact]"""
 import sys; sys.path.insert(0, '.')
 import numpy as np, soundfile as sf, voice.tts as T
 from scipy import signal
 spk, text = sys.argv[2], sys.argv[3]; v = T.VOICES[spk]
+exact = '--exact' in sys.argv   # also: the processed line's toneless pinyin must equal the script's (星 heard as 心)
+from pypinyin import lazy_pinyin
 path = T._cache_path(text, v, T._relevant_entries(text, T._zipvoice_content().splitlines()))
 tts = T._engine("zipvoice"); px, psr, pt = T._prompt(v)
 def processed(x, sr):
@@ -22,7 +24,7 @@ for n, (spd, steps) in enumerate([(v["speed"], 8), (v["speed"], 12), (v["speed"]
     x = np.asarray(a.samples, np.float32); sr = a.sample_rate
     bad, err = T._take_score(text, x, sr)
     h2 = heard(processed(x, sr), T.SR)
-    ok = not bad and not T._misheard_name(text, h2)
+    ok = not bad and not T._misheard_name(text, h2) and (not exact or lazy_pinyin(T._norm(h2)) == lazy_pinyin(T._norm(text)))
     print(n, spd, steps, round(err, 3), "BAD" if bad else "", h2, "OK" if ok else "", flush=True)
     if ok:
         sf.write(path, x, sr); print("saved", path); break

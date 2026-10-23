@@ -53,7 +53,7 @@ NO_BREAK = ["耶稣", "法利赛人", "牧羊人"]  # read in one breath (耶和
 # optional lead_in / tail seconds, and lines: (speaker, text[, pause_after_s]).
 SCENES = [
     {
-        "id": "s01_title", "mood": "title", "lead_in": 1.6, "tail": 1.6,
+        "id": "s01_title", "mood": "title", "lead_in": 1.6, "tail": 2.4,
         "note": "Title page: a spring hillside in soft morning light, a shepherd with his crook watching a big flock; "
                 "one little lamb a little apart, nibbling a flower. A new storybook look: mint green, buttercup "
                 "yellow, a wide blue sky with round clouds.",
@@ -180,7 +180,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s12_end", "transition": "dippaper", "mood": "end",
+        "id": "s12_end", "transition": "dippaper", "mood": "end", "tail": 5.5,   # the 2 s answer pause, the end card, a hold, the fade-out
         "note": "Ending: the modern child from the opening at bedtime, hugging a soft toy lamb; a picture-book "
                 "corner shows the shepherd carrying the lamb home under the moon; warm light; closing questions "
                 "with pauses.",

@@ -50,7 +50,7 @@ NO_BREAK = ["耶稣", "撒该", "耶利哥", "罗马"]  # read in one breath (�
 # optional lead_in / tail seconds, and lines: (speaker, text[, pause_after_s]).
 SCENES = [
     {
-        "id": "s01_title", "mood": "title", "lead_in": 1.6, "tail": 1.6,
+        "id": "s01_title", "mood": "title", "lead_in": 1.6, "tail": 2.4,
         "note": "Title page: a big sycamore-fig tree by a dusty road in Jericho, palms behind, a little man peeking "
                 "out from its leaves with a big smile; warm golden light, a hazy turquoise sky.",
         "lines": [("N", "圣经绘本：撒该爬上桑树。")],
@@ -166,7 +166,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s11_end", "transition": "dippaper", "mood": "end",
+        "id": "s11_end", "transition": "dippaper", "mood": "end", "tail": 5.5,   # the 2 s answer pause, the end card, a hold, the fade-out
         "note": "Ending: the modern child from the opening, at home in the evening with dad, looking at a picture-book "
                 "page of Zacchaeus in the tree (the door of their home in view, matching '到你家来'); warm light; closing question with a pause.",
         "lines": [
