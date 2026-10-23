@@ -1,7 +1,7 @@
 """Scene 10 — far away in the East, the wise men see the star and set off (Matthew 2:1-2, 9).
 
 N '在很远很远的东方，住着几位博士。博士，就是很有学问、会研究星星的人。' / N '有一天，他们看见天上出现了一颗特别的星星。' /
-W '这颗星告诉我们，有一位王出生了。我们去拜他吧！' / N '他们出发了。走啊走，走啊走，走了好久好久。'
+W '这颗星星告诉我们，有一位王出生了。我们去拜他吧！' / N '他们出发了。走啊走，走啊走，走了好久好久。'
 
 One 4000 x 1480 stage at dusk (s11_gifts shares it): violet-rose sky with the first stars, far violet hills, a ziggurat,
 dunes with palms and a trader's tent on the left, the Eastern city (mud-brick houses with blue tiles and turquoise
@@ -21,9 +21,10 @@ voice clip with the speech recogniser, see syllables(); nothing is hard-coded to
           '我们去'  all three bend to their treasures;  '拜'  they stand holding them (carry_gift) - the cushions are empty.
   line 3  a page-turn dip through the paper colour (no two shots' people overlap) to THE JOURNEY: the three camels with
           their riders (props.camel saddles + wise_men 'ride') walk in place while their ground strip scrolls with the
-          planted feet; '走' '走' '走' '走' '走' each land a footfall (soft thud); the day-phase sky runs at an even, calm
-          pace through two days, dawn -> a smiling sun with clouds -> evening -> night -> dawn -> day -> evening -> night
-          (~2.9 s per day; sun and moon on their own arcs, a light tint follows the sky); the dip is ~0.9 s, like the
+          planted feet; '走' '走' '走' '走' '走' each land a footfall (soft thud); the sky runs calmly through two days,
+          dawn -> a smiling sun with clouds -> evening -> night -> dawn -> day -> evening -> night (~2.9 s per day), timed
+          so its colour changes at an even rate with no flick (sky_phase_map; the flipbook crossfades through the wrap
+          into dawn); sun and moon on their own arcs, a light tint follows the sky; the dip is ~0.9 s, like the
           dips between scenes; the landscape changes on the 走 beats: dunes with the city far behind -> rose rocky mesas ->
           dunes past a palm oasis -> the night road with dark hills and olive trees ahead. The star does not lead them
           (Matthew 2:9: it appears again in s11).
@@ -963,6 +964,38 @@ def add_camels(sc, tag, cs, base, us, phase, dx=None, stand=None, rider_sched=No
 
 
 # ================================================================== the journey (shared with s11_gifts)
+def light_factors(phase):
+    """Per-channel multiply that tints the journey toward the time of day (moonlit night, warm dawn / evening)."""
+    p = phase % 1.0
+    nn = clamp(1 - abs(p - 0.75) / 0.2) if 0.55 < p < 0.95 else 0.0
+    warm = max(clamp(1 - abs(p - 0.5) / 0.09), clamp(1 - min(p, 1 - p) / 0.09))
+    return ((1 - 0.52 * nn) * (1 - 0.02 * warm), (1 - 0.42 * nn) * (1 - 0.15 * warm), (1 - 0.12 * nn) * (1 - 0.28 * warm))
+
+
+_PMAP = {}
+
+
+def sky_phase_map(p0, p1, steady=0.6, n=3500):
+    """(u, phase) samples mapping even progress u 0..1 to the day phase p0..p1 so that the seen sky colour (the sky
+    gradient times light_factors) changes at an even rate; ``steady`` adds time in proportion to plain phase, so the sun
+    and moon still travel through the steady day and night. Ends are exact (p0 at u=0, p1 at u=1)."""
+    key = (p0, p1, steady, n)
+    if key not in _PMAP:
+        ps = np.linspace(p0, p1, n)
+
+        def seen(p):
+            cols = np.array([S.hex_rgb(c) for c in PR._sky_at(p % 1.0)[:4]], np.float32).mean(0)
+            return cols * np.array(light_factors(p), np.float32)
+        cs = np.array([seen(p) for p in ps])
+        dc = np.abs(np.diff(cs, axis=0)).sum(1)
+        dp = np.diff(ps)
+        dc_total = float(dc.sum())
+        w = dc + steady * dc_total / (p1 - p0) * dp
+        u = np.concatenate([[0.0], np.cumsum(w)])
+        _PMAP[key] = (u / u[-1], ps)
+    return _PMAP[key]
+
+
 def journey_plan(ctx10):
     """Card timing and the sky's day phase as functions of JOURNEY time (= s10 scene time; s11 adds its offset)."""
     ph, steps = gait(ctx10)
@@ -973,8 +1006,13 @@ def journey_plan(ctx10):
     tB = steps[2] - 0.22
     tC = steps[4] - 0.22
     tD = min(ctx10.lines[3].end - 0.1, ctx10.duration - XF - 0.6)   # card D is complete before the dissolve to s11
-    # two calm days: from dawn as they set off to the second night, at an even pace (~3 s per day)
-    sky = keyed([(tA, 1.0), (max(tD + 0.5, ctx10.duration - XF), 2.75)], "linear")
+    # two calm days: from dawn as they set off to the second night (~2.9 s per day), timed so the sky's colour changes
+    # at an even rate (see sky_phase_map): no frame-to-frame step is large, also not at the wrap into dawn
+    lin = keyed([(tA, 0.0), (max(tD + 0.5, ctx10.duration - XF), 1.0)], "linear")
+    us, ps = sky_phase_map(1.0, 2.75)
+
+    def sky(t):
+        return float(np.interp(lin(t), us, ps))
     return dict(ph=ph, steps=steps, t_in=t_in, tA=tA, tB=tB, tC=tC, tD=tD, sky=sky)
 
 
@@ -1024,10 +1062,12 @@ def add_journey(sc, ctx10, toff=0.0, rider_sched=None, z0=50.0, late=False, alph
     if late:                                                  # night (phase .75 = frame 18 of the flipbook)
         sc.add("j_sky", jsky_svg(18 / NS), z=z0, motion=alpha_m(aA), wc=0.6, seed=501)
     else:
-        sky_frames = [jsky_svg(k / NS) for k in range(NS)]
+        # NS + 1 frames: the last one (phase 1.0) is the dawn of frame 0 again, so the flipbook crossfades through the
+        # wrap from the end of the night into dawn instead of snapping from frame NS - 1 back to frame 0
+        sky_frames = [jsky_svg(k / NS) for k in range(NS + 1)]
 
         def sky_fa(t):
-            return min((sky(jt(t)) % 1.0) * NS, NS - 1.0)
+            return min((sky(jt(t)) % 1.0) * NS, float(NS))
         sc.add("j_sky", sky_frames, z=z0, frame_at=sky_fa, motion=alpha_m(aA), wc=0.6, seed=501)
 
     def night(t):
@@ -1078,10 +1118,7 @@ def add_journey(sc, ctx10, toff=0.0, rider_sched=None, z0=50.0, late=False, alph
         k = aA(t) * (1 - aD(t))
         if k <= 0.003:
             return None
-        p = sky(jt(t)) % 1.0
-        nn = clamp(1 - abs(p - 0.75) / 0.2) if 0.55 < p < 0.95 else 0.0
-        warm = max(clamp(1 - abs(p - 0.5) / 0.09), clamp(1 - min(p, 1 - p) / 0.09))
-        f = ((1 - 0.52 * nn) * (1 - 0.02 * warm), (1 - 0.42 * nn) * (1 - 0.15 * warm), (1 - 0.12 * nn) * (1 - 0.28 * warm))
+        f = light_factors(sky(jt(t)))
         return tuple(1 - k * (1 - c) for c in f)
     if not late:
         sc.fx.append(mult_fx(light))

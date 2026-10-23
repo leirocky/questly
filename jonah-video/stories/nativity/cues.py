@@ -1573,7 +1573,7 @@ def star(c):
     t_stud = c.at("博士，就是")
     t_day = c.gap(c.find("有一天"))
     t_star = c.at("一颗特别的星星")
-    t_w = c.gap(c.find("这颗星告诉我们"))
+    t_w = c.gap(c.find("这颗星星告诉我们"))
     t_go = c.gap(c.find("他们出发了"))
     e = c.seg(0, t_stud, 2, "4/4", "C dorian", nominal=107, label="star-east")
     s = c.seg(t_stud, t_day, 2, "4/4", "C dorian", nominal=110, label="star-wise-men")
@@ -1661,7 +1661,7 @@ def star(c):
     lv(w, ["ooh"], -21, q1=6)
     lv(w, ["vla", "vln2", "vln1", "vc", "cb"], -19)
     lv(w, ["timp"], -13)
-    hit(c, segs, "sparkle", "这颗星告诉我们", 0, "a king is born (a glint)", glock=(86, 98), vel=44)
+    hit(c, segs, "sparkle", "这颗星星告诉我们", 0, "a king is born (a glint)", glock=(86, 98), vel=44)
     # the caravan sets off: plucked basses on the beats, the low drum on the camels' steps (picture)
     v.mel("ehorn", bars(CAR, 0, 4), vel=52)
     steps = [t_ for t_ in (pic(c, "thud", "他们出发了", kk) for kk in range(5)) if t_ is not None]
@@ -2123,7 +2123,7 @@ PICTURE_HITS = [
     ("s09_visit", "chime", "听见的人", 0, 0.0, "hit", "kept in her heart (a chime)"),
     ("s10_star", "sparkle", None, 0, 0.0, "hit", "a star sparkles over the wise men"),
     ("s10_star", "chime", "有一天", 0, 0.0, "hit", "the star shines ('一颗特别的星星')"),
-    ("s10_star", "sparkle", "这颗星告诉我们", 0, 0.0, "hit", "a king is born (a glint)"),
+    ("s10_star", "sparkle", "这颗星星告诉我们", 0, 0.0, "hit", "a king is born (a glint)"),
     ("s10_star", "thud", "他们出发了", 0, 0.0, "hit", "a camel's first step"),
     ("s10_star", "thud", "他们出发了", 4, 0.0, "hit", "a camel's fifth step"),
     ("s11_gifts", "chime", None, 0, 0.0, "hit", "the star appears again ('忽然')"),

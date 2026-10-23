@@ -371,7 +371,10 @@ def build(ctx):
     ox.move(dip(c_olook, 4, 0.97), breath(ctx, 0.012, 3.9, 0.5)).add(sc)
 
     # ---------------- Mary, the bale, the baby, Joseph
-    sc.add("bale", bale_svg(), z=3.2, seed=105)
+    # the straw seat fades in under her as she sits (during the squash-dip) and fades out just before she rises,
+    # so it never pops with her pose cuts (when she stands it would be hidden behind her skirt anyway)
+    seat_a = keyed([(c_sit - 0.06, 0.0), (c_sit + 0.26, 1.0), (c_lay - 0.32, 1.0), (c_lay - 0.02, 0.0)], "sine")
+    sc.add("bale", bale_svg(), z=3.2, seed=105, motion=lambda t: Tf(alpha=seat_a(t)))
     mary = Fig(ctx, "mary", MARY, 3.3, seed=107)
     mary.at(0, mary_body("hold_baby", 1, "tender"))
     mary.at(c_sit, mary_body("wrap", 1, "tender"))
