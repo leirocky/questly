@@ -56,7 +56,7 @@ SCENES = [
         "lines": [("N", "圣经绘本：撒该爬上桑树。")],
     },
     {
-        "id": "s02_question", "mood": "call",
+        "id": "s02_question", "mood": "call", "tail": 1.8,
         "note": "Opening question to the child: a modern child at a parade or a show behind a wall of grown-ups' backs, "
                 "jumping and still seeing nothing; then dad lifts the child onto his shoulders and the child beams.",
         "lines": [
@@ -91,7 +91,7 @@ SCENES = [
             ("N", "可是，撒该的个子太矮了！他跳呀跳，看不见。他踮起脚，还是看不见！"),
             ("N", "前面的人，像一堵高高的墙。撒该只看见别人的后脑勺！"),
             ("N", "他想挤进去，大家都不让他。撒该急得团团转。"),
-            ("N", "小朋友，你猜撒该想到了什么好办法？"),
+            ("N", "小朋友，你猜撒该想到了什么好办法？", 1.5),
         ],
     },
     {
