@@ -357,8 +357,16 @@ def _broken_word(text, x, sr, toks, ts, min_gap=0.05, stop_gap=0.10, silence_gap
         syls = [s for _, ws in LX.contextual(w) for s in ws]
         for m in re.finditer(w, ref):
             a = int(times[m.start()] * 100)
-            while a < len(quiet) and quiet[a]:   # the recogniser can stamp a word before its onset
-                a += 1
+            # the recogniser can stamp a word before its onset, even in the tail of the previous word
+            # (面前！… 马利亚, 在 … 伯利恒): start at the first run of 80 ms of voice before the next stamp
+            nxt = int(times[m.start() + 1] * 100)
+            for f in range(a, min(nxt, len(quiet) - 8)):
+                if not quiet[f:f + 8].any():
+                    a = f
+                    break
+            else:
+                while a < len(quiet) and quiet[a]:
+                    a += 1
             for k in range(1, len(w)):
                 # from the previous character to a little into this one (often stamped before its onset)
                 b = int(times[m.start() + k] * 100) + 8
@@ -450,8 +458,28 @@ def _take_score(text, x, sr):
     xp = np.concatenate([pad, x, pad])
     hyp, toks, ts = asr(xp, sr)
     err = _cer(text, hyp)
-    return (err > CER_OK or _edge_junk(text, hyp) or _broken_word(text, xp, sr, toks, ts)
-            or _wrong_tone(text, xp, sr, toks, ts)), err
+    return (err > CER_OK or _edge_junk(text, hyp) or _misheard_name(text, hyp)
+            or _broken_word(text, xp, sr, toks, ts) or _wrong_tone(text, xp, sr, toks, ts)), err
+
+
+def _misheard_name(text, hyp):
+    """True when the recogniser hears a NO_BREAK name fewer times than the text says it, comparing toneless
+    pinyin: a homophone passes (玛利亚 for 马利亚, 柏利恒 for 伯利恒), a wrong initial or final does not (撒呆 or 撒嘎
+    for 撒该). One wrong character in a name barely moves the CER, so this is checked on its own."""
+    from pypinyin import Style, lazy_pinyin, pinyin
+    from voice import lexicons as LX
+
+    ref = _norm(text)
+    said = [set(r) for r in pinyin(_norm(hyp), style=Style.NORMAL, heteronym=True)]   # every reading (柏 bai/bo)
+    for w in NO_BREAK:
+        n = ref.count(w)
+        if not n:
+            continue
+        entry = LX.ZV_FIX.get(w)
+        py = [s.rstrip("012345") for s in entry.split()] if entry else lazy_pinyin(w)
+        if sum(all(p in said[i + j] for j, p in enumerate(py)) for i in range(len(said) - len(py) + 1)) < n:
+            return True
+    return False
 
 
 PAUSE_AFTER = {"，": 0.30, "、": 0.22, "：": 0.36, "；": 0.36, "。": 0.50, "！": 0.50, "？": 0.50}

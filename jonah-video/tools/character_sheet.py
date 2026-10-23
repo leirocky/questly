@@ -28,6 +28,21 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   storm_disciples (the twelve), storm_disciple_poses (poses and action phases), storm_villagers, storm_child (pyjamas)
   and storm_group (Jesus with the twelve, crowds, the crew in the fishing boat: teaching, rowing, the storm, waking him,
   the calm, scale checks).
+  Nativity film (python3 tools/character_sheet.py nativity): nativity_mary (poses, pregnant, sweep), nativity_expr
+  (close-ups), nativity_joseph, nativity_baby (baby_jesus, toddler_jesus), nativity_angel, nativity_shepherds,
+  nativity_magi (wise men, gifts), nativity_townsfolk, nativity_child (child(outfit='jumper')) and nativity_group (scale
+  line-up, the journey, the stable, the shepherds with the glory and the choir, the wise men's visit).
+  Lost Sheep film (python3 tools/character_sheet.py lost_sheep): lost_sheep_jesus (the poses Jesus gains), lost_sheep_tax,
+  lost_sheep_sinners, lost_sheep_pharisees, lost_sheep_shepherd, lost_sheep_shepherd_night (lantern, lamb on the shoulders),
+  lost_sheep_village (neighbours, musicians), lost_sheep_modern (parent, child), lost_sheep_expr (close-ups),
+  lost_sheep_group (line-up, the meal, counting, the search, found, carried home, the party) and lost_sheep_modern_group
+  (the supermarket, found, holding hands, bedtime). These sheets are <= 2000 px wide.
+  Zacchaeus film (python3 tools/character_sheet.py zacchaeus): zacchaeus_poses, zacchaeus_climb (the climbing stages and the
+  branch poses), zacchaeus_expr (close-ups), zacchaeus_jesus (the poses Jesus gains), zacchaeus_folk (the people of Jericho:
+  kinds x variants, the back view), zacchaeus_folk_poses, zacchaeus_poor (the widow and the beggar), zacchaeus_modern (the
+  tracksuit boy and the festival dad), zacchaeus_group (scale line-up, the wall of backs, the tree with Jesus looking up, the
+  crowd parting, the dinner, the coin glosses) and zacchaeus_modern_group (the festival, the shoulder lift, the sofa). These
+  sheets are <= 2000 px wide.
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -201,6 +216,9 @@ def sheets():
     out += noah_sheets()
     out += joseph_sheets()
     out += storm_sheets()
+    out += nativity_sheets()
+    out += lost_sheep_sheets()
+    out += zacchaeus_sheets()
     return out
 
 
@@ -655,6 +673,629 @@ def storm_group():
     return path
 
 
+def nativity_sheets():
+    """Sheets for the Nativity film (Luke 1-2, Matthew 2)."""
+    out = []
+    items = [(p, lambda x, y, s, p=p: C.mary(x, y, s, pose=p)) for p in C.MARY_POSES if p not in ("walk",)]
+    items += [(f"pregnant {p}", lambda x, y, s, p=p: C.mary(x, y, s, pose=p, pregnant=True))
+              for p in ("stand", "walk_a", "walk_b", "sit", "ride", "startled")]
+    items += [(f"sweep phase={ph}", lambda x, y, s, ph=ph: C.mary(x, y, s, pose="sweep", phase=ph)) for ph in (0.25, 0.75)]
+    items += [("glow=.8", lambda x, y, s: C.mary(x, y, s, glow=0.8)), ("facing=-1 hold_baby", lambda x, y, s: C.mary(x, y, s, -1, pose="hold_baby"))]
+    out.append(("nativity_mary", "Mary — poses, pregnant=True, sweep phases (scale 0.8; ride / sit anchors: see doc)", items, 9,
+                250, 360, 0.8, {"ground_pad": 24}))
+    items = [(e, lambda x, y, s, e=e: C.mary(x, y, s, expr=e)) for e in C.MARY_EXPRESSIONS]
+    items += [(f"joseph {e}", lambda x, y, s, e=e: C.joseph_carpenter(x, y - 22 * s, s, expr=e)) for e in C.JOSEPH_CARPENTER_EXPRESSIONS]
+    out.append(("nativity_expr", "Nativity expressions (close-ups, scale 1.4): Mary; Joseph", items, 10, 240, 330, 1.4,
+                {"clip_cells": True, "ground_pad": -190}))
+    items = [(p, lambda x, y, s, p=p: C.joseph_carpenter(x, y, s, pose=p)) for p in C.JOSEPH_CARPENTER_POSES if p not in ("walk", "lead")]
+    items += [("staff=False", lambda x, y, s: C.joseph_carpenter(x, y, s, staff=False)),
+              ("knock phase=.5", lambda x, y, s: C.joseph_carpenter(x, y, s, pose="knock", phase=0.5)),
+              ("hold_lamp lamp=.4", lambda x, y, s: C.joseph_carpenter(x, y, s, pose="hold_lamp", lamp=0.4))]
+    out.append(("nativity_joseph", "Joseph the carpenter — poses (scale 0.8)", items, 10, 230, 380, 0.8, {"ground_pad": 24}))
+    items = [(f"baby {st}", lambda x, y, s, st=st: C.baby_jesus(x, y, s, state=st)) for st in C.BABY_STATES]
+    items += [("baby glow=.8", lambda x, y, s: C.baby_jesus(x, y, s, glow=0.8)), ("baby hand=True facing=-1", lambda x, y, s: C.baby_jesus(x, y, s, -1, hand=True))]
+    items += [(f"toddler {p}", lambda x, y, s, p=p: C.toddler_jesus(x, y, s, pose=p)) for p in C.TODDLER_POSES]
+    items += [("toddler laugh", lambda x, y, s: C.toddler_jesus(x, y, s, pose="stand", expr="laugh"))]
+    out.append(("nativity_baby", "baby_jesus states and toddler_jesus poses (scale 1.6)", items, 7, 300, 330, 1.6, {"ground_pad": 30}))
+    items = [(p, lambda x, y, s, p=p: C.angel(x, y, s, pose=p)) for p in C.ANGEL_POSES]
+    items += [(f"wings={w}", lambda x, y, s, w=w: C.angel(x, y, s, wings=w)) for w in (0.0, 0.5, 1.0)]
+    items += [("float phase=.25", lambda x, y, s: C.angel(x, y, s, pose="float", phase=0.25)),
+              ("glow=0", lambda x, y, s: C.angel(x, y, s, glow=0.0)), ("glow=1 announce -1", lambda x, y, s: C.angel(x, y, s, -1, pose="announce", glow=1.0))]
+    items += [(f"variant {v} sing", lambda x, y, s, v=v: C.angel(x, y, s, pose="sing", variant=v)) for v in range(1, 6)]
+    out.append(("nativity_angel", "angel — poses, wings, glow, variants (scale 0.6; float hovers ANGEL_FLOAT_LIFT above the anchor)",
+                items, 8, 300, 420, 0.6, {"ground_pad": 30}))
+    items = [(f"{v} stand", lambda x, y, s, v=v: C.shepherds(x, y, s, variant=v)) for v in range(6)]
+    for i, p in enumerate(C.SHEPHERD_POSES):
+        if p in ("stand", "walk", "run"):
+            continue
+        items.append((f"{i % 6} {p}", lambda x, y, s, i=i, p=p: C.shepherds(x, y, s, variant=i % 6, pose=p)))
+    items += [("2 hold_lamb (boy)", lambda x, y, s: C.shepherds(x, y, s, variant=2, pose="hold_lamb")),
+              ("1 sit sleepy", lambda x, y, s: C.shepherds(x, y, s, variant=1, pose="sit", expr="sleepy"))]
+    out.append(("nativity_shepherds", "shepherds — variants 0-5 (2 = the boy, 1 = the old shepherd) and poses (scale 0.7)",
+                items, 8, 250, 330, 0.7, {"ground_pad": 22}))
+    items = []
+    for v in range(3):
+        for p in C.WISE_MEN_POSES:
+            if p in ("walk",):
+                continue
+            items.append((f"{v} {p}", lambda x, y, s, v=v, p=p: C.wise_men(x, y, s, variant=v, pose=p)))
+    items += [(f"{v} kneel_offer open=1 glow=1", lambda x, y, s, v=v: C.wise_men(x, y, s, variant=v, pose="kneel_offer", gift_open=1.0, gift_glow=1.0)) for v in range(3)]
+    out.append(("nativity_magi", "wise_men — variants 0-2 x poses; gifts open and glow (scale 0.62)", items, 12, 200, 360, 0.62,
+                {"ground_pad": 22}))
+    items = []
+    for k in C.TOWNSFOLK_KINDS:
+        for v in range(3):
+            items.append((f"{k} {v}", lambda x, y, s, k=k, v=v: C.townsfolk(x, y, s, kind=k, variant=v)))
+    for p, k, it in (("carry_walk_a", "traveller", "bundle"), ("carry_walk_b", "traveller_woman", "bundle"), ("carry", "woman", "jar"),
+                     ("carry_walk_a", "man", "pots"), ("carry", "traveller", "hen"), ("squeeze", "man", "bundle"), ("squeeze", "woman", "pots"),
+                     ("look_around", "traveller", None), ("shake_head", "innkeeper", None), ("hold_lamp", "innkeeper", None),
+                     ("point", "innkeeper", None), ("read", "herald", None), ("announce", "herald", None), ("talk", "woman", None),
+                     ("wave", "child", None), ("listen", "elder", None), ("sit", "man", None), ("cheer", "child", None)):
+        items.append((f"{k} {p} {it or ''}", lambda x, y, s, p=p, k=k, it=it: C.townsfolk(x, y, s, kind=k, variant=1, pose=p, item=it)))
+    out.append(("nativity_townsfolk", "townsfolk — kinds x variants, travellers, the innkeeper, the herald, comic carriers (scale 0.6)",
+                items, 12, 200, 300, 0.6, {"ground_pad": 20}))
+    items = [(f"jumper {p}", lambda x, y, s, p=p: C.child(x, y, s, pose=p, outfit="jumper")) for p in ("stand", "walk_a") + C.NATIVITY_CHILD_POSES + ("smile_up", "point_up", "wave", "cheer", "pray")]
+    items += [("decorate item='star'", lambda x, y, s: C.child(x, y, s, pose="decorate", outfit="jumper", item="star")),
+              ("place item='sheep'", lambda x, y, s: C.child(x, y, s, pose="place", outfit="jumper", item="sheep")),
+              ("raincoat decorate", lambda x, y, s: C.child(x, y, s, pose="decorate")),
+              ("pyjamas place", lambda x, y, s: C.child(x, y, s, pose="place", outfit="pyjamas"))]
+    out.append(("nativity_child", "child(outfit='jumper') — the boy at the Christmas tree; the new poses (scale 1.1)", items, 8, 240, 330,
+                1.1, {"ground_pad": 22}))
+    return out
+
+
+def _panel(x0, y0, w, h, markup, key):
+    """Clip one composition panel to its rectangle."""
+    cid = f"natpanel{key}"
+    return (f'<clipPath id="{cid}"><rect x="{x0}" y="{y0}" width="{w}" height="{h}"/></clipPath>'
+            f'<g clip-path="url(#{cid})">{markup}</g>')
+
+
+def nativity_group():
+    """Compositions: the scale line-up, the journey, the stable, the shepherds and the angel, the wise men's visit."""
+    PR = C._prp()
+    W, H = 2300, 64 + 4 * 600
+    top = 64
+    body = ""
+    labels = []
+    gy = top + 540
+    b = f'<rect x="0" y="{top}" width="{W}" height="600" fill="#e8d6ae"/>'
+    xs = 80
+    for fn, kw, w in ((C.mary, {}, 150), (C.mary, {"pregnant": True}, 150), (C.joseph_carpenter, {}, 180), (C.angel, {"glow": 0.4}, 260),
+                      (C.shepherds, {"variant": 1}, 170), (C.shepherds, {"variant": 2, "pose": "hold_lamb"}, 140), (C.shepherds, {"variant": 3}, 170),
+                      (C.wise_men, {"variant": 0}, 160), (C.wise_men, {"variant": 1}, 160), (C.wise_men, {"variant": 2}, 170),
+                      (C.townsfolk, {"kind": "innkeeper"}, 170), (C.townsfolk, {"kind": "herald"}, 160), (C.child, {"outfit": "jumper"}, 120)):
+        b += fn(xs, gy, 1.0, **kw)
+        xs += w
+    b += C.toddler_jesus(xs, gy, 1.0, pose="stand") + C.baby_jesus(xs + 100, gy, 1.0)
+    body += _panel(0, top, W, 600, b, 1)
+    labels.append((20, gy + 14, "scale 1, one ground line: Mary, Mary pregnant, Joseph, angel, shepherds (old, boy with lamb, sturdy), wise men 0-2, innkeeper, herald, the jumper boy, toddler, baby"))
+    gy2 = gy + 600
+    b = PR.day_night_sky(0, gy2 - 540, 1150, gy2 + 60, t=0.47, scale=0.6)
+    b += PR.journey_road(0, 1150, gy2 - 260, 0.6, time="dusk")
+    pts = PR.road_points(0, 1150, gy2 - 260, 0.6)
+    px, py, kk = pts[1]
+    kk *= 0.5
+    b += PR.donkey(px, py, kk, 1, pose="walk_b", saddle="blue", bridle=True)
+    b += C.mary(*PR.donkey_points(px, py, kk, pose="walk_b")["seat"], kk, pose="ride", pregnant=True, expr="tired")
+    b += C.joseph_carpenter(PR.donkey_points(px, py, kk)["lead"][0] - C.JOSEPH_LEAD_HAND[0] * kk, py, kk, pose="lead_b")
+    body += _panel(0, gy2 - 540, 1150, 600, b, 2)
+    sx, sy = 1720, gy2 + 30
+    b = PR.starry_sky(1150, gy2 - 540, W, gy2 + 60, density=0.6)
+    b += PR.stable(sx, sy, 0.42, part="back")
+    sp = PR.stable_points(sx, sy, 0.42)
+    b += PR.ox(*sp["ox"], 0.42 * 0.9, -1, pose="lie_look") + PR.donkey(*sp["donkey"], 0.42 * 0.9, 1, pose="look", sacks=0)
+    b += C.joseph_carpenter(*sp["joseph"], 0.42, 1, pose="hold_lamp")
+    b += C.mary(sp["mary"][0] - 30, sp["mary"][1], 0.42, 1, pose="lay_baby")
+    b += PR.manger(*sp["manger"], 0.42, part="front", time="day")
+    b += PR.stable(sx, sy, 0.42, part="front")
+    body += _panel(1150, gy2 - 540, 1150, 600, b, 3)
+    labels.append((20, gy2 + 30, "the journey: journey_road, donkey walk + Mary ride (pregnant, tired) + Joseph lead | the stable: Mary lay_baby over the manger, Joseph hold_lamp, ox lie_look, donkey look"))
+    gy3 = gy2 + 600
+    b = PR.starry_sky(0, gy3 - 540, 1150, gy3 + 60, density=0.9, seed=4)
+    b += PR.night_hills(0, 1150, gy3 - 60, 0.55, part="back", town=True)
+    b += PR.glory(600, gy3, 0.5)
+    b += PR.night_hills(0, 1150, gy3 - 60, 0.55, part="front", fire=0.0, fire_x=False, fold_x=980)
+    for i, (dx, v, p) in enumerate(((380, 0, "shield_eyes"), (480, 1, "kneel"), (560, 5, "shield_eyes"), (290, 2, "hold_lamb"))):
+        b += C.shepherds(dx, gy3 + 10, 0.5, 1, variant=v, pose=p)
+    b += C.angel(740, gy3, 0.5, -1, pose="float", glow=1.0, lift=50)
+    b += PR.sheep(850, gy3 + 20, 0.42, -1, pose="look_up") + PR.sheep(930, gy3 + 30, 0.42, -1, variant=2, pose="look_up")
+    body += _panel(0, gy3 - 540, 1150, 600, b, 4)
+    b = PR.starry_sky(1150, gy3 - 540, W, gy3 + 60, density=0.9, seed=6)
+    b += PR.night_hills(1150, W, gy3 - 60, 0.55, part="back", town=False)
+    b += PR.heaven_light(1720, gy3 - 330, 0.5, progress=0.8) + C.angel_choir(1250, 2200, gy3 - 200, n=10, scale=0.22, rows=2)
+    b += PR.night_hills(1150, W, gy3 - 60, 0.55, part="front", fire=0.6, fire_x=1300, fold_x=False)
+    b += C.shepherds(1500, gy3 + 10, 0.5, 1, variant=3, pose="kneel") + C.shepherds(1640, gy3 + 14, 0.5, 1, variant=0, pose="point_up")
+    b += C.shepherds(1800, gy3 + 10, 0.5, -1, variant=4, pose="cheer") + PR.sheep(1950, gy3 + 30, 0.4, -1, pose="look_up", lamb=True)
+    body += _panel(1150, gy3 - 540, 1150, 600, b, 5)
+    labels.append((20, gy3 + 30, "the shepherds: glory round the group, angel float (lift 50) beside them, shield_eyes / kneel / hold_lamb, sheep look_up | heaven_light + angel_choir; kneel, point_up, cheer"))
+    gy4 = gy3 + 600
+    b = PR.family_house(560, gy4 - 30, 0.5, view="interior", star_light=0.7)
+    b += C.mary(560 + (PR.FAMILY_SEAT[0] + 50) * 0.5, gy4 - 30, 0.5, pose="sit_hold")
+    b += C.joseph_carpenter(330, gy4 - 40, 0.48, pose="watch")
+    for i, (dx, v, p, o) in enumerate(((640, 0, "kneel_offer", 1.0), (760, 2, "bow", 0.0), (880, 1, "present", 0.6))):
+        b += C.wise_men(dx, gy4 - 26 + 4 * i, 0.5, -1, variant=v, pose=p, gift_open=o, gift_glow=o)
+    body += _panel(0, gy4 - 540, 1150, 600, b, 6)
+    b = PR.starry_sky(1150, gy4 - 540, W, gy4 + 60, density=0.7, seed=9)
+    b += PR.bethlehem_town(1150, W, gy4 - 200, 0.4, time="night", part="back")
+    b += PR.the_star(1700, gy4 - 470, 0.4, beam=0.8, beam_to=(1700, gy4 - 300))
+    b += PR.family_house(1700, gy4 - 20, 0.42, star_light=0.8)
+    for i, v in enumerate((0, 1, 2)):
+        cx = 1300 + i * 150
+        b += PR.camel(cx, gy4 + 30, 0.3, pose="walk", phase=0.25 * i, saddle=("red", "green", "purple")[v], load=False)
+        b += C.wise_men(*PR.camel_points(cx, gy4 + 30, 0.3, pose="walk", phase=0.25 * i)["seat"], 0.3, variant=v, pose="ride")
+    body += _panel(1150, gy4 - 540, 1150, 600, b, 7)
+    labels.append((20, gy4 + 30, "the visit (Matthew 2): family_house interior, Mary sit_hold on the bench, Joseph watch, wise men kneel_offer / bow / present (gifts open, glowing) | the star stops over the house; camels with riders"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Nativity film — scale line-up, the journey, the stable, the shepherds and the angels, the wise men's visit")
+    font = ImageFont.truetype(str(FONT_REGULAR), 22)
+    for x0, y0, text in labels:
+        d.text((x0, y0), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_nativity_group.png"
+    sheet.save(path)
+    return path
+
+
+# ---------------------------------------------------------------- Lost Sheep film (Luke 15:1-7)
+def lost_sheep_sheets():
+    """Sheets for the Lost Sheep film (each <= 2000 px wide so they can be viewed whole)."""
+    out = []
+    items = [(p, lambda x, y, s, p=p: C.jesus(x, y, s, pose=p)) for p in C.JESUS_LOST_SHEEP_POSES]
+    items += [(f"sit_eat phase={ph}", lambda x, y, s, ph=ph: C.jesus(x, y, s, pose="sit_eat", phase=ph)) for ph in (0.5, 1.0)]
+    items += [("Storm stand (same Jesus)", lambda x, y, s: C.jesus(x, y, s)), ("sit_tell facing=-1", lambda x, y, s: C.jesus(x, y, s, -1, pose="sit_tell"))]
+    out.append(("lost_sheep_jesus", "Jesus — the poses this film adds (scale 0.8; sit_* = on the floor, anchor at the seat)", items, 9, 220, 330, 0.8,
+                {"ground_pad": 24}))
+    items = []
+    for v in range(3):
+        for p in ("stand", "walk_a", "count", "sit", "sit_eat", "laugh", "listen", "smile", "warm", "toast", "sit_count"):
+            items.append((f"tax{v} {p}", lambda x, y, s, v=v, p=p: C.tax_collector(x, y, s, variant=v, pose=p)))
+    out.append(("lost_sheep_tax", "tax_collector — variants 0-2 x poses (0 = money bag + ledger; scale 0.62)", items, 11, 180, 270, 0.62,
+                {"ground_pad": 20}))
+    items = []
+    for k in C.SINNER_KINDS:
+        for v in range(2):
+            for p in ("stand", "walk_b", "sit_eat", "laugh", "listen", "smile", "warm", "toast") if v == 0 else ("stand", "laugh", "warm"):
+                items.append((f"{k}{v} {p}", lambda x, y, s, k=k, v=v, p=p: C.sinner(x, y, s, kind=k, variant=v, pose=p)))
+    out.append(("lost_sheep_sinners", "sinner — the people nobody liked: woman, labourer, young man (variant 0 all poses, 1 a few; scale 0.62)",
+                items, 11, 180, 270, 0.62, {"ground_pad": 20}))
+    items = [(f"{v} {p}", lambda x, y, s, v=v, p=p: C.pharisee(x, y, s, variant=v, pose=p)) for v in range(3) for p in C.PHARISEE_POSES
+             if p != "walk"]
+    out.append(("lost_sheep_pharisees", "pharisee — variants 0-2 x poses (stern, never ugly; scale 0.62)", items, 10, 196, 290, 0.62,
+                {"ground_pad": 20}))
+    items = []
+    for p in C.PARABLE_SHEPHERD_POSES:
+        if p in ("walk", "lead", "climb", "step", "carry"):
+            continue
+        items.append((p, lambda x, y, s, p=p: C.parable_shepherd(x, y, s, pose=p)))
+    items += [(f"count phase={ph}", lambda x, y, s, ph=ph: C.parable_shepherd(x, y, s, pose="count", phase=ph)) for ph in (0.5,)]
+    items += [(f"look_around phase=.6", lambda x, y, s: C.parable_shepherd(x, y, s, pose="look_around", phase=0.6)),
+              ("dance phase=.6", lambda x, y, s: C.parable_shepherd(x, y, s, pose="dance", phase=0.6)),
+              ("lift phase=1", lambda x, y, s: C.parable_shepherd(x, y, s, pose="lift", phase=1.0))]
+    out.append(("lost_sheep_shepherd", "parable_shepherd — poses (crook, lamb where the pose holds it; scale 0.62)", items, 10, 196, 300, 0.62,
+                {"ground_pad": 22}))
+    items = []
+    for p in ("walk_a", "walk_c", "climb_a", "step_a", "push_through", "listen", "look_around", "call", "kneel_hug", "carry_a", "carry_b",
+              "carry_stand", "knock", "cheer", "stand", "count"):
+        items.append((f"lantern {p}", lambda x, y, s, p=p: C.parable_shepherd(x, y, s, pose=p, lantern=True)))
+    items += [(f"lamb=True {p}", lambda x, y, s, p=p: C.parable_shepherd(x, y, s, pose=p, lamb=True)) for p in ("stand", "walk_b", "cheer", "dance")]
+    out.append(("lost_sheep_shepherd_night", "parable_shepherd — lantern=True (lit, glow) and lamb=True on the shoulders (scale 0.62)",
+                items, 10, 196, 300, 0.62, {"ground_pad": 22}))
+    items = []
+    for k in C.NEIGHBOUR_KINDS:
+        for v in range(3):
+            items.append((f"{k}{v}", lambda x, y, s, k=k, v=v: C.neighbour(x, y, s, kind=k, variant=v)))
+    for p, k, it in (("wave", "woman", None), ("cheer", "man", None), ("clap", "woman", None), ("dance", "child", None), ("laugh", "elder", None),
+                     ("sing", "woman", None), ("open_door", "man", "lamp"), ("hold_lantern", "child", None), ("carry_dish", "woman", None),
+                     ("walk_a", "man", "lantern"), ("listen", "elder", None), ("point", "child", None)):
+        items.append((f"{k} {p} {it or ''}", lambda x, y, s, p=p, k=k, it=it: C.neighbour(x, y, s, kind=k, variant=2, pose=p, item=it, phase=0.3)))
+    for ins in C.MUSICIAN_INSTRUMENTS:
+        for p in ("play", "walk_a", "dance"):
+            items.append((f"{ins} {p}", lambda x, y, s, ins=ins, p=p: C.musician(x, y, s, instrument=ins, pose=p, phase=0.25)))
+    out.append(("lost_sheep_village", "neighbour (kinds x variants, party poses) and musician (lyre, tambourine, flute) (scale 0.62)",
+                items, 11, 180, 270, 0.62, {"ground_pad": 20}))
+    items = [(f"{k} {p}", lambda x, y, s, k=k, p=p: C.parent(x, y, s, kind=k, pose=p, phase=0.2))
+             for k in C.PARENT_KINDS for p in ("stand", "walk_a", "run_a", "look_around", "call", "kneel_hug", "hold_hand", "push", "smile")]
+    items += [(f"dungarees {p}", lambda x, y, s, p=p: C.child(x, y, s, pose=p, outfit="dungarees"))
+              for p in ("stand", "walk_a", "lost", "relieved_hug", "hug_toy", "hold_hand", "point_up", "cheer")]
+    items += [(f"cloud_pyjamas {p}", lambda x, y, s, p=p: C.child(x, y, s, pose=p, outfit="cloud_pyjamas"))
+              for p in ("stand", "hug_toy", "sit_hug_toy", "lie_hug_toy", "yawn", "pray", "smile_up")]
+    items += [("lost phase=.6", lambda x, y, s: C.child(x, y, s, pose="lost", outfit="dungarees", phase=0.6)),
+              ("raincoat toy='lamb'", lambda x, y, s: C.child(x, y, s, toy="lamb"))]
+    out.append(("lost_sheep_modern", "parent (mum, dad) and child(outfit='dungarees' / 'cloud_pyjamas', toy='lamb') (scale 0.62 / child 0.9)",
+                items, 9, 220, 290, 0.62, {"ground_pad": 22}))
+    exprs = C.LOST_SHEEP_EXPRESSIONS
+    items = [(f"shepherd {e}", lambda x, y, s, e=e: C.parable_shepherd(x, y + 10 * s, s, expr=e)) for e in exprs]
+    items += [(f"pharisee {e}", lambda x, y, s, e=e: C.pharisee(x, y + 40 * s, s, variant=1, expr=e)) for e in exprs]
+    items += [(f"child {e}", lambda x, y, s, e=e: C.child(x, y - 103 * s, s, outfit="dungarees", expr=e)) for e in exprs]
+    out.append(("lost_sheep_expr", "Lost Sheep expressions (close-ups): shepherd; Pharisee; the girl", items, 9, 210, 300, 1.3,
+                {"clip_cells": True, "ground_pad": -175}))
+    return out
+
+
+def lost_sheep_group():
+    """Compositions: the meal, the counting, the search at night, found, the party, the modern frame."""
+    PR = C._prp()
+    W, H = 2000, 64 + 4 * 560
+    top = 64
+    body = ""
+    labels = []
+    # 1. the scale line-up
+    gy = top + 500
+    b = f'<rect x="0" y="{top}" width="{W}" height="560" fill="#e8dcc0"/>'
+    xs = 70
+    for fn, kw, w in ((C.jesus, {}, 150), (C.parable_shepherd, {}, 160), (C.tax_collector, {"variant": 0}, 160), (C.tax_collector, {"variant": 1}, 140),
+                      (C.sinner, {"kind": "woman"}, 130), (C.sinner, {"kind": "labourer"}, 160), (C.sinner, {"kind": "young_man"}, 130),
+                      (C.pharisee, {"variant": 0}, 150), (C.pharisee, {"variant": 1}, 150), (C.neighbour, {"kind": "woman"}, 120),
+                      (C.musician, {"instrument": "tambourine"}, 140), (C.parent, {"kind": "mum"}, 120), (C.parent, {"kind": "dad"}, 130),
+                      (C.child, {"outfit": "dungarees"}, 110)):
+        b += fn(xs, gy, 0.95, **kw)
+        xs += w * 0.95
+    b += PR.cloud_sheep(xs + 40, gy, 0.95) + PR.little_lamb(xs + 160, gy, 0.95)
+    body += _panel(0, top, W, 560, b, "ls1")
+    labels.append((20, gy + 14, "scale .95: Jesus, shepherd, tax collectors 0 1, woman, labourer, young man, Pharisees 0 1, neighbour, musician, mum, dad, girl; cloud sheep, little lamb"))
+    # 2. the meal (s03): guests behind the low table, the Pharisees at the edge
+    gy2 = gy + 560
+    y0 = gy2 - 500
+    b = PR.courtyard(0, 1000, gy2 - 40, 0.42, part="back", tree_x=860)
+    ty = gy2 + 20
+    k = 0.5
+    sy = ty - PR.LOW_TABLE_DEPTH * k
+    b += C.tax_collector(220, sy, k, 1, variant=0, pose="sit_count")
+    b += C.sinner(330, sy, k, 1, kind="woman", pose="laugh")
+    b += C.jesus(470, sy, k, 1, pose="sit_eat", phase=1.0)
+    b += C.sinner(590, sy, k, -1, kind="labourer", pose="sit_eat")
+    b += C.tax_collector(700, sy, k, -1, variant=2, pose="toast")
+    b += PR.low_table(460, ty, k, width=1000)
+    b += C.pharisees_group(880, gy2 - 6, 0.48, -1, pose="whisper")
+    body += _panel(0, y0, 1000, 560, b, "ls2")
+    # 2b. the end of the meal (s11): softened Pharisees, warm guests, Jesus open hands with the story page
+    b = PR.courtyard(1000, 2000, gy2 - 40, 0.42, time="evening", part="back", tree_x=False)
+    b += C.sinner(1180, sy, k, 1, kind="young_man", pose="warm") + C.tax_collector(1300, sy, k, 1, variant=1, pose="warm")
+    b += C.jesus(1450, sy, k, 1, pose="sit_open_hands")
+    hp = C.body_points(C.jesus, 1450, sy, k, 1, pose="sit_open_hands")["hands"]
+    hx, hy = (hp[0][0] + hp[1][0]) / 2, min(hp[0][1], hp[1][1])
+    b += PR.low_table(1440, ty, k, width=700)
+    b += PR.story_page(hx, hy, 560, 380, inner=PR.spring_sky(0, 0, 560, 380, scale=0.3) + PR.spring_hills(0, 560, 300, 0.3, flowers=0.5)
+                       + PR.flock(40, 520, 200, 330, n=24, scale=0.3), unfold=0.8, glow=0.6)
+    b += C.pharisees_group(1850, gy2 - 6, 0.48, -1, pose="soften")
+    body += _panel(1000, y0, 1000, 560, b, "ls3")
+    labels.append((20, gy2 + 30, "the meal: courtyard, guests sit behind low_table (y - LOW_TABLE_DEPTH*s), Pharisees whisper | the end: warm, soften, story_page from Jesus's hands"))
+    # 3. spring hills + counting at sunset | the search at night
+    gy3 = gy2 + 560
+    y0 = gy3 - 500
+    b = PR.spring_sky(0, y0, 1000, gy3 + 60, time=0.35, sun=(820, y0 + 200), seed=2, scale=0.5)
+    b += PR.spring_hills(0, 1000, gy3 - 40, 0.5, time=0.35, part="back")
+    b += PR.spring_hills(0, 1000, gy3 - 40, 0.5, time=0.35, part="mid", stream=False)
+    pts = PR.spring_hills_points(0, 1000, gy3 - 40, 0.5)
+    b += PR.flock(20, 980, gy3 - 150, gy3 - 70, n=40, scale=0.4, top=pts["mid_top"], time=0.35, seed=3)
+    b += PR.spring_hills(0, 1000, gy3 - 40, 0.5, time=0.35, part="front", stream=False, flowers=0.6)
+    b += PR.sheep_line(560, gy3 + 30, 0.5, -1, n=4, phase=0.3, time=0.35)
+    b += C.parable_shepherd(400, gy3 + 30, 0.5, 1, pose="count", phase=0.5)
+    b += PR.count_bubble(470, gy3 - 190, 98, 0.8)
+    body += _panel(0, y0, 1000, 560, b, "ls4")
+    b = PR.spring_sky(1000, y0, 2000, gy3 + 60, time=1.0, moon=(1820, y0 + 120), seed=5, scale=0.5)
+    b += PR.high_hills(1000, 2000, gy3 - 120, 0.55, time=1.0, part="back")
+    b += PR.high_hills(1000, 2000, gy3 - 120, 0.55, time=1.0, part="front")
+    pp = PR.high_path_points(1000, 2000, gy3 - 120, 0.55)
+    px, py, kk = pp[2]
+    b += C.parable_shepherd(px, py, 0.5 * kk, -1, pose="climb_a", lantern=True)
+    b += PR.owl(1180, gy3 - 280, 0.5, 1, hoot=0.8)
+    body += _panel(1000, y0, 1000, 560, b, "ls5")
+    labels.append((20, gy3 + 30, "sunset: spring_hills + flock(top=mid_top) + sheep_line + shepherd count + count_bubble | night: high_hills, high_path_points, climb with lantern, owl"))
+    # 4. found (behind the big rock) | carry home | the party
+    gy4 = gy3 + 560
+    y0 = gy4 - 500
+    b = PR.spring_sky(0, y0, 700, gy4 + 60, time=0.9, moon=(560, y0 + 110), seed=8, scale=0.5)
+    b += PR.rocky_slope(0, 700, gy4 - 30, 0.5, time=0.9, part="back", rock_x=430, bush_x=110)
+    b += PR.rocky_slope(0, 700, gy4 - 30, 0.5, time=0.9, part="front", rock_x=430, bush_x=110)
+    b += C.parable_shepherd(250, gy4 + 30, 0.5, 1, pose="kneel_hug", lantern=True)
+    body += _panel(0, y0, 700, 560, b, "ls6")
+    b = PR.spring_sky(700, y0, 1300, gy4 + 60, time=1.0, moon=(1180, y0 + 120), seed=9, scale=0.5)
+    b += PR.spring_hills(700, 1300, gy4 - 40, 0.5, time=1.0)
+    b += C.parable_shepherd(1000, gy4 + 20, 0.55, 1, pose="carry_b", lantern=True)
+    body += _panel(700, y0, 600, 560, b, "ls7")
+    b = PR.spring_sky(1300, y0, 2000, gy4 + 60, time=1.0, seed=10, scale=0.5)
+    b += PR.shepherd_village(1300, 2000, gy4 - 30, 0.42, time=1.0, part="street", phase=0.2)
+    b += C.parable_shepherd(1650, gy4 + 40, 0.48, 1, pose="carry_stand")
+    b += C.neighbour(1480, gy4 + 30, 0.46, 1, kind="woman", variant=1, pose="clap", phase=0.3)
+    b += C.neighbour(1800, gy4 + 34, 0.46, -1, kind="man", variant=4, pose="cheer")
+    b += C.musician(1920, gy4 + 40, 0.46, -1, instrument="tambourine", phase=0.2)
+    b += C.neighbour(1560, gy4 + 70, 0.42, 1, kind="child", variant=3, pose="dance", phase=0.6)
+    body += _panel(1300, y0, 700, 560, b, "ls8")
+    labels.append((20, gy4 + 30, "found: rocky_slope back -> kneel_hug (lantern down) -> front | carry home under the moon | the party: village street, neighbours, musician"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Lost Sheep film — scale line-up, the meal, counting at sunset, the search, found, carried home, the party")
+    font = ImageFont.truetype(str(FONT_REGULAR), 20)
+    for x0, y0_, text in labels:
+        d.text((x0, y0_), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_lost_sheep_group.png"
+    sheet.save(path)
+    return path
+
+
+def lost_sheep_modern_group():
+    """The modern frame: lost in the supermarket, the hug, holding hands, bedtime with the toy lamb."""
+    PR = C._prp()
+    W, H = 2000, 64 + 2 * 600
+    top = 64
+    body, labels = "", []
+    gy = top + 520
+    b = PR.supermarket(0, 1000, gy, 0.5, part="back")
+    b += PR.trolley(260, gy + 20, 0.5, 1)
+    b += C.parent(260 + (PR.TROLLEY_HANDLE[0] - C.PARENT_HANDLE[0]) * 0.5, gy + 20, 0.5, 1, kind="dad", pose="push")
+    b += C.child(700, gy + 50, 0.5, -1, outfit="dungarees", pose="lost")
+    b += PR.supermarket(0, 1000, gy, 0.5, part="front")
+    body += _panel(0, top, 1000, 600, b, "lm1")
+    b = PR.supermarket(1000, 2000, gy, 0.5, part="back", seed=2)
+    b += C.hug_pair(1300, gy + 50, 0.55, 1, a=(C.parent, dict(kind="mum", pose="kneel_hug")),
+                    b=(C.child, dict(outfit="dungarees", pose="relieved_hug")), gap=C.PARENT_HUG_GAP)
+    px = 1650
+    b += C.parent(px, gy + 40, 0.55, 1, kind="dad", pose="hold_hand")
+    b += C.child(px + C.CHILD_HOLD["dad"][0] * 0.55, gy + 40 + C.CHILD_HOLD["dad"][1] * 0.55, 0.55, 1, outfit="dungarees", pose="hold_hand")
+    body += _panel(1000, top, 1000, 600, b, "lm2")
+    labels.append((20, gy + 70, "s02: supermarket, dad pushes the trolley (TROLLEY_HANDLE), the girl lost | found: hug_pair(mum kneel_hug, child relieved_hug) | dad + girl hold_hand"))
+    gy2 = gy + 600
+    b = PR.cosy_bedroom(0, 1000, gy2, 0.5, glow=0.9)
+    bx = 520
+    b += PR.kid_bed(bx, gy2 + 20, 0.6, 1, part="back")
+    b += C.child(bx + C.CHILD_BED_SIT_DX * 0.6, gy2 + 20 + PR.KID_BED_TOP * 0.6, 0.6, 1, outfit="cloud_pyjamas", pose="sit_hug_toy")
+    b += PR.kid_bed(bx, gy2 + 20, 0.6, 1, part="front")
+    body += _panel(0, gy2 - 520, 1000, 600, b, "lm3")
+    b = PR.cosy_bedroom(1000, 2000, gy2, 0.5, glow=0.7, seed=3)
+    bx = 1500
+    b += PR.kid_bed(bx, gy2 + 20, 0.6, 1, part="back")
+    b += C.child(bx + C.CHILD_BED_LIE[0] * 0.6, gy2 + 20 + C.CHILD_BED_LIE[1] * 0.6, 0.6, 1, outfit="cloud_pyjamas", pose="lie_hug_toy")
+    b += PR.kid_bed(bx, gy2 + 20, 0.6, 1, part="front")
+    body += _panel(1000, gy2 - 520, 1000, 600, b, "lm4")
+    labels.append((20, gy2 + 70, "s12: cosy_bedroom (night light, moon, the story picture), kid_bed back -> child sit_hug_toy / lie_hug_toy -> kid_bed front"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Lost Sheep film — the modern frame: lost in the supermarket, found, bedtime with the toy lamb")
+    font = ImageFont.truetype(str(FONT_REGULAR), 20)
+    for x0, y0_, text in labels:
+        d.text((x0, y0_), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_lost_sheep_modern_group.png"
+    sheet.save(path)
+    return path
+
+
+def zacchaeus_sheets():
+    """Sheets for the Zacchaeus film (each <= 2000 px wide so they can be viewed whole)."""
+    out = []
+    poses = [p for p in C.ZACCHAEUS_POSES if p not in ("walk", "strut", "pace", "run", "jump") and not p.startswith("climb")]
+    items = [("jesus (compare)", lambda x, y, s: C.jesus(x, y, s))]
+    items += [(p, lambda x, y, s, p=p: C.zacchaeus(x, y + (-130 * s if p in C.ZAC_SEAT_POSES else 0), s, pose=p)) for p in poses]
+    items += [(f"jump phase={ph}", lambda x, y, s, ph=ph: C.zacchaeus(x, y, s, pose="jump", phase=ph)) for ph in (0.4, 0.5)]
+    items += [("count phase=.5", lambda x, y, s: C.zacchaeus(x, y - 130 * s, s, pose="count", phase=0.5)),
+              ("walk facing=-1", lambda x, y, s: C.zacchaeus(x, y, s, -1, pose="walk_a"))]
+    out.append(("zacchaeus_poses", "zacchaeus — poses (scale 0.8; seated poses anchored at the seat 130*s above the line; Jesus for scale)",
+                items, 9, 220, 330, 0.8, {"ground_pad": 22}))
+    items = [(p, lambda x, y, s, p=p: C.jesus(x, y - (0 if not p.startswith("sit") else 0), s, pose=p)) for p in C.JESUS_ZACCHAEUS_POSES]
+    items += [("Storm walk_a (same Jesus)", lambda x, y, s: C.jesus(x, y, s, pose="walk_a")),
+              ("look_up facing=-1", lambda x, y, s: C.jesus(x, y, s, -1, pose="look_up"))]
+    out.append(("zacchaeus_jesus", "Jesus — the poses this film adds (scale 0.8; sit_* = on a bench, anchor = the floor, seat ~70 up)",
+                items, 10, 196, 330, 0.8, {"ground_pad": 24}))
+    items = []
+    for k in C.JERICHO_KINDS:
+        for v in range(6 if k in ("man", "woman") else (2 if k == "child" else 1)):
+            items.append((f"{k} v{v}", lambda x, y, s, k=k, v=v: C.jericho_folk(x, y, s, kind=k, variant=v)))
+    for k in C.JERICHO_KINDS:
+        for v in (0, 1):
+            items.append((f"{k}{v} crowd_back", lambda x, y, s, k=k, v=v: C.jericho_folk(x, y, s, kind=k, variant=v, pose="crowd_back")))
+    out.append(("zacchaeus_folk", "jericho_folk — kinds x variants (front) and pose='crowd_back' (the BACK view) (scale 0.62)",
+                items, 11, 180, 270, 0.62, {"ground_pad": 20}))
+    items = []
+    for p in C.JERICHO_POSES:
+        if p in ("walk", "run_to_see", "grumble_walk_off", "crowd_back"):
+            continue
+        k = ("man", "woman", "elder", "child", "fruit_seller", "farmer")[len(items) % 6]
+        items.append((f"{k} {p}", lambda x, y, s, p=p, k=k: C.jericho_folk(x, y, s, kind=k, variant=len(p) % 6, pose=p, phase=0.3)))
+    for v in range(6):
+        items.append((f"crowd_back arms {v}", lambda x, y, s, v=v: C.jericho_folk(x, y, s, kind="man", variant=v, pose="crowd_back", phase=0.2)))
+    for k, p in (("man", "pay"), ("farmer", "receive"), ("woman", "receive"), ("man", "elbow"), ("woman", "mutter")):
+        items.append((f"{k} {p} f=-1", lambda x, y, s, k=k, p=p: C.jericho_folk(x, y, s, -1, kind=k, variant=2, pose=p, phase=0.5)))
+    out.append(("zacchaeus_folk_poses", "jericho_folk — poses (scale 0.62)", items, 11, 180, 270, 0.62, {"ground_pad": 20}))
+    items = [(f"{k} {p}", lambda x, y, s, k=k, p=p: C.jericho_poor(x, y, s, kind=k, pose=p, phase=0.4))
+             for k in C.JERICHO_POOR_KINDS for p in C.JERICHO_POOR_POSES]
+    out.append(("zacchaeus_poor", "jericho_poor — the widow and the beggar (kind-faced, dignified; scale 0.8)", items, 6, 260, 330, 0.8,
+                {"ground_pad": 22}))
+    items = [(f"tracksuit {p}", lambda x, y, s, p=p: C.child(x, y, s, outfit="tracksuit", pose=p, phase=0.25))
+             for p in ("stand", "walk_a", "wave", "cheer", "point_up", "smile_up")]
+    items += [(f"{p}", lambda x, y, s, p=p: C.child(x, y, s, pose=p, phase=0.5)) for p in ("jump_see", "tiptoe")]
+    items += [("jump_see phase=0", lambda x, y, s: C.child(x, y, s, pose="jump_see", phase=0.0))]
+    items += [(f"{p} (seat {120 if p.startswith('sit') else 200}*s up)", lambda x, y, s, p=p: C.child(x, y - (120 if p.startswith("sit") else 200) * s, s, pose=p, phase=0.2))
+              for p in ("on_shoulders", "on_shoulders_point", "sit_read", "sit_point")]
+    items += [("on_shoulders part='front'", lambda x, y, s: C.child(x, y - 200 * s, s, pose="on_shoulders", part="front"))]
+    items += [(f"dad1 {p}", lambda x, y, s, p=p: C.parent(x, y, s, kind="dad", variant=1, pose=p, phase=0.2))
+              for p in ("stand", "walk_a", "look_around", "call", "hold_hand", "smile", "kneel_hug")]
+    items += [(f"dad1 lift phase={ph}", lambda x, y, s, ph=ph: C.parent(x, y, s, kind="dad", variant=1, pose="lift", phase=ph))
+              for ph in (0.0, 0.35, 0.68, 1.0)]
+    items += [(f"dad1 {p}", lambda x, y, s, p=p: C.parent(x, y, s, kind="dad", variant=1, pose=p, phase=0.3))
+              for p in ("shoulders", "shoulders_walk_a", "shoulders_walk_b", "sit_read", "sit_point")]
+    items += [("dad0 shoulders (Lost Sheep dad)", lambda x, y, s: C.parent(x, y, s, kind="dad", pose="shoulders"))]
+    climb = []
+    for st, g in C.ZAC_CLIMB.items():
+        def fn(x, y, s, st=st, g=g):
+            m = C.zacchaeus(x, y, s, pose=st)
+            for hx, hy in g["hands"]:
+                m += f'<circle cx="{x + hx * s:.1f}" cy="{y + hy * s:.1f}" r="5" fill="#3a7bd5"/>'
+            for f_ in g["feet"]:
+                if f_:
+                    m += f'<circle cx="{x + f_[0] * s:.1f}" cy="{y + f_[1] * s:.1f}" r="5" fill="#e8705a"/>'
+            return m
+        climb.append((f"{st} (dots = ZAC_CLIMB)", fn))
+    climb += [("climb_down (anchor = grip)", lambda x, y, s: C.zacchaeus(x, y - 250 * s, s, pose="climb_down")),
+              ("slide_down", lambda x, y, s: C.zacchaeus(x, y, s, pose="slide_down")),
+              ("sit_branch (seat)", lambda x, y, s: C.zacchaeus(x, y - 120 * s, s, pose="sit_branch")),
+              ("peek (seat)", lambda x, y, s: C.zacchaeus(x, y - 120 * s, s, pose="peek")),
+              ("wobble (seat)", lambda x, y, s: C.zacchaeus(x, y - 120 * s, s, pose="wobble")),
+              ("climb_c facing=-1", lambda x, y, s: C.zacchaeus(x, y, s, -1, pose="climb_c")),
+              ("run phase=.5", lambda x, y, s: C.zacchaeus(x, y, s, pose="run", phase=0.5)),
+              ("strut phase=.6", lambda x, y, s: C.zacchaeus(x, y, s, pose="strut", phase=0.6))]
+    out.append(("zacchaeus_climb", "zacchaeus — the climbing stages (anchor = the supporting sole; blue = hand grips, red = soles) and the branch poses (scale 0.8)",
+                climb, 6, 300, 390, 0.8, {"ground_pad": 24}))
+    ex = ("smug", "lonely", "eager", "frustrated", "idea", "surprised", "overjoyed", "nervous", "brave", "tender", "grateful", "laugh")
+    items = [(f"zacchaeus {e}", lambda x, y, s, e=e: C.zacchaeus(x, y + 10 * s, s, expr=e, marks=False)) for e in ex]
+    items += [(f"jesus {e}", lambda x, y, s, e=e: C.jesus(x, y + 70 * s, s, expr=e)) for e in ("call_warm", "speak_joy", "warm", "smile")]
+    items += [(f"folk {e}", lambda x, y, s, e=e: C.jericho_folk(x, y + 70 * s, s, kind="man", variant=2, expr=e)) for e in ("grumble", "mutter", "delighted", "cross")]
+    items += [(f"widow {e}", lambda x, y, s, e=e: C.jericho_poor(x, y + 50 * s, s, kind="widow", expr=e)) for e in ("touched", "grateful")]
+    items += [(f"boy {e}", lambda x, y, s, e=e: C.child(x, y - 103 * s, s, outfit="tracksuit", expr=e)) for e in ("frustrated", "overjoyed")]
+    out.append(("zacchaeus_expr", "Zacchaeus film expressions (close-ups): Zacchaeus; Jesus; the people of Jericho; the widow; the boy", items, 8, 230, 300, 1.3,
+                {"clip_cells": True, "ground_pad": -150}))
+    out.append(("zacchaeus_modern", "child(outfit='tracksuit') and parent(kind='dad', variant=1): the festival, the shoulder lift, the sofa (scale 0.62)",
+                items, 9, 220, 330, 0.62, {"ground_pad": 22}))
+    return out
+
+
+def zacchaeus_group():
+    """Compositions: the scale line-up, the wall of backs, the tree with Jesus looking up, the crowd parting, the tax booth,
+    the dinner and the promise with the coin glosses, the changed heart."""
+    PR = C._prp()
+    W, H = 2000, 64 + 4 * 560
+    top = 64
+    body, labels = "", []
+    gy = top + 500
+    b = PR.jericho_sky(0, top, W, gy, time=0.0, scale=0.5) + f'<rect x="0" y="{gy}" width="{W}" height="60" fill="#e8cc94"/>'
+    xs = 60
+    for fn, kw, w in ((C.jesus, {}, 150), (C.zacchaeus, {}, 140), (C.jericho_folk, {"kind": "man"}, 140), (C.jericho_folk, {"kind": "woman", "variant": 1}, 120),
+                      (C.jericho_folk, {"kind": "elder", "variant": 2}, 140), (C.jericho_folk, {"kind": "fruit_seller"}, 160), (C.jericho_folk, {"kind": "farmer"}, 150),
+                      (C.jericho_folk, {"kind": "child", "variant": 1}, 100), (C.jericho_poor, {"kind": "widow"}, 120), (C.jericho_poor, {"kind": "beggar"}, 130),
+                      (C.disciples, {"variant": 0}, 150), (C.parent, {"kind": "dad", "variant": 1}, 130), (C.child, {"outfit": "tracksuit"}, 110)):
+        b += fn(xs, gy, 0.95, **kw)
+        xs += w * 0.95
+    b += PR.coin_pile(xs + 40, gy - 4, 1.2, 8) + PR.money_chest(xs + 160, gy, 0.6, open=1.0, glow=0.6)
+    body += _panel(0, top, W, 560, b, "zg1")
+    labels.append((20, gy + 14, "scale .95: Jesus, ZACCHAEUS (short - an adult man, ~279 px), Jericho man / woman / elder / date seller / farmer / child, widow, beggar, Peter, the dad, the boy; coins, the chest"))
+    # 2. the wall of backs | the tree
+    gy2 = gy + 560
+    y0 = gy2 - 500
+    b = PR.jericho_sky(0, y0, 1000, gy2, time=0.0, scale=0.5) + PR.jericho_street(0, 1000, gy2 - 150, 0.42, part="back", time=0.0, seed=5)
+    b += PR.jericho_street(0, 1000, gy2 - 150, 0.42, part="road", time=0.0, seed=5)
+    b += C.jericho_crowd(520, gy2 - 10, 0.62, 1, n=26, pose="back", rows=2, seed=2)
+    b += C.zacchaeus(330, gy2 + 46, 0.62, 1, pose="jump", phase=0.5, expr="frustrated")
+    b += C.zacchaeus(640, gy2 + 54, 0.62, 1, pose="tiptoe", expr="frustrated")
+    body += _panel(0, y0, 1000, 560, b, "zg2")
+    b = PR.jericho_sky(1000, y0, 2000, gy2 + 60, time=0.0, sun=(1880, y0 + 80), scale=0.5) + f'<rect x="1000" y="{gy2 - 10}" width="1000" height="70" fill="#e8cc94"/>'
+    tx, k = 1450, 0.44
+    b += PR.sycomore(tx, gy2 + 10, k, 1, part="back")
+    pts = PR.sycomore_points(tx, gy2 + 10, k, 1)
+    b += C.zacchaeus(*pts["sit"], k, 1, pose="peek")
+    b += C.jericho_crowd(1780, gy2 + 26, 0.42, -1, n=6, pose="line", rows=1, width=500, seed=4)
+    b += C.jesus(*pts["under"], k, -1, pose="call_up")
+    b += C.disciples(pts["under"][0] + 110, pts["under"][1] + 4, k, -1, variant=1, pose="stand")
+    b += PR.sycomore(tx, gy2 + 10, k, 1, part="front")
+    body += _panel(1000, y0, 1000, 560, b, "zg3")
+    labels.append((20, gy2 + 30, "the wall of backs: jericho_crowd('back') -> Zacchaeus jump (phase .5) / tiptoe | the tree: sycomore back -> peek at sycomore_points 'sit' -> Jesus call_up at 'under' -> front"))
+    # 3. the crowd parts | the tax booth
+    gy3 = gy2 + 560
+    y0 = gy3 - 500
+    b = PR.jericho_sky(0, y0, 1000, gy3, time=0.3, scale=0.5) + PR.jericho_street(0, 1000, gy3 - 60, 0.42, part="back", time=0.3, seed=7)
+    sp = PR.jericho_street_points(0, 1000, gy3 - 60, 0.42)
+    b += PR.jericho_street(0, 1000, gy3 - 60, 0.42, part="road", time=0.3, seed=7)
+    b += C.jericho_crowd(500, sp["far_edge"] + 30, 0.5, 1, n=12, pose="part", part=1.0, rows=2, width=900, gap=300, seed=1)
+    b += C.jesus(500, gy3 + 10, 0.52, 1, pose="walk_b")
+    b += C.disciples(400, gy3 + 4, 0.5, 1, variant=0, pose="walk_a") + C.disciples(320, gy3 - 2, 0.49, 1, variant=3, pose="walk_b")
+    body += _panel(0, y0, 1000, 560, b, "zg4")
+    b = PR.jericho_sky(1000, y0, 2000, gy3, time=0.0, scale=0.5) + f'<rect x="1000" y="{gy3 - 60}" width="1000" height="120" fill="#e8cc94"/>'
+    bx, kk = 1460, 0.62
+    b += PR.tax_booth(bx, gy3 + 20, kk, part="back")
+    b += C.zacchaeus(*PR.local_to_stage(bx, gy3 + 20, kk, 1, *PR.TAX_BOOTH_SEAT), kk, 1, pose="count", phase=0.4)
+    b += PR.tax_booth(bx, gy3 + 20, kk, part="front")
+    b += C.jericho_folk(bx + 260, gy3 + 30, kk, -1, kind="man", variant=3, pose="pay")
+    b += C.jericho_folk(bx + 420, gy3 + 34, kk, 1, kind="woman", variant=4, pose="grumble_walk_off", phase=0.2)
+    b += C.jericho_folk(bx - 300, gy3 + 40, kk, 1, kind="farmer", pose="arms_folded")
+    b += C.jericho_folk(bx - 420, gy3 + 44, kk, 1, kind="elder", variant=1, pose="mutter")
+    body += _panel(1000, y0, 1000, 560, b, "zg5")
+    labels.append((20, gy3 + 30, "the crowd parts: jericho_crowd('part', part=1) -> Jesus and disciples walk through | the booth: tax_booth back -> zacchaeus 'count' at TAX_BOOTH_SEAT -> front; pay, grumble"))
+    # 4. the dinner, the promise and the glosses | the changed heart
+    gy4 = gy3 + 560
+    y0 = gy4 - 500
+    cx = 500
+    b = PR.zacchaeus_house(cx, gy4 - 160, 0.42, view="interior", time=1.0, part="back", chest=1.0)
+    k4 = 0.5
+    ty = gy4 + 10
+    fy = ty - PR.DINING_TABLE_DEPTH * k4
+    b += PR.dining_bench(cx - 80, fy, k4, width=700)
+    b += C.disciples(cx - 330, fy, k4, 1, variant=3, pose="sit") + C.jesus(cx - 190, fy, k4, 1, pose="sit_smile")
+    b += C.zacchaeus(cx + 0, fy, k4, -1, pose="promise")
+    b += C.disciples(cx + 150, fy, k4, -1, variant=0, pose="sit")
+    b += PR.dining_table(cx - 80, ty, k4, width=820)
+    b += PR.coins_gloss(cx + 300, y0 + 110, 0.42, kind="half", progress=0.5) + PR.coins_gloss(cx + 300, y0 + 250, 0.42, kind="fourfold", progress=1.0)
+    body += _panel(0, y0, 1000, 560, b, "zg6")
+    b = PR.jericho_sky(1000, y0, 2000, gy4, time=1.0, sun=(1850, gy4 - 200), scale=0.5)
+    b += PR.palm_grove(1000, 2000, gy4 - 20, 0.42, time=1.0, part="back", seed=3) + PR.palm_grove(1000, 2000, gy4 - 20, 0.42, time=1.0, part="mid", seed=3)
+    k5 = 0.6
+    b += C.jericho_poor(1200, gy4 + 30, k5, 1, kind="widow", pose="receive", phase=0.5)
+    b += C.zacchaeus(1320, gy4 + 30, k5, -1, pose="give", phase=0.5, expr="tender")
+    b += C.zacchaeus(1620, gy4 + 30, k5, 1, pose="pay_back", expr="happy")
+    b += C.jericho_folk(1760, gy4 + 30, k5, -1, kind="farmer", pose="receive", phase=0.4)
+    b += C.jericho_poor(1500, gy4 + 40, k5, 1, kind="beggar", pose="sit_thank")
+    b += PR.palm_grove(1000, 2000, gy4 - 20, 0.42, time=1.0, part="front", seed=3)
+    body += _panel(1000, y0, 1000, 560, b, "zg7")
+    labels.append((20, gy4 + 30, "the dinner: interior back -> bench -> guests -> Zacchaeus 'promise' -> dining_table; coins_gloss half / fourfold | the changed heart: give -> widow receive, beggar thanks, pay_back -> farmer"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Zacchaeus film — line-up, the wall of backs, the sycamore-fig, the crowd parting, the booth, the dinner, the changed heart")
+    font = ImageFont.truetype(str(FONT_REGULAR), 20)
+    for x0, y0_, text in labels:
+        d.text((x0, y0_), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_zacchaeus_group.png"
+    sheet.save(path)
+    return path
+
+
+def zacchaeus_modern_group():
+    """The modern frame: behind a wall of grown-ups' backs, the lift onto dad's shoulders, the evening sofa."""
+    PR = C._prp()
+    W, H = 2000, 64 + 2 * 620
+    top = 64
+    body, labels = "", []
+    gy = top + 560
+    b = PR.street_festival(0, 2000, gy, 0.5, part="back", phase=0.1, seed=1)
+    for i, ph in enumerate((0.0, 0.35, 0.68, 1.0)):
+        b += C.parent(1080 + i * 230, gy + 40, 0.55, 1, kind="dad", variant=1, pose="lift", phase=ph)
+    b += PR.festival_backs(-40, 1000, gy, 0.5, n=7, rows=2, seed=3, phase=0.1)
+    b += C.child(160, gy + 60, 0.55, 1, outfit="tracksuit", pose="jump_see", phase=0.5)
+    b += C.child(420, gy + 60, 0.55, 1, outfit="tracksuit", pose="tiptoe")
+    b += C.parent(700, gy + 60, 0.55, 1, kind="dad", variant=1, pose="stand", expr="kind")
+    body += _panel(0, top, 2000, 620, b, "zm1")
+    labels.append((20, top + 592, "s02: street_festival back -> festival_backs -> the boy jump_see / tiptoe, dad | the lift: parent(kind='dad', variant=1, pose='lift', phase=0 / .35 / .68 / 1)"))
+    gy2 = gy + 620
+    b = PR.evening_room(0, 1000, gy2 - 40, 0.55, glow=0.9)
+    sx = 520
+    b += PR.sofa(sx, gy2, 0.62, part="back")
+    b += C.parent(sx - 50, gy2, 0.62, 1, kind="dad", variant=1, pose="sit_read")
+    b += C.child(sx + 76, gy2 - PR.SOFA_SEAT * 0.62, 0.62, -1, outfit="tracksuit", pose="sit_point")
+    b += PR.sofa(sx, gy2, 0.62, part="front")
+    body += _panel(0, gy2 - 560, 1000, 620, b, "zm2")
+    b = PR.street_festival(1000, 2000, gy2, 0.5, part="back", phase=0.6, seed=2)
+    rx = 1500
+    pp = C.parent_points(rx, gy2 + 40, 0.6, 1, kind="dad", variant=1, pose="shoulders")
+    b += C.child(*pp["rider"], 0.6, 1, outfit="tracksuit", pose="on_shoulders_point", part="back")
+    b += C.parent(rx, gy2 + 40, 0.6, 1, kind="dad", variant=1, pose="shoulders", rider=False)
+    b += C.child(*pp["rider"], 0.6, 1, outfit="tracksuit", pose="on_shoulders_point", part="front")
+    b += PR.festival_backs(1000, 2000, gy2 + 10, 0.5, n=6, rows=1, seed=5)
+    b += f'<circle cx="{pp["rider"][0]:.1f}" cy="{pp["rider"][1]:.1f}" r="6" fill="#d64034"/>'
+    body += _panel(1000, gy2 - 560, 1000, 620, b, "zm3")
+    labels.append((20, top + 1212, "s11: evening_room -> sofa back -> dad sit_read -> boy sit_point -> sofa front | rider recipe: child part='back' at parent_points()['rider'] (red dot) -> dad rider=False -> child part='front'"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Zacchaeus film — the modern frame: behind the grown-ups, lifted onto dad's shoulders, the picture book at home")
+    font = ImageFont.truetype(str(FONT_REGULAR), 20)
+    for x0, y0_, text in labels:
+        d.text((x0, y0_), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_zacchaeus_modern_group.png"
+    sheet.save(path)
+    return path
+
+
 # ---------------------------------------------------------------- compositions
 
 
@@ -830,6 +1471,16 @@ def main():
         print(joseph_group())
     if not filt or any(f in "storm_group" for f in filt):
         print(storm_group())
+    if not filt or any(f in "nativity_group" for f in filt):
+        print(nativity_group())
+    if not filt or any(f in "lost_sheep_group" for f in filt):
+        print(lost_sheep_group())
+    if not filt or any(f in "lost_sheep_modern_group" for f in filt):
+        print(lost_sheep_modern_group())
+    if not filt or any(f in "zacchaeus_group" for f in filt):
+        print(zacchaeus_group())
+    if not filt or any(f in "zacchaeus_modern_group" for f in filt):
+        print(zacchaeus_modern_group())
     raster.close()
 
 

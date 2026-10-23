@@ -36,7 +36,7 @@ Themes
      F#4 A4. D5 A4. | B4 G4. B4 D5. | E5 D5. C5 E5. | D5-- A4--   (b5-b8: F#4 A4 D5 F#5 | G5 F#5 E5 D5 | E5 G5 E5 C5 |
      D5); in G when the boat sets out in the evening (s07); frantic, in G minor, in the panic (s09).
   The mustard seed (C major, 3/4, a music box over a pizzicato waltz): F, tiny and high, on '最小最小的种子', a pling on
-     each sparkle of the seed; then each 长 a step up -- 长 Dm7, 长 Em7, 长得 F, 所有的菜 G, 都大 C (music box D6 E6 F6
+     each sparkle of the seed; then each 长 a step up -- 长 Dm7, 长 Em7, 长大了 F, 所有的菜 G, 都大 C (music box D6 E6 F6
      G6 C7 over a climbing bass, on the picture's growth); C on '做窝', the birds' flute trill as they land.
   The lullaby (G major, 6/8; celesta and harp, then the flute): D5 B4. D5 B4. | E5 G5. E5 C5. | E5 D5. C5 A4. |
      B4 A4. A4-- (G C Am7 D) ... | D5 C5. A4 F#4. | G4 (D7 G); a tiny warm island of it inside the storm (s10).
@@ -964,13 +964,13 @@ def seed(c):
     sm_ed = edges48(sm, c, [t_small])
     prog48(sm, ["C", "F"], sm_ed)
     p.prog("C:3")
-    # 长 啊 长 / 长得 (the picture's growth) / 所有的菜 / 都大: each 长 a step up
+    # 长 啊 长 / 长大了 (the picture's growth) / 所有的菜 / 都大: each 长 a step up
     t_g2 = char_at(c, "长啊长", 2)
     t_all = c.at("所有的菜")
     t_big = c.at("都大")
     g1 = pic(c, "grow", "芥菜种", 1)
     pic_g1 = g1 is not None and t_g2 + 0.15 < g1 < t_all - 0.15
-    t_g3 = g1 if pic_g1 else c.at("长得比所有的菜都大")
+    t_g3 = g1 if pic_g1 else c.at("长大了")
     ed = edges48(g, c, [t_g2, t_g3, t_all, t_big])
     prog48(g, ["Dm7", "Em7", "F", "G", "C"], ed)
     b_ed = edges48(b, c, [t_nest])
@@ -1032,7 +1032,7 @@ def seed(c):
     p.expr(["pz_cb", "harp", "timp"], [(0, -12), (3, -12)])
     p.expr(["celesta"], [(0, -14), (3, -14)])
     p.expr(["vla", "vln2", "vc"], [(0, -20), (3, -18)])
-    # 长啊长 ... 长得比所有的菜都大: each 长 a step up, then big on '都大'
+    # 长啊长 ... 长大了，比所有的菜都大: each 长 a step up, then big on '都大'
     steps = [("D6", "D3"), ("E6", "E3"), ("F6", "F3"), ("G6", "G3")]
     for k, (hi_, lo_) in enumerate(steps):
         q = ed[k] / 48

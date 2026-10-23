@@ -9,6 +9,7 @@ extra dark "cave" reverb inside the fish (s11 and s12 up to its turning point), 
 loudness normalisation and a gentle look-ahead peak limiter.  Output: 48 kHz stereo WAV of
 exactly timeline['duration'].
 """
+import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -124,6 +125,11 @@ def render(timeline, out_path):
 
     sc = score_mod.build(timeline)
     sc.perform()
+    # the chord sounding at every moment (s, s, root pitch class, quality), for audio/mix.py: it tunes the pitched
+    # sound effects (chime, sparkle, grow) to the harmony they ring over
+    harmony = sorted([round(g.t(q0), 3), round(g.t(q1), 3), ch.root, ch.quality]
+                     for c in sc.cues for g in c.segs for q0, q1, ch, _ in g.chords)
+    (out_path.parent / "harmony.json").write_text(json.dumps(harmony))
     work = Path(tempfile.mkdtemp(prefix="music_", dir=out_path.parent))
     try:
         mids = sc.write_midis(work)

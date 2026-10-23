@@ -506,7 +506,7 @@ def glow(seg, q=0.0, vel=50, choir=True, land=None):
 # ------------------------------------------------------------------------------------------- cues
 def title(c):
     """Joseph's theme b1-b2 on the clarinet over harp and soft strings (D major); a glockenspiel glint on the coat."""
-    c.gain(-9.0)
+    c.gain(-9.4)
     s = c.seg(0, c.dur, 2, "4/4", "D major", nominal=96, label="title")
     s.duck(1.0)
     s.duck(4.0, parts=["clar"])
@@ -620,7 +620,7 @@ def coat(c):
     clarinet ('雅各最疼爱的'); a shimmer for the coat (Em7 A7); the colours: a rising glockenspiel/celesta scale, one
     note per colour as it appears (红 D, 黄 Em, 蓝 F#m, 绿 G over a rising bass), D on '好漂亮'; the brothers frown (D
     B7) and the jealousy motif on '酸溜溜的' (E minor, bassoon), the grumbling question ending on B7."""
-    c.gain(-2.4)
+    c.gain(-2.8)
     t_j = c.gap(c.find("雅各最疼爱的"))
     t_coat = c.gap(c.find("他给约瑟做了"))
     t_red = c.at("红")
@@ -873,7 +873,7 @@ def pit(c):
     the jealousy motif, tremolo); C on '剥下约瑟的彩衣' (the coat motif falling: glockenspiel, celesta, a plucked
     chord); the dry pit (A minor, hollow: low basses, a high thin violin line); '哥哥！放我出去！' -- the sad motif on a
     solo oboe (E minor)."""
-    c.gain(-2.2)
+    c.gain(-2.5)
     t_see = c.gap(c.find("哥哥们远远看见"))
     t_strip = c.at("剥下约瑟的彩衣")
     t_pit = c.at("把他丢进")
@@ -1670,7 +1670,7 @@ def forgive(c):
     '可是上帝把它变成了好事' (choir; God's light stays a soft swell), Em7 A7; the theme b5-b7 full (violins and clarinet,
     a horn counter-melody; soft harp/celesta touches on the hugs); D on '一家人，又在一起了' (choir 'ah', timpani, harp
     sweep, glockenspiel), with glints for Joseph and Jacob's hug and the family's twinkles on the picture."""
-    c.gain(-3.0)
+    c.gain(-4.0)
     t_me = c.at("我就是约瑟")
     t_fear = c.gap(c.find("哥哥们吓坏了"))
     t_dont = c.gap(c.find("不要害怕"))

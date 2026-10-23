@@ -113,6 +113,64 @@ def _zv_tokens(syl):
 
 
 # ------------------------------------------------------------------ ZipVoice
+# The particles 地 (轻轻地走) and 得 (跑得快) are read de5, but a lone 地/得 entry takes the script's majority reading
+# (地方 di4, 得到 de2), so 轻轻地 came out qing1 qing1 di4. Each particle use gets an entry for the word before it
+# plus the particle (轻轻地 = qing1 qing1 de5); nouns and lexical words keep their readings.
+_DI_NOUN_NEXT = set("上下里方面球图区带点位道")        # 地上 地方 ... (地 starts a noun)
+_DI_NOUN_PREV = set("在到从于往向满遍落倒各本外此大天土田草空当陆野平高工墓基该")   # 在地 大地 各地 ...
+_DI_WORDS = {"大地", "土地", "陆地", "草地", "天地", "各地", "田地", "野地", "空地", "当地", "遍地", "平地", "高地",
+             "本地", "外地", "内地", "工地", "墓地", "基地", "满地", "落地", "倒地", "园地", "场地", "心地"}
+_DE_WORDS = {"获得", "取得", "觉得", "记得", "懂得", "值得", "舍得", "显得", "晓得", "难得", "免得", "使得", "赢得",
+             "落得", "彼得", "认得", "不得", "怪不得", "舍不得", "巴不得", "了不得", "恨不得", "顾不得"}
+
+
+def _segments(run, entries):
+    """Forward longest match over the lexicon, like the ZipVoice front end: [(start, word)]."""
+    segs, i = [], 0
+    while i < len(run):
+        for L in range(min(8, len(run) - i), 0, -1):
+            w = run[i:i + L]
+            if L == 1 or w in entries:
+                segs.append((i, w))
+                i += L
+                break
+    return segs
+
+
+def _structural_de(texts, entries):
+    add = {}
+    runs = [r for t in texts for r in re.findall(r"[\u4e00-\u9fff]+", t)]
+    for run in runs:
+        segs = _segments(run, entries)
+        for k, (st, w) in enumerate(segs):
+            end = st + len(w) - 1
+            ch = run[end]
+            if ch not in "地得" or end == 0 or end + 1 >= len(run) or k == 0:
+                continue
+            nxt, prv = run[end + 1], run[end - 1]
+            if ch == "地" and (nxt in _DI_NOUN_NEXT or prv in _DI_NOUN_PREV or w in _DI_WORDS):
+                continue
+            if ch == "得" and (w in _DE_WORDS or nxt in "到救"):
+                continue
+            pw = segs[k - 1][1]
+            if len(w) == 1:                              # 轻轻 + 地
+                key, syl = pw + ch, list(entries.get(pw, [])) + ["de5"]
+            else:                                        # 伤 + 心得 (the segmenter took 心得 as a word)
+                key, syl = pw + w, list(entries.get(pw, [])) + list(entries.get(w, []))[:-1] + ["de5"]
+            if len(syl) != len(key):
+                continue
+            nk = k + 1                                   # the entry must not swallow a noun elsewhere (两个地方)
+            if any(key + n in r for r in runs for n in _DI_NOUN_NEXT) or any(r.endswith(key) for r in runs):
+                nw = segs[nk][1] if nk < len(segs) else ""
+                if not nw:
+                    continue
+                key, syl = key + nw, syl + list(entries.get(nw, []))
+                if len(syl) != len(key):
+                    continue
+            add.setdefault(key, syl)
+    return add
+
+
 def zipvoice_content(texts):
     counts, words = {}, {}
     for t in texts:
@@ -131,6 +189,8 @@ def zipvoice_content(texts):
     entries = {ch: c.most_common(1)[0][0].split() for ch, c in counts.items()}
     entries.update({w: ws for w, ws in words.items()})
     entries.update({w: s.split() for w, s in ZV_FIX.items()})
+    entries.update(_structural_de(texts, entries))
+    entries.update({w: s.split() for w, s in ZV_FIX.items()})      # explicit fixes always win
     lines = [w + " " + " ".join(tok for s in syls for tok in _zv_tokens(s)) for w, syls in sorted(entries.items())]
     return "\n".join(lines) + "\n"
 
