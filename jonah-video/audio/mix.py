@@ -21,6 +21,7 @@ Ducking under the narration (one speech envelope, two time constants):
   * a cue with ``duck_db`` set (Scene.sfx(..., duck_db=-3)) is ducked by that amount instead, on its own
     pre-ducked bus (same envelope as its kind).
 """
+import json
 import zlib
 
 import numpy as np
@@ -77,6 +78,36 @@ def collect_cues(tl):
 
 def _duck(env, db):
     return (10 ** (db * env / 20)).astype(np.float32)
+
+
+# pitched effects and their default root (MIDI): without an explicit root they are tuned to the score's chord
+TONAL = {"chime": 72, "sparkle": 79, "grow": 67}
+_MINOR = {"m", "m6", "m7", "m9", "madd9", "mmaj7"}
+_DIM = {"dim", "dim7", "m7b5"}
+_SUS = {"sus4", "7sus4"}
+
+
+def tune_to_score(cues, harmony):
+    """Give every chime, sparkle and grow cue the root that fits the chord the score plays where it rings (``harmony``: [t0, t1, root pc, quality] from audio/music.py).  The effects are a major triad
+    and major-pentatonic pings on their root, so: a major or dominant chord -> its own root; a minor chord -> its
+    relative major (minor-pentatonic pings); a diminished chord -> a major third below (the rootless dominant
+    ninth); a suspended chord -> a whole step below (9 and sus4 over the bass).  The octave is the one nearest the
+    cue's own root (scenes set one only for the register: root=91, a high sparkle) or else the effect's default.
+    Before this, every chime rang C major whatever the key (a C-major chord over E-flat)."""
+    for c in cues:
+        if c["name"] not in TONAL:
+            continue
+        t = c["t"] + 0.1
+        here = [h for h in harmony if h[0] <= t < h[1]]
+        if not here:
+            continue
+        _, _, root, q = max(here, key=lambda h: h[0])          # an overlapping hand-off: the incoming cue
+        pc = (root + 3) % 12 if q in _MINOR else (root + 8) % 12 if q in _DIM else (root + 10) % 12 if q in _SUS \
+            else root
+        d = int(c["params"].get("root", TONAL[c["name"]]))
+        r = d + (pc - d) % 12
+        c["params"] = {**c["params"], "root": r - 12 if r - d > 6 else r}
+    return cues
 
 
 def render_sfx(tl, cues, n, envs=None):
@@ -389,6 +420,9 @@ def mix():
     env_bed = bed_envelope(voice, tl)
     env_fx = speech_envelope(voice, **FX_ENV)
     cues = collect_cues(tl)
+    harmony = BUILD / "audio" / "harmony.json"           # written by the music stage
+    if harmony.exists():
+        tune_to_score(cues, json.loads(harmony.read_text()))
     loops, oneshots, pre = render_sfx(tl, cues, n, envs={"loop": env_bed, "oneshot": env_fx})
     music_d = music * _duck(env_bed, MUSIC_DUCK_DB)[:, None]
     loops *= _duck(env_bed, SFX_DUCK_DB)[:, None]
