@@ -57,11 +57,12 @@ Cue table (scene: key / meter -- what the music does; picture hits in brackets)
                             out of the leaves (a xylophone grace), the ribbon (a glint), a xylophone step climbing for
                             each of the six title characters, F5 Bb5 C6 Eb6 F6 A6, the ta-da on the sparkle]
   s02 question  F 2/4       the frame (marimba, guitar, strings): his tune's creep on the marimba; Gm7 C7sus4 on
-                            '什么都看不见' (change), hanging through the pause (a guitar heartbeat); F on '今天' (change):
-                            his tune small, on the bassoon, in F; B-flat on '可是，他想了一个好办法' (change), C7; F on
-                            '好办法' (change and a plucked hit), the guitar rolling on and the marimba waving through
-                            the tail into the page turn [two hops (a xylophone hop each), back on his heels (a low
-                            pluck), dad lifts him (a xylophone run up), the boy up and beaming (a xylophone ping)]
+                            '什么都看不见' (change), hanging through the pause (a guitar heartbeat, the marimba's B-flat
+                            resolving to A); F on '今天' (change, a soft strum): his tune small, on the bassoon, in F;
+                            B-flat on '可是，他想了一个好办法' (change), C7; F on '好办法' (change and a plucked hit), the guitar
+                            rolling on and the marimba waving through the tail into the page turn [two hops (a xylophone
+                            hop each), back on his heels (a low pluck), dad takes him under the arms (a pluck), dad
+                            lifts him (a xylophone run up), the boy up and beaming (a xylophone ping)]
   s03 jericho   B-flat 2/4 -> G minor -> E-flat   the street tune on the koto (marimba, pizzicato, darbuka, a qanun
                             flourish); his tune on '城里住着一个人' (change); a mock-imperial muted-trumpet fanfare on
                             '收税的人，就是' (change); his smug strut on '撒该管着好多' (change), a muted-trumpet 'heh-heh'
@@ -750,7 +751,7 @@ def title(c):
     f7 = int(round((q_b - 6.0) * 48))
     s.prog(f"Bb:2 | Bb:2 | Bb:2 | F7:{f7}/48 Bb:{192 - f7}/48")
     s.mel("clar", "r:2 | " + bars(Z, 0, 3) + " | Bb4:2", vel=50)
-    steps(s, 0, min(8.0, q_b), vel=36)
+    steps(s, 0, min(8.0, q_b) - 0.38, vel=36)
     oom(s, 0, min(8.0, q_b), vel=36)
     darbuka(s, 0, 8, vel=30)
     s.pad(["vla", "vla", "vln1"], 3, 55, 74, vel=30, bass_ref=(33, 45))
@@ -826,29 +827,33 @@ def question(c):
     a.pad(["vla", "vla", "vln1"], 3, 50, 67, vel=30, bass_ref=(41, 53))
     bassline(a, "vc", 41, 53, 30)
     a.duck(2.5, parts=["marimba"])
-    lv(a, ["marimba"], -14)
-    lv(a, ["guitar"], -13)
+    a.expr(["marimba"], [(0, -18), (1.5, -14), (6, -14)])
+    a.expr(["guitar"], [(0, -19), (1.5, -13), (6, -13)])
     a.expr(["vla", "vln1", "vc"], [(0, -24), (2, -22), (6, -22)])
     hops = pick_times(pics(c, "thud"), 0.0, t_q - 0.1, 2)
     for k_, t_ in enumerate(hops):                           # the boy hops (a xylophone hop and a pluck)
         clear_near(c, t_)
         accent(c, segs, t_, f"the boy hops ({k_ + 1})", xylo=(77, 86), pluck=(55, 64), block=76, vel=44)
     # 'can't see anything?': Gm7, then C7sus4 hangs through the pause (a guitar heartbeat, the marimba asks)
-    h.mel("marimba", "r:1/2 D5:1/2 C5:1", vel=40)
+    h.mel("marimba", "r:1/2 D5:1/2 C5:1/2 Bb4:1/2", vel=40)
     t_heel = pick_times(pics(c, "thud"), t_q - 0.1, t_today - 0.1, 1)
     if t_heel:                                               # back on his heels, pouting: a soft low pluck
         accent(c, segs, t_heel[0], "back on his heels (a low pluck)", pluck=(55, 62), block=77, vel=40)
     for k_ in range(8):
         h.add("guitar", 0.25 * k_, 0.25, top(h, 0.25 * k_, 43, 57, -1 - k_ % 2), 30 + (4 if k_ % 2 == 0 else 0),
-              "arp", "s")
+              "arp", "s" if k_ < 6 else "")
     h.pad(["vla", "vla", "vln1"], 3, 50, 69, vel=30, bass_part="vc", bass_lo=41, bass_hi=53)
     lv(h, ["marimba"], -15)
     lv(h, ["guitar"], -13)
     h.expr(["vla", "vln1", "vc"], [(0, -20), (2, -20)])
     # 'today's story has someone just like that': Zacchaeus's tune, small, on the bassoon (in F)
-    t.mel("bsn", "A3:1/2 Bb3:1/2 B3:1/2 C4:1/2 | F4:1/2:s r:1/2 C4:1/2:s A3:1/2:s | Bb3:1/2 G3:1/2 E3:1/2 G3:1/2",
+    t.mel("bsn", "A3:1 Bb3:1/3 B3:1/3 C4:1/3 | F4:1/2:s r:1/2 C4:1/2:s A3:1/2:s | Bb3:1/2 G3:1/2 E3:1/2 G3:1/2",
           vel=46)
     oom(t, 0, 6, vel=32, bass=(29, 41), hi=(57, 69), cpart="marimba")
+    for k_, nm in enumerate(("F3", "A3", "C4", "F4")):     # the story begins: a soft strum on F
+        t.add("guitar", 0.04 * k_, 1.0 - 0.04 * k_, nm, 34 - k_, "arp", "h" if k_ == 0 else "")
+    t.add("marimba", 0, 1.0, "A4", 34, "arp")
+    lv(t, ["guitar"], -15)
     t.pad(["vla", "vla", "vln1"], 3, 52, 69, vel=28, bass_ref=(29, 41))
     t.duck(2.0, parts=["bsn"])
     lv(t, ["bsn"], -15)
@@ -856,7 +861,8 @@ def question(c):
     lv(t, ["marimba"], -20)
     t.expr(["vla", "vln1"], [(0, -23), (6, -23)])
     # 'but he thought of a good idea!': B-flat, C7 ... F on '好办法'
-    i.mel("bsn", "F3:1/2:s r:1/2 E3:1", vel=40)
+    i.mel("bsn", "F3:1 E3:1", vel=40)
+    hit(c, segs, "cloth", None, 0, "dad takes him under the arms (a pluck)", pluck=(58, 70), marim=(62, 74), vel=40)
     i.pad(["vla", "vla", "vln1"], 3, 52, 70, vel=30, bass_part="vc", bass_lo=41, bass_hi=53)
     i.add("pz_cb", 0, 0.5, "Bb1", 40, "bass", "s")
     i.add("pz_cb", 1, 0.5, "C2", 40, "bass", "s")
@@ -897,7 +903,8 @@ def question(c):
         sg_, q_l = seg_at(c, segs, t_lift)
         clear_near(c, t_lift)
         sweep(sg_, q_l, 0.4, "F5", "F6", 30, 42, part="xylo")
-        sg_.add("pz_hi", q_l, _dq(sg_, q_l, 0.25), top(sg_, q_l, 60, 72), 44, "arp", "h")
+        sg_.add("pz_hi", q_l, _dq(sg_, q_l, 0.25), top(sg_, q_l, 60, 72), 48, "arp", "h")
+        sg_.add("xylo", q_l, _dq(sg_, q_l, 0.25), top(sg_, q_l, 72, 79), 44, "arp", "h")
         sg_.sync("dad lifts the child (a run up)", q_l, t_lift)
     t_pt = pic(c, "pop", "可是，他想了一个好办法", 0)
     if t_pt is not None:                                     # he points at the parade (the cue's last moment)
@@ -1105,7 +1112,7 @@ def crowd(c):
     t_qe = c.le(c.find("小朋友，你猜"))
     n = c.seg(0, t_w, 6, "2/4", "Bb major", nominal=123, label="crowd-news")
     w = c.seg(t_w, t_x, 4, "2/4", "Bb major", nominal=118, label="crowd-wants")
-    x = c.seg(t_x, t_s, 6, "2/4", "Bb major", nominal=103, label="crowd-chance")
+    x = c.seg(t_x, t_s, 6, "2/4", "Bb major", nominal=110, label="crowd-chance")
     s = c.seg(t_s, t_j, 2, "2/4", "Bb major", nominal=90, label="crowd-short")
     jm = c.seg(t_j, t_t, 2, "2/4", "Bb major", nominal=100, label="crowd-jump")
     tp = c.seg(t_t, t_wall, 2, "2/4", "Bb major", nominal=100, label="crowd-tiptoe")
@@ -1175,8 +1182,11 @@ def crowd(c):
     x.pad(["trem_va", "trem_va", "trem_hi"], 3, 50, 69, vel=28, q0=8, bass_ref=(43, 55))
     x.pad(["vla", "vla", "vln1"], 3, 50, 69, vel=28, q1=8, bass_ref=(43, 55))
     hit(c, segs, "pop", "撒该心想", 0, "a thought bubble opens (a xylophone pluck)", xylo=(74, 86), vel=38)
+    t_qm = pic(c, "pop", "撒该心想", 1)
+    if t_qm is not None:
+        clear_near(c, t_qm, win=0.15, roles=("arp", "perc"))
     hit(c, segs, "pop", "撒该心想", 1, "a big '?' in the bubble (a plucked question)", xylo=(79, 91), pluck=(62, 74),
-        vel=40)
+        block=77, vel=50)
     x.duck(4.5, parts=["clar"])
     lv(x, ["clar"], -17)
     lv(x, "hand", -20)
@@ -1300,7 +1310,7 @@ def crowd(c):
     if len(dots) == 3:                                       # three thinking dots rise: three notes climbing
         for t_ in dots:
             clear_near(c, t_, win=0.25)
-        climb(c, segs, dots, part="xylo", lo=76, hi=91, vel=54, sync=(0, 2), what="a thinking dot rises", glock=False,
+        climb(c, segs, dots, part="xylo", lo=76, hi=91, vel=58, sync=(0, 2), what="a thinking dot rises", glock=False,
               pz=True)
     else:
         for k_, nm in enumerate(("Bb5", "D6", "F6")):
@@ -1502,6 +1512,7 @@ def tree(c):
     tp.add("okit", 0, 1, 57, 24, "perc", "h")
     tp.sync("the hoist onto the sitting branch" + (" (picture)" if pic_c else ""), 0, t_top)
     strings(tp, vel=34, lo=55, hi=74, bass=(40, 52), cb=None)
+    tp.duck(2.5, parts=["flute", "koto"] + STR)
     t_set = pic(c, "pop", "撒该爬呀爬", 0, lo=t_top + 0.2, hi=t_hee - 0.1)
     if t_set is not None:                                    # he settles on the branch: a soft pluck
         clear_near(c, t_set)
@@ -1910,7 +1921,8 @@ def promise(c):
         sg2.add("pz_hi", q2, _dq(sg2, q2, 0.25), sg2.chord_at(q2 + 1e-3).tones(lo_, hi_)[0], 40, "arp", "h")
     sg_.sync("two piles of five (two plucked chords)" + (" (picture)" if pic_h else ""), q_2, t_two)
     if t_bowl is not None:
-        accent(c, segs, t_bowl, "one pile to the poor (a harp glint)", harp=(77, 89), vel=38)
+        clear_near(c, t_bowl)
+        accent(c, segs, t_bowl, "one pile to the poor (a harp glint)", harp=(77, 89), pluck=(62, 74), vel=44)
     hit(c, segs, "sparkle", "一半，就是", 0, "a heart for the poor (a glint)", glock=(86, 98), vel=38)
     # 'four times: if you took one coin too many, give back four!'
     hit(c, segs, "pop", "四倍，就是", 0, "the second card pops up (a pluck)", koto=(70, 82), marim=(74, 86), vel=40)
@@ -1960,9 +1972,9 @@ def saved(c):
     r = c.seg(t_jy, t_m, 1, "4/4", "D major", nominal=None, label="saved-salvation")
     m = c.seg(t_m, t_l, 2, "4/4", "D major", nominal=78, label="saved-family")
     lo_ = c.seg(t_l, t_f, 2, "4/4", "D major", nominal=96, label="saved-lost")
-    f1 = c.seg(t_f, t_also, 2, "2/4", "D major", nominal=94, label="saved-see")
-    f2 = c.seg(t_also, t_sh, 2, "2/4", "D major", nominal=88, label="saved-found")
-    p = c.seg(t_sh, c.dur, 2, "6/8", "D major", nominal=108, label="saved-shepherd")
+    f1 = c.seg(t_f, t_also, 2, "2/4", "D major", nominal=82, label="saved-see")
+    f2 = c.seg(t_also, t_sh, 2, "2/4", "D major", nominal=94, label="saved-found")
+    p = c.seg(t_sh, c.dur, 2, "6/8", "D major", nominal=101, label="saved-shepherd")
     segs = (s1, s2, r, m, lo_, f1, f2, p)
     for sg in segs:
         sg.duck(1.5)
@@ -2150,8 +2162,8 @@ def end(c):
     n.mel("marimba", "A4:1 Bb4:1/2 B4:1/2 C5:2 | F5:3/2 E5:1/2 D5:2", vel=50)
     broken(n, "guitar", 0, 8, (0, 2, 1, 2), 41, 57, vel=32, thin=True)
     n.pad(["vla", "vla", "vln1"], 3, 50, 69, vel=28, bass_part="vc", bass_lo=38, bass_hi=50)
-    n.duck(4.0, parts=["marimba"])
-    n.duck(1.5, parts=["guitar", "vla", "vln1", "vc"])
+    n.duck(5.5, parts=["marimba"])
+    n.duck(2.5, parts=["guitar", "vla", "vln1", "vc"])
     n.expr(["marimba"], [(0, -16), (1, -13), (8, -13)])
     lv(n, ["guitar"], -13)
     n.expr(["vla", "vln1", "vc"], [(0, -24), (8, -23)])
@@ -2159,8 +2171,9 @@ def end(c):
     l.mel("marimba", "Bb4:1 A4:1/2 G4:1/2 | C5:1 Bb4:1/2 A4:1/2 | D5:1 E5:1", vel=46)
     broken(l, "guitar", 0, 6, (0, 2, 1, 2), 41, 57, vel=30, thin=True)
     l.pad(["vla", "vla", "vln1"], 3, 50, 69, vel=28, bass_part="vc", bass_lo=38, bass_hi=50)
-    hit(c, segs, "chime", "不管别人", 0, "a heart pops up on '爱' (a glint)", glock=(86, 98), vel=38)
+    hit(c, segs, "chime", "不管别人", 0, "a heart pops up on '爱' (a glint)", clear=False, glock=(86, 98), vel=40)
     l.duck(4.0, parts=["marimba"])
+    l.duck(2.0, parts=["guitar", "vla", "vln1", "vc"])
     l.expr(["marimba"], [(0, -19), (1, -14), (6, -14)])
     l.expr(["guitar"], [(0, -18), (1, -13), (6, -13)])
     l.expr(["vla", "vln1", "vc"], [(0, -23), (6, -22)])
@@ -2170,6 +2183,7 @@ def end(c):
     strings(h, vel=32, lo=50, hi=71, bass=(41, 53), cb=(29, 41))
     hit(c, segs, "sparkle", "他也想住进你的心里", 0, "a heart (a glint)", glock=(86, 98), vel=38)
     h.duck(2.5, parts=["marimba"])
+    h.duck(2.0, parts=["guitar"] + STR)
     h.expr(["marimba"], [(0, -21), (1, -14), (4, -14)])
     h.expr(["guitar"], [(0, -18), (1, -13), (4, -13)])
     h.expr(STR, [(0, -27), (1, -22), (4, -21)])
@@ -2279,6 +2293,7 @@ PICTURE_HITS = [
     ("s02_question", "thud", None, 0, 0.0, "hit", "the boy hops (1)"),
     ("s02_question", "thud", None, 1, 0.0, "hit", "the boy hops (2)"),
     ("s02_question", "thud", None, 2, 0.0, "hit", "back on his heels, pouting (a low pluck)"),
+    ("s02_question", "cloth", None, 0, 0.0, "hit", "dad takes him under the arms (a pluck)"),
     ("s02_question", "whoosh", None, 0, 0.0, "hit", "dad lifts him onto his shoulders (a xylophone run up)"),
     ("s03_jericho", "coins", "城里住着一个人", 0, 0.0, "hit", "he counts his coins (a clink)"),
     ("s03_jericho", "pop", "收税的人，就是", 0, 0.0, "hit", "the emperor's coin (a timpani and a glint)"),
