@@ -89,19 +89,22 @@ Cue table (scene: key / meter -- what the music does; picture hits in brackets)
                           D for the sign (its entrance a synced attack), half cadence on A [the angel, good news, the
                           Saviour, wrapped in cloths]
   s08 choir     D         B minor on '忽然' (change), the host appears on its chime and multiplies (a celesta step per
-                          angel; G Em7 A7sus4, horns, a timpani roll); A7 '一起赞美上帝'; the Gloria in D in the pause
-                          (change: trumpet x, choir, brass, bells, cymbal, timpani -- the film's loudest moment, then
-                          held, ducked 10 dB, under the angels' song); G on '在地上' (change); the bells again in the next
-                          pause (a synced attack); G on '地上，上帝要把平安' (change): the gift theme's cadence on the horn
-                          [the host, three angels, glory, peace, heaven, peace on earth]
+                          angel; B minor held, Em7 A7sus4, horns, a timpani roll); A7 '一起赞美上帝'; the Gloria in D in
+                          the pause (change: trumpet x, choir, brass, bells, cymbal, timpani -- the film's loudest
+                          moment, then held, ducked 10 dB, under the angels' song); G on '在地上' (change); the bells
+                          again in the next pause (a synced attack); G on '地上，上帝要把平安' (change): the gift
+                          theme's cadence on the horn, landing on D with the picture's 'peace on earth' chime [the
+                          host, three angels, glory, peace, heaven, peace on earth]
   s09 visit     D -> Bb -> Eb   the angels go up (harp from the picture's whoosh, choir fading); B-flat glances on
                           '牧羊人你看看我' (change); E-flat F7 '我们快去'; the shepherds' run (change) and search at one
                           tempo; E-flat on '找到了' (change; the lullaby's first note on the picture's sparkle); the gift
                           theme on the horn on '他就是天使说的救主' (change); the shepherds' tune on '牧羊人好开心' (change);
-                          A-flat add9, amazed; the lullaby, very soft, on '马利亚呢' (change) [the angels leave, found,
+                          A-flat add9, amazed; the lullaby, very soft (E-flat Cm7 B-flat7 E-flat), on '马利亚呢' (change)
+                          [the angels leave, found,
                           the Saviour, sent by God, amazed, kept in her heart]
   s10 star      C dorian -> Eb lydian -> C dorian   the East (English horn over a C drone, dulcimer, finger cymbals,
-                          celesta stars); B-flat F rising (a harp sweep as the picture's star starts to rise); E-flat
+                          celesta stars); B-flat F7sus4 rising (a harp sweep as the picture's star starts to rise);
+                          E-flat
                           lydian on '一颗特别的星星' (change; x on celesta and glockenspiel from the picture's chime);
                           F/E-flat sparkle, a horn call on '有一位王出生了', G; the caravan on '他们出发了' (change), its
                           low drum on the camels' steps [the stargazers' star, the star, the king, first and fifth step]
@@ -619,7 +622,7 @@ def title(c):
     and a starry choir 'ooh' (E-flat, 3/4); a glint as the title appears, a celesta step for each title character as
     it pops in, a sparkle at the end (the picture)."""
     c.gain(-12.0)
-    s = c.seg(0, c.dur, 2, "3/4", "Eb major", nominal=80, label="title")
+    s = c.seg(0, c.dur, 2, "3/4", "Eb major", nominal=68, label="title")
     s.duck(1.0)
     s.duck(4.0, parts=["recorder"])
     s.prog("Eb:3 | Eb:3")
@@ -700,8 +703,8 @@ def angel(c):
     """Nazareth: Mary's theme on the recorder (A-flat, 3/4: sol- do | fa. mi fa | sol mi do | re); '有一天' D-flat,
     the lamp-lit room; '忽然亮起来了' C major -- the light on the picture's chime (harp up, glockenspiel and celesta, a
     bell, choir 'aah', high strings); F/C as the angel stands there (a bell on its sparkle); A minor, startled (a
-    plucked flick as she jumps); Gabriel's words over soft choir and strings (F C/E Dm7 G7sus4 C; the lullaby's head on the
-    celesta on '他是上帝的儿子'); Mary's question (Am F G, strings only under her voice); G7 -> C, radiant, on
+    plucked flick as she jumps); Gabriel's words over soft choir and strings (F C/E Dm7 G7sus4 C; the lullaby's head on
+    the celesta on '他是上帝的儿子'); Mary's question (Am F G, strings only under her voice); G7 -> C, radiant, on
     '没有做不到的事'; F minor on '我是上帝的使女' (strings and harp only under her words) and A-flat on '我愿意'."""
     c.gain(-2.0)
     t_day = c.ls(c.find("有一天"))
@@ -900,16 +903,16 @@ def journey(c):
     broken(j, "harp", 0, 6, (0, 2, 4, 2, 4, 2), 41, 53, vel=30, thin=True)
     j.duck(2.5, parts=["horn"])
     j.expr(["horn"], [(0, -19), (1, -16), (6, -16)])
-    j.expr(STR, [(0, -22), (1.5, -20), (6, -20)])
+    j.expr(STR, [(0, -22), (1.5, -20), (4.5, -20), (6, -18)])
     lv(j, ["harp"], -13)
     hit(c, segs, "pop", None, 0, "Joseph pops up", pluck=(60, 72), celesta=(79, 91), vel=44)
     hit(c, segs, "pop", None, 1, "Mary pops up", pluck=(63, 75), celesta=(82, 94), vel=44)
     # the Roman emperor: a small pompous fanfare; then the people counted
     r.mel("tpt", "F4:3/4 F4:1/4 Bb4:1 D5:3/4 C5:1/4 Bb4:1", vel=50)
     r.pad(["horn", "horn"], 2, 50, 62, vel=40, q1=4, bass_ref=(34, 46))
-    r.add("timp", 0, 0.5, "Bb2", 46, "timp", "h")
+    r.add("timp", 0, 0.5, "Bb2", 38, "timp", "h")
     r.add("timp", 2, 0.5, "F2", 40, "timp", "h")
-    r.add("pz_cb", 0, 1, "Bb1", 46, "bass", "h")
+    r.add("pz_cb", 0, 1, "Bb1", 38, "bass", "h")
     r.add("pz_lo", 4, 1, "Eb3", 42, "arp", "s")
     r.add("pz_lo", 6, 1, "F2", 42, "arp", "s")
     r.pad(["vla", "vln2"], 2, 58, 72, vel=32, q0=4, bass_ref=(34, 46))
@@ -976,8 +979,8 @@ def journey(c):
     k.pad(["vla", "vln2"], 2, 58, 72, vel=32, bass_ref=(39, 51))
     k.duck(2.5, parts=["recorder"])
     lv(k, ["recorder"], -15)
-    lv(k, ["pz_lo"], -11)
-    lv(k, "hand", -15)
+    k.expr(["pz_lo"], [(0, -15), (1.5, -11), (6, -11)])     # the walk eases in
+    k.expr("hand", [(0, -19), (1.5, -15), (6, -15)])
     lv(k, ["vla", "vln2"], -20)
     for sg in segs:
         lv(sg, ["glock", "pz_hi"], -12)
@@ -1020,9 +1023,9 @@ def noroom(c):
         if not bool(a.score.speaking(a.t(qq))):
             drum(a, qq, 76, 36)
     a.pad(["vla", "vln2"], 2, 58, 72, vel=34, bass_ref=(41, 53))
-    a.expr(["pz_lo", "pz_hi"], [(0, -16), (2, -10), (16, -10)])
+    a.expr(["pz_lo", "pz_hi"], [(0, -21), (3, -10), (16, -10)])      # the crowd fades in with the picture
     a.expr(["oboe", "clar"], [(0, -18), (2, -15), (16, -15)])
-    lv(a, "hand", -14)
+    a.expr("hand", [(0, -20), (3, -14), (16, -14)])
     a.expr(["vla", "vln2"], [(0, -21), (2, -19), (16, -19)])
     # 'the inn had no room': G minor, a lonely bassoon
     n.mel("bsn", "Bb3:1 A3:1 G3:1 F#3:1", vel=48)
@@ -1260,11 +1263,12 @@ def shepherds(c):
 
 def choir(c):
     """The heavenly host: '忽然' -- Bm, the angels appear on the picture's chime (bells, harp, glockenspiel; the choir
-    enters) and multiply (a celesta step for each new angel; G Em7 A7sus4, more voices, horns and a timpani roll
+    enters) and multiply (a celesta step for each new angel; B minor held, Em7 A7sus4, more voices, horns and a
+    timpani roll
     growing); A7 on '一起赞美上帝'; the Gloria in D in the pause (trumpet: the star motif's head; horns, trombone, choir
     'aah', bells pealing, timpani, a soft cymbal) -- held, ducked, under the angels' song (a glint on '荣耀'); G, peace,
     on '在地上' (a chime); the bells again in the pause; '就是说' D (a sparkle on '天上'); G on '地上，上帝要把平安'
-    -- the gift theme's cadence on the horn, D (a chime on '平安')."""
+    -- the gift theme's cadence on the horn, landing on D with the picture's '平安' chime (else half-way)."""
     c.gain(1.0)
     t_sud = c.ls(0)
     t_praise = c.at("一起赞美上帝")
@@ -1278,8 +1282,12 @@ def choir(c):
     g = c.seg(t_glo, t_peace, 2, "3/4", "D major", nominal=103, label="choir-gloria")
     p = c.seg(t_peace, t_exp, 2, "3/4", "D major", nominal=100, label="choir-peace")
     r = c.seg(t_exp, t_earth, 2, "3/4", "D major", nominal=105, label="choir-heaven")
-    e = c.seg(t_earth, c.dur, 2, "3/4", "D major", nominal=93, label="choir-earth")
-    segs = (a0, a, b, g, p, r, e)
+    t_pe = pic(c, "chime", "就是说")                         # 'peace on earth' (picture): the cadence lands on it
+    ok = t_pe is not None and t_earth + 1.45 <= t_pe <= min(c.dur - 1.2, t_earth + 2.5)   # (a G-A7 bar at q 72-124)
+    t_d = t_pe if ok else (t_earth + c.dur) / 2
+    e = c.seg(t_earth, t_d, 1, "3/4", "D major", nominal=97, label="choir-earth")
+    n = c.seg(t_d, c.dur, 1, "3/4", "D major", nominal=None, label="choir-peace-on-earth")   # the held cadence
+    segs = (a0, a, b, g, p, r, e, n)
     for sg in segs:
         sg.duck(1.5)
     a.duck(7.0)
@@ -1288,13 +1296,15 @@ def choir(c):
     p.duck(8.0)
     r.duck(5.0)
     e.duck(5.0)
+    n.duck(5.0)
     a0.prog("A:2")
-    a.prog("Bm:2 G:2 | Em7:2 A7sus4:2")
+    a.prog("Bm:4 | Em7:2 A7sus4:2")
     b.prog("A7:2")
     g.prog("D:3 | Bm:3/2 D/A:3/2")
     p.prog("G:3 | A7sus4:3/2 A7:3/2")
     r.prog("D:3 | Bm7:3/2 A:3/2")
-    e.prog("G:1 A7:2 | D:3")
+    e.prog("G:1 A7:2")
+    n.prog("D:3")
     a.sync("'忽然': the heavenly host (B minor)", 0, t_sud, kind="change")
     g.sync("'在至高之处': the Gloria (D major)", 0, t_glo, kind="change")
     p.sync("'在地上': peace on earth (G)", 0, t_peace, kind="change")
@@ -1375,15 +1385,19 @@ def choir(c):
     lv(r, ["harp", "bells"], -12)
     hit(c, segs, "sparkle", "就是说", 0, "heaven (a sparkle)", glock=(86, 98), vel=44)
     # '地上，上帝要把平安送给他喜爱的人': G, the gift theme's cadence on the horn (D)
-    e.mel("horn", bars(GIFT, 6, 8), vel=48, transpose=-13)
-    strings(e, vel=38, lo=55, hi=72, bass=(43, 55), cb=(31, 43))
-    e.pad("ooh", 3, 57, 74, vel=30, bass_ref=(43, 55))
+    e.mel("horn", GIFT[6], vel=48, transpose=-13)
+    n.mel("horn", GIFT[7], vel=48, transpose=-13)
     roll_chord(e, 0, 43, 67, vel=38)
-    e.duck(2.5, parts=["horn"])
-    lv(e, ["horn"], -16)
-    lv(e, STR, -18)
-    lv(e, ["ooh"], -22)
-    lv(e, ["harp"], -12)
+    roll_chord(n, 0.3, 38, 62, vel=34)
+    n.add("pz_cb", 0, 1, "D2", 42, "bass", "h")
+    for sg in (e, n):
+        strings(sg, vel=38, lo=55, hi=72, bass=(43, 55), cb=(31, 43))
+        sg.pad("ooh", 3, 57, 74, vel=30, bass_ref=(43, 55))
+        sg.duck(2.5, parts=["horn"])
+        lv(sg, ["horn"], -16)
+        lv(sg, STR, -18)
+        lv(sg, ["ooh"], -22)
+        lv(sg, ["harp", "pz_cb"], -12)
     hit(c, segs, "chime", "就是说", 0, "peace on earth (a chime)", celesta=(79, 91), vel=46)
     for sg in segs:
         lv(sg, ["glock", "celesta"], -12)
@@ -1427,7 +1441,7 @@ def visit(c):
     h.prog("Eb:3 | Cm:3")
     j.prog(" | ".join(SHEP_PROG[4:8]))
     w.prog("Abadd9:3")
-    y.prog("Eb:3 | Ab:3/2 Bb7:3/2 | Eb:3")
+    y.prog("Eb:3 | Cm7:3/2 Bb7:3/2 | Eb:3")
     k.sync("'牧羊人你看看我': back on earth (B-flat)", 0, t_look, kind="change")
     r.sync("'他们急急忙忙': the shepherds run (B-flat)", 0, t_run, kind="change")
     m.sync("'找到了': found (E-flat)", 0, t_found, kind="change")
@@ -1448,11 +1462,11 @@ def visit(c):
     # 'the shepherds looked at each other': plucked glances
     for qq, hi_ in ((0.0, 70), (0.5, 74), (2.0, 72), (2.5, 69)):
         k.add("pz_hi", qq, 0.25, top(k, qq, 58, hi_), 48, "arp", "s")
-    k.add("pz_lo", 0, 1, "Bb2", 44, "arp", "s")
-    k.add("pz_lo", 2, 1, "F2", 44, "arp", "s")
+    k.add("pz_lo", 0, 1, "Bb2", 36, "arp", "s")
+    k.add("pz_lo", 2, 1, "F2", 36, "arp", "s")
     k.pad(["vla", "vln2", "vln1"], 3, 57, 74, vel=34, bass_part="vc", bass_lo=41, bass_hi=53)
     lv(k, ["pz_hi", "pz_lo"], -9)
-    lv(k, ["vla", "vln2", "vln1", "vc"], -19)
+    lv(k, ["vla", "vln2", "vln1", "vc"], -17)
     # "let's go to Bethlehem!": E-flat F7, the plucked bass climbing
     for qq, nm in ((0.0, "Eb3"), (1.5, "G3"), (3.0, "F3"), (4.5, "A3")):
         s.add("pz_lo", qq, 1.5, nm, 46, "arp", "s")
@@ -1528,7 +1542,8 @@ def visit(c):
     lv(w, ["vla", "vln2", "vln1", "vc"], -20)
     lv(w, ["celesta"], -15)
     hit(c, segs, "pop", "听见的人", 0, "everyone is amazed (a pop)", pluck=(62, 74), celesta=(79, 91), vel=46)
-    # 'but Mary treasured all these things in her heart': the lullaby, very soft
+    # 'but Mary treasured all these things in her heart': the lullaby, very soft (Cm7, so the picture's heart chime,
+    # tuned E-flat from the score, rings on in the next chord)
     y.mel("celesta", "G5:1 F5:1/2 G5:3/2 | C5:1 Eb5:1/2 D5:1 F5:1/2 | Eb5:3", vel=44)
     rock(y, 0, 9, vel=30)
     y.pad(["vla", "vln2", "vln1"], 3, 56, 72, vel=32, bass_part="vc", bass_lo=41, bass_hi=53)
@@ -1549,7 +1564,7 @@ def visit(c):
 
 def star(c):
     """The East (C dorian: the English horn over a C drone, the dulcimer, a soft finger cymbal; a celesta star where
-    the picture's stars sparkle, '研究星星'); B-flat F, the strings rising (a harp sweep as the picture's star begins
+    the picture's stars sparkle, '研究星星'); B-flat F7sus4, the strings rising (a harp sweep as the picture's star begins
     to rise); E-flat lydian on '一颗特别的星星' -- the star motif on the celesta and glockenspiel from the picture's
     chime (harp up, choir 'ooh'); F/E-flat sparkles and a noble horn call on '有一位王出生了' (a glint on '王'), G;
     the caravan (C dorian 2/4: do. re | me sol | la. sol | fa -- the English horn, the dulcimer, plucked basses, finger
@@ -1571,7 +1586,7 @@ def star(c):
         sg.duck(1.5)
     e.prog("Cm:4 | F/C:4")
     s.prog("Gm/C:4 | Cm:4")
-    d.prog("Bb:2 F:2")
+    d.prog("Bb:2 F7sus4:2")
     t.prog("Eb:3")
     w.prog("F/Eb:3 | Eb:3 | G:3@C-melodic")
     v.prog(" | ".join(CAR_PROG[:4]))
@@ -1598,7 +1613,8 @@ def star(c):
     even = [t_stud + 1.0 + kk * (t_day - 0.4 - t_stud - 1.0) / 4 for kk in range(4)]
     times = sorted(sp + [t_ for t_ in even if all(abs(t_ - x) > 0.4 for x in sp)])
     stars(segs, c, times, lo=79, hi=91, vel=36, glock_every=0, synced=sp, what="a star sparkles over the wise men")
-    # 'one day they saw...': B-flat F, the strings rising; a harp sweep as the star begins to rise (picture)
+    # 'one day they saw...': B-flat F7sus4 (the mix tunes the rising star's bell from it: E-flat), the strings
+    # rising; a harp sweep as the star begins to rise (picture)
     d.pad(["trem_va", "trem_hi", "trem_hi"], 3, 58, 77, vel=34, bass_ref=(41, 53))
     bassline(d, "vc", 41, 53, 34)
     broken(d, "harp", 0, 4, (2, 3, 4, 3), 53, 70, vel=30, step=0.25, thin=True)
@@ -1857,9 +1873,9 @@ def gifts(c):
     broken(r, "harp", 0, 9, (0, 2, 4, 2, 4, 2), 39, 51, vel=30, thin=True)
     r.pad("ooh", 3, 58, 74, vel=30, bass_ref=(41, 53))
     r.duck(3.0, parts=["horn", "recorder"])
-    lv(r, ["horn"], -16)
+    lv(r, ["horn"], -17)
     lv(r, ["recorder"], -19)
-    lv(r, STR, -19)
+    lv(r, STR, -20)
     lv(r, ["harp"], -13)
     lv(r, ["ooh"], -22)
     t_fr = pic(c, "grow", "乳香和没药", lo=t_say - 0.2, hi=t_tre - 2.0)   # the fragrance rises (picture)
@@ -1875,10 +1891,10 @@ def gifts(c):
     glow(z, 0.0, vel=44)
     strings(z, vel=38, lo=55, hi=74)
     z.pad(["tbn", "horn", "horn"], 3, 46, 63, vel=36, bass_ref=(39, 51))
-    lv(z, ["horn", "tbn"], -18)
-    lv(z, ["recorder"], -19)
-    lv(z, ["harp", "pz_cb", "timp"], -13)
-    lv(z, STR, -19)
+    lv(z, ["horn", "tbn"], -19)
+    lv(z, ["recorder"], -20)
+    lv(z, ["harp", "pz_cb", "timp"], -14)
+    lv(z, STR, -20)
     for sg in segs:
         if sg is not s:
             lv(sg, ["glock", "bells", "pz_cb"], -12)
@@ -1934,7 +1950,7 @@ def end(c):
     h.pad(["vla", "vln2", "vln1"], 3, 57, 72, vel=34, bass_part="vc", bass_lo=39, bass_hi=51)
     jingle(h, 0.0, vel=32)
     h.duck(3.0, parts=["mbox"])
-    lv(h, ["mbox"], -14)
+    lv(h, ["mbox"], -16)
     lv(h, ["pz_lo", "harp"], -11)
     lv(h, ["vla", "vln2", "vln1", "vc"], -19)
     hit(c, segs, "sparkle", None, 0, "the wise men's gift (a sparkle)", glock=(86, 98), vel=44)
@@ -1955,9 +1971,9 @@ def end(c):
         broken(sg, "harp", 0, sg.n_q, (0, 2, 4, 2, 4, 2), 39, 51, vel=30, thin=True)
         sg.pad("ooh", 3, 58, 74, vel=30, bass_ref=(41, 53))
         sg.duck(3.5, parts=["recorder", "celesta"])
-        lv(sg, ["recorder"], -17)
+        lv(sg, ["recorder"], -18)
         lv(sg, ["celesta"], -17)
-        lv(sg, STR, -19)
+        lv(sg, STR, -20)
         lv(sg, ["harp"], -13)
         lv(sg, ["ooh"], -22)
     glow(m, 0.0, vel=44)
