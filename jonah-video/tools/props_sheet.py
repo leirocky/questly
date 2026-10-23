@@ -13,6 +13,7 @@ sailors) come from art/characters.py to check the props against them.
 David film: python3 tools/props_sheet.py david_items david_creatures david_camp valley
 Noah film: python3 tools/props_sheet.py noah_ark noah_animals noah_pairs noah_weather noah_items
 Joseph film: python3 tools/props_sheet.py joseph_items joseph_animals joseph_egypt
+Storm film: python3 tools/props_sheet.py storm_boat storm_lake storm_weather storm_items storm_story
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -789,13 +790,188 @@ def sheet_joseph_egypt():
     return render_sheet("joseph_egypt", "props — Joseph: Egypt (pyramids, houses, column, granary fill, throne, prison, pit, Nile, fields, dream bubbles)", rows)
 
 
+# ------------------------------------------------------------------ Storm film (Mark 4:35-41)
+def _sky(ox, oy, w, h, col):
+    return f'<rect x="{ox}" y="{oy}" width="{w}" height="{h}" fill="{col}"/>'
+
+
+def _boat_marks(x, y, k, f=1):
+    """Overlay: the documented boat points (blue = near floor / seats, green = far floor, red = Jesus, orange = cling /
+    wake, purple = oarlocks)."""
+    pts = PR.boat_points(x, y, k, f)
+    out = ""
+    for key, col in (("stand", "#3a7bd5"), ("seats", "#3a7bd5"), ("far_stand", "#2a9d5c"), ("far_seats", "#2a9d5c"),
+                     ("oarlocks", "#8a3ad5")):
+        for px, py in pts[key]:
+            out += f'<circle cx="{px:.0f}" cy="{py:.0f}" r="7" fill="{col}" opacity="0.85"/>'
+    for key, col in (("sleep", "#d53a3a"), ("stern_seat", "#d53a3a"), ("stern_cushion", "#d53a3a"), ("cling", "#e08a2a"),
+                     ("wake", "#e08a2a"), ("mast_top", "#8a3ad5")):
+        px, py = pts[key]
+        out += f'<rect x="{px - 7:.0f}" y="{py - 7:.0f}" width="14" height="14" fill="{col}" opacity="0.85"/>'
+    return out
+
+
+def _storm_crew(x, y, k, f=1, mode="calm", phase=0.0):
+    """Boat back + 13 people + boat front (see characters_storm_group for more)."""
+    pts = PR.boat_points(x, y, k, f)
+    storm = mode == "storm"
+    out = PR.fishing_boat(x, y, k, f, part="back", sail="flapping" if storm else "full", phase=phase,
+                          oars="out" if mode == "row" else "in", row=phase)
+    for i, (px, py) in enumerate(pts["far_stand"]):
+        out += CH.disciples(px, py, k, f if i % 2 else -f, variant=4 + i, pose="scared" if storm else "stand",
+                            shake=0.25 * i, wet=storm)
+    out += CH.jesus(*pts["sleep"], k, f, pose="sleep", glow=0.7 if storm else 0.0, marks=storm)
+    if mode == "row":
+        for (sx, sy), v in zip(pts["seats"], (1, 2)):
+            out += CH.disciples(sx, sy, k, -f, variant=v, pose="row", phase=phase)
+    for i, (px, py) in enumerate(pts["stand"]):
+        if mode == "row" and i in (0, 2):
+            continue
+        v = (0, 3, 10, 11, 9, 2)[i]
+        pose = ("bail", "bail", "pull_rope", "cling", "bail", "shout")[i] if storm else ("stand", "point")[i == 3]
+        if pose == "cling":
+            px, py = pts["cling"]
+        out += CH.disciples(px, py, k, f if (pose == "cling" or i >= 3) else -f, variant=v, pose=pose,
+                            phase=(phase + 0.3 * i) % 1, wet=storm, wind=1.0 if storm else 0.0)
+    out += PR.fishing_boat(x, y, k, f, part="front", oars="out" if mode == "row" else "in", row=phase,
+                           water=0.55 if storm else 0.0, wet=storm, lantern=storm)
+    return out
+
+
+def sheet_storm_boat():
+    rows = [
+        (640, [Cell("fishing_boat() sail=full (scale 0.55) + boat_points overlay + adult ref", lambda ox, oy: _sky(ox, oy, 1100, 640, P["sky_day"]) +
+                    PR.fishing_boat(ox + 560, oy + 560, 0.55), 1100, [(560, 560)],
+                    lambda ox, oy: _boat_marks(ox + 560, oy + 560, 0.55) + person_ref(ox + 860, oy + 560, 0.55)),
+               Cell("sail=flapping phase .3, water=.6, wet, lantern, oars='none'", lambda ox, oy: _sky(ox, oy, 1100, 640, "#5a6c82") +
+                    PR.fishing_boat(ox + 560, oy + 560, 0.55, sail="flapping", phase=0.3, water=0.6, wet=True, lantern=True,
+                                    oars="none"), 1100, [(560, 560)])]),
+        (640, [Cell("the crew rowing out (oars='out', row=.25; disciples row at 'seats', facing -1); Jesus asleep at 'sleep'",
+                    lambda ox, oy: _sky(ox, oy, 1100, 640, "#e8b98a") + _storm_crew(ox + 560, oy + 560, 0.55, 1, "row", 0.25), 1100, [(560, 560)]),
+               Cell("the crew in the storm: bail, cling at 'cling', pull_rope, scared; water .55", lambda ox, oy: _sky(ox, oy, 1100, 640, "#5a6c82") +
+                    _storm_crew(ox + 560, oy + 560, 0.55, 1, "storm", 0.6), 1100, [(560, 560)])]),
+        (500, [Cell(f"sail='{sl}' phase={ph} facing={fc}", lambda ox, oy, sl=sl, ph=ph, fc=fc: _sky(ox, oy, 733, 500, P["sky_day"]) +
+                    PR.fishing_boat(ox + 366, oy + 440, 0.42, fc, sail=sl, phase=ph, oars="out" if sl == "furled" else "in", row=0.75),
+                    733, [(366, 440)]) for sl, ph, fc in (("furled", 0, -1), ("flapping", 0.6, 1), ("none", 0, 1))]),
+        (420, [Cell(f"water={w}", lambda ox, oy, w=w: _sky(ox, oy, 733, 420, "#5a6c82") + PR.fishing_boat(ox + 366, oy + 360, 0.42,
+                    sail="none", water=w, wet=w > 0, oars="none", nets=False), 733, [(366, 360)]) for w in (0.2, 0.5, 0.9)]),
+        (500, [Cell("boat_rock(crew, tilt=7, bob=10)", lambda ox, oy: _sky(ox, oy, 733, 500, P["sky_day"]) +
+                    PR.boat_rock(_storm_crew(ox + 366, oy + 420, 0.42), ox + 366, oy + 420, 7, 10, 0.42), 733, [(366, 420)]),
+               Cell("fishing_boat(tilt=-6) alone", lambda ox, oy: _sky(ox, oy, 733, 500, P["sky_day"]) +
+                    PR.fishing_boat(ox + 366, oy + 420, 0.42, sail="full", tilt=-6), 733, [(366, 420)]),
+               Cell("part='back' only / part='front' only", lambda ox, oy: _sky(ox, oy, 733, 500, P["sky_day"]) +
+                    PR.fishing_boat(ox + 200, oy + 420, 0.24, part="back") + PR.fishing_boat(ox + 540, oy + 420, 0.24, part="front"),
+                    733, [(200, 420), (540, 420)])]),
+    ]
+    return render_sheet("storm_boat", "props — Storm: the fishing boat (sails, oars, rowing, water inside, rocking, parts, boat_points)", rows)
+
+
+def sheet_storm_lake():
+    rows = [
+        (560, [Cell(f"lake_galilee(time='{t}') scale 0.5 (anchor y = the near shoreline)", lambda ox, oy, t=t: PR.lake_galilee(
+            ox, ox + 1100, oy + 380, 0.5, time=t, top=oy, bottom=oy + 560), 1100, [(0, 380)]) for t in ("day", "sunset")]),
+        (560, [Cell("time='dawn' shore='far' village='right' (the arrival)", lambda ox, oy: PR.lake_galilee(
+            ox, ox + 1100, oy + 380, 0.5, time="dawn", shore="far", village="right", top=oy, bottom=oy + 560), 1100, [(0, 380)]),
+               Cell("time='night' village='right' + night_sky over it", lambda ox, oy: PR.lake_galilee(
+                   ox, ox + 1100, oy + 380, 0.5, time="night", village="right", top=oy, bottom=oy + 560)
+                   + PR.night_sky(ox, oy, ox + 1100, oy + 255, moon=(ox + 850, oy + 90), stars=40, progress=1.0), 1100, [(0, 380)])]),
+        (560, [Cell("lake 'back' + boat + lake_band (hides the hull) + 'shore' + villager_crowd(sit_listen)", lambda ox, oy:
+                    PR.lake_galilee(ox, ox + 1100, oy + 380, 0.5, time="day", part="back", top=oy, bottom=oy + 560)
+                    + PR.fishing_boat(ox + 760, oy + 330, 0.3, sail="furled")
+                    + CH.jesus(*PR.boat_points(ox + 760, oy + 330, 0.3)["stern_seat"], 0.3, -1, pose="teach")
+                    + PR.fishing_boat(ox + 760, oy + 330, 0.3, part="front", sail="furled")
+                    + PR.lake_band(ox, ox + 1100, oy + 330 - 4 * 0.3, oy + 385, "day", scale=0.5)
+                    + PR.lake_galilee(ox, ox + 1100, oy + 380, 0.5, time="day", part="shore", village="left", top=oy, bottom=oy + 560)
+                    + CH.villager_crowd(ox + 600, oy + 520, 0.42, -1, n=14, pose="sit_listen", width=900, rows=3), 1100, [(0, 380)]),
+               Cell("sunset: the crowd going home, waving (villager walk / wave)", lambda ox, oy:
+                    PR.lake_galilee(ox, ox + 1100, oy + 380, 0.5, time="sunset", top=oy, bottom=oy + 560)
+                    + CH.villager_crowd(ox + 300, oy + 520, 0.42, -1, n=7, pose="walk_a", width=420, rows=2, seed=2)
+                    + CH.villager_crowd(ox + 800, oy + 530, 0.42, 1, n=6, pose="wave", width=360, rows=2, seed=5), 1100, [(0, 380)])]),
+    ]
+    return render_sheet("storm_lake", "props — Storm: lake_galilee day / sunset / dawn (far shore) / night, parts, crowds", rows)
+
+
+def sheet_storm_weather():
+    rows = [
+        (600, [Cell("storm_sky(rain=.6, lightning=.5) + storm_lake back / boat_rock(crew) / front (STORM_BOAT_DY)", lambda ox, oy:
+                    PR.storm_sky(ox, oy, ox + 1100, oy + 600, phase=0.2, rain=0.6, lightning=0.5, scale=0.7)
+                    + PR.storm_lake(ox, ox + 1100, oy + 330, phase=0.2, part="back", bottom=oy + 600, scale=0.6)
+                    + PR.boat_rock(_storm_crew(ox + 560, oy + 330 + PR.STORM_BOAT_DY * 0.6, 0.42, 1, "storm", 0.4),
+                                   ox + 560, oy + 330 + PR.STORM_BOAT_DY * 0.6, -6, 0, 0.42)
+                    + PR.storm_lake(ox, ox + 1100, oy + 330, phase=0.2, part="front", bottom=oy + 600, scale=0.6), 1100, [(0, 330)]),
+               Cell("the calm: night_sky(moon, clouds .4, stars) + calm_lake(moon_x) + the boat", lambda ox, oy:
+                    PR.night_sky(ox, oy, ox + 1100, oy + 330, moon=(ox + 780, oy + 110), stars=50, progress=0.8, clouds=0.4)
+                    + PR.calm_lake(ox, ox + 1100, oy + 330, moon_x=ox + 780, bottom=oy + 600, scale=0.7)
+                    + _storm_crew(ox + 440, oy + 500, 0.4, 1, "calm"), 1100, [(0, 330)])]),
+        (420, [Cell(f"storm_lake wave={wv} phase={ph}", lambda ox, oy, wv=wv, ph=ph: _sky(ox, oy, 550, 420, "#3e4c61")
+                    + PR.storm_lake(ox, ox + 550, oy + 170, phase=ph, wave=wv, bottom=oy + 420, scale=0.55), 550, [(0, 170)])
+               for wv, ph in ((1.0, 0.0), (1.0, 0.25), (0.5, 0.0), (0.1, 0.0))]),
+        (420, [Cell(f"storm_sky phase={ph} density={dn}", lambda ox, oy, ph=ph, dn=dn, mo=mo: PR.storm_sky(
+            ox, oy, ox + 550, oy + 420, phase=ph, density=dn, moon=mo, scale=0.6), 550, [])
+               for ph, dn, mo in ((0.0, 1.0, None), (0.5, 1.0, None), (0.0, 0.4, (400, 120)), (0.0, 0.0, None))]),
+        (420, [Cell("night_sky time='dusk' progress=.3", lambda ox, oy: PR.night_sky(ox, oy, ox + 550, oy + 420, stars=40, progress=0.3, time="dusk"), 550, []),
+               Cell("night_sky progress=.6 twinkle=.5", lambda ox, oy: PR.night_sky(ox, oy, ox + 550, oy + 420, moon=(ox + 400, oy + 110), stars=50, progress=0.6, twinkle=0.5), 550, []),
+               Cell("calm_lake time='dawn' (sun path)", lambda ox, oy: PR.calm_lake(ox, ox + 550, oy + 40, moon_x=ox + 275, time="dawn", bottom=oy + 420, scale=0.7), 550, [(0, 40)]),
+               Cell("calm_lake night, glow=.4, phase .5", lambda ox, oy: PR.calm_lake(ox, ox + 550, oy + 40, moon_x=ox + 300, phase=0.5, glow=0.4, bottom=oy + 420, scale=0.7), 550, [(0, 40)])]),
+    ]
+    return render_sheet("storm_weather", "props — Storm: the storm (sky, lake, rocking boat) and the calm (night sky, moonlit lake)", rows)
+
+
+def sheet_storm_items():
+    def c(label, fn, w=300, ax=150, ay=330, ref=None):
+        return _c(label, fn, w, ax, ay, (w - 40, ay, ref) if ref else None)
+    night = "#2e3560"
+    rows = [
+        (300, [c(f"hanging_lantern swing={sw}", lambda x, y, sw=sw: _sky(x - 120, y - 280, 240, 300, night) + PR.hanging_lantern(x, y - 250, 1.5, swing=sw), 240, 120, 280)
+               for sw in (-1, 0, 1)]
+         + [c("unlit", lambda x, y: PR.hanging_lantern(x, y - 250, 1.5, lit=False), 140, 70, 280)]
+         + [c(f"bail_bucket {k} tip={t}", lambda x, y, k=k, t=t: PR.bail_bucket(x - 40, y, 1.6, kind=k, tip=t), 250, 125, 280)
+            for k, t in (("bucket", 0), ("bowl", 0), ("bucket", 1))]
+         + [c("boat_cushion / pillow / rope_spiral", lambda x, y: PR.boat_cushion(x - 140, y, 1.0) + PR.pillow(x + 20, y - 60, 0.6) + PR.rope_spiral(x + 150, y), 460, 230, 280)]),
+        (320, [c("fishing_net pile", lambda x, y: PR.fishing_net(x, y, 0.9), 260, 130, 300),
+               c("fishing_net pole", lambda x, y: PR.fishing_net(x, y, 0.8, kind="pole"), 330, 165, 300),
+               c("net_full phase 0 / .5", lambda x, y: PR.net_full(x - 90, y - 230, 1.0) + PR.net_full(x + 90, y - 230, 1.0, phase=0.5), 380, 190, 300),
+               c("fishing_net cast spread .3 / 1", lambda x, y: PR.fishing_net(x - 150, y - 220, 0.6, kind="cast", spread=0.3) + PR.fishing_net(x + 120, y - 160, 0.6, kind="cast", spread=1.0), 520, 260, 300),
+               c("lake_fish flap -1 / 0 / 1", lambda x, y: "".join(PR.lake_fish(x - 110 + 110 * i, y - 120 - 20 * i, 1.3, 1 if i % 2 else -1, flap=i - 1, rot=-20 + 20 * i) for i in range(3)), 380, 190, 300)]),
+        (300, [c(f"small_boat variant={v}", lambda x, y, v=v: PR.small_boat(x, y - 60, 0.55, variant=v, lantern=v == 3), 300, 150, 280) for v in range(4)]
+         + [c("sail='full' time='sunset'", lambda x, y: PR.small_boat(x, y - 60, 0.55, sail="full", time="sunset"), 300, 150, 280),
+            c("stone_house variant 0 / 1 / 2 (0.3), time='night' lit", lambda x, y: "".join(PR.stone_house(x - 230 + 210 * i, y, 0.3, variant=i, time="night" if i == 2 else "day") for i in range(3)), 640, 320, 280)]),
+        (620, [c(f"window_wind wind={w} rattle={r}", lambda x, y, w=w, r=r, n=n, gl=gl: _sky(x - 280, y - 600, 560, 620, "#d9c8ae")
+                 + PR.window_wind(x, y - 90, 0.9, wind=w, phase=0.3, rattle=r, night=n, glow=gl), 560, 280, 600)
+               for w, r, n, gl in ((1.0, 1.0, True, 0.0), (0.3, 0.0, True, 0.8))]
+         + [c("bed + child sit_hug at BED_TOP", lambda x, y: PR.bed(x, y, 0.9) + CH.child(x - 40, y + PR.BED_TOP * 0.9, 0.9, pose="sit_hug", outfit="pyjamas"), 620, 310, 600),
+            c("lake_map (scale .6), phase .3", lambda x, y: PR.lake_map(x, y - 260, 0.6, phase=0.3), 580, 290, 600)]),
+    ]
+    return render_sheet("storm_items", "props — Storm: lantern, buckets, cushion, pillow, rope, nets, fish, small boats, houses, window, bed, map", rows)
+
+
+def sheet_storm_story():
+    def c(label, fn, w=300, ax=150, ay=330, ref=None):
+        return _c(label, fn, w, ax, ay, (w - 40, ay, ref) if ref else None)
+    rows = [
+        (330, [c(f"growth={g}", lambda x, y, g=g: PR.mustard_plant(x, y, 1.0, growth=g), 230, 115, 310)
+               for g in (0.0, 0.1, 0.2, 0.3, 0.45)]
+         + [c("mustard_seed (hand) sparkle=1", lambda x, y: PR.mustard_seed(x + 30, y - 150, 0.9), 360, 180, 310),
+            c("nest build .3 / eggs 3 / chicks 3", lambda x, y: PR.nest(x - 150, y - 40, 1.2, build=0.3) + PR.nest(x, y - 40, 1.2, eggs=3) + PR.nest(x + 150, y - 40, 1.2, chicks=3), 500, 250, 310)]),
+        (640, [c(f"growth={g} (scale 0.6)", lambda x, y, g=g: PR.mustard_plant(x, y, 0.6, growth=g), 430, 215, 610, 0.6)
+               for g in (0.6, 0.8)]
+         + [c("growth=1 + nests at MUSTARD_NESTS + songbirds", lambda x, y: PR.mustard_plant(x, y, 0.6, growth=1.0)
+              + "".join(PR.nest(x + nx * 0.6, y + ny * 0.6, 0.5, chicks=2 if i % 2 else 0, eggs=0 if i % 2 else 2) for i, (nx, ny) in enumerate(PR.MUSTARD_NESTS))
+              + PR.songbird(x - 200, y - 500, 0.6, 1, wing=0.5, color="yellow") + PR.songbird(x + 170, y - 420, 0.6, -1, pose="perch", color="red"), 600, 300, 610, 0.6),
+            c("sway=1", lambda x, y: PR.mustard_plant(x, y, 0.45, growth=1.0, sway=1.0), 420, 210, 610)]),
+    ]
+    return render_sheet("storm_story", "props — Storm: the mustard seed (Mark 4:30-32): growth, the seed in a hand, nests", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
           "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
           "lions": sheet_lions, "daniel": sheet_daniel, "david_items": sheet_david_items,
           "david_creatures": sheet_david_creatures, "david_camp": sheet_david_camp, "valley": sheet_valley,
           "noah_ark": sheet_noah_ark, "noah_weather": sheet_noah_weather, "noah_items": sheet_noah_items,
           "noah_animals": sheet_noah_animals, "noah_pairs": sheet_noah_pairs,
-          "joseph_items": sheet_joseph_items, "joseph_animals": sheet_joseph_animals, "joseph_egypt": sheet_joseph_egypt}
+          "joseph_items": sheet_joseph_items, "joseph_animals": sheet_joseph_animals, "joseph_egypt": sheet_joseph_egypt,
+          "storm_boat": sheet_storm_boat, "storm_lake": sheet_storm_lake, "storm_weather": sheet_storm_weather,
+          "storm_items": sheet_storm_items, "storm_story": sheet_storm_story}
 
 
 def main():

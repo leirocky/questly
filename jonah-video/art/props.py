@@ -1,4 +1,5 @@
-"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David, Noah and Joseph picture-book videos.
+"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David, Noah, Joseph and Storm picture-book
+videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -778,6 +779,186 @@ NILE, PAPYRUS, PIT_R, PIT_DEPTH, PIT_FLOOR, CAMEL_LEAD, CHARIOT_STAND, CHARIOT_S
 RENDER COST: like the rest of the library (camel / cow / donkey ~ an ark_animal, granary ~ a house, pyramids / nile on
 static layers); quantise every 0..1 option into a small flipbook.
 
+11. STORM FILM (Mark 4:35-41)          sheets: python3 tools/props_sheet.py storm_boat storm_lake storm_weather storm_items
+-----------------------------                  storm_story (+ characters_storm_group.png: the crew in the boat)
+Person scale as everywhere (adult 330 px). Jesus, the twelve, the villagers and the pyjama girl are in art/characters.py
+(STORM FILM). Everything here is a new design with its own palette - violet-gold evening, a cold blue-grey storm with
+white foam, a silver moonlit calm - nothing reuses the Jonah ship(), sea or storm. The storm is big but friendly: nobody
+is ever in the water.
+THE FISHING BOAT
+fishing_boat(x, y, scale=1.0, facing=1, sail='full', phase=0.0, oars='in', row=0.0, cushion=True, water=0.0, tilt=0.0,
+             bob=0.0, wet=False, part='all', lantern=False, swing=0.0, nets=True, flag=True)
+    Anchor: the WATERLINE under the middle of the hull (the hull below it, down to ~+60, is drawn: cover it with the lake).
+    A small wooden Galilean fishing boat, bow toward facing, BOAT_LEN = 1500 px at scale 1 (~8 m: 13 people fit at the
+    same scale in two rows): a curved planked hull in weathered brown with a faded blue-green strake under the gunwale
+    and a dark tarred band at the waterline, a friendly painted eye at the bow, a raised curling stern post and a bow
+    post with a knob, a light cap rail, the darker inside of the far side showing above the near gunwale (slight 3/4 view
+    from above), a decked stern platform with a worn wool cushion, one mast forward of the middle (BOAT_MAST_X = 230,
+    top BOAT_MAST_TOP = (230, -960)) with a yard (BOAT_YARD_Y = -900, x -120..580), stays to both posts, a pennant, and a
+    net with cork floats draped over the near gunwale at the bow (nets=False hides it).
+    BBox (-789, -974, 762, 60) for every sail / oars (part='front' (-754, -235, 750, 60), 'back' bottom -48).
+    Options:
+      sail    'full' a bellied square linen sail with seams, reef points and three coloured patches | 'flapping' the
+              same sail loose and rippling in the storm wind, slack sheets swinging (phase 0..1 moves the ripples: loop
+              6-8 phases at ~0.08 s) | 'furled' rolled up under the yard and tied | 'none' (bare mast, stays and pennant).
+      phase   the sail / pennant flutter and the water sloshing inside.
+      oars    'in' two oars lying along the boat | 'out' the near-side oars out through the rope oarlocks, their
+              outboard parts in the water drawn on the near hull side for the rowing phase row 0..1 (characters.disciples
+              pose='row' draws the handle to the oarlock: give both the same phase) | 'none'.
+      cushion the stern cushion at STERN_CUSHION (characters.jesus(pose='sleep' / 'wake') draws the same one in the same
+              place, so leaving both on is harmless).
+      water 0..1  water sloshing INSIDE the hull: a translucent blue-grey band with a foam line rising from the near
+              gunwale toward the far one ('船里的水越来越多'); it is drawn in front of the people's legs and behind the
+              near hull side. Quantise (0, .2, .4, .6, .8).
+      wet     darker wood, glossy streaks, drips from the gunwale.
+      lantern a little bronze lantern hanging from the stern post (swing -1..1 tilts it: hanging_lantern).
+      tilt / bob  rock the boat: rotate tilt degrees about the anchor, move it bob*scale px down (keep |tilt| <= 8,
+              |bob| <= 15; 4-6 key values and M.keys easing). When people ride in it, build the whole group with tilt=0
+              and wrap it: boat_rock(back + people + front, x, y, tilt, bob, scale).
+      part    'all' | 'back' (rigging, sail, mast, far side and inside, stern platform and cushion, oars 'in') | 'front'
+              (water inside, near hull side, cap rail, oarlocks, oars 'out', the net, drips, lantern).
+    PEOPLE IN THE BOAT (same x, y, scale, facing for all three): fishing_boat(part='back') -> the far row (feet at
+    boat_points()['far_stand'], drawn first) -> Jesus on the stern -> the rowers / near row (feet at ['stand'] / ['seats'])
+    -> fishing_boat(part='front'). The near hull hides everyone below the hips (standing) or the belly (sitting).
+    Local points (scale 1, facing right; boat_points converts them, also for tilt / bob):
+      BOAT_FLOOR_Y = 0 (near row floor), BOAT_FAR_FLOOR_Y = -40 (far row, behind)
+      BOAT_STAND = 6 near floor spots, BOAT_FAR_STAND = 6 far floor spots (x -400..540)
+      BOAT_SEATS = ((-300, 0), (-40, 0)) the two rowers (disciples pose 'row', facing = -facing, they face the stern);
+      BOAT_FAR_SEATS far-side rowers (their oars are hidden behind the hull); oarlocks at seat x - ROW_PIVOT[0]
+      STERN_DECK = (-735, -420, -172) the stern platform x0, x1, top; STERN_CUSHION = (-655, -174)
+      STERN_SLEEP = (-505, -176): jesus(*boat_points(...)['sleep'], scale, facing, pose='sleep' / 'wake') - head on the
+                    cushion at the stern; STERN_SEAT = (-455, -100): jesus(pose='sit' / 'teach') on the platform's edge
+      BOAT_CLING = (150, 0): disciples(pose='cling', facing=facing) gripping the mast
+      BOAT_WAKE = (-462, 0): disciples(pose='wake_shake', facing=-facing): hands on the sleeping Jesus' shoulder
+    boat_points(x, y, scale=1.0, facing=1, tilt=0.0, bob=0.0) -> {'stern_cushion', 'sleep', 'stern_seat', 'mast_foot',
+      'mast_top', 'yard' [stern end, bow end], 'seats', 'far_seats', 'oarlocks', 'stand', 'far_stand', 'cling', 'wake',
+      'bow', 'stern', 'gunwale' (points every 100 px), 'waterline', 'sheet_stern', 'sheet_bow'} in stage px.
+    boat_rock(markup, x, y, tilt=0.0, bob=0.0, scale=1.0) -> markup rotated / lifted with the boat (see tilt).
+    Rowing geometry: row_hands(phase) / row_blade(phase) (rower's local frame), ROW_PIVOT = (40, -118), ROW_K = 3.4,
+    BOAT_SEAT_H = 72 (thwart top above the floor).
+LAKE AND SKY
+lake_galilee(x0, x1, y, scale=1.0, time='day', shore='near', part='all', village='left', nets=True, boats=True,
+             far_shore=True, sky=True, top=None, bottom=None, phase=0.0, seed=0, sun_x=None)
+    ABSOLUTE stage coordinates: from x0 to x1, y = the NEAR SHORELINE (the water's edge on the beach). The Sea of Galilee:
+    a sky (gradient + clouds by day, the sun low on the hills at dawn / sunset, from top = y - 1100*scale), three ridges
+    of rolling green-brown hills round the far shore (olive groves and field strips dotting them, a far village whose
+    windows light up at sunset / night), the far shoreline at y - 250*scale, the wide lake (gradient, drifting ripple
+    lines, the glittering path of the low sun, small sailing / rowing boats out on the water when boats=True), and the
+    near beach down to bottom (default y + 420*scale): sand and pebbles, a foam line.
+    time (LAKE_TIMES): 'day' | 'dawn' (pink-gold, the sun rising over the hills at sun_x (default 0.3 of the width)) |
+    'sunset' (violet-gold, the sun low at 0.72) | 'night' (deep blue; lit windows; no moon - use night_sky over it, or
+    sky=False and your own sky).
+    shore 'near': the fishing village of dark basalt stone houses with flat roofs on the `village` side ('left' / 'right'
+    / None), a palm, nets drying on a pole frame and a net pile, boats pulled up on the beach, reeds and grass |
+    'far' (the arrival, Mark 5:1): a different, rockier shore - boulders at the water's edge, a steep rocky slope with
+    outcrops and a few round-crowned trees on the village side, no village | None: no beach.
+    part 'back' (sky, hills, lake, far boats) | 'shore' (the beach and everything on it) | 'all': a boat in the shallows
+    goes between them (its waterline above y), people on the beach after 'shore'. Static layers only (~1-2 s / frame);
+    phase moves the ripples / glitter if you need a few frames. Scale 0.5 fills a 2112 x 1188 stage nicely.
+    A BOAT IN THE SHALLOWS (s04: Jesus teaching from the boat): lake_galilee(part='back') -> fishing_boat(bx, by, k, ...)
+    with its crew -> lake_band(x0, x1, by - 4*k, y, time) (hides the hull under the waterline) -> lake_galilee(part=
+    'shore') -> the crowd on the beach (villager_crowd(..., pose='sit_listen'), children in front).
+lake_band(x0, x1, y0, y1, time='day', phase=0.0, scale=1.0, seed=0)   A strip of lake_galilee water from y0 to y1 with a
+    rippled top edge (absolute coordinates).
+storm_lake(x0, x1, level, phase=0.0, wave=1.0, foam=True, spray=0.5, bottom=None, part='all', seed=0, scale=1.0)
+    ABSOLUTE coordinates: the stormy lake from `level` (the far edge) down to bottom. Four rows of tall, sharp-crested
+    waves in cold blue-grey (STORM_WATER), lighter faces under the crests, bubbly white foam caps curling forward,
+    foam streaks and flying spray. phase 0..1 loops (rows move in alternating directions): 8 phases at ~0.08 s.
+    wave 0..1 the size of the waves and foam (1 storm, ~.3 dying down, 0.05 almost flat - then cross-fade to calm_lake).
+    part 'back' (sky-side water + rows 1-2) | 'front' (rows 3-4) | 'all': THE BOAT IN THE STORM: storm_lake(part='back')
+    -> boat_rock(boat + crew, bx, level + STORM_BOAT_DY*scale, tilt, bob) -> storm_lake(part='front') - the near waves hide
+    the keel and slap at the hull (STORM_BOAT_DY = 70).
+calm_lake(x0, x1, level, phase=0.0, moon_x=None, bottom=None, time='night', ripples=1.0, sparkle=1.0, seed=0, scale=1.0,
+          glow=1.0)
+    ABSOLUTE coordinates: a mirror-calm lake from level to bottom: a smooth silver-blue gradient (CALM_WATER), long thin
+    ripple lines drifting with phase, twinkling sparkles, and under moon_x the broken silver column of the moon's
+    reflection (glow 0..1 fades it in). time 'night' | 'dawn' (pink-gold, the sun's path) | 'day'.
+storm_sky(x0, y0, x1, y1, phase=0.0, density=1.0, wind=1.0, rain=0.0, lightning=0.0, seed=0, moon=None, scale=1.0)
+    ABSOLUTE box: a cold blue-grey sky (STORM_SKY_COLS) with three banks of rounded clouds racing across with phase
+    (each bank at its own speed; loops at phase 1), density 0..1 how many, wind 0..1 curling white wind streaks, rain
+    0..1.5 slanted rain (the rain() helper at 24 deg), lightning 0..1 a soft glow inside the clouds (no bolts - flash it
+    0 -> .8 -> 0 over ~0.3 s with a 'thunder' sfx), moon=(x, y) a moon that the clouds hide (visible as density falls).
+night_sky(x0, y0, x1, y1, moon=None, moon_r=58, stars=40, progress=1.0, twinkle=0.0, time='night', clouds=0.0, seed=0,
+          scale=1.0, glow=1.0)
+    ABSOLUTE box: a night sky (NIGHT_COLS) or a violet-gold dusk ('dusk', DUSK_COLS), a soft moon with a halo at moon=(x, y),
+    stars that appear one by one as progress goes 0 -> 1 (star k at k / stars: '星星一颗一颗地亮起来了') and twinkle with
+    twinkle 0..1, clouds 0..1 a few silver-edged clouds parting (1 = still close, 0 = gone - the clouds opening at the calm).
+THE STORY'S SMALL THINGS
+hanging_lantern(x, y, scale=1.0, swing=0.0, lit=True)   Anchor: the hook. A small bronze lantern with a horn window and
+    a warm flame + glow; swing -1..1 tilts it (+-28 deg) - the boat lantern / the lanterns on the shore at dusk. BBox lit
+    (-84, -21, 82, 144) (glow), unlit (-20, -1, 19, 92).
+bail_bucket(x, y, scale=1.0, facing=1, kind='bucket', water=1.0, tip=0.0, rot=0.0)   Anchor: bottom centre. A wooden
+    bailing bucket with a rope handle (-29, -63, 27, 3) or a clay bowl 'bowl' (-32, -46, 31, -2); tip 0..1 pours the
+    water out toward facing in an arc with flying drops.
+fishing_net(x, y, scale=1.0, facing=1, kind='pile', phase=0.0, spread=1.0, n=7, time='day')   kind 'pile' a heap of net
+    with cork floats, anchor bottom centre (-124, -89, 129, 2); 'pole' nets hung to dry on a frame of two posts
+    (-178, -260, 178, 9); 'full' a net bag full of silvery fish flapping with phase, anchor = its top (-87, -6, 88, 152);
+    'cast' a round cast net flying open (spread 0..1), anchor = its top centre (-266, -10, 265, 105).
+net_full(x, y, scale=1.0, facing=1, phase=0.0, n=7) = fishing_net(kind='full').
+lake_fish(x, y, scale=1.0, facing=1, flap=0.0, rot=0.0, color=None)   Anchor: centre. A silvery lake fish ('St Peter's
+    fish') with a big eye; flap -1..1 bends the tail (jumping / flapping fish). BBox (-50, -23, 40, 19).
+rope_spiral(x, y, scale=1.0, facing=1)   Anchor: bottom centre. A flat coil of rope on a deck (-65, -50, 109, 9).
+boat_cushion(x, y, scale=1.0, facing=1, squash=0.0, color=None)   Anchor: bottom centre. The worn wool stern cushion
+    (-87, -58, 86, 2).
+pillow(x, y, scale=1.0, rot=0.0, hug=0.0, color=None)   Anchor: centre. The child's pale-yellow star pillow (-91, -54, 89,
+    53); hug 0..1 squeezes its middle.
+small_boat(x, y, scale=1.0, facing=1, variant=0, sail='none', lantern=False, time='day', tilt=0.0)   Anchor: waterline
+    middle. Simple background boats: 0 rowing boat (-264, -121, 264, 35), 1 small sailing boat (-264, -338, 264, 35),
+    2 pulled up on the beach, tilted (anchor = the ground) (-275, -158, 248, 27), 3 a rowing boat with two little figures
+    (-305, -190, 264, 35 with lantern); sail 'full' / 'furled' adds a mast; lantern=True a lit lantern at the stern; time
+    tints it like lake_galilee. '还有别的小船，也跟着他们一起出发': 2-4 of them at scale 0.2-0.4 behind the fishing boat.
+stone_house(x, y, scale=1.0, variant=0, facing=1, time='day', lit=None)   Anchor: bottom centre of the front wall. A
+    Galilean house of dark basalt blocks with a flat roof and parapet: 0 one storey (-154, -280, 225, 2) at 0.8, 1 two
+    storeys with an outside stair (-130, -416, 200, 2) at 0.8, 2 with a courtyard wall and a fig tree (-185, -305, 417, 9)
+    at 0.8; lit 0..1 warm windows (default by time). Doors ~150 px: use 0.3-0.6 behind the crowd.
+window_wind(x, y, scale=1.0, wind=1.0, phase=0.0, rattle=0.0, night=True, curtains=True, part='all', glow=0.0,
+            curtain_color=None)
+    Anchor: the middle of the SILL TOP. The child's bedroom window on a windy night: a cream-painted frame with four
+    panes (WINDOW_WIND_OPENING = (-200, -460, 200, 0)), a sill, a curtain rod with two warm-orange curtains with little
+    yellow stars whose lower parts blow up into the room (wind 0..1, phase 0..1 loops: 6 phases), and outside a night sky
+    with clouds racing past, the moon, a tree branch bending and leaves flying (night=False: a daytime sky). rattle 0..1
+    jitters the sashes and adds rattle ticks at the frame corners ('窗户哐哐地响': cycle phase quickly). glow 0..1 a warm
+    lamp light on the curtains and the wall below (the calm, warm room of the ending, while the wind still blows).
+    part 'back' = the view outside only, 'front' = frame, glass, curtains. BBox (-357, -542, 357, 32) (wind 0: bottom 97).
+bed(x, y, scale=1.0, facing=1, quilt=None)   Anchor: bottom centre. A child's wooden bed (headboard with a moon cut-out
+    on the left for facing=1), mattress, a blue patchwork quilt with yellow dots, the star pillow. BED_TOP = -150 is the
+    mattress top: child(x', y + BED_TOP*scale, scale, pose='sit_hug' / 'sit_pray', outfit='pyjamas'). BBox
+    (-302, -353, 292, 12).
+lake_map(x, y, scale=1.0, fish=True, wind=1.0, boat=True, phase=0.0, labels=True)   Anchor: centre. A picture-book map of
+    the Sea of Galilee on a parchment card (~900 x 640): the harp-shaped lake with the Jordan flowing in and out, hills
+    all round, little basalt villages, circled fish spots with fish (wiggling with phase), a little sailing boat, and
+    wind lines rushing down from the hills onto the lake (wind 0..1); labels writes '加利利湖' (not wobbled). BBox
+    (-455, -334, 454, 333).
+THE MUSTARD SEED (Mark 4:30-32)
+mustard_plant(x, y, scale=1.0, growth=1.0, sway=0.0, flowers=True, seed=0, facing=1)   Anchor: the root on a soil mound.
+    growth 0..1 (continuous; quantise in steps of ~0.05): 0 a tiny seed in the soil (-72, -26, 71, 2), .1-.25 a sprout with
+    two round seed leaves, .3 a young plant with broad wavy leaves (-72, -119, 71, 2), .45 taller with the first buds
+    (-72, -215, 71, 2), .6 a leafy bush with yellow flower clusters (-105, -330, 94, 2), .8 a bushy tree (-260, -586, 249, 2),
+    1 a big bushy tree ~2.5 x an adult (MUSTARD_HEIGHT ~ 780: (-369, -780, 357, 2)) with a brown trunk, spreading
+    branches and many yellow flower clusters. sway -1..1 bends the branches in the breeze. Birds building nests: put
+    nest() at (x + nx*scale, y + ny*scale) for (nx, ny) in MUSTARD_NESTS (on the branches at growth 1) and let
+    songbird(...) fly in (section 9).
+mustard_seed(x, y, scale=1.0, facing=1, sparkle=1.0, skin=None)   Anchor: about the middle of the palm. An open hand,
+    palm up, with a tiny dark mustard seed in it and a soft golden ring + rays pointing it out (sparkle 0..1):
+    '芥菜种是最小最小的种子'. BBox (-233, -134, 151, 111).
+nest(x, y, scale=1.0, facing=1, eggs=0, chicks=0, build=1.0, phase=0.0)   Anchor: bottom centre (sit it on a branch). A
+    little twig nest; build 0..1 adds the twigs one by one, eggs 0..3 pale blue speckled eggs, chicks 0..3 fluffy chicks
+    with open beaks bobbing with phase. BBox (-66, -55, 67, 13).
+Constants: ROPE, BOAT_* (colours and geometry), BOAT_LEN, BOAT_FLOOR_Y, BOAT_FAR_FLOOR_Y, BOAT_STAND, BOAT_FAR_STAND,
+BOAT_SEATS, BOAT_FAR_SEATS, BOAT_SEAT_H, BOAT_MAST_X, BOAT_MAST_TOP, BOAT_YARD_Y, BOAT_CLING, BOAT_WAKE, STERN_DECK,
+STERN_CUSHION, STERN_SLEEP, STERN_SEAT, ROW_PIVOT, ROW_K, SAIL_LINEN, SAIL_PATCH, NET, NET_FLOAT, LAKE_FISH, LAKE_TIMES,
+STORM_SKY_COLS, STORM_WATER, STORM_FOAM, STORM_BOAT_DY, NIGHT_COLS, CALM_WATER, DUSK_COLS, DAWN_COLS, BASALT (+ _DARK /
+_LIGHT), WINDOW_WIND_OPENING, BED_TOP, MUSTARD_* (colours), MUSTARD_HEIGHT, MUSTARD_NESTS.
+STORM-TO-CALM RECIPE (s11): the storm layers (storm_sky rain + wind + clouds, storm_lake wave=1 flapping sail, boat_rock
+tilt +-6) while Jesus stands (stand_command, wind=1, glow .4); on '住了吧！静了吧！' step storm_lake wave 1 -> .5 -> .2 ->
+.05 and storm_sky density 1 -> .4 / wind 1 -> 0 / rain -> 0 over ~1.5 s (5-6 pre-rendered frames each), tilt -> 0,
+jesus wind 1 -> 0; then cross-fade (~0.8 s) to night_sky(moon, clouds 1 -> 0, progress 0 -> 1) + calm_lake(moon_x, glow 0
+-> 1) with the boat (sail 'furled', wet=True) and the crew in 'wonder' / 'awed'.
+RENDER COST (2112 x 1188 layer, uncached, measured): fishing_boat ~0.32 s (ark 0.29, ship 0.32), lake_galilee ~0.7 s
+(valley_elah 0.76), storm_lake ~0.7 s, storm_sky with rain + lightning ~1.4 s, night_sky + calm_lake ~1.2 s, window_wind
+~0.33 s, mustard_plant ~0.3 s; jesus ~0.22 s (joseph 0.22), disciples_group ~0.28 s (brothers_group 0.30). Keep the skies
+and lakes on static layers or small flipbooks; quantise every 0..1 option.
+
 Helpers / constants
 -------------------
 local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
@@ -790,7 +971,7 @@ LION_POSES, DEN_FLOOR_Y, DEN_INNER, DEN_OPENING, DEN_HOLE, DEN_STONE_R, WINDOW_O
 SHUTTER; in_den_hole(...).
 Contact sheets of everything: ``python3 tools/props_sheet.py [fish ship items castor plants creatures
 buildings daniel david_items ... noah_ark noah_animals noah_pairs noah_weather noah_items joseph_items
-joseph_animals joseph_egypt]``
+joseph_animals joseph_egypt storm_boat storm_lake storm_weather storm_items storm_story]``
 -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
 """
 import hashlib
@@ -8264,3 +8445,1608 @@ def _field(x0, x1, y, depth=120.0, ripe=1.0, dry=0.0, seed=0, s=1.0):
 def field(x0, x1, y, depth=120.0, scale=1.0, ripe=1.0, dry=0.0, seed=0):
     """A wheat field band in absolute stage coordinates (see module doc, section 10)."""
     return _place(_field(x0, x1, y, depth * scale, _clamp(ripe), _clamp(dry), seed, scale), 0, 0, 1.0)
+
+
+# ====================================================================== 11. Storm film (Mark 4:35-41)
+# The fishing boat, the Sea of Galilee (day / dawn / sunset / night, near and far shore), the storm lake and sky, the
+# calm moonlit lake, nets, lanterns, buckets, small boats, the mustard plant and nests, the windy bedroom window.
+# Module doc section 11. Own palette: violet-gold evening, cold blue-grey storm with white foam, silver moonlit calm.
+ROPE = "#c9a873"
+BOAT_WOOD = "#9a7356"
+BOAT_WOOD_LIGHT = "#c49a70"
+BOAT_WOOD_DARK = "#6a4c3a"
+BOAT_INNER = "#7a5a44"
+BOAT_TAR = "#4e423e"
+BOAT_PAINT = "#5f8f9a"          # a faded blue-green strake under the gunwale
+BOAT_EYE = "#d9b25a"
+SAIL_LINEN = "#efe4cc"
+SAIL_PATCH = ("#d8a35a", "#c98a8a", "#a8bfa0")
+NET = "#7a6a52"
+NET_FLOAT = "#d9a35a"
+LAKE_FISH = "#a9b9bf"            # silvery 'St Peter's fish'
+STORM_SKY_COLS = ("#2b3648", "#3e4c61", "#5a6c82", "#8696a8")
+STORM_WATER = ("#36506a", "#4a6a80", "#64879a", "#8fb0bd")
+STORM_FOAM = "#eef4f2"
+NIGHT_COLS = ("#1c2140", "#2e3560", "#4c4f84", "#7c76a8")
+CALM_WATER = ("#2c3a66", "#45568a", "#6f80b0", "#c9d2e6")
+DUSK_COLS = ("#5a4c8c", "#9a6aa0", "#e8907a", "#f6c66a", "#fbe4a0")
+DAWN_COLS = ("#8fb4d8", "#c9c4dc", "#f2c0b4", "#f8d8a0", "#fdf0cf")
+
+# rowing geometry (rower's local frame: anchor = floor under the pelvis of a seated rower, facing +x = toward the
+# stern; the thwart top is BOAT_SEAT_H above the floor)
+BOAT_SEAT_H = 72
+ROW_PIVOT = (40, -118)           # the oarlock (where the oar crosses the near gunwale)
+ROW_K = 3.4                      # outboard / inboard ratio in the picture
+
+
+def row_hands(phase=0.0):
+    """Rower's hand centre (local, scale 1, facing +x) at rowing phase 0..1: 0 catch (reaching toward the stern),
+    .25 drive (blade deep), .5 finish (hands at the chest), .75 recovery (blade out of the water)."""
+    a = 2 * math.pi * (phase % 1.0)
+    return (60 + 26 * math.cos(a), -158 - 9 * math.sin(a))
+
+
+def row_blade(phase=0.0):
+    """Tip of the oar blade (same frame as row_hands): it sweeps opposite to the hands and dips in the drive."""
+    hx, hy = row_hands(phase)
+    px, py = ROW_PIVOT
+    return (px + (px - hx) * ROW_K, py + (py - hy) * ROW_K)
+
+
+def _oar_svg(phase=0.0, origin=(0.0, 0.0), part="all", k=1.0):
+    """One oar for the rowing phase, in the rower's local frame shifted by origin. part 'all' | 'in' (handle to the
+    oarlock) | 'out' (oarlock to the blade)."""
+    ox, oy = origin
+    hx, hy = row_hands(phase)
+    px, py = ROW_PIVOT
+    bx, by = row_blade(phase)
+    H, Pv, B = (ox + hx + 6, oy + hy), (ox + px, oy + py), (ox + bx, oy + by)
+    dx, dy = B[0] - H[0], B[1] - H[1]
+    L = math.hypot(dx, dy) or 1.0
+    ux, uy = dx / L, dy / L
+    start = H if part in ("all", "in") else Pv
+    end = Pv if part == "in" else (B[0] - ux * 52, B[1] - uy * 52)
+    out = _tube(f"M{_f(start[0] - ux * 14)},{_f(start[1] - uy * 14)} L{_f(end[0])},{_f(end[1])}", 9 * k, BOAT_WOOD_LIGHT,
+                3.4 * k)
+    if part in ("all", "out"):
+        nx, ny = -uy, ux
+        b0 = (B[0] - ux * 70, B[1] - uy * 70)
+        blade = [(b0[0] + nx * 6, b0[1] + ny * 6), (B[0] + nx * 15, B[1] + ny * 15), (B[0] + ux * 6, B[1] + uy * 6),
+                 (B[0] - nx * 15, B[1] - ny * 15), (b0[0] - nx * 6, b0[1] - ny * 6)]
+        out += _p(_sm(blade, closed=True, tension=0.6), BOAT_WOOD_LIGHT, 3.4 * k)
+        out += _line(b0[0], b0[1], B[0] - ux * 4, B[1] - uy * 4, sw=2 * k, color=BOAT_WOOD_DARK, extra='opacity="0.6"')
+    return out
+
+
+# ---------------------------------------------------------------------- small things for people to hold
+def _bail_vessel(kind="bucket", water=1.0, tip=0.0, splash=False):
+    """A bailing bucket (wooden staves, rope handle) or a clay bowl, centre of the rim at about (0, -6); water 0..1
+    inside; tip 0..1 the water pours out of the mouth (+x side) in an arc (splash=True adds flying drops)."""
+    out = ""
+    if kind == "bowl":
+        out += _p("M-30,-8 Q-28,22 0,24 Q28,22 30,-8 Z", P["terracotta"], 3.4)
+        out += _ell(0, -8, 30, 8, S.shade(P["terracotta"], -0.3), 3)
+        out += _p("M-24,4 Q0,12 24,4", sw=2.4, stroke=CREAM, extra='opacity="0.8"')
+        if water > 0.05:
+            out += _ell(0, -7, 26 * (0.6 + 0.4 * water), 5.5, STORM_WATER[3], 0, extra='opacity="0.9"')
+    else:
+        out += _p("M-26,-14 L-21,26 Q0,32 21,26 L26,-14 Z", BOAT_WOOD_LIGHT, 3.4)
+        for xx in (-12, 0, 12):
+            out += _line(xx * 1.05, -10, xx * 0.85, 26, sw=2, color=BOAT_WOOD_DARK, extra='opacity="0.6"')
+        for yy in (-4, 16):
+            out += _line(-25 + (yy + 14) * 0.12, yy, 25 - (yy + 14) * 0.12, yy, sw=3.4, color=BOAT_TAR)
+        out += _ell(0, -14, 26, 7, S.shade(BOAT_WOOD, -0.25), 3)
+        if water > 0.05:
+            out += _ell(0, -13, 22 * (0.5 + 0.5 * water), 5, STORM_WATER[3], 0, extra='opacity="0.95"')
+        out += _p("M-25,-14 Q0,-48 25,-14", sw=4.5, stroke=ROPE) + _p("M-25,-14 Q0,-48 25,-14", sw=1.4,
+                                                                       stroke=S.shade(ROPE, -0.4))
+    if tip > 0.4 and water > 0.05:
+        a = _clamp((tip - 0.4) / 0.6)
+        col = STORM_WATER[3]
+        d = f"M22,-14 Q{_f(60 + 30 * a)},{_f(-40 - 10 * a)} {_f(80 + 50 * a)},{_f(10 + 40 * a)}"
+        out += _p(d, sw=16 * water, stroke=S.shade(col, -0.35)) + _p(d, sw=12 * water, stroke=col)
+        out += _p(d, sw=3, stroke=STORM_FOAM, extra='opacity="0.8"')
+        if splash:
+            for k in range(5):
+                xx, yy = 70 + 60 * a + k * 13, -20 + 22 * k * a - 8 * (k % 2)
+                out += f'<path d="{_raindrop_d(xx, yy, 6.5 - k * 0.6)}" fill="{col}" {_st(2, S.shade(col, -0.4))}/>'
+    return out
+
+
+def _net_mesh(d, cid, spacing=13, col=None, sw=1.6):
+    """Diamond net mesh clipped to the outline d."""
+    col = col or S.shade(NET, -0.15)
+    lines = ""
+    for k in range(-40, 41):
+        lines += f"M{k * spacing - 400},-400 L{k * spacing + 400},400 M{k * spacing + 400},-400 L{k * spacing - 400},400 "
+    return _clip(cid, d, f'<path d="{lines}" fill="none" stroke="{col}" stroke-width="{sw}" opacity="0.85"/>')
+
+
+def _net_bundle():
+    """A cast net gathered up in the hands: a hanging mesh bag with lead weights at the hem. Top at (0, 0)."""
+    d = "M-14,-4 Q-46,40 -58,96 Q-30,118 0,112 Q34,118 58,92 Q40,40 14,-4 Z"
+    out = _p(d, S.mix(NET, P["sand_light"], 0.55), 3.2)
+    out += _net_mesh(d, _uid("netb", 0), 11)
+    for k in range(7):
+        xx = -54 + k * 18
+        out += _circ(xx, 100 + 6 * math.sin(k), 5, "#8e8a86", 2)
+    out += _p(d, sw=3.2)
+    return out
+
+
+def _net_fly(spread=0.6):
+    """A round cast net flying open (spread 0..1): a wide umbrella of mesh, weights round the rim. Centre-top at
+    (0, 0), opening forward/down."""
+    s = _clamp(spread)
+    w, h = 90 + 170 * s, 60 + 40 * s
+    d = (f"M0,-6 Q{_f(w * 0.55)},{_f(-h * 0.2)} {_f(w)},{_f(h * 0.75)} Q{_f(w * 0.55)},{_f(h * 1.05)} 0,{_f(h * 0.95)} "
+         f"Q{_f(-w * 0.55)},{_f(h * 1.05)} {_f(-w)},{_f(h * 0.75)} Q{_f(-w * 0.55)},{_f(-h * 0.2)} 0,-6 Z")
+    out = _p(d, S.mix(NET, P["sand_light"], 0.6), 3, extra='fill-opacity="0.55"')
+    out += _net_mesh(d, _uid("netf", round(s, 3)), 14)
+    for k in range(11):
+        u = -1 + 2 * k / 10
+        xx = w * u
+        yy = h * 0.75 + h * 0.25 * (1 - u * u)
+        out += _circ(xx, yy, 5, "#8e8a86", 2)
+    out += _p(d, sw=3)
+    return out
+
+
+def _lake_fish(flap=0.0, k=1.0, col=None):
+    """A silvery lake fish ('St Peter's fish'), centre at (0, 0), head toward +x; flap -1..1 bends the tail."""
+    col = col or LAKE_FISH
+    t = flap
+    body = (f"M{_f(40 * k)},0 Q{_f(22 * k)},{_f(-22 * k)} {_f(-14 * k)},{_f(-15 * k)} L{_f(-30 * k)},{_f((-4 + 6 * t) * k)} "
+            f"L{_f(-48 * k)},{_f((-18 + 10 * t) * k)} Q{_f(-44 * k)},{_f((0 + 8 * t) * k)} {_f(-48 * k)},{_f((18 + 10 * t) * k)} "
+            f"L{_f(-30 * k)},{_f((4 + 6 * t) * k)} L{_f(-14 * k)},{_f(15 * k)} Q{_f(22 * k)},{_f(22 * k)} {_f(40 * k)},0 Z")
+    out = _p(body, col, 2.6 * k)
+    out += _p(f"M{_f(-8 * k)},{_f(-15 * k)} Q{_f(6 * k)},{_f(-26 * k)} {_f(20 * k)},{_f(-16 * k)}", S.shade(col, -0.15), 2.2 * k)
+    out += _p(f"M{_f(18 * k)},{_f(-10 * k)} Q{_f(14 * k)},0 {_f(18 * k)},{_f(10 * k)}", sw=1.8 * k, stroke=S.shade(col, -0.35))
+    out += _p(f"M{_f(-10 * k)},{_f(3 * k)} Q{_f(10 * k)},{_f(9 * k)} {_f(30 * k)},{_f(3 * k)}", sw=2.4 * k, stroke=HILITE,
+              extra='opacity="0.6"')
+    out += _circ(26 * k, -5 * k, 3.2 * k, PUPIL, 0) + _circ(25 * k, -6 * k, 1.1 * k, HILITE, 0)
+    return out
+
+
+def _net_full(phase=0.0, n=7):
+    """A net bag full of fish, hanging from its top at (0, 0); the fish flap with phase 0..1."""
+    d = "M-30,-2 Q-78,30 -86,92 Q-60,148 0,150 Q62,148 86,92 Q78,30 30,-2 Z"
+    out = _p(d, S.mix(NET, P["sand_light"], 0.5), 3.2, extra='fill-opacity="0.35"')
+    rng = random.Random(4)
+    fish = ""
+    for i in range(n):
+        cx, cy = rng.uniform(-50, 50), rng.uniform(40, 125)
+        fl = math.sin(2 * math.pi * (phase + i * 0.37))
+        ang = rng.uniform(-35, 35) + 8 * fl
+        fish += _g(_lake_fish(fl, 0.62), f"translate({_f(cx)},{_f(cy)}) rotate({ang:.1f}) scale({1 if i % 2 else -1},1)")
+    out += _clip(_uid("netfullc", round(phase, 3), n), d, fish)
+    out += _net_mesh(d, _uid("netfull", n), 12)
+    out += _p(d, sw=3.2)
+    out += _p("M-30,-2 Q0,8 30,-2", sw=5, stroke=ROPE)
+    return out
+
+
+def _pillow(hug=0.0, col=None):
+    """The child's soft pillow (pale yellow with stars), centre at (0, 0); hug 0..1 squeezes it in the middle."""
+    col = col or "#f6e6b0"
+    q = 18 * _clamp(hug)
+    d = (f"M-80,-44 Q-2,{_f(-58 + q)} 80,-44 Q96,0 80,44 Q0,{_f(58 - q)} -80,44 Q-96,0 -80,-44 Z")
+    out = _p(d, col, 4)
+    for cx, cy, r in ((-40, -12, 9), (16, 10, 8), (46, -20, 7), (-12, 22, 6)):
+        pts = []
+        for k in range(10):
+            a = -math.pi / 2 + k * math.pi / 5
+            rr = r if k % 2 == 0 else r * 0.45
+            pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
+        out += _p(_poly(pts), "#e8a85a", 0, extra='opacity="0.8"')
+    for sx, sy in ((-80, -44), (80, -44), (80, 44), (-80, 44)):
+        out += _p(f"M{sx},{sy} l{_f(-8 if sx < 0 else 8)},{_f(-8 if sy < 0 else 8)}", sw=4)
+    out += _p("M-60,-30 Q-70,0 -60,30", sw=2.4, stroke=S.shade(col, -0.25), extra='opacity="0.7"')
+    return out
+
+
+def _boat_cushion(squash=0.0, col=None, k=1.0):
+    """The worn wool cushion in the stern (Mark 4:38), bottom centre at (0, 0), ~150 x 50 at k=1."""
+    col = col or "#9c8a6a"
+    w, h = 150 * k, (50 - 10 * squash) * k
+    d = (f"M{_f(-w / 2)},{_f(-4 * k)} Q{_f(-w / 2 - 6 * k)},{_f(-h * 0.55)} {_f(-w / 2 + 8 * k)},{_f(-h)} "
+         f"Q{_f(-6 * k)},{_f(-h - 8 * k + 10 * squash * k)} {_f(w / 2 - 6 * k)},{_f(-h + 2 * k)} "
+         f"Q{_f(w / 2 + 8 * k)},{_f(-h * 0.5)} {_f(w / 2)},{_f(-3 * k)} Q0,{_f(5 * k)} {_f(-w / 2)},{_f(-4 * k)} Z")
+    out = _p(d, col, 3.4 * k)
+    seam = f"M{_f(-w * 0.36)},{_f(-h * 0.55)} Q0,{_f(-h * 0.38)} {_f(w * 0.36)},{_f(-h * 0.52)}"
+    out += _p(seam, sw=6 * k, stroke=S.shade(col, 0.28), extra='opacity="0.9"')
+    out += _p(seam, sw=1.8 * k, stroke=S.shade(col, -0.3), extra='stroke-dasharray="4 4" opacity="0.8"')
+    for sx in (-1, 1):
+        out += _tube(f"M{_f(sx * (w / 2 - 2 * k))},{_f(-h * 0.8)} L{_f(sx * (w / 2 + 8 * k))},{_f(-h - 4 * k)}", 4 * k,
+                     S.shade(col, -0.15), 2.0 * k)
+    return out
+
+
+def boat_cushion(x, y, scale=1.0, facing=1, squash=0.0, color=None):
+    return _place(_boat_cushion(squash, color), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the fishing boat
+BOAT_LEN = 1500                 # stern tip -750 .. bow tip +750 at scale 1 (about 8 m: 4.5 adults)
+BOAT_FLOOR_Y = 0                # floor of the near standing row = the waterline (people's feet; hidden by the hull)
+BOAT_FAR_FLOOR_Y = -40          # floor of the far row (people standing by the far side, drawn first)
+STERN_DECK = (-735, -420, -172)  # the stern platform: x0, x1, top of its near edge
+STERN_CUSHION = (-655, -174)     # bottom centre of the cushion on the stern platform
+STERN_SLEEP = (-505, -176)       # characters.jesus(pose='sleep' / 'wake') anchor: head on the cushion
+STERN_SEAT = (-455, -100)        # characters.jesus(pose='sit' / 'teach') anchor: sitting on the platform's edge
+BOAT_MAST_X = 230
+BOAT_MAST_TOP = (230, -960)
+BOAT_YARD_Y = -900
+BOAT_SEATS = ((-300, 0), (-40, 0))          # rowers' seats (near side): anchors of disciples(pose='row', facing=-f)
+BOAT_FAR_SEATS = ((-330, -40), (-70, -40))  # far side (their oars are hidden behind the hull)
+BOAT_STAND = ((-330, 0), (-170, 0), (10, 0), (150, 0), (390, 0), (540, 0))       # near row floor spots
+BOAT_FAR_STAND = ((-400, -40), (-250, -40), (-100, -40), (60, -40), (340, -40), (480, -40))
+BOAT_CLING = (150, 0)            # disciples(pose='cling') facing the mast (+1 for a boat facing right)
+BOAT_WAKE = (-462, 0)            # disciples(pose='wake_shake') facing -1 (toward the stern): hands on the sleeper
+
+
+def _ng(x):
+    """Top of the near gunwale (local, scale 1, bow toward +x)."""
+    if x >= 0:
+        return -128 - 70 * min(1.0, x / 690) ** 2.4
+    return -128 - 62 * min(1.0, -x / 700) ** 2.2
+
+
+def _boat_depth(x):
+    return max(6.0, 64 * (1 - (x / 740) ** 2))
+
+
+def _fg(x):
+    return _ng(x) - _boat_depth(x)
+
+
+def _kb(x):
+    return 66 * (1 - (abs(x) / 735) ** 2.4) - 8
+
+
+def _boat_hull_d():
+    xs = [-700 + i * 20 for i in range(70)] + [690]
+    top = [(x, _ng(x)) for x in xs]
+    bow = [(712, -214), (736, -232), (748, -224), (744, -196), (734, -130), (718, -70), (690, -26)]
+    bottom = [(x, _kb(x)) for x in range(640, -660, -40)]
+    stern = [(-690, -22), (-722, -76), (-742, -140), (-750, -196)]
+    return _sm(top + bow + bottom + stern, closed=True, tension=0.55), xs
+
+
+def _stern_post():
+    d = ("M-724,-186 Q-760,-240 -770,-300 Q-782,-356 -752,-382 Q-722,-404 -704,-376 Q-694,-354 -716,-346 "
+         "Q-734,-342 -730,-362")
+    return _tube(d, 22, BOAT_WOOD) + _p("M-748,-230 Q-766,-300 -748,-362", sw=3, stroke=BOAT_WOOD_LIGHT,
+                                        extra='opacity="0.8"')
+
+
+def _bow_post():
+    return _tube("M716,-210 Q742,-252 748,-290 Q752,-312 740,-322", 20, BOAT_WOOD) + _circ(738, -324, 12, BOAT_WOOD_LIGHT, 3.6)
+
+
+def _boat_sail(state, phase, sid, k=1.0):
+    """Square linen sail on a yard spanning x -170..630 at BOAT_YARD_Y (local). state full | flapping | furled."""
+    yard = f"M-128,{BOAT_YARD_Y + 4} Q{BOAT_MAST_X},{BOAT_YARD_Y - 16} 588,{BOAT_YARD_Y + 4}"
+    out = ""
+    x0, x1, yt = -115, 575, BOAT_YARD_Y + 8
+    if state == "furled":
+        pts = []
+        for i in range(15):
+            u = i / 14
+            pts.append((_lerp(x0 + 10, x1 - 10, u), yt + 30 + 9 * math.sin(i * 2.1)))
+        out += _p(_sm([(x0 + 4, yt - 4)] + pts[1:-1] + [(x1 - 4, yt - 4)], closed=True), SAIL_LINEN, 4)
+        for i in range(1, 14, 3):
+            xx = _lerp(x0, x1, i / 14)
+            out += _p(f"M{_f(xx - 12)},{yt + 2} Q{_f(xx)},{yt + 22} {_f(xx + 12)},{yt + 2}", sw=2.5,
+                      stroke=S.shade(SAIL_LINEN, -0.35))
+        for xx in (-90, 90, 330, 520):
+            out += _rect(xx - 6, yt - 8, 12, 44, ROPE, 3, rx=5)
+        return _tube(yard, 13, BOAT_WOOD) + out
+    n = 16
+    flap = state == "flapping"
+    ph = 2 * math.pi * phase
+
+    def pt(u, v):
+        x = _lerp(x0, x1, u)
+        y = _lerp(yt, -440, v)
+        if flap:
+            # loose, rippling cloth: waves travel along the sail, the foot lifts and flicks
+            amp = 60 * v ** 1.2
+            x += 40 * v * math.sin(ph + u * 5.0) - 50 * v
+            y += -amp * (0.55 + 0.45 * math.sin(ph * 1 + u * 7.0 + 0.6)) - 50 * v * v
+        else:
+            belly = math.sin(math.pi * v) ** 0.9
+            x += (-30 if u < 0.5 else 40) * belly * abs(u - 0.5) * 2
+            y += 60 * math.sin(math.pi * u) ** 0.9 * v ** 2
+        return (x, y)
+    left = [pt(0, i / n) for i in range(n + 1)]
+    bottom = [pt(i / n, 1) for i in range(n + 1)]
+    right = [pt(1, 1 - i / n) for i in range(n + 1)]
+    top = [pt(1 - i / n, 0) for i in range(n + 1)]
+    outline = _sm(left[:-1] + bottom + right[1:] + top[1:-1], closed=True, tension=0.6)
+    inner = ""
+    # vertical seams (cloth panels) and a few coloured patches (a working fishermen's sail)
+    for u in (0.2, 0.4, 0.6, 0.8):
+        inner += _p(_sm([pt(u, i / n) for i in range(n + 1)], closed=False), sw=2.4, stroke=S.shade(SAIL_LINEN, -0.3),
+                    extra='opacity="0.7"')
+    for (u0, v0, w_, h_, col) in ((0.12, 0.55, 0.12, 0.18, SAIL_PATCH[0]), (0.66, 0.25, 0.10, 0.14, SAIL_PATCH[1]),
+                                  (0.44, 0.72, 0.09, 0.12, SAIL_PATCH[2])):
+        q = [pt(u0, v0), pt(u0 + w_, v0), pt(u0 + w_, v0 + h_), pt(u0, v0 + h_)]
+        inner += _p(_poly(q), col, 2.4, extra='opacity="0.9"')
+        inner += _p(_poly([(a + 4 * (1 if i in (0, 3) else -1), b + 4 * (1 if i < 2 else -1)) for i, (a, b) in enumerate(q)]),
+                    sw=1.6, stroke=S.shade(col, -0.35), extra='stroke-dasharray="4 4" fill="none"')
+    shade_ = [pt(0, i / n) for i in range(n + 1)] + [pt(0.25, 1 - i / n) for i in range(n + 1)]
+    inner += _p(_poly(shade_), S.shade(SAIL_LINEN, -0.25), 0, extra='filter="url(#soft)" opacity="0.5"')
+    if not flap:
+        belly = [pt(i / n, 0.72) for i in range(n + 1)] + [pt(1 - i / n, 1.05) for i in range(n + 1)]
+        inner += _p(_poly(belly), S.shade(SAIL_LINEN, -0.28), 0, extra='filter="url(#soft)" opacity="0.45"')
+        lit = [pt(i / n, 0.28) for i in range(n + 1)] + [pt(1 - i / n, 0.48) for i in range(n + 1)]
+        inner += _p(_poly(lit), HILITE, 0, extra='filter="url(#soft)" opacity="0.4"')
+    else:
+        for j in range(3):
+            v = 0.3 + 0.25 * j
+            inner += _p(_sm([pt(i / n, v + 0.04 * math.sin(ph + i)) for i in range(n + 1)], closed=False), sw=3,
+                        stroke=S.shade(SAIL_LINEN, -0.32), extra='opacity="0.6"')
+    reef = "".join(f'<circle cx="{_f(pt(u, 0.12)[0])}" cy="{_f(pt(u, 0.12)[1])}" r="3" fill="{S.shade(SAIL_LINEN, -0.4)}"/>'
+                   for u in [i / 12 for i in range(1, 12)])
+    out += _p(outline, SAIL_LINEN, 0) + _clip(sid, outline, inner + reef) + _p(outline, sw=4.5)
+    out = _tube(yard, 13, BOAT_WOOD) + out
+    return out, pt(0, 1), pt(1, 1)
+
+
+def _boat_water_inside(level, phase):
+    """Water sloshing inside the hull: a band rising from the near gunwale toward the far one (level 0..1)."""
+    if level <= 0:
+        return ""
+    ph = 2 * math.pi * phase
+    xs = [x for x in range(-680, 681, 20)]
+    surf = []
+    for x in xs:
+        base = _lerp(_ng(x) + 4, _fg(x) + 2, _clamp(level))
+        surf.append((x, base + 7 * math.sin(x / 70 + ph) * min(1, level * 3)))
+    body = surf + [(x, _ng(x) + 30) for x in reversed(xs)]
+    col = STORM_WATER[1]
+    out = _p(_sm(body, closed=True, tension=0.5), col, 3, stroke=S.shade(col, -0.35), extra='fill-opacity="0.82"')
+    out += _p(_sm(surf, closed=False), sw=5, stroke=STORM_WATER[3], extra='opacity="0.9"')
+    out += _p(_sm([(x, y + 2) for x, y in surf], closed=False), sw=2.4, stroke=STORM_FOAM,
+              extra='stroke-dasharray="26 34" opacity="0.9"')
+    if level > 0.25:                 # water slopping over the near gunwale
+        for j, x0 in enumerate((-420, -60, 300)):
+            xx = x0 + 60 * math.sin(ph + j * 2.1)
+            h = (18 + 26 * level) * (0.6 + 0.4 * math.sin(ph * 2 + j))
+            yy = _ng(xx) - 4
+            out += _p(f"M{_f(xx - 34)},{_f(yy + 6)} Q{_f(xx - 20)},{_f(yy - h)} {_f(xx)},{_f(yy - h * 0.8)} "
+                      f"Q{_f(xx + 18)},{_f(yy - h * 1.1)} {_f(xx + 36)},{_f(yy + 6)} Z", STORM_FOAM, 2.6,
+                      stroke=S.shade(col, -0.35), extra='opacity="0.95"')
+    return out
+
+
+def _boat_lantern(swing=0.0, lit=True, k=1.0):
+    """Small hanging boat lantern, hook at (0, 0): a bronze cap, horn window, warm flame; swing -1..1 rotates it."""
+    out = ""
+    if lit:
+        gid = _uid("blg", round(swing, 3), k)
+        out += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.9), (0.45, P["gold"], 0.35), (1, P["gold"], 0)])}</defs>'
+                f'<circle cx="0" cy="62" r="110" fill="url(#{gid})"/>')
+    body = _circ(0, 6, 6, "none", 3)
+    body += _line(0, 12, 0, 22, sw=3)
+    body += _p("M-16,36 Q-16,22 0,20 Q16,22 16,36 Z", "#b9894a", 3.4)
+    body += _rect(-15, 36, 30, 40, P["glow"] if lit else "#c9b89a", 3.4, rx=5)
+    if lit:
+        body += _ell(0, 58, 6, 10, P["sun_hot"], 0) + _ell(0, 60, 3.4, 6, P["glow"], 0)
+    body += _line(-6, 38, -6, 74, sw=2.4, color="#8a6a3a") + _line(6, 38, 6, 74, sw=2.4, color="#8a6a3a")
+    body += _rect(-18, 74, 36, 9, "#b9894a", 3.2, rx=3)
+    body += _p("M-8,83 L0,92 L8,83", "#b9894a", 3)
+    return out + _g(body, f"rotate({_f(-28 * swing)})")
+
+
+def hanging_lantern(x, y, scale=1.0, swing=0.0, lit=True):
+    return _place(_boat_lantern(swing, lit), x, y, scale, 1)
+
+
+def _boat(sail="full", phase=0.0, oars="in", row=0.0, cushion=True, water=0.0, wet=False, part="all",
+          lantern=False, swing=0.0, nets=True, rig=3.4, flag=True):
+    back, front = "", ""
+    wood = S.shade(BOAT_WOOD, -0.14) if wet else BOAT_WOOD
+    stay = S.shade(INK, 0.12)
+    # ---- rigging and sail (behind everyone)
+    mx, mtop = BOAT_MAST_TOP
+    back += _line(mx, mtop + 14, 738, -320, sw=rig, color=stay)          # forestay to the bow post
+    back += _line(mx, mtop + 14, -748, -372, sw=rig, color=stay)         # backstay to the stern post
+    if flag:
+        ph = 2 * math.pi * phase
+        w1 = 10 * math.sin(ph)
+        back += _p(f"M{mx},{mtop + 6} Q{mx + 40},{_f(mtop - 10 + w1)} {mx + 86},{_f(mtop + 2 - w1)} "
+                   f"Q{mx + 50},{_f(mtop + 18 + w1)} {mx},{mtop + 26} Z", "#c9a24a", 3.2)
+    back += _tube(f"M{mx},-60 L{mx},{mtop}", 17, wood)
+    back += _ell(mx, mtop, 15, 8, BOAT_WOOD_DARK, 3.4)
+    sid = _uid("bsail", sail, round(phase, 3))
+    if sail == "furled":
+        back += _boat_sail("furled", phase, sid)
+    elif sail in ("full", "flapping"):
+        sv, cl, cr = _boat_sail(sail, phase, sid)
+        back += sv
+        if sail == "flapping":     # slack sheets swinging in the wind
+            a = math.sin(2 * math.pi * phase)
+            back += _p(_sm([cl, (cl[0] - 60, cl[1] + 140 + 20 * a), (-420, -175)], closed=False), sw=rig, stroke=stay)
+            back += _p(_sm([cr, (cr[0] + 40 + 30 * a, cr[1] + 160), (640, -190)], closed=False), sw=rig, stroke=stay)
+        else:
+            back += _line(cl[0], cl[1], -440, -165, sw=rig, color=stay)
+            back += _line(cr[0], cr[1], 650, -195, sw=rig, color=stay)
+    # ---- the boat: far side, interior, stern platform
+    xs = [-700 + i * 20 for i in range(70)] + [690]
+    far = [(x, _fg(x)) for x in xs]
+    inner_poly = far + [(x, _ng(x) + 10) for x in reversed(xs)]
+    inner = _p(_poly(inner_poly), S.shade(BOAT_INNER, -0.1) if wet else BOAT_INNER, 0)
+    for t in (0.3, 0.62):
+        inner += _p(_sm([(x, _lerp(_fg(x), _ng(x), t)) for x in xs], closed=False), sw=2.4,
+                    stroke=S.shade(BOAT_INNER, -0.3), extra='opacity="0.7"')
+    for x in range(-600, 680, 95):
+        inner += _line(x, _fg(x) + 6, x + 4, _ng(x) + 6, sw=7, color=S.shade(BOAT_INNER, -0.25), extra='opacity="0.8"')
+    inner += _p(_sm(far, closed=False), sw=13, stroke=INK) + _p(_sm(far, closed=False), sw=7, stroke=BOAT_WOOD_LIGHT)
+    back += _stern_post() + _bow_post() + inner
+    # stern platform with the cushion
+    x0, x1, yd = STERN_DECK
+    deck = [(x0, yd - 14), (x1 - 10, yd - 14), (x1, yd), (x0 + 8, yd)]
+    back += _p(_poly([(x1 - 8, yd), (x1, yd), (x1, _ng(x1) + 4), (x1 - 8, _ng(x1) + 4)]), BOAT_WOOD_DARK, 3)
+    back += _p(_poly(deck), BOAT_WOOD_LIGHT, 3.6)
+    for xx in range(x0 + 50, x1, 60):
+        back += _line(xx, yd - 13, xx - 4, yd - 1, sw=2, color=BOAT_WOOD_DARK, extra='opacity="0.6"')
+    back += _rect(x0 + 6, yd, x1 - x0 - 6, 12, BOAT_WOOD, 3.2, rx=2)
+    if cushion:
+        back += _g(_boat_cushion(0.0), f"translate({STERN_CUSHION[0]},{STERN_CUSHION[1]})")
+    if oars == "in":           # two oars resting along the boat, blades up at the bow end
+        for (ax, ay, bx, by) in ((-420, -150, 320, -205), (-380, -140, 360, -192)):
+            back += _tube(f"M{ax},{ay} L{bx},{by}", 9, BOAT_WOOD_LIGHT, 3.2)
+            back += _p(f"M{bx - 10},{by - 4} L{bx + 70},{by - 16} Q{bx + 86},{by - 6} {bx + 70},{by + 6} L{bx - 10},{by + 4} Z",
+                       BOAT_WOOD_LIGHT, 3.2)
+    # ---- near side (in front of the people)
+    front += _boat_water_inside(water, phase)
+    hull_d, _ = _boat_hull_d()
+    hid = _uid("bhull", wet)
+    hin = _rect(-800, -300, 1600, 420, wood, 0)
+    for t in (0.18, 0.36, 0.54, 0.72):
+        hin += _p(_sm([(x, _lerp(_ng(x), _kb(x), t)) for x in xs], closed=False), sw=3, stroke=BOAT_WOOD_DARK,
+                  extra='opacity="0.7"')
+    hin += _p(_poly([(x, _ng(x) + 12) for x in xs] + [(x, _ng(x) + 34) for x in reversed(xs)]), BOAT_PAINT, 0)
+    hin += _p(_sm([(x, _ng(x) + 34) for x in xs], closed=False), sw=2.6, stroke=S.shade(BOAT_PAINT, -0.4))
+    hin += _p(_poly([(x, -12 + 4 * math.sin(x / 90)) for x in range(-760, 761, 30)] + [(760, 140), (-760, 140)]), BOAT_TAR, 0)
+    rng = random.Random(7)
+    for _ in range(30):
+        xx = rng.uniform(-640, 640)
+        t = rng.choice((0.27, 0.45, 0.63))
+        hin += _circ(xx, _lerp(_ng(xx), _kb(xx), t), 2.6, BOAT_WOOD_DARK, 0, extra='opacity="0.8"')
+    hin += _ell(-80, -95, 520, 22, HILITE, 0, extra=f'filter="url(#soft)" opacity="{0.32 if wet else 0.16}"')
+    if wet:
+        for xx in range(-560, 600, 140):
+            hin += _p(f"M{xx},{_f(_ng(xx) + 46)} q30,6 70,2", sw=4, stroke=HILITE, extra='opacity="0.55"')
+    # the painted eye at the bow (a friendly look-out)
+    ex, ey = 600, _ng(600) + 62
+    hin += _p(f"M{ex - 34},{ey} Q{ex},{ey - 26} {ex + 34},{ey} Q{ex},{ey + 22} {ex - 34},{ey} Z", "#f2e6c8", 3)
+    hin += _circ(ex + 4, ey, 11, "#3f5f7a", 0) + _circ(ex + 4, ey, 5, INK, 0) + _circ(ex + 1, ey - 4, 3, HILITE, 0)
+    hin += _p(f"M{ex - 38},{ey - 4} Q{ex},{ey - 34} {ex + 38},{ey - 6}", sw=4, stroke=BOAT_EYE)
+    front += _p(hull_d, wood, 0) + _clip(hid, hull_d, hin) + _p(hull_d, sw=4.6)
+    rail = [(x, _ng(x)) for x in xs]
+    front += _p(_sm(rail, closed=False), sw=16, stroke=INK) + _p(_sm(rail, closed=False), sw=9, stroke=BOAT_WOOD_LIGHT)
+    for sx, _sy in BOAT_SEATS:      # oarlocks: a rope grommet on the gunwale
+        px = sx - ROW_PIVOT[0]
+        front += _ell(px, _ng(px) + 4, 10, 7, "none", 4, stroke=ROPE)
+    if oars == "out":
+        for sx, sy in BOAT_SEATS:   # outboard parts of the near oars (the rowers face the stern: mirrored)
+            o = _oar_svg(row, (0.0, 0.0), part="out")
+            front += _g(o, f"translate({sx},{sy}) scale(-1,1)")
+    if nets:                        # a net draped over the near gunwale at the bow, cork floats
+        nd = f"M380,{_f(_ng(380) - 6)} Q470,{_f(_ng(470) - 14)} 560,{_f(_ng(560) - 6)} L548,{_f(_ng(548) + 70)} " \
+             f"Q520,{_f(_ng(520) + 96)} 470,{_f(_ng(470) + 80)} Q420,{_f(_ng(420) + 96)} 392,{_f(_ng(392) + 64)} Z"
+        front += _p(nd, S.mix(NET, P["sand_light"], 0.55), 3.2, extra='fill-opacity="0.85"')
+        front += _net_mesh(nd, _uid("bnet", 0), 12)
+        front += _p(nd, sw=3.2)
+        for i in range(5):
+            xx = 395 + i * 38
+            front += _ell(xx, _ng(xx) - 4, 9, 6, NET_FLOAT, 2.4)
+    if wet:
+        for xx in range(-600, 640, 110):
+            front += f'<path d="{_raindrop_d(xx, _ng(xx) + 22, 5)}" fill="{STORM_WATER[3]}" {_st(1.8, S.shade(STORM_WATER[3], -0.4))}/>'
+    if lantern:
+        front += _line(-752, -372, -760, -352, sw=3)
+        front += _g(_boat_lantern(swing, True), "translate(-760,-352) scale(0.8)")
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def fishing_boat(x, y, scale=1.0, facing=1, sail="full", phase=0.0, oars="in", row=0.0, cushion=True, water=0.0,
+                 tilt=0.0, bob=0.0, wet=False, part="all", lantern=False, swing=0.0, nets=True, flag=True):
+    """The small wooden Galilean fishing boat (see module doc, section 11)."""
+    if sail not in ("full", "flapping", "furled", "none"):
+        raise ValueError(f"fishing_boat: unknown sail {sail!r}; choose from ('full', 'flapping', 'furled', 'none')")
+    if oars not in ("in", "out", "none"):
+        raise ValueError(f"fishing_boat: unknown oars {oars!r}; choose from ('in', 'out', 'none')")
+    if part not in ("all", "back", "front"):
+        raise ValueError(f"fishing_boat: unknown part {part!r}; choose from ('all', 'back', 'front')")
+    rig = max(3.4, 2.4 / max(scale, 0.05))
+    body = _boat(sail, phase, oars, row, cushion, _clamp(water), wet, part, lantern, swing, nets, rig, flag)
+    return _place(body, x, y + bob * scale, scale, facing, rot=tilt)
+
+
+def boat_rock(markup, x, y, tilt=0.0, bob=0.0, scale=1.0):
+    """Wrap markup (boat back + people + boat front, all placed with tilt=0) so it rocks with the boat: rotate by tilt
+    degrees about the boat's anchor (x, y) and lift / drop it by bob*scale px."""
+    return f'<g transform="translate(0,{_f(bob * scale)}) rotate({tilt:.2f} {_f(x)} {_f(y)})">{markup}</g>'
+
+
+def boat_points(x, y, scale=1.0, facing=1, tilt=0.0, bob=0.0):
+    """Stage points of the fishing boat drawn at (x, y, scale, facing, tilt, bob) (see module doc)."""
+    a = math.radians(tilt)
+    sx = 1 if facing >= 0 else -1
+
+    def st(lx, ly):
+        px, py = lx * scale * sx, ly * scale
+        return (x + px * math.cos(a) - py * math.sin(a), y + bob * scale + px * math.sin(a) + py * math.cos(a))
+    return {"stern_cushion": st(*STERN_CUSHION), "sleep": st(*STERN_SLEEP), "stern_seat": st(*STERN_SEAT),
+            "mast_foot": st(BOAT_MAST_X, -128), "mast_top": st(*BOAT_MAST_TOP), "yard": [st(-120, BOAT_YARD_Y), st(580, BOAT_YARD_Y)],
+            "seats": [st(*p) for p in BOAT_SEATS], "far_seats": [st(*p) for p in BOAT_FAR_SEATS],
+            "oarlocks": [st(p[0] - ROW_PIVOT[0], ROW_PIVOT[1]) for p in BOAT_SEATS],
+            "stand": [st(*p) for p in BOAT_STAND], "far_stand": [st(*p) for p in BOAT_FAR_STAND],
+            "cling": st(*BOAT_CLING), "wake": st(*BOAT_WAKE), "bow": st(748, -224), "stern": st(-752, -380),
+            "gunwale": [st(gx, _ng(gx)) for gx in range(-700, 701, 100)], "waterline": st(0, 0),
+            "sheet_stern": st(-440, -165), "sheet_bow": st(650, -195)}
+
+
+# ---------------------------------------------------------------------- Galilean houses, small boats
+BASALT = "#7d7570"
+BASALT_DARK = "#5c5856"
+BASALT_LIGHT = "#9a958e"
+LAKE_TIMES = ("day", "dawn", "sunset", "night")
+_LT = {
+    "day": dict(sky=("#8fc4dc", "#bfe0e8", "#e6f2ec"), hills=("#b7c6a6", "#9db58a", "#86a56c"), near="#8fae68",
+                lake=("#9ccbd4", "#5f9ab4", "#3f7d9c"), lite="#e2f2ee", sand="#e2c99a", tint="#d8ecee", house=1.0,
+                lit=0.0, sun=None),
+    "dawn": dict(sky=("#9ab8dc", "#e2c6d8", "#fbd9b4"), hills=("#b8a9c4", "#9a95b4", "#8a9f86"), near="#93ad78",
+                 lake=("#f6dcc4", "#9cb8cc", "#5f8db0"), lite="#fff3d6", sand="#e8cfa8", tint="#f3d8c8", house=0.92,
+                 lit=0.15, sun=("#fbe08a", "#fff4cf")),
+    "sunset": dict(sky=("#5c4c8e", "#c07aa0", "#f8c37a"), hills=("#9a6f96", "#7c5a86", "#6a5a74"), near="#7d7468",
+                   lake=("#f1b47e", "#9a6f9e", "#4f4a80"), lite="#ffe0a0", sand="#d9a888", tint="#e2a0a0", house=0.75,
+                   lit=0.7, sun=("#f8a85a", "#ffe6a0")),
+    "night": dict(sky=("#1a1f3e", "#2c3462", "#4a5288"), hills=("#3e4470", "#30365c", "#283050"), near="#343e58",
+                  lake=("#5a68a0", "#36457a", "#222c52"), lite="#c9d2ec", sand="#6e6a82", tint="#3a4270", house=0.5,
+                  lit=1.0, sun=None),
+}
+
+
+def _tint(col, time, k=None):
+    t = _LT[time]
+    k = (1 - t["house"]) if k is None else k
+    return S.mix(col, t["tint"], k)
+
+
+def _stone_house(variant=0, lit=0.0, time="day"):
+    """A Galilean basalt house with a flat roof (bottom centre of the front wall at (0, 0)); ~ person scale."""
+    v = int(variant) % 3
+    wall, dark, lite = _tint(BASALT, time), _tint(BASALT_DARK, time), _tint(BASALT_LIGHT, time)
+    w, h = (360, 300, 440)[v], (300, 470, 300)[v]
+    out = ""
+    side = 90
+    # side face (3/4 view toward +x) and front face
+    out += _p(_poly([(w / 2, 0), (w / 2 + side, -40), (w / 2 + side, -h - 40), (w / 2, -h)]), dark, 4)
+    out += _rect(-w / 2, -h, w, h, wall, 4)
+    rng = random.Random(11 + v)
+    blocks = ""
+    for row, yy in enumerate(range(-h + 26, 0, 30)):
+        off = 0 if row % 2 else 26
+        for xx in range(int(-w / 2) + off, int(w / 2), 52):
+            if rng.random() < 0.55:
+                c = S.mix(wall, lite if rng.random() < 0.5 else dark, rng.uniform(0.25, 0.6))
+                blocks += _rect(xx + 3, yy - 24, 44, 22, c, 0, rx=6)
+    out += _clip(_uid("hsb", v, time), f"M{-w / 2},{-h} h{w} v{h} h{-w} Z", blocks)
+    out += _line(-w / 2, -h, w / 2, -h, sw=4)
+    # roof: beams, parapet, a little roof ladder
+    out += _p(_poly([(-w / 2 - 10, -h - 6), (w / 2 + 10, -h - 6), (w / 2 + side + 10, -h - 46), (-w / 2 + side - 10, -h - 46)]),
+              _tint("#b9a48a", time), 4)
+    for xx in range(int(-w / 2) + 20, int(w / 2), 46):
+        out += _circ(xx, -h + 8, 6, _tint(P["wood_dark"], time), 2.6)
+    out += _rect(-w / 2 - 10, -h - 26, w + 20, 22, lite, 3.6, rx=4)
+    # door and windows (warm light inside at night / sunset)
+    win = S.mix(_tint("#4a3a30", time), P["glow"], lit)
+    dw, dh = 84, 150
+    dx = -w * 0.18 if v != 1 else -w * 0.1
+    out += _p(f"M{dx - dw / 2},0 L{dx - dw / 2},{-dh + 20} Q{dx},{-dh - 16} {dx + dw / 2},{-dh + 20} L{dx + dw / 2},0 Z",
+              _tint(P["wood"], time), 4)
+    out += _line(dx, -dh + 2, dx, -4, sw=2.6, color=_tint(P["wood_dark"], time))
+    for wx, wy in (((w * 0.24, -h * 0.55),) if v != 1 else ((w * 0.22, -h * 0.35), (-w * 0.12, -h * 0.75))):
+        out += _rect(wx - 20, wy - 22, 40, 44, win, 3.6, rx=8)
+        out += _line(wx, wy - 22, wx, wy + 22, sw=2.6, color=_tint(P["wood_dark"], time))
+    if v == 1:                  # outside stair up to the roof
+        steps = ""
+        for i in range(8):
+            yy = -i * (h / 8)
+            steps += _rect(w / 2 + 6 + i * 4, yy - h / 8, 70 - i * 2, h / 8, S.mix(wall, lite, 0.3), 3)
+        out = steps + out
+    if v == 2:                  # a fig tree and a courtyard wall
+        out += _rect(w / 2 + 20, -100, 170, 100, wall, 4)
+        out += S.cloud(w / 2 + 120, -230, 230, 150, _tint("#6f9a52", time), seed=3, puffs=5, sw=4,
+                       shade_fill=_tint("#4f7a3a", time))
+        out = _tube(f"M{w / 2 + 110},0 Q{w / 2 + 120},-90 {w / 2 + 116},-180", 18, _tint(P["wood"], time)) + out
+    pots = _ell(-w / 2 + 40, -h - 30, 18, 14, _tint(P["terracotta"], time), 3)
+    return out + pots
+
+
+def stone_house(x, y, scale=1.0, variant=0, facing=1, time="day", lit=None):
+    t = _LT[time]
+    return _place(_stone_house(variant, t["lit"] if lit is None else lit, time), x, y, scale, facing)
+
+
+def _small_boat(variant=0, sail="none", lantern=False, time="day", tilt=0.0):
+    """Simple background boat (side view), anchor = waterline middle. variant 0 rowing boat, 1 small sail boat,
+    2 pulled up on the beach (tilted, anchor = ground under the keel), 3 rowing boat with two figures."""
+    wood = _tint(("#9a7356", "#8a6a50", "#a0805a", "#7a5a44")[variant % 4], time)
+    paint = _tint(("#c9774a", "#5f8f9a", "#d9b25a", "#8a5a7a")[variant % 4], time)
+    out = ""
+    if sail in ("full", "furled") or (variant == 1 and sail == "none"):
+        sl = "full" if sail == "none" else sail
+        out += _tube("M10,-30 L10,-330", 9, wood, 3)
+        if sl == "full":
+            out += _p("M14,-320 Q120,-250 150,-70 L14,-70 Z", _tint(SAIL_LINEN, time), 3.4)
+            out += _p("M14,-250 Q90,-200 108,-120", sw=2, stroke=_tint(S.shade(SAIL_LINEN, -0.3), time), extra='opacity="0.7"')
+        else:
+            out += _rect(-40, -300, 110, 18, _tint(SAIL_LINEN, time), 3, rx=8)
+    d = "M-240,-74 Q-250,-96 -262,-112 L-238,-104 Q-120,-62 0,-60 Q140,-62 236,-96 L262,-118 Q254,-82 236,-52 Q160,30 0,34 Q-150,30 -236,-40 Z"
+    out += _p(d, wood, 3.6)
+    out += _p("M-238,-86 Q-120,-50 0,-48 Q140,-50 238,-84", sw=7, stroke=paint)
+    out += _p("M-230,-30 Q-120,10 0,12 Q140,10 230,-30", sw=2.4, stroke=S.shade(wood, -0.3), extra='opacity="0.7"')
+    if variant % 4 == 3:
+        for xx, c in ((-70, "#c0623f"), (60, "#4f9a94")):
+            out += _rect(xx - 18, -150, 36, 90, _tint(c, time), 3.2, rx=14) + _circ(xx, -168, 20, _tint("#d9a37a", time), 3.2)
+        out += _line(-30, -110, -140, 10, sw=5, color=wood) + _line(90, -110, -10, 14, sw=5, color=wood)
+    if lantern:
+        out += _line(-240, -110, -246, -150, sw=3) + _g(_boat_lantern(0, True), "translate(-246,-150) scale(0.7)")
+    if variant % 4 == 2:
+        return _g(out, f"rotate({-6 + tilt:.1f}) translate(0,-10)")
+    return _g(out, f"rotate({tilt:.1f})") if tilt else out
+
+
+def small_boat(x, y, scale=1.0, facing=1, variant=0, sail="none", lantern=False, time="day", tilt=0.0):
+    return _place(_small_boat(variant, sail, lantern, time, tilt), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- nets, fish, rope
+def _net_pole(time="day"):
+    """Fishing nets hung to dry on a frame of two posts and a crossbar (bottom centre between the posts)."""
+    wood = _tint(P["wood"], time)
+    out = _tube("M-150,0 L-146,-250", 12, wood, 3.4) + _tube("M150,0 L146,-250", 12, wood, 3.4)
+    out += _tube("M-170,-244 L170,-250", 10, wood, 3.4)
+    d = "M-150,-246 Q-80,-236 0,-244 Q80,-252 150,-248 L140,-110 Q110,-60 70,-120 Q20,-50 -30,-112 Q-80,-60 -120,-110 Z"
+    col = _tint(S.mix(NET, P["sand_light"], 0.5), time)
+    out += _p(d, col, 3.2, extra='fill-opacity="0.8"')
+    out += _net_mesh(d, _uid("netpole", time), 13, col=_tint(S.shade(NET, -0.15), time))
+    out += _p(d, sw=3.2)
+    for i in range(7):
+        xx = -132 + i * 44
+        out += _ell(xx, -238, 10, 7, _tint(NET_FLOAT, time), 2.4)
+    return out
+
+
+def _net_pile(time="day"):
+    col = _tint(S.mix(NET, P["sand_light"], 0.45), time)
+    d = "M-120,0 Q-130,-40 -80,-62 Q-40,-96 10,-80 Q60,-100 100,-60 Q136,-36 124,0 Z"
+    out = _p(d, col, 3.6)
+    out += _net_mesh(d, _uid("netpile", time), 12, col=_tint(S.shade(NET, -0.2), time))
+    for (cx, cy, a) in ((-80, -50, 10), (-20, -78, -8), (50, -76, 14), (96, -40, -20), (-40, -20, 4), (40, -26, 0)):
+        out += _ell(cx, cy, 10, 7, _tint(NET_FLOAT, time), 2.4, extra=f'transform="rotate({a} {cx} {cy})"')
+    out += _p(d, sw=3.6)
+    return out
+
+
+def fishing_net(x, y, scale=1.0, facing=1, kind="pile", phase=0.0, spread=1.0, n=7, time="day"):
+    """Nets (see module doc): kind 'pile' | 'pole' | 'full' (a bag of flapping fish) | 'cast' (flying open)."""
+    if kind == "pile":
+        body = _net_pile(time)
+    elif kind == "pole":
+        body = _net_pole(time)
+    elif kind == "full":
+        body = _net_full(phase, n)
+    elif kind == "cast":
+        body = _net_fly(spread)
+    else:
+        raise ValueError(f"fishing_net: unknown kind {kind!r}; choose from ('pile', 'pole', 'full', 'cast')")
+    return _place(body, x, y, scale, facing)
+
+
+def net_full(x, y, scale=1.0, facing=1, phase=0.0, n=7):
+    return fishing_net(x, y, scale, facing, "full", phase, n=n)
+
+
+def lake_fish(x, y, scale=1.0, facing=1, flap=0.0, rot=0.0, color=None):
+    return _place(_lake_fish(flap, 1.0, color), x, y, scale, facing, rot=rot)
+
+
+def _rope_spiral():
+    col = ROPE
+    out = ""
+    for k in range(4):
+        rx, ry = 62 - k * 13, 22 - k * 4.5
+        out += _ell(0, -ry - 4 + k * 0.5, rx, ry, S.shade(col, -0.05 * k), 3.2)
+    out += _ell(0, -10, 8, 3, S.shade(col, -0.4), 0)
+    out += _p("M58,-16 Q90,-10 104,4", sw=11, stroke=INK) + _p("M58,-16 Q90,-10 104,4", sw=5, stroke=col)
+    return out
+
+
+def rope_spiral(x, y, scale=1.0, facing=1):
+    return _place(_rope_spiral(), x, y, scale, facing)
+
+
+def bail_bucket(x, y, scale=1.0, facing=1, kind="bucket", water=1.0, tip=0.0, rot=0.0):
+    if kind not in ("bucket", "bowl"):
+        raise ValueError(f"bail_bucket: unknown kind {kind!r}; choose from ('bucket', 'bowl')")
+    return _place(_g(_bail_vessel(kind, water, tip, True), "translate(0,-28)"), x, y, scale, facing, rot=rot)
+
+
+def pillow(x, y, scale=1.0, rot=0.0, hug=0.0, color=None):
+    return _place(_pillow(hug, color), x, y, scale, 1, rot=rot)
+
+
+# ---------------------------------------------------------------------- the Sea of Galilee backdrop
+def _ridge(x0, x1, y, peak, seed, bottom, bumps, fill, ink, sw):
+    """Rolling hills: alternating rounded tops and saddles (no single big hump), filled down to bottom."""
+    rng = random.Random(seed)
+    n = bumps * 2
+    pts = []
+    for i in range(n + 1):
+        u = i / n
+        hgt = peak * (rng.uniform(0.62, 1.0) if i % 2 else rng.uniform(0.25, 0.5))
+        pts.append((x0 + (x1 - x0) * (u + rng.uniform(-0.25, 0.25) / n * (0 < i < n)), y - hgt))
+    d = _sm(pts, closed=False) + f" L{_f(x1)},{_f(bottom)} L{_f(x0)},{_f(bottom)} Z"
+    return _p(d, fill, sw, stroke=ink)
+
+
+def _sun_disc(cx, cy, r, cols, gid):
+    a, b = cols
+    return (f'<defs>{S.rad_grad(gid, [(0, b, 0.9), (0.35, a, 0.45), (1, a, 0)])}</defs>'
+            f'<circle cx="{_f(cx)}" cy="{_f(cy)}" r="{_f(r * 4.2)}" fill="url(#{gid})"/>'
+            + _circ(cx, cy, r, b, 0) + _circ(cx, cy, r * 0.82, S.mix(a, b, 0.5), 0, extra='opacity="0.6"'))
+
+
+def _lake_back(x0, x1, y, s, time, far_shore, sky, top, boats, phase, seed, sun_x):
+    t = _LT[time]
+    W_ = x1 - x0
+    yf = y - 250 * s                         # the far shoreline
+    top = y - 1100 * s if top is None else top
+    out = ""
+    if sky:
+        gid = _uid("lgsky", time, x0, x1, top, yf)
+        c0, c1, c2 = t["sky"]
+        out += (f'<defs>{S.lin_grad(gid, [(0, c0), (0.55, c1), (1, c2)])}</defs>'
+                f'<rect x="{_f(x0 - 4)}" y="{_f(top)}" width="{_f(W_ + 8)}" height="{_f(yf - top + 10)}" fill="url(#{gid})"/>')
+        if time in ("day", "dawn"):
+            for i, (fx, fy, w) in enumerate(((0.18, 0.30, 360), (0.62, 0.22, 300), (0.86, 0.40, 240))):
+                out += S.cloud(x0 + W_ * fx, top + (yf - top) * fy, w * s, w * 0.32 * s,
+                               fill=S.mix("#fbf4ea", t["tint"], 0.3), seed=seed + i, sw=3 * s,
+                               shade_fill=S.mix(t["sky"][1], "#ffffff", 0.2))
+        if t["sun"]:
+            sx_ = x0 + W_ * (sun_x if sun_x is not None else (0.72 if time == "sunset" else 0.3))
+            out += _sun_disc(sx_, yf - (330 if time == "sunset" else 250) * s, 62 * s, t["sun"],
+                             _uid("lgsun", time, x0, x1, s))
+    if far_shore:
+        h0, h1, h2 = t["hills"]
+        ink = S.mix(INK, t["tint"], 0.55)
+        nb = max(3, int(W_ / (420 * s)))
+        out += _ridge(x0 - 40, x1 + 40, yf - 50 * s, 190 * s, seed + 1, yf + 4, nb, h0, ink, 2.6 * s)
+        out += _ridge(x0 - 40, x1 + 40, yf - 16 * s, 120 * s, seed + 2, yf + 4, nb + 2, h1, ink, 3.0 * s)
+        out += _ridge(x0 - 40, x1 + 40, yf, 60 * s, seed + 3, yf + 6, nb + 4, h2, S.mix(INK, t["tint"], 0.4), 3.2 * s)
+        rng0 = random.Random(seed + 4)
+        tree_c = S.mix("#5f7f45", t["tint"], 0.35 if time == "day" else 0.6)
+        for i in range(int(26 * W_ / 2112)):          # olive groves and fields dotting the hills
+            ox_ = x0 + rng0.random() * W_
+            oy_ = yf - rng0.uniform(8, 120) * s
+            if rng0.random() < 0.3:
+                out += _p(f"M{_f(ox_ - 40 * s)},{_f(oy_)} q{_f(40 * s)},{_f(-10 * s)} {_f(80 * s)},0", sw=6 * s,
+                          stroke=S.mix(h1, "#d9c27a", 0.35), extra='opacity="0.7"')
+            else:
+                for j in range(3):
+                    out += _circ(ox_ + j * 9 * s, oy_ - (j % 2) * 4 * s, 5.5 * s, tree_c, 1.4 * s,
+                                 stroke=S.mix(INK, t["tint"], 0.5))
+        rng = random.Random(seed + 5)
+        vx = x0 + W_ * 0.62
+        for i in range(9):                    # a far village on the far shore
+            hx = vx + i * 34 * s + rng.uniform(-6, 6) * s
+            hh = rng.uniform(18, 34) * s
+            out += _rect(hx, yf - hh - 4 * s, 28 * s, hh, _tint(BASALT_LIGHT, time, 0.55), 1.8 * s,
+                         stroke=S.mix(INK, t["tint"], 0.5))
+            if t["lit"] > 0.3 and i % 2 == 0:
+                out += _rect(hx + 9 * s, yf - hh + 4 * s, 8 * s, 8 * s, P["glow"], 0, extra=f'opacity="{t["lit"]:.2f}"')
+    # the lake
+    gid = _uid("lglake", time, x0, x1, yf, y)
+    l0, l1, l2 = t["lake"]
+    out += (f'<defs>{S.lin_grad(gid, [(0, l0), (0.45, l1), (1, l2)])}</defs>'
+            f'<rect x="{_f(x0 - 4)}" y="{_f(yf - 2)}" width="{_f(W_ + 8)}" height="{_f(y - yf + 60 * s)}" fill="url(#{gid})"/>')
+    out += _p(f"M{_f(x0 - 4)},{_f(yf + 2)} L{_f(x1 + 4)},{_f(yf + 2)}", sw=5 * s, stroke=S.mix(t["lite"], l0, 0.4))
+    rng = random.Random(seed + 9)
+    ph = phase % 1.0
+    rip = ""
+    for i in range(int(46 * W_ / 2112) + 6):
+        u = rng.random()
+        yy = yf + 12 * s + (y - yf - 16 * s) * u ** 1.4
+        L = (24 + 90 * u) * s
+        xx = x0 + ((rng.random() + ph * (0.3 + 0.7 * u)) % 1.0) * (W_ + 200) - 100
+        rip += _line(xx, yy, xx + L, yy, sw=(2 + 2.5 * u) * s, color=t["lite"], extra=f'opacity="{0.35 + 0.4 * u:.2f}"')
+    out += rip
+    if t["sun"]:                             # the glittering path of the low sun on the water
+        sx_ = x0 + W_ * (sun_x if sun_x is not None else (0.72 if time == "sunset" else 0.3))
+        glit = ""
+        for i in range(16):
+            u = i / 15
+            yy = yf + 10 * s + (y - yf - 20 * s) * u
+            w = (30 + 140 * u) * s * (0.7 + 0.3 * math.sin(i * 2.3 + ph * 6.28))
+            glit += _line(sx_ - w / 2, yy, sx_ + w / 2, yy, sw=(3 + 3 * u) * s, color=t["sun"][1],
+                          extra=f'opacity="{0.75 - 0.3 * u:.2f}"')
+        out += glit
+    if boats:                                # small boats out on the lake
+        for i, (fx, fy, k, v) in enumerate(((0.16, 0.30, 0.16, 1), (0.40, 0.18, 0.11, 1), (0.83, 0.45, 0.2, 0))):
+            bx, by = x0 + W_ * fx, yf + (y - yf) * fy
+            out += _place(_small_boat(v, "none", time == "night", time), bx, by, k * s, 1 if i % 2 else -1, filt=None)
+    return out
+
+
+def _near_shore(x0, x1, y, s, time, village, nets, boats, bottom, seed, shore):
+    t = _LT[time]
+    W_ = x1 - x0
+    bottom = y + 420 * s if bottom is None else bottom
+    out = ""
+    sand = t["sand"]
+    ink = S.mix(INK, t["tint"], 0.2)
+    rng = random.Random(seed + 21)
+    edge = [(x0 - 40 + i * (W_ + 80) / 24, y + 6 * s * math.sin(i * 1.7)) for i in range(25)]
+    beach = _sm(edge, closed=False) + f" L{_f(x1 + 40)},{_f(bottom)} L{_f(x0 - 40)},{_f(bottom)} Z"
+    gid = _uid("lgbeach", time, x0, x1, y, shore)
+    out += (f'<defs>{S.lin_grad(gid, [(0, S.shade(sand, 0.1)), (1, S.shade(sand, -0.12))])}</defs>'
+            f'<path d="{beach}" fill="url(#{gid})" {_st(3.4 * s, ink)}/>')
+    out += _p(_sm([(px, py - 6 * s) for px, py in edge], closed=False), sw=5 * s, stroke=S.mix(STORM_FOAM, t["tint"], 0.3),
+              extra='stroke-dasharray="40 26" opacity="0.8"')
+    peb = ""
+    for _ in range(int(60 * W_ / 2112)):
+        px, py = rng.uniform(x0, x1), y + rng.uniform(14, max(20.0, (bottom - y) * 0.95))
+        if py > bottom - 4:
+            continue
+        r = rng.uniform(4, 10) * s
+        peb += _ell(px, py, r * 1.3, r, _tint(rng.choice(("#b8ab98", "#8f8a84", "#c9b9a0", BASALT_LIGHT)), time), 1.8 * s,
+                    stroke=ink)
+    out += peb
+    if shore == "far":                       # the far shore: rocks, a rocky slope and a few trees
+        side = -1 if village == "left" else 1
+        hx0, hx1 = (x0 - 60, x0 + W_ * 0.42) if side < 0 else (x1 - W_ * 0.42, x1 + 60)
+        out += _p(S.hill(hx0, hx1, bottom + 10, bottom - y + 300 * s, seed=seed + 4, bottom=bottom + 20, bumps=2),
+                  _tint("#a89a7a", time), 4 * s, stroke=ink)
+        out += _p(S.hill(hx0 + 30, hx1 - 30, bottom + 10, bottom - y + 150 * s, seed=seed + 6, bottom=bottom + 20, bumps=3),
+                  _tint("#8f8a6a", time), 3.4 * s, stroke=ink)
+        for i in range(7):                   # rock outcrops on the slope
+            rx = hx0 + (hx1 - hx0) * (0.15 + 0.12 * i)
+            ry = y + (40 + 60 * (i % 3)) * s
+            r = (30 + 12 * (i % 2)) * s
+            c = _tint(BASALT_LIGHT if i % 2 else "#b0a088", time)
+            out += _p(S.blob(rx, ry, r * 1.4, r * 0.8, 0.18, 7, seed=40 + i), c, 3 * s, stroke=ink)
+        for i in range(6):                   # trees (terebinth / sycamore: round dark crowns)
+            tx = hx0 + (hx1 - hx0) * (0.15 + 0.14 * i) + rng.uniform(-20, 20) * s
+            ty = y + 40 * s - (190 if 0 < i < 5 else 90) * s * rng.uniform(0.6, 1.0)
+            k = rng.uniform(0.7, 1.1) * s
+            out += _tube(f"M{_f(tx)},{_f(ty)} Q{_f(tx - 6 * k)},{_f(ty - 50 * k)} {_f(tx + 6 * k)},{_f(ty - 100 * k)}", 14 * k,
+                         _tint(P["wood_dark"], time), 3 * k)
+            out += _tube(f"M{_f(tx + 2 * k)},{_f(ty - 60 * k)} L{_f(tx + 40 * k)},{_f(ty - 100 * k)}", 8 * k,
+                         _tint(P["wood_dark"], time), 3 * k)
+            for j, (dx, dy, w) in enumerate(((-30, -120, 120), (40, -112, 100), (6, -160, 110))):
+                out += S.cloud(tx + dx * k, ty + dy * k, w * k, w * 0.62 * k, fill=_tint(("#5f8a4a", "#6f9a52", "#557f42")[j], time),
+                               seed=seed + 30 + i * 3 + j, puffs=4, sw=3 * k, shade_fill=_tint("#46703a", time))
+        for i in range(9):                   # boulders at the water's edge
+            bx = x0 + W_ * rng.uniform(0.05, 0.95)
+            by = y + rng.uniform(10, 60) * s
+            r = rng.uniform(26, 60) * s
+            c = _tint(rng.choice((BASALT, BASALT_LIGHT, "#a39484")), time)
+            out += _p(S.blob(bx, by - r * 0.5, r * 1.3, r * 0.7, 0.14, 8, seed=i), c, 3.4 * s, stroke=ink)
+            out += _p(f"M{_f(bx - r * 0.7)},{_f(by - r * 0.8)} q{_f(r * 0.4)},{_f(-r * 0.25)} {_f(r * 0.9)},{_f(-r * 0.1)}",
+                      sw=3 * s, stroke=S.shade(c, 0.35), extra='opacity="0.7"')
+        return out
+    # the near shore: the fishing village, nets drying, boats pulled up on the beach, reeds
+    if village:
+        side = -1 if village == "left" else 1
+        xs = [x0 + W_ * f for f in (0.03, 0.15, 0.27)] if side < 0 else [x1 - W_ * f for f in (0.27, 0.15, 0.03)]
+        for i, hx in enumerate(xs):
+            k = (0.42, 0.36, 0.46)[i] * s
+            out += _place(_stone_house((i + seed) % 3, t["lit"], time), hx, y + (40 + 26 * (i % 2)) * s, k,
+                          -side if i == 1 else side, filt=None)
+        palm_x = xs[1] + 120 * s * -side
+        out += _place(_palm(0.15 * -side, 0.0, True, False), palm_x, y + 60 * s, 0.55 * s, 1, filt=None)
+    if nets:
+        nx = x0 + W_ * (0.40 if village == "left" else 0.60)
+        out += _place(_net_pole(time), nx, y + 70 * s, 0.6 * s, 1, filt=None)
+        out += _place(_net_pile(time), nx + 150 * s, y + 96 * s, 0.6 * s, 1, filt=None)
+    if boats:
+        bx = x0 + W_ * (0.55 if village == "left" else 0.45)
+        out += _place(_small_boat(2, "none", False, time), bx, y + 40 * s, 0.42 * s, -1, filt=None)
+        out += _place(_small_boat(0, "none", False, time, 4), bx + 260 * s, y + 18 * s, 0.36 * s, 1, filt=None)
+    for i in range(5):
+        rx = x0 + W_ * (0.08 + 0.21 * i) + rng.uniform(-30, 30) * s
+        out += _place(_reeds(i % 2, 0.15), rx, y + 24 * s, 0.32 * s, 1, filt=None)
+        out += _place(_grass(i % 3, 0.0), rx + 60 * s, y + (120 + 40 * (i % 3)) * s, 0.7 * s, 1, filt=None)
+    return out
+
+
+def lake_galilee(x0, x1, y, scale=1.0, time="day", shore="near", part="all", village="left", nets=True, boats=True,
+                 far_shore=True, sky=True, top=None, bottom=None, phase=0.0, seed=0, sun_x=None):
+    """The Sea of Galilee backdrop in absolute stage coordinates (see module doc, section 11)."""
+    if time not in LAKE_TIMES:
+        raise ValueError(f"lake_galilee: unknown time {time!r}; choose from {LAKE_TIMES}")
+    if shore not in ("near", "far", None):
+        raise ValueError(f"lake_galilee: unknown shore {shore!r}; choose from ('near', 'far', None)")
+    if part not in ("all", "back", "shore"):
+        raise ValueError(f"lake_galilee: unknown part {part!r}; choose from ('all', 'back', 'shore')")
+    s = scale
+    out = ""
+    if part in ("all", "back"):
+        out += _lake_back(x0, x1, y, s, time, far_shore, sky, top, boats, phase, seed, sun_x)
+    if part in ("all", "shore") and shore:
+        out += _near_shore(x0, x1, y, s, time, village, nets, boats, bottom, seed, shore)
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+# ---------------------------------------------------------------------- the storm: lake and sky
+STORM_BOAT_DY = 70               # put the fishing boat's anchor at level + STORM_BOAT_DY*scale (between back / front rows)
+
+
+def _crest_wave(x0, x1, y, A, L, ph, sharp=1.6, step=None):
+    """Sharp-crested wave line points: crests at y - A, rounded troughs at y + 0.25A."""
+    step = step or L / 16
+    pts = []
+    x = x0
+    while x <= x1 + step:
+        th = 2 * math.pi * (x / L) + ph
+        c = (0.5 + 0.5 * math.cos(th)) ** sharp
+        pts.append((x, y - A * c + 0.25 * A * (1 - c)))
+        x += step
+    return pts
+
+
+def _foam_cap(cx, ty, cw, A, curl, s, ink, seed=0):
+    """A bubbly white foam crest curling forward (toward curl = +1 / -1) at the top of a wave."""
+    rng = random.Random(seed)
+    circ = []
+    n = 7
+    for j in range(n):
+        u = j / (n - 1)
+        ang = math.pi * (1.0 - u * 1.15)
+        x = cx - curl * cw * 0.15 + curl * cw * 0.75 * math.cos(ang)
+        y = ty + A * 0.10 - cw * 0.42 * math.sin(ang) + (cw * 0.2 * u * u)
+        r = (0.20 + 0.10 * math.sin(math.pi * u)) * cw * rng.uniform(0.85, 1.1)
+        circ.append((x, y, r))
+    circ += [(cx - curl * cw * 0.85, ty + A * 0.30, cw * 0.16), (cx - curl * cw * 0.45, ty + A * 0.22, cw * 0.2)]
+    out = "".join(_circ(x, y, r, STORM_FOAM, 2 * 2.8 * s, stroke=ink) for x, y, r in circ)
+    out += "".join(_circ(x, y, r, STORM_FOAM, 0) for x, y, r in circ)
+    x_, y_, r_ = circ[-3]
+    out += _circ(x_, y_ + r_ * 0.2, r_ * 0.45, S.mix(STORM_FOAM, STORM_WATER[2], 0.45), 0)
+    for x, y, r in circ[1:5]:
+        out += _p(f"M{_f(x - r * 0.5)},{_f(y - r * 0.1)} q{_f(r * 0.4)},{_f(-r * 0.5)} {_f(r * 0.9)},{_f(-r * 0.2)}", sw=1.8 * s,
+                  stroke=S.mix(STORM_FOAM, STORM_WATER[2], 0.5))
+    return out
+
+
+def storm_lake(x0, x1, level, phase=0.0, wave=1.0, foam=True, spray=0.5, bottom=None, part="all", seed=0, scale=1.0):
+    """The stormy lake in absolute stage coordinates (see module doc): rows of tall, sharp-crested blue-grey waves with
+    curling white foam caps; part 'back' (rows behind the boat) | 'front' (rows in front of the hull) | 'all'."""
+    s = scale
+    bottom = S.H + 60 if bottom is None else bottom
+    wv = _clamp(wave, 0.0, 1.2)
+    ph = 2 * math.pi * (phase % 1.0)
+    rows = [(0, 10 + 26 * wv, 320, STORM_WATER[2], 1), (40, 14 + 52 * wv, 400, STORM_WATER[1], -1),
+            (110, 18 + 86 * wv, 500, S.mix(STORM_WATER[1], STORM_WATER[0], 0.5), 1),
+            (210, 24 + 118 * wv, 600, STORM_WATER[0], -1)]
+    sel = {"back": (0, 1), "front": (2, 3), "all": (0, 1, 2, 3)}[part]
+    out = ""
+    rng = random.Random(seed)
+    if part in ("back", "all"):
+        out += _rect(x0 - 40, level - 30 * s, x1 - x0 + 80, bottom - level + 30 * s, STORM_WATER[2], 0)
+    for i in sel:
+        dy, A, L, col, dirn = rows[i]
+        yy, A, L = level + dy * s, A * s, L * s
+        p_ = ph * dirn * (1 + i % 2) + i * 1.7
+        pts = _crest_wave(x0 - 60, x1 + 60, yy, A, L, p_, 1.4 + 0.5 * wv)
+        d = _sm(pts, closed=False) + f" L{_f(x1 + 60)},{_f(bottom)} L{_f(x0 - 60)},{_f(bottom)} Z"
+        out += _p(d, col, 3.4 * s, stroke=S.shade(col, -0.45) if i else INK)
+        # lighter wave faces under each crest and a soft highlight line below the crest line
+        cid = _uid("swclip", i, x0, x1, level, round(phase, 3), round(wv, 2), s, seed)
+        lit = [(px, py + 6 * s) for px, py in pts] + [(px, py + A * 0.45 + 16 * s) for px, py in reversed(pts)]
+        inner = _p(_poly(lit), S.shade(col, 0.2), 0, extra='opacity="0.55"')
+        inner += _p(_sm([(px, py + A * 0.75 + 22 * s) for px, py in pts], closed=False), sw=3 * s,
+                    stroke=S.shade(col, 0.28), extra='opacity="0.5"')
+        out += _clip(cid, d, inner)
+        if foam and wv > 0.05:
+            caps = ""
+            th0 = p_
+            for k in range(-1, int((x1 - x0 + 120) / L) + 3):
+                # crest x where cos(2*pi*x/L + p_) = 1
+                cx = (k - th0 / (2 * math.pi)) * L
+                cx = x0 - 60 + ((cx - (x0 - 60)) % (x1 - x0 + 120 + L))
+                if cx < x0 - 80 or cx > x1 + 80:
+                    continue
+                ty = yy - A
+                cw = (20 + 34 * wv) * s * (1 + 0.22 * i)
+                curl = dirn
+                caps += _foam_cap(cx, ty, cw, A, curl, s, S.shade(col, -0.35), seed + k * 7 + i)
+                for j in range(3):
+                    fx = cx - curl * cw * (1.0 + 0.55 * j)
+                    caps += _p(f"M{_f(fx)},{_f(ty + A * (0.40 + 0.18 * j))} q{_f(curl * 18 * s)},{_f(-8 * s)} "
+                               f"{_f(curl * 38 * s)},{_f(2 * s)}", sw=(3.6 - 0.7 * j) * s, stroke=STORM_FOAM,
+                               extra=f'opacity="{0.85 - 0.2 * j:.2f}"')
+                if spray > 0 and i >= 1:
+                    for j in range(int(3 + 5 * spray)):
+                        a = rng.uniform(-2.6, -0.5)
+                        r = rng.uniform(20, 70) * s * (0.5 + spray)
+                        caps += _circ(cx + curl * 20 * s + r * math.cos(a) * curl, ty + r * math.sin(a),
+                                      rng.uniform(2.5, 5.5) * s, STORM_FOAM, 1.4 * s, stroke=S.shade(col, -0.3))
+            out += caps
+    cid = _uid("stormlake", x0, x1, level, bottom, part)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0)}" y="{_f(level - 260 * s)}" width="{_f(x1 - x0)}" '
+            f'height="{_f(bottom - level + 260 * s)}"/></clipPath><g filter="url(#wobble)"><g clip-path="url(#{cid})">{out}</g></g>')
+
+
+def calm_lake(x0, x1, level, phase=0.0, moon_x=None, bottom=None, time="night", ripples=1.0, sparkle=1.0, seed=0,
+              scale=1.0, glow=1.0):
+    """A mirror-calm lake in absolute stage coordinates (see module doc): smooth silver-blue water, long thin ripple
+    lines, the moon's broken reflection under moon_x (time 'night'), or a pink-gold one under the sun ('dawn')."""
+    s = scale
+    bottom = S.H + 60 if bottom is None else bottom
+    ph = phase % 1.0
+    if time == "dawn":
+        cols, lite, refl = ("#f6dcc8", "#a9bcd2", "#6f8db4"), "#fff1d8", "#ffe2a6"
+    elif time == "day":
+        cols, lite, refl = ("#b8dade", "#6fa8c0", "#3f7d9c"), "#eef8f4", "#ffffff"
+    else:
+        cols, lite, refl = (CALM_WATER[2], CALM_WATER[1], CALM_WATER[0]), CALM_WATER[3], "#eef0f8"
+    gid = _uid("calmlake", time, x0, x1, level, bottom)
+    out = (f'<defs>{S.lin_grad(gid, [(0, cols[0]), (0.35, cols[1]), (1, cols[2])])}</defs>'
+           f'<rect x="{_f(x0 - 4)}" y="{_f(level)}" width="{_f(x1 - x0 + 8)}" height="{_f(bottom - level)}" fill="url(#{gid})"/>')
+    out += _line(x0 - 4, level + 1.5 * s, x1 + 4, level + 1.5 * s, sw=4 * s, color=lite, extra='opacity="0.8"')
+    rng = random.Random(seed)
+    n = int(34 * ripples * (x1 - x0) / 2112) + 4
+    for i in range(n):
+        u = rng.random()
+        yy = level + 10 * s + (bottom - level) * u ** 1.6
+        L = (60 + 260 * u) * s
+        xx = x0 + ((rng.random() + ph * (0.2 + 0.5 * u)) % 1.0) * (x1 - x0 + L) - L
+        out += _line(xx, yy, xx + L, yy, sw=(1.6 + 2.4 * u) * s, color=lite, extra=f'opacity="{0.22 + 0.35 * u:.2f}"')
+    if moon_x is not None:                    # the broken column of moonlight (or the low sun's path)
+        for i in range(22):
+            u = i / 21
+            yy = level + 8 * s + (bottom - level - 60 * s) * u ** 1.2
+            w = (20 + 150 * u) * s * (0.55 + 0.45 * math.sin(i * 1.9 + ph * 2 * math.pi))
+            off = 10 * s * math.sin(i * 2.7 + ph * 2 * math.pi)
+            out += _line(moon_x - w / 2 + off, yy, moon_x + w / 2 + off, yy, sw=(3 + 3 * u) * s, color=refl,
+                         extra=f'opacity="{(0.85 - 0.35 * u) * glow:.2f}"')
+    if sparkle > 0:
+        for i in range(int(14 * sparkle * (x1 - x0) / 2112) + 2):
+            sx_ = rng.uniform(x0, x1)
+            sy_ = level + rng.uniform(10, (bottom - level) * 0.7)
+            tw = 0.5 + 0.5 * math.sin(2 * math.pi * (ph + rng.random()))
+            r = (4 + 6 * tw) * s
+            out += _p(f"M{_f(sx_)},{_f(sy_ - r)} L{_f(sx_ + r * 0.25)},{_f(sy_ - r * 0.25)} L{_f(sx_ + r)},{_f(sy_)} "
+                      f"L{_f(sx_ + r * 0.25)},{_f(sy_ + r * 0.25)} L{_f(sx_)},{_f(sy_ + r)} L{_f(sx_ - r * 0.25)},{_f(sy_ + r * 0.25)} "
+                      f"L{_f(sx_ - r)},{_f(sy_)} L{_f(sx_ - r * 0.25)},{_f(sy_ - r * 0.25)} Z", refl, 0,
+                      extra=f'opacity="{0.4 + 0.5 * tw:.2f}"')
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+_rain_layer = rain                 # (storm_sky's own 'rain' option shadows the function name)
+
+
+def storm_sky(x0, y0, x1, y1, phase=0.0, density=1.0, wind=1.0, rain=0.0, lightning=0.0, seed=0, moon=None, scale=1.0):
+    """Racing storm clouds in absolute stage coordinates (see module doc): a cold blue-grey sky, three banks of rounded
+    clouds sliding with phase (loops), wind streaks, slanted rain and a soft lightning glow inside the clouds."""
+    s = scale
+    W_, H_ = x1 - x0, y1 - y0
+    dn = _clamp(density)
+    gid = _uid("stsky", x0, y0, x1, y1)
+    c0, c1, c2, c3 = STORM_SKY_COLS
+    out = (f'<defs>{S.lin_grad(gid, [(0, c0), (0.6, c1), (1, c2)])}</defs>'
+           f'<rect x="{_f(x0 - 4)}" y="{_f(y0 - 4)}" width="{_f(W_ + 8)}" height="{_f(H_ + 8)}" fill="url(#{gid})"/>')
+    if moon:
+        mx, my = moon
+        out += _circ(mx, my, 150 * s, "#d8deea", 0, extra=f'filter="url(#blur-md)" opacity="{0.45 * (1 - dn):.2f}"')
+        out += _circ(mx, my, 54 * s, "#eef0f6", 3 * s, stroke=S.mix(INK, "#eef0f6", 0.4),
+                     extra=f'opacity="{max(0.0, 1 - 1.2 * dn):.2f}"')
+    if lightning > 0:
+        lgid = _uid("stlight", x0, y0, x1, y1, round(lightning, 2))
+        lx, ly = x0 + W_ * 0.62, y0 + H_ * 0.32
+        out += (f'<defs>{S.rad_grad(lgid, [(0, "#fff6d8", 0.9), (0.4, "#e8e4f0", 0.4), (1, "#e8e4f0", 0)])}</defs>'
+                f'<ellipse cx="{_f(lx)}" cy="{_f(ly)}" rx="{_f(W_ * 0.42)}" ry="{_f(H_ * 0.45)}" fill="url(#{lgid})" '
+                f'opacity="{_clamp(lightning):.2f}"/>')
+    rng = random.Random(seed)
+    ph = phase % 1.0
+    for layer, (speed, k, col, ny) in enumerate(((1, 0.85, c2, 0.12), (2, 1.1, S.mix(c1, c2, 0.4), 0.38),
+                                                 (3, 1.35, S.shade(c1, -0.05), 0.62))):
+        n = int(round(8 * dn))
+        span = W_ + 900 * s
+        for i in range(n):
+            bx = rng.uniform(0, span)
+            by = y0 + H_ * (ny + rng.uniform(-0.12, 0.12))
+            w = rng.uniform(420, 700) * s * k
+            h = w * rng.uniform(0.32, 0.42)
+            cx = x0 - 450 * s + (bx + ph * span * speed) % span
+            light = S.mix(col, c3, 0.35 + 0.25 * _clamp(lightning))
+            out += S.cloud(cx, by, w, h, fill=col, seed=seed + layer * 20 + i, puffs=6, sw=3.6 * s,
+                           shade_fill=S.shade(col, -0.25))
+            out += S.cloud(cx - w * 0.06, by - h * 0.08, w * 0.55, h * 0.5, fill=light, seed=seed + layer * 20 + i + 7,
+                           puffs=4, sw=2.6 * s)
+    if wind > 0:
+        for i in range(int(6 + 10 * _clamp(wind))):
+            wx = x0 + ((rng.random() + ph * 2) % 1.0) * (W_ + 400 * s) - 200 * s
+            wy = y0 + H_ * rng.uniform(0.15, 0.95)
+            L = rng.uniform(140, 300) * s
+            curl = rng.uniform(16, 30) * s
+            out += _p(f"M{_f(wx)},{_f(wy)} q{_f(L * 0.5)},{_f(-12 * s)} {_f(L)},0 q{_f(curl)},{_f(2 * s)} {_f(curl * 0.4)},"
+                      f"{_f(-curl * 0.8)}", sw=3.4 * s, stroke="#e6ecf2", extra=f'opacity="{0.35 + 0.35 * _clamp(wind):.2f}"')
+    if rain > 0:
+        out += _rain_layer(ph, rain, x0, y0, x1, y1, angle=24, seed=seed + 3, color="#c9d6e2", scale=s)
+    cid = _uid("stskyc", x0, y0, x1, y1)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0)}" y="{_f(y0)}" width="{_f(W_)}" height="{_f(H_)}"/></clipPath>'
+            f'<g filter="url(#wobble)" clip-path="url(#{cid})">{out}</g>')
+
+
+def _star(cx, cy, r, col, sw=0.0):
+    return _p(f"M{_f(cx)},{_f(cy - r)} Q{_f(cx + r * 0.12)},{_f(cy - r * 0.12)} {_f(cx + r)},{_f(cy)} "
+              f"Q{_f(cx + r * 0.12)},{_f(cy + r * 0.12)} {_f(cx)},{_f(cy + r)} Q{_f(cx - r * 0.12)},{_f(cy + r * 0.12)} "
+              f"{_f(cx - r)},{_f(cy)} Q{_f(cx - r * 0.12)},{_f(cy - r * 0.12)} {_f(cx)},{_f(cy - r)} Z", col, sw)
+
+
+def night_sky(x0, y0, x1, y1, moon=None, moon_r=58, stars=40, progress=1.0, twinkle=0.0, time="night", clouds=0.0,
+              seed=0, scale=1.0, glow=1.0):
+    """A night (or dusk) sky in absolute stage coordinates (see module doc): gradient, a soft moon with a halo, stars
+    that appear one by one with progress 0..1 and twinkle with twinkle 0..1, optional parting silver-edged clouds."""
+    s = scale
+    W_, H_ = x1 - x0, y1 - y0
+    gid = _uid("ngsky", time, x0, y0, x1, y1)
+    if time == "dusk":
+        cols = [(0, DUSK_COLS[0]), (0.45, DUSK_COLS[1]), (0.78, DUSK_COLS[2]), (1, DUSK_COLS[3])]
+    else:
+        cols = [(0, NIGHT_COLS[0]), (0.55, NIGHT_COLS[1]), (1, NIGHT_COLS[2])]
+    out = (f'<defs>{S.lin_grad(gid, cols)}</defs>'
+           f'<rect x="{_f(x0 - 4)}" y="{_f(y0 - 4)}" width="{_f(W_ + 8)}" height="{_f(H_ + 8)}" fill="url(#{gid})"/>')
+    rng = random.Random(seed)
+    pr = _clamp(progress)
+    for i in range(int(stars)):
+        sx_, sy_ = x0 + rng.random() * W_, y0 + rng.random() ** 1.3 * H_ * 0.8
+        big = rng.random() < 0.25
+        a = _clamp(pr * stars - i)            # star i appears at progress i / stars
+        if a <= 0:
+            continue
+        tw = 0.75 + 0.25 * math.sin(2 * math.pi * (twinkle + rng.random()))
+        if time == "dusk":
+            a *= _clamp(1 - (sy_ - y0) / (H_ * 0.7))
+        if big:
+            out += _g(_star(sx_, sy_, (9 + 5 * tw) * s, "#fff4c8", 0) + _circ(sx_, sy_, 2.2 * s, "#fffaf0", 0),
+                      extra=f'opacity="{a:.2f}"')
+        else:
+            out += _circ(sx_, sy_, (1.6 + 1.6 * tw) * s, "#fbf2d0", 0, extra=f'opacity="{0.9 * a:.2f}"')
+    if moon:
+        mx, my = moon
+        mr = moon_r * s
+        mg = _uid("ngmoon", mx, my, mr, round(glow, 2))
+        out += (f'<defs>{S.rad_grad(mg, [(0, "#f8f2dc", 0.55), (0.35, "#d8dcf0", 0.22), (1, "#d8dcf0", 0)])}</defs>'
+                f'<circle cx="{_f(mx)}" cy="{_f(my)}" r="{_f(mr * 4.5)}" fill="url(#{mg})" opacity="{_clamp(glow):.2f}"/>')
+        out += _circ(mx, my, mr, "#f6f0da", 3 * s, stroke=S.mix(INK, "#f6f0da", 0.5))
+        for (dx, dy, r) in ((-0.3, -0.2, 0.18), (0.25, 0.15, 0.13), (-0.05, 0.38, 0.1), (0.35, -0.3, 0.08)):
+            out += _circ(mx + dx * mr, my + dy * mr, r * mr, "#e4dcc0", 0, extra='opacity="0.8"')
+    if clouds > 0:
+        k = _clamp(clouds)
+        for i, (fx, fy, w) in enumerate(((0.12, 0.62, 640), (0.50, 0.80, 560), (0.86, 0.55, 600), (0.30, 0.30, 380))):
+            cx = x0 + W_ * fx + (1 - k) * (-260 if fx < 0.5 else 260) * s
+            col = S.mix(NIGHT_COLS[1], "#6a6f9a", 0.5)
+            out += S.cloud(cx, y0 + H_ * fy, w * s, w * 0.34 * s, fill=col, seed=seed + 40 + i, sw=3.4 * s,
+                           shade_fill=S.shade(col, -0.2))
+            out += _p(f"M{_f(cx - w * 0.38 * s)},{_f(y0 + H_ * fy - w * 0.16 * s)} q{_f(w * 0.3 * s)},{_f(-w * 0.12 * s)} "
+                      f"{_f(w * 0.6 * s)},{_f(-w * 0.02 * s)}", sw=4 * s, stroke="#e8e6f4", extra=f'opacity="{0.7 * k:.2f}"')
+    cid = _uid("ngskyc", x0, y0, x1, y1)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0)}" y="{_f(y0)}" width="{_f(W_)}" height="{_f(H_)}"/></clipPath>'
+            f'<g filter="url(#wobble)" clip-path="url(#{cid})">{out}</g>')
+
+
+# ---------------------------------------------------------------------- the child's room: the windy window, the bed
+WINDOW_WIND_OPENING = (-200, -460, 200, 0)    # window_wind: the glass opening (x0, top, x1, sill top) at scale 1
+
+
+def _window_view(phase, wind, night, seed=3):
+    x0, top, x1, sill = WINDOW_WIND_OPENING
+    ph = 2 * math.pi * phase
+    cols = (NIGHT_COLS[0], NIGHT_COLS[2]) if night else ("#9fcde0", "#dff0ee")
+    gid = _uid("wwsky", night)
+    out = (f'<defs>{S.lin_grad(gid, [(0, cols[0]), (1, cols[1])])}</defs>'
+           f'<rect x="{x0 - 10}" y="{top - 10}" width="{x1 - x0 + 20}" height="{sill - top + 20}" fill="url(#{gid})"/>')
+    ccol = "#5a6290" if night else "#f6f2ea"
+    for i, (fx, fy, w) in enumerate(((0.2, 0.25, 220), (0.75, 0.5, 260), (0.4, 0.75, 180))):
+        cx = x0 - 160 + ((fx + phase * wind * (0.6 + 0.3 * i)) % 1.0) * (x1 - x0 + 320)
+        out += S.cloud(cx, top + (sill - top) * fy, w, w * 0.34, fill=ccol, seed=seed + i, sw=3,
+                       shade_fill=S.shade(ccol, -0.2))
+    if night:
+        out += _circ(x1 - 70, top + 70, 26, "#f2ecd6", 2.6, extra='opacity="0.85"')
+    # a tree branch bending in the wind, leaves fluttering, a few loose leaves flying past
+    bend = 18 * wind * (0.6 + 0.4 * math.sin(ph))
+    tc = "#3a4064" if night else P["wood_dark"]
+    lc = "#46566e" if night else P["leaf"]
+    br = [(x0 - 20, sill - 120), (x0 + 80, sill - 170 - bend * 0.3), (x0 + 190, sill - 230 - bend), (x0 + 280, sill - 250 - bend * 1.6)]
+    out += _tube(_sm(br, closed=False), 16, tc, 3.4)
+    for i, (bx, by) in enumerate(br[1:]):
+        for j in range(3):
+            a = math.radians(-40 + 40 * j + 30 * wind * math.sin(ph + i + j))
+            lx, ly = bx + 34 * math.cos(a) + 10 * wind, by - 34 * math.sin(a)
+            out += _ell(lx, ly, 18, 9, lc, 2.6, extra=f'transform="rotate({_f(-math.degrees(a) + 20 * wind)} {_f(lx)} {_f(ly)})"')
+    rng = random.Random(seed)
+    for i in range(int(4 * wind)):
+        lx = x0 + ((rng.random() + phase * 1.5) % 1.0) * (x1 - x0)
+        ly = top + rng.uniform(0.2, 0.8) * (sill - top)
+        out += _ell(lx, ly, 10, 5, lc, 2, extra=f'transform="rotate({rng.randint(0, 180)} {_f(lx)} {_f(ly)})"')
+    for i in range(int(5 * wind)):
+        wy = top + (0.2 + 0.15 * i) * (sill - top)
+        wx = x0 + ((0.2 * i + phase * 2) % 1.0) * (x1 - x0) - 40
+        out += _p(f"M{_f(wx)},{_f(wy)} q60,-10 120,0 q16,2 6,-14", sw=3, stroke="#dfe6f2", extra='opacity="0.6"')
+    return _clip(_uid("wwview", night), f"M{x0},{top} L{x1},{top} L{x1},{sill} L{x0},{sill} Z", out)
+
+
+def _curtain(side, wind, phase, col, glow):
+    """One curtain hanging from the rod at the window side (-1 left, +1 right), its lower part blown into the room."""
+    x0, top, x1, sill = WINDOW_WIND_OPENING
+    ph = 2 * math.pi * phase
+    sx = x0 - 40 if side < 0 else x1 + 40
+    w = 120
+    blow = wind * (0.7 + 0.3 * math.sin(ph + (0 if side < 0 else 1.3)))
+    pts_out, pts_in = [], []
+    n = 10
+    for i in range(n + 1):
+        v = i / n
+        yy = top - 70 + (sill + 90 - (top - 70)) * v - 160 * blow * v ** 2
+        lift = 150 * blow * v ** 2 * (-side)
+        wave = 14 * wind * v * math.sin(ph * 2 + v * 6 + side)
+        xo = sx + side * (w * 0.5) + lift * 0.5 + wave
+        xi = sx - side * (w * 0.5 + 20 * blow * v) + lift + wave
+        pts_out.append((xo, yy))
+        pts_in.append((xi, yy + 30 * blow * v * v))
+    d = _sm(pts_out + pts_in[::-1], closed=True, tension=0.7)
+    c = S.mix(col, P["glow"], 0.25 * glow)
+    out = _p(d, c, 4)
+    for k in range(1, 4):
+        u = k / 4
+        fold = [_lerp2(a, b, u) for a, b in zip(pts_out, pts_in)]
+        out += _p(_sm(fold, closed=False), sw=2.6, stroke=S.shade(c, -0.22), extra='opacity="0.75"')
+    for k, (a, b) in enumerate(zip(pts_out[1:-1:2], pts_in[1:-1:2])):     # little star dots
+        q = _lerp2(a, b, 0.5)
+        out += _circ(q[0], q[1], 4.5, "#f4d77a", 0, extra='opacity="0.9"')
+    return out
+
+
+def window_wind(x, y, scale=1.0, wind=1.0, phase=0.0, rattle=0.0, night=True, curtains=True, part="all", glow=0.0,
+                curtain_color=None):
+    """The child's bedroom window on a windy night (see module doc, section 11)."""
+    x0, top, x1, sill = WINDOW_WIND_OPENING
+    wd = _clamp(wind)
+    back = _window_view(phase, wd, night)
+    jx = 3.5 * _clamp(rattle) * math.sin(2 * math.pi * phase * 3)
+    jy = 1.5 * _clamp(rattle) * math.cos(2 * math.pi * phase * 3)
+    frame_c = S.mix("#efe6d6", P["glow"], 0.3 * glow)
+    fr = (f'<path d="M{x0 - 34},{top - 34} L{x1 + 34},{top - 34} L{x1 + 34},{sill} L{x0 - 34},{sill} Z M{x0},{top} L{x0},{sill} '
+          f'L{x1},{sill} L{x1},{top} Z" fill="{frame_c}" fill-rule="evenodd" {_st(4)}/>')
+    sash = (_rect(x0, top, (x1 - x0) / 2, sill - top, "none", 9, stroke=S.shade(frame_c, -0.08)) +
+            _rect((x0 + x1) / 2, top, (x1 - x0) / 2, sill - top, "none", 9, stroke=S.shade(frame_c, -0.08)))
+    sash += _line((x0 + x1) / 2, top, (x0 + x1) / 2, sill, sw=18, color=INK) + _line((x0 + x1) / 2, top, (x0 + x1) / 2, sill, sw=11, color=frame_c)
+    for yy in ((top + sill) / 2,):
+        sash += _line(x0, yy, x1, yy, sw=16, color=INK) + _line(x0, yy, x1, yy, sw=9, color=frame_c)
+    glass = ""
+    for gx in (x0 + 30, (x0 + x1) / 2 + 30):
+        glass += _p(f"M{gx},{top + 140} L{gx + 110},{top + 30} L{gx + 140},{top + 30} L{gx + 30},{top + 140} Z", HILITE, 0,
+                    extra='opacity="0.2"')
+    front = fr + _g(sash + glass, f"translate({_f(jx)},{_f(jy)})")
+    front += _p(f"M{x0 - 60},{sill - 4} L{x1 + 60},{sill - 4} L{x1 + 46},{sill + 30} L{x0 - 46},{sill + 30} Z",
+                S.shade(frame_c, -0.06), 4)
+    if rattle > 0:
+        for (cx, cy, sg) in ((x0 - 46, top + 30, -1), (x1 + 46, top + 30, 1), (x0 - 46, sill - 50, -1), (x1 + 46, sill - 50, 1)):
+            for k in range(2):
+                front += _line(cx + sg * 12 * k, cy - 14, cx + sg * (12 * k + 8), cy + 14, sw=3.4, color=P["ink_soft"],
+                               extra=f'opacity="{0.8 * _clamp(rattle):.2f}"')
+    if curtains:
+        col = curtain_color or "#e8a86a"
+        front += _tube(f"M{x0 - 140},{top - 70} L{x1 + 140},{top - 70}", 10, P["wood"], 3.4)
+        front += _circ(x0 - 146, top - 70, 10, P["wood_light"], 3) + _circ(x1 + 146, top - 70, 10, P["wood_light"], 3)
+        front += _curtain(-1, wd, phase, col, glow) + _curtain(1, wd, phase, col, glow)
+    if glow > 0:
+        gid = _uid("wwglow", round(glow, 2))
+        front += (f'<defs>{S.rad_grad(gid, [(0, P["glow"], 0.5), (1, P["gold"], 0)])}</defs>'
+                  f'<ellipse cx="0" cy="{sill + 60}" rx="420" ry="300" fill="url(#{gid})" opacity="{_clamp(glow):.2f}"/>')
+    body = back if part == "back" else (front if part == "front" else back + front)
+    return _place(body, x, y, scale, 1)
+
+
+BED_TOP = -150                  # bed: top of the mattress (sit a child there: anchor y + BED_TOP*scale)
+
+
+def _bed(quilt=None, glow=0.0):
+    quilt = quilt or "#8fb0d8"
+    wood = "#c99a62"
+    out = _rect(-290, -330, 46, 330, wood, 4, rx=10)                     # headboard (left)
+    out += _p("M-300,-330 Q-267,-372 -234,-330 Z", wood, 4)
+    out += _p("M-280,-270 a16,16 0 1,0 22,-14 a12,12 0 1,1 -22,14 Z", "#f4d77a", 2.6)
+    out += _rect(250, -210, 40, 210, wood, 4, rx=10)                     # footboard
+    out += _rect(-250, -120, 510, 40, wood, 4, rx=8)                     # side rail
+    out += _rect(-246, -170, 500, 54, "#f6efe0", 4, rx=20)               # mattress
+    out += _p("M-232,-168 Q-150,-196 -60,-178 Q60,-196 180,-180 Q250,-176 262,-150 L262,-106 Q0,-90 -232,-110 Z",
+              quilt, 4)
+    for xx in range(-200, 240, 70):                                      # quilt squares
+        out += _line(xx, -180, xx - 6, -100, sw=2.4, color=S.shade(quilt, -0.25), extra='opacity="0.7"')
+    for xx in range(-170, 240, 140):
+        out += _circ(xx, -140, 6, "#f4d77a", 0, extra='opacity="0.85"')
+    out += _g(_pillow(0.0, "#f6e6b0"), "translate(-170,-190) scale(0.6)")
+    out += _tube("M-262,0 L-262,-20", 18, S.shade(wood, -0.2), 3) + _tube("M268,0 L268,-20", 18, S.shade(wood, -0.2), 3)
+    return out
+
+
+def bed(x, y, scale=1.0, facing=1, quilt=None):
+    return _place(_bed(quilt), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the mustard seed story (Mark 4:30-32)
+MUSTARD_LEAF = "#7aa84e"
+MUSTARD_LEAF_DARK = "#557d36"
+MUSTARD_FLOWER = "#f2cf3e"
+MUSTARD_STEM = "#8a6a42"
+MUSTARD_HEIGHT = 820            # mustard_plant(growth=1): about 2.5 x an adult
+# (x, y) where nests sit on the branches at growth=1 (local, scale 1, side=+1): nest(x + nx*scale, y + ny*scale, ...)
+MUSTARD_NESTS = ((-232, -470), (196, -560), (-60, -660), (300, -380))
+# a fixed branch skeleton: (parent index, start fraction along the parent, angle deg from vertical, length, birth growth)
+_MB = [(-1, 0.0, 0, 520, 0.08),
+       (0, 0.42, -42, 300, 0.45), (0, 0.50, 38, 320, 0.48), (0, 0.70, -30, 260, 0.58), (0, 0.78, 28, 250, 0.62),
+       (1, 0.55, -18, 170, 0.66), (2, 0.55, 20, 180, 0.68), (3, 0.6, -10, 150, 0.74), (4, 0.6, 12, 150, 0.76),
+       (0, 0.92, -6, 200, 0.70), (1, 0.85, -60, 120, 0.80), (2, 0.85, 64, 130, 0.82),
+       (0, 0.18, -40, 240, 0.52), (0, 0.22, 42, 230, 0.54)]
+
+
+def _leaf_shape(cx, cy, r, ang, col, sw=2.6):
+    """A broad, wavy-edged mustard leaf."""
+    pts = []
+    for k in range(14):
+        a = 2 * math.pi * k / 14
+        rr = r * (1 + 0.12 * math.sin(a * 4)) * (0.55 + 0.45 * abs(math.cos(a / 2)))
+        pts.append((cx + rr * math.cos(a) * 0.62, cy + rr * math.sin(a)))
+    d = _sm(pts, closed=True)
+    out = _p(d, col, sw, extra=f'transform="rotate({ang:.1f} {_f(cx)} {_f(cy)})"')
+    out += _p(f"M{_f(cx)},{_f(cy + r * 0.8)} L{_f(cx)},{_f(cy - r * 0.7)}", sw=1.6, stroke=S.shade(col, 0.35),
+              extra=f'transform="rotate({ang:.1f} {_f(cx)} {_f(cy)})" opacity="0.8"')
+    return out
+
+
+def _mustard(growth=1.0, sway=0.0, flowers=True, seed=0):
+    g = _clamp(growth)
+    out = _p("M-70,0 Q-40,-22 0,-24 Q40,-22 70,0 Z", P["earth"], 3.4)              # the soil mound
+    if g < 0.08:                     # the tiny seed in the soil
+        out += _circ(6, -18 + 60 * g, 5, "#5a3a24", 2)
+        return out
+    rng = random.Random(seed)
+    k = 0.06 + 0.94 * _smooth((g - 0.08) / 0.92) ** 1.25     # overall size
+    ends, segs = [], []
+    for i, (par, f, ang, L, birth) in enumerate(_MB):
+        gr = _clamp((g - birth) / 0.25)
+        if gr <= 0:
+            ends.append(None)
+            continue
+        if par < 0:
+            p0, a0 = (0.0, -20.0), 0.0
+        else:
+            if ends[par] is None:
+                ends.append(None)
+                continue
+            (q0, q1, pa) = ends[par]
+            p0, a0 = _lerp2(q0, q1, f), pa
+        a = a0 + ang + sway * 6 * (1 if i else 0.3)
+        length = L * k * gr
+        p1 = (p0[0] + length * math.sin(math.radians(a)), p0[1] - length * math.cos(math.radians(a)))
+        ends.append((p0, p1, a))
+        w = max(3.0, (26 if par < 0 else 13 if par == 0 else 8) * k * (0.5 + 0.5 * gr))
+        segs.append((p0, p1, w, par))
+    # stems and branches (woody brown low down, green toward the tips)
+    for p0, p1, w, par in segs:
+        col = MUSTARD_STEM if (par < 0 and g > 0.5) else S.mix(MUSTARD_LEAF_DARK, MUSTARD_STEM, 0.4 if g > 0.6 else 0.0)
+        out += _tube(f"M{_f(p0[0])},{_f(p0[1])} Q{_f((p0[0] + p1[0]) / 2 + 6 * k)},{_f((p0[1] + p1[1]) / 2)} {_f(p1[0])},{_f(p1[1])}",
+                     w, col, 3.2)
+    if g < 0.25:                     # sprout: two round seed leaves, then the first true leaves
+        top = ends[0][1]
+        r = 18 + 30 * _clamp((g - 0.08) / 0.17)
+        out += _ell(top[0] - r * 0.6, top[1], r * 0.6, r * 0.35, MUSTARD_LEAF, 2.6)
+        out += _ell(top[0] + r * 0.6, top[1], r * 0.6, r * 0.35, MUSTARD_LEAF, 2.6)
+        return out
+    # leaves along the stems, a leafy crown (soft clumps) once it is a bush, flower clusters
+    crown = ""
+    if g >= 0.5:                     # one leafy silhouette: the union of puffs round every branch tip
+        circ = []
+        for i, e in enumerate(ends):
+            if e is None:
+                continue
+            p0, p1, a = e
+            r = (66 if i else 88) * k * (0.6 + 0.4 * _clamp((g - 0.5) / 0.3))
+            q = _lerp2(p0, p1, 0.85)
+            for j in range(5):
+                ang = 2 * math.pi * j / 5 + i
+                circ.append((q[0] + r * 0.9 * math.cos(ang), q[1] + r * 0.6 * math.sin(ang) - r * 0.2,
+                             r * rng.uniform(0.75, 1.05)))
+        crown += "".join(_circ(x, y, r, MUSTARD_LEAF, 6.4) for x, y, r in circ)
+        crown += "".join(_circ(x, y, r, MUSTARD_LEAF, 0) for x, y, r in circ)
+        for x, y, r in circ[::2]:
+            crown += _ell(x + r * 0.15, y + r * 0.45, r * 0.7, r * 0.32, MUSTARD_LEAF_DARK, 0, extra='opacity="0.45"')
+        for x, y, r in circ[1::3]:
+            crown += _p(f"M{_f(x - r * 0.5)},{_f(y - r * 0.35)} q{_f(r * 0.4)},{_f(-r * 0.3)} {_f(r * 0.8)},{_f(-r * 0.05)}",
+                        sw=3, stroke=S.shade(MUSTARD_LEAF, 0.3), extra='opacity="0.8"')
+    leaves = ""
+    for i, e in enumerate(ends):
+        if e is None or g >= 0.5:
+            continue
+        p0, p1, a = e
+        n = 3
+        for j in range(n):
+            t = 0.35 + 0.6 * j / max(1, n - 1)
+            q = _lerp2(p0, p1, t)
+            side = 1 if (i + j) % 2 else -1
+            r = 52 * max(0.7, k)
+            leaves += _leaf_shape(q[0] + side * r * 0.7, q[1] - r * 0.2, r, a + side * 55 + sway * 10,
+                                  MUSTARD_LEAF if j % 2 else S.shade(MUSTARD_LEAF, -0.06))
+    out += crown + leaves
+    if flowers and g >= 0.42:
+        fl = ""
+        fa = _clamp((g - 0.42) / 0.3)
+        for i, e in enumerate(ends):
+            if e is None:
+                continue
+            p0, p1, a = e
+            for j in range(int(2 + 3 * fa)):         # little clusters of yellow flowers
+                ang = rng.uniform(0, 2 * math.pi)
+                rr = rng.uniform(10, 90) * k
+                fx, fy = p1[0] + rr * math.cos(ang), p1[1] + rr * math.sin(ang) * 0.7 - 20 * k
+                for m in range(4):
+                    fl += _circ(fx + 7 * math.cos(m * 1.6) * max(0.7, k), fy + 7 * math.sin(m * 1.6) * max(0.7, k),
+                                (4.5 + 2 * fa) * max(0.7, k), MUSTARD_FLOWER, 1.8)
+        out += fl
+    return out
+
+
+def mustard_plant(x, y, scale=1.0, growth=1.0, sway=0.0, flowers=True, seed=0, facing=1):
+    """The mustard plant from seed to a big bushy tree (see module doc, section 11)."""
+    return _place(_mustard(growth, sway, flowers, seed), x, y, scale, facing)
+
+
+def _seed_palm(sparkle=1.0, skin=None):
+    """An open hand, palm up, a tiny dark mustard seed in the middle (with a soft ring to point it out)."""
+    skin = skin or "#d9a37a"
+    dark = S.shade(skin, -0.12)
+    out = _p("M-230,60 Q-200,30 -150,24 L-120,80 Q-180,96 -230,110 Z", skin, 4)              # wrist / sleeve edge
+    for i, (fx, fy, ang) in enumerate(((110, -40, -8), (128, -6, 0), (126, 30, 8), (106, 62, 16))):
+        out += (f'<g transform="rotate({ang} {fx - 90} {fy})"><path d="M{fx - 100},{fy - 17} L{fx},{fy - 17} '
+                f'Q{fx + 22},{fy - 16} {fx + 22},{fy} Q{fx + 22},{fy + 16} {fx},{fy + 17} L{fx - 100},{fy + 17} Z" '
+                f'fill="{skin if i % 2 == 0 else S.shade(skin, -0.04)}" {_st(3.6)}/></g>')
+    out += _p("M-160,20 Q-170,-40 -100,-56 Q-20,-70 40,-58 Q60,40 40,96 Q-40,112 -120,96 Q-160,80 -160,20 Z", skin, 4)
+    out += _p("M-120,-50 Q-160,-110 -110,-130 Q-80,-138 -60,-100 Q-50,-70 -40,-56", skin, 4)    # thumb
+    out += _p("M-80,64 Q-20,78 30,60", sw=2.6, stroke=dark, extra='opacity="0.8"')
+    out += _p("M-110,-20 Q-60,0 -30,-40", sw=2.4, stroke=dark, extra='opacity="0.6"')
+    out += _ell(-40, 18, 70, 34, S.shade(skin, -0.06), 0, extra='opacity="0.5"')
+    if sparkle > 0:
+        out += _circ(-40, 18, 28, "none", 3, stroke=P["gold"], extra=f'opacity="{0.8 * _clamp(sparkle):.2f}"')
+        for a in range(0, 360, 45):
+            r0, r1 = 36, 50
+            ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
+            out += _line(-40 + r0 * ca, 18 + r0 * sa, -40 + r1 * ca, 18 + r1 * sa, sw=3, color=P["gold"],
+                         extra=f'opacity="{0.8 * _clamp(sparkle):.2f}"')
+    out += _ell(-40, 18, 4.5, 3.6, "#4a2e1c", 1.4)
+    return out
+
+
+def mustard_seed(x, y, scale=1.0, facing=1, sparkle=1.0, skin=None):
+    return _place(_seed_palm(sparkle, skin), x, y, scale, facing)
+
+
+def _nest(eggs=0, chicks=0, build=1.0, phase=0.0):
+    b = _clamp(build)
+    out = ""
+    twig = "#9a7448"
+    if b > 0:
+        d = "M-62,-30 Q-60,8 0,12 Q60,8 62,-30 Q30,-16 0,-16 Q-30,-16 -62,-30 Z"
+        out += _p(d, S.shade(twig, -0.1), 3.2, extra=f'opacity="{min(1, b * 2):.2f}"')
+    rng = random.Random(5)
+    n = int(26 * b)
+    tw = ""
+    for i in range(n):
+        y0 = rng.uniform(-30, 6)
+        x0 = rng.uniform(-60, 20)
+        L = rng.uniform(30, 60)
+        tw += _p(f"M{_f(x0)},{_f(y0)} q{_f(L / 2)},{_f(rng.uniform(-8, 8))} {_f(L)},{_f(rng.uniform(-6, 6))}", sw=3.2,
+                 stroke=S.shade(twig, rng.uniform(-0.3, 0.25)))
+    out += tw
+    for i in range(min(3, eggs)):
+        ex = -26 + i * 24
+        out += _ell(ex, -30, 12, 15, "#bfe0e6", 2.4) + _circ(ex + 4, -34, 2, "#7a9aa8", 0) + _circ(ex - 4, -26, 1.6, "#7a9aa8", 0)
+    for i in range(min(3, chicks)):
+        cx = -28 + i * 28
+        bob = 5 * math.sin(2 * math.pi * (phase + i * 0.3))
+        out += _circ(cx, -34 + bob, 15, "#e9c46a", 2.6)
+        out += _circ(cx - 4, -40 + bob, 2.6, PUPIL, 0)
+        out += _p(f"M{cx + 6},{_f(-40 + bob)} L{cx + 22},{_f(-50 + bob)} L{cx + 10},{_f(-34 + bob)} Z", "#f29a4c", 2)
+    if b > 0:
+        out += _p("M-62,-30 Q-30,-14 0,-14 Q30,-14 62,-30", sw=6, stroke=S.shade(twig, 0.2), extra=f'opacity="{b:.2f}"')
+        out += _p("M-62,-30 Q-30,-14 0,-14 Q30,-14 62,-30", sw=3, stroke=INK, extra=f'opacity="{b:.2f}"')
+    return out
+
+
+def nest(x, y, scale=1.0, facing=1, eggs=0, chicks=0, build=1.0, phase=0.0):
+    """A little twig nest (see module doc): build 0..1 adds the twigs, eggs / chicks 0..3 (chicks bob with phase)."""
+    return _place(_nest(eggs, chicks, build, phase), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the lake map vignette
+def _lake_map(fish=True, wind=1.0, boat=True, phase=0.0, labels=True):
+    """A picture-book map of the Sea of Galilee: a parchment card ~900 x 640 centred on (0, 0)."""
+    ph = 2 * math.pi * phase
+    out = _p("M-450,-300 Q-460,-330 -420,-330 L420,-330 Q460,-330 450,-300 L450,300 Q460,330 420,330 L-420,330 "
+             "Q-460,330 -450,300 Z", "#f3e4c0", 4.4)
+    out += _p("M-430,-312 L430,-312 L430,312 L-430,312 Z", sw=2.4, stroke="#c9a46a", extra='stroke-dasharray="14 10" fill="none"')
+    # hills around the lake
+    for i, (hx, hy) in enumerate(((-330, -200), (-370, 40), (-300, 230), (300, -220), (360, -20), (320, 210), (-60, -270),
+                                  (110, -275), (60, 270))):
+        out += _p(f"M{hx - 50},{hy + 24} Q{hx},{hy - 46} {hx + 50},{hy + 24} Z", "#a8bf86", 3)
+        out += _p(f"M{hx - 14},{hy - 16} Q{hx},{hy - 30} {hx + 16},{hy - 14}", sw=2.4, stroke="#7a9a5a")
+    # the harp-shaped lake with the Jordan river in and out
+    lake = "M-60,-232 Q90,-250 170,-160 Q220,-80 170,40 Q120,160 50,226 Q0,250 -50,220 Q-130,150 -170,20 Q-210,-120 -150,-200 Q-110,-232 -60,-232 Z"
+    out += _p("M-10,-232 Q-20,-280 10,-320", sw=12, stroke="#7fb4cc") + _p("M10,232 Q20,280 -10,320", sw=12, stroke="#7fb4cc")
+    out += _p(lake, "#8fc2d6", 4.4)
+    for j in range(5):
+        yy = -170 + j * 80
+        out += _p(f"M{-120 + 10 * (j % 2)},{yy} q30,-10 60,0 q30,10 60,0 q30,-10 60,0", sw=2.6, stroke="#e6f4f4",
+                  extra='opacity="0.85"')
+    # villages on the shore
+    for (vx, vy) in ((-150, -200), (140, -190), (-200, 40), (175, 120), (-60, 245)):
+        out += _rect(vx - 14, vy - 12, 16, 14, BASALT_LIGHT, 2.2) + _rect(vx + 2, vy - 18, 14, 20, BASALT_LIGHT, 2.2)
+    if fish:
+        for i, (fx, fy) in enumerate(((-60, -110), (70, -40), (-80, 90), (90, 130))):
+            wig = math.sin(ph + i)
+            out += _circ(fx, fy, 30, "none", 2.4, stroke="#5f9ab4", extra='stroke-dasharray="6 6" opacity="0.8"')
+            out += _g(_lake_fish(wig, 0.45), f"translate({fx},{fy}) rotate({_f(8 * wig)})")
+    if boat:
+        bx = -20 + 20 * math.sin(ph)
+        out += _place(_small_boat(1, "full", False, "day"), bx, 10, 0.16, 1, filt=None)
+    if wind > 0:                     # sudden winds rushing down from the hills onto the lake
+        for i, (wx, wy, a) in enumerate(((260, -150, 200), (290, 60, 190), (-290, -100, -20))):
+            k = _clamp(wind)
+            sx = 1 if a > 90 else -1
+            off = 18 * math.sin(ph + i)
+            out += _p(f"M{wx},{_f(wy + off)} q{-sx * 50},-14 {-sx * 100},0 q{-sx * 24},6 {-sx * 14},-20", sw=4,
+                      stroke="#6a86a8", extra=f'opacity="{0.9 * k:.2f}"')
+            out += _p(f"M{wx + sx * 10},{_f(wy + 26 + off)} q{-sx * 40},-10 {-sx * 80},0", sw=3, stroke="#6a86a8",
+                      extra=f'opacity="{0.7 * k:.2f}"')
+    return out
+
+
+def lake_map(x, y, scale=1.0, fish=True, wind=1.0, boat=True, phase=0.0, labels=True):
+    """A picture-book map vignette of the Sea of Galilee (see module doc, section 11)."""
+    out = _place(_lake_map(fish, wind, boat, phase, labels), x, y, scale, 1)
+    if labels:                       # lettering is not wobbled
+        out += _place(S.text(0, -282, "加利利湖", size=40, fill=INK), x, y, scale, 1, filt=None)
+    return out
+
+
+def lake_band(x0, x1, y0, y1, time="day", phase=0.0, scale=1.0, seed=0):
+    """A strip of lake water (lake_galilee's colours) from y0 to y1 in absolute coordinates, with a rippled top edge:
+    draw it in front of a boat floating in the shallows to hide its hull below the waterline (see lake_galilee)."""
+    t = _LT[time]
+    s = scale
+    l0, l1, l2 = t["lake"]
+    gid = _uid("lband", time, x0, x1, y0, y1)
+    top = S.wave_line(y0, 3 * s, 120 * s, 2 * math.pi * phase, x0=x0 - 20, x1=x1 + 20)
+    d = top + f" L{_f(x1 + 20)},{_f(y1)} L{_f(x0 - 20)},{_f(y1)} Z"
+    out = (f'<defs>{S.lin_grad(gid, [(0, S.mix(l1, l2, 0.3)), (1, l2)])}</defs>'
+           f'<path d="{d}" fill="url(#{gid})"/>')
+    out += _p(top, sw=3 * s, stroke=t["lite"], extra='opacity="0.8"')
+    rng = random.Random(seed)
+    for i in range(int(10 * (x1 - x0) / 1000) + 2):
+        yy = y0 + rng.uniform(8, max(10, y1 - y0 - 4)) if y1 - y0 > 14 else y0 + 6
+        xx = x0 + ((rng.random() + phase * 0.5) % 1.0) * (x1 - x0)
+        out += _line(xx, yy, xx + rng.uniform(30, 90) * s, yy, sw=2.4 * s, color=t["lite"], extra='opacity="0.6"')
+    return f'<g filter="url(#wobble)">{out}</g>'
