@@ -625,10 +625,10 @@ def trem(seg, part, q0, q1, pitch, vel, rate=0.125, role="arp"):
         k += 1
 
 
-def count_pluck(sg, q, p, vel=50, glock=True, block=True):
+def count_pluck(sg, q, p, vel=50, glock=True, block=True, art="h"):
     """One sheep counted: a mandolin and pizzicato pluck (and a glockenspiel ping two octaves up, a woodblock tick)."""
-    sg.add("mandolin", q, _dq(sg, q, 0.5), p, vel, "arp", "h")
-    sg.add("pz_hi", q, _dq(sg, q, 0.5), p, vel - 6, "arp", "h")
+    sg.add("mandolin", q, _dq(sg, q, 0.5), p, vel, "arp", art)
+    sg.add("pz_hi", q, _dq(sg, q, 0.5), p, vel - 6, "arp", art)
     if glock:
         g = p + 24 if p + 24 <= 105 else p + 12
         sg.add("glock", q, _dq(sg, q, 0.5), g, vel - 10, "arp", "h")
@@ -660,7 +660,7 @@ def title(c):
     strings (A major, 6/8), the lamb's bell on the last chord; the picture: the lamb's bleat (its bell), the title's
     glint, a mandolin step for each title character as it pops in, two sparkles."""
     c.gain(-8.5)
-    s = c.seg(0, c.dur, 3, "6/8", "A major", nominal=120, label="title")
+    s = c.seg(0, c.dur, 3, "6/8", "A major", nominal=102, label="title")
     s.duck(1.5)
     s.duck(3.5, parts=["whistle"])
     s.prog("A:3 | E/G#:3 | A:3")
@@ -1155,7 +1155,7 @@ def count(c):
         sg.duck(1.5)
     su.prog("D:3 | G:3 | Em7:3/2 A7:3/2")
     if len(one) >= 4 and one[3] < t_run - 0.15:
-        prog48(o, ["D", "A/C#", "Bm", "G"], edges48(o, c, one[1:4]))
+        prog48(o, ["D", "A/C#", "Bm", "G/B"], edges48(o, c, one[1:4]))     # the bass stays on B
     else:
         one = one[:3]
         prog48(o, ["D", "A/C#", "Bm"], edges48(o, c, one[1:3]))
@@ -1198,7 +1198,8 @@ def count(c):
             o.add("accordion", q_, _dq(o, q_, 0.4), pt, 28, "arp", "s")
     for k_, (t_, nm) in enumerate(zip(one, ("D4", "E4", "F#4", "G4"))):
         sg_, q_ = seg_at(c, segs, t_)
-        count_pluck(sg_, q_, midi(nm), vel=48 + 2 * k_, glock=k_ < 3)
+        count_pluck(sg_, q_, midi(nm), vel=48 + 2 * k_ if k_ < 3 else 46, glock=k_ < 3,
+                    art="h" if k_ < 3 else "hS")                # the fourth, just before the A, kept short
         sg_.sync(f"count {k_ + 1} (a pluck)" + (" (picture)" if pic_one else ""), q_, t_)
     lv(o, ["vla", "vln1"], -21)
     lv(o, ["pz_cb"], -12)
@@ -1221,15 +1222,16 @@ def count(c):
         drum(sg_, q_, 76, 32)
     oom(r, 0, 6, vel=32, bass=(40, 52), hi=(57, 69))
     for pt in ("A3", "C#4", "E4"):                           # the A arrives with '数啊数' (the run starts on the pops)
-        r.add("accordion", 0, 1.0, pt, 34, "arp")
-    r.add("pz_cb", 0, 0.5, "A1", 42, "bass", "h")
+        r.add("accordion", 0, 1.0, pt, 40, "arp", "h")
+    r.add("pz_cb", 0, 0.5, "A2", 44, "bass", "h")
+    r.add("pz_lo", 0, 0.5, "E3", 40, "arp", "h")
     r.pad(["vla", "vla", "vln1"], 3, 50, 69, vel=28, bass_ref=(40, 52))
     lv(r, ["mandolin"], -15)
     lv(r, ["pz_hi"], -16)
     lv(r, ["pz_lo", "pz_cb"], -14)
-    r.expr(["accordion"], [(0, -21), (1, -24), (6, -24)])
+    r.expr(["accordion"], [(0, -18), (1, -24), (6, -24)])
     lv(r, "hand", -18)
-    lv(r, ["vla", "vln1"], -23)
+    r.expr(["vla", "vln1"], [(0, -19), (1.5, -23), (6, -23)])
     # '97, 98, 99...': A5 B5 C#6 over D G A -- each louder; the strings lean in
     for k_, (t_, nm) in enumerate(zip(ninety, ("A5", "B5", "C#6"))):
         sg_, q_ = seg_at(c, segs, t_)
@@ -1905,11 +1907,13 @@ def end(c):
     lv(sp, ["tinkle"], -18)
     # the final D chord on the end card: kalimba, guitar and bell together, then rolled up; strings
     for nm in ("D3", "A3", "F#4"):
-        f.add("guitar", 0, 2, nm, 44, "arp", "r")
+        f.add("guitar", 0, 2, nm, 40, "arp", "r")
     for nm in ("D5", "A5"):
-        f.add("kalimba", 0, 2, nm, 46, "arp", "r")
-    f.add("tinkle", 0, 1.5, "F#6", 40, "arp", "r")
-    f.add("glock", 0, 1.5, "D7", 34, "arp", "r")
+        f.add("kalimba", 0, 2, nm, 42, "arp", "r")
+    f.add("tinkle", 0, 0.75, "F#6", 38, "arp", "r")
+    f.add("glock", 0, 1.5, "D7", 32, "arp", "r")
+    if f.t(0.9) - f.t(0.0) >= 1.2 and f.t1 - f.t(0.9) >= 1.3:   # a long end card: the lamb's bell once more
+        bell(f, 0.9, vel=30, lo=76, hi=88)
     for k_, nm in enumerate(["A4", "D5", "F#5", "A5", "D6"]):
         f.add("kalimba", 0.4 + 0.08 * k_, 1.6 - 0.08 * k_, nm, 34 - 2 * k_, "arp", "r")
     strings(f, vel=32, lo=50, hi=69, bass=(40, 52), cb=(28, 40), q0=0.25)
