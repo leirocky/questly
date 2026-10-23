@@ -1,5 +1,5 @@
-"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David, Noah, Joseph, Storm, Nativity and Lost
-Sheep picture-book videos.
+"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David, Noah, Joseph, Storm, Nativity, Lost
+Sheep and Zacchaeus picture-book videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -1375,6 +1375,148 @@ courtyard (+ table), the village and the rooms on static layers (one render each
 butterfly, owl, lanterns, people) and use pre-rendered flipbooks of quantised option values for time-of-day changes,
 string-lantern sway (4 frames), the flock's nibbling (4 frames) and the story page (8 frames).
 
+14. ZACCHAEUS FILM (Luke 19:1-10)     sheets: python3 tools/props_sheet.py zacchaeus_tree zacchaeus_street zacchaeus_house
+---------------------------------               zacchaeus_coins zacchaeus_grove zacchaeus_modern (each <= 2000 px wide)
+                                                 (+ characters_zacchaeus_group.png / _modern_group.png: people with props)
+Person scale as everywhere (adult 330 px; Zacchaeus ~279). Zacchaeus, Jesus, the people of Jericho, the poor, the boy and
+the dad are in art/characters.py (ZACCHAEUS FILM). Everything here is a new design with this film's own look: Jericho, the
+city of palms, in a warm, low desert valley - date-palm green, terracotta, sandstone gold, balsam gardens, a hazy turquoise
+sky and warm afternoon light that turns to a golden evening (not the Nativity's Bethlehem or the Lost Sheep's spring hills).
+TIME OF DAY: the Jericho functions take time = 0..1 or a name of JR_TIMES ('afternoon' 0, 'golden' .5, 'evening' 1); the
+colours (sky, far hills, sand, stone, palms, leaves, bark) are interpolated between those keys, so any value in between is
+a smooth step - quantise a change (0, .25, .5, .75, 1) and cross-fade. Lit things (lamps, windows) stay warm.
+THE SKY AND THE STREET
+jericho_sky(x0, y0, x1, y1, time=0.0, sun=None, clouds=1.0, birds=0, seed=0, scale=1.0)
+    ABSOLUTE box (clipped to it). A hazy turquoise afternoon sky fading to a warm haze at the horizon, the golden hour, the
+    rose-and-gold evening; sun=(x, y) a soft round sun with a wide halo; clouds 0..1 long thin desert wisps (not round
+    storybook clouds); birds n little swifts. scale sizes the sun / clouds (use the scene scale).
+jericho_street(x0, x1, y, scale=1.0, part='all', time=0.0, seed=0, bottom=None, road_w=300, stalls=True, lit=None)
+    ABSOLUTE coordinates (sky not included). y = the road's centre line, where Jesus walks. part 'back': the far hills of
+    the Jordan valley with striped cliffs, palms rising behind, sandstone and terracotta houses along the far side (walls
+    on far_edge - 40*scale) with date stalls in front and palms between; 'road': the packed-earth road between two lines of
+    kerb stones (far_edge = y - road_w*scale/2 .. near_edge = y + road_w*scale/2), ruts, pebbles, the near verge with dry
+    tufts down to bottom (default near_edge + 260*scale); 'front': a big palm trunk at the left and a basket of dates
+    framing the near corners; 'all'. lit 0..1 lights the windows (default by time). THE CROWD LINES BOTH SIDES: back ->
+    characters.jericho_crowd on far_edge -> road -> Jesus and the disciples on the road -> jericho_crowd on near_edge
+    (pose 'back' = the wall of backs) -> front. ~4 x a figure's cost: a static layer.
+jericho_street_points(x0, x1, y, scale=1.0, road_w=300, seed=0) -> {'road', 'far_edge', 'near_edge', 'houses' [x, ...],
+    'stalls' [x, ...]} for the same arguments.
+date_palm(x, y, scale=1.0, facing=1, height=1.0, lean=0.0, sway=0.0, dates=True, time=0.0, seed=0)   Anchor: the foot of the
+    trunk; (-308, -1073, 308, 8) at height 1 (~3 adults). A tall date palm: a gently curved trunk covered in criss-cross leaf
+    bases, a full crown of long feathery fronds with a few dry ones hanging below, big bunches of orange-red dates; lean
+    -1..1; sway -1..1 (2-4 frames).
+jericho_house(x, y, scale=1.0, facing=1, variant=0, time=0.0, door=0.0, lit=0.0, awning=True, seed=0)   Anchor: bottom centre
+    of the front wall; (-221, -411, 220, 14). Sandstone / terracotta / cream / rose-clay plaster (variant 0-3,
+    JR_HOUSE_COLS), a flat roof with a rounded parapet, beam ends and a trim band, an arched doorway JR_HOUSE_DOOR =
+    (-55, -205, 55, 0) with a wooden door (door 0 closed .. 1 open onto warm light), two arched lattice windows, a striped
+    awning, plants in pots; lit 0..1 warm light inside.
+market_stall(x, y, scale=1.0, facing=1, goods='dates', time=0.0, awning=None, seed=0)   Anchor: the ground under the middle of
+    its table front; (-198, -305, 197, 3). A plank table with baskets of glossy dates, pomegranates and figs under a striped
+    awning (awning=colour) with date bunches hanging from its edge.
+THE SYCAMORE-FIG (桑树 in the 和合本 = Ficus sycomorus: a wide, low-branching fig tree with figs on the trunk - NOT a mulberry)
+sycomore(x, y, scale=1.0, facing=1, part='all', sway=0.0, time=0.0, figs=True, seed=0)
+    Anchor: the foot of the trunk; (-656, -1130, 706, 18) at scale 1 (~3.4 adults tall, ~4 wide; use 0.45-0.9). A short,
+    thick, pale khaki-grey trunk with smooth patches that forks low into wide spreading limbs (a long low branch to each
+    side, the sitting branch over the road, upper limbs into the crown), clusters of little round yellow-orange-red figs
+    growing straight out of the trunk and the thick limbs (cauliflory; figs=False hides them), surface roots and dry tufts,
+    and a broad dome of heart-shaped leaves with a scalloped leafy edge, lit tops and shaded undersides. part 'back' (the
+    crown's leaf mass, the trunk, every limb, the figs) | 'front' (sprays of leaves on twigs in front: they frame the
+    sitting spot so his face shows, and never cover the climbing route) | 'all'. sway -1..1 stirs the leaves (2-3 frames);
+    time tints it. ~2 x a figure's cost: back and front on static layers (or a 2-frame sway flipbook).
+sycomore_points(x, y, scale=1.0, facing=1) -> {'climb': [{'pose', 'anchor', 'hands' [far, near], 'feet' [support, raised]},
+    ...] the five climbing stages from the ground to the sitting branch (SYCOMORE_CLIMB: climb_a and climb_b on the ground
+    with a foot up on the knob, climb_c on the knob, climb_d on the low branch, climb_c on the low branch with a foot on the
+    stub); characters.zacchaeus(*stage['anchor'], scale, facing, pose=stage['pose']) puts his hands and feet on the bark,
+    'down' (the same reversed), 'sit' (the seat on the sitting branch: zacchaeus sit_branch / peek / wobble anchor, local
+    SYCOMORE_SIT = (140, -481)), 'face' (about where his face is there), 'under' (SYCOMORE_UNDER = (210, 0): where Jesus
+    stops to look up), 'slide' (the soles' path down the trunk's side for slide_down), 'trunk', 'crown'}. See the climbing
+    recipe in characters (ZACCHAEUS FILM).
+THE TAX BOOTH AND THE COINS
+tax_booth(x, y, scale=1.0, facing=1, part='all', coins=1.0, time=0.0, ledger=True)   Anchor: the floor under the middle of the
+    table's front; (-262, -435, 261, 12). A plank table (front edge TAX_TABLE_H = 106 up, back edge TAX_TABLE_DEPTH = 24
+    higher) with a heap and two stacks of gold coins (coins 0..1), the ledger scroll and a brass balance, a stool, a small
+    strongbox and a red rug under a terracotta-and-cream striped awning on two poles. part 'back' (poles, awning, rug, stool,
+    strongbox) | 'front' (the table and everything on it). TAX_BOOTH_SEAT = (-50, -70): Zacchaeus's seat (zacchaeus
+    pose='count' anchor) in local coords - see THE BOOTH in characters.
+coin(x, y, scale=1.0, tilt=0.0, kind='gold')   Anchor: its centre; (-15, -15, 13, 16). A Jericho coin: warm gold (or 'silver')
+    with a thick rim and a little stamped date palm, a glint; tilt 0..1 flattens it (lying on a table ~.6).
+coin_pile(x, y, scale=1.0, n=12, style='heap', seed=0)   Anchor: the bottom centre where they lie. COIN_STYLES: 'heap' a
+    mound (n 12: (-60, -31, 62, 4)), 'stack' one column ((-15, -69, 13, 4)), 'row' counted out side by side 27.6 px apart,
+    'spill' scattered.
+money_chest(x, y, scale=1.0, facing=1, open=0.0, coins=1.0, glow=0.0)   Anchor: bottom centre; closed (-118, -177, 118, 3),
+    open (-113, -275, 113, 3), with glow (-153, -275, 152, 3). Zacchaeus's money chest: carved dark wood, brass bands, corner
+    plates and a lock; open 0..1 lifts the lid on its back hinge (quantise 0, .25, .5, .75, 1) showing a heap of gold coins
+    (coins 0..1); glow 0..1 a golden shine with twinkles.
+coins_gloss(x, y, scale=1.0, kind='half', progress=1.0, card=True, labels=True)   Anchor: the centre of a cream card;
+    (-289, -157, 288, 156). The two picture-book glosses of Luke 19:8 (GLOSS_KINDS): 'half' - ten coins in a row (progress
+    0) slide apart into two little piles of five (.5) and the right pile moves into an alms bowl under a heart (1);
+    'fourfold' - one coin, an arrow, then four coins popping out one by one (progress .25, .5, .75, 1). labels=True adds
+    the numbers 10 / 5 5 / 1 / 4 (LXGW WenKai, not wobbled); card=False leaves out the card. Quantise progress (8 frames).
+balance_scale(x, y, scale=1.0, tilt=0.0)   Anchor: the foot of its post; (-86, -113, 84, 1). A brass balance; tilt -1..1.
+ledger_scroll(x, y, scale=1.0, open=1.0)   Anchor: its centre; (-124, -17, 123, 14) open. The tax ledger lying unrolled.
+ZACCHAEUS'S HOUSE AND THE DINNER
+zacchaeus_house(x, y, scale=1.0, facing=1, view='exterior', time=0.0, door=0.0, lamp=1.0, chest=0.0, part='all', seed=0)
+    view='exterior'  Anchor: bottom centre of the front wall; (-624, -794, 622, 20). A fine two-storey sandstone house with
+                     terracotta and teal trim and a zigzag band, a carved double gate with brass studs in an arched gateway
+                     (ZAC_GATE = (-118, -318, 118, 0); door 0 closed .. 1 swung open onto warm light), lattice windows, an
+                     upper floor with a balcony rail and a teal striped awning, potted palms and two hanging lanterns (lamp
+                     0..1, strongest in the evening).
+    view='interior'  Anchor: the middle of the floor where people stand; ZAC_ROOM_BACK_Y = -170 is the base of the back wall
+                     and the floor runs down to +420; the room is a 2200 x 1420 box at scale 1 (scale ~0.95 fills the
+                     stage). The dining room: warm ochre walls with a teal-and-gold frieze and a terracotta dado, three arched
+                     windows onto palms and the sky (time), two rich wall hangings, four hanging bronze lamps (lamp 0..1), a
+                     big red patterned rug and the money chest at ZAC_ROOM_CHEST = (520, -150) (chest 0..1 opens it, with a
+                     golden shine). part 'back' (the room) | 'front' (two pillars at the near edges) | 'all'.
+dining_table(x, y, scale=1.0, facing=1, width=700, food=True, seed=0)   Anchor: the floor under the middle of its FRONT edge;
+    (-353, -170, 352, 2) at width 700. The raised dining table in 3/4 view: a cream cloth with a teal runner and gold
+    fringe, dates, bread, fruit, cups and a jug. The top's front edge is DINING_TABLE_H = 112 up, the back edge
+    DINING_TABLE_DEPTH = 30 higher; guests sit BEHIND it (their floor line y - DINING_TABLE_DEPTH*scale), drawn first.
+dining_bench(x, y, scale=1.0, facing=1, width=600)   Anchor: the floor under its middle; (-302, -87, 300, 2). A long bench with
+    a striped cushion, seat top DINING_BENCH_H = 70 (the seat of jesus 'sit_table' and the disciples' 'sit').
+THE PALM GROVE AND THE BALSAM GARDEN (the golden evening)
+palm_grove(x0, x1, y, scale=1.0, time=1.0, part='all', seed=0, bottom=None, sway=0.0)
+    ABSOLUTE coordinates (sky not included: jericho_sky above). y = the near ground line where people stand. part 'back'
+    (the hazy far hills, a band of far palms, a low mud-brick wall) | 'mid' (rows of tall date palms with dates, balsam
+    bushes along an irrigation channel that shines with the sky) | 'front' (big balsam bushes at the near corners, a fallen
+    frond) | 'all'. People go between 'mid' and 'front'. bottom default y + 300*scale. ~2.5 x a figure: static layers.
+balsam_bush(x, y, scale=1.0, facing=1, time=1.0, sway=0.0, seed=0)   Anchor: its foot; (-88, -127, 87, 1). A balsam shrub of
+    Jericho's gardens: a low rounded bush of small grey-green leaves with drops of golden resin and tiny cream flowers.
+THE MODERN FRAME (opening and ending)
+street_festival(x0, x1, y, scale=1.0, part='all', phase=0.0, seed=0, bottom=None, float_x=None)
+    ABSOLUTE coordinates; y = the ground line where the front row of the crowd and the child stand. part 'back': a bright
+    blue sky, colourful shop-houses with striped awnings and window boxes, red paper lanterns, two strings of bunting across
+    the street and, beyond the crowd, the top of a parade float (balloons, flags, a big smiling sun mascot) at float_x
+    (default 0.58 of the width), drifting confetti (phase 0..1); 'front': festival_backs along y - the wall of grown-ups'
+    backs; 'all'. bottom default y + 160*scale. ~4 x a figure: back on a static layer, front as a 2-3 frame flipbook.
+festival_backs(x0, x1, y, scale=1.0, n=8, rows=2, seed=0, phase=0.0)   ABSOLUTE; y = where the front row stands. Modern grown-
+    ups from behind (~305-350 px): jackets, hoodies and t-shirts, jeans and sneakers, ponytails, buns, caps, a backpack; some
+    hold up a phone or a little flag (phase bobs them); rows behind 36*scale higher, drawn first. Not the Jericho crowd.
+bunting(x0, y0, x1, y1, n=12, sag=50, phase=0.0, colors=None, scale=1.0)   ABSOLUTE. A string of little triangular flags
+    (FESTIVAL_COLS) sagging between two points; phase flutters them (3-4 frames).
+evening_room(x0, x1, y, scale=1.0, glow=0.8, seed=0, door_x=None, window_x=None, bottom=None, time='evening')
+    ABSOLUTE coordinates; y = the floor line (the wall meets it 40*scale higher). The family's living room in the evening -
+    not the Nativity living room: sage-blue walls over a wooden wainscot, a big window (window_x, default 0.2 of the width)
+    onto the city at dusk with lit windows and a crescent moon, mustard curtains, a framed family picture, a bookshelf of
+    picture books with a plant, a floor lamp with a warm glow (glow 0..1), the front door (door_x, default 0.86 - '如果耶稣
+    今天到你家来') with a little window and a red knot ornament, a shoe mat with sneakers, a honey wood floor and a round
+    patterned rug. Put sofa() near the middle. ~2 x a figure: a static layer.
+sofa(x, y, scale=1.0, facing=1, part='all', color=None)   Anchor: the floor under its middle; (-229, -250, 228, 0). A cosy
+    mustard sofa with a teal and a coral cushion; seat top SOFA_SEAT = 69 (= the dad's sit_read seat; the child sits at
+    y - SOFA_SEAT*scale). part 'back' (backrest, cushions, seat, the far armrest) | 'front' (the near armrest) | 'all'.
+picture_book(x, y, scale=1.0, facing=1, rot=0.0)   Anchor: the middle of its bottom edge; (-83, -108, 82, 5). The family's
+    picture book open at Zacchaeus in the sycamore-fig with Jesus below (characters.parent(pose='sit_read') holds it).
+Constants: JR_TIMES, JR_GOLD, JR_GOLD_DARK, JR_GOLD_LIGHT, JR_DATE, JR_DATE_RIPE, JR_DATE_GOLD, JR_LAMP, JR_HOUSE_COLS,
+FESTIVAL_COLS (colours); JR_HOUSE_DOOR, SYCOMORE_CLIMB, SYCOMORE_SIT, SYCOMORE_UNDER, SYCOMORE_SLIDE, TAX_TABLE_H,
+TAX_TABLE_DEPTH, TAX_BOOTH_SEAT, COIN_STYLES, GLOSS_KINDS, ZAC_GATE, ZAC_ROOM_BACK_Y, ZAC_ROOM_CHEST, DINING_TABLE_H,
+DINING_TABLE_DEPTH, DINING_BENCH_H, SOFA_SEAT.
+RENDER COST (2112 x 1188 layer, uncached, measured under heavy machine load where jesus took 0.53-0.62 s): tax_booth,
+dining_table, coins_gloss, money_chest ~0.5 s (1 x a figure); zacchaeus_house exterior 0.6 s; evening_room 1.1 s;
+sycomore back + front 1.3 s; zacchaeus_house interior 1.4 s; jericho_sky + palm_grove 1.5 s; street_festival 2.4 s;
+jericho_sky + jericho_street 2.5 s. STATIC-LAYER ADVICE: render each sky, the street (back / road / front), the tree's back
+and front, the booth, the house views, the grove, the festival back and the room once on static layers; animate only the
+people, the coins and small things, and use pre-rendered flipbooks of quantised values for time-of-day changes, the tree's
+sway (2-3 frames), the crowd parting (5 frames), the chest (5 frames), the glosses (8 frames) and the bunting (3-4 frames).
+
 Helpers / constants
 -------------------
 local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
@@ -1389,7 +1531,8 @@ Contact sheets of everything: ``python3 tools/props_sheet.py [fish ship items ca
 buildings daniel david_items ... noah_ark noah_animals noah_pairs noah_weather noah_items joseph_items
 joseph_animals joseph_egypt storm_boat storm_lake storm_weather storm_items storm_story nativity_stable
 nativity_animals nativity_places nativity_sky nativity_journey nativity_items nativity_home lost_sheep_hills
-lost_sheep_flock lost_sheep_lamb lost_sheep_places lost_sheep_items lost_sheep_modern]``
+lost_sheep_flock lost_sheep_lamb lost_sheep_places lost_sheep_items lost_sheep_modern zacchaeus_tree zacchaeus_street
+zacchaeus_house zacchaeus_coins zacchaeus_grove zacchaeus_modern]``
 -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
 """
 import hashlib
@@ -14789,3 +14932,1707 @@ def cosy_bedroom(x0, x1, y, scale=1.0, glow=0.8, seed=0, window_x=None, frame_x=
     for i, c in enumerate(("#e8573f", "#7cc4a2", "#8fc4ec")):
         out += _rect(x0 + W_ * 0.9 + i * 38 * s, wy + 40 * s - (i % 2) * 36 * s, 34 * s, 34 * s, c, 2.6 * s, rx=4 * s)
     return f'<g filter="url(#wobble)">{out}</g>'
+
+
+# ====================================================================== 14. Zacchaeus film (Luke 19:1-10)
+# Jericho, the city of palms, in a warm low desert valley: date-palm green, terracotta, sandstone gold, balsam gardens,
+# a hazy turquoise sky, warm afternoon light and a golden evening. The sycamore-fig, the street, the tax booth, Zacchaeus's
+# house, the coins and their picture-book glosses, the palm grove; the modern street festival and the evening living room.
+# Module doc section 14 (ZACCHAEUS FILM).
+
+JR_GOLD = "#f2c14a"           # Jericho coins: warm gold with a little stamped palm
+JR_GOLD_DARK = "#c48f2c"
+JR_GOLD_LIGHT = "#fbe08a"
+
+
+def _jcoin(cx, cy, r=12.0, tilt=0.0, kind="gold"):
+    """One Jericho coin (local markup): a thick rim, a little stamped date palm and a glint; tilt 0..1 flattens it."""
+    tilt = _clamp(tilt)
+    ry = r * (1 - 0.58 * tilt)
+    col, dk, lt = (JR_GOLD, JR_GOLD_DARK, JR_GOLD_LIGHT) if kind == "gold" else ("#d8d4c8", "#9a968a", "#f4f1e8")
+    sw = max(1.4, r * 0.17)
+    out = _ell(cx, cy + r * 0.20, r, ry, dk, sw)
+    out += _ell(cx, cy, r, ry, col, sw)
+    out += _ell(cx, cy, r * 0.70, ry * 0.70, "none", sw * 0.6, stroke=dk, extra='opacity="0.75"')
+    if r >= 6:
+        k = ry / r
+        out += _p(f"M{_f(cx)},{_f(cy + 0.42 * ry)} Q{_f(cx + 0.04 * r)},{_f(cy)} {_f(cx)},{_f(cy - 0.30 * ry)}", sw=sw * 0.7,
+                  stroke=dk)
+        for a in (-1, 1):
+            out += _p(f"M{_f(cx)},{_f(cy - 0.30 * ry)} q{_f(a * 0.18 * r)},{_f(-0.14 * r * k)} {_f(a * 0.34 * r)},{_f(0.06 * r * k)}",
+                      sw=sw * 0.6, stroke=dk)
+    out += _ell(cx - r * 0.36, cy - ry * 0.38, r * 0.22, ry * 0.13, lt, 0, extra='opacity="0.95"')
+    return out
+
+
+JR_DATE = "#9a4a2a"
+JR_DATE_RIPE = "#c2552e"
+JR_DATE_GOLD = "#e8a83a"
+
+
+def _date_cluster(cx, cy, s=1.0, n=14, seed=0, cols=(JR_DATE, JR_DATE_RIPE, JR_DATE_GOLD)):
+    """A hanging bunch of dates (local markup): little glossy ovals on orange stalks."""
+    rng = random.Random(seed)
+    out = _p(f"M{_f(cx)},{_f(cy - 14 * s)} q{_f(4 * s)},{_f(10 * s)} {_f(0)},{_f(22 * s)}", sw=3.0 * s, stroke="#d98a3a")
+    for i in range(n):
+        a = rng.uniform(-0.9, 0.9)
+        d = rng.uniform(0.15, 1.0)
+        x = cx + 22 * s * a * d
+        y = cy + 4 * s + 30 * s * d * rng.uniform(0.6, 1.0)
+        col = cols[i % len(cols)]
+        out += _ell(x, y, 4.6 * s, 6.4 * s, col, 1.6 * s)
+        out += _ell(x - 1.4 * s, y - 2.4 * s, 1.2 * s, 2.0 * s, HILITE, 0, extra='opacity="0.6"')
+    return out
+
+
+def _date_basket():
+    """A round woven basket heaped with glossy dates (local markup, anchor = the middle of its rim, ~110 px wide)."""
+    out = _p("M-56,-4 Q-52,40 0,44 Q52,40 56,-4 Z", "#c99a5c", 3.4)
+    for k in range(3):
+        yy = 8 + 12 * k
+        out += _p(f"M{-52 + 6 * k},{yy} Q0,{yy + 8} {52 - 6 * k},{yy}", sw=2.0, stroke="#8a6440", extra='opacity="0.7"')
+    rng = random.Random(4)
+    pts = [(rng.uniform(-46, 46), rng.uniform(-22, -2)) for _ in range(26)]
+    pts.sort(key=lambda p: p[1])
+    for i, (x, y) in enumerate(pts):
+        if abs(x) > 50 - (y + 22) * 0.2:
+            continue
+        col = (JR_DATE, JR_DATE_RIPE, JR_DATE_GOLD)[i % 3]
+        out += _ell(x, y, 5.2, 7.2, col, 1.8, extra=f'transform="rotate({int(x)} {_f(x)} {_f(y)})"')
+        out += _ell(x - 1.5, y - 2.5, 1.3, 2.2, HILITE, 0, extra='opacity="0.6"')
+    out += _ell(0, -4, 56, 8, "none", 3.4)
+    out += _p("M-56,-4 Q0,8 56,-4", sw=3.0, stroke="#8a6440")
+    return out
+
+
+def _alms_bowl(coins=2):
+    """A beggar's wooden bowl on the ground (anchor = bottom centre), a coin or two inside."""
+    out = _p("M-34,-26 Q-32,0 0,2 Q32,0 34,-26 Z", "#a0683e", 3.0)
+    out += _ell(0, -26, 34, 8, "#74462a", 3.0)
+    for j in range(int(coins)):
+        out += _jcoin(-8 + 14 * j, -27 - 2 * j, 7, 0.6)
+    return out
+
+
+def _mini_sycomore_page(w, h):
+    """The little picture on the open picture-book page: Zacchaeus in the sycamore-fig, Jesus looking up (page coords)."""
+    out = _rect(0, 0, w, h, "#cfeae6", 0)
+    out += _p(f"M0,{_f(h * 0.70)} Q{_f(w * 0.5)},{_f(h * 0.62)} {_f(w)},{_f(h * 0.70)} L{_f(w)},{_f(h)} L0,{_f(h)} Z", "#e8cf94", 0)
+    out += _tube(f"M{_f(w * 0.36)},{_f(h * 0.80)} Q{_f(w * 0.40)},{_f(h * 0.55)} {_f(w * 0.34)},{_f(h * 0.40)}", w * 0.06, "#b8a27a", 1.6)
+    out += _tube(f"M{_f(w * 0.38)},{_f(h * 0.55)} Q{_f(w * 0.55)},{_f(h * 0.42)} {_f(w * 0.70)},{_f(h * 0.42)}", w * 0.035, "#b8a27a", 1.4)
+    out += _cluster([(w * 0.20, h * 0.30, h * 0.16), (w * 0.38, h * 0.20, h * 0.20), (w * 0.58, h * 0.22, h * 0.18),
+                     (w * 0.74, h * 0.32, h * 0.15), (w * 0.30, h * 0.40, h * 0.14), (w * 0.52, h * 0.36, h * 0.15)], "#6fa04f", 1.6)
+    out += _circ(w * 0.56, h * 0.36, h * 0.07, "#e3a77b", 1.4) + _circ(w * 0.56, h * 0.31, h * 0.065, "#f6e9c9", 1.2)
+    out += _rect(w * 0.53, h * 0.41, w * 0.06, h * 0.08, "#2a7e86", 1.2, rx=2)
+    out += _circ(w * 0.80, h * 0.62, h * 0.06, "#c88e66", 1.4) + _rect(w * 0.77, h * 0.67, w * 0.06, h * 0.16, "#f0e6d0", 1.2, rx=2)
+    out += _p(f"M{_f(w * 0.77)},{_f(h * 0.68)} L{_f(w * 0.83)},{_f(h * 0.76)}", sw=h * 0.025, stroke="#b24f47")
+    for i in range(5):
+        out += _circ(w * (0.30 + 0.08 * i), h * (0.48 + 0.04 * (i % 2)), h * 0.018, "#e8a83a", 0)
+    return out
+
+
+def _picture_book(open_=1.0, w=150, h=100):
+    """The modern family's picture book (local markup, anchor = the middle of its bottom edge): open, the left page a
+    picture of Zacchaeus in the sycamore-fig with Jesus below, the right page a few lines of 'text' and a little palm."""
+    out = _p(f"M{-w / 2 - 6},4 L{w / 2 + 6},4 L{w / 2 + 4},{-h - 4} L0,{-h + 2} L{-w / 2 - 4},{-h - 4} Z", "#c8643c", 2.8)
+    pl = f"M{-w / 2},0 L0,4 L0,{-h} L{-w / 2},{-h - 6} Z"
+    pr = f"M0,4 L{w / 2},0 L{w / 2},{-h - 6} L0,{-h} Z"
+    out += _p(pl, "#fbf5e6", 2.4) + _p(pr, "#fbf5e6", 2.4)
+    cid = _uid("pbook", w, h)
+    out += _clip(cid, f"M{-w / 2 + 6},-6 L-6,-4 L-6,{-h + 6} L{-w / 2 + 6},{-h} Z",
+                 _g(_mini_sycomore_page(w / 2 - 12, h - 8), f"translate({-w / 2 + 6},{-h})"))
+    for k in range(5):
+        yy = -h + 18 + k * 13
+        out += _line(10, yy, w / 2 - 12 - (14 if k == 4 else 0), yy + 1, sw=2.2, color="#b8a890")
+    out += _line(0, 4, 0, -h, sw=2.0, color=S.shade("#fbf5e6", -0.25))
+    return out
+
+
+def picture_book(x, y, scale=1.0, facing=1, rot=0.0):
+    """The modern family's picture book, open at Zacchaeus in the sycamore-fig (anchor = the middle of its bottom edge;
+    (-82, -110, 82, 8)). characters.parent(pose='sit_read', variant=1) holds it."""
+    return _place(_picture_book(1.0), x, y, scale, facing, rot)
+
+
+# ---------------------------------------------------------------------- palette and time of day
+JR_TIMES = {"afternoon": 0.0, "golden": 0.5, "evening": 1.0}
+_JR_KEYS = [
+    (0.0, dict(sky=("#64b4bd", "#86c7c6", "#acd9d0", "#d4e8cf", "#efe4bf"), haze="#ede0c2", mtn="#d4b2a0", mtn2="#e0c5b0",
+               hill="#dcbc84", sand="#e8cc94", sand_dk="#c9a46a", sand_lt="#f4e2b6", stone="#e8ca8e", stone_dk="#c39a58",
+               terra="#c8643c", palm="#4f8a4a", palm_lt="#7aae58", palm_dk="#35663a", leaf="#5f9a48", leaf_lt="#8cbf5a",
+               leaf_dk="#3f7a3a", bark="#b9ad86", trunk="#9a7a58", sun="#fff4cc", cloud="#fbf3e2", cloud_sh="#c9ddd6",
+               tint=("#ffffff", 0.0), shadow="#a88a5a", glow=0.0)),
+    (0.5, dict(sky=("#78a7c0", "#b6bfae", "#eac690", "#f5d293", "#fae2a8"), haze="#f2d6a4", mtn="#dcac8a", mtn2="#e8c29c",
+               hill="#e2b47a", sand="#eec486", sand_dk="#cc9a5c", sand_lt="#f8dca6", stone="#efc07e", stone_dk="#c99050",
+               terra="#d0663a", palm="#56823e", palm_lt="#8aa850", palm_dk="#3a5a30", leaf="#6a9442", leaf_lt="#9cb85a",
+               leaf_dk="#456a34", bark="#c4a87c", trunk="#a07850", sun="#ffe2a0", cloud="#fde6c0", cloud_sh="#e4b690",
+               tint=("#f6b05a", 0.14), shadow="#a07a4a", glow=0.4)),
+    (1.0, dict(sky=("#6f74a6", "#b98a9c", "#e8a47a", "#f4bf6e", "#f9da94"), haze="#f0c08a", mtn="#b98c88", mtn2="#d2a496",
+               hill="#c89a7a", sand="#d9a878", sand_dk="#a8784e", sand_lt="#ecc69a", stone="#dca674", stone_dk="#a87848",
+               terra="#b85a3a", palm="#3f6a44", palm_lt="#62804a", palm_dk="#2c4a34", leaf="#4f7a44", leaf_lt="#77985a",
+               leaf_dk="#33553a", bark="#a89070", trunk="#86664c", sun="#ffcf88", cloud="#f2c8b0", cloud_sh="#b88a98",
+               tint=("#e0806a", 0.24), shadow="#7a5a4a", glow=1.0)),
+]
+_JR_CACHE = {}
+JR_LAMP = "#ffd27a"
+
+
+def _jr_t(time):
+    if isinstance(time, str):
+        if time not in JR_TIMES:
+            raise ValueError(f"unknown time {time!r}; choose from {tuple(JR_TIMES)} or a number 0..1")
+        return JR_TIMES[time]
+    return _clamp(time)
+
+
+def _jr_pal(time):
+    """Jericho's colours at time 0 (warm afternoon, hazy turquoise sky) .. .5 (golden hour) .. 1 (golden evening)."""
+    t = round(_jr_t(time), 3)
+    if t in _JR_CACHE:
+        return _JR_CACHE[t]
+    for (t0, a), (t1, b) in zip(_JR_KEYS, _JR_KEYS[1:]):
+        if t0 <= t <= t1:
+            u = _smooth((t - t0) / (t1 - t0))
+            out = {}
+            for k, v in a.items():
+                w = b[k]
+                if k == "sky":
+                    out[k] = tuple(S.mix(c0, c1, u) for c0, c1 in zip(v, w))
+                elif k == "tint":
+                    out[k] = (S.mix(v[0], w[0], u), v[1] + (w[1] - v[1]) * u)
+                elif isinstance(v, float):
+                    out[k] = v + (w - v) * u
+                else:
+                    out[k] = S.mix(v, w, u)
+            _JR_CACHE[t] = out
+            return out
+    return _JR_KEYS[0][1]
+
+
+def _jt(col, time, k=1.0):
+    """Tint any colour toward Jericho's light at `time` (warm gold, then rose in the evening)."""
+    c, a = _jr_pal(time)["tint"]
+    return S.mix(col, c, a * k) if a > 0 else col
+
+
+# ---------------------------------------------------------------------- the sky and the far hills
+def _jr_wisp(cx, cy, w, h, fill, shade_c, seed=0):
+    """A long thin desert cloud: a soft lens of overlapping ellipses with a shaded underside (no ink, very light)."""
+    rng = random.Random(seed)
+    out = ""
+    for i in range(5):
+        u = (i + 0.5) / 5 - 0.5
+        out += _ell(cx + u * w * 0.8 + rng.uniform(-8, 8), cy + rng.uniform(-h * 0.15, h * 0.1), w * 0.26, h * (0.5 - abs(u) * 0.5),
+                    fill, 0, extra='opacity="0.85"')
+    out += _ell(cx, cy + h * 0.32, w * 0.42, h * 0.16, shade_c, 0, extra='opacity="0.5"')
+    return out
+
+
+def jericho_sky(x0, y0, x1, y1, time=0.0, sun=None, clouds=1.0, birds=0, seed=0, scale=1.0):
+    """Jericho's sky (ABSOLUTE box): a hazy turquoise afternoon sky fading to a warm haze at the horizon, the golden hour,
+    the rose-and-gold evening (time 0..1 or JR_TIMES); sun=(x, y) a soft round sun with a wide halo; clouds 0..1 long thin
+    desert wisps; birds n little swifts."""
+    pal = _jr_pal(time)
+    gid = _uid("jrsky", x0, y0, x1, y1, round(_jr_t(time), 3))
+    stops = [(0.0, pal["sky"][0]), (0.35, pal["sky"][1]), (0.62, pal["sky"][2]), (0.84, pal["sky"][3]), (1.0, pal["sky"][4])]
+    out = (f'<defs>{S.lin_grad(gid, stops)}</defs>'
+           f'<rect x="{_f(x0 - 2)}" y="{_f(y0 - 2)}" width="{_f(x1 - x0 + 4)}" height="{_f(y1 - y0 + 4)}" fill="url(#{gid})"/>')
+    if sun is not None:
+        sx, sy = sun
+        out += _ls_glow(sx, sy, 330 * scale, 330 * scale, 0.75, "jrsun", pal["sun"], S.mix(pal["sky"][3], pal["sun"], 0.5))
+        out += _circ(sx, sy, 62 * scale, pal["sun"], 0)
+        out += _circ(sx, sy, 62 * scale, "none", 2.6 * scale, stroke=S.mix(pal["sun"], "#e8a84a", 0.5), extra='opacity="0.6"')
+    rng = random.Random(seed)
+    n = int(round(5 * _clamp(clouds) * (x1 - x0) / 2112))
+    for i in range(n):
+        cx = x0 + (i + 0.5) / max(1, n) * (x1 - x0) + rng.uniform(-80, 80) * scale
+        cy = y0 + (y1 - y0) * rng.uniform(0.12, 0.42)
+        out += _jr_wisp(cx, cy, rng.uniform(260, 420) * scale, rng.uniform(26, 40) * scale, pal["cloud"], pal["cloud_sh"], seed + i)
+    for i in range(int(birds)):
+        bx = x0 + (x1 - x0) * rng.uniform(0.2, 0.8)
+        by = y0 + (y1 - y0) * rng.uniform(0.15, 0.4)
+        k = scale * rng.uniform(0.7, 1.1)
+        out += _p(f"M{_f(bx - 14 * k)},{_f(by - 4 * k)} Q{_f(bx - 6 * k)},{_f(by - 8 * k)} {_f(bx)},{_f(by)} "
+                  f"Q{_f(bx + 6 * k)},{_f(by - 8 * k)} {_f(bx + 14 * k)},{_f(by - 4 * k)}", sw=2.6 * k, stroke=S.shade(pal["sky"][0], -0.45))
+    cid = _uid("jrskyclip", x0, y0, x1, y1)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0 - 2)}" y="{_f(y0 - 2)}" width="{_f(x1 - x0 + 4)}" height="{_f(y1 - y0 + 4)}"/></clipPath>'
+            f'<g clip-path="url(#{cid})">{out}</g>')
+
+
+def _jr_far(x0, x1, y, s, time, seed=0, cliffs=True):
+    """The far hills of the Jordan valley: two hazy ridges (rose-tan) and the striped cliffs on one side (local stage px)."""
+    pal = _jr_pal(time)
+    rng = random.Random(seed)
+    out = ""
+    for k, (col, top, amp) in enumerate(((pal["mtn2"], 300, 70), (pal["mtn"], 210, 55))):
+        pts = [(x0 - 40, y)]
+        n = 9
+        for i in range(n + 1):
+            u = i / n
+            pts.append((x0 + (x1 - x0) * u, y - top * s - amp * s * math.sin(u * math.pi * (1.6 + k) + seed) * rng.uniform(0.6, 1.0)))
+        pts.append((x1 + 40, y))
+        out += _p(_sm(pts, closed=False, tension=0.8) + f" L{_f(x1 + 40)},{_f(y + 60 * s)} L{_f(x0 - 40)},{_f(y + 60 * s)} Z", col,
+                  2.6 * s, stroke=S.mix(col, "#7a5a50", 0.45))
+    if cliffs:
+        cx = x0 + (x1 - x0) * (0.80 if seed % 2 == 0 else 0.16)
+        w = 360 * s
+        pts = [(cx - w / 2, y), (cx - w * 0.36, y - 330 * s), (cx - w * 0.08, y - 390 * s), (cx + w * 0.22, y - 360 * s),
+               (cx + w / 2, y - 260 * s), (cx + w * 0.62, y)]
+        col = S.mix(pal["mtn"], pal["terra"], 0.18)
+        out += _p(_sm(pts, closed=False, tension=0.6) + " Z", col, 2.6 * s, stroke=S.mix(col, "#7a5a50", 0.45))
+        for j in range(7):
+            xx = cx - w * 0.30 + j * w * 0.12
+            out += _p(f"M{_f(xx)},{_f(y - (300 - 30 * abs(j - 3)) * s)} q{_f(6 * s)},{_f(110 * s)} {_f(-4 * s)},{_f(220 * s)}", sw=2 * s,
+                      stroke=S.shade(col, -0.18), extra='opacity="0.6"')
+    out += f'<rect x="{_f(x0 - 40)}" y="{_f(y - 90 * s)}" width="{_f(x1 - x0 + 80)}" height="{_f(150 * s)}" fill="{pal["haze"]}" opacity="0.45"/>'
+    return out
+
+
+# ---------------------------------------------------------------------- date palms (Jericho, the city of palms)
+def _jr_palm(height=1.0, lean=0.0, sway=0.0, dates=True, time=0.0, seed=0, far=False):
+    """A tall date palm (local, anchor = the foot of the trunk): a gently curved trunk covered in criss-cross leaf bases,
+    a full round crown of long feathery fronds (a few dry ones hanging below) and big hanging bunches of orange dates."""
+    pal = _jr_pal(time)
+    rng = random.Random(seed)
+    H = 820 * height
+    top = (lean * 170, -H)
+    ctrl = (lean * 30 + 10, -H * 0.55)
+
+    def at(t):
+        u = 1 - t
+        return (2 * u * t * ctrl[0] + t * t * top[0], 2 * u * t * ctrl[1] + t * t * top[1])
+    L, Rr = [], []
+    for i in range(15):
+        t = i / 14
+        p, q = at(max(0, t - 0.01)), at(min(1, t + 0.01))
+        dx, dy = q[0] - p[0], q[1] - p[1]
+        ln = math.hypot(dx, dy) or 1
+        nx, ny = -dy / ln, dx / ln
+        h = 30 - 10 * t + (12 if i == 0 else 0)
+        c = at(t)
+        L.append((c[0] + nx * h, c[1] + ny * h))
+        Rr.append((c[0] - nx * h, c[1] - ny * h))
+    trunk = pal["trunk"]
+    out = ""
+    sw_ = sway * 7
+    dark = S.mix(pal["palm_dk"], "#6a5a3a", 0.25)
+    fr = (lambda b, a_, l_, d_, w_, c_: _frond(b, a_, l_, d_, w_, c_, lite=True)) if far else \
+         (lambda b, a_, l_, d_, w_, c_: _pinnate(b, a_, l_, d_, w_, c_, n=14))
+    if not far:                                      # dry fronds hanging under the crown
+        for ang, ln_ in ((-60, 170), (-118, 160), (-88, 150)):
+            out += _pinnate((top[0], top[1] + 14), ang + 150 + sw_ * 0.5, ln_, 30, 26, S.mix("#b8955a", pal["shadow"], 0.2), n=10, sw=2.4)
+    for ang, ln_, dr in ((-158, 330, 150), (-128, 320, 90), (-100, 290, 40), (-76, 290, 40), (-50, 320, 90), (-22, 330, 150)):
+        out += fr(top, ang + sw_, ln_, dr, 40, dark)
+    trunk_d = _sm(L + list(reversed(Rr)), closed=True, tension=0.7)
+    out += _p(trunk_d, trunk, 0)
+    hatch = ""
+    for i in range(1, 26):
+        t = i / 26
+        c = at(t)
+        h = 30 - 10 * t
+        for sgn in (1, -1):
+            hatch += f"M{_f(c[0] - h)},{_f(c[1] + sgn * h * 0.5)} L{_f(c[0] + h)},{_f(c[1] - sgn * h * 0.5)} "
+    out += _clip(_uid("jrpalm", round(height, 3), round(lean, 3), seed), trunk_d,
+                 _p(hatch, sw=2.4, stroke=S.shade(trunk, -0.32), extra='opacity="0.8"') +
+                 _p(_sm([(at(i / 10)[0] + 9, at(i / 10)[1]) for i in range(11)], closed=False), sw=10, stroke=S.shade(trunk, 0.22),
+                    extra='opacity="0.45"'))
+    out += _p(trunk_d, sw=4)
+    if dates:
+        for k, (dx_, sz) in enumerate(((-34, 1.25), (30, 1.15), (4, 1.05))):
+            out += _date_cluster(top[0] + dx_, top[1] + 34 + 6 * k, 1.35 * sz, n=18, seed=seed * 7 + k)
+    for ang, ln_, dr in ((-176, 300, 170), (-142, 330, 80), (-112, 290, 26), (-88, 250, 0), (-66, 290, 26), (-36, 330, 80),
+                         (-4, 300, 170), (152, 220, 110), (28, 220, 110)):
+        out += fr(top, ang + sw_ * (1.4 if abs(ang) > 90 else 1), ln_, dr, 44, pal["palm"] if ang % 2 else pal["palm_lt"])
+    out += _circ(top[0], top[1] + 4, 16, S.shade(trunk, -0.2), 3.5)
+    return out
+
+
+def date_palm(x, y, scale=1.0, facing=1, height=1.0, lean=0.0, sway=0.0, dates=True, time=0.0, seed=0):
+    """A tall Jericho date palm (anchor = the foot of the trunk; ~(-360, -1170, 380, 14) at height 1): criss-cross trunk,
+    a full crown of feathery fronds with a few dry ones below, bunches of orange dates; lean -1..1, sway -1..1 (2-4
+    frames), time 0..1 / JR_TIMES tints it."""
+    return _place(_jr_palm(height, lean, sway, dates, time, seed), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- houses and market stalls
+JR_HOUSE_COLS = ("#e8ca8e", "#d4845c", "#f0dfb8", "#dca08a")
+JR_HOUSE_DOOR = (-55, -205, 55, 0)
+
+
+def _jr_house(variant=0, time=0.0, door=0.0, lit=0.0, awning=True, seed=0, w=420, h=380):
+    """A Jericho house (local, anchor = bottom centre of the front wall): sandstone / terracotta plaster, a flat roof with
+    a rounded parapet and beam ends, an arched doorway with a wooden door, little arched windows with wooden lattice, a
+    striped awning, plants in pots; lit 0..1 warm light inside."""
+    pal = _jr_pal(time)
+    rng = random.Random(seed * 13 + variant)
+    wall = _jt(JR_HOUSE_COLS[variant % 4], time, 0.8)
+    trim = _jt("#c8643c" if variant % 4 != 1 else "#f0d29a", time, 0.6)
+    ink2 = S.shade(wall, -0.35)
+    x0, x1 = -w / 2, w / 2
+    out = _p(f"M{x0},0 L{x0},{-h} L{x1},{-h} L{x1},0 Z", wall, 4)
+    out += _p(f"M{x0 - 8},{-h} L{x0 - 8},{-h - 22} Q{x0 + w * 0.25},{-h - 30} {0},{-h - 26} Q{x1 - w * 0.25},{-h - 32} {x1 + 8},{-h - 22} "
+              f"L{x1 + 8},{-h} Z", S.shade(wall, 0.08), 3.4)
+    out += _rect(x0, -h + 4, w, 14, trim, 2.4)
+    for i in range(6):
+        bx = x0 + 30 + i * (w - 60) / 5
+        out += _circ(bx, -h + 30, 6.5, S.shade(_jt("#8a5a36", time), 0.0), 2.2)
+    for _ in range(9):
+        px, py = rng.uniform(x0 + 20, x1 - 20), rng.uniform(-h + 50, -20)
+        out += _ell(px, py, rng.uniform(10, 26), rng.uniform(6, 12), S.shade(wall, rng.choice((-0.08, 0.10))), 0,
+                    extra='opacity="0.6"')
+    dl, dt, dr, db = JR_HOUSE_DOOR
+    lightc = S.mix(JR_LAMP, "#fff2c8", 0.4)
+    arch = f"M{dl},{db} L{dl},{dt + 55} Q{dl},{dt} 0,{dt} Q{dr},{dt} {dr},{dt + 55} L{dr},{db} Z"
+    out += _p(arch, S.mix("#4a3426", lightc, _clamp(lit) * 0.7), 3.4)
+    if lit > 0:
+        out += _ls_glow(0, -90, 120, 110, _clamp(lit) * 0.8, f"jrhd{variant}", "#fff2c8", JR_LAMP)
+    wood = _jt("#8a5a36", time)
+    if door < 1.0:
+        k = 1 - _clamp(door)
+        out += _p(f"M{dl},{db} L{dl},{dt + 55} Q{dl},{dt} 0,{dt} L{_f(dl + (dr - dl) * k)},{dt + 4} L{_f(dl + (dr - dl) * k)},{db} Z"
+                  if k < 0.999 else arch, wood, 3.0)
+        for j in range(1, 4):
+            xx = dl + (dr - dl) * k * j / 4
+            out += _line(xx, dt + 30, xx, db - 4, sw=2.0, color=S.shade(wood, -0.3))
+        out += _circ(dl + (dr - dl) * k - 14, -100, 4, "#e8b746", 1.6)
+    out += _p(f"M{dl - 10},{db} L{dl - 10},{dt + 55} Q{dl - 10},{dt - 10} 0,{dt - 10} Q{dr + 10},{dt - 10} {dr + 10},{dt + 55} L{dr + 10},{db}",
+              sw=8, stroke=trim) + _p(f"M{dl - 15},{db} L{dl - 15},{dt + 55} Q{dl - 15},{dt - 15} 0,{dt - 15} Q{dr + 15},{dt - 15} {dr + 15},"
+                                     f"{dt + 55} L{dr + 15},{db}", sw=2.4)
+    for wx in (x0 + w * 0.2, x1 - w * 0.2):
+        wy = -h * 0.62
+        wd = f"M{wx - 30},{wy + 40} L{wx - 30},{wy - 10} Q{wx - 30},{wy - 40} {wx},{wy - 40} Q{wx + 30},{wy - 40} {wx + 30},{wy - 10} L{wx + 30},{wy + 40} Z"
+        out += _p(wd, S.mix("#4a3426", lightc, _clamp(lit) * 0.8), 3.0)
+        lat = ""
+        for j in range(-2, 3):
+            lat += f"M{wx + j * 12 - 30},{wy + 40} L{wx + j * 12 + 30},{wy - 40} M{wx + j * 12 + 30},{wy + 40} L{wx + j * 12 - 30},{wy - 40} "
+        out += _clip(_uid("jrlat", variant, seed, round(wx)), wd, _p(lat, sw=3.0, stroke=wood))
+        out += _p(wd, sw=3.0)
+        out += _rect(wx - 36, wy + 40, 72, 8, trim, 2.2)
+    if awning:
+        ac = ("#c8643c", "#4f8a4a", "#3f8a92", "#c8643c")[variant % 4]
+        y_a = dt - 26
+        aw = f"M{dl - 60},{y_a} L{dr + 60},{y_a} L{dr + 74},{y_a + 46} L{dl - 74},{y_a + 46} Z"
+        stripes = ""
+        for j in range(-6, 7):
+            stripes += _p(f"M{j * 22 - 8},{y_a} L{j * 22 + 4},{y_a} L{j * 26 + 8},{y_a + 46} L{j * 26 - 6},{y_a + 46} Z", _jt(ac, time), 0)
+        out += _p(aw, _jt("#f3e6c8", time), 3.0)
+        out += _clip(_uid("jraw", variant, seed), aw, stripes)
+        out += _p(aw, sw=3.0)
+        sc = ""
+        for j in range(9):
+            xx = dl - 74 + j * (dr - dl + 148) / 8
+            sc += f"M{_f(xx)},{y_a + 46} q{_f((dr - dl + 148) / 16)},{14} {_f((dr - dl + 148) / 8)},0 "
+        out += _p(sc, _jt("#f3e6c8", time), 2.6)
+        for px_ in (dl - 66, dr + 66):
+            out += _line(px_, y_a + 46, px_, db, sw=5, color=wood) + _line(px_, y_a + 46, px_, db, sw=2.0, color=S.shade(wood, 0.3))
+    for k, px_ in enumerate((dl - 110, dr + 100)):
+        if rng.random() < 0.8:
+            pot = _jt("#c8643c", time)
+            out += _p(f"M{px_ - 22},-46 L{px_ + 22},-46 L{px_ + 16},0 L{px_ - 16},0 Z", pot, 2.8)
+            out += _cluster([(px_ - 14, -60, 14), (px_ + 12, -62, 13), (px_, -78, 15)], _jt(pal["leaf"], time), 2.4)
+    out += _p(f"M{dl - 30},0 L{dr + 30},0 L{dr + 40},12 L{dl - 40},12 Z", S.shade(wall, -0.12), 2.6)
+    del ink2
+    return out
+
+
+def jericho_house(x, y, scale=1.0, facing=1, variant=0, time=0.0, door=0.0, lit=0.0, awning=True, seed=0):
+    """A sandstone / terracotta Jericho house (anchor = bottom centre of the front wall; (-262, -420, 262, 14)): flat roof
+    with a rounded parapet and beam ends, an arched doorway JR_HOUSE_DOOR (door 0 closed .. 1 open), lattice windows, a
+    striped awning, potted plants. variant 0-3 (JR_HOUSE_COLS); lit 0..1 warm light inside (evening)."""
+    return _place(_jr_house(variant, time, door, lit, awning, seed), x, y, scale, facing)
+
+
+def _jr_stall(goods="dates", time=0.0, awning=None, seed=0):
+    """A market stall (local, anchor = the ground under the middle of the table front): a plank table with baskets of
+    dates, pomegranates and figs, a striped awning on two poles and date bunches hanging from its edge."""
+    wood = _jt("#a0683e", time)
+    ac = _jt(awning or ("#4f8a4a", "#c8643c", "#e0a03a")[seed % 3], time)
+    out = ""
+    for px_ in (-150, 150):
+        out += _line(px_, 0, px_, -300, sw=7, color=wood) + _line(px_, 0, px_, -300, sw=2.4, color=S.shade(wood, 0.3))
+    aw = "M-178,-300 L178,-300 L196,-252 L-196,-252 Z"
+    stripes = "".join(_p(f"M{j * 30 - 10},-300 L{j * 30 + 6},-300 L{j * 33 + 10},-252 L{j * 33 - 8},-252 Z", ac, 0) for j in range(-7, 8))
+    out += _p(aw, _jt("#f3e6c8", time), 3.2) + _clip(_uid("jrst", seed, goods), aw, stripes) + _p(aw, sw=3.2)
+    sc = "".join(f"M{-196 + j * 49},-252 q24.5,14 49,0 " for j in range(8))
+    out += _p(sc, _jt("#f3e6c8", time), 2.6)
+    if goods == "dates":
+        for k, xx in enumerate((-110, 30, 120)):
+            out += _date_cluster(xx, -246, 1.1, n=12, seed=seed + k)
+    out += _p("M-170,-92 L170,-92 L176,-80 L-176,-80 Z", S.shade(wood, 0.15), 3.0)
+    out += _p("M-160,-80 L160,-80 L160,0 L148,0 L148,-66 L-148,-66 L-148,0 L-160,0 Z", wood, 3.0)
+    out += _g(_date_basket(), "translate(-95,-100) scale(0.9)")
+    out += _g(_date_basket(), "translate(10,-102) scale(0.8)")
+    for k, (xx, yy) in enumerate(((84, -108), (106, -104), (128, -108), (96, -122), (118, -122), (107, -134))):
+        out += _circ(xx, yy, 13, _jt("#c9443c", time), 2.6) + _p(f"M{xx - 3},{yy - 13} l3,-5 l3,5", sw=2.2, stroke="#7a2a2a")
+    for k in range(5):
+        out += _ell(-150 + k * 14, -106 - (k % 2) * 6, 7, 8, _jt("#6a3a6a", time), 2.0)
+    return out
+
+
+def market_stall(x, y, scale=1.0, facing=1, goods="dates", time=0.0, awning=None, seed=0):
+    """A Jericho market stall (anchor = the ground under the middle of its table front; (-200, -320, 200, 4)): baskets of
+    glossy dates, pomegranates and figs on a plank table, a striped awning (awning=colour) with date bunches hanging."""
+    return _place(_jr_stall(goods, time, awning, seed), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the street
+def jericho_street_points(x0, x1, y, scale=1.0, road_w=300, seed=0):
+    """Points of jericho_street(x0, x1, y, scale, road_w=...): 'road' (y of the road's centre: Jesus walks here),
+    'far_edge' / 'near_edge' (the ground lines where the crowds on the far / near side stand), 'houses' [x, ...] the house
+    centres (their walls stand on far_edge - 40*scale), 'stalls' [x, ...]."""
+    rng = random.Random(seed)
+    step = 470 * scale
+    n = int((x1 - x0) / step) + 2
+    houses = [x0 + (i + 0.35) * step + rng.uniform(-40, 40) * scale for i in range(n)]
+    stalls = [hx + 240 * scale for i, hx in enumerate(houses) if i % 2 == 1]
+    return {"road": y, "far_edge": y - road_w * scale / 2, "near_edge": y + road_w * scale / 2, "houses": houses, "stalls": stalls}
+
+
+def jericho_street(x0, x1, y, scale=1.0, part="all", time=0.0, seed=0, bottom=None, road_w=300, stalls=True, lit=None):
+    """A street in Jericho, city of palms (ABSOLUTE coordinates; sky not included: jericho_sky above). y = the road's centre
+    line. part 'back': the far hills and cliffs, palms rising behind, sandstone and terracotta houses along the far side
+    (their walls on far_edge - 40*scale) with market stalls of dates in front, palms between them; 'road': the packed-earth
+    road (ruts, pebbles, footprints) from far_edge to near_edge and the near verge down to bottom (default y +
+    road_w*scale/2 + 260*scale); 'front': a big palm trunk and a basket of dates framing the near corner; 'all'. THE CROWD
+    LINES BOTH SIDES: back -> jericho_crowd on far_edge (scale ~0.9*s) -> road -> Jesus on the road -> jericho_crowd on
+    near_edge (pose 'back' for the wall of backs) -> front. lit 0..1 lights the windows (default by time). ~1.0 s."""
+    pal = _jr_pal(time)
+    pts = jericho_street_points(x0, x1, y, scale, road_w, seed)
+    yf, yn = pts["far_edge"], pts["near_edge"]
+    bottom = bottom if bottom is not None else yn + 260 * scale
+    lit = (max(0.0, _jr_t(time) - 0.5) * 2) if lit is None else _clamp(lit)
+    rng = random.Random(seed)
+    out = ""
+    if part in ("back", "all"):
+        out += _jr_far(x0, x1, yf - 300 * scale, scale, time, seed)
+        hb = yf - 40 * scale
+        out += _p(f"M{_f(x0 - 40)},{_f(hb - 60 * scale)} L{_f(x1 + 40)},{_f(hb - 60 * scale)} L{_f(x1 + 40)},{_f(yf + 4)} "
+                  f"L{_f(x0 - 40)},{_f(yf + 4)} Z", pal["sand"], 0)
+        for i in range(int((x1 - x0) / (300 * scale)) + 2):
+            px = x0 + (i + 0.6) * 300 * scale + rng.uniform(-60, 60) * scale
+            out += _place(_jr_palm(rng.uniform(0.75, 0.95), rng.uniform(-0.2, 0.2), 0.0, False, time, seed + i, far=True),
+                          px, hb - 120 * scale, scale * 0.62, 1, filt=None)
+        for i, hx in enumerate(pts["houses"]):
+            v = (i + seed) % 4
+            out += _place(_jr_house(v, time, 0.0, lit, i % 2 == 0, seed + i), hx, hb, scale * rng.uniform(0.92, 1.0), 1 if i % 2 else -1,
+                          filt=None)
+            if i % 2 == 0:
+                out += _place(_jr_palm(rng.uniform(0.9, 1.05), rng.uniform(-0.15, 0.15), 0.0, True, time, seed + 20 + i),
+                              hx + 250 * scale, hb + 6 * scale, scale * 0.78, 1, filt=None)
+        if stalls:
+            for k, sx in enumerate(pts["stalls"]):
+                out += _place(_jr_stall("dates", time, None, seed + k), sx, yf - 6 * scale, scale * 0.82, 1, filt=None)
+    if part in ("road", "all"):
+        out += _p(f"M{_f(x0 - 40)},{_f(yf - 4 * scale)} L{_f(x1 + 40)},{_f(yf - 4 * scale)} L{_f(x1 + 40)},{_f(bottom + 40)} "
+                  f"L{_f(x0 - 40)},{_f(bottom + 40)} Z", pal["sand"], 0)
+        rd = S.mix(pal["sand_lt"], "#fff2d8", 0.25)
+        out += _p(f"M{_f(x0 - 40)},{_f(yf + 6 * scale)} Q{_f((x0 + x1) / 2)},{_f(yf - 4 * scale)} {_f(x1 + 40)},{_f(yf + 6 * scale)} "
+                  f"L{_f(x1 + 40)},{_f(yn - 4 * scale)} Q{_f((x0 + x1) / 2)},{_f(yn + 6 * scale)} {_f(x0 - 40)},{_f(yn - 4 * scale)} Z",
+                  rd, 2.6 * scale, stroke=S.shade(pal["sand"], -0.2))
+        for yy_, sg in ((yf + 6 * scale, 1), (yn - 4 * scale, -1)):
+            out += _p(f"M{_f(x0 - 40)},{_f(yy_)} Q{_f((x0 + x1) / 2)},{_f(yy_ - 8 * scale * sg)} {_f(x1 + 40)},{_f(yy_)}", sw=10 * scale,
+                      stroke=S.shade(pal["sand"], -0.16), extra='opacity="0.8"')
+            for j in range(int((x1 - x0) / (70 * scale)) + 1):
+                sx_ = x0 + j * 70 * scale + rng.uniform(-10, 10) * scale
+                out += _ell(sx_, yy_ + sg * 4 * scale, rng.uniform(16, 26) * scale, rng.uniform(7, 10) * scale,
+                            S.mix(pal["stone"], pal["sand_lt"], rng.uniform(0.0, 0.5)), 2.2 * scale)
+        for k in (0.36, 0.64):
+            yy = yf + (yn - yf) * k
+            out += _p(f"M{_f(x0 - 40)},{_f(yy)} Q{_f((x0 + x1) / 2)},{_f(yy - 6 * scale)} {_f(x1 + 40)},{_f(yy)}", sw=6 * scale,
+                      stroke=S.shade(rd, -0.07), extra='opacity="0.7"')
+        for _ in range(int((x1 - x0) / (40 * scale))):
+            px, py = rng.uniform(x0, x1), rng.uniform(yf + 10 * scale, bottom)
+            out += _ell(px, py, rng.uniform(3, 8) * scale, rng.uniform(2, 4) * scale, S.shade(pal["sand"], rng.choice((-0.15, 0.12))), 0,
+                        extra='opacity="0.8"')
+        for _ in range(int((x1 - x0) / (160 * scale))):
+            px, py = rng.uniform(x0, x1), rng.uniform(yn + 30 * scale, bottom)
+            out += _jr_tuft(px, py, scale * rng.uniform(0.7, 1.1), time, rng.randrange(9))
+    if part in ("front", "all"):
+        px = x0 + (x1 - x0) * 0.04
+        out += _place(_jr_palm(1.25, 0.12, 0.0, True, time, seed + 99), px, bottom + 80 * scale, scale * 1.3, 1, filt=None)
+        out += _place(_date_basket(), x1 - (x1 - x0) * 0.08, bottom - 20 * scale, scale * 1.1, 1, filt=None)
+    return f'<g filter="url(#wobble-fine)">{out}</g>'
+
+
+def _jr_tuft(x, y, s, time, seed=0):
+    """A little tuft of dry desert grass (local stage px)."""
+    pal = _jr_pal(time)
+    rng = random.Random(seed)
+    d = ""
+    for i in range(5):
+        a = -0.9 + 0.45 * i + rng.uniform(-0.1, 0.1)
+        L = rng.uniform(18, 30) * s
+        d += f"M{_f(x)},{_f(y)} q{_f(math.sin(a) * L * 0.3)},{_f(-L * 0.6)} {_f(math.sin(a) * L)},{_f(-L * math.cos(a))} "
+    return _p(d, sw=3 * s, stroke=S.mix(pal["leaf"], pal["sand_dk"], 0.4))
+
+
+# ---------------------------------------------------------------------- the sycamore-fig (Ficus sycomorus: 桑树)
+# The climb route matches characters.ZAC_CLIMB (anchor of each climb pose = the supporting sole); the hand grips of
+# each stage land on the branches drawn here. Local coords at scale 1, facing 1, anchor = the foot of the trunk.
+SYCOMORE_CLIMB = (("climb_a", (-118, 0)), ("climb_b", (-118, 0)), ("climb_c", (-72, -78)), ("climb_d", (-56, -236)),
+                  ("climb_c", (-30, -227)))
+_SYCO_CLIMB_HANDS = {"climb_a": ((80, -238), (66, -228)), "climb_b": ((80, -238), (66, -228)), "climb_c": ((72, -236), (60, -228)),
+                     "climb_d": ((70, -240), (58, -230))}        # = characters.ZAC_CLIMB hands (checked by the smoke test)
+_SYCO_CLIMB_FEET = {"climb_a": ((-12, 0), (12, 0)), "climb_b": ((-12, 0), (46, -78)), "climb_c": ((-8, 0), (18, -157)),
+                    "climb_d": ((4, 0), None)}
+SYCOMORE_SIT = (140, -481)       # the seat on the sitting branch (zacchaeus sit_branch / peek / wobble anchor)
+SYCOMORE_UNDER = (210, 0)        # where Jesus stops under the tree, looking up at the sitting spot
+SYCOMORE_SLIDE = ((-84, -228), (-92, -150), (-104, -70), (-118, 0))    # down the trunk's left side (slide_down soles)
+_SYCO_L1 = [(-30, -205), (-150, -251), (-280, -306), (-420, -366), (-525, -411)]
+_SYCO_L1_W = (44, 18)
+_SYCO_L0 = [(2, -228), (-14, -320), (-34, -420), (-62, -540), (-86, -680), (-84, -800)]
+_SYCO_L0_W = (66, 26)
+_SYCO_L2 = [(-44, -454), (40, -458), (140, -465), (260, -476), (390, -500), (520, -526), (600, -536)]
+_SYCO_L2_W = (42, 16)
+_SYCO_R1 = [(36, -205), (150, -250), (280, -284), (400, -312), (500, -340), (600, -380)]
+_SYCO_R1_W = (46, 18)
+_SYCO_UP = (([(-60, -560), (40, -650), (190, -716), (330, -770)], (30, 13)),
+            ([(-74, -610), (-200, -680), (-330, -722), (-460, -760)], (28, 12)),
+            ([(-86, -740), (-20, -840), (60, -930)], (22, 10)),
+            ([(-90, -760), (-200, -860), (-300, -930)], (20, 10)))
+_SYCO_FIGS = ((-34, -64), (44, -96), (-24, -150), (52, -184), (-190, -262), (-330, -318), (190, -258), (340, -300), (-6, -296),
+              (-52, -420), (290, -470), (90, -652), (-230, -680))
+_SYCO_FRONT = ((10, -640, 56), (300, -620, 54), (360, -520, 48), (-180, -560, 46), (-390, -700, 58), (440, -770, 58),
+               (-210, -905, 54), (160, -950, 56), (-560, -470, 52), (600, -400, 50), (-150, -760, 46), (520, -600, 46),
+               (-470, -400, 44), (480, -330, 44))
+
+
+def _syco_leaf(cx, cy, r, rot, col, sw=2.2):
+    """A broad, rounded, heart-shaped sycamore-fig leaf (tip pointing along rot, 0 = up) with a midrib."""
+    d = (f"M0,{_f(0.8 * r)} C{_f(-0.95 * r)},{_f(0.95 * r)} {_f(-1.05 * r)},{_f(-0.25 * r)} 0,{_f(-r)} "
+         f"C{_f(1.05 * r)},{_f(-0.25 * r)} {_f(0.95 * r)},{_f(0.95 * r)} 0,{_f(0.8 * r)} Z")
+    body = _p(d, col, sw) + _p(f"M0,{_f(0.7 * r)} L0,{_f(-0.75 * r)}", sw=sw * 0.7, stroke=S.shade(col, -0.28))
+    return _g(body, f"translate({_f(cx)},{_f(cy)}) rotate({_f(rot)})")
+
+
+def _syco_figs(cx, cy, s=1.0, seed=0, time=0.0):
+    """A cluster of small round figs growing straight out of the bark (cauliflory)."""
+    rng = random.Random(seed)
+    cols = ("#e8a83a", "#e07a48", "#c9554a", "#d9b44a", "#d86a5a")
+    out = ""
+    for i in range(rng.randint(3, 5)):
+        x, y = cx + rng.uniform(-14, 14) * s, cy + rng.uniform(-10, 10) * s
+        r = rng.uniform(6.5, 9.0) * s
+        col = _jt(cols[(i + seed) % len(cols)], time, 0.6)
+        out += _circ(x, y, r, col, 2.0 * s)
+        out += _circ(x - r * 0.35, y - r * 0.35, r * 0.25, HILITE, 0, extra='opacity="0.7"')
+        out += _circ(x + r * 0.15, y + r * 0.25, r * 0.10, S.shade(col, -0.35), 0, extra='opacity="0.7"')
+    return out
+
+
+def _syco_branch_top(pts, w01, x):
+    """Top surface y of a limb (centreline pts, widths w0 -> w1) at x (linear between the centreline points)."""
+    n = len(pts)
+    for i in range(n - 1):
+        (xa, ya), (xb, yb) = pts[i], pts[i + 1]
+        if min(xa, xb) <= x <= max(xa, xb):
+            t = (x - xa) / ((xb - xa) or 1)
+            yc = ya + (yb - ya) * t
+            w = w01[0] + (w01[1] - w01[0]) * (i + t) / (n - 1)
+            return yc - w / 2
+    return pts[-1][1]
+
+
+def _leaf_spray(cx, cy, ang, length, n, cols, rng, sway=0.0, size=24):
+    """A twig of sycamore-fig leaves fanning from (cx, cy) along screen angle ang (local markup)."""
+    a = math.radians(ang + sway * 6)
+    bend = rng.uniform(-0.25, 0.25)
+    out = ""
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        aa = a + bend * t
+        pts.append((cx + math.cos(aa) * length * t, cy + math.sin(aa) * length * t))
+    out += _p(_sm(pts, closed=False), sw=3.0, stroke="#6a5a3a")
+    for i in range(1, n + 1):
+        t = i / n
+        px, py = pts[i]
+        side = 1 if i % 2 else -1
+        rot = math.degrees(a + bend * t) + 90 + side * rng.uniform(35, 60) + sway * 8
+        if i == n:
+            rot = math.degrees(a + bend) + 90
+        r = size * rng.uniform(0.85, 1.12) * (1.0 - 0.15 * t)
+        off = r * 0.75
+        lx = px + math.cos(math.radians(rot - 90)) * off
+        ly = py + math.sin(math.radians(rot - 90)) * off
+        out += _syco_leaf(lx, ly, r, rot, cols[(i + int(rng.random() * 3)) % len(cols)])
+    return out
+
+
+_SYCO_BLOBS = ((40, -800, 150), (-180, -760, 130), (270, -770, 130), (-360, -660, 115), (440, -660, 112), (-90, -940, 120),
+               (190, -950, 118), (-300, -880, 105), (400, -870, 100), (60, -1010, 100), (-500, -560, 92), (560, -540, 92),
+               (-430, -500, 80), (500, -470, 82), (-220, -600, 104), (300, -610, 100), (40, -640, 110), (-560, -660, 80),
+               (620, -650, 76), (-160, -1010, 82), (300, -1000, 78))
+
+
+def _syco_canopy(time, sway, seed, part):
+    pal = _jr_pal(time)
+    rng = random.Random(seed + 5)
+    dk, mid, lt = pal["leaf_dk"], pal["leaf"], pal["leaf_lt"]
+    out = ""
+    if part == "back":
+        blobs = [(cx + sway * 3 * (cy + 500) / -600, cy, r) for cx, cy, r in _SYCO_BLOBS]
+        cid = _uid("sycomass", round(sway, 3), round(_jr_t(time), 3), seed)
+        clip = "".join(f'<circle cx="{_f(cx)}" cy="{_f(cy)}" r="{_f(r)}"/>' for cx, cy, r in blobs)
+        out += _cluster(blobs, mid, 4.0)
+        shade_ = ""
+        for cx, cy, r in blobs:
+            shade_ += _ell(cx + r * 0.08, cy + r * 0.55, r * 0.95, r * 0.55, dk, 0, extra='opacity="0.55"')
+        for cx, cy, r in blobs:
+            shade_ += _ell(cx - r * 0.22, cy - r * 0.30, r * 0.58, r * 0.45, lt, 0, extra='opacity="0.55"')
+        for cx, cy, r in blobs:
+            shade_ += _p(f"M{_f(cx - r * 0.75)},{_f(cy - r * 0.15)} Q{_f(cx - r * 0.3)},{_f(cy - r * 0.85)} {_f(cx + r * 0.55)},{_f(cy - r * 0.55)}",
+                         sw=2.4, stroke=S.shade(mid, -0.28), extra='opacity="0.6"')
+        for i in range(60):
+            cx, cy, r = blobs[i % len(blobs)]
+            a = rng.uniform(0, 2 * math.pi)
+            rr = rng.uniform(0.1, 0.8) * r
+            shade_ += _syco_leaf(cx + rr * math.cos(a), cy + rr * math.sin(a), rng.uniform(16, 22), rng.uniform(-70, 70) + sway * 8,
+                                 lt if i % 3 else dk, 1.8)
+        out += f'<clipPath id="{cid}">{clip}</clipPath><g clip-path="url(#{cid})">{shade_}</g>'
+        edge = ""
+        for j, (cx, cy, r) in enumerate(blobs):
+            n = max(6, int(2 * math.pi * r / 30))
+            for i in range(n):
+                a = 2 * math.pi * (i + rng.uniform(-0.2, 0.2)) / n
+                px, py = cx + r * math.cos(a), cy + r * math.sin(a)
+                if any((px - bx) ** 2 + (py - by) ** 2 < (br * 0.97) ** 2 for k_, (bx, by, br) in enumerate(blobs) if k_ != j):
+                    continue
+                lr = rng.uniform(20, 27)
+                lx, ly = cx + (r - lr * 0.3) * math.cos(a), cy + (r - lr * 0.3) * math.sin(a)
+                rot = math.degrees(a) + 90 + rng.uniform(-22, 22) + sway * 6
+                edge += _syco_leaf(lx, ly, lr, rot, (mid, lt, mid, dk)[i % 4] if math.sin(a) < 0.3 else (dk, mid)[i % 2])
+        out += edge
+    else:
+        cols = (lt, mid, lt)
+        for k, (cx, cy, r) in enumerate(_SYCO_FRONT):
+            cx += sway * 5 * (1 if k % 2 else -1)
+            n_sp = 3
+            for j in range(n_sp):
+                ang = -90 + (j - 1) * 55 + rng.uniform(-15, 15) + (180 if cy > -560 and j == 1 else 0)
+                out += _leaf_spray(cx + rng.uniform(-r * 0.3, r * 0.3), cy + rng.uniform(-r * 0.2, r * 0.2), ang, r * 1.05, 5, cols,
+                                   rng, sway, size=r * 0.42)
+    return out
+
+
+def _sycomore(part="all", sway=0.0, time=0.0, figs=True, seed=0):
+    """The sycamore-fig of Jericho (local markup)."""
+    pal = _jr_pal(time)
+    bark = pal["bark"]
+    bdk, blt = S.shade(bark, -0.22), S.shade(bark, 0.25)
+    out = ""
+    if part in ("back", "all"):
+        out += _syco_canopy(time, sway, seed, "back")
+        shapes = []
+        trunk = [(-108, 6), (-90, -18), (-76, -60), (-71, -120), (-66, -190), (-58, -238), (-20, -258), (30, -252), (58, -228),
+                 (64, -190), (68, -130), (74, -72), (88, -24), (104, 6)]
+        shapes.append(_sm(trunk, closed=True, tension=0.7))
+        for pts, (w0, w1) in [(_SYCO_L1, _SYCO_L1_W), (_SYCO_L0, _SYCO_L0_W), (_SYCO_L2, _SYCO_L2_W), (_SYCO_R1, _SYCO_R1_W)] + list(_SYCO_UP):
+            left, right = [], []
+            n = len(pts)
+            for i, pp in enumerate(pts):
+                q0, q1 = pts[max(0, i - 1)], pts[min(n - 1, i + 1)]
+                dx, dy = q1[0] - q0[0], q1[1] - q0[1]
+                ln = math.hypot(dx, dy) or 1
+                w = (w0 + (w1 - w0) * i / (n - 1)) / 2
+                left.append((pp[0] - dy / ln * w, pp[1] + dx / ln * w))
+                right.append((pp[0] + dy / ln * w, pp[1] - dx / ln * w))
+            shapes.append(_sm(left + list(reversed(right)), closed=True, tension=0.8))
+        shapes.append(_sm([(-94, -70), (-88, -48), (-70, -46), (-66, -72), (-80, -80)], closed=True))       # the knob (a foothold)
+        shapes.append(_sm([(-6, -360), (16, -364), (18, -378), (0, -384), (-10, -374)], closed=True))       # a stub on the limb
+        for d in shapes:
+            out += _p(d, bark, 8.0)
+        for d in shapes:
+            out += _p(d, bark, 0)
+        for d in shapes[1:]:
+            out += _p(d, "none", 0)
+        out += _p("M-60,-40 Q-52,-140 -46,-230 M34,-30 Q40,-120 30,-226", sw=10, stroke=blt, extra='opacity="0.45"')
+        out += _p("M-30,-20 Q-18,-90 -26,-170 M10,-40 Q20,-110 8,-200 M48,-60 Q56,-120 46,-180", sw=2.4, stroke=bdk, extra='opacity="0.55"')
+        rng = random.Random(seed + 11)
+        for _ in range(26):
+            px, py = rng.uniform(-60, 56), rng.uniform(-220, -20)
+            out += _ell(px, py, rng.uniform(5, 13), rng.uniform(3, 6), rng.choice((bdk, blt, "#c8c08a")), 0, extra='opacity="0.6"')
+        for pts, _w in [(_SYCO_L1, 0), (_SYCO_R1, 0), (_SYCO_L2, 0)]:
+            for i in range(len(pts) - 1):
+                a, b = pts[i], pts[i + 1]
+                out += _p(f"M{_f(a[0])},{_f(a[1] + 4)} L{_f(b[0])},{_f(b[1] + 4)}", sw=2.0, stroke=bdk, extra='opacity="0.4"')
+        for rx, ry, rl in ((-110, 4, -60), (100, 4, 66), (-40, 6, -40), (50, 8, 40)):
+            out += _p(f"M{rx},{ry} q{rl * 0.5},-4 {rl},6", sw=12, stroke=bark) + _p(f"M{rx},{ry} q{rl * 0.5},-4 {rl},6", sw=2.4, stroke=bdk,
+                                                                                 extra='opacity="0.6"')
+        if figs:
+            for k, (fx, fy) in enumerate(_SYCO_FIGS):
+                out += _syco_figs(fx, fy, 1.0, seed + k, time)
+        for k in range(7):
+            gx = -160 + k * 52
+            out += _jr_tuft(gx, 8 + (k % 2) * 4, 0.9, time, k + seed)
+    if part in ("front", "all"):
+        out += _syco_canopy(time, sway, seed, "front")
+    return out
+
+
+def sycomore(x, y, scale=1.0, facing=1, part="all", sway=0.0, time=0.0, figs=True, seed=0):
+    """The sycamore-fig tree by the road (Luke 19:4) - NOT a mulberry (see module doc, section 14). Anchor: the foot of the
+    trunk. part 'back' (the crown's back foliage, trunk, every limb, figs on the bark) | 'front' (leaf clusters in front of
+    the climber, framing the sitting spot so his face shows) | 'all'. BBox (-700, -1100, 720, 20) at scale 1 (use 0.45-0.9)."""
+    if part not in ("all", "back", "front"):
+        raise ValueError(f"sycomore: part must be 'all', 'back' or 'front', not {part!r}")
+    return _place(_sycomore(part, sway, time, figs, seed), x, y, scale, facing)
+
+
+def sycomore_points(x, y, scale=1.0, facing=1):
+    """Stage points of sycomore(x, y, scale, facing): 'climb' [dict(pose, anchor, hands [far, near], feet [support,
+    raised]), ...] the climbing stages from the ground to the sitting branch in order (characters.zacchaeus(*anchor, scale,
+    facing, pose=pose) puts his hands on the branches), 'sit' (the seat on the sitting branch), 'face' (about where his face
+    is when he sits there), 'under' (where Jesus stands to look up at him), 'slide' [(x, y), ...] the soles' path for
+    slide_down along the trunk, 'down' (the climb stages reversed, for climbing down), 'trunk', 'crown' (the crown's
+    centre)."""
+    P_ = lambda lx, ly: local_to_stage(x, y, scale, facing, lx, ly)   # noqa: E731
+    stages = []
+    for pose, (ax, ay) in SYCOMORE_CLIMB:
+        hands = [P_(ax + hx, ay + hy) for hx, hy in _SYCO_CLIMB_HANDS[pose]]
+        feet = [P_(ax + fx_, ay + fy_) if (fx_ is not None) else None for fx_, fy_ in
+                [(f if f is not None else (None, None)) for f in _SYCO_CLIMB_FEET[pose]]]
+        stages.append({"pose": pose, "anchor": P_(ax, ay), "hands": hands, "feet": feet})
+    return {"climb": stages, "down": list(reversed(stages)), "sit": P_(*SYCOMORE_SIT), "face": P_(SYCOMORE_SIT[0] + 4, SYCOMORE_SIT[1] - 132),
+            "under": P_(*SYCOMORE_UNDER), "slide": [P_(*p) for p in SYCOMORE_SLIDE], "trunk": P_(0, 0), "crown": P_(40, -760)}
+
+
+# ---------------------------------------------------------------------- coins, the money chest, the picture-book glosses
+COIN_STYLES = ("heap", "stack", "row", "spill")
+
+
+def coin(x, y, scale=1.0, tilt=0.0, kind="gold"):
+    """One Jericho coin (anchor = its centre; r 13 at scale 1): gold with a little stamped date palm and a glint (kind
+    'gold' | 'silver'); tilt 0..1 flattens it (lying on a table ~0.6)."""
+    return _place(_jcoin(0, 0, 13, tilt, kind), x, y, scale)
+
+
+def _coin_pile(n=12, style="heap", seed=0, r=12.0):
+    rng = random.Random(seed)
+    out = ""
+    n = max(0, int(n))
+    if style == "stack":
+        for i in range(n):
+            out += _jcoin(rng.uniform(-1.5, 1.5), -r * 0.45 - i * r * 0.42, r, 0.72)
+    elif style == "row":
+        for i in range(n):
+            out += _jcoin((i - (n - 1) / 2) * r * 2.3, -r * 0.5, r, 0.62)
+    elif style == "spill":
+        for i in range(n):
+            out += _jcoin(rng.uniform(-r * 4, r * 4), -r * 0.4 + rng.uniform(-r * 0.6, r * 0.6), r, rng.uniform(0.5, 0.75))
+    else:
+        placed, row = 0, 0
+        while placed < n:
+            w = max(1, 6 - row)
+            for j in range(w):
+                if placed >= n:
+                    break
+                out += _jcoin((j - (w - 1) / 2) * r * 1.6 + rng.uniform(-2, 2), -r * 0.6 - row * r * 0.62 + rng.uniform(-1, 1), r, 0.62)
+                placed += 1
+            row += 1
+    return out
+
+
+def coin_pile(x, y, scale=1.0, n=12, style="heap", seed=0):
+    """Coins (anchor = the bottom centre where they lie): style 'heap' (a mound), 'stack' (one column), 'row' (counted out
+    side by side, 27.6 px apart at scale 1), 'spill' (scattered). n coins."""
+    if style not in COIN_STYLES:
+        raise ValueError(f"coin_pile: unknown style {style!r}; choose from {COIN_STYLES}")
+    return _place(_coin_pile(n, style, seed), x, y, scale)
+
+
+def _money_chest(open_=0.0, coins=1.0, glow=0.0, w=220, h=130):
+    """Zacchaeus's money chest (local, anchor = bottom centre): dark carved wood, brass bands, corner plates and a lock;
+    the lid is hinged at the back (open 0..1 lifts it) and gold coins heap up inside."""
+    wood, wood_dk, brass = "#7a4a2c", "#5a3420", "#d9a845"
+    k = _clamp(open_)
+    x0, x1 = -w / 2, w / 2
+    out = ""
+    if glow > 0:
+        out += _ls_glow(0, -h - 20, w * 0.9, h * 0.9, _clamp(glow) * k, "chest", "#fff4c8", JR_GOLD)
+    back_top = -h - 26
+    if k > 0:
+        out += _p(f"M{x0 + 8},{-h} L{x1 - 8},{-h} L{x1 - 14},{back_top} L{x0 + 14},{back_top} Z", wood_dk, 3.0)
+        if coins > 0:
+            rng = random.Random(3)
+            heap = _sm([(x0 + 12, -h + 2), (x0 + 30, -h - 22 * coins), (0, -h - 36 * coins), (x1 - 30, -h - 22 * coins), (x1 - 12, -h + 2)],
+                       closed=True, tension=0.8)
+            out += _p(heap, JR_GOLD, 3.0)
+            for i in range(int(16 * coins)):
+                cx = rng.uniform(x0 + 26, x1 - 26)
+                cy = -h - rng.uniform(4, 30) * coins * (1 - abs(cx) / w)
+                out += _jcoin(cx, cy, 10, 0.6)
+            if glow > 0:
+                for i in range(4):
+                    out += _sparkle_p(rng.uniform(x0 + 30, x1 - 30), -h - rng.uniform(30, 70), 10, "#fff6d0")
+    out += _p(f"M{x0},0 L{x0},{-h} L{x1},{-h} L{x1},0 Z", wood, 4)
+    out += _p(f"M{x0 + 14},-14 L{x1 - 14},-14 L{x1 - 14},{-h + 14} L{x0 + 14},{-h + 14} Z", "none", 2.2, stroke=wood_dk)
+    for yy in (-h * 0.32, -h * 0.72):
+        out += _rect(x0, yy - 6, w, 12, brass, 2.4)
+    for cx in (x0, x1):
+        out += _p(f"M{cx},0 l{18 if cx < 0 else -18},0 l0,-22 M{cx},{-h} l{18 if cx < 0 else -18},0 l0,22", sw=6, stroke=brass)
+    for i in range(5):
+        out += _circ(x0 + 28 + i * (w - 56) / 4, -h * 0.32, 3.4, S.shade(brass, -0.2), 1.4)
+    if k < 1:
+        lift = 120 * k
+        lid = (f"M{x0 - 6},{-h} L{x1 + 6},{-h} L{x1 + 2},{_f(-h - 34 - lift * 0.15)} Q0,{_f(-h - 54 - lift * 0.6)} "
+               f"{x0 - 2},{_f(-h - 34 - lift * 0.15)} Z")
+        if k > 0:
+            lid = (f"M{x0 + 10},{back_top} L{x1 - 10},{back_top} L{x1 - 6},{_f(back_top - 30 - 60 * k)} Q0,{_f(back_top - 46 - 90 * k)} "
+                   f"{x0 + 6},{_f(back_top - 30 - 60 * k)} Z")
+        out += _p(lid, S.shade(wood, 0.08), 4)
+        out += _p(lid.replace(" Z", ""), "none", 0)
+        if k == 0:
+            out += _rect(x0 - 6, -h - 12, w + 12, 10, brass, 2.4)
+            out += _rect(-14, -h - 6, 28, 30, brass, 2.4, rx=4) + _circ(0, -h + 6, 4, S.shade(brass, -0.45), 0)
+    else:
+        lid = f"M{x0 + 10},{back_top} L{x1 - 10},{back_top} L{x1 - 6},{back_top - 92} Q0,{back_top - 140} {x0 + 6},{back_top - 92} Z"
+        out = _p(lid, S.shade(wood, 0.08), 4) + _rect(x0 + 10, back_top - 18, w - 20, 9, brass, 2.2) + out
+    return out
+
+
+def _sparkle_p(x, y, r, col):
+    d = (f"M{_f(x)},{_f(y - r)} Q{_f(x + r * 0.16)},{_f(y - r * 0.16)} {_f(x + r)},{_f(y)} Q{_f(x + r * 0.16)},{_f(y + r * 0.16)} "
+         f"{_f(x)},{_f(y + r)} Q{_f(x - r * 0.16)},{_f(y + r * 0.16)} {_f(x - r)},{_f(y)} Q{_f(x - r * 0.16)},{_f(y - r * 0.16)} {_f(x)},{_f(y - r)} Z")
+    return _p(d, col, 1.6, stroke=S.shade(col, -0.4))
+
+
+def money_chest(x, y, scale=1.0, facing=1, open=0.0, coins=1.0, glow=0.0):
+    """Zacchaeus's money chest (anchor = bottom centre; closed (-118, -170, 118, 4), open (-118, -300, 118, 4)): carved dark
+    wood, brass bands and lock; open 0..1 lifts the lid on its back hinge (quantise 0, .25, .5, .75, 1) showing a heap of
+    gold coins (coins 0..1); glow 0..1 a golden shine with twinkles when open ('钱箱打开了')."""
+    return _place(_money_chest(open, coins, glow), x, y, scale, facing)
+
+
+GLOSS_KINDS = ("half", "fourfold")
+
+
+def _gloss_label(x, y, txt, size=34, col="#7a4a2c"):
+    return (f'<text x="{_f(x)}" y="{_f(y)}" font-family="LXGW WenKai" font-weight="bold" font-size="{size}" fill="{col}" '
+            f'text-anchor="middle">{txt}</text>')
+
+
+def coins_gloss(x, y, scale=1.0, kind="half", progress=1.0, card=True, labels=True):
+    """A picture-book gloss for the promise (Luke 19:8), as a little card (anchor = its centre; ~560 x 300 at scale 1).
+    kind 'half' ('一半，就是有十块钱，分五块给穷人'): ten coins in a row (progress 0) slide apart into two piles of five (.5)
+    and the right pile moves into a little alms bowl with a heart (1). kind 'fourfold' ('多收了一块钱，要还四块钱'): one coin
+    on the left (0) and an arrow, then four coins pop out one by one on the right (progress .25, .5, .75, 1). labels=True
+    adds the numbers (LXGW WenKai, not wobbled); card=False leaves out the cream card. Quantise progress (8 frames)."""
+    if kind not in GLOSS_KINDS:
+        raise ValueError(f"coins_gloss: unknown kind {kind!r}; choose from {GLOSS_KINDS}")
+    p = _clamp(progress)
+    art, txt = "", ""
+    if card:
+        art += _p("M-286,-138 Q-290,-152 -272,-154 L272,-154 Q290,-152 286,-138 L280,138 Q278,152 262,154 L-262,154 Q-280,152 -282,138 Z",
+                  "#fbf3e0", 4.0)
+        art += _p("M-266,-134 L266,-134 L262,134 L-262,134 Z", "none", 2.0, stroke="#e2c79a", extra='stroke-dasharray="7 6"')
+    r = 22
+    if kind == "half":
+        split = _smooth(min(1.0, p / 0.5))
+        move = _smooth(max(0.0, (p - 0.5) / 0.5))
+        bowl_x = 180
+        if move > 0:
+            art += _g(_alms_bowl(0), f"translate({bowl_x},40) scale(1.5)")
+        for i in range(10):
+            left = i < 5
+            base = (i - 4.5) * r * 2.25
+            q = i % 5
+            px_, py_ = ((-26, 0), (0, 0), (26, 0), (-13, -20), (13, -20))[q]
+            gx = (-150 + px_) if left else (60 + px_)
+            gy = 12 + py_
+            if not left and move > 0:
+                gx = gx + (bowl_x - 60) * move
+                gy = gy + (6 - gy) * move
+            cx = base + (gx - base) * split
+            cy = -10 + (gy + 10) * split
+            art += _jcoin(cx, cy, r, 0.18 + 0.30 * split)
+        if move > 0.6:
+            art += _p(f"M{bowl_x},-70 c-18,-22 -42,-2 0,24 c42,-26 18,-46 0,-24 Z", "#e2574a", 2.6, extra=f'opacity="{min(1.0, (move - 0.6) * 2.5):.2f}"')
+        if labels:
+            if split < 0.5:
+                txt += _gloss_label(0, 96, "10")
+            else:
+                txt += _gloss_label(-150, 96, "5") + _gloss_label(60 + (bowl_x - 60) * move, 108 if move > 0 else 96, "5")
+    else:
+        art += _jcoin(-190, 0, r * 1.15, 0.2)
+        art += _p("M-120,0 L-40,0 M-62,-18 L-38,0 L-62,18", sw=7, stroke="#c8643c")
+        for k in range(4):
+            t0 = 0.25 * k
+            if p > t0 + 1e-6 or (k == 0 and p > 0):
+                pk = _clamp((p - t0) / 0.2)
+                pop = 1.0 + 0.25 * math.sin(math.pi * pk)
+                cx = 30 + k * 62
+                art += _g(_jcoin(0, 0, r, 0.2), f"translate({cx},{_f(-4 - 10 * math.sin(math.pi * pk))}) scale({pop:.3f})")
+        if labels:
+            txt += _gloss_label(-190, 96, "1")
+            if p >= 0.999:
+                txt += _gloss_label(123, 96, "4")
+    return _place(art, x, y, scale) + (_g(txt, f"translate({_f(x)},{_f(y)}) scale({scale:.4f})") if txt else "")
+
+
+# ---------------------------------------------------------------------- the tax booth
+TAX_TABLE_H = 106                # the table's front edge above the floor; its back edge is TAX_TABLE_DEPTH higher
+TAX_TABLE_DEPTH = 24
+TAX_BOOTH_SEAT = (-50, -70)      # Zacchaeus's seat behind the table (zacchaeus(pose='count') anchor), local coords
+
+
+def _balance_scale(tilt=0.0):
+    """A brass balance (local, anchor = the foot of its post): a post, a beam and two hanging pans; tilt -1..1."""
+    brass, dk = "#d9a845", "#a8782a"
+    a = math.radians(12 * tilt)
+    out = _p("M-26,0 Q0,-12 26,0 Z", brass, 2.6) + _line(0, -4, 0, -104, sw=7, color=dk) + _line(0, -4, 0, -104, sw=3.4, color=brass)
+    bx, by = 62 * math.cos(a), 62 * math.sin(a)
+    out += _line(-bx, -104 - by, bx, -104 + by, sw=6, color=dk) + _line(-bx, -104 - by, bx, -104 + by, sw=2.6, color=brass)
+    out += _circ(0, -106, 6, brass, 2.2)
+    for sg in (-1, 1):
+        px, py = sg * bx, -104 + sg * by
+        out += _line(px, py, px - 16, py + 44, sw=1.6, color=dk) + _line(px, py, px + 16, py + 44, sw=1.6, color=dk)
+        out += _p(f"M{_f(px - 22)},{_f(py + 44)} Q{_f(px)},{_f(py + 58)} {_f(px + 22)},{_f(py + 44)} Z", brass, 2.4)
+    out += _jcoin(-bx, -104 - by + 40, 7, 0.7)
+    return out
+
+
+def balance_scale(x, y, scale=1.0, tilt=0.0):
+    """The tax booth's brass balance (anchor = the foot of its post; (-86, -118, 86, 4)); tilt -1..1 tips the beam."""
+    return _place(_balance_scale(tilt), x, y, scale)
+
+
+def _ledger_scroll(open_=1.0):
+    """The tax ledger: a scroll unrolled flat on the table with columns of marks (local, anchor = its centre)."""
+    w = 40 + 70 * _clamp(open_)
+    out = _p(f"M{-w},-12 L{w},-12 L{w + 6},10 L{-w - 6},10 Z", "#f3e2bc", 2.6)
+    for k in range(3):
+        yy = -6 + k * 6
+        for j in range(int(w / 14)):
+            xx = -w + 10 + j * 14
+            out += _line(xx, yy, xx + 7, yy, sw=1.8, color="#8a5a36")
+    for sx in (-1, 1):
+        out += _ell(sx * (w + 4), -1, 8, 14, "#e2c690", 2.6) + _ell(sx * (w + 4), -1, 3, 9, "#a0683e", 0)
+    return out
+
+
+def ledger_scroll(x, y, scale=1.0, open=1.0):
+    """The tax ledger scroll lying open (anchor = its centre; (-122, -18, 122, 16) open); open 0..1 unrolls it."""
+    return _place(_ledger_scroll(open), x, y, scale)
+
+
+def _tax_booth(part="all", coins=1.0, time=0.0, ledger=True):
+    pal = _jr_pal(time)
+    wood = _jt("#a0683e", time)
+    wood_dk = S.shade(wood, -0.25)
+    out = ""
+    if part in ("back", "all"):
+        aw_c = _jt("#c8643c", time)
+        for px_ in (-200, 200):
+            out += _line(px_, 0, px_, -430, sw=9, color=wood) + _line(px_, 0, px_, -430, sw=3.0, color=S.shade(wood, 0.3))
+        aw = "M-236,-430 L236,-430 L256,-360 L-256,-360 Z"
+        stripes = "".join(_p(f"M{j * 40 - 14},-430 L{j * 40 + 8},-430 L{j * 44 + 12},-360 L{j * 44 - 12},-360 Z", aw_c, 0) for j in range(-7, 8))
+        out += _p(aw, _jt("#f3e6c8", time), 3.4) + _clip(_uid("tbaw", round(_jr_t(time), 3)), aw, stripes) + _p(aw, sw=3.4)
+        out += _p("".join(f"M{-256 + j * 64},-360 q32,18 64,0 " for j in range(8)), _jt("#f3e6c8", time), 2.8)
+        out += _p("M-260,10 L260,10 L230,-30 L-230,-30 Z", _jt("#b8463a", time), 2.6)
+        out += _p("M-246,2 L246,2 M-238,-8 L238,-8", sw=3, stroke=_jt("#e8b746", time), extra='opacity="0.8"')
+        sx, sy = TAX_BOOTH_SEAT
+        out += _p(f"M{sx - 30},{sy} L{sx + 30},{sy} L{sx + 24},{sy + 46} L{sx - 24},{sy + 46} Z", wood, 3.0)
+        out += _g(_money_chest(0.0, 0.0, 0.0), "translate(170,-24) scale(0.55)")
+    if part in ("front", "all"):
+        top_f, top_b = -TAX_TABLE_H, -TAX_TABLE_H - TAX_TABLE_DEPTH
+        out += _p(f"M-170,{top_f} L170,{top_f} L162,{top_b} L-162,{top_b} Z", S.shade(wood, 0.18), 3.2)
+        out += _p(f"M-174,0 L-174,{top_f} L174,{top_f} L174,0 Z", wood, 3.6)
+        for j in range(1, 6):
+            xx = -174 + j * 58
+            out += _line(xx, top_f + 6, xx, -6, sw=2.2, color=wood_dk, extra='opacity="0.7"')
+        out += _rect(-174, top_f, 348, 12, S.shade(wood, -0.08), 2.4)
+        out += _p("M-150,-30 Q0,-50 150,-30", sw=3, stroke=_jt("#e8b746", time), extra='opacity="0.9"')
+        n = int(round(18 * _clamp(coins)))
+        if n:
+            out += _g(_coin_pile(n, "heap", 2, 11), f"translate(-10,{top_f - 10})")
+            out += _g(_coin_pile(max(1, n // 3), "stack", 4, 11), f"translate(42,{top_f - 12})")
+            out += _g(_coin_pile(max(1, n // 4), "stack", 5, 11), f"translate(62,{top_f - 8})")
+        if ledger:
+            out += _g(_ledger_scroll(1.0), f"translate(116,{top_f - 10}) scale(0.62)")
+        out += _g(_balance_scale(-0.3), f"translate(-128,{top_f - 10}) scale(0.62)")
+    return out
+
+
+def tax_booth(x, y, scale=1.0, facing=1, part="all", coins=1.0, time=0.0, ledger=True):
+    """Zacchaeus's tax booth by the road (anchor = the floor under the middle of the table's front; (-262, -450, 262, 14)):
+    a plank table (front edge TAX_TABLE_H = 106 up, back edge TAX_TABLE_DEPTH = 24 higher) with a heap and stacks of gold
+    coins (coins 0..1), the ledger scroll and a brass balance, a stool, a small strongbox and a striped awning on two
+    poles over a red rug. part 'back' (poles, awning, rug, stool, strongbox) | 'front' (the table with everything on it).
+    COUNTING: tax_booth(part='back') -> zacchaeus(*local_to_stage(x, y, s, f, *TAX_BOOTH_SEAT), s, f, pose='count',
+    phase=ph) -> tax_booth(part='front'): his hand carries a coin from the heap to the stacks as phase goes 0 -> 1."""
+    if part not in ("all", "back", "front"):
+        raise ValueError(f"tax_booth: part must be 'all', 'back' or 'front', not {part!r}")
+    return _place(_tax_booth(part, coins, time, ledger), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- Zacchaeus's fine house
+ZAC_GATE = (-118, -318, 118, 0)      # the gateway of the exterior (local): people walk in here
+ZAC_ROOM_BACK_Y = -170               # interior: the base of the back wall (the floor runs from here down to +420)
+ZAC_ROOM_CHEST = (520, -150)         # interior: where the money chest stands (its bottom centre, local)
+DINING_TABLE_H = 112                 # dining_table: the top's front edge above the floor; back edge DINING_TABLE_DEPTH higher
+DINING_TABLE_DEPTH = 30
+DINING_BENCH_H = 70                  # dining_bench: seat top (= the seat of jesus 'sit_table' and the disciples' 'sit')
+
+
+def _zac_house_ext(time=0.0, door=0.0, lamp=1.0, seed=0):
+    pal = _jr_pal(time)
+    wall = _jt("#ecd09a", time, 0.8)
+    trim = _jt("#c8643c", time, 0.6)
+    teal = _jt("#2a7e86", time, 0.5)
+    wood = _jt("#7a4a2c", time)
+    lit = _clamp(lamp) * max(0.25, _jr_t(time))
+    rng = random.Random(seed + 77)
+    out = ""
+    out += _p("M-470,0 L-470,-520 L470,-520 L470,0 Z", wall, 4)
+    out += _p("M-300,-520 L-300,-760 L300,-760 L300,-520 Z", S.shade(wall, 0.05), 4)
+    for (ax0, ax1, ay) in ((-482, 482, -520), (-312, 312, -760)):
+        out += _p(f"M{ax0},{ay} L{ax0},{ay - 24} Q{(ax0 + ax1) / 2},{ay - 34} {ax1},{ay - 24} L{ax1},{ay} Z", S.shade(wall, 0.1), 3.4)
+        out += _rect(ax0 + 12, ay + 2, ax1 - ax0 - 24, 14, trim, 2.4)
+        for i in range(8):
+            out += _circ(ax0 + 40 + i * (ax1 - ax0 - 80) / 7, ay + 34, 7, wood, 2.2)
+    for _ in range(14):
+        px, py = rng.uniform(-440, 440), rng.uniform(-480, -30)
+        out += _ell(px, py, rng.uniform(12, 28), rng.uniform(6, 12), S.shade(wall, rng.choice((-0.07, 0.09))), 0, extra='opacity="0.6"')
+    out += _rect(-470, -270, 940, 16, teal, 2.6)
+    for i in range(23):
+        out += _p(f"M{-460 + i * 40},-262 l8,-6 l8,6 l8,-6 l8,6", sw=2, stroke=_jt("#e8b746", time))
+    gl, gt, gr, gb = ZAC_GATE
+    arch = f"M{gl},{gb} L{gl},{gt + 90} Q{gl},{gt} 0,{gt} Q{gr},{gt} {gr},{gt + 90} L{gr},{gb} Z"
+    out += _p(arch, S.mix("#3a2a20", "#fff2c8", 0.25 + 0.6 * lit), 3.6)
+    if lit > 0.05:
+        out += _ls_glow(0, -150, 200, 170, lit, "zhgate", "#fff2c8", JR_LAMP)
+    k = _clamp(door)
+    for sg in (-1, 1):
+        wdt = gr * (1 - 0.82 * k)
+        xa, xb = (gl, gl + wdt) if sg < 0 else (gr - wdt, gr)
+        if sg < 0:
+            leaf = f"M{_f(xa)},{gb} L{_f(xa)},{gt + 90} Q{_f(xa)},{gt} 0,{gt} L{_f(xb)},{gt + 6} L{_f(xb)},{gb} Z" if k < 0.02 else \
+                f"M{_f(xa)},{gb} L{_f(xa)},{gt + 90} Q{_f(xa)},{_f(gt + 20)} {_f(xb)},{_f(gt + 40)} L{_f(xb)},{gb} Z"
+        else:
+            leaf = f"M{_f(xa)},{gb} L{_f(xa)},{gt + 6} L0,{gt} Q{_f(xb)},{gt} {_f(xb)},{gt + 90} L{_f(xb)},{gb} Z" if k < 0.02 else \
+                f"M{_f(xa)},{gb} L{_f(xa)},{_f(gt + 40)} Q{_f(xb)},{_f(gt + 20)} {_f(xb)},{gt + 90} L{_f(xb)},{gb} Z"
+        out += _p(leaf, wood, 3.4)
+        for r_ in range(4):
+            for c_ in range(2):
+                bx = xa + (xb - xa) * (0.3 + 0.4 * c_)
+                out += _circ(bx, -60 - r_ * 60, 4.5, "#e8b746", 1.6)
+        out += _line(xa + (xb - xa) * 0.5, gt + 50, xa + (xb - xa) * 0.5, gb - 6, sw=2.2, color=S.shade(wood, -0.3))
+    out += _p(f"M{gl - 16},{gb} L{gl - 16},{gt + 90} Q{gl - 16},{gt - 16} 0,{gt - 16} Q{gr + 16},{gt - 16} {gr + 16},{gt + 90} L{gr + 16},{gb}",
+              sw=14, stroke=trim) + _p(f"M{gl - 24},{gb} L{gl - 24},{gt + 90} Q{gl - 24},{gt - 24} 0,{gt - 24} Q{gr + 24},{gt - 24} {gr + 24},"
+                                       f"{gt + 90} L{gr + 24},{gb}", sw=2.6)
+    out += _p(f"M{gl - 50},0 L{gr + 50},0 L{gr + 70},18 L{gl - 70},18 Z", S.shade(wall, -0.15), 2.8)
+    for wx in (-330, 330):
+        wy = -340
+        wd = f"M{wx - 44},{wy + 60} L{wx - 44},{wy - 20} Q{wx - 44},{wy - 64} {wx},{wy - 64} Q{wx + 44},{wy - 64} {wx + 44},{wy - 20} L{wx + 44},{wy + 60} Z"
+        out += _p(wd, S.mix("#4a3426", "#fff2c8", 0.2 + 0.6 * lit), 3.2)
+        lat = "".join(f"M{wx + j * 14 - 44},{wy + 60} L{wx + j * 14 + 44},{wy - 64} M{wx + j * 14 + 44},{wy + 60} L{wx + j * 14 - 44},{wy - 64} "
+                      for j in range(-3, 4))
+        out += _clip(_uid("zhlat", wx, round(lit, 2)), wd, _p(lat, sw=3.0, stroke=teal)) + _p(wd, sw=3.2)
+        out += _rect(wx - 52, wy + 60, 104, 10, trim, 2.2)
+    bal = "M-250,-560 L250,-560 L250,-610 L-250,-610 Z"
+    for wx in (-160, 0, 160):
+        wd = f"M{wx - 40},-560 L{wx - 40},-660 Q{wx - 40},-700 {wx},-700 Q{wx + 40},-700 {wx + 40},-660 L{wx + 40},-560 Z"
+        out += _p(wd, S.mix("#4a3426", "#fff2c8", 0.2 + 0.6 * lit), 3.0)
+        lat = "".join(f"M{wx + j * 14 - 40},-560 L{wx + j * 14 + 40},-700 M{wx + j * 14 + 40},-560 L{wx + j * 14 - 40},-700 " for j in range(-3, 4))
+        out += _clip(_uid("zhlat2", wx, round(lit, 2)), wd, _p(lat, sw=2.6, stroke=teal)) + _p(wd, sw=3.0)
+    out += _p(bal, _jt("#a0683e", time), 3.2)
+    for j in range(13):
+        out += _line(-240 + j * 40, -606, -240 + j * 40, -564, sw=3, color=S.shade(_jt("#a0683e", time), -0.3))
+    aw = "M-290,-720 L290,-720 L316,-670 L-316,-670 Z"
+    st_ = "".join(_p(f"M{j * 44 - 14},-720 L{j * 44 + 10},-720 L{j * 48 + 14},-670 L{j * 48 - 12},-670 Z", teal, 0) for j in range(-7, 8))
+    out += _p(aw, _jt("#f3e6c8", time), 3.2) + _clip(_uid("zhaw", round(_jr_t(time), 3)), aw, st_) + _p(aw, sw=3.2)
+    out += _p("".join(f"M{-316 + j * 79},-670 q39.5,16 79,0 " for j in range(8)), _jt("#f3e6c8", time), 2.6)
+    for px_ in (-230, 230):
+        pot = _jt("#c8643c", time)
+        out += _p(f"M{px_ - 40},-70 L{px_ + 40},-70 L{px_ + 30},0 L{px_ - 30},0 Z", pot, 3.0)
+        out += _rect(px_ - 44, -78, 88, 12, S.shade(pot, 0.15), 2.4)
+        out += _g(_jr_palm(0.42, 0.0, 0.0, False, time, seed + int(px_)), f"translate({px_},-72) scale(0.42)")
+        lx = px_ + (60 if px_ > 0 else -60)
+        out += _line(lx, -330, lx, -290, sw=2.4, color="#5a4030")
+        out += _p(f"M{lx - 14},-290 L{lx + 14},-290 L{lx + 10},-250 L{lx - 10},-250 Z", S.mix("#e8b746", "#fff2c8", lit), 2.4)
+        if lit > 0.05:
+            out += _ls_glow(lx, -270, 70, 70, lit, f"zhl{px_}", "#fff2c8", JR_LAMP)
+    out += _p("M-470,0 L-620,0 L-620,-150 Q-545,-170 -470,-150 Z", S.shade(wall, -0.05), 3.4)
+    out += _p("M470,0 L620,0 L620,-150 Q545,-170 470,-150 Z", S.shade(wall, -0.05), 3.4)
+    return out
+
+
+def _zac_room(time=1.0, lamp=1.0, chest=0.0, seed=0, part="back"):
+    body = _zac_room_body(time, lamp, chest, seed, part)
+    return _clip(_uid("zroom", part, round(_jr_t(time), 3), round(lamp, 3), round(chest, 3)), "M-1100,-1000 L1100,-1000 L1100,420 L-1100,420 Z",
+                 body) + (_p("M-1100,-1000 L1100,-1000 L1100,420 L-1100,420 Z", "none", 4) if part in ("back", "all") else "")
+
+
+def _zac_room_body(time=1.0, lamp=1.0, chest=0.0, seed=0, part="back"):
+    pal = _jr_pal(time)
+    out = ""
+    if part in ("back", "all"):
+        wall = "#e9c890"
+        out += _p("M-1100,-1000 L1100,-1000 L1100,-170 L-1100,-170 Z", wall, 0)
+        out += _rect(-1100, -1000, 2200, 70, "#2a7e86", 0)
+        for i in range(44):
+            out += _p(f"M{-1090 + i * 50},-948 l12,-14 l12,14 l12,-14 l12,14", sw=2.6, stroke="#e8b746")
+        out += _rect(-1100, -930, 2200, 10, "#e8b746", 2.0)
+        out += _rect(-1100, -270, 2200, 100, "#c8643c", 3.0)
+        for i in range(22):
+            cx = -1080 + i * 100
+            out += _p(f"M{cx},-250 l22,30 l-22,30 l-22,-30 Z", "#f0d29a", 2.0)
+        for wx in (-560, 0, 560):
+            wd = f"M{wx - 110},-300 L{wx - 110},-640 Q{wx - 110},-760 {wx},-760 Q{wx + 110},-760 {wx + 110},-640 L{wx + 110},-300 Z"
+            sky = _uid("zrsky", wx, round(_jr_t(time), 3))
+            st = [(0, pal["sky"][1]), (0.6, pal["sky"][3]), (1, pal["sky"][4])]
+            out += f'<defs>{S.lin_grad(sky, st)}</defs>'
+            inner = f'<rect x="{wx - 120}" y="-770" width="240" height="480" fill="url(#{sky})"/>'
+            inner += _g(_jr_palm(0.46, 0.1 if wx < 0 else -0.1, 0.0, True, time, seed + wx), f"translate({wx + 30},-300) scale(0.8)")
+            out += _clip(_uid("zrwin", wx, round(_jr_t(time), 3)), wd, inner) + _p(wd, sw=4)
+            out += _p(wd, "none", 12, stroke="#a0683e", extra='opacity="0.9"') + _p(wd, sw=3)
+            out += _rect(wx - 130, -306, 260, 18, "#c8643c", 2.6)
+        for hx, col in ((-280, "#8a3f5c"), (280, "#3f6a8a")):
+            out += _p(f"M{hx - 90},-880 L{hx + 90},-880 L{hx + 90},-430 L{hx - 90},-430 Z", col, 3.4)
+            out += _p(f"M{hx - 70},-860 L{hx + 70},-860 L{hx + 70},-450 L{hx - 70},-450 Z", "none", 4, stroke="#e8b746")
+            for k in range(4):
+                cy = -810 + k * 110
+                out += _p(f"M{hx},{cy - 36} L{hx + 40},{cy} L{hx},{cy + 36} L{hx - 40},{cy} Z", S.shade(col, 0.3), 2.4)
+                out += _circ(hx, cy, 9, "#e8b746", 1.8)
+            for k in range(9):
+                out += _line(hx - 80 + k * 20, -430, hx - 80 + k * 20, -410, sw=4, color="#e8b746")
+        out += _p("M-1100,-170 L1100,-170 L1100,420 L-1100,420 Z", "#d9a468", 0)
+        for j in range(12):
+            yy = -170 + j * j * 4.2
+            out += _line(-1100, yy, 1100, yy, sw=2.4, color="#b8834e", extra='opacity="0.6"')
+        for i in range(-12, 13):
+            out += _line(i * 60, -170, i * 160, 420, sw=2.4, color="#b8834e", extra='opacity="0.5"')
+        rug = "M-760,-120 L760,-120 L900,380 L-900,380 Z"
+        out += _p(rug, "#9a2f3a", 4)
+        out += _p("M-700,-96 L700,-96 L820,350 L-820,350 Z", "none", 10, stroke="#e8b746")
+        for k in range(5):
+            cx = -560 + k * 280
+            out += _p(f"M{cx},40 L{cx + 90},150 L{cx},260 L{cx - 90},150 Z", "#2a7e86", 3.0)
+            out += _p(f"M{cx},90 L{cx + 40},150 L{cx},210 L{cx - 40},150 Z", "#e8b746", 2.2)
+        for k in range(30):
+            out += _line(-900 + k * 62, 380, -896 + k * 62, 404, sw=4, color="#e8b746")
+        cx, cy = ZAC_ROOM_CHEST
+        out += _g(_money_chest(chest, 1.0, 0.9 if chest > 0 else 0.0), f"translate({cx},{cy}) scale(1.1)")
+        lit = _clamp(lamp)
+        for lx in (-760, 760, -260, 260):
+            out += _line(lx, -1000, lx, -820, sw=2.4, color="#5a4030")
+            out += _p(f"M{lx - 30},-820 L{lx + 30},-820 Q{lx + 24},-790 {lx},-780 Q{lx - 24},-790 {lx - 30},-820 Z", "#c99a48", 2.6)
+            out += _p(f"M{lx},-830 q-8,-18 0,-34 q8,16 0,34 Z", S.mix("#f6a43c", JR_LAMP, 0.5), 1.8) if lit > 0 else ""
+            if lit > 0:
+                out += _ls_glow(lx, -820, 240, 200, lit * 0.8, f"zrl{lx}", "#fff2c8", JR_LAMP)
+    if part in ("front", "all"):
+        for px_, sg in ((-1020, 1), (1020, -1)):
+            out += _p(f"M{px_ - 60},420 L{px_ - 60},-1000 L{px_ + 60},-1000 L{px_ + 60},420 Z", "#f0dfb8", 4)
+            out += _rect(px_ - 76, -1000, 152, 60, "#e8b746", 3.0) + _rect(px_ - 76, 360, 152, 60, "#c8643c", 3.0)
+            out += _line(px_ - 20, 360, px_ - 20, -940, sw=2.4, color="#d9c49a") + _line(px_ + 20, 360, px_ + 20, -940, sw=2.4, color="#d9c49a")
+    return out
+
+
+def zacchaeus_house(x, y, scale=1.0, facing=1, view="exterior", time=0.0, door=0.0, lamp=1.0, chest=0.0, part="all", seed=0):
+    """Zacchaeus's fine house (Luke 19:5-9).
+    view='exterior'  Anchor: bottom centre of the front wall; (-640, -800, 640, 20). A two-storey sandstone house with
+                     terracotta and teal trim, a carved double gate with brass studs (ZAC_GATE; door 0 closed .. 1 swung
+                     open onto warm light), lattice windows, a balcony under a teal striped awning, potted palms and two
+                     hanging lanterns (lamp 0..1, strongest at evening).
+    view='interior'  Anchor: the middle of the floor where people stand (the back wall's base is ZAC_ROOM_BACK_Y = -170;
+                     the floor runs down to +420); ~2200 x 1420 at scale 1 (scale ~0.95 fills the stage). The dining room:
+                     ochre walls with a teal-and-gold frieze, three arched windows onto palms and the sky (time), two rich
+                     wall hangings, hanging bronze lamps (lamp 0..1), a big patterned rug and the money chest at
+                     ZAC_ROOM_CHEST (chest 0..1 opens it, with a golden shine). part 'back' (room) | 'front' (two pillars at
+                     the near edges) | 'all'. THE DINNER: zacchaeus_house(view='interior', part='back') -> dining_bench ->
+                     the guests on the bench -> dining_table (it hides their legs) -> zacchaeus_house(part='front')."""
+    if view not in ("exterior", "interior"):
+        raise ValueError(f"zacchaeus_house: view must be 'exterior' or 'interior', not {view!r}")
+    if part not in ("all", "back", "front"):
+        raise ValueError(f"zacchaeus_house: part must be 'all', 'back' or 'front', not {part!r}")
+    if view == "exterior":
+        return _place(_zac_house_ext(time, door, lamp, seed) if part != "front" else "", x, y, scale, facing)
+    return _place(_zac_room(time, lamp, chest, seed, part), x, y, scale, facing)
+
+
+def _dining_table(width=700, food=True, seed=0):
+    w = width / 2
+    top_f, top_b = -DINING_TABLE_H, -DINING_TABLE_H - DINING_TABLE_DEPTH
+    wood = "#8a5434"
+    out = ""
+    for lx in (-w + 30, w - 30):
+        out += _p(f"M{lx - 12},{top_f} L{lx + 12},{top_f} L{lx + 9},0 L{lx - 9},0 Z", S.shade(wood, -0.1), 3.0)
+    out += _p(f"M{-w},{top_f} L{w},{top_f} L{w - 14},{top_b} L{-w + 14},{top_b} Z", "#f3e6c8", 3.2)
+    out += _p(f"M{-w},{top_f} L{w},{top_f} L{w},{top_f + 34} Q0,{top_f + 44} {-w},{top_f + 34} Z", "#f3e6c8", 3.2)
+    out += _p(f"M{-w * 0.4},{top_b} L{w * 0.4},{top_b} L{w * 0.42},{top_f + 40} L{-w * 0.42},{top_f + 40} Z", "#2a7e86", 2.6)
+    out += _line(-w * 0.42, top_f + 30, w * 0.42, top_f + 30, sw=4, color="#e8b746")
+    for k in range(int(width / 26)):
+        xx = -w + 6 + k * 26
+        out += _line(xx, top_f + 36 + 6 * math.sin(math.pi * (xx + w) / width) * 0, xx + 2, top_f + 50, sw=3, color="#e8b746")
+    if food:
+        rng = random.Random(seed)
+        yy = top_f - 12
+        out += _ell(-w * 0.62, yy + 4, 46, 12, "#d9a845", 2.8) + _g(_date_basket(), f"translate({-w * 0.62},{yy - 4}) scale(0.62)")
+        out += _ell(-w * 0.22, yy + 4, 52, 13, "#efe0bf", 2.8)
+        for k in range(3):
+            out += _ell(-w * 0.22 - 22 + k * 22, yy - 4, 20, 9, "#d9a45a", 2.4)
+        out += _ell(w * 0.15, yy + 4, 50, 13, "#d9a845", 2.8)
+        for k, col in enumerate(("#8a4f9a", "#c9443c", "#e8a83a", "#8a4f9a", "#6a9a3a")):
+            out += _circ(w * 0.15 - 24 + k * 12, yy - 6 - (k % 2) * 8, 9, col, 2.0)
+        for cx_ in (-w * 0.82, w * 0.40, w * 0.78):
+            out += _p(f"M{cx_ - 12},{yy - 22} L{cx_ + 12},{yy - 22} L{cx_ + 9},{yy + 6} L{cx_ - 9},{yy + 6} Z", "#c99a48", 2.4)
+        out += _p(f"M{w * 0.6 - 16},{yy + 6} Q{w * 0.6 - 26},{yy - 30} {w * 0.6 - 8},{yy - 44} L{w * 0.6 + 8},{yy - 44} Q{w * 0.6 + 26},{yy - 30} {w * 0.6 + 16},{yy + 6} Z",
+                  "#c8643c", 2.8)
+    return out
+
+
+def dining_table(x, y, scale=1.0, facing=1, width=700, food=True, seed=0):
+    """The raised dining table of the dinner at Zacchaeus's house (anchor = the floor under the middle of its FRONT edge;
+    (-width/2 - 6, -150, width/2 + 6, 4)): a cream cloth with a teal runner and gold fringe, dates, bread, fruit, cups and
+    a jug. The top's front edge is DINING_TABLE_H = 112 up, the back edge DINING_TABLE_DEPTH = 30 higher. Guests sit
+    BEHIND it on a dining_bench whose floor line is y - DINING_TABLE_DEPTH*scale, drawn first (see the dinner recipe)."""
+    return _place(_dining_table(width, food, seed), x, y, scale, facing)
+
+
+def dining_bench(x, y, scale=1.0, facing=1, width=600):
+    """A long wooden bench with a striped cushion (anchor = the floor under its middle; seat top DINING_BENCH_H = 70)."""
+    w = width / 2
+    wood = "#7a4a2c"
+    out = ""
+    for lx in (-w + 24, w - 24):
+        out += _p(f"M{lx - 10},-60 L{lx + 10},-60 L{lx + 8},0 L{lx - 8},0 Z", wood, 2.8)
+    out += _p(f"M{-w},-70 L{w},-70 L{w},-56 L{-w},-56 Z", wood, 3.0)
+    out += _p(f"M{-w + 8},-70 L{w - 8},-70 L{w - 14},-84 L{-w + 14},-84 Z", "#c8643c", 2.6)
+    for k in range(int(width / 40)):
+        out += _line(-w + 20 + k * 40, -82, -w + 14 + k * 40, -71, sw=3, color="#f0d29a")
+    return _place(out, x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the palm grove and the balsam garden (evening)
+def _balsam_bush(time=1.0, sway=0.0, seed=0):
+    """A balsam shrub of Jericho (local, anchor = its foot): a low rounded bush of small grey-green leaves on wiry twigs,
+    a few drops of golden resin and tiny cream flowers."""
+    pal = _jr_pal(time)
+    rng = random.Random(seed)
+    leaf = S.mix(pal["leaf"], "#9aa88a", 0.45)
+    dk = S.shade(leaf, -0.25)
+    out = _p("M-6,0 Q-14,-20 -30,-40 M2,0 Q4,-24 -2,-50 M8,0 Q16,-20 32,-36", sw=3.2, stroke=_jt("#6a5a3a", time))
+    circ = [(-46 + sway * 4, -64, 30), (-8 + sway * 6, -88, 36), (40 + sway * 4, -62, 30), (-2, -46, 34), (-60, -34, 24), (60, -32, 24)]
+    out += _cluster(circ, leaf, 3.0)
+    for cx, cy, r in circ:
+        out += _ell(cx - r * 0.2, cy - r * 0.3, r * 0.6, r * 0.4, S.shade(leaf, 0.2), 0, extra='opacity="0.6"')
+    for _ in range(26):
+        cx, cy, r = circ[rng.randrange(len(circ))]
+        a = rng.uniform(0, 2 * math.pi)
+        px, py = cx + r * 0.8 * math.cos(a), cy + r * 0.8 * math.sin(a)
+        out += _ell(px, py, 6, 3, dk if rng.random() < 0.5 else S.shade(leaf, 0.3), 0,
+                    extra=f'transform="rotate({rng.uniform(-60, 60):.0f} {_f(px)} {_f(py)})"')
+    for _ in range(4):
+        px, py = rng.uniform(-50, 50), rng.uniform(-110, -50)
+        out += _circ(px, py, 3.2, "#f2c14a", 1.4) + _circ(px - 1, py - 1, 1, HILITE, 0)
+    for _ in range(5):
+        px, py = rng.uniform(-55, 55), rng.uniform(-115, -55)
+        out += _circ(px, py, 2.6, "#fbf3e0", 0)
+    return out
+
+
+def balsam_bush(x, y, scale=1.0, facing=1, time=1.0, sway=0.0, seed=0):
+    """A balsam shrub of Jericho's gardens (anchor = its foot; (-86, -140, 86, 6)); sway -1..1, time tints it."""
+    return _place(_balsam_bush(time, sway, seed), x, y, scale, facing)
+
+
+def palm_grove(x0, x1, y, scale=1.0, time=1.0, part="all", seed=0, bottom=None, sway=0.0):
+    """The palm groves and balsam gardens of Jericho in the golden evening (ABSOLUTE coordinates; sky not included:
+    jericho_sky above). y = the near ground line where people stand. part 'back' (the hazy far hills, a band of far palms,
+    a low mud-brick wall) | 'mid' (rows of tall date palms with dates and balsam bushes along an irrigation channel that
+    shines with the sky) | 'front' (big balsam bushes and grass at the near corners, a fallen frond) | 'all'. People go
+    between 'mid' and 'front'. bottom default y + 300*scale. ~1.1 s: static layers (sway: a 2-4 frame flipbook)."""
+    pal = _jr_pal(time)
+    rng = random.Random(seed)
+    bottom = bottom if bottom is not None else y + 300 * scale
+    out = ""
+    if part in ("back", "all"):
+        out += _jr_far(x0, x1, y - 330 * scale, scale, time, seed + 1, cliffs=False)
+        out += _p(f"M{_f(x0 - 40)},{_f(y - 360 * scale)} L{_f(x1 + 40)},{_f(y - 360 * scale)} L{_f(x1 + 40)},{_f(bottom + 40)} "
+                  f"L{_f(x0 - 40)},{_f(bottom + 40)} Z", pal["sand"], 0)
+        for i in range(int((x1 - x0) / (130 * scale)) + 2):
+            px = x0 + (i + 0.3) * 130 * scale + rng.uniform(-30, 30) * scale
+            out += _place(_jr_palm(rng.uniform(0.7, 0.9), rng.uniform(-0.15, 0.15), sway * 0.5, False, time, seed + i, far=True),
+                          px, y - 330 * scale, scale * 0.42, 1, filt=None)
+        wall = _jt("#c9a070", time)
+        out += _p(f"M{_f(x0 - 40)},{_f(y - 300 * scale)} L{_f(x1 + 40)},{_f(y - 300 * scale)} L{_f(x1 + 40)},{_f(y - 250 * scale)} "
+                  f"L{_f(x0 - 40)},{_f(y - 250 * scale)} Z", wall, 2.6 * scale)
+        for i in range(int((x1 - x0) / (60 * scale)) + 1):
+            xx = x0 + i * 60 * scale
+            out += _line(xx, y - 300 * scale, xx, y - 250 * scale, sw=1.8 * scale, color=S.shade(wall, -0.2))
+    if part in ("mid", "all"):
+        ch_y = y - 150 * scale
+        water = S.mix(pal["sky"][2], pal["sky"][4], 0.4)
+        out += _p(f"M{_f(x0 - 40)},{_f(ch_y - 14 * scale)} Q{_f((x0 + x1) / 2)},{_f(ch_y - 24 * scale)} {_f(x1 + 40)},{_f(ch_y - 12 * scale)} "
+                  f"L{_f(x1 + 40)},{_f(ch_y + 12 * scale)} Q{_f((x0 + x1) / 2)},{_f(ch_y + 2 * scale)} {_f(x0 - 40)},{_f(ch_y + 14 * scale)} Z",
+                  water, 2.4 * scale)
+        for k in range(int((x1 - x0) / (90 * scale))):
+            xx = x0 + rng.uniform(0, x1 - x0)
+            out += _line(xx, ch_y - 2 * scale, xx + 30 * scale, ch_y - 3 * scale, sw=2 * scale, color=HILITE, extra='opacity="0.7"')
+        for i in range(int((x1 - x0) / (330 * scale)) + 1):
+            px = x0 + (i + 0.5) * 330 * scale + rng.uniform(-40, 40) * scale
+            out += _place(_jr_palm(rng.uniform(0.85, 1.0), rng.uniform(-0.18, 0.18), sway, True, time, seed + 30 + i), px,
+                          ch_y - 30 * scale, scale * 0.66, 1 if i % 2 else -1, filt=None)
+        for i in range(int((x1 - x0) / (170 * scale)) + 1):
+            px = x0 + (i + 0.2) * 170 * scale + rng.uniform(-30, 30) * scale
+            out += _place(_balsam_bush(time, sway, seed + i), px, ch_y + 40 * scale, scale * rng.uniform(0.7, 0.9), 1, filt=None)
+        for _ in range(int((x1 - x0) / (120 * scale))):
+            out += _jr_tuft(rng.uniform(x0, x1), rng.uniform(y - 80 * scale, bottom), scale, time, rng.randrange(9))
+    if part in ("front", "all"):
+        out += _place(_balsam_bush(time, sway, seed + 50), x0 + 90 * scale, bottom - 10 * scale, scale * 1.5, 1, filt=None)
+        out += _place(_balsam_bush(time, sway, seed + 51), x1 - 110 * scale, bottom + 10 * scale, scale * 1.7, -1, filt=None)
+        out += _place(_pinnate((0, 0), -8, 260, 40, 36, S.mix(pal["palm_dk"], "#b8955a", 0.4), n=12), x0 + 260 * scale,
+                      bottom - 30 * scale, scale, 1, filt=None)
+    return f'<g filter="url(#wobble-fine)">{out}</g>'
+
+
+# ---------------------------------------------------------------------- the modern frame: the street festival
+FESTIVAL_COLS = ("#e2503c", "#f2c43c", "#3f8fd0", "#5fb36a", "#e88ab0", "#f08a3c", "#8a6ac8")
+
+
+def bunting(x0, y0, x1, y1, n=12, sag=50, phase=0.0, colors=None, scale=1.0):
+    """A string of little triangular flags sagging from (x0, y0) to (x1, y1) (ABSOLUTE); phase 0..1 flutters them
+    (loop 3-4 frames)."""
+    cols = colors or FESTIVAL_COLS
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        pts.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + sag * scale * 4 * t * (1 - t)))
+    out = _p(_sm(pts, closed=False), sw=2.6 * scale, stroke="#6a5a4a")
+    for i in range(n):
+        a, b = pts[i], pts[i + 1]
+        m = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        fl = 6 * scale * math.sin(2 * math.pi * (phase + i * 0.17))
+        tip = (m[0] + fl, m[1] + 46 * scale)
+        out += _p(f"M{_f(a[0] + 3 * scale)},{_f(a[1])} L{_f(b[0] - 3 * scale)},{_f(b[1])} L{_f(tip[0])},{_f(tip[1])} Z", cols[i % len(cols)],
+                  2.4 * scale)
+    return f'<g filter="url(#wobble-fine)">{out}</g>'
+
+
+def _modern_back(kind=0, h=330, seed=0, phase=0.0):
+    """A grown-up at the festival seen from behind (local, anchor = between the feet): no face, just hair, ears, a jacket
+    or hoodie, jeans, sneakers; kind picks the look (0-7), some raise a phone or a little flag."""
+    rng = random.Random(seed * 31 + kind)
+    looks = [("#3f6aa0", "#2f3a4a", "#3a2a20", "short", None), ("#d9483c", "#3a4a6a", "#5a3a24", "ponytail", None),
+             ("#8a9a9a", "#2f3a4a", "#1f1a17", "cap", "#3f8fd0"), ("#e8b44a", "#4a5a7a", "#7a4a2a", "bun", None),
+             ("#5f9a6a", "#3a3a40", "#2a201b", "curly", None), ("#efe6d6", "#5a6a8a", "#a8783a", "long", None),
+             ("#8a5ac0", "#2f3a4a", "#1f1a17", "short", None), ("#c86a4a", "#3a4a5a", "#3a2a20", "cap", "#e2503c")]
+    top, legs, hair, style, cap = looks[kind % len(looks)]
+    k = h / 330
+    skin = ("#efc29c", "#d9a379", "#b77a52", "#8f5a3b")[rng.randrange(4)]
+    out = ""
+    for sx_ in (-1, 1):
+        out += _p(f"M{_f(sx_ * 6 * k)},{_f(-150 * k)} L{_f(sx_ * 34 * k)},{_f(-150 * k)} L{_f(sx_ * 30 * k)},{_f(-12 * k)} L{_f(sx_ * 10 * k)},{_f(-12 * k)} Z",
+                  legs if sx_ < 0 else S.shade(legs, 0.1), 3.4 * k)
+        out += _p(f"M{_f(sx_ * 6 * k)},{_f(-16 * k)} L{_f(sx_ * 36 * k)},{_f(-16 * k)} Q{_f(sx_ * 40 * k)},0 {_f(sx_ * 30 * k)},{_f(2 * k)} "
+                  f"L{_f(sx_ * 6 * k)},{_f(2 * k)} Z", "#f2ede2", 3.0 * k)
+    raise_arm = rng.random() < 0.35
+    body = f"M{_f(-46 * k)},{_f(-140 * k)} Q{_f(-52 * k)},{_f(-230 * k)} {_f(-34 * k)},{_f(-262 * k)} L{_f(34 * k)},{_f(-262 * k)} Q{_f(52 * k)},{_f(-230 * k)} {_f(46 * k)},{_f(-140 * k)} Z"
+    for sx_ in (-1, 1):
+        if raise_arm and sx_ == 1:
+            continue
+        out += _tube(f"M{_f(sx_ * 38 * k)},{_f(-250 * k)} Q{_f(sx_ * 54 * k)},{_f(-200 * k)} {_f(sx_ * 48 * k)},{_f(-150 * k)}", 20 * k, top, 3.4 * k)
+        out += _circ(sx_ * 48 * k, -146 * k, 10 * k, skin, 3.0 * k)
+    out += _p(body, top, 3.6 * k)
+    out += _p(f"M0,{_f(-256 * k)} L0,{_f(-150 * k)}", sw=2 * k, stroke=S.shade(top, -0.25), extra='opacity="0.6"')
+    if kind % 4 == 1:
+        out += _p(f"M{_f(-28 * k)},{_f(-248 * k)} Q0,{_f(-210 * k)} {_f(28 * k)},{_f(-248 * k)} L{_f(26 * k)},{_f(-266 * k)} L{_f(-26 * k)},{_f(-266 * k)} Z",
+                  S.shade(top, -0.08), 2.6 * k)
+    if kind % 3 == 2:
+        out += _p(f"M{_f(-30 * k)},{_f(-238 * k)} L{_f(30 * k)},{_f(-238 * k)} L{_f(28 * k)},{_f(-168 * k)} Q0,{_f(-160 * k)} {_f(-28 * k)},{_f(-168 * k)} Z",
+                  ("#e2503c", "#3f8fd0", "#f2c43c")[kind % 3], 3.0 * k)
+        out += _p(f"M{_f(-30 * k)},{_f(-232 * k)} L{_f(-38 * k)},{_f(-258 * k)} M{_f(30 * k)},{_f(-232 * k)} L{_f(38 * k)},{_f(-258 * k)}", sw=4 * k,
+                  stroke="#3a3430")
+    hy = -300 * k
+    out += _circ(30 * k, hy + 4 * k, 9 * k, skin, 2.6 * k)
+    out += _circ(-30 * k, hy + 4 * k, 9 * k, skin, 2.6 * k)
+    out += _circ(0, hy, 34 * k, hair, 3.4 * k)
+    if style == "ponytail":
+        out += _tube(f"M0,{_f(hy - 10 * k)} Q{_f(-6 * k)},{_f(hy + 30 * k)} {_f(4 * k)},{_f(hy + 62 * k)}", 16 * k, hair, 3.0 * k)
+        out += _ell(0, hy - 8 * k, 8 * k, 5 * k, "#e2503c", 2 * k)
+    elif style == "bun":
+        out += _circ(0, hy - 36 * k, 15 * k, hair, 3.0 * k)
+    elif style == "curly":
+        out += _cluster([(math.cos(a) * 30 * k, hy + math.sin(a) * 30 * k, 12 * k) for a in [i * 0.9 for i in range(7)]], hair, 3.0 * k)
+    elif style == "long":
+        out += _p(f"M{_f(-32 * k)},{_f(hy)} Q{_f(-38 * k)},{_f(hy + 60 * k)} {_f(-24 * k)},{_f(hy + 78 * k)} L{_f(24 * k)},{_f(hy + 78 * k)} "
+                  f"Q{_f(38 * k)},{_f(hy + 60 * k)} {_f(32 * k)},{_f(hy)} Z", hair, 3.0 * k)
+    elif style == "cap":
+        out += _p(f"M{_f(-34 * k)},{_f(hy - 2 * k)} Q{_f(-34 * k)},{_f(hy - 40 * k)} 0,{_f(hy - 40 * k)} Q{_f(34 * k)},{_f(hy - 40 * k)} {_f(34 * k)},{_f(hy - 2 * k)} Z",
+                  cap, 3.0 * k)
+        out += _rect(-14 * k, hy - 6 * k, 28 * k, 12 * k, S.shade(cap, -0.15), 2.4 * k, rx=4 * k)
+    if raise_arm:
+        bob = 6 * k * math.sin(2 * math.pi * (phase + seed * 0.3))
+        out += _tube(f"M{_f(38 * k)},{_f(-250 * k)} Q{_f(58 * k)},{_f(-310 * k)} {_f(52 * k)},{_f(-372 * k + bob)}", 20 * k, top, 3.4 * k)
+        out += _circ(52 * k, -378 * k + bob, 10 * k, skin, 3.0 * k)
+        if rng.random() < 0.5:
+            out += _rect(40 * k, -432 * k + bob, 26 * k, 44 * k, "#2f3440", 3.0 * k, rx=4 * k) + _rect(44 * k, -428 * k + bob, 18 * k, 34 * k, "#8fd0f0", 0)
+        else:
+            out += _line(52 * k, -378 * k + bob, 52 * k, -470 * k + bob, sw=3 * k, color="#6a5a4a")
+            out += _p(f"M{_f(52 * k)},{_f(-470 * k + bob)} L{_f(98 * k)},{_f(-455 * k + bob)} L{_f(52 * k)},{_f(-440 * k + bob)} Z",
+                      FESTIVAL_COLS[kind % len(FESTIVAL_COLS)], 2.4 * k)
+    return out
+
+
+def festival_backs(x0, x1, y, scale=1.0, n=8, rows=2, seed=0, phase=0.0):
+    """The wall of grown-ups' backs at the street festival (ABSOLUTE; y = where the front row stands): modern adults
+    from behind in jackets, hoodies and t-shirts, jeans and sneakers, ponytails, buns, caps; some hold up a phone or a
+    little flag (phase 0..1 bobs them). rows behind are 36*scale higher and drawn first. Not the Jericho crowd. ~0.3 s."""
+    rng = random.Random(seed)
+    out = ""
+    for r in reversed(range(max(1, int(rows)))):
+        m = n if r == 0 else n + 1
+        for j in range(m):
+            u = (j + 0.5 + 0.5 * (r % 2)) / m
+            px = x0 + (x1 - x0) * u + rng.uniform(-18, 18) * scale
+            h = rng.uniform(305, 350)
+            out += _place(_modern_back((j * 3 + r * 5 + seed) % 8, h, seed + j + 10 * r, phase), px, y - 36 * scale * r,
+                          scale * (1 - 0.04 * r), 1 if rng.random() < 0.5 else -1, filt=None)
+    return f'<g filter="url(#wobble-fine)">{out}</g>'
+
+
+def street_festival(x0, x1, y, scale=1.0, part="all", phase=0.0, seed=0, bottom=None, float_x=None):
+    """The modern street festival of the opening (ABSOLUTE coordinates; y = the ground line where the front row of the
+    crowd and the child stand). part 'back': a bright blue sky, colourful shop-houses with awnings and potted plants, red
+    paper lanterns and two strings of bunting across the street, and beyond the crowd the top of a parade float (balloons,
+    flags, a big smiling sun mascot) at float_x (default 0.58 of the width), confetti (phase 0..1 drifts it); 'front':
+    festival_backs (the wall of grown-ups' backs) along y; 'all'. bottom default y + 160*scale. ~1.0 s (back) + 0.3 s."""
+    rng = random.Random(seed)
+    bottom = bottom if bottom is not None else y + 160 * scale
+    fx = x0 + (x1 - x0) * (0.58 if float_x is None else (float_x - x0) / (x1 - x0))
+    out = ""
+    if part in ("back", "all"):
+        top = y - 1300 * scale
+        gid = _uid("fsky", x0, x1, round(y))
+        out += (f'<defs>{S.lin_grad(gid, [(0, "#7cc0e8"), (1, "#d2ecf4")])}</defs>'
+                f'<rect x="{_f(x0 - 40)}" y="{_f(top)}" width="{_f(x1 - x0 + 80)}" height="{_f(y - top + 10)}" fill="url(#{gid})"/>')
+        out += _p(f"M{_f(x0 - 40)},{_f(y - 330 * scale)} L{_f(x1 + 40)},{_f(y - 330 * scale)} L{_f(x1 + 40)},{_f(bottom + 40)} L{_f(x0 - 40)},{_f(bottom + 40)} Z",
+                  "#c9c2b6", 0)
+        bcols = ("#f2b8a0", "#f6d68a", "#a8d0c8", "#d8b8e0", "#f0c4a8", "#b8d8a0")
+        bx = x0 - 60 * scale
+        i = 0
+        while bx < x1 + 40:
+            bw = rng.uniform(300, 420) * scale
+            bh = rng.uniform(760, 980) * scale
+            col = bcols[(i + seed) % len(bcols)]
+            by = y - 300 * scale
+            out += _p(f"M{_f(bx)},{_f(by)} L{_f(bx)},{_f(by - bh)} L{_f(bx + bw)},{_f(by - bh)} L{_f(bx + bw)},{_f(by)} Z", col, 3.4 * scale)
+            out += _rect(bx - 6 * scale, by - bh - 18 * scale, bw + 12 * scale, 22 * scale, S.shade(col, -0.18), 3 * scale)
+            for r in range(3):
+                for c in range(3):
+                    wx = bx + bw * (0.18 + 0.32 * c)
+                    wy = by - bh + 110 * scale + r * 170 * scale
+                    if wy > by - 260 * scale:
+                        continue
+                    out += _rect(wx - 30 * scale, wy, 60 * scale, 84 * scale, "#cfe8f0", 3 * scale, rx=6 * scale)
+                    out += _line(wx, wy, wx, wy + 84 * scale, sw=2 * scale, color="#8aa0a8")
+                    if (r + c + i) % 3 == 0:
+                        out += _p(f"M{_f(wx - 36 * scale)},{_f(wy + 84 * scale)} L{_f(wx + 36 * scale)},{_f(wy + 84 * scale)} L{_f(wx + 30 * scale)},{_f(wy + 100 * scale)} "
+                                  f"L{_f(wx - 30 * scale)},{_f(wy + 100 * scale)} Z", "#c86a4a", 2.4 * scale)
+                        out += _cluster([(wx - 14 * scale, wy + 80 * scale, 10 * scale), (wx + 10 * scale, wy + 78 * scale, 11 * scale)], "#6aa858", 2 * scale)
+            aw_c = FESTIVAL_COLS[(i * 2 + seed) % len(FESTIVAL_COLS)]
+            ay = by - 250 * scale
+            aw = f"M{_f(bx + 10 * scale)},{_f(ay)} L{_f(bx + bw - 10 * scale)},{_f(ay)} L{_f(bx + bw + 6 * scale)},{_f(ay + 70 * scale)} L{_f(bx - 6 * scale)},{_f(ay + 70 * scale)} Z"
+            st = "".join(_p(f"M{_f(bx + j * 40 * scale)},{_f(ay)} L{_f(bx + j * 40 * scale + 20 * scale)},{_f(ay)} L{_f(bx + j * 40 * scale + 24 * scale)},{_f(ay + 70 * scale)} "
+                            f"L{_f(bx + j * 40 * scale + 2 * scale)},{_f(ay + 70 * scale)} Z", aw_c, 0) for j in range(int(bw / (40 * scale)) + 1))
+            out += _p(aw, "#fbf6ea", 3 * scale) + _clip(_uid("fsaw", i, seed, round(bx)), aw, st) + _p(aw, sw=3 * scale)
+            out += _rect(bx + bw * 0.2, ay + 70 * scale, bw * 0.6, 180 * scale, "#5a4a44", 3 * scale)
+            out += _rect(bx + bw * 0.24, ay + 84 * scale, bw * 0.52, 120 * scale, "#f6e8c8", 0)
+            bx += bw + rng.uniform(10, 30) * scale
+            i += 1
+        for k in range(2):
+            yy = y - (920 - 200 * k) * scale
+            out += bunting(x0 - 20, yy, x1 + 20, yy + 30 * scale, n=int((x1 - x0) / (90 * scale)), sag=60 + 20 * k, phase=phase + k * 0.3,
+                           scale=scale)
+        for k in range(int((x1 - x0) / (360 * scale)) + 1):
+            lx = x0 + (k + 0.5) * 360 * scale
+            ly = y - 820 * scale + 30 * scale * math.sin(k)
+            out += _line(lx, ly - 40 * scale, lx, ly - 10 * scale, sw=2 * scale, color="#6a5a4a")
+            out += _ell(lx, ly + 22 * scale, 30 * scale, 34 * scale, "#e2503c", 3 * scale)
+            out += _rect(lx - 14 * scale, ly - 14 * scale, 28 * scale, 8 * scale, "#f2c43c", 2 * scale)
+            out += _rect(lx - 14 * scale, ly + 54 * scale, 28 * scale, 8 * scale, "#f2c43c", 2 * scale)
+            out += _line(lx, ly + 62 * scale, lx, ly + 84 * scale, sw=3 * scale, color="#f2c43c")
+        fy = y - 300 * scale
+        out += _p(f"M{_f(fx - 300 * scale)},{_f(fy)} L{_f(fx - 280 * scale)},{_f(fy - 120 * scale)} L{_f(fx + 280 * scale)},{_f(fy - 120 * scale)} L{_f(fx + 300 * scale)},{_f(fy)} Z",
+                  "#3f8fd0", 3.6 * scale)
+        for j in range(12):
+            xx = fx - 270 * scale + j * 49 * scale
+            out += _p(f"M{_f(xx)},{_f(fy - 120 * scale)} q{_f(24 * scale)},{_f(26 * scale)} {_f(49 * scale)},0", "#f2c43c", 2.6 * scale)
+        sx_, sy_ = fx, fy - 330 * scale
+        out += _p(S.rays(sx_, sy_, 120 * scale, 190 * scale, n=12, width_deg=14, rot=12 * phase), "#f6a43c", 2.6 * scale)
+        out += _circ(sx_, sy_, 120 * scale, "#f6c84a", 4 * scale)
+        out += _circ(sx_ - 40 * scale, sy_ - 16 * scale, 12 * scale, "#3a2a20", 0) + _circ(sx_ + 40 * scale, sy_ - 16 * scale, 12 * scale, "#3a2a20", 0)
+        out += _p(f"M{_f(sx_ - 50 * scale)},{_f(sy_ + 26 * scale)} Q{_f(sx_)},{_f(sy_ + 76 * scale)} {_f(sx_ + 50 * scale)},{_f(sy_ + 26 * scale)}", sw=6 * scale)
+        out += _ell(sx_ - 70 * scale, sy_ + 24 * scale, 18 * scale, 11 * scale, "#f08a6a", 0) + _ell(sx_ + 70 * scale, sy_ + 24 * scale, 18 * scale, 11 * scale, "#f08a6a", 0)
+        for j, (bx_, by_) in enumerate(((-220, -330), (-160, -420), (190, -380), (240, -300), (-250, -230))):
+            col = FESTIVAL_COLS[j % len(FESTIVAL_COLS)]
+            cx, cy = fx + bx_ * scale, fy + (by_ + 8 * math.sin(2 * math.pi * (phase + j * 0.2))) * scale
+            out += _line(cx, cy + 40 * scale, fx + bx_ * 0.6 * scale, fy - 120 * scale, sw=1.8 * scale, color="#6a5a4a")
+            out += _ell(cx, cy, 30 * scale, 38 * scale, col, 3 * scale)
+            out += _ell(cx - 10 * scale, cy - 14 * scale, 7 * scale, 10 * scale, HILITE, 0, extra='opacity="0.7"')
+        for j in range(int(40 * (x1 - x0) / 2112)):
+            cx = x0 + rng.uniform(0, x1 - x0)
+            cy = y - 1100 * scale + ((rng.uniform(0, 800) + phase * 160) % 800) * scale
+            out += _rect(cx, cy, 10 * scale, 6 * scale, FESTIVAL_COLS[j % len(FESTIVAL_COLS)], 0,
+                         extra=f'transform="rotate({rng.uniform(0, 180):.0f} {_f(cx)} {_f(cy)})"')
+    if part in ("front", "all"):
+        out += festival_backs(x0 - 60 * scale, x1 + 60 * scale, y, scale, n=max(3, int((x1 - x0) / (150 * scale))), rows=2, seed=seed, phase=phase)
+    return f'<g filter="url(#wobble-fine)">{out}</g>'
+
+
+# ---------------------------------------------------------------------- the modern frame: home in the evening
+SOFA_SEAT = 69                    # sofa seat top (= parent(kind="dad", variant=1, pose="sit_read") seat; the child sits here too)
+
+
+def _sofa(part="all", color=None, w=440):
+    c = color or "#e0a83a"
+    dk = S.shade(c, -0.2)
+    x0, x1 = -w / 2, w / 2
+    out = ""
+    if part in ("back", "all"):
+        out += _p(f"M{x0 + 30},{-SOFA_SEAT - 10} L{x0 + 34},{-SOFA_SEAT - 150} Q{x0 + 40},{-SOFA_SEAT - 176} {x0 + 80},{-SOFA_SEAT - 178} "
+                  f"L{x1 - 80},{-SOFA_SEAT - 178} Q{x1 - 40},{-SOFA_SEAT - 176} {x1 - 34},{-SOFA_SEAT - 150} L{x1 - 30},{-SOFA_SEAT - 10} Z", c, 4)
+        for k in (-1, 0, 1):
+            out += _line(k * w * 0.27, -SOFA_SEAT - 160, k * w * 0.27, -SOFA_SEAT - 20, sw=2.4, color=dk, extra='opacity="0.6"')
+        out += _p(f"M{x0 + 60},{-SOFA_SEAT - 8} Q{x0 + 50},{-SOFA_SEAT - 110} {x0 + 110},{-SOFA_SEAT - 112} Q{x0 + 150},{-SOFA_SEAT - 100} {x0 + 140},{-SOFA_SEAT - 8} Z",
+                  "#3f8f8a", 3.0)
+        out += _p(f"M{x1 - 60},{-SOFA_SEAT - 8} Q{x1 - 50},{-SOFA_SEAT - 110} {x1 - 110},{-SOFA_SEAT - 112} Q{x1 - 150},{-SOFA_SEAT - 100} {x1 - 140},{-SOFA_SEAT - 8} Z",
+                  "#e2574a", 3.0)
+        out += _p(f"M{x0 + 20},{-SOFA_SEAT} L{x1 - 20},{-SOFA_SEAT} L{x1 - 14},{-SOFA_SEAT + 50} L{x0 + 14},{-SOFA_SEAT + 50} Z", S.shade(c, 0.08), 3.6)
+        out += _line(0, -SOFA_SEAT + 2, 0, -SOFA_SEAT + 48, sw=2.2, color=dk)
+        out += _p(f"M{x0 + 10},{-SOFA_SEAT + 50} L{x1 - 10},{-SOFA_SEAT + 50} L{x1 - 10},-14 L{x0 + 10},-14 Z", dk, 3.4)
+        for lx in (x0 + 34, x1 - 34):
+            out += _p(f"M{lx - 7},-14 L{lx + 7},-14 L{lx + 4},0 L{lx - 4},0 Z", "#7a4a2c", 2.4)
+        out += _p(f"M{x0 - 6},-10 L{x0 - 6},{-SOFA_SEAT - 50} Q{x0 - 6},{-SOFA_SEAT - 80} {x0 + 22},{-SOFA_SEAT - 80} Q{x0 + 50},{-SOFA_SEAT - 80} {x0 + 50},{-SOFA_SEAT - 50} "
+                  f"L{x0 + 50},-10 Z", c, 4)
+    if part in ("front", "all"):
+        out += _p(f"M{x1 + 6},-10 L{x1 + 6},{-SOFA_SEAT - 50} Q{x1 + 6},{-SOFA_SEAT - 80} {x1 - 22},{-SOFA_SEAT - 80} Q{x1 - 50},{-SOFA_SEAT - 80} {x1 - 50},{-SOFA_SEAT - 50} "
+                  f"L{x1 - 50},-10 Z", c, 4)
+    return out
+
+
+def sofa(x, y, scale=1.0, facing=1, part="all", color=None):
+    """A cosy mustard sofa with a teal and a coral cushion (anchor = the floor under its middle; (-232, -258, 232, 4)); seat
+    top SOFA_SEAT = 69. part 'back' (backrest, cushions, seat, the far armrest) | 'front' (the near armrest, drawn after a
+    person sitting at that end) | 'all'. READING: sofa(part='back') -> parent(x - 60*s, y, s, 1, kind='dad', variant=1,
+    pose='sit_read') -> child(x + 70*s, y - SOFA_SEAT*s, s, -1, outfit='tracksuit', pose='sit_point') -> sofa(part='front')."""
+    return _place(_sofa(part, color), x, y, scale, facing)
+
+
+def evening_room(x0, x1, y, scale=1.0, glow=0.8, seed=0, door_x=None, window_x=None, bottom=None, time="evening"):
+    """The family's living room in the evening (ABSOLUTE coordinates; y = the floor line, the wall meets the floor
+    40*scale above it) - not the Nativity living room: soft sage-blue walls over a wooden wainscot, a big window (window_x,
+    default 0.2 of the width) onto the city at dusk with lit windows and a crescent moon, mustard curtains, a framed family
+    picture, a bookshelf of picture books with a plant, a floor lamp with a warm glow (glow 0..1), the front door (door_x,
+    default 0.86: '到你家来') with a little window and a red knot ornament, a shoe mat with sneakers, a honey wood floor and a
+    round patterned rug. Put sofa() near the middle. ~1.0 s: a static layer."""
+    rng = random.Random(seed)
+    bottom = bottom if bottom is not None else y + 360 * scale
+    wx = x0 + (x1 - x0) * (0.2 if window_x is None else (window_x - x0) / (x1 - x0))
+    dx = x0 + (x1 - x0) * (0.86 if door_x is None else (door_x - x0) / (x1 - x0))
+    wall_y = y - 40 * scale
+    top = y - 1400 * scale
+    out = _p(f"M{_f(x0 - 40)},{_f(top)} L{_f(x1 + 40)},{_f(top)} L{_f(x1 + 40)},{_f(wall_y)} L{_f(x0 - 40)},{_f(wall_y)} Z", "#a9c4bc", 0)
+    out += _p(f"M{_f(x0 - 40)},{_f(wall_y - 240 * scale)} L{_f(x1 + 40)},{_f(wall_y - 240 * scale)} L{_f(x1 + 40)},{_f(wall_y)} L{_f(x0 - 40)},{_f(wall_y)} Z",
+              "#c99a6a", 3 * scale)
+    for i in range(int((x1 - x0) / (80 * scale)) + 1):
+        xx = x0 + i * 80 * scale
+        out += _line(xx, wall_y - 230 * scale, xx, wall_y - 6 * scale, sw=2.2 * scale, color="#a87a4e", extra='opacity="0.7"')
+    out += _rect(x0 - 40, wall_y - 252 * scale, x1 - x0 + 80, 14 * scale, "#e8d8b8", 2.6 * scale)
+    out += _p(f"M{_f(x0 - 40)},{_f(wall_y)} L{_f(x1 + 40)},{_f(wall_y)} L{_f(x1 + 40)},{_f(bottom + 40)} L{_f(x0 - 40)},{_f(bottom + 40)} Z", "#d9a86e", 3 * scale)
+    for k in range(9):
+        yy = wall_y + (bottom - wall_y) * (k / 8) ** 1.4
+        out += _line(x0 - 40, yy, x1 + 40, yy, sw=2 * scale, color="#b88452", extra='opacity="0.6"')
+    ww, wh = 420 * scale, 560 * scale
+    wtop = wall_y - 300 * scale - wh
+    gid = _uid("erwin", round(wx), round(y))
+    city = (f'<defs>{S.lin_grad(gid, [(0, "#3d4f86"), (0.6, "#b87fa5"), (1, "#f3a873")])}</defs>'
+            f'<rect x="{_f(wx - ww / 2)}" y="{_f(wtop)}" width="{_f(ww)}" height="{_f(wh)}" fill="url(#{gid})"/>')
+    city += _p(f"M{_f(wx + 90 * scale)},{_f(wtop + 90 * scale)} a{_f(34 * scale)},{_f(34 * scale)} 0 1 0 {_f(30 * scale)},{_f(60 * scale)} "
+               f"a{_f(26 * scale)},{_f(26 * scale)} 0 1 1 {_f(-30 * scale)},{_f(-60 * scale)} Z", "#fbf0c8", 0)
+    bx = wx - ww / 2
+    while bx < wx + ww / 2:
+        bw = rng.uniform(40, 80) * scale
+        bh = rng.uniform(120, 320) * scale
+        city += _rect(bx, wtop + wh - bh, bw, bh + 4, rng.choice(("#2f3a5e", "#3a4470", "#45406a")), 0)
+        for r in range(int(bh / (24 * scale))):
+            for c in range(int(bw / (16 * scale))):
+                if rng.random() < 0.45:
+                    city += _rect(bx + 5 * scale + c * 16 * scale, wtop + wh - bh + 8 * scale + r * 24 * scale, 7 * scale, 10 * scale, "#ffd27a", 0)
+        bx += bw + 4 * scale
+    wd = f"M{_f(wx - ww / 2)},{_f(wtop)} L{_f(wx + ww / 2)},{_f(wtop)} L{_f(wx + ww / 2)},{_f(wtop + wh)} L{_f(wx - ww / 2)},{_f(wtop + wh)} Z"
+    out += _clip(_uid("erwc", round(wx), round(y)), wd, city)
+    out += _p(wd, "none", 14 * scale, stroke="#f2ebdc") + _p(wd, sw=3 * scale)
+    out += _line(wx, wtop, wx, wtop + wh, sw=10 * scale, color="#f2ebdc") + _line(wx - ww / 2, wtop + wh * 0.45, wx + ww / 2, wtop + wh * 0.45, sw=10 * scale, color="#f2ebdc")
+    out += _rect(wx - ww / 2 - 20 * scale, wtop + wh, ww + 40 * scale, 22 * scale, "#f2ebdc", 2.6 * scale)
+    for sx_ in (-1, 1):
+        cx = wx + sx_ * (ww / 2 + 40 * scale)
+        out += _p(f"M{_f(cx - 50 * scale)},{_f(wtop - 40 * scale)} L{_f(cx + 50 * scale)},{_f(wtop - 40 * scale)} Q{_f(cx + 60 * scale)},{_f(wtop + wh * 0.6)} "
+                  f"{_f(cx + 40 * scale)},{_f(wtop + wh + 120 * scale)} L{_f(cx - 40 * scale)},{_f(wtop + wh + 120 * scale)} Q{_f(cx - 60 * scale)},{_f(wtop + wh * 0.6)} "
+                  f"{_f(cx - 50 * scale)},{_f(wtop - 40 * scale)} Z", "#e0a83a", 3 * scale)
+        for k in (-1, 1):
+            out += _line(cx + k * 20 * scale, wtop - 30 * scale, cx + k * 24 * scale, wtop + wh + 100 * scale, sw=2 * scale, color="#b8862a", extra='opacity="0.7"')
+    out += _line(wx - ww / 2 - 110 * scale, wtop - 44 * scale, wx + ww / 2 + 110 * scale, wtop - 44 * scale, sw=6 * scale, color="#7a4a2c")
+    cx_m = (x0 + x1) / 2
+    fr_w, fr_h = 300 * scale, 210 * scale
+    fy = wall_y - 300 * scale - 200 * scale - fr_h
+    out += _rect(cx_m - fr_w / 2, fy, fr_w, fr_h, "#a0683e", 3.4 * scale)
+    out += _rect(cx_m - fr_w / 2 + 16 * scale, fy + 16 * scale, fr_w - 32 * scale, fr_h - 32 * scale, "#f6ecd4", 2 * scale)
+    for k, (dxx, hh, col) in enumerate(((-70, 120, "#7f9f6c"), (-15, 90, "#2f6fd0"), (45, 110, "#e8705a"))):
+        bxx = cx_m + dxx * scale
+        out += _circ(bxx, fy + fr_h - 30 * scale - hh * scale * 0.85, 16 * scale, "#efc29c", 2 * scale)
+        out += _rect(bxx - 16 * scale, fy + fr_h - 30 * scale - hh * scale * 0.7, 32 * scale, hh * scale * 0.55, col, 2 * scale, rx=10 * scale)
+    out += _ls_glow(cx_m + 170 * scale, fy + 40 * scale, 120 * scale, 90 * scale, 0.0, "x")
+    shx = x0 + (x1 - x0) * 0.66
+    out += _rect(shx - 110 * scale, wall_y - 520 * scale, 220 * scale, 520 * scale, "#b8835a", 3.4 * scale)
+    for r in range(3):
+        sy0 = wall_y - 500 * scale + r * 168 * scale
+        out += _rect(shx - 96 * scale, sy0, 192 * scale, 150 * scale, "#8a5a3a", 2 * scale)
+        bxx = shx - 90 * scale
+        while bxx < shx + 80 * scale:
+            bw = rng.uniform(14, 26) * scale
+            bh = rng.uniform(90, 130) * scale
+            out += _rect(bxx, sy0 + 150 * scale - bh, bw, bh, FESTIVAL_COLS[rng.randrange(len(FESTIVAL_COLS))], 2 * scale)
+            bxx += bw + 2 * scale
+    out += _p(f"M{_f(shx - 30 * scale)},{_f(wall_y - 520 * scale)} L{_f(shx + 30 * scale)},{_f(wall_y - 520 * scale)} L{_f(shx + 22 * scale)},{_f(wall_y - 570 * scale)} "
+              f"L{_f(shx - 22 * scale)},{_f(wall_y - 570 * scale)} Z", "#c8643c", 2.6 * scale)
+    out += _cluster([(shx - 26 * scale, wall_y - 600 * scale, 24 * scale), (shx + 22 * scale, wall_y - 610 * scale, 22 * scale), (shx, wall_y - 640 * scale, 26 * scale)],
+                    "#5f9a48", 2.6 * scale)
+    dw, dh = 230 * scale, 560 * scale
+    out += _rect(dx - dw / 2 - 18 * scale, wall_y - dh - 18 * scale, dw + 36 * scale, dh + 18 * scale, "#f2ebdc", 3 * scale)
+    out += _rect(dx - dw / 2, wall_y - dh, dw, dh, "#a8683e", 3.4 * scale)
+    for k in range(2):
+        out += _rect(dx - dw / 2 + 24 * scale, wall_y - dh + 40 * scale + k * 250 * scale, dw - 48 * scale, 200 * scale, "none", 2.2 * scale,
+                     stroke="#7a4a2c")
+    out += _rect(dx - 40 * scale, wall_y - dh + 60 * scale, 80 * scale, 70 * scale, "#e8c890", 2.4 * scale, rx=6 * scale)
+    out += _circ(dx + dw / 2 - 30 * scale, wall_y - dh * 0.48, 8 * scale, "#e8b746", 2 * scale)
+    kx, ky = dx, wall_y - dh + 190 * scale
+    out += _p(f"M{_f(kx)},{_f(ky - 30 * scale)} L{_f(kx + 22 * scale)},{_f(ky)} L{_f(kx)},{_f(ky + 30 * scale)} L{_f(kx - 22 * scale)},{_f(ky)} Z", "#d9383c", 2.4 * scale)
+    out += _line(kx, ky - 60 * scale, kx, ky - 30 * scale, sw=2.4 * scale, color="#d9383c")
+    for k in (-1, 1):
+        out += _line(kx + k * 6 * scale, ky + 30 * scale, kx + k * 10 * scale, ky + 70 * scale, sw=2.4 * scale, color="#d9383c")
+    out += _p(f"M{_f(dx - 150 * scale)},{_f(y + 10 * scale)} L{_f(dx + 150 * scale)},{_f(y + 10 * scale)} L{_f(dx + 130 * scale)},{_f(y - 26 * scale)} L{_f(dx - 130 * scale)},{_f(y - 26 * scale)} Z",
+              "#7a8a5a", 2.6 * scale)
+    for k, sx_ in enumerate((-60, -20, 40)):
+        out += _p(f"M{_f(dx + sx_ * scale)},{_f(y - 6 * scale)} l{_f(30 * scale)},0 q{_f(6 * scale)},{_f(-10 * scale)} {_f(-6 * scale)},{_f(-12 * scale)} "
+                  f"l{_f(-20 * scale)},0 Z", ("#f6f1e4", "#2f6fd0", "#e2503c")[k], 2 * scale)
+    lx = x0 + (x1 - x0) * 0.36
+    g = _clamp(glow)
+    if g > 0:
+        out += _ls_glow(lx, wall_y - 560 * scale, 420 * scale, 380 * scale, g, "erlamp", "#fff2c8", "#ffc861")
+    out += _line(lx, wall_y + 10 * scale, lx, wall_y - 540 * scale, sw=6 * scale, color="#5a4030")
+    out += _ell(lx, wall_y + 10 * scale, 40 * scale, 10 * scale, "#5a4030", 2 * scale)
+    out += _p(f"M{_f(lx - 60 * scale)},{_f(wall_y - 520 * scale)} L{_f(lx + 60 * scale)},{_f(wall_y - 520 * scale)} L{_f(lx + 40 * scale)},{_f(wall_y - 610 * scale)} "
+              f"L{_f(lx - 40 * scale)},{_f(wall_y - 610 * scale)} Z", S.mix("#f3e2b8", "#fff2c8", g), 3 * scale)
+    cxr = (x0 + x1) / 2
+    out += _ell(cxr, y + 120 * scale, 520 * scale, 120 * scale, "#c8643c", 3 * scale)
+    out += _ell(cxr, y + 120 * scale, 420 * scale, 92 * scale, "none", 6 * scale, stroke="#f2c43c")
+    for k in range(10):
+        a = 2 * math.pi * k / 10
+        out += _p(f"M{_f(cxr + 300 * scale * math.cos(a))},{_f(y + 120 * scale + 64 * scale * math.sin(a))} l{_f(14 * scale)},{_f(-8 * scale)} "
+                  f"l{_f(14 * scale)},{_f(8 * scale)} l{_f(-14 * scale)},{_f(8 * scale)} Z", "#2a7e86", 1.8 * scale)
+    if g > 0:
+        out += f'<rect x="{_f(x0 - 40)}" y="{_f(top)}" width="{_f(x1 - x0 + 80)}" height="{_f(bottom - top + 40)}" fill="#ffd27a" opacity="{0.08 * g:.3f}"/>'
+    del time
+    return f'<g filter="url(#wobble-fine)">{out}</g>'

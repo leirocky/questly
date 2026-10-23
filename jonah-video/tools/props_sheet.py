@@ -18,6 +18,8 @@ Nativity film: python3 tools/props_sheet.py nativity_stable nativity_animals nat
   nativity_items nativity_home
 Lost Sheep film: python3 tools/props_sheet.py lost_sheep_hills lost_sheep_flock lost_sheep_lamb lost_sheep_places
   lost_sheep_items lost_sheep_modern   (these sheets are <= 2000 px wide)
+Zacchaeus film: python3 tools/props_sheet.py zacchaeus_tree zacchaeus_street zacchaeus_house zacchaeus_coins zacchaeus_grove
+  zacchaeus_modern   (these sheets are <= 2000 px wide)
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -1385,6 +1387,183 @@ def sheet_lost_sheep_modern():
     return render_sheet("lost_sheep_modern", "props — Lost Sheep: the supermarket and trolley, the cosy bedroom, bed, night light, the story picture", rows)
 
 
+# ------------------------------------------------------------------ Zacchaeus film (sheets <= 2000 px wide)
+def _zc(label, fn, w=245, ax=122, ay=300, bg=None, h=None):
+    return _nat_c(label, fn, w, ax, ay, bg=bg, h=h)
+
+
+def _jr_scene(ox, oy, w, h, t, gy, sun=None):
+    return PR.jericho_sky(ox, oy, ox + w, gy + 40, time=t, sun=sun, scale=0.5) + \
+        f'<rect x="{ox}" y="{gy}" width="{w}" height="{oy + h - gy}" fill="{PR._jr_pal(t)["sand"]}"/>'
+
+
+def sheet_zacchaeus_tree():
+    k = 0.44
+
+    def tree(ox, oy, t=0.0, stage=None, sit=None, route=False, tx=470):
+        gy = oy + 600
+        tx = ox + tx
+        s = _jr_scene(ox, oy, 980, 660, t, gy, sun=(ox + 860, oy + 120))
+        s += PR.sycomore(tx, gy, k, 1, part="back", time=t)
+        pts = PR.sycomore_points(tx, gy, k, 1)
+        if stage is not None:
+            st = pts["climb"][stage]
+            s += CH.zacchaeus(*st["anchor"], k, 1, pose=st["pose"])
+        if sit:
+            s += CH.zacchaeus(*pts["sit"], k, 1, pose=sit)
+            s += CH.jesus(*pts["under"], k, -1, pose="look_up" if sit != "wobble" else "call_up")
+        s += PR.sycomore(tx, gy, k, 1, part="front", time=t)
+        if route:
+            for st in pts["climb"]:
+                for hp in st["hands"]:
+                    s += f'<circle cx="{hp[0]:.1f}" cy="{hp[1]:.1f}" r="5" fill="#3a7bd5"/>'
+                for fp in st["feet"]:
+                    if fp:
+                        s += f'<circle cx="{fp[0]:.1f}" cy="{fp[1]:.1f}" r="5" fill="#e8705a"/>'
+            sp = pts["sit"]
+            s += f'<circle cx="{sp[0]:.1f}" cy="{sp[1]:.1f}" r="7" fill="#8a3f9a"/>'
+        return s
+    rows = [
+        (660, [Cell("sycomore (time 0): wide, low-branching, figs on the trunk; dots = sycomore_points climb holds (blue hands, red feet), purple = sit", lambda ox, oy: tree(ox, oy, route=True), 980, [(470, 600)]),
+               Cell("sit_branch on the sitting branch, Jesus at 'under' (look_up); back -> Zacchaeus -> front frames his face", lambda ox, oy: tree(ox, oy, sit="sit_branch"), 980, [(470, 600)])]),
+        (660, [Cell(f"climb stage {i}: {PR.SYCOMORE_CLIMB[i][0]}", lambda ox, oy, i=i: tree(ox, oy, stage=i, tx=330), 490, [(330, 600)]) for i in range(4)]),
+        (660, [Cell("climb stage 4: climb_c onto the sitting branch", lambda ox, oy: tree(ox, oy, stage=4, tx=330), 490, [(330, 600)]),
+               Cell("peek (golden hour, time .5)", lambda ox, oy: tree(ox, oy, t=0.5, sit="peek", tx=200), 490, [(200, 600)]),
+               Cell("wobble + Jesus call_up (evening, time 1)", lambda ox, oy: tree(ox, oy, t=1.0, sit="wobble", tx=200), 490, [(200, 600)]),
+               Cell("part='back' / 'front' alone", lambda ox, oy: _jr_scene(ox, oy, 490, 660, 0.0, oy + 600) + PR.sycomore(ox + 140, oy + 600, 0.24, part="back")
+                    + PR.sycomore(ox + 370, oy + 600, 0.24, part="front"), 490, [(140, 600), (370, 600)])]),
+    ]
+    return render_sheet("zacchaeus_tree", "props — Zacchaeus: the sycamore-fig (桑树: Ficus sycomorus, not a mulberry), the climb route and the sitting spot", rows)
+
+
+def sheet_zacchaeus_street():
+    def street(ox, oy, t=0.0, crowd=False):
+        x0, x1, gy = ox, ox + 1960, oy + 470
+        s = PR.jericho_sky(ox, oy, x1, oy + 700, time=t, sun=(ox + 1700, oy + 110), birds=3, scale=0.5)
+        s += PR.jericho_street(x0, x1, gy, 0.5, part="back", time=t, seed=2)
+        pts = PR.jericho_street_points(x0, x1, gy, 0.5, seed=2)
+        if crowd:
+            s += CH.jericho_crowd(ox + 980, pts["far_edge"], 0.45, 1, n=16, pose="part", part=0.8, width=1900, rows=2, gap=320)
+        s += PR.jericho_street(x0, x1, gy, 0.5, part="road", time=t, seed=2)
+        if crowd:
+            s += CH.jesus(ox + 980, gy + 10, 0.5, -1, pose="walk_a")
+            s += CH.disciples(ox + 1080, gy + 4, 0.48, -1, variant=0, pose="walk_b") + CH.disciples(ox + 1160, gy - 6, 0.47, -1, variant=3, pose="walk_a")
+            s += CH.jericho_crowd(ox + 980, pts["near_edge"] + 40, 0.56, 1, n=40, pose="back", width=1900, rows=2, seed=3)
+        s += PR.jericho_street(x0, x1, gy, 0.5, part="front", time=t, seed=2)
+        return s
+    rows = [
+        (700, [Cell("jericho_sky + jericho_street (back / road / front) time 0: houses, palms, date stalls, far hills and cliffs", lambda ox, oy: street(ox, oy), 1960, [(0, 470)])]),
+        (700, [Cell("with crowds: far side jericho_crowd('part', part=.8) -> road -> Jesus + disciples walking -> near side jericho_crowd('back') (time .5)",
+                    lambda ox, oy: street(ox, oy, 0.5, True), 1960, [(0, 470)])]),
+        (380, [_zc(f"date_palm time={t}", lambda x, y, t=t: PR.date_palm(x, y, 0.3, time=t), 245, 122, 350, bg=PR._jr_pal(t)["sky"][2]) for t in (0.0, 0.5, 1.0)]
+         + [_zc(f"jericho_house v{v}", lambda x, y, v=v: PR.jericho_house(x, y, 0.5, variant=v, door=0.6 if v == 1 else 0.0), 245, 122, 350, bg="#bfe0d8") for v in range(4)]
+         + [_zc("house lit=1 (evening)", lambda x, y: PR.jericho_house(x, y, 0.5, variant=2, time=1.0, lit=1.0), 245, 122, 350, bg="#d8907c")]),
+        (300, [_zc("market_stall dates", lambda x, y: PR.market_stall(x, y - 10, 0.75), 330, 165, 290),
+               _zc("market_stall (pomegranate awning)", lambda x, y: PR.market_stall(x, y - 10, 0.75, awning="#c8643c", seed=1), 330, 165, 290),
+               _zc("jericho_sky time 0 / .5 / 1", lambda x, y: "".join(PR.jericho_sky(x - 165 + 110 * i, y - 280, x - 55 + 110 * i, y, time=i * 0.5, scale=0.3) for i in range(3)), 330, 165, 290),
+               _zc("tufts + date basket", lambda x, y: PR._jr_tuft(x - 80, y - 20, 1.5, 0.0) + PR._jr_tuft(x + 90, y - 20, 1.2, 0.5) + PR.coin_pile(x, y - 200, 1.0, 0) +
+                   f'<g filter="url(#wobble-fine)"><g transform="translate({x},{y - 60})">{PR._date_basket()}</g></g>', 330, 165, 290),
+               _zc("tax_booth (all)", lambda x, y: PR.tax_booth(x, y - 10, 0.6), 640, 320, 290)]),
+    ]
+    return render_sheet("zacchaeus_street", "props — Zacchaeus: Jericho, city of palms (sky, street, houses, palms, date stalls), time of day", rows)
+
+
+def sheet_zacchaeus_house():
+    def ext(ox, oy, t, door):
+        gy = oy + 520
+        s = PR.jericho_sky(ox, oy, ox + 980, gy + 20, time=t, scale=0.5) + f'<rect x="{ox}" y="{gy}" width="980" height="80" fill="{PR._jr_pal(t)["sand"]}"/>'
+        s += PR.zacchaeus_house(ox + 490, gy + 10, 0.58, view="exterior", time=t, door=door)
+        if door > 0.5:
+            s += CH.zacchaeus(ox + 560, gy + 30, 0.58, -1, pose="host") + CH.jesus(ox + 380, gy + 34, 0.58, 1, pose="walk_a")
+        return s
+
+    def room(ox, oy, chest):
+        cx, gy = ox + 980, oy + 420
+        s = PR.zacchaeus_house(cx, gy, 0.45, view="interior", time=1.0, part="back", chest=chest)
+        k = 0.5
+        ty = gy + 150
+        fy = ty - PR.DINING_TABLE_DEPTH * k
+        s += PR.dining_bench(cx, fy, k, width=900)
+        s += CH.disciples(cx - 330, fy, k, 1, variant=0, pose="sit") + CH.jesus(cx - 170, fy, k, 1, pose="sit_table")
+        s += CH.zacchaeus(cx + 20, fy - PR.DINING_BENCH_H * k, k, -1, pose="sit_table")
+        s += CH.disciples(cx + 180, fy, k, -1, variant=3, pose="sit")
+        s += PR.dining_table(cx - 60, ty, k, width=1000)
+        s += PR.zacchaeus_house(cx, gy, 0.45, view="interior", time=1.0, part="front")
+        return s
+    rows = [
+        (600, [Cell("zacchaeus_house exterior (golden): the carved gate closed", lambda ox, oy: ext(ox, oy, 0.5, 0.0), 980, [(490, 530)]),
+               Cell("exterior evening, door=1: Zacchaeus 'host' welcomes Jesus in", lambda ox, oy: ext(ox, oy, 1.0, 1.0), 980, [(490, 530)])]),
+        (680, [Cell("interior (part back) -> dining_bench -> guests (Jesus sit_table, Zacchaeus sit_table at the SEAT: his feet dangle!) -> dining_table -> part front",
+                    lambda ox, oy: room(ox, oy, 0.0), 1960, [(980, 420)])]),
+        (300, [_zc(f"money_chest open={o}", lambda x, y, o=o: PR.money_chest(x, y - 10, 0.75, open=o, glow=0.8 if o == 1 else 0), 245, 122, 290, bg="#e9c890")
+               for o in (0.0, 0.25, 0.5, 1.0)]
+               + [_zc("dining_table(width=500)", lambda x, y: PR.dining_table(x, y - 10, 0.7, width=500), 490, 245, 290),
+                  _zc("dining_bench", lambda x, y: PR.dining_bench(x, y - 10, 0.7, width=400), 490, 245, 290)]),
+    ]
+    return render_sheet("zacchaeus_house", "props — Zacchaeus: his fine house (gate, dining room, lamps, rug, the money chest), the dinner", rows)
+
+
+def sheet_zacchaeus_coins():
+    def card(kind, p):
+        return lambda x, y: PR.coins_gloss(x, y - 170, 0.8, kind=kind, progress=p)
+    rows = [
+        (330, [_zc(f"half progress={p}", card("half", p), 490, 245, 330, bg="#cfe6e0") for p in (0.0, 0.5, 0.75, 1.0)]),
+        (330, [_zc(f"fourfold progress={p}", card("fourfold", p), 490, 245, 330, bg="#cfe6e0") for p in (0.0, 0.25, 0.6, 1.0)]),
+        (260, [_zc(f"coin_pile {st}", lambda x, y, st=st: PR.coin_pile(x, y - 30, 1.2, n=10, style=st), 245, 122, 250) for st in PR.COIN_STYLES]
+         + [_zc("coin gold / silver / tilt", lambda x, y: PR.coin(x - 60, y - 100, 2.0) + PR.coin(x + 10, y - 100, 2.0, kind="silver") + PR.coin(x + 70, y - 100, 2.0, 0.6), 245, 122, 250),
+            _zc("balance_scale tilt -.5/.5", lambda x, y: PR.balance_scale(x - 60, y - 20, 0.9, -0.5) + PR.balance_scale(x + 60, y - 20, 0.9, 0.5), 245, 122, 250),
+            _zc("ledger_scroll open 1 / .2", lambda x, y: PR.ledger_scroll(x, y - 150, 0.9) + PR.ledger_scroll(x, y - 70, 0.9, open=0.2), 245, 122, 250),
+            _zc("tax_booth part back / front", lambda x, y: PR.tax_booth(x - 30, y - 10, 0.36, part="back") + PR.tax_booth(x + 60, y - 10, 0.36, part="front"), 245, 122, 250)]),
+    ]
+    return render_sheet("zacchaeus_coins", "props — Zacchaeus: coins, the picture-book glosses ('一半' and '四倍'), scale, ledger, the booth", rows)
+
+
+def sheet_zacchaeus_grove():
+    def grove(ox, oy, t):
+        x0, x1, gy = ox, ox + 1960, oy + 470
+        s = PR.jericho_sky(ox, oy, x1, gy, time=t, sun=(ox + 1500, oy + 300), scale=0.5)
+        s += PR.palm_grove(x0, x1, gy, 0.5, time=t, part="back", seed=4) + PR.palm_grove(x0, x1, gy, 0.5, time=t, part="mid", seed=4)
+        s += CH.zacchaeus(ox + 900, gy + 30, 0.5, 1, pose="wave", phase=0.3, expr="overjoyed")
+        for i, (dx, v) in enumerate(((1050, 0), (1150, 1), (1230, 2))):
+            s += CH.jericho_folk(ox + dx, gy + 40, 0.5, -1, kind="child", variant=v, pose="wave", phase=0.2 * i)
+        s += PR.palm_grove(x0, x1, gy, 0.5, time=t, part="front", seed=4)
+        return s
+    rows = [
+        (600, [Cell("palm_grove (back / mid / front) time 1 (golden evening): palms, balsam, the irrigation channel; children wave to Zacchaeus", lambda ox, oy: grove(ox, oy, 1.0), 1960, [(0, 470)])]),
+        (300, [_zc(f"balsam_bush time={t}", lambda x, y, t=t: PR.balsam_bush(x, y - 10, 1.4, time=t), 245, 122, 290) for t in (0.0, 0.5, 1.0)]
+         + [_zc("palm_grove time .5 (part all)", lambda x, y: PR.jericho_sky(x - 590, y - 290, x + 590, y, time=0.5, scale=0.3) + PR.palm_grove(x - 590, x + 590, y - 60, 0.3, time=0.5), 1225, 612, 290)]),
+    ]
+    return render_sheet("zacchaeus_grove", "props — Zacchaeus: the palm grove and the balsam garden in the golden evening", rows)
+
+
+def sheet_zacchaeus_modern():
+    def fest(ox, oy):
+        x0, x1, gy = ox, ox + 980, oy + 560
+        s = PR.street_festival(x0, x1, gy, 0.5, part="back", phase=0.2)
+        s += CH.parent(ox + 640, gy + 40, 0.55, 1, kind="dad", variant=1, pose="shoulders")
+        s += PR.street_festival(x0, x1, gy, 0.5, part="front", phase=0.2)
+        s += CH.child(ox + 200, gy + 60, 0.55, 1, outfit="tracksuit", pose="jump_see", phase=0.5)
+        return s
+
+    def home(ox, oy):
+        x0, x1, gy = ox, ox + 980, oy + 520
+        s = PR.evening_room(x0, x1, gy, 0.5, glow=0.9)
+        sx = ox + 470
+        s += PR.sofa(sx, gy + 40, 0.6, part="back")
+        s += CH.parent(sx - 40, gy + 40, 0.6, 1, kind="dad", variant=1, pose="sit_read")
+        s += CH.child(sx + 80, gy + 40 - PR.SOFA_SEAT * 0.6, 0.6, -1, outfit="tracksuit", pose="sit_point")
+        s += PR.sofa(sx, gy + 40, 0.6, part="front")
+        return s
+    rows = [
+        (640, [Cell("street_festival back -> dad + boy on shoulders -> front (festival_backs: the wall of grown-ups' backs) -> the boy jumping", fest, 980, [(0, 560)]),
+               Cell("evening_room -> sofa back -> dad sit_read (the picture book) -> boy sit_point -> sofa front", home, 980, [(0, 520)])]),
+        (360, [_zc("festival_backs (n=4, rows=1)", lambda x, y: PR.festival_backs(x - 230, x + 230, y - 10, 0.55, n=4, rows=1, seed=s_), 490, 245, 350) for s_ in (0, 1)]
+         + [_zc("bunting", lambda x, y: PR.bunting(x - 220, y - 300, x + 220, y - 280, n=9, sag=50), 490, 245, 350),
+            _zc("sofa + picture_book", lambda x, y: PR.sofa(x - 60, y - 10, 0.6) + PR.picture_book(x + 170, y - 60, 1.0), 490, 245, 350)]),
+    ]
+    return render_sheet("zacchaeus_modern", "props — Zacchaeus: the modern frame - the street festival and the cosy evening at home", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
           "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
           "lions": sheet_lions, "daniel": sheet_daniel, "david_items": sheet_david_items,
@@ -1399,7 +1578,10 @@ SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor"
           "nativity_items": sheet_nativity_items, "nativity_home": sheet_nativity_home,
           "lost_sheep_hills": sheet_lost_sheep_hills, "lost_sheep_flock": sheet_lost_sheep_flock,
           "lost_sheep_lamb": sheet_lost_sheep_lamb, "lost_sheep_places": sheet_lost_sheep_places,
-          "lost_sheep_items": sheet_lost_sheep_items, "lost_sheep_modern": sheet_lost_sheep_modern}
+          "lost_sheep_items": sheet_lost_sheep_items, "lost_sheep_modern": sheet_lost_sheep_modern,
+          "zacchaeus_tree": sheet_zacchaeus_tree, "zacchaeus_street": sheet_zacchaeus_street,
+          "zacchaeus_house": sheet_zacchaeus_house, "zacchaeus_coins": sheet_zacchaeus_coins,
+          "zacchaeus_grove": sheet_zacchaeus_grove, "zacchaeus_modern": sheet_zacchaeus_modern}
 
 
 def main():

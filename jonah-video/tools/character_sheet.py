@@ -37,6 +37,12 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   lost_sheep_village (neighbours, musicians), lost_sheep_modern (parent, child), lost_sheep_expr (close-ups),
   lost_sheep_group (line-up, the meal, counting, the search, found, carried home, the party) and lost_sheep_modern_group
   (the supermarket, found, holding hands, bedtime). These sheets are <= 2000 px wide.
+  Zacchaeus film (python3 tools/character_sheet.py zacchaeus): zacchaeus_poses, zacchaeus_climb (the climbing stages and the
+  branch poses), zacchaeus_expr (close-ups), zacchaeus_jesus (the poses Jesus gains), zacchaeus_folk (the people of Jericho:
+  kinds x variants, the back view), zacchaeus_folk_poses, zacchaeus_poor (the widow and the beggar), zacchaeus_modern (the
+  tracksuit boy and the festival dad), zacchaeus_group (scale line-up, the wall of backs, the tree with Jesus looking up, the
+  crowd parting, the dinner, the coin glosses) and zacchaeus_modern_group (the festival, the shoulder lift, the sofa). These
+  sheets are <= 2000 px wide.
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -212,6 +218,7 @@ def sheets():
     out += storm_sheets()
     out += nativity_sheets()
     out += lost_sheep_sheets()
+    out += zacchaeus_sheets()
     return out
 
 
@@ -1057,6 +1064,238 @@ def lost_sheep_modern_group():
     return path
 
 
+def zacchaeus_sheets():
+    """Sheets for the Zacchaeus film (each <= 2000 px wide so they can be viewed whole)."""
+    out = []
+    poses = [p for p in C.ZACCHAEUS_POSES if p not in ("walk", "strut", "pace", "run", "jump") and not p.startswith("climb")]
+    items = [("jesus (compare)", lambda x, y, s: C.jesus(x, y, s))]
+    items += [(p, lambda x, y, s, p=p: C.zacchaeus(x, y + (-130 * s if p in C.ZAC_SEAT_POSES else 0), s, pose=p)) for p in poses]
+    items += [(f"jump phase={ph}", lambda x, y, s, ph=ph: C.zacchaeus(x, y, s, pose="jump", phase=ph)) for ph in (0.4, 0.5)]
+    items += [("count phase=.5", lambda x, y, s: C.zacchaeus(x, y - 130 * s, s, pose="count", phase=0.5)),
+              ("walk facing=-1", lambda x, y, s: C.zacchaeus(x, y, s, -1, pose="walk_a"))]
+    out.append(("zacchaeus_poses", "zacchaeus — poses (scale 0.8; seated poses anchored at the seat 130*s above the line; Jesus for scale)",
+                items, 9, 220, 330, 0.8, {"ground_pad": 22}))
+    items = [(p, lambda x, y, s, p=p: C.jesus(x, y - (0 if not p.startswith("sit") else 0), s, pose=p)) for p in C.JESUS_ZACCHAEUS_POSES]
+    items += [("Storm walk_a (same Jesus)", lambda x, y, s: C.jesus(x, y, s, pose="walk_a")),
+              ("look_up facing=-1", lambda x, y, s: C.jesus(x, y, s, -1, pose="look_up"))]
+    out.append(("zacchaeus_jesus", "Jesus — the poses this film adds (scale 0.8; sit_* = on a bench, anchor = the floor, seat ~70 up)",
+                items, 10, 196, 330, 0.8, {"ground_pad": 24}))
+    items = []
+    for k in C.JERICHO_KINDS:
+        for v in range(6 if k in ("man", "woman") else (2 if k == "child" else 1)):
+            items.append((f"{k} v{v}", lambda x, y, s, k=k, v=v: C.jericho_folk(x, y, s, kind=k, variant=v)))
+    for k in C.JERICHO_KINDS:
+        for v in (0, 1):
+            items.append((f"{k}{v} crowd_back", lambda x, y, s, k=k, v=v: C.jericho_folk(x, y, s, kind=k, variant=v, pose="crowd_back")))
+    out.append(("zacchaeus_folk", "jericho_folk — kinds x variants (front) and pose='crowd_back' (the BACK view) (scale 0.62)",
+                items, 11, 180, 270, 0.62, {"ground_pad": 20}))
+    items = []
+    for p in C.JERICHO_POSES:
+        if p in ("walk", "run_to_see", "grumble_walk_off", "crowd_back"):
+            continue
+        k = ("man", "woman", "elder", "child", "fruit_seller", "farmer")[len(items) % 6]
+        items.append((f"{k} {p}", lambda x, y, s, p=p, k=k: C.jericho_folk(x, y, s, kind=k, variant=len(p) % 6, pose=p, phase=0.3)))
+    for v in range(6):
+        items.append((f"crowd_back arms {v}", lambda x, y, s, v=v: C.jericho_folk(x, y, s, kind="man", variant=v, pose="crowd_back", phase=0.2)))
+    for k, p in (("man", "pay"), ("farmer", "receive"), ("woman", "receive"), ("man", "elbow"), ("woman", "mutter")):
+        items.append((f"{k} {p} f=-1", lambda x, y, s, k=k, p=p: C.jericho_folk(x, y, s, -1, kind=k, variant=2, pose=p, phase=0.5)))
+    out.append(("zacchaeus_folk_poses", "jericho_folk — poses (scale 0.62)", items, 11, 180, 270, 0.62, {"ground_pad": 20}))
+    items = [(f"{k} {p}", lambda x, y, s, k=k, p=p: C.jericho_poor(x, y, s, kind=k, pose=p, phase=0.4))
+             for k in C.JERICHO_POOR_KINDS for p in C.JERICHO_POOR_POSES]
+    out.append(("zacchaeus_poor", "jericho_poor — the widow and the beggar (kind-faced, dignified; scale 0.8)", items, 6, 260, 330, 0.8,
+                {"ground_pad": 22}))
+    items = [(f"tracksuit {p}", lambda x, y, s, p=p: C.child(x, y, s, outfit="tracksuit", pose=p, phase=0.25))
+             for p in ("stand", "walk_a", "wave", "cheer", "point_up", "smile_up")]
+    items += [(f"{p}", lambda x, y, s, p=p: C.child(x, y, s, pose=p, phase=0.5)) for p in ("jump_see", "tiptoe")]
+    items += [("jump_see phase=0", lambda x, y, s: C.child(x, y, s, pose="jump_see", phase=0.0))]
+    items += [(f"{p} (seat {120 if p.startswith('sit') else 200}*s up)", lambda x, y, s, p=p: C.child(x, y - (120 if p.startswith("sit") else 200) * s, s, pose=p, phase=0.2))
+              for p in ("on_shoulders", "on_shoulders_point", "sit_read", "sit_point")]
+    items += [("on_shoulders part='front'", lambda x, y, s: C.child(x, y - 200 * s, s, pose="on_shoulders", part="front"))]
+    items += [(f"dad1 {p}", lambda x, y, s, p=p: C.parent(x, y, s, kind="dad", variant=1, pose=p, phase=0.2))
+              for p in ("stand", "walk_a", "look_around", "call", "hold_hand", "smile", "kneel_hug")]
+    items += [(f"dad1 lift phase={ph}", lambda x, y, s, ph=ph: C.parent(x, y, s, kind="dad", variant=1, pose="lift", phase=ph))
+              for ph in (0.0, 0.35, 0.68, 1.0)]
+    items += [(f"dad1 {p}", lambda x, y, s, p=p: C.parent(x, y, s, kind="dad", variant=1, pose=p, phase=0.3))
+              for p in ("shoulders", "shoulders_walk_a", "shoulders_walk_b", "sit_read", "sit_point")]
+    items += [("dad0 shoulders (Lost Sheep dad)", lambda x, y, s: C.parent(x, y, s, kind="dad", pose="shoulders"))]
+    climb = []
+    for st, g in C.ZAC_CLIMB.items():
+        def fn(x, y, s, st=st, g=g):
+            m = C.zacchaeus(x, y, s, pose=st)
+            for hx, hy in g["hands"]:
+                m += f'<circle cx="{x + hx * s:.1f}" cy="{y + hy * s:.1f}" r="5" fill="#3a7bd5"/>'
+            for f_ in g["feet"]:
+                if f_:
+                    m += f'<circle cx="{x + f_[0] * s:.1f}" cy="{y + f_[1] * s:.1f}" r="5" fill="#e8705a"/>'
+            return m
+        climb.append((f"{st} (dots = ZAC_CLIMB)", fn))
+    climb += [("climb_down (anchor = grip)", lambda x, y, s: C.zacchaeus(x, y - 250 * s, s, pose="climb_down")),
+              ("slide_down", lambda x, y, s: C.zacchaeus(x, y, s, pose="slide_down")),
+              ("sit_branch (seat)", lambda x, y, s: C.zacchaeus(x, y - 120 * s, s, pose="sit_branch")),
+              ("peek (seat)", lambda x, y, s: C.zacchaeus(x, y - 120 * s, s, pose="peek")),
+              ("wobble (seat)", lambda x, y, s: C.zacchaeus(x, y - 120 * s, s, pose="wobble")),
+              ("climb_c facing=-1", lambda x, y, s: C.zacchaeus(x, y, s, -1, pose="climb_c")),
+              ("run phase=.5", lambda x, y, s: C.zacchaeus(x, y, s, pose="run", phase=0.5)),
+              ("strut phase=.6", lambda x, y, s: C.zacchaeus(x, y, s, pose="strut", phase=0.6))]
+    out.append(("zacchaeus_climb", "zacchaeus — the climbing stages (anchor = the supporting sole; blue = hand grips, red = soles) and the branch poses (scale 0.8)",
+                climb, 6, 300, 390, 0.8, {"ground_pad": 24}))
+    ex = ("smug", "lonely", "eager", "frustrated", "idea", "surprised", "overjoyed", "nervous", "brave", "tender", "grateful", "laugh")
+    items = [(f"zacchaeus {e}", lambda x, y, s, e=e: C.zacchaeus(x, y + 10 * s, s, expr=e, marks=False)) for e in ex]
+    items += [(f"jesus {e}", lambda x, y, s, e=e: C.jesus(x, y + 70 * s, s, expr=e)) for e in ("call_warm", "speak_joy", "warm", "smile")]
+    items += [(f"folk {e}", lambda x, y, s, e=e: C.jericho_folk(x, y + 70 * s, s, kind="man", variant=2, expr=e)) for e in ("grumble", "mutter", "delighted", "cross")]
+    items += [(f"widow {e}", lambda x, y, s, e=e: C.jericho_poor(x, y + 50 * s, s, kind="widow", expr=e)) for e in ("touched", "grateful")]
+    items += [(f"boy {e}", lambda x, y, s, e=e: C.child(x, y - 103 * s, s, outfit="tracksuit", expr=e)) for e in ("frustrated", "overjoyed")]
+    out.append(("zacchaeus_expr", "Zacchaeus film expressions (close-ups): Zacchaeus; Jesus; the people of Jericho; the widow; the boy", items, 8, 230, 300, 1.3,
+                {"clip_cells": True, "ground_pad": -150}))
+    out.append(("zacchaeus_modern", "child(outfit='tracksuit') and parent(kind='dad', variant=1): the festival, the shoulder lift, the sofa (scale 0.62)",
+                items, 9, 220, 330, 0.62, {"ground_pad": 22}))
+    return out
+
+
+def zacchaeus_group():
+    """Compositions: the scale line-up, the wall of backs, the tree with Jesus looking up, the crowd parting, the tax booth,
+    the dinner and the promise with the coin glosses, the changed heart."""
+    PR = C._prp()
+    W, H = 2000, 64 + 4 * 560
+    top = 64
+    body, labels = "", []
+    gy = top + 500
+    b = PR.jericho_sky(0, top, W, gy, time=0.0, scale=0.5) + f'<rect x="0" y="{gy}" width="{W}" height="60" fill="#e8cc94"/>'
+    xs = 60
+    for fn, kw, w in ((C.jesus, {}, 150), (C.zacchaeus, {}, 140), (C.jericho_folk, {"kind": "man"}, 140), (C.jericho_folk, {"kind": "woman", "variant": 1}, 120),
+                      (C.jericho_folk, {"kind": "elder", "variant": 2}, 140), (C.jericho_folk, {"kind": "fruit_seller"}, 160), (C.jericho_folk, {"kind": "farmer"}, 150),
+                      (C.jericho_folk, {"kind": "child", "variant": 1}, 100), (C.jericho_poor, {"kind": "widow"}, 120), (C.jericho_poor, {"kind": "beggar"}, 130),
+                      (C.disciples, {"variant": 0}, 150), (C.parent, {"kind": "dad", "variant": 1}, 130), (C.child, {"outfit": "tracksuit"}, 110)):
+        b += fn(xs, gy, 0.95, **kw)
+        xs += w * 0.95
+    b += PR.coin_pile(xs + 40, gy - 4, 1.2, 8) + PR.money_chest(xs + 160, gy, 0.6, open=1.0, glow=0.6)
+    body += _panel(0, top, W, 560, b, "zg1")
+    labels.append((20, gy + 14, "scale .95: Jesus, ZACCHAEUS (short - an adult man, ~279 px), Jericho man / woman / elder / date seller / farmer / child, widow, beggar, Peter, the dad, the boy; coins, the chest"))
+    # 2. the wall of backs | the tree
+    gy2 = gy + 560
+    y0 = gy2 - 500
+    b = PR.jericho_sky(0, y0, 1000, gy2, time=0.0, scale=0.5) + PR.jericho_street(0, 1000, gy2 - 150, 0.42, part="back", time=0.0, seed=5)
+    b += PR.jericho_street(0, 1000, gy2 - 150, 0.42, part="road", time=0.0, seed=5)
+    b += C.jericho_crowd(520, gy2 - 10, 0.62, 1, n=26, pose="back", rows=2, seed=2)
+    b += C.zacchaeus(330, gy2 + 46, 0.62, 1, pose="jump", phase=0.5, expr="frustrated")
+    b += C.zacchaeus(640, gy2 + 54, 0.62, 1, pose="tiptoe", expr="frustrated")
+    body += _panel(0, y0, 1000, 560, b, "zg2")
+    b = PR.jericho_sky(1000, y0, 2000, gy2 + 60, time=0.0, sun=(1880, y0 + 80), scale=0.5) + f'<rect x="1000" y="{gy2 - 10}" width="1000" height="70" fill="#e8cc94"/>'
+    tx, k = 1450, 0.44
+    b += PR.sycomore(tx, gy2 + 10, k, 1, part="back")
+    pts = PR.sycomore_points(tx, gy2 + 10, k, 1)
+    b += C.zacchaeus(*pts["sit"], k, 1, pose="peek")
+    b += C.jericho_crowd(1780, gy2 + 26, 0.42, -1, n=6, pose="line", rows=1, width=500, seed=4)
+    b += C.jesus(*pts["under"], k, -1, pose="call_up")
+    b += C.disciples(pts["under"][0] + 110, pts["under"][1] + 4, k, -1, variant=1, pose="stand")
+    b += PR.sycomore(tx, gy2 + 10, k, 1, part="front")
+    body += _panel(1000, y0, 1000, 560, b, "zg3")
+    labels.append((20, gy2 + 30, "the wall of backs: jericho_crowd('back') -> Zacchaeus jump (phase .5) / tiptoe | the tree: sycomore back -> peek at sycomore_points 'sit' -> Jesus call_up at 'under' -> front"))
+    # 3. the crowd parts | the tax booth
+    gy3 = gy2 + 560
+    y0 = gy3 - 500
+    b = PR.jericho_sky(0, y0, 1000, gy3, time=0.3, scale=0.5) + PR.jericho_street(0, 1000, gy3 - 60, 0.42, part="back", time=0.3, seed=7)
+    sp = PR.jericho_street_points(0, 1000, gy3 - 60, 0.42)
+    b += PR.jericho_street(0, 1000, gy3 - 60, 0.42, part="road", time=0.3, seed=7)
+    b += C.jericho_crowd(500, sp["far_edge"] + 30, 0.5, 1, n=12, pose="part", part=1.0, rows=2, width=900, gap=300, seed=1)
+    b += C.jesus(500, gy3 + 10, 0.52, 1, pose="walk_b")
+    b += C.disciples(400, gy3 + 4, 0.5, 1, variant=0, pose="walk_a") + C.disciples(320, gy3 - 2, 0.49, 1, variant=3, pose="walk_b")
+    body += _panel(0, y0, 1000, 560, b, "zg4")
+    b = PR.jericho_sky(1000, y0, 2000, gy3, time=0.0, scale=0.5) + f'<rect x="1000" y="{gy3 - 60}" width="1000" height="120" fill="#e8cc94"/>'
+    bx, kk = 1460, 0.62
+    b += PR.tax_booth(bx, gy3 + 20, kk, part="back")
+    b += C.zacchaeus(*PR.local_to_stage(bx, gy3 + 20, kk, 1, *PR.TAX_BOOTH_SEAT), kk, 1, pose="count", phase=0.4)
+    b += PR.tax_booth(bx, gy3 + 20, kk, part="front")
+    b += C.jericho_folk(bx + 260, gy3 + 30, kk, -1, kind="man", variant=3, pose="pay")
+    b += C.jericho_folk(bx + 420, gy3 + 34, kk, 1, kind="woman", variant=4, pose="grumble_walk_off", phase=0.2)
+    b += C.jericho_folk(bx - 300, gy3 + 40, kk, 1, kind="farmer", pose="arms_folded")
+    b += C.jericho_folk(bx - 420, gy3 + 44, kk, 1, kind="elder", variant=1, pose="mutter")
+    body += _panel(1000, y0, 1000, 560, b, "zg5")
+    labels.append((20, gy3 + 30, "the crowd parts: jericho_crowd('part', part=1) -> Jesus and disciples walk through | the booth: tax_booth back -> zacchaeus 'count' at TAX_BOOTH_SEAT -> front; pay, grumble"))
+    # 4. the dinner, the promise and the glosses | the changed heart
+    gy4 = gy3 + 560
+    y0 = gy4 - 500
+    cx = 500
+    b = PR.zacchaeus_house(cx, gy4 - 160, 0.42, view="interior", time=1.0, part="back", chest=1.0)
+    k4 = 0.5
+    ty = gy4 + 10
+    fy = ty - PR.DINING_TABLE_DEPTH * k4
+    b += PR.dining_bench(cx - 80, fy, k4, width=700)
+    b += C.disciples(cx - 330, fy, k4, 1, variant=3, pose="sit") + C.jesus(cx - 190, fy, k4, 1, pose="sit_smile")
+    b += C.zacchaeus(cx + 0, fy, k4, -1, pose="promise")
+    b += C.disciples(cx + 150, fy, k4, -1, variant=0, pose="sit")
+    b += PR.dining_table(cx - 80, ty, k4, width=820)
+    b += PR.coins_gloss(cx + 300, y0 + 110, 0.42, kind="half", progress=0.5) + PR.coins_gloss(cx + 300, y0 + 250, 0.42, kind="fourfold", progress=1.0)
+    body += _panel(0, y0, 1000, 560, b, "zg6")
+    b = PR.jericho_sky(1000, y0, 2000, gy4, time=1.0, sun=(1850, gy4 - 200), scale=0.5)
+    b += PR.palm_grove(1000, 2000, gy4 - 20, 0.42, time=1.0, part="back", seed=3) + PR.palm_grove(1000, 2000, gy4 - 20, 0.42, time=1.0, part="mid", seed=3)
+    k5 = 0.6
+    b += C.jericho_poor(1200, gy4 + 30, k5, 1, kind="widow", pose="receive", phase=0.5)
+    b += C.zacchaeus(1320, gy4 + 30, k5, -1, pose="give", phase=0.5, expr="tender")
+    b += C.zacchaeus(1620, gy4 + 30, k5, 1, pose="pay_back", expr="happy")
+    b += C.jericho_folk(1760, gy4 + 30, k5, -1, kind="farmer", pose="receive", phase=0.4)
+    b += C.jericho_poor(1500, gy4 + 40, k5, 1, kind="beggar", pose="sit_thank")
+    b += PR.palm_grove(1000, 2000, gy4 - 20, 0.42, time=1.0, part="front", seed=3)
+    body += _panel(1000, y0, 1000, 560, b, "zg7")
+    labels.append((20, gy4 + 30, "the dinner: interior back -> bench -> guests -> Zacchaeus 'promise' -> dining_table; coins_gloss half / fourfold | the changed heart: give -> widow receive, beggar thanks, pay_back -> farmer"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Zacchaeus film — line-up, the wall of backs, the sycamore-fig, the crowd parting, the booth, the dinner, the changed heart")
+    font = ImageFont.truetype(str(FONT_REGULAR), 20)
+    for x0, y0_, text in labels:
+        d.text((x0, y0_), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_zacchaeus_group.png"
+    sheet.save(path)
+    return path
+
+
+def zacchaeus_modern_group():
+    """The modern frame: behind a wall of grown-ups' backs, the lift onto dad's shoulders, the evening sofa."""
+    PR = C._prp()
+    W, H = 2000, 64 + 2 * 620
+    top = 64
+    body, labels = "", []
+    gy = top + 560
+    b = PR.street_festival(0, 2000, gy, 0.5, part="back", phase=0.1, seed=1)
+    for i, ph in enumerate((0.0, 0.35, 0.68, 1.0)):
+        b += C.parent(1080 + i * 230, gy + 40, 0.55, 1, kind="dad", variant=1, pose="lift", phase=ph)
+    b += PR.festival_backs(-40, 1000, gy, 0.5, n=7, rows=2, seed=3, phase=0.1)
+    b += C.child(160, gy + 60, 0.55, 1, outfit="tracksuit", pose="jump_see", phase=0.5)
+    b += C.child(420, gy + 60, 0.55, 1, outfit="tracksuit", pose="tiptoe")
+    b += C.parent(700, gy + 60, 0.55, 1, kind="dad", variant=1, pose="stand", expr="kind")
+    body += _panel(0, top, 2000, 620, b, "zm1")
+    labels.append((20, top + 592, "s02: street_festival back -> festival_backs -> the boy jump_see / tiptoe, dad | the lift: parent(kind='dad', variant=1, pose='lift', phase=0 / .35 / .68 / 1)"))
+    gy2 = gy + 620
+    b = PR.evening_room(0, 1000, gy2 - 40, 0.55, glow=0.9)
+    sx = 520
+    b += PR.sofa(sx, gy2, 0.62, part="back")
+    b += C.parent(sx - 50, gy2, 0.62, 1, kind="dad", variant=1, pose="sit_read")
+    b += C.child(sx + 76, gy2 - PR.SOFA_SEAT * 0.62, 0.62, -1, outfit="tracksuit", pose="sit_point")
+    b += PR.sofa(sx, gy2, 0.62, part="front")
+    body += _panel(0, gy2 - 560, 1000, 620, b, "zm2")
+    b = PR.street_festival(1000, 2000, gy2, 0.5, part="back", phase=0.6, seed=2)
+    rx = 1500
+    pp = C.parent_points(rx, gy2 + 40, 0.6, 1, kind="dad", variant=1, pose="shoulders")
+    b += C.child(*pp["rider"], 0.6, 1, outfit="tracksuit", pose="on_shoulders_point", part="back")
+    b += C.parent(rx, gy2 + 40, 0.6, 1, kind="dad", variant=1, pose="shoulders", rider=False)
+    b += C.child(*pp["rider"], 0.6, 1, outfit="tracksuit", pose="on_shoulders_point", part="front")
+    b += PR.festival_backs(1000, 2000, gy2 + 10, 0.5, n=6, rows=1, seed=5)
+    b += f'<circle cx="{pp["rider"][0]:.1f}" cy="{pp["rider"][1]:.1f}" r="6" fill="#d64034"/>'
+    body += _panel(1000, gy2 - 560, 1000, 620, b, "zm3")
+    labels.append((20, top + 1212, "s11: evening_room -> sofa back -> dad sit_read -> boy sit_point -> sofa front | rider recipe: child part='back' at parent_points()['rider'] (red dot) -> dad rider=False -> child part='front'"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Zacchaeus film — the modern frame: behind the grown-ups, lifted onto dad's shoulders, the picture book at home")
+    font = ImageFont.truetype(str(FONT_REGULAR), 20)
+    for x0, y0_, text in labels:
+        d.text((x0, y0_), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_zacchaeus_modern_group.png"
+    sheet.save(path)
+    return path
+
+
 # ---------------------------------------------------------------- compositions
 
 
@@ -1238,6 +1477,10 @@ def main():
         print(lost_sheep_group())
     if not filt or any(f in "lost_sheep_modern_group" for f in filt):
         print(lost_sheep_modern_group())
+    if not filt or any(f in "zacchaeus_group" for f in filt):
+        print(zacchaeus_group())
+    if not filt or any(f in "zacchaeus_modern_group" for f in filt):
+        print(zacchaeus_modern_group())
     raster.close()
 
 

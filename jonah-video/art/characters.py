@@ -12,7 +12,11 @@ angels and angel_choir(), the shepherds, the wise men, the Bethlehem townsfolk a
 a Christmas jumper (child(outfit='jumper')) (section NATIVITY FILM); for the Lost Sheep film (stories/lost_sheep) new
 poses for the same Jesus, the tax collectors, sinner(), the Pharisees and pharisees_group(), the shepherd of the parable
 (parable_shepherd, shepherd_points), the village neighbours and musician(), the modern parent() and the girl lost in the
-supermarket (child(outfit='dungarees' / 'cloud_pyjamas', toy='lamb')) (section LOST SHEEP FILM at the end).
+supermarket (child(outfit='dungarees' / 'cloud_pyjamas', toy='lamb')) (section LOST SHEEP FILM); for the Zacchaeus film
+(stories/zacchaeus) Zacchaeus (zacchaeus(), zacchaeus_points()), new poses for the same Jesus, the people of Jericho
+(jericho_folk(), jericho_crowd()), the widow and the beggar (jericho_poor()), the boy in a tracksuit
+(child(outfit='tracksuit')) and the festival dad (parent(kind='dad', variant=1), parent_points()) (section ZACCHAEUS FILM at
+the end).
 
 Every public drawing function returns SVG markup - one ``<g>`` element, NO ``<svg>`` wrapper - to be
 placed inside ``art.style.svg_doc(...)`` (it uses that document's ``#wobble-fine`` filter; ``ground_shadow``
@@ -1523,6 +1527,273 @@ NOTES FOR SCENE ILLUSTRATORS (Lost Sheep)
     picture on the wall is the shepherd carrying the lamb home (props.picture_frame).
   RENDER COST (2112 x 1188, uncached): every figure here 0.21-0.25 s (the shepherd with lantern 0.31, pharisees_group 0.25),
     the same as jesus / shepherds (0.22 s). Backdrops: see art/props.py section 13 - keep them on static layers.
+
+ZACCHAEUS FILM (Luke 19:1-10, stories/zacchaeus)                 sheets: python3 tools/character_sheet.py zacchaeus
+================================================
+Same rig and conventions as above (anchor = ground under the pelvis, between the feet; facing; scale; marks; bboxes
+(l, t, r, b) at scale 1 / facing 1 measured from renders, wobble included). hand_positions / body_points work for every
+function here. Sheets (each <= 2000 px wide): characters_zacchaeus_poses / _climb / _expr / _jesus / _folk / _folk_poses /
+_poor / _modern, characters_zacchaeus_group (the line-up, the wall of backs, the tree with Jesus calling up, the crowd
+parting, the booth, the dinner with the coin glosses, the changed heart) and characters_zacchaeus_modern_group (the
+festival, the shoulder lift, the sofa). New designs with this film's palette - Jericho, the city of palms in a warm, low
+desert valley: date-palm green, terracotta, sandstone gold, turquoise, saffron - nothing reuses the Nativity townsfolk, the
+Lost Sheep neighbours, the Galilean villagers or the Nineveh citizens. Only Jesus is the same person as in 耶稣平静风浪 and
+迷失的羊 (same design, new poses), and two or three of the Storm film's disciples() can walk and sit with him unchanged
+(walk_a / walk_b behind him; 'sit' on the dinner bench). The sycamore-fig, the street, the booth, the house, the coins and
+the modern places are in art/props.py section 14.
+SCALE: at the same ``scale`` Zacchaeus is ~279 px to the top of his head-cloth (head centre (2, -228)) - clearly shorter than
+the grown-ups but an adult man (beard, adult proportions ~3.4 heads, never a child): Jericho men ~338 (head (2, -278)),
+women ~317 ((2, -268)), elders ~319, the date seller ~333, the farmer ~341 with his hat, children ~224, the widow ~306, the
+beggar ~323, Jesus ~342, the festival dad ~344, the boy ~228. Standing, Zacchaeus's eyes are at the crowd's shoulders: he
+sees only backs; on tiptoe +16; at the top of a jump the backs of heads ('只看见别人的后脑勺'). One ground line, one scale.
+New expressions (ZACCHAEUS_EXPRESSIONS; every function accepts them): lonely (eyes down, sad mouth), eager (big bright
+eyes, grin, raised brows), frustrated (frowning brows, pout, a sweat drop), idea (big eyes, brows up, open 'oh!' - with
+pose 'idea' a light bulb), overjoyed (^ eyes, laughing mouth, blush), nervous (worried brows, wobbly mouth, blush, a sweat
+drop), grateful (closed eyes, smile, blush), grumble (narrowed eyes, grumpy mouth - the crowd), delighted (big eyes, grin,
+blush - receiving coins), call_warm (friendly calling mouth, blush - Jesus calling him down), speak_joy (^ eyes, open
+speaking mouth, blush - '今天，救恩到了这一家！'). Also useful: smug (the opening), surprised, brave, tender, happy, laugh,
+determined, sad, kind, cross, mutter, touched.
+
+zacchaeus(x, y, scale=1.0, facing=1, pose='stand', expr=None, phase=0.0, purse=True, coins=True, marks=True)
+--------------------------------------------------------------------------------------------------------------
+The chief tax collector of Jericho (Luke 19:2): short and a little stocky, a neat short beard and a dapper curled
+moustache, a fine cream head-cloth wrapped a little high with gold stripes, a twisted teal band and a raspberry jewel; an
+open peacock-teal robe (ZAC_ROBE) sprinkled with little gold diamonds, gold embroidered borders down both front edges,
+gold hem, cuffs and collar, over a saffron striped tunic (ZAC_TUNIC); a raspberry sash; a gold ring; red sandals; and
+(purse=True) a fat plum velvet money pouch with a gold drawstring at the waist. He reads first as a slightly smug rich
+official (natural expr 'smug' when standing / walking) and turns warm (pass expr). coins=False empties his hands.
+  pose (ZACCHAEUS_POSES)  bbox (l, t, r, b)      natural expr  notes (hands [far, near] at scale 1)
+  stand          (-63, -279, 49, 0)        smug        the near hand resting on the money pouch
+  walk_a/_b/_c   (-74, -279, 71, 1) / (-58, -281, 85, 0) / (-58, -282, 53, -1)   smug   planted-foot stride frames and the
+                                                       passing frame; 'walk' + phase cycles a, c, b, c (flip ~0.2 s)
+  strut_a/_b     (-75, -281, 74, 1) / (-89, -278, 90, 0)   smug   chest out, chin up, arms swinging ('strut' + phase): the
+                                                       rich man walking down the street while people step aside
+  lonely         (-57, -275, 72, 0)        lonely      head bowed, hands clasped low ('大家都不喜欢撒该')
+  count          seat anchor (-52, -179, 98, 57)  smug  seated behind the tax booth (anchor = the SEAT), hands on the table
+                                                       (74, -67), (51, -67); phase 0..1 carries a coin from the heap (0) to
+                                                       the stacks (.5) and back - see THE BOOTH
+  jump           + phase: crouch (< .22), air (.22-.78, the soles rise up to ZAC_JUMP = 74), land (>= .78)   bbox over the
+                 cycle (-104, -342, 128, 4); also jump_crouch (eager), jump_air (eager, arms up; drawn ZAC_JUMP up), jump_land
+                 (frustrated, arms out). The anchor stays on the ground (put the shadow there). 8 frames at ~0.07 s.
+  tiptoe         (-81, -294, 94, 3)        eager       on his toes (+16), craning, a hand up, the other back for balance
+  squeeze        (-63, -251, 139, 0)       determined  bent forward, both palms pushing between two backs
+  bumped         (-133, -283, 109, 0)      surprised   knocked back: leaning back, one foot up, arms flung, little stars
+  pace_a/_b      (-74, -276, 71, 0) / (-55, -279, 70, 0)  frustrated  hands behind the back, head down ('pace' + phase):
+                                                       '急得团团转' (move him to and fro)
+  think          (-62, -279, 55, 0)        frustrated  a fist on the hip, the other hand at the chin
+  idea           (-60, -349, 68, 0)        idea        a finger up beside his head and a glowing light bulb ('有了！')
+  run_a/_b       (-132, -254, 101, 0) / (-132, -249, 77, 0)  eager  the comic run: robe hitched up to the knees in both
+                                                       fists, bare legs churning, dust puffs ('run' + phase, ~0.15 s)
+  climb_a..d     see CLIMBING (anchor = the SUPPORTING sole; ZAC_CLIMB lists the hand grips and soles)
+                 climb_a (-60, -278, 94, 0) reaching to the fork of the trunk; climb_b (-57, -278, 96, 0) a foot up on a
+                 knob; climb_c (-55, -277, 98, 0) a knee up onto the branch; climb_d (-63, -279, 91, 2) standing on a branch,
+                 reaching higher. The robe is hitched up (ZAC_HITCH) and the near arm passes behind his head so his face
+                 always shows; hands land on the given grips within ~5 px.
+  sit_branch     seat anchor (-60, -182, 99, 58)   overjoyed  sitting on a branch, legs dangling, hands gripping the branch
+  peek           seat anchor (-40, -174, 128, 55)  eager      leaning forward, a hand pushing the leaves aside (115, -112)
+  wobble         seat anchor (-129, -208, 121, 36) surprised  nearly falling off backward, legs and arms flung up, '!'
+  climb_down     grip anchor (-72, -15, 46, 239)   overjoyed  hanging from a branch by both hands (anchor = between them),
+                                                       legs dangling feeling for the trunk
+  slide_down     (-60, -315, 68, 1)        overjoyed   hugging the trunk and sliding down, robe flying up, speed lines
+  bow            (-47, -271, 138, 0)       grateful    a deep welcoming bow, hand on the heart, the other arm sweeping open
+  host           (-106, -280, 115, 0)      happy       'come in!': an open hand toward his gate, the other arm open
+  stand_speak    (-62, -279, 58, 0)        nervous     standing up to speak, a hand on the chest, the other open
+  promise        (-63, -280, 89, 0)        brave       hand on the heart, the other hand raised: '主啊，我要...'
+  give           (-52, -276, 128, 0)       tender      coins on the far palm (111, -153) held out; phase 0..1 hops one coin
+                                                       ~54 px toward the receiver's hands (see THE CHANGED HEART)
+  pay_back       (-52, -277, 102, 0)       tender      four coins held out in both hands (87, -151), (59, -147)
+  cheer          (-83, -279, 86, 0)        overjoyed   laugh (-66, -279, 48, 0) laugh, hands on the belly
+  sit_table      seat anchor (-60, -182, 99, 58)   happy  on the dinner bench, hands on the table (75, -62), (54, -55)
+  wave           (-62, -279, 99, 0)        happy       phase swings the hand
+ZAC_SEAT_POSES (count, sit_branch, peek, wobble, sit_table) are anchored at the SEAT under him with the legs hanging below:
+put the anchor on a stool, a branch, a bench (on a bench made for adults his feet dangle - a nice detail). Expressions that
+suit him (ZACCHAEUS_EXPRESSIONS plus): smug, surprised, brave, tender, happy, laugh, determined, sad, kind, worried, dizzy.
+zacchaeus_points(x, y, scale=1.0, facing=1, pose='stand', phase=0.0, **kw) -> body_points() plus 'grip' (the midpoint of
+  his hands), 'seat' (the seat under him = the anchor of the seated poses) and 'purse' (the pouch's knot).
+
+jesus(..., pose=<JESUS_ZACCHAEUS_POSES>)  - the poses this film adds
+--------------------------------------------------------------------
+Same design and output for every earlier call (JESUS_POSES and JESUS_LOST_SHEEP_POSES unchanged). His walk is the Storm
+film's walk_a / walk_b (planted-foot frames, alternate ~0.25 s); 'bless' is the Storm film's. New poses (natural expr):
+  look_up        (-83, -339, 60, 0)     warm       stopping under the tree, head tipped back, eyes up, hands relaxed
+  call_up        (-84, -339, 94, 0)     call_warm  the far hand raised toward the tree, open and friendly: '撒该，快下来！'
+  smile          (-71, -341, 55, 0)     smile      hands loosely folded in front
+  speak_joy      (-143, -343, 129, 0)   speak_joy  arms open wide, speaking with joy: '今天，救恩到了这一家！'
+  At the raised dining table (anchor = the FLOOR under his feet, the seat ~70 up = props.DINING_BENCH_H; hands on the table
+  top (86, -127), (59, -121)):
+  sit_table      (-68, -288, 116, 0)    warm       sit_smile (smile), sit_bless (-74, -290, 116, 0) kind - the near hand
+                                                   raised palm out, sit_speak_joy (-146, -290, 132, 0) speak_joy - arms open
+
+jericho_folk(x, y, scale=1.0, facing=1, kind='man', variant=0, pose='stand', expr=None, phase=0.0, item=None, coins=True,
+             marks=True)
+---------------------------------------------------------------------------------------------------------------------------
+The people of Jericho with this film's look (JERICHO_KINDS), variant 0-5 (mod 6) colourings and skin tones:
+  'man'           a long cloak with broad vertical stripes (cream / terracotta, palm green / cream, sand / brown,
+                  terracotta / sand, turquoise / cream, plum / gold) open over a coloured tunic, a cream head-cloth held by
+                  a dark twisted cord ring, beards varying                                  stand (-70, -338, 60, 0)
+  'woman'         a long dress (palm green, terracotta, deep turquoise, rose, saffron, plum) with an embroidered chest panel
+                  of little palm fronds, a soft veil and a band of little gold coins across the forehead   (-53, -317, 52, 0)
+  'elder'         white hair round a bald crown under a small embroidered cap, a white beard, a striped cloak, stooped with a
+                  knobbly stick when standing / walking                                     (-50, -319, 65, 4)
+  'child'         knee tunic with a woven belt, barefoot; even variants boys with curls, odd variants girls with two
+                  braids and coin beads                                                     (-43, -224, 43, 0)
+  'fruit_seller'  the plump, jolly date seller: a yellow-and-green striped turban, a leather apron, a full beard; a round
+                  basket of dates on his hip (item 'dates' by default)                      (-69, -334, 63, 0)
+  'farmer'        a lean balsam farmer: a wide woven straw hat, a short tucked-up tunic, stubble, a hoe on his shoulder
+                  (item 'hoe' by default) - the man Zacchaeus pays back                     (-70, -339, 82, 4)
+  item (JERICHO_ITEMS) 'dates' / 'hoe' / 'sack' / None (on stand, walk, smile, frown, point...). coins=False empties the
+  hands of pay / receive.
+  pose (JERICHO_POSES)  bbox man (others similar, see the sheets)   natural expr  notes
+  stand / walk_a / walk_b     ('walk' + phase)                      kind
+  run_to_see     run_a / run_b (-119, -304, 122, 0) / (-91, -297, 143, 0)  eager   hurrying to see Jesus ('run_to_see' + phase)
+  crowd_back     (-72, -349, 125, 4)   THE BACK VIEW (the wall of backs): turned away toward `facing`, only a sliver of
+                 cheek and an ear show; the head-cloth, a veil, braids hang down the back; variant + phase pick the arms
+                 (down, hands on the hips, waving up high, pointing at the road, on tiptoe craning, hands behind the back)
+                 and phase sways them a little (loop 4 frames)
+  look           (-62, -333, 64, 0)    eager   a hand shading the eyes, looking down the road
+  point          (-69, -334, 100, 0)   eager   cheer (-100, -334, 105, 0) joyful   wave (phase) happy
+  frown          (-74, -335, 55, 0)    cross   arms_folded (-69, -334, 63, 0) grumble
+  mutter         (-55, -333, 88, 0)    mutter  leaning in, a hand by the mouth: two face to face ~110*scale apart
+  elbow          (-97, -335, 65, 0)    cross   blocking: the elbow jutting back at whoever is behind
+  pay            (-59, -332, 98, 0)    grumble coins held out on the palm, grudgingly (paying the tax)
+  grumble_walk_off  grumble_walk_a / _b (arms folded, walking away, 'grumble_walk_off' + phase)   grumble
+  smile          (-69, -333, 55, 0)    happy
+  receive        (-58, -332, 91, 0)    delighted  both hands cupped forward (71, -167), (55, -164) with coins in them;
+                                                   phase 0..1 drops one more coin in
+  For women and children 'frown' looks worried rather than cross, and the grumbling poses use 'cross' (pass expr to override).
+jericho_crowd(x, y, scale=1.0, facing=1, n=12, pose='line', width=1200, rows=3, seed=0, phase=0.0, part=0.0, gap=300,
+              children=True, marks=True)
+  A Jericho crowd (JERICHO_CROWD_POSES) of n people in up to `rows` rows centred on x over width*scale (each row behind is
+  42*scale higher and 5% smaller, drawn first; children in front). 'line': lining the road and looking down it toward
+  facing (look / point / cheer / wave / stand / smile); 'back': THE WALL OF BACKS seen from behind - adults only (head-
+  cloths, veils, a straw hat, a turban, a bald elder), packed ~92*scale apart whatever the width (use n ~ 2 x the people per
+  row you want, rows 2-3); 'part': the crowd parting for Jesus - the two halves face the middle and step aside, part 0..1
+  opening a gap of gap*scale at x (quantise part 0, .25, .5, .75, 1), those nearest the gap point, cheer and wave;
+  'grumble': arms folded, muttering in pairs, frowning, walking off (s07); 'run_to_see': hurrying toward facing; also
+  cheer / look / wave / stand / point for everyone. children=False leaves the children out.
+
+jericho_poor(x, y, scale=1.0, facing=1, kind='widow', pose='stand', expr=None, phase=0.0, coins=True, bowl=True, marks=True)
+  The poor of Jericho whom Zacchaeus helps (Luke 19:8), kind-faced and dignified, never pitiful-comic (JERICHO_POOR_KINDS):
+  'widow' an older woman with grey hair under a grey-violet veil, a faded indigo dress with two neat patches, lashes, smile
+  lines (stand (-47, -307, 58, 0)); 'beggar' a man with a grey-black beard and curls, a green headband, a patched brown
+  robe, a rope belt, barefoot (stand (-51, -324, 62, 0)); bowl=True gives him a wooden alms bowl with a coin when sitting.
+  JERICHO_POOR_POSES: stand (kind, hands folded), sit (on the ground, seat at the anchor; widow (-57, -211, 114, 3), beggar
+  (-66, -223, 143, 1)), receive (touched: cupped hands (60, -155), (47, -153), coins in them, phase drops one in), thank
+  (grateful: hands pressed together, a small bow), sit_receive (hands held out (116, -115), (83, -109) from the ground),
+  sit_thank.
+
+child(..., outfit='tracksuit', part=None)  - the boy at the street festival (opening) and at home (ending)
+---------------------------------------------------------------------------------------------------------
+child() keeps every earlier look and output. outfit='tracksuit' (ZACCHAEUS_OUTFITS): a little boy (~5, 228 px, head (2, -179))
+with straight black hair and a fringe under a yellow baseball cap worn brim-forward, a royal-blue tracksuit (TRACKSUIT) with
+white stripes down the sleeves and trousers, a zip and a white collar, white sneakers with red stripes - not the Nativity
+jumper boy or the Lost Sheep girl. Every earlier pose works in the tracksuit; the new ZACCHAEUS_CHILD_POSES work in the
+tracksuit (default), 'dungarees' or 'jumper':
+  jump_see       + phase: crouch / air (the soles CHILD_SEE_JUMP = 46 up) / land, frustrated - 'jumping and still seeing
+                 nothing'; bbox over the cycle (-64, -265, 81, 10)
+  tiptoe         (-63, -236, 74, 2)   frustrated   on tiptoe, a hand reaching up
+  lifted         grip anchor (-89, -107, 84, 125)  overjoyed  being lifted: anchor = between the armpits where the hands
+                 hold; legs dangling, arms out (parent 'lift' draws this itself)
+  on_shoulders   seat anchor (-69, -159, 61, 68)   overjoyed  riding on dad's shoulders, arms up (phase waves them);
+  on_shoulders_point  (-42, -159, 105, 67) delighted  pointing ahead at the parade. part='back' draws everything (the near
+                 leg is re-drawn by part='front' in front of dad); part='front' only the near leg - see THE MODERN FRAME.
+  sit_read       seat anchor (-27, -154, 93, 42)   happy      on the sofa (anchor = the seat) leaning in to the picture book;
+  sit_point      (-27, -153, 95, 42)  delighted  the near hand pointing at the page
+
+parent(..., variant=1, rider=None, book=True)  - the festival dad and the shoulder ride
+--------------------------------------------------------------------------------------
+parent() keeps every earlier call's output (variant=0, the Lost Sheep mum and dad). variant=1 (kind='dad' only;
+PARENT_VARIANTS): a new dad - short black hair with a side part, clean-shaven and smiling, an open sage-green overshirt with
+rolled sleeves over a white tee, a watch, khaki trousers, brown sneakers (stand (-52, -342, 57, 3), head (2, -291)). Every
+PARENT_POSES pose works in variant 1, plus PARENT_ZAC_POSES (kind='dad', variant 0 or 1):
+  lift           + phase 0..1: 0 crouching behind the child, hands under its arms; .35 the child up at his chest; .68 swung
+                 up high over his head (drawn behind him); 1 = 'shoulders'. bbox 0 (-39, -316, 144, 14), .35 (-44, -344,
+                 134, 6), .68 (-105, -440, 68, 6). Render 6-8 frames over ~1.2 s.
+  shoulders      (-120, -432, 62, 3) happy  the child on his shoulders (behind his head, its near leg in front of his
+                 shoulder, his hands holding its shins); shoulders_walk_a / _b ('shoulders_walk' + phase) walking so.
+  sit_read       (-39, -284, 127, 2) kind   on the sofa (anchor = the FLOOR, seat props.SOFA_SEAT = 69 up) holding the open
+                 picture book (props.picture_book, open at Zacchaeus in the tree) at (77, -149); book=False: hands only.
+  sit_point      (-39, -285, 134, 2) happy  the same, a finger on the page.
+  rider          None = the child of this variant (tracksuit boy for variant 1, the dungarees girl for 0); dict(outfit=...,
+                 pose='on_shoulders_point', expr=...) changes it; False draws the dad alone (for a separately animated child).
+parent_points(x, y, scale=1.0, facing=1, pose='stand', phase=0.0, **kw) -> body_points() plus 'rider' (the child's seat on
+  his shoulders = child(pose='on_shoulders') anchor, for shoulders / shoulders_walk* / lift at phase 1: (-52, -272) at scale
+  1 for variant 1) and 'book' (the middle of the picture book).
+
+Constants (Zacchaeus film): ZACCHAEUS_POSES, ZACCHAEUS_EXPRESSIONS, ZAC_SEAT_POSES, ZAC_CLIMB, ZAC_JUMP, ZAC_HITCH,
+JESUS_ZACCHAEUS_POSES, JERICHO_KINDS, JERICHO_POSES, JERICHO_ITEMS, JERICHO_CROWD_POSES, JERICHO_POOR_KINDS,
+JERICHO_POOR_POSES, ZACCHAEUS_CHILD_POSES, ZACCHAEUS_OUTFITS, CHILD_SEE_JUMP, PARENT_ZAC_POSES, PARENT_VARIANTS; colours
+ZAC_ROBE, ZAC_TRIM, ZAC_TUNIC, ZAC_TUNIC_STRIPE, ZAC_SASH, ZAC_CLOTH, ZAC_JEWEL, ZAC_PURSE, ZAC_SKIN, ZAC_HAIR, ZAC_SANDAL,
+JR_CORD, JR_DATE, TRACKSUIT, TRACK_STRIPE, TRACK_CAP, TRACK_SKIN, TRACK_HAIR, TRACK_SHOE, TRACK_SHOE_ACCENT, FDAD_SHIRT,
+FDAD_TEE, FDAD_TROUSERS, FDAD_SHOE, FDAD_SKIN, FDAD_HAIR.
+
+NOTES FOR SCENE ILLUSTRATORS (Zacchaeus)
+  THE BOOTH (s03): props.tax_booth(bx, by, s, f, part='back') -> zacchaeus(*props.local_to_stage(bx, by, s, f,
+    *props.TAX_BOOTH_SEAT), s, f, pose='count', phase=ph) -> tax_booth(part='front'). His hand carries a coin from the
+    heap to the stacks as ph goes 0 -> .5 -> 1 (6 frames, ~0.6 s per coin; sfx 'coins'). Payers: jericho_folk(bx +
+    260*s*f, by + 10*s, s, -f, pose='pay') then 'grumble_walk_off' (phase) walking away; onlookers 'arms_folded' / 'mutter'.
+    Walking down the street: zacchaeus 'strut' + phase (expr 'smug'); people step aside with 'frown' / 'arms_folded' and
+    turn away (facing away from him) - '大家看见撒该，都躲得远远的'.
+  THE WALL OF BACKS (s04): the road side seen from behind - jericho_crowd(x, y, s, f, n=20-30, pose='back', rows=2-3)
+    (packed ~92*s apart, adults only) and Zacchaeus IN FRONT of it (lower on the screen, drawn after it, e.g. y + 40*s):
+    'jump' + phase (crouch, up to ZAC_JUMP, land; 8 frames, ~0.6 s per hop - '跳呀跳'), 'tiptoe' ('踮起脚'), 'squeeze'
+    pressed against two backs, 'bumped' (one of them 'elbow' facing away from him), then 'pace' + phase / 'think'
+    ('急得团团转') and 'idea' (the bulb, sfx 'chime' or 'pop'). His eye line (~226*s above his feet) is at the crowd's
+    shoulders; at the top of a jump it reaches the backs of their heads.
+  RUNNING AHEAD (s05): zacchaeus 'run' + phase (~0.15 s per frame) along the road toward the tree; robe hitched up.
+  CLIMBING THE TREE (s05): pts = props.sycomore_points(tx, ty, s, f) at the SAME scale as Zacchaeus. Draw
+    props.sycomore(tx, ty, s, f, part='back') -> zacchaeus(*st['anchor'], s, f, pose=st['pose']) for the current stage
+    st = pts['climb'][i] -> sycomore(part='front'). The five stages climb_a (on the ground, hands on the fork), climb_b
+    (a foot on the knob), climb_c (on the knob, a knee onto the low branch), climb_d (standing on the low branch), climb_c
+    (on the low branch, a foot on the stub, hands on the sitting branch) put his hands and feet on the bark (pts['climb']
+    also lists 'hands' and 'feet'). Hold each stage ~0.35 s and slide the anchor between stages with an eased tween
+    (0.15-0.2 s) - '爬呀爬，爬呀爬' - then cut to sit_branch at pts['sit'].
+  SITTING IN THE TREE, JESUS UNDER IT (s05-s06): sycomore(part='back') -> zacchaeus(*pts['sit'], s, f, pose='sit_branch' /
+    'peek') ('嘿嘿，这下看得清清楚楚了！' expr 'eager' / 'laugh') -> jesus(*pts['under'], s, -f, pose='look_up') (he faces
+    back toward the tree; the sitting spot is about 480*s above his feet) then 'call_up' ('撒该，快下来！') ->
+    sycomore(part='front') (the leaf sprays frame the sitting spot; his face, at about pts['face'], stays clear). The crowd
+    and the disciples (disciples(..., pose='stand' / 'walk_a')) gather on the road beside him. 'wobble' for '撒该吓了一跳'
+    (2-3 frames, sfx 'whoosh'), then down: the climb stages in reverse (pts['down']) with expr='overjoyed', or 'climb_down'
+    hanging from the low branch (its anchor is the grip: put it on the branch) and a 'jump_land' on the ground, or
+    'slide_down' moved down along pts['slide']. Then 'bow' to Jesus.
+  THE CROWD PARTING (s06): jericho_crowd(x, far_edge, s, f, pose='part', part=p, gap=300) with p 0 -> 1 over ~1 s (5
+    frames) as Jesus (jesus 'walk_a' / 'walk_b') and two or three disciples (disciples 'walk_a' / 'walk_b', the Storm
+    film's twelve, unchanged) come through; the near side can be the wall of backs.
+  THE GRUMBLING (s07): jericho_crowd(..., pose='grumble') or individual jericho_folk 'mutter' pairs (~110*s apart, face
+    to face), 'arms_folded', 'frown' ('哼！'), while zacchaeus 'host' / 'walk' leads Jesus off to his house (zacchaeus_house
+    exterior, door 0 -> 1).
+  THE DINNER (s08): zacchaeus_house(view='interior', part='back', chest=c) -> props.dining_bench(x, y - DINING_TABLE_DEPTH*s,
+    s, width=...) -> the guests on its floor line fy = y - DINING_TABLE_DEPTH*s: jesus(gx, fy, s, f, pose='sit_table' /
+    'sit_smile' / 'sit_speak_joy'), disciples(gx, fy, s, f, pose='sit') (anchors = the floor; seats DINING_BENCH_H = 70 up),
+    zacchaeus(gx, fy - DINING_BENCH_H*s, s, f, pose='sit_table') (anchor = the seat) -> props.dining_table(x, y, s,
+    width=...) (it hides everyone's legs; their hands rest on its top) -> zacchaeus_house(part='front'). '撒该站起来':
+    cut him to 'stand_speak' (expr 'nervous') then 'promise' (expr 'brave') standing on the same floor line fy behind the
+    table (he is short: standing, his head is level with the seated guests'). The money chest: chest 0 -> 1 (5 frames) with
+    the glow ('the money chests open').
+  THE COIN GLOSSES (s08): props.coins_gloss(cx, cy, s, kind='half', progress=p) during '一半，就是有十块钱，分五块给穷人！'
+    (p 0 -> .5 splits ten coins into two piles of five, .5 -> 1 moves one pile into an alms bowl with a heart) and
+    kind='fourfold' during '四倍，就是多收了一块钱，要还四块钱！' (one coin, an arrow, then four coins popping out one by one
+    at p .25 / .5 / .75 / 1 - sfx 'pop' on each). Quantise p in steps of 1/8; the card floats on top of the dinner (a small
+    'pop' in with a scale tween).
+  THE CHANGED HEART (s10): zacchaeus(x, y, s, f, pose='give', phase=ph) with jericho_poor(x + 218*s*f, y, s, -f,
+    kind='widow', pose='receive', phase=ph) (the hopped coin lands in her hands; 'thank' after), the beggar 'sit_thank' by
+    his bowl; zacchaeus 'pay_back' with jericho_folk(x + 160*s*f, y, s, -f, kind='farmer', pose='receive'); children
+    jericho_folk(kind='child', pose='wave' / 'cheer'); props.palm_grove at time 1 (golden evening) and the sycamore-fig
+    (time 1) behind.
+  THE MODERN FRAME (s02, s11): props.street_festival(x0, x1, y, s, part='back') -> (the dad further back, in the crowd)
+    -> street_festival(part='front') (the wall of grown-ups' backs) -> the boy in front: child(outfit='tracksuit',
+    pose='jump_see', phase=...) then 'tiptoe'. The lift: parent(x, y, s, f, kind='dad', variant=1, pose='lift', phase=p)
+    draws dad and boy together, p 0 -> 1 over ~1.2 s (8 frames); then pose='shoulders' (expr for the boy via
+    rider=dict(expr='overjoyed')). THE SHOULDER RIDE animated separately: rp = parent_points(x, y, s, f, kind='dad',
+    variant=1, pose='shoulders')['rider']; child(*rp, s, f, pose='on_shoulders', phase=ph, part='back') -> parent(x, y, s,
+    f, kind='dad', variant=1, pose='shoulders', rider=False) -> child(*rp, s, f, pose='on_shoulders', phase=ph,
+    part='front'). At home: props.evening_room(...) -> props.sofa(sx, y, s, part='back') -> parent(sx - 60*s, y, s, 1,
+    kind='dad', variant=1, pose='sit_read') -> child(sx + 76*s, y - props.SOFA_SEAT*s, s, -1, outfit='tracksuit',
+    pose='sit_point') -> sofa(part='front'); the front door is in view (evening_room door_x).
+  RENDER COST (2112 x 1188, uncached; measured under heavy machine load where the Storm film's jesus stand took 0.53-0.62 s):
+    zacchaeus 0.40-0.62 s, jericho_folk 0.47-0.67 s, jericho_crowd (14) 0.58-0.66 s, jericho_poor 0.64 s, the boy 0.54 s, the
+    dad with the boy (lift / shoulders) 0.47-0.50 s - i.e. 0.75-1.1 x jesus, the same class as every other figure.
+    Backdrops: see art/props.py section 14 - keep them on static layers.
 """
 import hashlib
 import math
@@ -1978,7 +2249,8 @@ def _hair_cap(R, col, style="short", front=-28, back=165, line=-0.42):
 
 _MOUSTACHED = ("full", "white", "captain", "assyrian", "assyrian_short", "trim", "pointed", "long",
                "jesus", "curly", "fisher",   # these three: Storm film
-               "carpenter", "elder_curl", "magus", "magus_short")   # Nativity film (_nativity_beard)
+               "carpenter", "elder_curl", "magus", "magus_short",   # Nativity film (_nativity_beard)
+               "zac")                                                # Zacchaeus film (_zac_beard)
 
 
 def _beard(R, col, kind):
@@ -2051,6 +2323,8 @@ def _beard(R, col, kind):
         return _storm_beard(R, col, kind)
     if kind in _NATIVITY_BEARDS:               # Nativity film: see _nativity_beard
         return _nativity_beard(R, col, kind)
+    if kind == "zac":                          # Zacchaeus film: see _zac_beard
+        return _zac_beard(R, col)
     if kind == "pointed":      # an official: neat beard ending in a soft point, a curl row across it
         pts = [(-0.86 * R, 0.0), (-0.88 * R, 0.55 * R), (-0.50 * R, 1.10 * R), (0.08 * R, 1.62 * R),
                (0.52 * R, 1.16 * R), (0.90 * R, 0.55 * R), (0.70 * R, 0.66 * R), (0.20 * R, 0.84 * R),
@@ -2071,6 +2345,8 @@ def _moustache(R, col, kind):
     """Short moustache well above the mouth, so the mouth (drawn after it) always shows."""
     if kind not in _MOUSTACHED:
         return ""
+    if kind == "zac":          # Zacchaeus: a dapper little moustache with curled-up ends (see _zac_moustache)
+        return _zac_moustache(R, col)
     mx, my = 0.18 * R, 0.45 * R
     if kind == "long":         # Noah: a full moustache whose ends curl up a little (a smiling grandfather)
         w = 0.30 * R
@@ -11048,3 +11324,1561 @@ def child(x, y, scale=1.0, facing=1, pose="stand", expr=None, hood=False, boots=
                                  toy, item)
     return _child_before_lost_sheep(x, y, scale, facing, pose, expr, hood, boots, coat, phase, marks, sibling, toy, outfit,
                                     pillow, item)
+
+
+# ======================================================================= Zacchaeus film (Luke 19:1-10)
+# Zacchaeus (zacchaeus(), zacchaeus_points()), the poses Jesus gains (the same person as in the Storm and Lost Sheep films),
+# the people of Jericho (jericho_folk(), jericho_crowd()), the widow and the beggar (jericho_poor()), the boy in a tracksuit
+# (child(outfit='tracksuit')) and the festival dad (parent(kind='dad', variant=1), parent_points()) with the shoulder ride.
+# Module doc section "ZACCHAEUS FILM". The sycamore-fig, the street, the tax booth, the house, the coins and the modern
+# places are in art/props.py section 14 (the coins in people's hands come from there).
+
+EXPRS.update({
+    "lonely":     dict(eyes="down", brow=(-0.12, 0.05, 0.01), mouth="frown"),
+    "eager":      dict(eyes="big", brow=(-0.07, 0.02, -0.13), mouth="grin", blush=True, look=(0.03, -0.03)),
+    "frustrated": dict(eyes="dot", brow=(0.13, -0.06, 0.03), mouth="pout", sweat=1),
+    "idea":       dict(eyes="big", brow=(-0.05, -0.05, -0.18), mouth="awe", blush=True, look=(0.02, -0.05)),
+    "overjoyed":  dict(eyes="arc", brow=(-0.06, 0.02, -0.12), mouth="laugh", blush=True),
+    "nervous":    dict(eyes="dot", brow=(-0.12, 0.05, -0.04), mouth="wave", blush=True, sweat=1, look=(-0.03, 0.02)),
+    "grateful":   dict(eyes="closed", brow=(-0.09, 0.04, -0.05), mouth="smile", blush=True),
+    "grumble":    dict(eyes="narrow", brow=(0.11, -0.05, 0.03), mouth="grumpy", look=(0.04, 0.02)),
+    "delighted":  dict(eyes="big", brow=(-0.08, 0.03, -0.13), mouth="grin", blush=True),
+    "call_warm":  dict(eyes="dot", brow=(-0.06, 0.02, -0.09), mouth="call", blush=True),
+    "speak_joy":  dict(eyes="arc", brow=(-0.06, 0.02, -0.10), mouth="call", blush=True),
+})
+ZACCHAEUS_EXPRESSIONS = ("lonely", "eager", "frustrated", "idea", "overjoyed", "nervous", "grateful", "grumble", "delighted",
+                         "call_warm", "speak_joy")
+
+# ---------------------------------------------------------------- palette
+ZAC_ROBE = "#2a7e86"          # peacock-teal outer robe (open at the front)
+ZAC_TRIM = "#e8b746"          # gold embroidery: borders, hem, cuffs, collar
+ZAC_TUNIC = "#f0a33c"         # saffron inner tunic showing down the front
+ZAC_TUNIC_STRIPE = "#f9d17c"
+ZAC_SASH = "#c63d6c"          # raspberry sash
+ZAC_CLOTH = "#f6e9c9"         # the fine cream head-cloth
+ZAC_JEWEL = "#c63d6c"
+ZAC_PURSE = "#76418c"         # the plum velvet money pouch
+ZAC_SKIN = "#e3a77b"
+ZAC_HAIR = "#3a2519"
+ZAC_SANDAL = "#a8462f"
+_ZAC_M = dict(R=40, T=82, neck=36, ua=40, fa=37, th=48, sh=46, aw=19, lw=15.5, hr=10, fl=26, sw=24, hw=12.5, ww=30,
+              shw=35, flare=18, sdrop=11, seat=16, ank=10)
+ZAC_JUMP = 74                 # jump: the soles leave the ground by this much at the top of the jump (x scale)
+ZAC_HITCH = 0.58              # run / climb: the robe hitched up to just above the knees
+
+
+def _zac_beard(R, col):
+    """Zacchaeus: a short, neat, rounded beard trimmed close along the jaw, with a soft point at the chin."""
+    pts = [(-0.84 * R, 0.02 * R), (-0.88 * R, 0.50 * R), (-0.60 * R, 0.88 * R), (-0.16 * R, 1.02 * R),
+           (0.16 * R, 1.13 * R), (0.44 * R, 1.00 * R), (0.76 * R, 0.72 * R), (0.90 * R, 0.48 * R), (0.70 * R, 0.60 * R),
+           (0.20 * R, 0.78 * R), (-0.30 * R, 0.68 * R), (-0.62 * R, 0.28 * R)]
+    s = f'<path d="{smooth_path(pts)}" fill="{col}" {_st(3.2)}/>'
+    lite = shade(col, 0.30)
+    for x0, y0, x1, y1 in ((-0.66, 0.40, -0.52, 0.74), (-0.22, 0.86, -0.08, 0.98), (0.36, 0.84, 0.46, 0.94)):
+        s += _line(f"M{fmt(x0 * R)},{fmt(y0 * R)} Q{fmt((x0 + 0.07) * R)},{fmt((y0 + y1) / 2 * R)} {fmt(x1 * R)},{fmt(y1 * R)}",
+                   w=2.0, col=lite, extra='opacity="0.85"')
+    return s
+
+
+def _zac_moustache(R, col):
+    """A dapper little moustache whose two wings curl up at the tips (the mouth, drawn after it, always shows)."""
+    mx, my = 0.18 * R, 0.45 * R
+    s = ""
+    for sg in (-1, 1):
+        w = 0.21 * R if sg < 0 else 0.25 * R
+        d = (f"M{fmt(mx)},{fmt(my - 0.01 * R)} Q{fmt(mx + sg * 0.10 * R)},{fmt(my - 0.07 * R)} {fmt(mx + sg * w)},{fmt(my + 0.02 * R)} "
+             f"Q{fmt(mx + sg * (w + 0.07 * R))},{fmt(my + 0.03 * R)} {fmt(mx + sg * (w + 0.06 * R))},{fmt(my - 0.07 * R)} "
+             f"Q{fmt(mx + sg * (w + 0.12 * R))},{fmt(my + 0.10 * R)} {fmt(mx + sg * (w - 0.04 * R))},{fmt(my + 0.08 * R)} "
+             f"Q{fmt(mx + sg * 0.08 * R)},{fmt(my + 0.07 * R)} {fmt(mx)},{fmt(my + 0.05 * R)} Z")
+        s += f'<path d="{d}" fill="{col}" {_st(2.4)}/>'
+    return s
+
+
+def _zac_hat(R):
+    """A fine cream head-cloth wrapped a little high like a small turban, two thin gold stripes, a twisted teal-and-gold
+    band across the brow and a raspberry jewel on a gold mount at the front; a few dark curls at the temple."""
+    s = ""
+    for cx, cy, r in ((0.66 * R, -0.40 * R, 0.12 * R), (0.44 * R, -0.46 * R, 0.11 * R)):
+        s += f'<circle cx="{fmt(cx)}" cy="{fmt(cy)}" r="{fmt(r)}" fill="{ZAC_HAIR}" {_st(2.2)}/>'
+    pts = [(0.95 * R, -0.36 * R), (0.86 * R, -0.90 * R), (0.34 * R, -1.18 * R), (-0.40 * R, -1.13 * R),
+           (-0.98 * R, -0.74 * R), (-1.14 * R, 0.02 * R), (-1.08 * R, 0.60 * R), (-0.80 * R, 0.70 * R),
+           (-0.64 * R, 0.30 * R), (-0.62 * R, -0.24 * R), (-0.20 * R, -0.50 * R), (0.45 * R, -0.52 * R)]
+    s += f'<path d="{smooth_path(pts)}" fill="{ZAC_CLOTH}" {_st(3.6)}/>'
+    cid = _clip_id("zachat", round(R, 2))
+    inner = ""
+    for k in (0.0, 0.17):
+        inner += _line(f"M{fmt(-1.2 * R)},{fmt((-0.30 - k) * R)} Q{fmt(-0.30 * R)},{fmt((-1.12 - k) * R)} {fmt(1.0 * R)},"
+                       f"{fmt((-0.96 - k) * R)}", w=0.05 * R, col=ZAC_TRIM)
+    inner += _line(f"M{fmt(-0.20 * R)},{fmt(-1.10 * R)} Q{fmt(-0.78 * R)},{fmt(-0.66 * R)} {fmt(-0.86 * R)},{fmt(0.40 * R)}",
+                   w=2.2, col=shade(ZAC_CLOTH, -0.22))
+    s += f'<clipPath id="{cid}"><path d="{smooth_path(pts)}"/></clipPath><g clip-path="url(#{cid})">{inner}</g>'
+    band = _spline_pts([(0.98 * R, -0.38 * R), (0.45 * R, -0.60 * R), (-0.18 * R, -0.56 * R), (-0.64 * R, -0.24 * R),
+                        (-0.72 * R, 0.22 * R)])
+    s += _tube(band, 0.17 * R, ZAC_ROBE, ow=2.4)
+    for i in range(1, len(band) - 1, 3):
+        p = band[i]
+        s += _line(f"M{fmt(p[0] - 0.05 * R)},{fmt(p[1] - 0.05 * R)} l{fmt(0.08 * R)},{fmt(0.10 * R)}", w=0.06 * R, col=ZAC_TRIM)
+    jx, jy = 0.56 * R, -0.64 * R
+    s += _ell(jx, jy, 0.15 * R, 0.17 * R, ZAC_TRIM, sw=2.4)
+    s += _ell(jx, jy, 0.09 * R, 0.11 * R, ZAC_JEWEL, sw=1.8)
+    s += f'<circle cx="{fmt(jx - 0.03 * R)}" cy="{fmt(jy - 0.04 * R)}" r="{fmt(0.03 * R)}" fill="{HI}"/>'
+    return s
+
+
+def _zac_purse_svg():
+    """The fat plum velvet money pouch (local markup, anchor = the drawstring knot at its neck, ~58 px long): a gold
+    drawstring with two tassels, a soft sheen and a gold coin peeking out of its mouth."""
+    c = ZAC_PURSE
+    s = (f'<path d="M-8,4 C-30,10 -34,44 -16,58 C-6,64 6,64 16,58 C34,44 30,10 8,4 Z" fill="{c}" {_st(3.2)}/>')
+    s += f'<path d="M-12,4 C-15,-7 -6,-11 0,-7 C6,-11 15,-7 12,4 Z" fill="{shade(c, -0.12)}" {_st(2.6)}/>'
+    s += _prp()._jcoin(9, -6, 7.5, 0.3)
+    s += _tube([(-13, 5), (0, 10), (13, 5)], 4.2, ZAC_TRIM, ow=2.0)
+    for dx, dy in ((-8, 22), (-2, 25)):
+        s += _tube([(-4, 9), (dx, dy)], 3.0, ZAC_TRIM, ow=1.6)
+        s += f'<circle cx="{dx}" cy="{dy + 2}" r="3.4" fill="{ZAC_TRIM}" {_st(1.6)}/>'
+    s += _ell(-12, 34, 5, 10, HI, extra='opacity="0.28"')
+    s += _line("M-14,44 q10,7 24,2", w=2, col=shade(c, -0.35))
+    return s
+
+
+def _zac_purse_mid(lap=False):
+    def mid(st):
+        m, tp = st["m"], st["tp"]
+        c = tp(-0.22 * m["ww"], 4 if lap else -6)
+        return f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) scale(0.62)">{_zac_purse_svg()}</g>'
+    return mid
+
+
+def _zac_border(lap=False):
+    """Gold embroidered borders down both front edges of the open teal robe (over the robe, under the sash)."""
+    lo, hi = (3, 18) if lap else (-6, 11)
+
+    def mid(st):
+        m, pel, f, u = st["m"], st["pel"], st["f"], st["u"]
+        c0, wt = 0.28 * m["ww"], 0.30 * m["ww"]
+        s = ""
+        for poly in st["robe"]:
+            for a, b in ((c0 - wt - 7, c0 - wt), (c0 + wt, c0 + wt + 7)):
+                bd = _band(poly, pel, f, a, b)
+                if len(bd) < 3:
+                    continue
+                for seg in (_band(bd, pel, u, -900, lo), _band(bd, pel, u, hi, 900)):
+                    if len(seg) > 2:
+                        s += _poly(seg, ZAC_TRIM, sw=0)
+                        s += _poly(seg, "none", sw=1.6)
+        return s
+    return mid
+
+
+def _zac_design(pose, lap=False, purse=True):
+    D = dict(robe=ZAC_ROBE, sleeve=ZAC_ROBE, hem_col=ZAC_TRIM, hem_w=8, cuff=ZAC_TRIM, skin=ZAC_SKIN, leg=ZAC_SKIN,
+             hem=0.94, flare_k=1.0, hair=None, hat=("custom", _zac_hat), hat_h=0.18, tail=(ZAC_CLOTH, ZAC_TRIM), ears=False,
+             beard=("zac", ZAC_HAIR), sash=ZAC_SASH, sash_tail=True, tunic=ZAC_TUNIC, tunic_stripes=(ZAC_TUNIC_STRIPE, 11, 3),
+             collar=ZAC_TRIM, sandal=ZAC_SANDAL, pattern=(shade(ZAC_TRIM, 0.18), "diamond", 26), brow_w=3.8,
+             arm_deco=_rings_deco())
+    mids = [_zac_border(lap)]
+    if purse:
+        mids.append(_zac_purse_mid(lap))
+    D["mid"] = _hooks(*mids)
+    return D
+
+
+# ---------------------------------------------------------------- Zacchaeus's poses
+# Climbing (the sycamore-fig, props.sycomore_points): hands = the grip points [far, near] and feet = [support, raised]
+# sole points in anchor coords at scale 1, facing 1; the anchor of a climb pose is the SUPPORTING sole (on the ground, a
+# knob on the trunk or the top of a branch). props.sycomore_points()['climb'] places every stage on the tree.
+ZAC_CLIMB = {
+    "climb_a": dict(hands=((80, -238), (66, -228)), feet=((-12, 0), (12, 0))),         # reaching up to the fork of the trunk
+    "climb_b": dict(hands=((80, -238), (66, -228)), feet=((-12, 0), (46, -78))),       # one foot up on a knob in the trunk
+    "climb_c": dict(hands=((72, -236), (60, -228)), feet=((-8, 0), (18, -157))),       # on the knob: a knee up onto the branch
+    "climb_d": dict(hands=((70, -240), (58, -230)), feet=((4, 0), None)),              # standing on a branch, reaching higher
+}
+ZAC_SEAT_POSES = ("count", "sit_branch", "peek", "wobble", "sit_table")       # anchor = the seat under him (legs hang)
+_ZSEAT_LEGS = ((84, 8), (76, 2))
+_ZAC_LAP = dict(lap=True, hem=0.97, flare=-8)
+
+
+def _zclimb(stage, t, h, hands=("fist", "fist"), dangle=None, expr="determined", look=(0.03, -0.08), bend=(1, 1)):
+    g = ZAC_CLIMB[stage]
+    (fx, fy), (nx, ny) = g["hands"]
+    sup, rai = g["feet"]
+    if rai is None:
+        legs = (("ik", sup[0], 1), dangle)
+    else:
+        legs = (("ik", sup[0], 1), ("ik", rai[0], 1, -rai[1]))
+    return _P(t=t, h=h, legs=legs, arms=(("ik", "abs", fx, fy, bend[0]), ("ik", "abs", nx, ny, bend[1])), hands=hands,
+              expr=expr, look=look, hem=ZAC_HITCH, flare=-2, tail=-40, near_back=True, reach=1.25)
+
+
+_ZZ = {
+    "stand": _P(arms=(("fk", 12, 6), ("ik", "torso", -0.28, 0.02, -1)), hands=("fist", "open"), expr="smug"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -34, -24), ("fk", 26, 42)), expr="smug"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 42), ("fk", -24, -14)), expr="smug"),
+    "walk_c": _P(t=3, legs=((5, 1), (-8, -16)), arms=(("fk", 4, 8), ("fk", 2, 8)), expr="smug"),
+    "strut_a": _P(t=-6, h=-12, legs=((28, 8), (-22, -34)), arms=(("fk", -46, -28), ("fk", 40, 62)), expr="smug"),
+    "strut_b": _P(t=-6, h=-12, legs=((-22, -34), (28, 8)), arms=(("fk", 40, 62), ("fk", -44, -26)), expr="smug"),
+    "lonely": _P(t=4, h=22, arms=(("ik", "torso", 1.05, 0.20, 1), ("ik", "torso", 1.05, 0.20, 1)), hands=("none", "fist"),
+                 expr="lonely"),
+    "jump_crouch": _P(t=20, h=-16, drop=24, legs=(("ik", 22, 1), ("ik", -16, 1)), arms=(("fk", -62, -40), ("fk", -56, -34)),
+                      hands=("open", "open"), expr="eager", look=(0.03, -0.08)),
+    "jump_air": _P(t=-4, h=-20, legs=((54, -14), (18, -64)), arms=(("fk", 142, 160), ("fk", -160, -172)), hands=("open", "open"),
+                   expr="eager", look=(0.03, -0.10), hem=0.80, billow=10),
+    "jump_land": _P(t=10, h=-4, drop=16, legs=(("ik", 26, 1), ("ik", -22, 1)), arms=(("fk", 72, 112), ("fk", -66, -108)),
+                    hands=("open", "open"), expr="frustrated"),
+    "tiptoe": _P(h=-18, drop=-16, legs=(("ik", 4, 0), ("ik", -4, 0)), feet=(62, 62), arms=(("fk", 112, 150), ("fk", -48, -20)),
+                 hands=("open", "open"), expr="eager", look=(0.03, -0.09)),
+    "squeeze": _P(t=26, h=6, drop=12, legs=(("ik", 42, 1), ("ik", -46, 0)), arms=(("fk", 98, 114), ("fk", 90, 104)),
+                  hands=("palm", "palm"), expr="determined", hem=0.80),
+    "bumped": _P(t=-20, h=-12, legs=((58, 30), ("ik", -24, 1)), arms=(("fk", 152, 176), ("fk", -136, -104)),
+                 hands=("open", "open"), expr="surprised", marks=("bump",)),
+    "pace_a": _P(t=6, h=14, legs=((24, 8), (-20, -34)), arms=(("ik", "torso", -1.35, 0.32, -1), ("ik", "torso", -1.35, 0.32, -1)),
+                 hands=("none", "fist"), expr="frustrated"),
+    "pace_b": _P(t=6, h=14, legs=((-20, -34), (24, 8)), arms=(("ik", "torso", -1.35, 0.32, -1), ("ik", "torso", -1.35, 0.32, -1)),
+                 hands=("none", "fist"), expr="frustrated"),
+    "think": _P(h=-6, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", 0.95, 0.04, -1), ("ik", "head", 0.32, 1.05, 1)),
+                hands=("fist", "fist"), expr="frustrated", look=(0.03, -0.05)),
+    "idea": _P(h=-12, legs=((8, 3), (-6, -2)), arms=(("fk", 140, 172), ("ik", "torso", 0.30, 0.04, -1)), hands=("point", "fist"),
+               expr="idea", look=(0.02, -0.07), marks=("bulb",)),
+    "run_a": _P(t=14, h=-4, legs=((58, 22), (-24, -118)), arms=(("ik", "torso", 0.95, -0.30, 1), ("ik", "torso", 0.80, -0.34, 1)),
+                hands=("fist", "fist"), hem=ZAC_HITCH, tail=-102, flare=-2, expr="eager", marks=("dust",)),
+    "run_b": _P(t=14, h=-4, legs=((-24, -118), (58, 22)), arms=(("ik", "torso", 0.95, -0.30, 1), ("ik", "torso", 0.80, -0.34, 1)),
+                hands=("fist", "fist"), hem=ZAC_HITCH, tail=-102, flare=-2, expr="eager", marks=("dust",)),
+    "climb_a": _zclimb("climb_a", 8, -16),
+    "climb_b": _zclimb("climb_b", 10, -14),
+    "climb_c": _zclimb("climb_c", 12, -14),
+    "climb_d": _zclimb("climb_d", 6, -18, dangle=(22, -24), expr="eager"),
+    "count": None,
+    "sit_branch": _P(t=2, h=6, legs=_ZSEAT_LEGS, arms=(("ik", "body", 40, 12, 1), ("ik", "body", -22, 14, -1)),
+                     hands=("fist", "fist"), expr="overjoyed", **_ZAC_LAP),
+    "peek": _P(t=16, h=14, legs=_ZSEAT_LEGS, arms=(("fk", 104, 128), ("ik", "body", -20, 14, -1)), hands=("open", "fist"),
+               expr="eager", look=(0.04, 0.05), **_ZAC_LAP),
+    "wobble": _P(t=-28, h=-8, legs=((112, 70), (98, 50)), arms=(("fk", 168, 124), ("fk", -150, -112)), hands=("open", "open"),
+                 expr="surprised", marks=("wobble",), lap=True, hem=0.97, flare=-6),
+    "climb_down": _P(t=-4, h=14, legs=((10, -14), (-12, -34)), arms=(("fk", 166, 176), ("fk", 172, 182)), hands=("fist", "fist"),
+                     expr="overjoyed", look=(0.03, 0.06), hem=ZAC_HITCH, flare=-2, tail=-20),
+    "slide_down": _P(t=4, h=-6, legs=((70, -40), (52, -60)), arms=(("ik", "body", 42, -58, 1), ("ik", "body", 34, -44, 1)),
+                     hands=("open", "open"), expr="overjoyed", hem=0.70, billow=16, tail=(-150, -170), marks=("slide",)),
+    "bow": _P(t=20, h=16, legs=((6, 2), (-4, -2)), arms=(("fk", 62, 104), ("ik", "torso", 0.55, 0.74, 1)), hands=("open", "open"),
+              expr="grateful"),
+    "host": _P(t=-2, h=-4, legs=((10, 3), (-8, -3)), arms=(("fk", 66, 98), ("fk", -40, -64)), hands=("open", "open"), expr="happy"),
+    "stand_speak": _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("ik", "torso", 0.55, 0.70, 1), ("fk", 38, 96)), hands=("open", "open"),
+                      expr="nervous"),
+    "promise": _P(t=-2, h=-8, legs=((8, 3), (-6, -2)), arms=(("fk", 118, 150), ("ik", "torso", 0.55, 0.74, 1)),
+                  hands=("palm", "open"), expr="brave", look=(0.02, -0.04)),
+    "give": _P(t=8, h=12, legs=((10, 3), (-8, -3)), arms=(("fk", 68, 76), ("ik", "torso", -0.25, 0.04, -1)), hands=("open", "open"),
+               expr="tender", look=(0.03, 0.05)),
+    "pay_back": _P(t=8, h=8, legs=((10, 3), (-8, -3)), arms=(("ik", "abs", 82, -150, 1), ("ik", "abs", 64, -144, 1)),
+                   hands=("open", "open"), expr="tender", look=(0.03, 0.04)),
+    "cheer": _P(h=-10, legs=((10, 4), (-8, -2)), arms=(("fk", 130, 152), ("fk", -134, -156)), hands=("open", "open"),
+                expr="overjoyed"),
+    "laugh": _P(t=-5, h=-14, arms=(("ik", "torso", 0.80, 0.40, 1), ("ik", "torso", 1.10, 0.25, 1)), hands=("open", "open"),
+                expr="laugh"),
+    "sit_table": None,
+    "wave": None,
+}
+ZACCHAEUS_POSES = ("stand", "walk", "walk_a", "walk_b", "walk_c", "strut", "strut_a", "strut_b", "lonely", "count", "jump",
+                   "jump_crouch", "jump_air", "jump_land", "tiptoe", "squeeze", "bumped", "pace", "pace_a", "pace_b", "think",
+                   "idea", "run", "run_a", "run_b", "climb_a", "climb_b", "climb_c", "climb_d", "sit_branch", "peek",
+                   "wobble", "climb_down", "slide_down", "bow", "host", "stand_speak", "promise", "give", "pay_back", "cheer",
+                   "laugh", "sit_table", "wave")
+
+
+def _zac_seat_arms(pose, phase):
+    """Seated (anchor = the seat) arm targets: 'body' coords are pelvis-relative, the seat is 14.75 px below the pelvis."""
+    dy = 0.5 * _ZAC_M["lw"] + 7
+    if pose == "count":
+        ph = phase % 1.0
+        a = 0.5 - 0.5 * math.cos(2 * math.pi * ph)                 # 0 at the heap .. 1 on the stack
+        return (("ik", "body", 70, -64 + dy, 1), ("ik", "body", 46 + 54 * a, -66 - 6 * a + dy, 1)), a
+    return (("ik", "body", 70, -60 + dy, 1), ("ik", "body", 50, -56 + dy, 1)), 0.0
+
+
+def _zac_pose(pose, phase):
+    """-> (pose dict, key) for every pose name, resolving the phase-driven ones."""
+    ph = phase % 1.0
+    if pose == "walk":
+        return _walk_phase_pose(_ZZ, ph), "walk_" + "acbc"[int(ph * 4 + 1e-6) % 4]
+    if pose in ("strut", "pace", "run"):
+        k = pose + ("_a" if ph < 0.5 else "_b")
+        return dict(_ZZ[k]), k
+    if pose == "jump":
+        if ph < 0.22:
+            return dict(_ZZ["jump_crouch"]), "jump_crouch"
+        if ph < 0.78:
+            return dict(_ZZ["jump_air"]), "jump_air"
+        return dict(_ZZ["jump_land"]), "jump_land"
+    if pose == "count":
+        arms, a = _zac_seat_arms("count", phase)
+        return _P(t=8, h=16, legs=_ZSEAT_LEGS, arms=arms, hands=("open", "fist"), expr="smug", look=(0.03, 0.08), **_ZAC_LAP), "count"
+    if pose == "sit_table":
+        arms, _ = _zac_seat_arms("sit_table", phase)
+        return _P(t=2, h=4, legs=_ZSEAT_LEGS, arms=arms, hands=("open", "open"), expr="happy", **_ZAC_LAP), "sit_table"
+    if pose == "wave":
+        f = 166 + 16 * math.sin(2 * math.pi * ph)
+        return _P(h=-6, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"), expr="happy"), "wave"
+    return dict(_ZZ[pose]), pose
+
+
+def _jump_lift(phase):
+    """Height of the soles above the ground during 'jump' + phase (0 crouch .. air .. land)."""
+    ph = phase % 1.0
+    if ph < 0.22 or ph >= 0.78:
+        return 0.0
+    return ZAC_JUMP * math.sin(math.pi * (ph - 0.22) / 0.56)
+
+
+def _bulb_mark(st):
+    """'有了！' - a little glowing light bulb above the head, with rays."""
+    R, Hc = st["m"]["R"], st["Hc"]
+    c = (Hc[0] + 0.15 * R, Hc[1] - 2.05 * R)
+    s = _glow_disc(c, 1.25 * R, 1.25 * R, 0.85, "zbulb", "#fff8d8", "#ffe28a")
+    for a in range(-150, -20, 26):
+        v = (math.cos(math.radians(a)), math.sin(math.radians(a)))
+        s += _line(f"M{fmt(c[0] + v[0] * 0.62 * R)},{fmt(c[1] + v[1] * 0.62 * R)} L{fmt(c[0] + v[0] * 0.92 * R)},"
+                   f"{fmt(c[1] + v[1] * 0.92 * R)}", w=3.2, col="#e8a93a")
+    s += (f'<path d="M{fmt(c[0] - 0.36 * R)},{fmt(c[1] + 0.02 * R)} A{fmt(0.40 * R)},{fmt(0.40 * R)} 0 1 1 {fmt(c[0] + 0.36 * R)},'
+          f'{fmt(c[1] + 0.02 * R)} Q{fmt(c[0] + 0.20 * R)},{fmt(c[1] + 0.26 * R)} {fmt(c[0] + 0.18 * R)},{fmt(c[1] + 0.40 * R)} '
+          f'L{fmt(c[0] - 0.18 * R)},{fmt(c[1] + 0.40 * R)} Q{fmt(c[0] - 0.20 * R)},{fmt(c[1] + 0.26 * R)} {fmt(c[0] - 0.36 * R)},'
+          f'{fmt(c[1] + 0.02 * R)} Z" fill="#fff1a8" {_st(3.0)}/>')
+    s += _poly([(c[0] - 0.19 * R, c[1] + 0.40 * R), (c[0] + 0.19 * R, c[1] + 0.40 * R), (c[0] + 0.15 * R, c[1] + 0.58 * R),
+                (c[0] - 0.15 * R, c[1] + 0.58 * R)], "#b9b3a6", sw=2.6)
+    s += _line(f"M{fmt(c[0] - 0.12 * R)},{fmt(c[1] + 0.18 * R)} Q{fmt(c[0])},{fmt(c[1] - 0.10 * R)} {fmt(c[0] + 0.12 * R)},"
+               f"{fmt(c[1] + 0.18 * R)}", w=2.2, col="#e8a93a")
+    s += f'<circle cx="{fmt(c[0] - 0.16 * R)}" cy="{fmt(c[1] - 0.14 * R)}" r="{fmt(0.07 * R)}" fill="{HI}"/>'
+    st["ext"].append((c[0], c[1] - 0.95 * R, 3))
+    return s
+
+
+def _star_marks(c, r, n=3, rot=0.0, col="#e8b746"):
+    s = ""
+    for i in range(n):
+        a = math.radians(rot + 360 * i / n)
+        p = (c[0] + r * math.cos(a), c[1] + r * 0.5 * math.sin(a))
+        s += _sparkle(p, 9, col, 2.0)
+    return s
+
+
+def _zac_marks(pose, phase):
+    def front(st):
+        R, Hc, G = st["m"]["R"], st["Hc"], st["ground"]
+        s = ""
+        if pose == "idea":
+            s += _bulb_mark(st)
+        elif pose == "bumped":                      # a comic bump: little stars round the head and a puff behind
+            s += _star_marks((Hc[0] - 0.1 * R, Hc[1] - 1.05 * R), 0.95 * R, 3, 200 + 40 * phase)
+            for k, r in enumerate((0.30, 0.48)):
+                c = (Hc[0] + 1.25 * R + 0.22 * R * k, Hc[1] - 0.10 * R)
+                s += _line(f"M{fmt(c[0])},{fmt(c[1] - r * R)} Q{fmt(c[0] + 0.16 * R)},{fmt(c[1])} {fmt(c[0])},{fmt(c[1] + r * R)}",
+                           w=3.0, col=MARK)
+        elif pose in ("run_a", "run_b"):            # dust puffs behind the heel and a speed line or two
+            for k, (dx, r) in enumerate(((-70, 11), (-92, 8), (-110, 6))):
+                s += _ell(dx, G - r - 2, r * 1.3, r, "#e9d9b8", sw=2.0, extra='opacity="0.9"')
+            for k in range(2):
+                y0 = -40 - 26 * k
+                s += _line(f"M{fmt(-86 - 10 * k)},{fmt(y0)} l-34,0", w=2.6, col=MARK, extra='opacity="0.7"')
+        elif pose == "wobble":                      # wobble arcs on both sides and a '!' above
+            for sg in (-1, 1):
+                for k in (0, 1):
+                    c = (Hc[0] + sg * (1.35 + 0.22 * k) * R, Hc[1] + 0.2 * R)
+                    s += _line(f"M{fmt(c[0])},{fmt(c[1] - 0.45 * R)} Q{fmt(c[0] + sg * 0.15 * R)},{fmt(c[1])} {fmt(c[0])},"
+                               f"{fmt(c[1] + 0.45 * R)}", w=3.0, col=MARK)
+            x0, y0 = Hc[0] + 0.9 * R, Hc[1] - 1.75 * R
+            s += _tube([(x0, y0 - 18), (x0 + 2, y0 + 4)], 4.0, MARK, ow=0.1) + f'<circle cx="{fmt(x0 + 3)}" cy="{fmt(y0 + 13)}" r="3.4" fill="{MARK}"/>'
+            st["ext"].append((x0, y0 - 22, 3))
+        elif pose == "slide_down":                  # speed lines streaming up past him
+            for k, dx in enumerate((-30, 6, 40)):
+                s += _line(f"M{fmt(dx)},{fmt(-150 - 16 * k)} l0,-46", w=2.6, col=MARK, extra='opacity="0.7"')
+        elif pose == "jump_air":
+            for dx in (-22, 0, 22):
+                s += _line(f"M{fmt(dx)},{fmt(G + 12)} l0,22", w=2.6, col=MARK, extra='opacity="0.7"')
+        return s
+    return front
+
+
+def _zac_items(D, pose, phase, coins):
+    """Coins in his hands: counting (one coin carried from the heap to the stack), giving and paying back."""
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        skin = D["skin"]
+        s = ""
+        if pose == "count":
+            a = 0.5 - 0.5 * math.cos(2 * math.pi * (phase % 1.0))
+            if coins:
+                s += PR._jcoin(W1[0] + 4, W1[1] - 4 - 4 * math.sin(math.pi * a), 8.5, 0.35)
+            s += _hand(W1, (0.5, 0.9), "fist", skin, hr) + _hand(W0, (0.3, 1.0), "open", skin, hr)
+        elif pose == "give":
+            if coins:
+                for j, (dx, dy) in enumerate(((2, -6), (13, -4), (7, -12))):
+                    s += PR._jcoin(W0[0] + dx, W0[1] + dy, 8, 0.6)
+                ph = phase % 1.0
+                if ph > 0:                         # a coin hopping from his palm toward the receiver's hands (phase 0..1)
+                    s += PR._jcoin(W0[0] + 14 + 40 * ph, W0[1] - 8 - 26 * math.sin(math.pi * ph) + 10 * ph, 8, 0.2 + 0.4 * ph)
+        elif pose == "pay_back":
+            if coins:
+                for j in range(4):
+                    s += PR._jcoin((W0[0] + W1[0]) / 2 - 15 + 10 * j, (W0[1] + W1[1]) / 2 - 8 - 3 * (j % 2), 8.5, 0.55)
+            s += _hand(W1, (0.6, -0.8), "open", skin, hr)
+        return s
+    return front
+
+
+def zacchaeus(x, y, scale=1.0, facing=1, pose="stand", expr=None, phase=0.0, purse=True, coins=True, marks=True):
+    """Zacchaeus, the chief tax collector of Jericho: a short man (never a child) in rich robes (see module doc, 'ZACCHAEUS
+    FILM'). Seated / branch poses (ZAC_SEAT_POSES) are anchored at the seat; climb poses at the supporting sole;
+    climb_down at the grip of his hands."""
+    if pose not in ZACCHAEUS_POSES:
+        raise ValueError(f"zacchaeus: unknown pose {pose!r}; choose from {ZACCHAEUS_POSES}")
+    _ls_expr(expr, "zacchaeus")
+    ps, key = _zac_pose(pose, phase)
+    D = _zac_design(key, lap=bool(ps["lap"]), purse=purse)
+    fronts = []
+    if key in ("count", "give", "pay_back"):
+        fronts.append(_zac_items(D, key, phase, coins))
+    if marks:
+        fronts.append(_zac_marks(key, phase))
+        if key == "wave":
+            fronts.append(_wave_marks)
+    D["front"] = _hooks(*fronts)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _ZAC_M, ps, e, _fsign(facing), marks)
+    if key in ZAC_SEAT_POSES:
+        sx, sy = _seat_point(_ZAC_M)
+        inner = _reanchor(inner, sx, sy)
+    elif key == "climb_down":
+        h0, h1 = _LAST["hands"]
+        inner = _reanchor(inner, (h0[0] + h1[0]) / 2, (h0[1] + h1[1]) / 2)
+    if pose == "jump":
+        lift = _jump_lift(phase)
+        if lift:
+            inner = _reanchor(inner, 0, lift)
+    elif key == "jump_air":
+        inner = _reanchor(inner, 0, ZAC_JUMP)
+    return _wrap_out(inner, x, y, scale, facing, f"zacchaeus-{key}")
+
+
+def zacchaeus_points(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, **kw):
+    """Stage points of zacchaeus(x, y, scale, facing, pose=..., phase=..., **kw): body_points() plus 'grip' (the midpoint
+    of his hands: the branch he holds), 'seat' (the seat under him: the anchor of the seated poses) and 'purse' (the
+    knot of his money pouch)."""
+    bp = body_points(zacchaeus, x, y, scale, facing, pose=pose, phase=phase, **kw)
+    h0, h1 = bp["hands"]
+    bp["grip"] = ((h0[0] + h1[0]) / 2, (h0[1] + h1[1]) / 2)
+    pel = bp["pelvis"]
+    bp["seat"] = (pel[0], pel[1] + (0.5 * _ZAC_M["lw"] + 7) * scale)
+    sx = scale * (1 if facing >= 0 else -1)
+    bp["purse"] = (pel[0] - 0.22 * _ZAC_M["ww"] * sx, pel[1] + 6 * scale)
+    return bp
+
+
+# ---------------------------------------------------------------- Jesus: the poses this film adds (same design)
+JESUS_ZACCHAEUS_POSES = ("look_up", "call_up", "smile", "speak_joy", "sit_table", "sit_smile", "sit_bless", "sit_speak_joy")
+_JZ_ZAC = {
+    "look_up": _P(t=-3, h=-26, legs=((6, 2), (-5, -2)), arms=(("fk", 14, 10), ("fk", -10, -4)), expr="warm", look=(0.03, -0.11)),
+    "call_up": _P(t=-4, h=-24, legs=((8, 3), (-6, -2)), arms=(("fk", 130, 154), ("fk", -10, -4)), hands=("open", "fist"),
+                  expr="call_warm", look=(0.03, -0.11)),
+    "smile": _P(h=6, arms=(("ik", "torso", 1.20, 0.25, 1), ("ik", "torso", 1.20, 0.25, 1)), hands=("none", "fist"), expr="smile"),
+    "speak_joy": _P(t=-3, h=-8, legs=((8, 3), (-7, -3)), arms=(("fk", 96, 128), ("fk", -88, -120)), hands=("open", "open"),
+                    expr="speak_joy"),
+    "sit_table": _P(t=2, h=4, arms=(("ik", "abs", 80, -126, 1), ("ik", "abs", 54, -122, 1)), hands=("open", "open"), expr="warm",
+                    **_SEAT),
+    "sit_smile": _P(t=2, h=8, arms=(("ik", "abs", 80, -126, 1), ("ik", "abs", 54, -122, 1)), hands=("open", "open"), expr="smile",
+                    **_SEAT),
+    "sit_bless": _P(t=-2, h=-4, arms=(("ik", "abs", 82, -126, 1), ("fk", 80, 138)), hands=("open", "palm"), expr="kind", **_SEAT),
+    "sit_speak_joy": _P(t=-4, h=-8, arms=(("fk", 70, 112), ("fk", -60, -100)), hands=("open", "open"), expr="speak_joy", **_SEAT),
+}
+
+_jesus_lost_sheep = jesus
+
+
+def jesus(x, y, scale=1.0, facing=1, pose="stand", expr=None, glow=0.0, cushion=True, wind=0.0, phase=0.0,
+          mantle=True, marks=True, bread=True):
+    """Jesus: a kind, calm man of about thirty (see module doc, 'STORM FILM'; the poses of JESUS_LOST_SHEEP_POSES and
+    bread=... are in 'LOST SHEEP FILM', JESUS_ZACCHAEUS_POSES in 'ZACCHAEUS FILM'). Every earlier call draws exactly what
+    it did before."""
+    if pose not in JESUS_ZACCHAEUS_POSES:
+        if pose not in JESUS_POSES + ("walk",) + JESUS_LOST_SHEEP_POSES:
+            raise ValueError(f"jesus: unknown pose {pose!r}; choose from "
+                             f"{JESUS_POSES + JESUS_LOST_SHEEP_POSES + JESUS_ZACCHAEUS_POSES}")
+        return _jesus_lost_sheep(x, y, scale, facing, pose=pose, expr=expr, glow=glow, cushion=cushion, wind=wind,
+                                 phase=phase, mantle=mantle, marks=marks, bread=bread)
+    _check_js_expr(expr, "jesus")
+    ps = dict(_JZ_ZAC[pose])
+    D = _jesus_design(pose, _clamp01(glow), cushion, _clamp01(wind), mantle)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, _JESUS_M, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"jesus-{pose}")
+
+
+# ---------------------------------------------------------------- the people of Jericho (a new look: striped cloaks)
+JERICHO_KINDS = ("man", "woman", "elder", "child", "fruit_seller", "farmer")
+JERICHO_POSES = ("stand", "walk", "walk_a", "walk_b", "run_to_see", "run_a", "run_b", "crowd_back", "look", "point", "cheer",
+                 "wave", "frown", "arms_folded", "mutter", "elbow", "pay", "grumble_walk_off", "grumble_walk_a",
+                 "grumble_walk_b", "smile", "receive")
+JERICHO_ITEMS = ("dates", "hoe", "sack", None)
+JR_CORD = "#3a2a22"
+JR_DATE = "#9a4a2a"
+_JRV = [   # cloak, stripe, tunic, skin, hair, cloth (head-cloth / veil), dress (women)
+    dict(cloak="#efe1c0", stripe="#b85a3a", tunic="#d9a24a", skin="#d9a379", hair="#2f2219", cloth="#f2e6cc", dress="#4f8a4a",
+         veil="#f2e6cc"),
+    dict(cloak="#4f8a4a", stripe="#eedcb0", tunic="#e8b44a", skin="#b77a52", hair="#241a15", cloth="#efe3c6", dress="#c8643c",
+         veil="#e8b44a"),
+    dict(cloak="#d8b77a", stripe="#7a5236", tunic="#5fb3ad", skin="#e2ad85", hair="#4a2f1f", cloth="#e9d6b0", dress="#3f8a92",
+         veil="#f4e6c8"),
+    dict(cloak="#c8643c", stripe="#f0d29a", tunic="#f1e6cc", skin="#a96d48", hair="#1f1915", cloth="#f4e8cf", dress="#d9897a",
+         veil="#f6dcc0"),
+    dict(cloak="#5aa9a3", stripe="#f2e2bd", tunic="#d97f6a", skin="#cf9570", hair="#3a2618", cloth="#f0e1c4", dress="#e0a03a",
+         veil="#cfe6dd"),
+    dict(cloak="#7a4a52", stripe="#e8b746", tunic="#6f9a4a", skin="#8f5a3b", hair="#1c1613", cloth="#ecdcb8", dress="#6b4a7a",
+         veil="#efe0bf"),
+]
+_JR_BEARDS = ("full", "trim", "pointed", "fisher", "short", "carpenter")
+_JRZ = {
+    "stand": _P(arms=(("fk", 14, 8), ("fk", -8, -3)), expr="kind"),
+    "walk_a": _P(t=4, legs=((24, 8), (-20, -34)), arms=(("fk", -34, -24), ("fk", 24, 40)), expr="kind"),
+    "walk_b": _P(t=4, legs=((-20, -34), (24, 8)), arms=(("fk", 26, 42), ("fk", -22, -12)), expr="kind"),
+    "run_a": _P(t=14, h=-4, legs=((58, 22), (-24, -118)), arms=(("fk", -82, -42), ("fk", 62, 128)), hem=0.82, tail=-102,
+                expr="eager"),
+    "run_b": _P(t=14, h=-4, legs=((-24, -118), (58, 22)), arms=(("fk", 62, 128), ("fk", -60, -20)), hem=0.82, tail=-102,
+                expr="eager"),
+    "look": _P(t=4, h=-6, legs=((8, 3), (-6, -2)), arms=(("fk", 14, 8), ("ik", "head", 0.95, -0.52, 1)), hands=("fist", "open"),
+               expr="eager", look=(0.05, -0.03)),
+    "point": _P(h=-4, legs=((5, 2), (-5, -2)), arms=(("fk", 14, 8), ("fk", 92, 96)), hands=("fist", "point"), expr="eager"),
+    "cheer": _P(h=-8, legs=((10, 4), (-8, -2)), arms=(("fk", 128, 150), ("fk", -132, -155)), hands=("open", "open"),
+                expr="joyful"),
+    "frown": _P(t=-3, h=6, arms=(("fk", 10, 4), ("fk", -10, -4)), expr="cross"),
+    "arms_folded": _P(h=6, legs=((8, 3), (-7, -3)), arms=(("ik", "torso", -0.15, 0.60, 1), ("ik", "torso", 1.25, 0.56, 1)),
+                      far_front=True, expr="grumble"),
+    "mutter": _P(t=10, h=-2, legs=((8, 3), (-6, -2)), arms=(("fk", 8, 3), ("ik", "head", 1.08, 0.50, 1)), hands=("fist", "open"),
+                 expr="mutter"),
+    "elbow": _P(t=-4, h=6, legs=((10, 3), (-12, -4)), arms=(("fk", 14, 8), ("fk", -84, 34)), hands=("fist", "fist"),
+                expr="cross", look=(-0.05, 0.0)),
+    "pay": _P(t=6, h=8, legs=((8, 3), (-6, -2)), arms=(("fk", 14, 8), ("fk", 64, 80)), hands=("fist", "open"), expr="grumble"),
+    "grumble_walk_a": _P(t=4, h=8, legs=((24, 8), (-20, -34)),
+                         arms=(("ik", "torso", -0.15, 0.60, 1), ("ik", "torso", 1.25, 0.56, 1)), far_front=True, expr="grumble"),
+    "grumble_walk_b": _P(t=4, h=8, legs=((-20, -34), (24, 8)),
+                         arms=(("ik", "torso", -0.15, 0.60, 1), ("ik", "torso", 1.25, 0.56, 1)), far_front=True, expr="grumble"),
+    "smile": _P(h=6, arms=(("ik", "torso", 1.20, 0.25, 1), ("ik", "torso", 1.20, 0.25, 1)), hands=("none", "fist"),
+                expr="happy"),
+    "receive": _P(t=6, h=12, legs=((8, 3), (-6, -2)), arms=(("ik", "torso", 2.5, 0.40, 1), ("ik", "torso", 1.9, 0.36, 1)),
+                  hands=("open", "open"), expr="delighted", look=(0.03, 0.05)),
+}
+_JR_BACK_ARMS = (   # crowd_back sub-poses (variant + seed pick one): arms, hands, feet, head tilt
+    ((("fk", 10, 4), ("fk", -8, -3)), ("fist", "fist"), None, -4),
+    ((("ik", "torso", 1.15, 0.10, -1), ("ik", "torso", -1.15, 0.10, 1)), ("fist", "fist"), None, -6),     # hands on the hips
+    ((("fk", 150, 168), ("fk", -8, -3)), ("open", "fist"), None, -10),                                      # waving up high
+    ((("fk", 122, 132), ("fk", -8, -3)), ("point", "fist"), None, -8),                                      # pointing at the road
+    ((("fk", 30, 60), ("fk", -24, -10)), ("fist", "fist"), (62, 62), -12),                                  # on tiptoe, craning
+    ((("ik", "torso", -1.35, 0.32, -1), ("ik", "torso", -1.35, 0.32, -1)), ("none", "fist"), None, -2),     # hands behind the back
+)
+
+
+def _jr_pose(pose, phase, back_v=0):
+    ph = phase % 1.0
+    if pose == "walk":
+        return dict(_JRZ["walk_a" if ph < 0.5 else "walk_b"])
+    if pose == "run_to_see":
+        return dict(_JRZ["run_a" if ph < 0.5 else "run_b"])
+    if pose == "grumble_walk_off":
+        return dict(_JRZ["grumble_walk_a" if ph < 0.5 else "grumble_walk_b"])
+    if pose == "wave":
+        f = 166 + 18 * math.sin(2 * math.pi * ph)
+        return _P(h=-4, legs=((6, 2), (-5, -2)), arms=(("fk", 146, f), ("fk", -8, -3)), hands=("open", "fist"), expr="happy")
+    if pose == "crowd_back":
+        arms, hands, feet, h = _JR_BACK_ARMS[back_v % len(_JR_BACK_ARMS)]
+        sway = 2.5 * math.sin(2 * math.pi * ph)
+        if back_v % len(_JR_BACK_ARMS) == 2:
+            a0 = arms[0]
+            arms = (("fk", a0[1], a0[2] + 16 * math.sin(2 * math.pi * ph)), arms[1])
+        kw = dict(feet=feet, drop=-14, legs=(("ik", 5, 0), ("ik", -5, 0))) if feet else dict(legs=((5, 2), (-5, -2)))
+        return _P(t=sway, h=h, arms=arms, hands=hands, expr="neutral", **kw)
+    return dict(_JRZ[pose])
+
+
+def _stripes_v(col, offs, w=7.0):
+    """robe_deco: broad vertical stripes down a cloak (bands parallel to the torso axis at the given offsets x ww)."""
+    def deco(st, polys):
+        m, pel, f = st["m"], st["pel"], st["f"]
+        s = ""
+        for o in offs:
+            for poly in polys:
+                b = _band(poly, pel, f, o * m["ww"] - w / 2, o * m["ww"] + w / 2)
+                if len(b) > 2:
+                    s += _poly(b, col, sw=0)
+        return s
+    return deco
+
+
+def _agal_hat(cloth, cord, hair=None):
+    """A Jericho man's head-cloth held by a double twisted cord ring (front view)."""
+    def hat(R):
+        s = _cloth_cap(R, cloth, edge=None)
+        for k, dy in enumerate((0.0, 0.13)):
+            pts = _spline_pts([(0.97 * R, (-0.40 + dy) * R), (0.45 * R, (-0.62 + dy) * R), (-0.18 * R, (-0.58 + dy) * R),
+                               (-0.66 * R, (-0.26 + dy) * R), (-0.74 * R, (0.18 + dy) * R)])
+            s += _tube(pts, 0.085 * R, cord, ow=1.8)
+        s += _line(f"M{fmt(0.30 * R)},{fmt(-1.00 * R)} Q{fmt(-0.20 * R)},{fmt(-0.92 * R)} {fmt(-0.70 * R)},{fmt(-0.66 * R)}", w=1.8,
+                   col=shade(cloth, -0.18), extra='opacity="0.8"')
+        return s
+    return hat
+
+
+def _coin_band_hat(veil, hair):
+    """A Jericho woman: a soft veil over dark hair with a band of little gold coins across the forehead."""
+    def hat(R):
+        s = (f'<path d="{smooth_path([(0.90 * R, -0.36 * R), (0.55 * R, -0.50 * R), (0.10 * R, -0.52 * R), (-0.45 * R, -0.42 * R), (-0.70 * R, -0.05 * R), (-0.62 * R, 0.40 * R), (-0.85 * R, 0.30 * R), (-0.90 * R, -0.40 * R), (-0.30 * R, -0.78 * R), (0.55 * R, -0.78 * R)])}" '
+             f'fill="{hair}" {_st(2.8)}/>')
+        s += _cloth_cap(R, veil, edge=None)
+        band = _spline_pts([(0.92 * R, -0.42 * R), (0.45 * R, -0.58 * R), (-0.15 * R, -0.54 * R), (-0.60 * R, -0.22 * R)])
+        s += _tube(band, 0.07 * R, "#b8463a", ow=1.6)
+        for i in range(0, len(band), 2):
+            p = band[i]
+            s += _ell(p[0], p[1] + 0.07 * R, 0.065 * R, 0.07 * R, GOLD, sw=1.4)
+        return s + _lashes(R, "dot")
+    return hat
+
+
+def _skullcap_hat(cap):
+    """A Jericho elder: white hair round a bald crown under a small round embroidered cap."""
+    def hat(R):
+        s = _hair_cap(R, "#ece6da", "curly", front=-40, back=170, line=-0.30)
+        s += _ell(0.0, -0.80 * R, 0.62 * R, 0.30 * R, cap, sw=2.6)
+        s += _line(f"M{fmt(-0.55 * R)},{fmt(-0.74 * R)} Q{fmt(0.0)},{fmt(-0.62 * R)} {fmt(0.55 * R)},{fmt(-0.74 * R)}", w=2.4,
+                   col=GOLD)
+        return s + _ear(R, "#d9a379")
+    return hat
+
+
+def _seller_turban(c1, c2):
+    """The date seller: a plump striped turban wrapped round and round (yellow and palm green)."""
+    def hat(R):
+        pts = [(0.96 * R, -0.36 * R), (0.98 * R, -0.86 * R), (0.50 * R, -1.24 * R), (-0.40 * R, -1.22 * R),
+               (-1.06 * R, -0.80 * R), (-1.06 * R, -0.24 * R), (-0.62 * R, -0.36 * R), (0.30 * R, -0.50 * R)]
+        s = f'<path d="{smooth_path(pts)}" fill="{c1}" {_st(3.4)}/>'
+        cid = _clip_id("jrturban", c1, c2, round(R, 2))
+        inner = ""
+        for k in range(4):
+            y0 = -0.50 - 0.20 * k
+            inner += _line(f"M{fmt(-1.2 * R)},{fmt((y0 + 0.30) * R)} Q{fmt(0.0)},{fmt((y0 - 0.22) * R)} {fmt(1.2 * R)},{fmt((y0 + 0.06) * R)}",
+                           w=0.09 * R, col=c2)
+        s += f'<clipPath id="{cid}"><path d="{smooth_path(pts)}"/></clipPath><g clip-path="url(#{cid})">{inner}</g>'
+        s += _ell(0.50 * R, -0.62 * R, 0.10 * R, 0.10 * R, c2, sw=2.0)
+        return s + _ear(R, "#c98e66")
+    return hat
+
+
+def _straw_hat(col="#e9c87a"):
+    """The balsam farmer: a wide woven straw sun hat with a dark band."""
+    def hat(R):
+        s = _hair_cap(R, "#2a201b", "short")
+        s += _ear(R, "#a8714c")
+        brim = [(1.55 * R, -0.42 * R), (0.80 * R, -0.62 * R), (-0.40 * R, -0.64 * R), (-1.50 * R, -0.44 * R), (-1.40 * R, -0.30 * R),
+                (-0.30 * R, -0.42 * R), (0.80 * R, -0.40 * R), (1.48 * R, -0.28 * R)]
+        s += f'<path d="{smooth_path(brim)}" fill="{col}" {_st(3.0)}/>'
+        crown = [(0.72 * R, -0.52 * R), (0.62 * R, -1.10 * R), (0.0, -1.26 * R), (-0.66 * R, -1.08 * R), (-0.74 * R, -0.52 * R)]
+        s += f'<path d="{smooth_path(crown)}" fill="{col}" {_st(3.0)}/>'
+        s += _tube(_spline_pts([(0.72 * R, -0.66 * R), (0.0, -0.74 * R), (-0.74 * R, -0.66 * R)]), 0.11 * R, "#7a4a2a", ow=1.8)
+        for k in range(5):
+            x0 = (-0.55 + 0.27 * k) * R
+            s += _line(f"M{fmt(x0)},{fmt(-0.82 * R)} l{fmt(0.06 * R)},{fmt(-0.30 * R)}", w=1.6, col=shade(col, -0.3), extra='opacity="0.7"')
+        return s
+    return hat
+
+
+def _braids_hat(hair, bead):
+    """A Jericho girl: dark hair parted in the middle and two braids with little coin beads (front view)."""
+    def hat(R):
+        s = ""
+        for x0 in (-0.80, -0.55):
+            pts = _spline_pts([(x0 * R, 0.10 * R), ((x0 - 0.06) * R, 0.60 * R), ((x0 + 0.02) * R, 1.10 * R)])
+            s += _tube(pts, 0.17 * R, hair, ow=2.2)
+            for t in (0.35, 0.65):
+                p = pts[int(t * (len(pts) - 1))]
+                s += _line(f"M{fmt(p[0] - 0.08 * R)},{fmt(p[1])} l{fmt(0.16 * R)},{fmt(0.04 * R)}", w=1.6, col=shade(hair, 0.3))
+            s += _ell((x0 + 0.02) * R, 1.18 * R, 0.07 * R, 0.07 * R, bead, sw=1.4)
+        s += _hair_cap(R, hair, "short", line=-0.38)
+        s += _line(f"M{fmt(0.25 * R)},{fmt(-1.02 * R)} Q{fmt(0.30 * R)},{fmt(-0.70 * R)} {fmt(0.42 * R)},{fmt(-0.46 * R)}", w=1.8,
+                   col=shade(hair, 0.35))
+        return s + _lashes(R, "dot")
+    return hat
+
+
+# ---- the back view (crowd_back): the head seen from behind covers the face; only a sliver of cheek and an ear show
+def _back_cover(R, col, sw=3.4, top=-1.04, cut=0.64):
+    pts = [(cut * R, -0.84 * R), (0.20 * R, (top - 0.02) * R), (-0.55 * R, (top + 0.06) * R), (-1.02 * R, -0.50 * R),
+           (-1.08 * R, 0.20 * R), (-0.86 * R, 0.82 * R), (-0.30 * R, 1.02 * R), (0.30 * R, 0.98 * R), ((cut - 0.04) * R, 0.66 * R),
+           ((cut + 0.04) * R, 0.0)]
+    return f'<path d="{smooth_path(pts)}" fill="{col}" {_st(sw)}/>'
+
+
+def _back_head(kind, c, v):
+    """fn(R) drawing the back of the head for crowd_back (drawn after the face, so it hides it)."""
+    skin, hair = c["skin"], c["hair"]
+
+    def hat(R):
+        s = ""
+        if kind in ("man", "fruit_seller"):
+            cloth = c["cloth"] if kind == "man" else "#f2c94e"
+            s += _back_cover(R, hair, top=-1.0)
+            s += _ell(0.66 * R, 0.14 * R, 0.15 * R, 0.21 * R, skin, sw=2.8)
+            pts = [(0.86 * R, -0.36 * R), (0.70 * R, -0.92 * R), (0.10 * R, -1.18 * R), (-0.70 * R, -1.06 * R), (-1.16 * R, -0.50 * R),
+                   (-1.20 * R, 0.30 * R), (-1.00 * R, 0.82 * R), (-0.20 * R, 0.90 * R), (0.44 * R, 0.70 * R), (0.56 * R, -0.10 * R)]
+            s += f'<path d="{smooth_path(pts)}" fill="{cloth}" {_st(3.4)}/>'
+            if kind == "man":
+                ring = _spline_pts([(0.62 * R, -0.70 * R), (0.20 * R, -0.62 * R), (-0.40 * R, -0.62 * R), (-0.92 * R, -0.74 * R)])
+                s += _tube(ring, 0.11 * R, c.get("cord", JR_CORD), ow=1.8)
+                for p_ in ring[2:-2:3]:
+                    s += _line(f"M{fmt(p_[0] - 0.04 * R)},{fmt(p_[1] - 0.05 * R)} l{fmt(0.08 * R)},{fmt(0.10 * R)}", w=1.4, col="#7a6a5a")
+                for x0 in (-0.55, -0.15, 0.25):
+                    s += _line(f"M{fmt(x0 * R)},{fmt(-0.52 * R)} Q{fmt((x0 - 0.05) * R)},{fmt(0.10 * R)} {fmt((x0 - 0.02) * R)},{fmt(0.80 * R)}",
+                               w=2.0, col=shade(cloth, -0.18), extra='opacity="0.8"')
+            else:
+                for k in range(3):
+                    s += _line(f"M{fmt(-1.1 * R)},{fmt((-0.40 - 0.22 * k) * R)} Q{fmt(-0.2 * R)},{fmt((-0.78 - 0.22 * k) * R)} "
+                               f"{fmt(0.80 * R)},{fmt((-0.50 - 0.20 * k) * R)}", w=0.09 * R, col="#5f9a48")
+        elif kind == "woman":
+            s += _back_cover(R, c["veil"], top=-1.06)
+            s += _line(f"M{fmt(-0.30 * R)},{fmt(-0.96 * R)} Q{fmt(-0.85 * R)},{fmt(-0.40 * R)} {fmt(-0.80 * R)},{fmt(0.70 * R)}", w=2.2,
+                       col=shade(c["veil"], -0.2))
+            s += _line(f"M{fmt(0.20 * R)},{fmt(-0.96 * R)} Q{fmt(-0.10 * R)},{fmt(-0.30 * R)} {fmt(-0.10 * R)},{fmt(0.90 * R)}", w=2.0,
+                       col=shade(c["veil"], -0.15), extra='opacity="0.8"')
+        elif kind == "elder":
+            s += _back_cover(R, skin, top=-1.0)
+            s += _ell(0.66 * R, 0.14 * R, 0.15 * R, 0.21 * R, skin, sw=2.8)
+            fr = [(0.58 * R, -0.20 * R), (0.42 * R, 0.30 * R), (-0.10 * R, 0.52 * R), (-0.72 * R, 0.40 * R), (-1.06 * R, -0.05 * R),
+                  (-1.00 * R, -0.42 * R), (-0.78 * R, -0.10 * R), (-0.20 * R, 0.18 * R), (0.30 * R, 0.04 * R)]
+            s += f'<path d="{smooth_path(fr)}" fill="#ece6da" {_st(2.8)}/>'
+            s += _ell(-0.18 * R, -0.86 * R, 0.62 * R, 0.26 * R, c["stripe"], sw=2.6)
+            s += _line(f"M{fmt(-0.30 * R)},{fmt(-0.40 * R)} q{fmt(0.10 * R)},{fmt(0.06 * R)} {fmt(0.20 * R)},0", w=1.8,
+                       col=shade(skin, -0.25), extra='opacity="0.6"')
+        elif kind == "farmer":
+            s += _back_cover(R, hair, top=-1.0)
+            s += _ell(0.66 * R, 0.14 * R, 0.15 * R, 0.21 * R, skin, sw=2.8)
+            s += _ell(-0.10 * R, -0.50 * R, 1.62 * R, 0.30 * R, "#e9c87a", sw=3.0)
+            s += f'<path d="{smooth_path([(0.66 * R, -0.52 * R), (0.56 * R, -1.10 * R), (-0.10 * R, -1.26 * R), (-0.80 * R, -1.08 * R), (-0.86 * R, -0.52 * R)])}" fill="#e9c87a" {_st(3.0)}/>'
+            s += _tube(_spline_pts([(0.64 * R, -0.66 * R), (-0.10 * R, -0.74 * R), (-0.86 * R, -0.66 * R)]), 0.11 * R, "#7a4a2a", ow=1.8)
+        else:                                       # child: curls (boys) or a parting and braids (girls)
+            if v % 2:
+                s += _back_cover(R, hair, top=-1.0)
+                s += _line(f"M{fmt(-0.25 * R)},{fmt(-1.0 * R)} L{fmt(-0.30 * R)},{fmt(0.30 * R)}", w=2.2, col=shade(hair, 0.35))
+            else:
+                circ = [(-0.25 * R + 0.55 * R * math.cos(a), -0.05 * R + 0.95 * R * math.sin(a), 0.30 * R)
+                        for a in [math.radians(d) for d in range(0, 360, 40)]]
+                circ.append((-0.25 * R, -0.05 * R, 0.80 * R))
+                s += _union_circles(circ, hair, 2.6)
+                s += _ell(0.66 * R, 0.16 * R, 0.14 * R, 0.19 * R, skin, sw=2.6)
+        return s
+    return hat
+
+
+def _back_drape(kind, c, v):
+    """crowd_back: what hangs down the BACK (in front of the body in this view): a man's head-cloth, a woman's veil, a
+    girl's braids."""
+    def front(st):
+        if kind not in ("man", "woman", "child"):
+            return ""
+        R, hw = st["m"]["R"], st["hw"]
+        if kind == "child":
+            if not v % 2:
+                return ""
+            s = ""
+            for x0 in (-0.55, -0.05):
+                a, b = hw(x0, 0.40), hw(x0 - 0.04, 1.25)
+                s += _tube([a, _lerp(a, b, 0.5), b], 0.17 * R, c["hair"], ow=2.2)
+                s += _ell(b[0], b[1] + 0.08 * R, 0.07 * R, 0.07 * R, GOLD, sw=1.4)
+            return s
+        col = c["cloth"] if kind == "man" else c["veil"]
+        L = 1.35 if kind == "man" else 2.15
+        w0, w1 = (0.70, 0.86) if kind == "man" else (0.88, 1.10)
+        top_l, top_r = hw(-0.92, 0.50), hw(0.36, 0.78)
+        bot = hw(-0.30, 0.30 + L)
+        n = (st["u"][1], -st["u"][0])
+        pts = [top_l, top_r, _add(bot, _mul(st["f"], w1 * 0.55 * R)), _add(bot, _mul(st["f"], -w1 * R)),
+               _add(_lerp(top_l, bot, 0.5), _mul(st["f"], -w0 * 0.35 * R))]
+        s = f'<path d="{smooth_path(pts, tension=0.8)}" fill="{shade(col, -0.04)}" {_st(3.2)}/>'
+        s += _line(f"M{_pt(_lerp(top_l, top_r, 0.4))} Q{_pt(_add(_lerp(top_l, bot, 0.6), _mul(st['f'], 0.1 * R)))} "
+                   f"{_pt(_add(bot, _mul(st['f'], -0.2 * R)))}", w=2.0, col=shade(col, -0.22), extra='opacity="0.8"')
+        if kind == "man":
+            for t0 in (0.80, 0.90):
+                a = _add(_lerp(top_l, bot, t0), _mul(st["f"], -0.85 * R))
+                b = _add(_lerp(top_r, bot, t0), _mul(st["f"], 0.45 * R))
+                s += _line(f"M{_pt(a)} L{_pt(b)}", w=3.0, col=c["stripe"], extra='opacity="0.9"')
+        del n
+        return s
+    return front
+
+
+def _palm_yoke(col, leaf):
+    """A Jericho woman's dress: an embroidered chest panel with a little palm-frond pattern and gold dots."""
+    def mid(st):
+        m, tp = st["m"], st["tp"]
+        T, ww = m["T"], m["ww"]
+        p = [tp(-0.50 * ww, 0.98 * T), tp(0.62 * ww, 0.98 * T), tp(0.50 * ww, 0.52 * T), tp(0.06 * ww, 0.40 * T), tp(-0.42 * ww, 0.52 * T)]
+        s = _poly(_rounded(_hull(p), 6), col, sw=2.4)
+        c = tp(0.06 * ww, 0.70 * T)
+        s += _line(f"M{_pt(tp(0.06 * ww, 0.48 * T))} L{_pt(tp(0.06 * ww, 0.92 * T))}", w=2.2, col=leaf)
+        for k in range(3):
+            yy = (0.56 + 0.12 * k) * T
+            for sg in (-1, 1):
+                a = tp(0.06 * ww, yy)
+                b = tp((0.06 + sg * 0.32) * ww, yy + 0.07 * T)
+                s += _line(f"M{_pt(a)} Q{_pt(_lerp(a, b, 0.5))} {_pt(b)}", w=2.2, col=leaf)
+        for fx in (-0.30, 0.42):
+            q = tp(fx * ww, 0.86 * T)
+            s += f'<circle cx="{fmt(q[0])}" cy="{fmt(q[1])}" r="2.6" fill="{GOLD}"/>'
+        del c
+        return s
+    return mid
+
+
+def _apron_mid(st):
+    """The date seller's leather apron over the front of the robe."""
+    m, tp = st["m"], st["tp"]
+    ww, T = m["ww"], m["T"]
+    lap = st["mode"] == "seat"
+    lo = -0.62 * (m["th"] + m["sh"]) if not lap else -0.1 * T
+    p = [tp(-0.15 * ww, 0.10 * T), tp(0.95 * ww, 0.10 * T), tp(1.05 * ww, lo), tp(-0.10 * ww, lo)]
+    s = _poly(_rounded(p, 8), "#a8744a", sw=2.8)
+    s += _line(f"M{_pt(tp(0.0, 0.02 * T))} L{_pt(tp(0.85 * ww, 0.02 * T))}", w=3.0, col="#6b4a2c")
+    q = _lerp(p[0], p[2], 0.45)
+    s += _ell(q[0], q[1], 8, 6, "#8a5a36", sw=2.0)
+    return s
+
+
+def _jr_design(kind, v, back=False):
+    c = dict(_JRV[v % 6])
+    c["cord"] = JR_CORD
+    if kind == "woman":
+        D = dict(robe=c["dress"], sleeve=c["dress"], hem_col=shade(c["dress"], -0.18), hem_w=9, cuff="#e3b44f", skin=c["skin"],
+                 leg=c["skin"], hem=0.98, flare_k=1.12, hair=None, hat=("custom", _coin_band_hat(c["veil"], c["hair"])),
+                 hat_h=0.12, ears=False, veil=c["veil"], sash=c["stripe"] if v % 2 else "#e3b44f", sash_tail=True,
+                 sandal=SANDAL, brow_w=3.0)
+        D["mid"] = _palm_yoke(shade(c["dress"], 0.30), "#3f7a3a" if v != 0 else "#e3b44f")
+        m = _metrics(_ADULT, 0.95, 0.92)
+    elif kind == "child":
+        girl = v % 2 == 1
+        D = dict(robe=c["tunic"], sleeve=c["tunic"], hem_col=shade(c["tunic"], -0.18), hem_w=7, skin=c["skin"], leg=c["skin"],
+                 hem=0.60, flare_k=0.9, sleeve_len=0.55, hair=c["hair"], hair_style="curly", rope_belt=c["stripe"],
+                 sandal=SANDAL, bare=True, stripes=(shade(c["tunic"], 0.30), 22, 5))
+        if girl:
+            D.update(hair=None, hat=("custom", _braids_hat(c["hair"], GOLD)), hat_h=0.10, ears=False, stripes=None)
+        m = _CHILD
+    elif kind == "elder":
+        D = dict(robe=c["cloak"], sleeve=c["cloak"], tunic=c["tunic"], hem_col=shade(c["cloak"], -0.2), hem_w=8, skin=c["skin"],
+                 leg=c["skin"], hem=0.95, flare_k=1.05, hair=None, hat=("custom", _skullcap_hat(c["stripe"])), hat_h=0.06,
+                 ears=False, beard=("white", "#ece6da"), sash=c["stripe"], sash_tail=False, brow_w=4.4, brow_col="#9a9088",
+                 robe_deco=_stripes_v(c["stripe"], (-0.72, -0.40, 0.80)), sandal=SANDAL)
+        m = _metrics(_ADULT, 0.96, 1.0)
+    elif kind == "fruit_seller":
+        D = dict(robe="#e9d6b0", sleeve="#e9d6b0", hem_col="#b98552", hem_w=8, cuff="#b98552", skin="#c98e66", leg="#c98e66",
+                 hem=0.90, flare_k=1.15, sleeve_len=0.62, hair=None, hat=("custom", _seller_turban("#f2c94e", "#5f9a48")),
+                 hat_h=0.26, ears=False, beard=("full", "#2a201b"), sash="#5f9a48", sash_tail=True, sandal=SANDAL_DARK,
+                 neck_v="#d9c09a")
+        D["mid"] = _apron_mid
+        m = _metrics(_ADULT, 0.98, 1.34)
+    elif kind == "farmer":
+        D = dict(robe="#c9a46a", sleeve="#c9a46a", hem_col=shade("#c9a46a", -0.2), hem_w=7, skin="#a8714c", leg="#a8714c",
+                 hem=0.58, flare_k=0.9, sleeve_len=0.50, hair=None, hat=("custom", _straw_hat()), hat_h=0.30, ears=False,
+                 beard=("stubble", "#2a201b"), rope_belt="#7a5236", sandal=SANDAL_DARK, neck_v=shade("#c9a46a", -0.25))
+        m = _metrics(_ADULT, 1.0, 0.95)
+    else:
+        D = dict(robe=c["cloak"], sleeve=c["cloak"], tunic=c["tunic"], hem_col=shade(c["cloak"], -0.2), hem_w=8, skin=c["skin"],
+                 leg=c["skin"], hem=0.94, flare_k=1.0, hair=None, hat=("custom", _agal_hat(c["cloth"], JR_CORD)), hat_h=0.12,
+                 tail=(c["cloth"], c["stripe"]), ears=False, beard=(_JR_BEARDS[v % 6], c["hair"]), sash=c["stripe"],
+                 sash_tail=False, robe_deco=_stripes_v(c["stripe"], (-0.74, -0.42, 0.78)), sandal=SANDAL)
+        m = _metrics(_ADULT, 1.0 + 0.015 * (v % 3 - 1), 1.0 + 0.05 * (v % 2))
+    if back:
+        D.update(hat=("custom", _back_head(kind, c, v)), hat_h=0.08 if kind != "farmer" else 0.30, beard=None, tail=None,
+                 veil=None, neck_v=None, sash_tail=False, collar=None, ponytail=None, ears=False)
+        if D.get("tunic"):
+            D["tunic"] = None
+            D["robe_deco"] = _stripes_v(c["stripe"], (-0.70, -0.34, 0.02, 0.38, 0.74))
+    return D, m, c
+
+
+def _jr_items(D, pose, item, phase, coins):
+    def front(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        skin = D["skin"]
+        s = ""
+        if pose == "pay" and coins:
+            for j in range(3):
+                s += PR._jcoin(W1[0] + 3 + 7 * j, W1[1] - 6 - 3 * (j % 2), 7.5, 0.6)
+        elif pose == "receive" and coins:
+            c = ((W0[0] + W1[0]) / 2, (W0[1] + W1[1]) / 2)
+            for j in range(4):
+                s += PR._jcoin(c[0] - 12 + 8 * j, c[1] - 8 - 2 * (j % 2), 7.5, 0.6)
+            ph = phase % 1.0
+            if ph > 0:
+                s += PR._jcoin(c[0] + 4, c[1] - 70 + 60 * ph, 7.5, 0.2)
+            s += _hand(W1, (0.5, -0.9), "open", skin, hr)
+        if item == "dates":
+            if pose in ("stand", "walk_a", "walk_b", "look", "smile", "frown"):
+                c = (W1[0] + 6, W1[1] - 12)
+                s += f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) scale(0.55)">{PR._date_basket()}</g>'
+                s += _fist(W1, hr, skin)
+        elif item == "hoe":
+            if pose in ("stand", "walk_a", "walk_b", "smile", "frown", "point"):
+                W = W0
+                a, b = (W[0] - 52, W[1] + 108), (W[0] + 34, W[1] - 120)
+                s = _tube([a, b], 7, "#a0683e", ow=2.8) + s
+                d = _nrm(_sub(b, a))
+                s = _poly([_add(b, (0, 0)), _add(b, _mul((d[1], -d[0]), 34)), _add(_add(b, _mul((d[1], -d[0]), 30)), _mul(d, -14)),
+                           _add(b, _mul(d, -10))], "#8a8f8a", sw=2.6) + s
+                s += _fist(W, hr, skin)
+        elif item == "sack":
+            if pose in ("stand", "walk_a", "walk_b", "frown", "smile"):
+                c = (W1[0] - 4, W1[1] + 18)
+                s += _ell(c[0], c[1], 22, 26, "#c9a46a", sw=3.0) + _line(f"M{fmt(c[0] - 8)},{fmt(c[1] - 26)} l16,0", w=3, col="#7a5236")
+                s += _fist(W1, hr, skin)
+        return s
+    return front
+
+
+def _cane_hook(st):
+    W = st["arms"][1][2]
+    g = st["ground"]
+    return _staff_line(W[0] + 4, W[1] - 26, g - 2, w=7.0, col="#8a5a36")
+
+
+def jericho_folk(x, y, scale=1.0, facing=1, kind="man", variant=0, pose="stand", expr=None, phase=0.0, item=None, coins=True,
+                 marks=True):
+    """The people of Jericho, city of palms (see module doc, 'ZACCHAEUS FILM'): JERICHO_KINDS man / woman / elder / child /
+    fruit_seller (dates) / farmer, variant 0-5 colourings; pose='crowd_back' draws the BACK view (the wall of backs; the
+    variant + phase choose the arms)."""
+    if kind not in JERICHO_KINDS:
+        raise ValueError(f"jericho_folk: unknown kind {kind!r}; choose from {JERICHO_KINDS}")
+    _ls_check(pose, JERICHO_POSES, "jericho_folk")
+    if item not in JERICHO_ITEMS:
+        raise ValueError(f"jericho_folk: unknown item {item!r}; choose from {JERICHO_ITEMS}")
+    _ls_expr(expr, "jericho_folk")
+    v = int(variant)
+    back = pose == "crowd_back"
+    ps = _jr_pose(pose, phase, back_v=v + (2 if kind == "woman" else 0))
+    D, m, c = _jr_design(kind, v, back)
+    if item is None and not back:
+        item = {"fruit_seller": "dates", "farmer": "hoe"}.get(kind)
+    fronts = []
+    if back:
+        D["mid"] = _back_drape(kind, c, v)
+    else:
+        fronts.append(_jr_items(D, pose, item, phase, coins))
+        if marks and pose == "wave":
+            fronts.append(_wave_marks)
+        if kind == "elder" and pose in ("stand", "walk_a", "walk_b", "walk", "frown", "smile", "look"):
+            ps["t"] = ps["t"] + 7
+            if pose not in ("look", "smile"):
+                ps["arms"] = (ps["arms"][0], ("fk", 22, 30))
+                fronts.insert(0, _cane_hook)
+    D["front"] = _hooks(*fronts)
+    e = expr or ps["expr"]
+    if kind in ("woman", "child") and e in ("cross", "grumble", "mutter") and expr is None:
+        e = {"cross": "worried", "grumble": "cross", "mutter": "mutter"}[e]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"jericho_folk-{kind}{v % 6}-{pose}")
+
+
+JERICHO_CROWD_POSES = ("line", "back", "part", "grumble", "run_to_see", "cheer", "look", "wave", "stand", "point")
+
+
+def jericho_crowd(x, y, scale=1.0, facing=1, n=12, pose="line", width=1200, rows=3, seed=0, phase=0.0, part=0.0, gap=300,
+                  children=True, marks=True):
+    """A Jericho crowd of n people in up to `rows` rows centred on x over width*scale (each row behind is 42*scale higher and
+    5% smaller, drawn first). pose 'line': lining the road and looking down it toward `facing` (a mix of look / point /
+    cheer / wave / stand); 'back': the WALL OF BACKS seen from behind (crowd_back), tightly packed, adults only, a straw hat
+    and a basket here and there; 'part': the crowd parting for Jesus - the two halves face the middle and step aside,
+    part 0..1 opening a gap of gap*scale at x; 'grumble': frowning, arms folded, muttering in pairs; 'run_to_see':
+    hurrying toward facing; also cheer / look / wave / stand / point (everyone). See the recipes in the module doc."""
+    _ls_check(pose, JERICHO_CROWD_POSES, "jericho_crowd")
+    import random as _random
+    rng = _random.Random(seed)
+    sx = 1 if facing >= 0 else -1
+    rows = max(1, int(rows))
+    if pose == "back":
+        kinds = ["man", "woman", "man", "farmer", "elder", "woman", "man", "fruit_seller", "woman", "man"]
+    else:
+        kinds = ["man", "woman", "child", "elder", "man", "woman", "farmer", "child", "fruit_seller", "woman", "man", "child"]
+    if not children:
+        kinds = [k for k in kinds if k != "child"]
+    people = [(kinds[(i + seed) % len(kinds)], (i * 5 + seed * 3) % 6) for i in range(int(n))]
+    if pose != "back":
+        people.sort(key=lambda p_: 0 if p_[0] == "child" else 1)
+    per = max(1, -(-len(people) // rows))
+    out = ""
+    pk = float(_clamp01(part)) if pose == "part" else 0.0
+    for r in reversed(range(rows)):
+        grp = people[r * per:(r + 1) * per]
+        if not grp:
+            continue
+        k_r = scale * (1 - 0.05 * r)
+        y_r = y - 42 * scale * r
+        wid = min(width, len(grp) * 92) if pose == "back" else width
+        for j, (kind, v) in enumerate(grp):
+            u = (j + 0.5) / len(grp) - 0.5
+            px = x + sx * (u * wid * scale + (r % 2) * 34 * scale + rng.uniform(-14, 14) * scale)
+            ph = (phase + 0.31 * j + 0.5 * r) % 1.0
+            f_ = sx
+            p_ = pose
+            if pose == "line":
+                p_ = ("look", "point", "cheer", "stand", "wave", "look", "smile")[(j + 2 * r + seed) % 7]
+            elif pose == "back":
+                p_ = "crowd_back"
+                f_ = sx if (j + r + seed) % 3 else -sx
+                v = v + 3 * ((j + seed) % 2)
+            elif pose == "part":
+                side = -1 if px < x else 1
+                f_ = -side
+                push = pk * (gap * 0.5 + 40 * (1 - 0.3 * r)) * scale * (1 - min(1.0, abs(px - x) / (width * scale * 0.9)) * 0.6)
+                px += side * push
+                near = abs(px - x) < (gap * 0.5 + 170) * scale
+                p_ = (("point", "cheer", "look", "wave")[(j + r) % 4] if near else ("stand", "look", "smile")[(j + r) % 3])
+                if pk > 0.2 and near and r == 0 and j % 3 == 1:
+                    p_ = "smile"
+            elif pose == "grumble":
+                p_ = ("arms_folded", "mutter", "mutter", "frown", "arms_folded", "grumble_walk_off")[(j + r + seed) % 6]
+                if p_ == "mutter":
+                    f_ = sx if (j % 2) else -sx
+                else:
+                    f_ = -sx if (j + r) % 3 == 0 else sx
+            elif pose == "run_to_see":
+                p_ = "run_to_see" if kind != "elder" else "walk"
+            if kind == "elder" and p_ in ("run_to_see", "cheer"):
+                p_ = "look"
+            out += jericho_folk(px, y_r + rng.uniform(-4, 4) * scale, k_r, f_, kind=kind, variant=v, pose=p_, phase=ph,
+                                marks=marks)
+    return f'<g data-who="jericho_crowd-{pose}">{out}</g>'
+
+
+# ---------------------------------------------------------------- the widow and the beggar (kind-faced, dignified)
+JERICHO_POOR_KINDS = ("widow", "beggar")
+JERICHO_POOR_POSES = ("stand", "sit", "receive", "thank", "sit_receive", "sit_thank")
+_JPZ = {
+    "stand": _P(t=3, h=4, arms=(("ik", "torso", 1.10, 0.25, 1), ("ik", "torso", 1.10, 0.25, 1)), hands=("none", "fist"), expr="kind"),
+    "sit": _P(t=-3, arms=(("ik", "knee", 0, 0.30, 1), ("ik", "knee", 1, 0.30, 1)), expr="kind", **_GSEAT),
+    "receive": _P(t=8, h=10, legs=((8, 3), (-6, -2)), arms=(("ik", "torso", 2.4, 0.40, 1), ("ik", "torso", 1.8, 0.36, 1)),
+                  hands=("open", "open"), expr="touched", look=(0.03, 0.04)),
+    "thank": _P(t=10, h=14, legs=((8, 3), (-6, -2)), arms=(("ik", "torso", 1.55, 0.66, 1), ("ik", "torso", 1.55, 0.66, 1)),
+                hands=("none", "pray"), expr="grateful"),
+    "sit_receive": _P(t=6, h=8, arms=(("ik", "abs", 112, -112, 1), ("ik", "abs", 92, -108, 1)), hands=("open", "open"),
+                      expr="touched", look=(0.03, -0.02), **_GSEAT),
+    "sit_thank": _P(t=8, h=12, arms=(("ik", "torso", 1.55, 0.66, 1), ("ik", "torso", 1.55, 0.66, 1)), hands=("none", "pray"),
+                    expr="grateful", **_GSEAT),
+}
+
+
+def _widow_hat(R):
+    s = _hair_cap(R, "#b8b0a6", "short", line=-0.36)
+    s += _cloth_cap(R, "#8f8aa0", edge=shade("#8f8aa0", -0.2))
+    s += _line(f"M{fmt(0.62 * R)},{fmt(0.10 * R)} q{fmt(0.10 * R)},{fmt(0.04 * R)} {fmt(0.16 * R)},{fmt(-0.02 * R)}", w=1.8,
+               col=shade("#d9a983", -0.3))
+    return s + _lashes(R, "dot")
+
+
+def _jr_poor_design(kind):
+    if kind == "widow":
+        D = dict(robe="#4f5f7a", sleeve="#4f5f7a", hem_col=shade("#4f5f7a", -0.15), hem_w=8, cuff=shade("#4f5f7a", -0.15),
+                 skin="#d9a983", leg="#d9a983", hem=0.98, flare_k=1.05, hair=None, hat=("custom", _widow_hat), hat_h=0.12,
+                 ears=False, veil="#8f8aa0", sash="#a89c86", sash_tail=True, sandal=SANDAL, brow_w=3.0, brow_col="#8a7f76",
+                 robe_deco=_patches(("#6f7f9a", "#9a8f7a"), seed=1))
+        return D, _metrics(_ADULT, 0.92, 0.92)
+    D = dict(robe="#9a7a56", sleeve="#9a7a56", hem_col=shade("#9a7a56", -0.18), hem_w=8, cuff=shade("#9a7a56", -0.18),
+             skin="#b98058", leg="#b98058", hem=0.88, flare_k=1.0, hair="#3a3430", hair_style="curly", ears=True,
+             beard=("full", "#5a524c"), rope_belt="#c9a46a", bare=True, robe_deco=_patches(("#7a8a5a", "#b8a27a")),
+             hat=("headband", "#7a8a5a"))
+    return D, _metrics(_ADULT, 0.98, 1.0)
+
+
+def jericho_poor(x, y, scale=1.0, facing=1, kind="widow", pose="stand", expr=None, phase=0.0, coins=True, bowl=True, marks=True):
+    """The poor of Jericho whom Zacchaeus helps (Luke 19:8): a widow and a beggar, kind-faced and dignified, never
+    pitiful-comic (see module doc, 'ZACCHAEUS FILM'). Seated poses: on the ground, the seat at the anchor."""
+    if kind not in JERICHO_POOR_KINDS:
+        raise ValueError(f"jericho_poor: unknown kind {kind!r}; choose from {JERICHO_POOR_KINDS}")
+    _ls_check(pose, JERICHO_POOR_POSES, "jericho_poor")
+    _ls_expr(expr, "jericho_poor")
+    ps = dict(_JPZ[pose])
+    D, m = _jr_poor_design(kind)
+    fronts = []
+
+    def items(st):
+        PR = _prp()
+        W0, W1, hr = st["arms"][0][2], st["arms"][1][2], st["m"]["hr"]
+        s = ""
+        if kind == "beggar" and bowl and pose in ("sit", "sit_thank"):
+            G = st["ground"]
+            s += f'<g transform="translate(112,{fmt(G - 2)}) scale(0.9)">{PR._alms_bowl(2 if coins else 0)}</g>'
+        if pose in ("receive", "sit_receive") and coins:
+            c = ((W0[0] + W1[0]) / 2, (W0[1] + W1[1]) / 2)
+            for j in range(3):
+                s += PR._jcoin(c[0] - 8 + 8 * j, c[1] - 7 - 2 * (j % 2), 7.5, 0.6)
+            ph = phase % 1.0
+            if ph > 0:
+                s += PR._jcoin(c[0] + 2, c[1] - 66 + 56 * ph, 7.5, 0.2)
+            s += _hand(W1, (0.5, -0.9), "open", D["skin"], hr)
+        return s
+    fronts.append(items)
+    D["front"] = _hooks(*fronts)
+    e = expr or ps["expr"]
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"jericho_poor-{kind}-{pose}")
+
+
+# ---------------------------------------------------------------- the modern boy (child(outfit='tracksuit')) and the dad
+TRACKSUIT = "#2f6fd0"           # the boy: a royal-blue tracksuit with white stripes, a yellow cap, white sneakers
+TRACK_STRIPE = "#f6f1e4"
+TRACK_CAP = "#f2c43c"
+TRACK_SKIN = "#f0c9a4"
+TRACK_HAIR = "#1f1a17"
+TRACK_SHOE = "#f6f1e4"
+TRACK_SHOE_ACCENT = "#e2503c"
+FDAD_SHIRT = "#7f9f6c"          # the festival dad: an open sage-green overshirt over a white tee, khaki trousers
+FDAD_TEE = "#f6f1e4"
+FDAD_TROUSERS = "#c9a46a"
+FDAD_SHOE = "#8a5a3a"
+FDAD_SKIN = "#eec29c"
+FDAD_HAIR = "#1f1a17"
+ZACCHAEUS_CHILD_POSES = ("jump_see", "tiptoe", "lifted", "on_shoulders", "on_shoulders_point", "sit_read", "sit_point")
+ZACCHAEUS_OUTFITS = ("tracksuit",)
+CHILD_SEE_JUMP = 46             # jump_see: the soles leave the ground by this much at the top (x scale)
+_ZC_SEAT = dict(lap=True, hem=0.97, flare=-6)
+_ZCZ = {
+    "jump_crouch": _P(t=16, h=-14, drop=16, legs=(("ik", 16, 1), ("ik", -12, 1)), arms=(("fk", -60, -40), ("fk", -54, -34)),
+                      hands=("open", "open"), expr="eager", look=(0.03, -0.08)),
+    "jump_air": _P(t=-4, h=-18, legs=((50, -18), (16, -62)), arms=(("fk", 146, 164), ("fk", -158, -172)), hands=("open", "open"),
+                   expr="frustrated", look=(0.03, -0.10)),
+    "jump_land": _P(t=8, h=-4, drop=12, legs=(("ik", 18, 1), ("ik", -16, 1)), arms=(("fk", 70, 110), ("fk", -64, -106)),
+                    hands=("open", "open"), expr="frustrated"),
+    "tiptoe": _P(h=-18, drop=-12, legs=(("ik", 3, 0), ("ik", -3, 0)), feet=(62, 62), arms=(("fk", 118, 150), ("fk", -46, -18)),
+                 hands=("open", "open"), expr="frustrated", look=(0.03, -0.09)),
+    "lifted": _P(t=-4, h=-10, legs=((26, -10), (-6, -24)), arms=(("fk", 104, 136), ("fk", -98, -130)), hands=("open", "open"),
+                 expr="overjoyed"),
+    "held": _P(t=-2, h=-8, legs=((4, 1), (-4, -1)), arms=(("fk", 40, 70), ("fk", -36, -66)), hands=("open", "open"), expr="delighted"),
+    "on_shoulders": None,
+    "on_shoulders_point": _P(t=2, h=-4, legs=((30, -2), (20, -4)), arms=(("fk", 96, 100), ("fk", -10, 20)), hands=("point", "open"),
+                             expr="delighted", look=(0.03, -0.02), **_ZC_SEAT),
+    "sit_read": _P(t=10, h=16, legs=((80, 6), (74, 2)), arms=(("ik", "body", 34, 2, 1), ("ik", "body", 30, 8, 1)),
+                   hands=("open", "open"), expr="happy", look=(0.04, 0.06), **_ZC_SEAT),
+    "sit_point": _P(t=12, h=16, legs=((80, 6), (74, 2)), arms=(("ik", "body", 30, 2, 1), ("fk", 70, 74)), hands=("open", "point"),
+                    expr="delighted", look=(0.04, 0.06), **_ZC_SEAT),
+}
+_ZC_SEAT_POSES = ("on_shoulders", "on_shoulders_point", "sit_read", "sit_point")
+
+
+def _zc_pose(pose, phase):
+    ph = phase % 1.0
+    if pose == "jump_see":
+        if ph < 0.22:
+            return dict(_ZCZ["jump_crouch"]), "jump_crouch"
+        if ph < 0.78:
+            return dict(_ZCZ["jump_air"]), "jump_air"
+        return dict(_ZCZ["jump_land"]), "jump_land"
+    if pose == "on_shoulders":
+        w = 16 * math.sin(2 * math.pi * ph)
+        return _P(t=-2, h=-8, legs=((30, -2), (20, -4)), arms=(("fk", 136 + w, 158 + w), ("fk", -134 + w, -156 + w)),
+                  hands=("open", "open"), expr="overjoyed", **_ZC_SEAT), "on_shoulders"
+    return dict(_ZCZ[pose]), pose
+
+
+def _cap_boy_hat(R):
+    """The boy: straight black hair with a fringe under a yellow baseball cap worn with the brim forward."""
+    s = _hair_cap(R, TRACK_HAIR, "short", line=-0.30)
+    for x0 in (0.30, 0.52, 0.72):
+        s += _poly([(x0 * R, -0.56 * R), ((x0 + 0.20) * R, -0.54 * R), ((x0 + 0.08) * R, -0.30 * R)], TRACK_HAIR, sw=2.2)
+    s += _ear(R, TRACK_SKIN)
+    dome = [(0.94 * R, -0.42 * R), (0.80 * R, -0.94 * R), (0.20 * R, -1.18 * R), (-0.55 * R, -1.08 * R), (-0.98 * R, -0.64 * R),
+            (-0.98 * R, -0.40 * R), (-0.30 * R, -0.54 * R), (0.40 * R, -0.58 * R)]
+    s += f'<path d="{smooth_path(dome)}" fill="{TRACK_CAP}" {_st(3.2)}/>'
+    s += _line(f"M{fmt(0.10 * R)},{fmt(-1.16 * R)} Q{fmt(0.30 * R)},{fmt(-0.80 * R)} {fmt(0.30 * R)},{fmt(-0.56 * R)}", w=2.0,
+               col=shade(TRACK_CAP, -0.25))
+    s += _line(f"M{fmt(0.10 * R)},{fmt(-1.16 * R)} Q{fmt(-0.40 * R)},{fmt(-0.86 * R)} {fmt(-0.55 * R)},{fmt(-0.52 * R)}", w=2.0,
+               col=shade(TRACK_CAP, -0.25))
+    brim = [(0.60 * R, -0.56 * R), (1.10 * R, -0.62 * R), (1.52 * R, -0.50 * R), (1.48 * R, -0.38 * R), (0.92 * R, -0.36 * R)]
+    s += f'<path d="{smooth_path(brim, tension=0.8)}" fill="{shade(TRACK_CAP, -0.10)}" {_st(3.0)}/>'
+    s += f'<circle cx="{fmt(0.10 * R)}" cy="{fmt(-1.17 * R)}" r="{fmt(0.07 * R)}" fill="{shade(TRACK_CAP, -0.15)}" {_st(1.8)}/>'
+    s += _ell(-0.30 * R, -0.80 * R, 0.13 * R, 0.10 * R, "#e2503c", sw=1.6)
+    return s
+
+
+def _track_sleeve(st, i, Sx, E, W):
+    """Two white stripes along the tracksuit sleeve (over the sleeve, under the hand)."""
+    s = ""
+    pts = [Sx, E, _lerp(E, W, 0.82)]
+    s += f'<path d="{_d(pts, closed=False)}" fill="none" stroke="{TRACK_STRIPE}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>'
+    return s
+
+
+def _tracksuit_design():
+    c = TRACKSUIT
+    D = dict(robe=c, sleeve=c, hem_col=TRACK_STRIPE, hem_w=5, cuff=TRACK_STRIPE, skin=TRACK_SKIN, leg=TRACK_SKIN, hem=0.28,
+             flare_k=0.55, hair=None, hat=("custom", _cap_boy_hat), hat_h=0.16, ears=False, bare=True, neck_v=TRACK_STRIPE,
+             arm_deco=_track_sleeve)
+
+    def zip_mid(st):
+        m, tp = st["m"], st["tp"]
+        T, ww = m["T"], m["ww"]
+        a, b = tp(0.30 * ww, T - 2), tp(0.30 * ww, -2 if st["mode"] != "seat" else 8)
+        s = _line(f"M{_pt(a)} L{_pt(b)}", w=2.4, col=shade(c, -0.35))
+        q = _lerp(a, b, 0.18)
+        s += _poly([(q[0] - 3, q[1] - 2), (q[0] + 3, q[1] - 2), (q[0] + 2, q[1] + 7), (q[0] - 2, q[1] + 7)], "#d9d4c4", sw=1.4)
+        s += _line(f"M{_pt(tp(-0.62 * ww, T - 4))} Q{_pt(tp(0.0, T - 14))} {_pt(tp(0.62 * ww, T - 4))}", w=3.0, col=TRACK_STRIPE)
+        return s
+    D["mid"] = zip_mid
+
+    def legwear(st, i):
+        H, K, A, a1, a2 = st["legs"][i]
+        col = c if i == 1 else shade(c, -0.12)
+        lw = st["m"]["lw"]
+        s_ = _tube([H, K, _lerp(K, A, 0.86)], lw + 8, col, ow=3.2)
+        dv1, dv2 = _nrm(_sub(K, H)), _nrm(_sub(A, K))
+        o1, o2 = _mul((-dv1[1], dv1[0]), (lw + 8) * 0.30), _mul((-dv2[1], dv2[0]), (lw + 8) * 0.30)
+        s_ += _line(f"M{_pt(_add(H, o1))} L{_pt(_add(K, o1))} L{_pt(_add(_lerp(K, A, 0.80), o2))}", w=2.6, col=TRACK_STRIPE)
+        fl = st["m"]["fl"]
+        fa = max(-90.0, min(20.0, _ang(_rot(dv2, -90))))
+        sc = TRACK_SHOE if i == 1 else shade(TRACK_SHOE, -0.10)
+
+        def q(x, y_):
+            v = _rot((x * fl, y_ * fl), fa)
+            return (A[0] + v[0], A[1] + v[1])
+        pts = [q(-0.46, -0.30), q(-0.50, 0.40), q(1.14, 0.40), q(1.16, 0.06), q(0.72, -0.20), q(0.10, -0.40)]
+        s_ += f'<path d="{smooth_path(pts, tension=0.6)}" fill="{sc}" {_st(3.0)}/>'
+        s_ += _line(f"M{_pt(q(-0.48, 0.30))} L{_pt(q(1.14, 0.30))}", w=3.6, col=TRACK_SHOE_ACCENT)
+        s_ += _line(f"M{_pt(q(0.05, -0.05))} Q{_pt(q(0.40, 0.10))} {_pt(q(0.80, -0.02))}", w=2.2, col=TRACK_SHOE_ACCENT)
+        return s_
+    D["legwear"] = legwear
+    return D, _metrics(_CHILD, 1.0, 0.98)
+
+
+def _rider_design(outfit):
+    if outfit in (None, "tracksuit"):
+        return _tracksuit_design()
+    if outfit == "dungarees":
+        return _dungaree_design(), _metrics(_CHILD, 1.0, 0.98)
+    if outfit == "jumper":
+        return _jumper_design(), _metrics(_CHILD, 1.0, 0.98)
+    raise ValueError(f"rider outfit must be 'tracksuit', 'dungarees' or 'jumper', not {outfit!r}")
+
+
+def _leg_front_clip(st, i, D, from_t=0.40, key="lf"):
+    """Markup of leg i alone (tube, foot, legwear), clipped to the part beyond from_t of the thigh (for riders whose near
+    leg hangs in front of the person carrying them)."""
+    H, K, A, a1, a2 = st["legs"][i]
+    m = st["m"]
+    s = _tube([H, K, A], m["lw"], D["leg"])
+    fa = _ang(_rot(_dv(a2), -90))
+    s += _foot(A, fa, D["leg"], m["fl"], D.get("sandal", SANDAL), bare=D.get("bare", False))[0]
+    if D.get("legwear"):
+        s += D["legwear"](st, i)
+    d = _nrm(_sub(K, H))
+    n = (-d[1], d[0])
+    P0 = _lerp(H, K, from_t)
+    poly = [_add(P0, _mul(n, 400)), _add(_add(P0, _mul(n, 400)), _mul(d, 600)), _add(_sub(P0, _mul(n, 400)), _mul(d, 600)),
+            _sub(P0, _mul(n, 400))]
+    cid = _clip_id(key, _d(poly), round(H[0], 1))
+    return f'<clipPath id="{cid}"><path d="{_d(poly)}"/></clipPath><g clip-path="url(#{cid})">{s}</g>'
+
+
+def _child_zac_build(pose, expr, phase, marks, outfit="tracksuit"):
+    """Build the modern child of this film without touching _LAST. Returns (inner in anchor coords, near-leg front markup
+    in anchor coords or '', last points dict, key)."""
+    ps, key = _zc_pose(pose, phase) if pose in ZACCHAEUS_CHILD_POSES or pose == "held" else (None, pose)
+    if ps is None:
+        ps = _lc_pose(pose, phase) if pose in LOST_SHEEP_CHILD_POSES else dict(_CH_POSES.get(pose) or _P())
+    D, m = _rider_design(outfit)
+    store = {}
+    if key in ("on_shoulders", "on_shoulders_point"):
+        def cap(st):
+            store["leg"] = _leg_front_clip(st, 1, D, 0.45, "zrider")
+            store["G"] = st["ground"]
+            return ""
+        D["front"] = _hooks(D.get("front"), cap)
+    e = expr or ps["expr"]
+    saved = dict(_LAST)
+    inner, _ = _figure(D, m, ps, e, 1, marks)
+    front = ""
+    if store:
+        front = f'<g transform="translate(0,{fmt(-store["G"])})">{store["leg"]}</g>'
+    if key in _ZC_SEAT_POSES:
+        sx, sy = _seat_point(m)
+        inner = _reanchor(inner, sx, sy)
+        if front:
+            front = f'<g transform="translate({fmt(-sx)},{fmt(-sy)})">{front}</g>'
+    elif key == "jump_air":
+        inner = _reanchor(inner, 0, CHILD_SEE_JUMP)
+    elif key in ("lifted", "held"):
+        sh = _LAST["shoulders"]
+        gx, gy = (sh[0][0] + sh[1][0]) / 2, (sh[0][1] + sh[1][1]) / 2 + 10
+        inner = _reanchor(inner, gx, gy)
+    last = dict(_LAST)
+    _LAST.clear()
+    _LAST.update(saved)
+    return inner, front, last, key
+
+
+def _child_zacchaeus(x, y, scale, facing, pose, expr, phase, marks, outfit, part=None):
+    allp = (CHILD_POSES + SIBLING_POSES + STORM_CHILD_POSES + NATIVITY_CHILD_POSES + LOST_SHEEP_CHILD_POSES + ZACCHAEUS_CHILD_POSES)
+    if pose not in allp:
+        raise ValueError(f"child: unknown pose {pose!r}; choose from {allp}")
+    if part not in (None, "back", "front"):
+        raise ValueError(f"child: part must be None, 'back' or 'front', not {part!r}")
+    _ls_expr(expr, "child")
+    if outfit == "tracksuit" and pose not in ZACCHAEUS_CHILD_POSES and pose not in LOST_SHEEP_CHILD_POSES:
+        # the earlier poses in the tracksuit (same rig as the other modern children)
+        if pose in _NC_POSES:
+            ps = dict(_NC_POSES[pose])
+        elif pose in _SC_POSES:
+            ps = dict(_SC_POSES[pose])
+        elif pose == "wave":
+            f = 166 + 18 * math.sin(2 * math.pi * phase)
+            ps = _P(h=-4, arms=(("fk", 146, f), ("fk", -10, -4)), hands=("open", "fist"), expr="happy")
+        elif pose in _SIB_POSES:
+            ps = dict(_SIB_POSES[pose])
+        else:
+            ps = dict(_CH_POSES[pose])
+        D, m = _tracksuit_design()
+        if pose in NATIVITY_CHILD_POSES:
+            D["front"] = _child_item_front(D, pose, None)
+        e = expr or ps["expr"]
+        inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+        if pose == "jump":
+            inner = f'<g transform="translate(0,{-CHILD_JUMP})">{inner}</g>'
+        return _wrap_out(inner, x, y, scale, facing, f"child-tracksuit-{pose}")
+    inner, front, last, key = _child_zac_build(pose, expr, phase, marks, outfit or "tracksuit")
+    _LAST.clear()
+    _LAST.update(last)
+    if part == "front":
+        inner = front
+    if pose in LOST_SHEEP_CHILD_POSES and (outfit or "tracksuit") == "tracksuit":
+        pass
+    return _wrap_out(inner, x, y, scale, facing, f"child-{outfit or 'tracksuit'}-{key}")
+
+
+_child_before_zacchaeus = child
+
+
+def child(x, y, scale=1.0, facing=1, pose="stand", expr=None, hood=False, boots=True, coat=None, phase=0.0,
+          marks=True, sibling=None, toy=None, outfit=None, pillow=True, item=None, part=None):
+    """A little modern child (see module doc: the raincoat child, the Joseph-film siblings, the Storm-film pyjamas, the
+    Nativity jumper, the Lost Sheep girl and, for the Zacchaeus film, outfit='tracksuit' and the poses of
+    ZACCHAEUS_CHILD_POSES with part=...). Every earlier call draws exactly what it did before."""
+    if outfit in ZACCHAEUS_OUTFITS or pose in ZACCHAEUS_CHILD_POSES or part is not None:
+        if pose in ZACCHAEUS_CHILD_POSES and outfit not in (None, "tracksuit", "dungarees", "jumper"):
+            raise ValueError(f"child: pose {pose!r} supports outfit 'tracksuit' (default), 'dungarees' or 'jumper'")
+        if outfit not in ZACCHAEUS_OUTFITS and pose not in ZACCHAEUS_CHILD_POSES:
+            raise ValueError("child: part=... is for the poses of ZACCHAEUS_CHILD_POSES")
+        return _child_zacchaeus(x, y, scale, facing, pose, expr, phase, marks, outfit, part)
+    return _child_before_zacchaeus(x, y, scale, facing, pose, expr, hood, boots, coat, phase, marks, sibling, toy, outfit,
+                                   pillow, item)
+
+
+# ---- the festival dad (parent(kind='dad', variant=1)) and the shoulder ride
+PARENT_ZAC_POSES = ("lift", "shoulders", "shoulders_walk", "shoulders_walk_a", "shoulders_walk_b", "sit_read", "sit_point")
+PARENT_VARIANTS = {"mum": (0,), "dad": (0, 1)}
+_FD_M = _metrics(_ADULT, 1.04, 1.04)
+_PZZ = {
+    "sit_read": _P(t=4, h=16, arms=(("ik", "abs", 86, -146, 1), ("ik", "abs", 58, -140, 1)), hands=("open", "open"), expr="kind",
+                   look=(0.04, 0.07), **_SEAT),
+    "sit_point": _P(t=4, h=14, arms=(("ik", "abs", 86, -146, 1), ("ik", "abs", 74, -164, 1)), hands=("open", "point"),
+                    expr="happy", look=(0.04, 0.06), **_SEAT),
+}
+
+
+def _fdad_hair(R):
+    s = _hair_cap(R, FDAD_HAIR, "short", line=-0.46)
+    s += (f'<path d="M{fmt(0.92 * R)},{fmt(-0.44 * R)} Q{fmt(0.70 * R)},{fmt(-0.70 * R)} {fmt(0.10 * R)},{fmt(-0.64 * R)} '
+          f'Q{fmt(0.40 * R)},{fmt(-1.02 * R)} {fmt(0.86 * R)},{fmt(-0.80 * R)} Q{fmt(0.98 * R)},{fmt(-0.60 * R)} {fmt(0.92 * R)},{fmt(-0.44 * R)} Z" '
+          f'fill="{FDAD_HAIR}" {_st(2.4)}/>')
+    s += _line(f"M{fmt(-0.10 * R)},{fmt(-1.04 * R)} Q{fmt(-0.20 * R)},{fmt(-0.80 * R)} {fmt(-0.12 * R)},{fmt(-0.56 * R)}", w=2.0,
+               col=shade(FDAD_HAIR, 0.4))
+    s += _line(f"M{fmt(0.60 * R)},{fmt(0.08 * R)} l{fmt(0.12 * R)},{fmt(-0.04 * R)}", w=1.8, col=shade(FDAD_SKIN, -0.3))
+    return s + _ear(R, FDAD_SKIN)
+
+
+def _watch_deco(st, i, Sx, E, W):
+    if i != 1:
+        return ""
+    dv = _nrm(_sub(W, E))
+    p = _sub(W, _mul(dv, 5))
+    nv = (-dv[1], dv[0])
+    aw = st["m"]["aw"]
+    s = _tube([_add(p, _mul(nv, aw * 0.42)), _sub(p, _mul(nv, aw * 0.42))], 5.0, "#3a3430", ow=1.6)
+    s += f'<circle cx="{fmt(p[0] + nv[0] * 2)}" cy="{fmt(p[1] + nv[1] * 2)}" r="4.2" fill="#e8e4d8" {_st(1.6)}/>'
+    return s
+
+
+def _fdad_design(feet=(None, None)):
+    D = dict(robe=FDAD_SHIRT, sleeve=FDAD_SHIRT, tunic=FDAD_TEE, hem_col=shade(FDAD_SHIRT, -0.12), hem_w=6,
+             cuff=shade(FDAD_SHIRT, -0.18), skin=FDAD_SKIN, leg=FDAD_SKIN, hem=0.30, flare_k=0.6, hair=None,
+             hat=("custom", _fdad_hair), hat_h=0.10, ears=False, bare=True, sleeve_len=0.80, arm_deco=_watch_deco)
+    D["legwear"] = _trousers_legwear(FDAD_TROUSERS, FDAD_SHOE, feet=feet)
+
+    def pocket(st):
+        m, tp = st["m"], st["tp"]
+        T, ww = m["T"], m["ww"]
+        p = [tp(-0.62 * ww, 0.80 * T), tp(-0.20 * ww, 0.80 * T), tp(-0.22 * ww, 0.58 * T), tp(-0.60 * ww, 0.58 * T)]
+        return _poly(p, shade(FDAD_SHIRT, 0.12), sw=2.2)
+    D["mid"] = pocket
+    return D, _FD_M
+
+
+def _head_centre_body(m, t, h):
+    """Head centre in body coords (pelvis origin) for torso tilt t and head tilt h - the rig's own formula."""
+    u = _rot((0, -1), t)
+    N = (u[0] * m["T"], u[1] * m["T"])
+    return _add(N, _rot((2.0, -m["neck"]), t + h))
+
+
+_LIFT_KEYS = ((0.0, (60.0, None)), (0.35, (50.0, -236.0)), (0.68, (-16.0, -332.0)))
+
+
+def _lift_offset(p, g0):
+    """The grip under the boy's arms relative to the dad's anchor during the lift (p < 1; p = 1 is the shoulders seat);
+    g0 = the grip height of the boy standing on the ground (p = 0)."""
+    keys = [(k, (a[0], -g0 if a[1] is None else a[1])) for k, a in _LIFT_KEYS]
+    for (p0, a), (p1, b) in zip(keys, keys[1:]):
+        if p <= p1:
+            u = (p - p0) / (p1 - p0)
+            u = u * u * (3 - 2 * u)
+            return _lerp(a, b, u)
+    return keys[-1][1]
+
+
+def _dad_rider_pose(pose, phase):
+    """The dad's pose dict for the shoulder poses before the arms are set."""
+    ph = phase % 1.0
+    if pose in ("shoulders_walk_a", "shoulders_walk_b") or pose == "shoulders_walk":
+        a = pose == "shoulders_walk_a" or (pose == "shoulders_walk" and ph < 0.5)
+        return _P(t=2, h=-4, legs=((24, 8), (-20, -34)) if a else ((-20, -34), (24, 8)), expr="happy"), \
+            ("shoulders_walk_a" if a else "shoulders_walk_b")
+    return _P(t=0, h=-4, legs=((6, 2), (-5, -2)), expr="happy"), "shoulders"
+
+
+def _parent_zac(x, y, scale, facing, kind, pose, expr, phase, marks, variant, rider, book):
+    if kind not in PARENT_KINDS:
+        raise ValueError(f"parent: unknown kind {kind!r}; choose from {PARENT_KINDS}")
+    if int(variant) not in PARENT_VARIANTS[kind]:
+        raise ValueError(f"parent: kind={kind!r} has variant(s) {PARENT_VARIANTS[kind]}")
+    allp = PARENT_POSES + PARENT_ZAC_POSES
+    _ls_check(pose, allp, "parent")
+    _ls_expr(expr, "parent")
+    if pose in PARENT_ZAC_POSES and kind != "dad":
+        raise ValueError(f"parent: pose {pose!r} is for kind='dad'")
+    ph = phase % 1.0
+    v = int(variant)
+    rid = None
+    if rider is not False and pose in ("lift", "shoulders", "shoulders_walk", "shoulders_walk_a", "shoulders_walk_b"):
+        rid = dict(outfit="tracksuit" if v == 1 else "dungarees")
+        if isinstance(rider, dict):
+            rid.update(rider)
+    key = pose
+    behind, fronts = [], []
+    if pose in ("walk", "run"):
+        key = pose + ("_a" if ph < 0.5 else "_b")
+        ps = dict(_PAZ[key])
+    elif pose in _PAZ:
+        ps = dict(_PAZ[pose])
+        if pose == "look_around" and ph >= 0.5:
+            ps["flip"] = True
+    elif pose in _PZZ:
+        ps = dict(_PZZ[pose])
+    elif pose == "lift" and phase < 1.0:
+        p = _clamp01(phase)
+        crouch = max(0.0, 1.0 - p / 0.35)
+        up = _clamp01((p - 0.35) / 0.33)
+        ps = _P(t=12 * crouch + 2, h=6 * crouch - 10 * up, drop=18 * crouch, legs=(("ik", 16, 1), ("ik", -18, 1)),
+                hands=("open", "open"), expr="happy", look=(0.03, -0.05 * up))
+        cpose = "lifted" if p >= 0.12 else "held"
+        inner_c, _, last_c, _k = _child_zac_build(cpose, (rider or {}).get("expr") if isinstance(rider, dict) else None,
+                                                  0.0, marks, (rid or {}).get("outfit", "tracksuit"))
+        g0 = _child_zac_build("held", None, 0.0, False, (rid or {}).get("outfit", "tracksuit"))[2]["bbox"][3] - 2
+        bx, by = _lift_offset(p, g0)
+        # the boy is held under the arms: 'lifted' is anchored at that grip already
+        ps["arms"] = (("ik", "abs", bx + 16, by - 4, 1), ("ik", "abs", bx - 14, by + 2, 1))
+        if rid is not None:
+            def lift_draw(st, inner_c=inner_c, bx=bx, by=by):
+                return f'<g transform="translate({fmt(bx)},{fmt(st["ground"] + by)})">{inner_c}</g>'
+            if up > 0.75:
+                behind.append(lift_draw)
+            else:
+                fronts.append(lift_draw)
+
+            def near_hand(st):
+                W, E = st["arms"][1][2], st["arms"][1][1]
+                return _hand(W, _nrm(_sub(W, E)), "open", FDAD_SKIN if v == 1 else "#e8b48c", st["m"]["hr"])
+            fronts.append(near_hand)
+        key = "lift"
+    else:
+        ps, key = _dad_rider_pose("shoulders" if pose == "lift" else pose, phase)
+    D, m = (_fdad_design(ps["feet"]) if v == 1 else _parent_design(kind, ps["feet"]))
+    if key in ("shoulders", "shoulders_walk_a", "shoulders_walk_b"):
+        Hc = _head_centre_body(m, ps["t"], ps["h"])
+        seat_b = (Hc[0] - 1.10 * m["R"], Hc[1] + 0.42 * m["R"])
+        cp = "on_shoulders" if not isinstance(rider, dict) or rider.get("pose") is None else rider["pose"]
+        inner_c, front_c, last_c, _k = _child_zac_build(cp, rid.get("expr") if rid else None, phase, marks,
+                                                        (rid or {}).get("outfit", "tracksuit"))
+        fa = last_c["feet"]
+        hand_n = (seat_b[0] + fa[1][0] + 2, seat_b[1] + fa[1][1] - 18)
+        hand_f = (seat_b[0] + fa[0][0] + 10, seat_b[1] + fa[0][1] - 14)
+        ps["arms"] = (("ik", "body", hand_f[0], hand_f[1], -1), ("ik", "body", hand_n[0], hand_n[1], -1))
+        ps["hands"] = ("fist", "fist")
+        if rid is not None:
+            def back_draw(st, inner_c=inner_c, seat_b=seat_b):
+                return f'<g transform="translate({fmt(seat_b[0])},{fmt(seat_b[1])})">{inner_c}</g>'
+
+            def front_draw(st, front_c=front_c, seat_b=seat_b):
+                W1 = st["arms"][1][2]
+                return (f'<g transform="translate({fmt(seat_b[0])},{fmt(seat_b[1])})">{front_c}</g>' +
+                        _fist(W1, st["m"]["hr"], D["skin"]))
+            behind.append(back_draw)
+            fronts.append(front_draw)
+    if key in ("sit_read", "sit_point") and book:
+        def book_draw(st):
+            W0, W1 = st["arms"][0][2], st["arms"][1][2]
+            c = ((W0[0] + W1[0]) / 2 + 4, max(W0[1], W1[1]) - 2)
+            PR = _prp()
+            s = f'<g transform="translate({fmt(c[0])},{fmt(c[1])}) rotate(-6) scale(0.62)">{PR._picture_book(1.0)}</g>'
+            s += _hand(W0, (0.3, -1.0), "open", D["skin"], st["m"]["hr"])
+            if key == "sit_read":
+                s += _hand(W1, (0.3, -1.0), "open", D["skin"], st["m"]["hr"])
+            return s
+        fronts.append(book_draw)
+    if marks and pose == "call":
+        fronts.append(lambda st: _sound_marks(st, 0.9))
+    e = expr or ps["expr"]
+    if e == "teary":
+        fronts.append(_teardrop_front)
+    D["behind"] = _hooks(D.get("behind"), *behind)
+    D["front"] = _hooks(D.get("front"), *fronts)
+    inner, _ = _figure(D, m, ps, e, _fsign(facing), marks)
+    return _wrap_out(inner, x, y, scale, facing, f"parent-{kind}{v}-{key}")
+
+
+_parent_before_zacchaeus = parent
+
+
+def parent(x, y, scale=1.0, facing=1, kind="mum", pose="stand", expr=None, phase=0.0, marks=True, variant=0, rider=None,
+           book=True):
+    """The modern mum or dad (see module doc, 'LOST SHEEP FILM'); for the Zacchaeus film variant=1 (kind='dad') is the
+    festival dad and the poses of PARENT_ZAC_POSES lift the child onto his shoulders (rider=...) and read on the sofa
+    (book=...). Every earlier call draws exactly what it did before."""
+    if int(variant) == 0 and pose in PARENT_POSES:
+        return _parent_before_zacchaeus(x, y, scale, facing, kind, pose, expr, phase, marks)
+    return _parent_zac(x, y, scale, facing, kind, pose, expr, phase, marks, variant, rider, book)
+
+
+def parent_points(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, **kw):
+    """Stage points of parent(x, y, scale, facing, pose=..., phase=..., **kw): body_points() plus 'rider' (the seat of the
+    child on his shoulders = child(pose='on_shoulders') anchor; for 'shoulders' / 'shoulders_walk*' and 'lift' at phase 1)
+    and 'book' (the middle of the picture book in sit_read / sit_point)."""
+    kw.setdefault("kind", "dad")
+    bp = body_points(parent, x, y, scale, facing, pose=pose, phase=phase, **kw)
+    v = int(kw.get("variant", 0))
+    m = _FD_M if v == 1 else _parent_design(kw["kind"])[1]
+    sx = scale * (1 if facing >= 0 else -1)
+    if pose in ("shoulders", "shoulders_walk", "shoulders_walk_a", "shoulders_walk_b") or (pose == "lift" and phase >= 1.0):
+        ps, _k = _dad_rider_pose("shoulders" if pose == "lift" else pose, phase)
+        Hc = _head_centre_body(m, ps["t"], ps["h"])
+        pel = bp["pelvis"]
+        bp["rider"] = (pel[0] + (Hc[0] - 1.10 * m["R"]) * sx, pel[1] + (Hc[1] + 0.42 * m["R"]) * scale)
+    h0, h1 = bp["hands"]
+    bp["book"] = ((h0[0] + h1[0]) / 2, min(h0[1], h1[1]))
+    return bp
