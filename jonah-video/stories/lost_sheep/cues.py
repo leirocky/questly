@@ -68,9 +68,9 @@ Cue table (scene: key / meter -- what the music does; picture hits in brackets)
                           laughs (tambourine, a strum)]
   s04 story     G 6/8 -> D -> E7sus4   the deceptive G (kindness after F#7), the mandolin's tremolo rising; D on
                           '如果你有一百只羊' (change), strings under Jesus's voice, a run up for the hundred; E7sus4 on
-                          '你会怎么做呢' (change), hanging into the page turn [the page pops open (a glint), a sheep in
-                          the page (its bell), '丢了一只' (one bell note falling away), the page's whoosh (a run up),
-                          a last glint]
+                          '你会怎么做呢' (change), hanging through the flight into the page [the page pops open (a
+                          glint), a sheep in the page (its bell), '丢了一只' (one bell note falling away), the whoosh
+                          into the page (a mandolin run up; the page's last glint accented, unlisted)]
   s05 flock     A 6/8     E7sus4 held through the page turn; the shepherd's song on '耶稣的故事里' (change); the
                           whole flock on '一百只羊' (change: strings, tremolo, a run up on E7); the morning walk on
                           '每天早上' (change: the song on the mandolin, woodblock hooves); the lamb's motif on
@@ -111,7 +111,8 @@ Cue table (scene: key / meter -- what the music does; picture hits in brackets)
                           '如果你做错了事' (change, the lamb's motif in minor); D on '我想回到你身边' (change); G on the
                           last question (change), very soft; A7sus4 at the end of '你想对牧羊人说什么呢' (change),
                           hanging; the final D chord on the end card (kalimba, guitar and bell together, then rolled)
-                          [the toy lamb squeezed (its bell), God comes to find you, the toy lamb lifted, the end card]
+                          [the toy lamb squeezed (its bell), God comes to find you, the end card]; on a long end card
+                          the lamb's bell rings once more before the fade
 
 All the music stays under the narration (Seg.duck, low expression levels, melodies ducked further); entrances fade in
 over their first beat where a bass or a whistle would otherwise jump out; the loud moments (the found arrival, the
@@ -265,10 +266,10 @@ def _prop(t0, t1, groups):
 
 
 def _voice_groups(c, i):
-    """[(group, start, end)] of the punctuation groups of line i (cue-relative), measured in the voice clip: the subtitle
-    chunks are the anchors; inside a chunk the group boundaries are the clip's pauses that best match the character
-    estimate, longer pauses preferred (the scenes' voice_marks method, scaled to the line's length in this timeline);
-    proportional inside the chunk without the clip."""
+    """[(group, start, end)] of the punctuation groups of line i (cue-relative), measured in the voice clip: the
+    subtitle chunks are the anchors; inside a chunk the group boundaries are the clip's pauses that best match the
+    character estimate, longer pauses preferred (the scenes' voice_marks method, scaled to the line's length in this
+    timeline); proportional inside the chunk without the clip."""
     import itertools
     from engine.paths import BUILD
 
@@ -844,7 +845,8 @@ def meal(c):
         sg_, q_c = seg_at(c, segs, t_ch)
         drum(sg_, q_c, 54, 40)
         for k_, pt in enumerate(sg_.chord_at(q_c + 1e-3).tones(52, 67)[:4]):
-            sg_.add("guitar", q_c + 0.04 * k_, _dq(sg_, q_c + 0.04 * k_, 1.0), pt, 40 - k_, "arp", "h" if k_ == 0 else "")
+            qk = q_c + 0.04 * k_
+            sg_.add("guitar", qk, _dq(sg_, qk, 1.0), pt, 40 - k_, "arp", "h" if k_ == 0 else "")
         sg_.sync("the table laughs (tambourine, a strum)", q_c, t_ch)
     # the Pharisees: a stiff staccato bassoon over marching pizzicato
     p.mel("bsn", "B2:3/4 C#3:1/4 D3:1/2 B2:1/2 | F#3:1 F#2:1 | D3:3/4 E3:1/4 F#3:1/2 D3:1/2 | G3:1 E3:1 | "
@@ -942,17 +944,21 @@ def story(c):
     lv(b, ["tinkle"], -13)
     # 'what would you do?': E7sus4 hangs (into the page turn)
     h.pad(["vla", "vla", "vln1"], 3, 50, 71, vel=32, bass_part="vc", bass_lo=40, bass_hi=52)
-    trem(h, "mandolin", 0, 3, "B4", 28)
-    h.add("tinkle", 0.5, 2.5, "E6", 34, "arp")
     t_wh = pic(c, "whoosh", "如果你有一百只羊", 0)
-    if t_wh is not None:                                     # the page whooshes open into the story: a run up
-        sg_, q_w = seg_at(c, segs, t_wh)
-        if sg_ is h:
-            run(h, "mandolin", q_w, ["E5", "A5", "B5", "D6", "E6"], 0.12, vel=34, role="arp")
-            h.sync("the page whooshes into the story (a run up)", q_w, t_wh)
-        else:
-            accent(c, segs, t_wh, "the page whooshes (a pluck)", mando=(74, 88), vel=40)
-    hit(c, segs, "sparkle", "你会怎么做呢", 1, "the story page glints", glock=(86, 98), vel=38)
+    sg_w, q_w = seg_at(c, segs, t_wh) if t_wh is not None else (None, 3.0)
+    trem(h, "mandolin", 0, max(0.5, q_w - 0.25) if sg_w is h else 3, "B4", 28)   # quiet before the flight
+    h.add("tinkle", 0.5, 2.5, "E6", 34, "arp")
+    if sg_w is h:                                           # the flight into the page: a run up from the whoosh
+        for k_, nm in enumerate(["E5", "A5", "B5", "D6", "E6"]):
+            qq = q_w + 0.24 * k_
+            if qq < h.n_q - 0.05:
+                h.add("mandolin", qq, min(0.24, h.n_q - qq), nm, 48 if k_ == 0 else 36 + 2 * k_, "arp", "h")
+        h.sync("the page whooshes into the story (a run up)", q_w, t_wh)
+    elif t_wh is not None:
+        accent(c, segs, t_wh, "the page whooshes (a pluck)", mando=(74, 88), vel=40)
+    t_gl = pic(c, "sparkle", "你会怎么做呢", 1)               # the page's last glint (in the cue's last moments)
+    if t_gl is not None:
+        accent(c, segs, t_gl, None, glock=(86, 98), vel=36)
     h.expr(["vla", "vln2", "vln1", "vc"], [(0, -21), (3, -22)])
     lv(h, ["mandolin"], -18)
     lv(h, ["tinkle"], -15)
@@ -961,9 +967,10 @@ def story(c):
 
 
 def flock(c):
-    """Jesus's story begins (A major, 6/8): the page turn holds the question's E7sus4, the shepherd's song lands on A at
-    '耶稣的故事里' (whistle, mandolin, the accordion's oom-pah, pizzicato; a pluck as he loves each one); '一百只羊' --
-    the whole flock (strings, a mandolin tremolo, the song's second phrase, a little bell for every bleat in the
+    """Jesus's story begins (A major, 6/8): the flight into the page holds the question's E7sus4 (its run up was on
+    s04's whoosh), the shepherd's song lands on A at '耶稣的故事里' (whistle, mandolin, the accordion's oom-pah,
+    pizzicato; a pluck as he loves each one); '一百只羊' -- the whole flock (strings, a mandolin tremolo, the song's
+    second phrase, a little bell for every bleat in the
     picture, a run up the scale on E7); '每天早上' -- the walk to the grass (the song on the mandolin, the hooves on two
     woodblocks; a glint of morning); '有一只小羊' -- the lamb's motif (mandolin with its bell), wandering up into D on
     '越走越远', a nibble, a flute butterfly; '一抬头' -- E7sus4 hangs, a plucked '咦？'; F# minor on '大家都不见了',
@@ -1004,8 +1011,7 @@ def flock(c):
     # the page turn: the question's E7sus4 held; a mandolin run up into the spring hills
     p.pad(["vla", "vla", "vln1"], 3, 50, 71, vel=32, bass_part="vc", bass_lo=40, bass_hi=52)
     p.pad("accordion", 3, 57, 69, vel=30, bass_ref=(40, 52))
-    trem(p, "mandolin", 0, 1.0, "B4", 28)
-    run(p, "mandolin", 1.0, ["E5", "A5", "B5", "D6", "E6"], 0.2, vel=32, role="arp")
+    trem(p, "mandolin", 0, 2.0, "B4", 26)                    # the flight's run up was on s04's whoosh: hold
     p.expr(["vla", "vln1", "vc"], [(0, -21), (2, -19)])
     lv(p, ["accordion"], -22)
     lv(p, ["mandolin"], -17)
@@ -1896,7 +1902,6 @@ def end(c):
     lv(q, ["kalimba"], -15)
     lv(q, ["guitar"], -14)
     q.expr(["vla", "vln1", "vc"], [(0, -22), (9, -23)])
-    hit(c, segs, "pop", "小朋友，如果你是那只小羊", 0, "the toy lamb lifted (a pluck)", pluck=(62, 74), vel=36)
     # the space after the question: A7sus4 hanging, very soft; the bell asks once
     sp.pad(["vla", "vla", "vln1"], 3, 50, 69, vel=28, bass_part="vc", bass_lo=40, bass_hi=52)
     sp.add("guitar", 0, 2, "A2", 32, "arp", "h")
@@ -1999,7 +2004,6 @@ PICTURE_HITS = [
     ("s04_story", "sheep", "如果你有一百只羊", 0, 0.0, "hit", "a sheep in the story page (its bell)"),
     ("s04_story", "sheep", "如果你有一百只羊", 1, 0.0, "hit", "'丢了一只': one bell note falls away"),
     ("s04_story", "whoosh", "如果你有一百只羊", 0, 0.0, "hit", "the page whooshes into the story (a run up)"),
-    ("s04_story", "sparkle", "如果你有一百只羊", 1, 0.0, "hit", "the story page glints"),
     ("s05_flock", "pop", None, 0, 0.0, "hit", "he loves every one (a pluck)"),
     ("s05_flock", "sheep", "一百只羊，好多好多", 0, 0.0, "hit", "a sheep of the hundred bleats (its bell)"),
     ("s05_flock", "sparkle", "每天早上", 0, 0.0, "hit", "morning (a glint)"),
@@ -2041,6 +2045,5 @@ PICTURE_HITS = [
     ("s11_meaning", "sparkle", "在上帝眼里", 0, 0.0, "hit", "'失去': not one lost (a glint)"),
     ("s12_end", "pop", "小朋友，上帝就像", 0, 0.0, "hit", "the toy lamb squeezed (its bell)"),
     ("s12_end", "sparkle", "不管你走多远", 0, 0.0, "hit", "God will come and find you (a glint)"),
-    ("s12_end", "pop", "小朋友，如果你是那只小羊", 0, 0.0, "hit", "the toy lamb lifted (a pluck)"),
     ("s12_end", "chime", "你想对牧羊人说什么呢", 0, 0.0, "hit", "the end card: the final D chord"),
 ]

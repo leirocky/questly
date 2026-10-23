@@ -59,7 +59,8 @@ Cue table (scene: key / meter -- what the music does; picture hits in brackets)
   s02 question  F 2/4       the frame (marimba, guitar, strings): his tune's creep on the marimba; Gm7 C7sus4 on
                             '什么都看不见' (change), hanging through the pause (a guitar heartbeat); F on '今天' (change):
                             his tune small, on the bassoon, in F; B-flat on '可是，他想了一个好办法' (change), C7; F on
-                            '好办法' (change and a plucked hit) [two hops (a xylophone hop each), back on his heels (a low
+                            '好办法' (change and a plucked hit), the guitar rolling on and the marimba waving through
+                            the tail into the page turn [two hops (a xylophone hop each), back on his heels (a low
                             pluck), dad lifts him (a xylophone run up), the boy up and beaming (a xylophone ping)]
   s03 jericho   B-flat 2/4 -> G minor -> E-flat   the street tune on the koto (marimba, pizzicato, darbuka, a qanun
                             flourish); his tune on '城里住着一个人' (change); a mock-imperial muted-trumpet fanfare on
@@ -76,18 +77,20 @@ Cue table (scene: key / meter -- what the music does; picture hits in brackets)
                             (change): a clarinet slide up the chord, a wobbling trill, the fall; G minor on '前面的人'
                             (change): a wall of low brass; G minor on '他想挤进去' (change): pushing pizzicato, the thud
                             of the elbow; G minor on '撒该急得团团转' (change): a circling figure; E-flat add9 on '小朋友，
-                            你猜' (change), F7sus4 hanging into the page turn [the thought bubble (a pluck), its '?' (a
+                            你猜' (change); F7sus4 at the end of the question (change), hanging through the 1.5 s
+                            guess: the koto rolls it, the marimba ticks while he thinks, and his tune's creep (E-flat,
+                            E, F) rises on the clarinet as the idea comes [the thought bubble (a pluck), its '?' (a
                             plucked question), the two jumps (take-off, glissando, landing), the elbow (a thud), three
-                            thinking dots (three soft notes climbing)]
-  s05 tree      B-flat 2/4 -> E-flat 4/4 -> B-flat   F7sus4 held; the idea sting on '有了' (change; the hit on the
-                            picture's light bulb); the scamper (his tune fast on the xylophone over a running bassoon,
-                            woodblock feet) that screeches to a halt; E-flat on '那里有一棵大大的桑树' (change): the tree on
-                            the horn; B-flat on '撒该爬呀爬' (change): one step up for each climbing stage, D Eb F A over a
-                            rising bass B-flat C D F; B-flat high on the hoist onto the sitting branch (a picture change);
-                            his tune an octave higher on flute and xylophone on '嘿嘿' (change) [the light bulb, the halt
-                            (a plucked stop), the low branches glow (a glint), hands on the fork (a run up), climbing
-                            stages 1 and 4, the hoist, he settles (a pluck), the twig pushed aside (a muted-trumpet
-                            giggle)]
+                            thinking dots (three xylophone notes climbing)]
+  s05 tree      B-flat 2/4 -> E-flat 4/4 -> B-flat   F7sus4 held (the clarinet's F still hanging); the idea sting on
+                            '有了' (change; the hit on the picture's light bulb); the scamper (his tune fast on the
+                            xylophone over a running bassoon, woodblock feet) that screeches to a halt; E-flat on
+                            '那里有一棵大大的桑树' (change): the tree on the horn; B-flat on '撒该爬呀爬' (change): one step up for
+                            each climbing stage, D Eb F A over a rising bass B-flat C D F; B-flat high on the hoist onto
+                            the sitting branch (a picture change); his tune an octave higher on flute and xylophone on
+                            '嘿嘿' (change) [the light bulb, the halt (a plucked stop), the low branches glow (a glint),
+                            hands on the fork (a run up), climbing stages 1 and 4, the hoist, he settles (a pluck), the
+                            twig pushed aside (a muted-trumpet giggle)]
   s06 call      B-flat 2/4 -> E-flat -> C minor -> B-flat   the procession (soft pizzicato, harp, the darbuka's slow
                             taps); a hush on '停住了' (hit: a last pluck, the harp ringing, one string chord); warm E-flat
                             add9 on '他抬起头' (change); the call on the horn on '撒该，快下来' (change); G7 on '撒该吓了
@@ -876,6 +879,13 @@ def question(c):
     g.sync("'好办法': the idea (F)", 0, t_good)
     g.pad(["vla", "vla", "vln1"], 3, 52, 72, vel=30, bass_part="vc", bass_lo=41, bass_hi=53)
     g.add("bsn", 0, 0.5, "F3", 40, "melody", "s")
+    q_ar = min(max(q_up + 0.5, 0.75), 1.25)                  # after the ping: the guitar rolls on, the marimba waves
+    broken(g, "guitar", q_ar, 2.0, (0, 2, 4, 2, 4, 2), 41, 64, vel=28, step=0.25, ring=False)
+    for k_, nm in enumerate(("A4", "C5", "F5")):
+        qq = q_ar + 0.25 + 0.2 * k_
+        if qq < 1.9:
+            g.add("marimba", qq, 2.0 - qq, nm, 32 + 2 * k_, "arp")
+    lv(g, ["guitar"], -15)
     lv(g, ["xylo"], -14)
     lv(g, ["glock"], -14)
     lv(g, ["pz_cb"], -13)
@@ -939,14 +949,13 @@ def jericho(c):
     oom(j, 0, 16, vel=36)
     darbuka(j, 0, 16, vel=32)
     j.pad(["vla", "vla", "vln1"], 3, 53, 72, vel=28, bass_ref=(33, 45))
-    scale_run(j, 0.0, 0.5, "F4", "F5", 26, 38, part="koto")
     sweep(j, 15.0, 0.45, "F4", "Eb5", 28, 36, part="koto")        # a qanun flourish on the last F7, into his steps
     j.duck(7.5, parts=["koto"])
     j.duck(3.5, parts=["marimba"])
-    j.expr(["koto"], [(0, -17), (1, -15), (16, -15)])
-    lv(j, ["pz_cb"], -13)
-    lv(j, ["marimba"], -20)
-    lv(j, "hand", -21)
+    j.expr(["koto"], [(0, -19), (1.5, -15), (16, -15)])
+    j.expr(["pz_cb"], [(0, -19), (1.5, -13), (16, -13)])
+    j.expr(["marimba"], [(0, -25), (1.5, -20), (16, -20)])
+    j.expr("hand", [(0, -26), (1.5, -21), (16, -21)])
     j.expr(["vla", "vln1"], [(0, -26), (2, -24), (16, -24)])
     # 'in the town lived a man called Zacchaeus; he was a tax collector': his steps, then his tune
     z.mel("clar", "r:2 | " + bars(Z, 0, 3) + " | Bb4:2", vel=50)
@@ -1079,8 +1088,10 @@ def crowd(c):
     back, a bassoon 'nope'; C minor on '他踮起脚': a clarinet slide up, a wobbling trill on tiptoe, the fall on
     '还是看不见'; G minor on '前面的人': a wall of low brass, a woodblock bonk on the back of a head; G minor on
     '他想挤进去': pushing pizzicato and the thud of the elbow; G minor on '撒该急得团团转': a circling figure; E-flat add9
-    on '小朋友，你猜', then F7sus4, hanging into the page turn, with three soft xylophone notes climbing as his three
-    thinking dots rise (a pluck for the thought bubble and its '?' earlier on)."""
+    on '小朋友，你猜' with three xylophone notes climbing as his three thinking dots rise (a pluck for the thought bubble
+    and its '?' earlier on); F7sus4 at the end of the question, hanging through the guess without dead air: the koto
+    rolls it, the marimba ticks while he thinks, and his tune's creep (E-flat, E, F) rises on the clarinet as the idea
+    comes -- s05 pops it."""
     c.gain(-3.0)
     t_w = c.gap(c.find("撒该也想看看"))
     t_x = c.gap(c.find("撒该心想"))
@@ -1091,6 +1102,7 @@ def crowd(c):
     t_sq = c.gap(c.find("他想挤进去"))
     t_sp = c.at("撒该急得团团转")
     t_q = c.gap(c.find("小朋友，你猜"))
+    t_qe = c.le(c.find("小朋友，你猜"))
     n = c.seg(0, t_w, 6, "2/4", "Bb major", nominal=123, label="crowd-news")
     w = c.seg(t_w, t_x, 4, "2/4", "Bb major", nominal=118, label="crowd-wants")
     x = c.seg(t_x, t_s, 6, "2/4", "Bb major", nominal=103, label="crowd-chance")
@@ -1100,8 +1112,9 @@ def crowd(c):
     wl = c.seg(t_wall, t_sq, 4, "2/4", "Bb major", nominal=82, label="crowd-wall")
     sq = c.seg(t_sq, t_sp, 3, "2/4", "Bb major", nominal=108, label="crowd-squeeze")
     sp = c.seg(t_sp, t_q, 2, "2/4", "Bb major", nominal=120, label="crowd-spin")
-    q = c.seg(t_q, c.dur, 2, "2/4", "Bb major", nominal=None, label="crowd-question")     # the question hangs
-    segs = (n, w, x, s, jm, tp, wl, sq, sp, q)
+    q = c.seg(t_q, t_qe, 2, "2/4", "Bb major", nominal=None, label="crowd-question")      # the question
+    gs = c.seg(t_qe, c.dur, 1, "2/4", "Bb major", nominal=None, label="crowd-guess")       # the guess hangs
+    segs = (n, w, x, s, jm, tp, wl, sq, sp, q, gs)
     for sg in segs:
         sg.duck(1.5)
     n.prog("Bb:2 | Bb:2 | Cm7:2 | F7:2 | Bb:2 | F7:2")
@@ -1113,7 +1126,8 @@ def crowd(c):
     wl.prog("Gm:2 | Eb:2 | Cm:2 | D:2@G-harmonic")
     sq.prog("Gm:2 | Cm:2 | D7:2@G-harmonic")
     sp.prog("Gm:1 D7:1@G-harmonic | Gm:1 D7:1@G-harmonic")
-    q.prog("Ebadd9:2 | F7sus4:2")
+    q.prog("Ebadd9:2 | Ebadd9:2")
+    gs.prog("F7sus4:2")
     w.sync("'撒该也想看看': he wants to see too (B-flat)", 0, t_w, kind="change")
     x.sync("'撒该心想': no other chance (G minor)", 0, t_x, kind="change")
     s.sync("'可是，撒该的个子太矮了': too short (E-flat)", 0, t_s, kind="change")
@@ -1123,6 +1137,7 @@ def crowd(c):
     sq.sync("'他想挤进去': squeezing (G minor)", 0, t_sq, kind="change")
     sp.sync("'撒该急得团团转': round and round (G minor)", 0, t_sp, kind="change")
     q.sync("'小朋友，你猜': the question (E-flat add9)", 0, t_q, kind="change")
+    gs.sync("the guess: F7sus4 hangs", 0, t_qe, kind="change")
     # 'Jesus is coming! everyone ran into the street': the street tune, claps, a scamper
     n.mel("koto", bars(JER, 0, 4), vel=48)
     n.mel("clar", bars(JER, 0, 4), vel=40, transpose=-12, role="fx")
@@ -1276,21 +1291,32 @@ def crowd(c):
     lv(sp, ["xylo"], -19)
     lv(sp, ["pz_lo"], -14)
     sp.expr(["vla", "vln1"], [(0, -25), (4, -24)])
-    # 'child, can you guess what good idea Zacchaeus thought of?': E-flat add9, F7sus4 hanging
+    # 'child, can you guess what good idea Zacchaeus thought of?': E-flat add9 under the question, the three thinking
+    # dots climbing on the xylophone; then the guess: F7sus4 hangs in the pause -- the koto rolls it, the marimba ticks
+    # while he thinks, and his tune's creep (E-flat, E, F) rises on the clarinet as the idea comes (s05 pops it)
     q.pad(["vla", "vla", "vln1"], 3, 53, 74, vel=30, bass_part="vc", bass_lo=39, bass_hi=53)
     roll_chord(q, 0.05, 55, 79, vel=34, part="koto", n=5)
     dots = pick_times(pics(c, "pop"), t_q, c.dur - 0.05, 3)
-    if len(dots) == 3:                                       # three thinking dots rise: three soft notes climbing
+    if len(dots) == 3:                                       # three thinking dots rise: three notes climbing
         for t_ in dots:
-            clear_near(c, t_, win=0.2)
-        climb(c, segs, dots, part="xylo", lo=76, hi=91, vel=46, sync=(0, 2), what="a thinking dot rises", glock=False,
+            clear_near(c, t_, win=0.25)
+        climb(c, segs, dots, part="xylo", lo=76, hi=91, vel=54, sync=(0, 2), what="a thinking dot rises", glock=False,
               pz=True)
     else:
-        roll_chord(q, 2.05, 53, 77, vel=34, part="koto", n=5)
-        q.add("xylo", 3.0, 1.0, "C6", 32, "arp")
+        for k_, nm in enumerate(("Bb5", "D6", "F6")):
+            q.add("xylo", 2.0 + 0.5 * k_, 0.5, nm, 34 + 2 * k_, "arp")
     lv(q, ["koto"], -17)
-    lv(q, ["xylo"], -16)
-    q.expr(["vla", "vln1", "vc"], [(0, -22), (2, -21), (4, -21)])
+    lv(q, ["xylo"], -14)
+    q.expr(["vla", "vln1", "vc"], [(0, -22), (4, -21)])
+    gs.pad(["vla", "vla", "vln1"], 3, 53, 74, vel=30, bass_part="vc", bass_lo=39, bass_hi=53)
+    roll_chord(gs, 0.04, 53, 77, vel=34, part="koto", n=5)
+    for q_, nm in ((0.5, "C5"), (0.9, "Bb4"), (1.3, "C5")):  # thinking: tick, tock, tick
+        gs.add("marimba", q_, 0.3, nm, 34, "arp", "s")
+    gs.mel("clar", "r:3/2 Eb5:1/6 E5:1/6 F5:1/6", vel=40)
+    lv(gs, ["koto"], -17)
+    lv(gs, ["marimba"], -17)
+    gs.expr(["clar"], [(0, -21), (2, -18)])
+    gs.expr(["vla", "vln1", "vc"], [(0, -21), (2, -20)])
     for sg in segs:
         lv(sg, ["glock"], -14)
         lv(sg, ["pz_hi"], -14)
@@ -1351,8 +1377,10 @@ def tree(c):
     e.sync("'嘿嘿': his tune in the tree (B-flat)", 0, t_hee, kind="change")
     # the question still hangs (F7sus4)
     h.pad(["vla", "vla", "vln1"], 3, 53, 74, vel=30, bass_part="vc", bass_lo=39, bass_hi=53)
-    roll_chord(h, 0.0, 53, 77, vel=32, part="koto", n=5)
+    roll_chord(h, 0.0, 53, 77, vel=28, part="koto", n=5)
+    h.add("clar", 0.0, 2.0, "F5", 36, "melody")
     h.add("xylo", 1.0, 1.0, "C6", 30, "arp")
+    lv(h, ["clar"], -19)
     lv(h, ["koto"], -17)
     lv(h, ["xylo"], -18)
     h.expr(["vla", "vln1", "vc"], [(0, -21), (2, -21)])
@@ -1568,21 +1596,21 @@ def call(c):
     w.expr(["vla", "vln1"], [(0, -25), (4, -24)])
     # '... and stopped': a last pluck, a triangle; one high string note holds
     st.add("pz_lo", 0, 0.5, "Bb2", 28, "arp", "h")
-    st.add("harp", 0, 2, "F5", 36, "arp", "r")
-    st.add("harp", 0, 2, "Bb5", 32, "arp", "r")
-    st.add("harp", 0, 2, "Bb3", 34, "arp", "r")
+    st.add("harp", 0, 2, "F5", 33, "arp", "r")
+    st.add("harp", 0, 2, "Bb5", 29, "arp", "r")
+    st.add("harp", 0, 2, "Bb3", 31, "arp", "r")
     st.add("vc", 0, 2, "Bb2", 26, "bass")
-    st.add("vln1", 0, 2, "F5", 26, "pad")
-    st.add("vla", 0, 2, "D5", 24, "pad")
-    st.add("vla", 0, 2, "Bb4", 24, "pad")
+    st.add("vln1", 0, 2, "F5", 29, "pad")
+    st.add("vla", 0, 2, "D5", 27, "pad")
+    st.add("vla", 0, 2, "Bb4", 27, "pad")
     lv(st, ["pz_lo"], -14)
     lv(st, ["harp"], -15)
     st.expr(["vla", "vln1", "vc"], [(0, -22), (2, -22)])
     # 'he looked up at Zacchaeus and said': warm E-flat, the strings swell, the harp rolled
     strings(u, vel=34, lo=53, hi=72, bass=(40, 52), cb=(28, 40))
-    roll_chord(u, 0.05, 51, 79, vel=34, part="harp", n=6)
+    roll_chord(u, 0.05, 51, 79, vel=29, part="harp", n=6)
     u.mel("horn", "r:2 | Eb4:1 F4:1", vel=34)
-    u.expr(STR, [(0, -23), (1.5, -20), (4, -21)])
+    u.expr(STR, [(0, -23), (2.0, -20), (4, -21)])
     lv(u, ["harp"], -16)
     lv(u, ["horn"], -22)
     # 'Zacchaeus, come down quickly! today I must stay at your house': the call on the horn
@@ -2014,25 +2042,30 @@ def saved(c):
     lv(lo_, ["harp"], -17)
     lv(lo_, ["horn"], -21)
     # 'Zacchaeus wanted to see Jesus': his perky head on the clarinet, in D
-    f1.mel("clar", "F#5:1/2 G5:1/2 G#5:1/2 A5:1/2 | D6:1/2:s r:1/2 A5:1/2:s F#5:1/2:s", vel=44)
+    f1.mel("clar", "F#5:1/2 G5:1/2 G#5:1/2 A5:1/2 | D6:1/2:s r:1/2 A5:1/2:s F#5:1/2", vel=44)
     for q_ in range(4):
         f1.add("pz_lo", q_, 0.5, f1.chord_at(q_ + 1e-3).bass_note(38, 50) if q_ % 2 == 0 else
                _alt_bass(f1.chord_at(q_ + 1e-3), 38, 50), 32, "arp", "s")
     f1.pad(["vla", "vla", "vln1"], 3, 54, 74, vel=28, bass_ref=(38, 50))
     hit(c, segs, "pop", "撒该想看看耶稣", 0, "the picture of the tree pops up (a pluck)", pluck=(62, 74), xylo=(74, 86),
         block=76, vel=44)
-    f1.duck(2.5, parts=["clar"])
-    lv(f1, ["clar"], -17)
-    lv(f1, ["pz_lo"], -14)
-    f1.expr(["vla", "vln1"], [(0, -24), (4, -23)])
+    f1.duck(1.5, parts=["clar"])
+    lv(f1, ["clar"], -16)
+    lv(f1, ["pz_lo"], -13)
+    f1.expr(["vla", "vln1"], [(0, -24), (2.5, -23), (4, -20)])
     # '... and Jesus was looking for Zacchaeus too!': the call answering on the horn, warm strings
     f2.mel("horn", "B4:1 A4:1/2 B4:1/2 | D5:1 C#5:1", vel=46)
     strings(f2, vel=34, lo=54, hi=74, bass=(40, 52), cb=(28, 40))
-    roll_chord(f2, 0.05, 50, 74, vel=30, part="harp", n=5)
+    roll_chord(f2, 0.05, 50, 74, vel=24, part="harp", n=5)
+    f2.add("pz_lo", 0, 0.5, "G2", 34, "arp", "s")             # the bows take a moment: a soft plucked G carries the beat
+    for nm in ("D4", "G4"):
+        f2.add("pz_hi", 0, 0.5, nm, 30, "arp", "s")
+    lv(f2, ["pz_lo", "pz_hi"], -15)
     f2.duck(3.0, parts=["horn"])
-    f2.expr(["horn"], [(0, -22), (1, -17), (4, -17)])
-    f2.expr(["harp"], [(0, -22), (1, -17), (4, -17)])
-    f2.expr(STR, [(0, -24), (1, -19), (4, -20)])
+    f2.expr(["horn"], [(0, -28), (1.5, -20), (4, -19)])
+    f2.expr(["harp"], [(0, -23), (1.5, -17), (4, -17)])
+    f2.expr(["vla", "vln1"], [(0, -22), (1.5, -20), (4, -20)])
+    f2.expr(["vc", "cb"], [(0, -28), (1.5, -20), (4, -20)])
     # 'like a shepherd looking for his lost lamb': the pan flute over a drone
     p.mel("panflute", "A5:1/2 B5:1/2 A5:1/2 F#5:1 D5:1/2 | E5:1/2 F#5:1/2 E5:1/2 D5:3/2", vel=44)
     p.add("vc", 0, 6, "D2", 30, "bass")
@@ -2200,7 +2233,8 @@ REQUIRED_HITS = [
     ("s04_crowd", "前面的人", "gap", "change"),                     # the wall (G minor)
     ("s04_crowd", "他想挤进去", "gap", "change"),                   # squeezing (G minor)
     ("s04_crowd", "撒该急得团团转", "phrase", "change"),            # round and round (G minor)
-    ("s04_crowd", "小朋友，你猜", "gap", "change"),                 # the question (E-flat add9 -> F7sus4)
+    ("s04_crowd", "小朋友，你猜", "gap", "change"),                 # the question (E-flat add9)
+    ("s04_crowd", "小朋友，你猜", "end", "change"),                 # the guess: F7sus4 hangs through the pause
     ("s05_tree", "有了", "line", "change"),                         # the idea (B-flat)
     ("s05_tree", "那里有一棵大大的桑树", "gap", "change"),          # the tree (E-flat)
     ("s05_tree", "撒该爬呀爬", "gap", "change"),                    # the climb (B-flat)
