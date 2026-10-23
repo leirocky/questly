@@ -20,8 +20,9 @@ Beats class; nothing hard-coded to the take):
   '数啊数'       quick jabs, little numbers pop over the resting sheep one after another
   '还是九十九只'  a big '99' on '九十九'
   '少了一只小羊'  hands on his cheeks, worried; a thought bubble with the little lamb and a '?' on '小羊'
-  '我的小羊呢'   he peers toward the hills, a hand at his brow, looks back and forth
-  '我要去找它'   he lifts his lantern on '去' (its light blooms) and sets off
+  '我的小羊呢'   he peers toward the hills, a hand at his brow, then bends to the lantern on the grass in front of
+                him and lifts it into his hand; '我要' he straightens up with it
+  '我要去找它'   on '去' he lifts it high, lit (its light blooms), and sets off - always facing right, the way he goes
   '牧羊人把'     the camera pulls back over the whole hillside at dusk: the ninety-nine rest together, he walks up the
                 path toward the hills, smaller and smaller, the lantern glowing
   end           s07 opens on exactly this frame (the same clock: he keeps walking), then goes to the lamb
@@ -42,7 +43,8 @@ from stories.lost_sheep.scenes.s05_flock import (CAM_END, GY, H5, HS, HX0, HX1, 
                                                  REST_POSES, STREAM_X, W5, X_LAND, X_SNIFF, YL, YS, Fig, add_clouds, blink,
                                                  cam_path, doc, env, f1, flock_band_markup, flower_frame, flowers_svg, gate,
                                                  knoll_markup, lamb_fig_draw, lone_tree_markup, persp, pop_motion,
-                                                 question_markup, sheep_markup, shepherd_markup, sky_svg, sun_markup)
+                                                 question_markup, sheep_markup, shepherd_markup, sky_svg, squash,
+                                                 sun_markup)
 
 # ------------------------------------------------------------------ geometry (shared with s07)
 TIMES6 = (0.35, 0.45, 0.55, 0.62)          # backdrop frames, cross-faded by tod(t)
@@ -52,7 +54,8 @@ YW = YS - 14                                # the counting line (just behind him
 GAP = 215 * persp(YW)                       # spacing of the sheep in the line
 NUMS = (1, 2, 3, 4, 12, 25, 38, 52, 66, 80, 91, 96, 97, 98, 99)
 BUB = (CX - 40, YS - 345 * K)               # where the count bubbles pop (above the tapped sheep)
-LANTERN0 = (SX - 96, YS + 8)                # the lantern waiting on the grass
+LANTERN0 = (SX + 99 * K, YS + 8)            # the lantern waiting on the grass, in front of him (under his far hand
+                                            # when he bends to it)
 PATH = [(SX, YS), (SX + 150, YS - 36), (SX + 250, YS - 100), (SX + 390, YS - 160), (SX + 530, YS - 206),
         (SX + 610, YS - 262), (SX + 650, YS - 320), (SX + 720, YS - 372), (SX + 820, YS - 414), (SX + 900, YS - 462),
         (SX + 950, YS - 515)]
@@ -464,13 +467,17 @@ def build(ctx):
     sh.cut(B["t_zai"] - 0.05, shep("count_again", "determined", -1, tm=tod(B["t_zai"])), depth=6)
     sh.cut(B["t_hai"] + 0.1, shep("count_again", "puzzled", -1, tm=tod(B["t_hai"])), dip=False)
     sh.cut(B["t_shao"] - 0.05, shep("worried", "worried", 1, tm=tod(B["t_shao"])), depth=6)
-    sh.cut(B["t_wd"] - 0.05, shep("look_around", "worried", 1, 0.0, tod(B["t_wd"])), depth=5)
-    sh.cut(B["t_wd"] + 0.55, shep("look_around", "worried", 1, 0.6, tod(B["t_wd"])), depth=3)
-    # he bends down to the lantern on the grass behind him and picks it up (it rises into his far hand) ...
+    # '我的小羊呢': he peers toward the hills (facing right, the way he will go: no more turning from here on) ...
+    t_peer = snap(B["t_wd"] - 0.05)
+    sh.cut(t_peer, shep("look_around", "worried", 1, 0.0, tod(B["t_wd"])), depth=5)
+    # ... bends to the lantern waiting on the grass in front of him and lifts it into his far hand ...
     t_up = snap(B["t_qu"] - 0.05)
-    t_pick = snap(min(B["t_wd"] + 1.15, t_up - 0.55))
-    sh.cut(t_pick, shep("count_again", "determined", -1, 0.0, tod(B["t_wy"])), depth=6)
-    # ... and on '去' stands up holding it high, lit
+    t_pick = snap(max(t_peer + 0.55, t_up - 1.25))
+    t_stand = snap(t_pick + 0.62)
+    sh.cut(t_pick, shep("count_again", "determined", 1, 0.0, tod(B["t_wd"])), depth=6)
+    # ... straightens up with it hanging from his hand (the figure's own lantern, 36 px from the bent hand) ...
+    sh.cut(t_stand, shep("stand", "determined", 1, 0.0, tod(B["t_wy"]), True), depth=6)
+    # ... and on '去' lifts it high, lit (the light blooms); the walk away starts facing the same way
     sh.cut(t_up, shep("look_around", "determined", 1, 0.0, tod(B["t_qu"]), True), depth=7)
     sh.add_blinks({shep("stand", "warm"): shep("stand", blink("warm")),
                    shep("stand", "happy"): shep("stand", blink("happy"))}, t_cut, B["t_shu"], rng)
@@ -480,15 +487,17 @@ def build(ctx):
     sh.mots.append(lambda t: Tf(sy=1 + 0.01 * math.sin(2 * math.pi * (t + g0) / 3.1)))
     sh.mots.append(lambda t: Tf(alpha=1.0 if t_cut <= t < t_go else 0.0))
     sh.build(sc)
-    hand = C.shepherd_points(SX, YS, K, -1, pose="count_again")["hands"][0]      # his far hand when he bends
+    hand_b = C.shepherd_points(SX, YS, K, 1, pose="count_again")["hands"][0]     # his far hand when he bends
     lx0, ly0 = LANTERN0[0], LANTERN0[1] - 64 * K
 
     def lantern_mot(t):
-        if not (t_cut <= t < t_up):
+        """The lantern on the grass; lifted into his hand while he bends; from t_stand the figure draws it (hanging
+        from his far hand, then raised on '去')."""
+        if not (t_cut <= t < t_stand):
             return Tf(alpha=0.0)
-        u = M.progress(t, t_pick + 0.1, t_pick + 0.32, "out")       # lifted off the grass into his hand
+        u = M.progress(t, t_pick + 0.1, t_pick + 0.32, "out")
         sw = 3 * math.sin(2 * math.pi * (t - t_pick) / 0.6) * M.progress(t, t_pick + 0.3, t_pick + 0.4)
-        return Tf(dx=(hand[0] - lx0) * u, dy=(hand[1] - ly0) * u, rot=sw, px=lx0, py=ly0)
+        return Tf(dx=(hand_b[0] - lx0) * u, dy=(hand_b[1] - ly0) * u, rot=sw, px=lx0, py=ly0)
     sc.add("lantern0", doc(PR.ls_lantern(lx0, ly0, K, lit=0.0, glow=False)), z=6.45, seed=605, motion=lantern_mot)
     # the lantern's light blooming when he lifts it (raised in look_around), then the walk away
     lx, ly = SX + 133 * K, YS - 222 * K + 40 * K

@@ -20,7 +20,7 @@ Tm class, chunk fallback; nothing is hard-coded to the take):
                 (chin on the hand); the camera holds on Jesus, the page and the listeners (all faces well above the
                 subtitle band)
   pause        when the question's subtitle has gone, the camera flies into the page in one continuous log-space
-                zoom (whoosh) until the picture fills the frame: a sharp full-resolution copy of the page fades in over
+                zoom over 1.8 s on a gentle plateau ease (peak ~0.59 ln/s; whoosh) until the picture fills the frame: a sharp full-resolution copy of the page fades in over
                 the zoomed page, the courtyard's warm light, dust motes and the sparkles melt away
   end          calm hold inside the page (the flock nibbling) for the page-turn into s05
 The page device (page_inner, story page frames, the hi-res copy) is shared with s11_meaning.
@@ -51,6 +51,24 @@ HI_V0 = (CAM_PAGE.x - CAM_PAGE.w / 2, CAM_PAGE.y - CAM_PAGE.w * 9 / 32)
 UNFOLD = [0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1.0]     # the 8 quantised frames props.story_page suggests
 GY_P = 405                               # the page's meadow line (page coordinates)
 LAMB_P = (760, GY_P + 70)                # the little lamb in the page
+
+
+FLIGHT = 1.8                             # s: the flight into the page after the question
+
+
+def plateau_ease(u, a=0.3):
+    """Ease 0..1 whose speed rises smoothly over the first a of the time, stays level, and falls over the last a:
+    peak speed 1 / (1 - a) times the average (sine easing: 1.57x)."""
+    u = min(1.0, max(0.0, u))
+    k = 1.0 / (1.0 - a)
+
+    def ramp(x):                         # distance covered while the speed rises 0 -> 1 over [0, x] (x <= a)
+        return 0.5 * x - 0.5 * a / math.pi * math.sin(math.pi * x / a)
+    if u <= a:
+        return k * ramp(u)
+    if u >= 1 - a:
+        return 1.0 - k * ramp(1.0 - u)
+    return k * (ramp(a) + (u - a))
 
 
 def page_inner(phase=0.0):
@@ -276,9 +294,11 @@ def build(ctx):
                                           sy=0.7 + 0.5 * M.progress(t, tp, tp + 0.7, "out"), px=lx, py=ly))
     # inside the page: a sharp copy fades in over the zoomed page as the camera flies in (the flock nibbles)
     # the flight into the page waits until the question's subtitle has gone (it is up until the line's end + 0.3 s,
-    # see engine.compositor.Subtitles), so no face slides under it; it ends just before the page-turn dip's darkest point
+    # see engine.compositor.Subtitles), so no face slides under it; it lasts FLIGHT s on a gentle plateau ease (peak
+    # zoom ~0.6 ln/s) and settles at least ~0.3 s before the page-turn dip covers the frame (its paper peak, T - 0.5)
     t_sub = min(t_qend + 0.3, T - 0.3)
-    t_p0, t_p1 = t_sub - 0.02, T - 0.75
+    t_p0 = t_sub
+    t_p1 = min(t_p0 + FLIGHT, T - 0.78)
     t_h0, t_h1 = t_p0 + 0.42 * (t_p1 - t_p0), t_p1 - 0.08
     hi = [hires_svg(page_inner(ph)) for ph in (0.0, 0.5)]
     sc.add("page_hi", hi, z=83, wc=0.5,
@@ -300,7 +320,7 @@ def build(ctx):
     add_air(sc, g0, "day", t1=t_p1)
     base = cam_seq([(0.0, END_CAM), (1.0, END_CAM), (t_jiu + 0.3, c_turn), (t_gushi, c_tell), (t_r0, c_tell),
                     (t_u1, c_page), (t_c0, c_page), (t_p1, CAM_PAGE, "linear"), (T, CAM_PAGE)])
-    sc.camera = splice(base, t_c0, t_p1, log_push(t_c0, t_p1, c_page, CAM_PAGE))
+    sc.camera = splice(base, t_c0, t_p1, log_push(t_c0, t_p1, c_page, CAM_PAGE, curve=plateau_ease))
 
     # ---------------------------------------------------------------- sound
     sc.sfx("crowd", 0, dur=t_p1, gain_db=-29, fade_in=0.8, fade_out=1.0)

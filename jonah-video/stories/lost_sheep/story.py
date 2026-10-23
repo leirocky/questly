@@ -83,7 +83,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s04_story", "mood": "lesson", "tail": 2.3,   # time to fly into the page after the question
+        "id": "s04_story", "mood": "lesson", "tail": 3.4,   # time to fly into the page after the question
         "note": "Luke 15:3-4. Jesus turns kindly to everyone, Pharisees included, and asks his question; the scene "
                 "opens into his story like a picture-book page unfolding from his hands (the spring hills).",
         "lines": [
