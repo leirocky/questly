@@ -1003,8 +1003,11 @@ Mary of Nazareth, a kind young woman of about 16-18: olive skin (MARY_SKIN), dar
 centre-parted fringe and a lock in front of the ear under a soft blue head-veil (MARY_VEIL) with a light-blue edge that
 falls down her back, tiny lashes, a simple warm-cream dress (MARY_DRESS) with a thin gold-ochre hem, cuffs and neckline
 (MARY_TRIM), a blue sash (MARY_BLUE), sandals.
-  pregnant=True  visibly expecting (Luke 2:5): a rounded belly (outline only on the outside of the body) under an empire
-                 sash; works in every pose (use it for walk / ride / sit / stand on the journey and at the inn).
+  pregnant=True  visibly expecting (Luke 2:5, '马利亚的肚子已经大大的了'): a round, gentle belly under the dress that clearly
+                 stands out past her front line (~25 px at scale 1, still readable at scale 0.45), an empire sash above it;
+                 works in every pose (walk / ride / sit / stand / question / startled on the journey, in the street and at
+                 the inn). In sit and ride her near hand rests on top of the belly (the far hand on the knee). stand bbox
+                 (-52, -314, 51, 0); the other bboxes are unchanged.
   glow 0..1      a very soft warm light round her (no halo ring).   baby  False hides the baby / toddler in the poses
                  that hold one.   phase  sweep / walk cycles.
   pose (MARY_POSES)  bbox (l, t, r, b)       natural expr  notes (hands [far, near] at scale 1)
@@ -7640,32 +7643,36 @@ def _toddler_on_lap(expr, pose="sit"):
     return mid
 
 
-def _bump_mid(D):
-    """pregnant: a rounded belly under an empire sash (the outline only on the outside of the body)."""
+def _bump_mid(D, seated=False):
+    """pregnant: a round, gentle belly under the dress, clearly past the body's front line (outline only on the outside),
+    an empire sash just above it; seated: a little higher so its round top shows above the lap."""
     def mid(st):
         m, tp = st["m"], st["tp"]
         ww, T = m["ww"], m["T"]
-        c = (0.80 * ww, 0.22 * T)
-        rf, ru = 0.94 * ww, 0.47 * T
-        arc = [tp(c[0] + rf * math.cos(math.radians(a)), c[1] + ru * math.sin(math.radians(a))) for a in range(-104, 112, 8)]
-        fill = arc + [tp(0.05 * ww, -0.30 * T), tp(0.05 * ww, 0.66 * T)]
+        c = (1.05 * ww, 0.27 * T) if seated else (0.95 * ww, 0.20 * T)
+        rf, ru = (1.12 * ww, 0.41 * T) if seated else (1.02 * ww, 0.46 * T)
+
+        def ep(a, k=1.0, kr=1.0):
+            r = math.radians(a)
+            return tp(c[0] + kr * rf * math.cos(r) * k, c[1] + kr * ru * math.sin(r))
+        arc = [ep(a) for a in range(-100, 106, 6)]
+        top_u, bot_u = c[1] + ru * math.sin(math.radians(100)), c[1] + ru * math.sin(math.radians(-100))
+        fill = arc + [tp(0.05 * ww, top_u), tp(0.05 * ww, bot_u)]
         col = D["robe"]
         s = _poly(fill, col, sw=0)
+        # roundness: a soft shadow along the lower front, a highlight on the upper front
+        shadow = [ep(a) for a in range(-96, 34, 8)] + [ep(a, kr=0.80) for a in range(26, -90, -8)]
+        s += _poly(shadow, shade(col, -0.14), sw=0, extra='opacity="0.55"')
+        s += _line(_d([ep(a, kr=0.62) for a in range(10, 74, 8)], closed=False), w=5.0, col=shade(col, 0.5),
+                   extra='opacity="0.75"')
         s += _line(_d(arc, closed=False), w=OW)
-        s += _line(_d([tp(c[0] + 0.62 * rf * math.cos(math.radians(a)), c[1] + 0.70 * ru * math.sin(math.radians(a)))
-                       for a in range(-60, 30, 10)], closed=False), w=4.5, col=shade(col, 0.45), extra='opacity="0.7"')
-        s += _line(_d([tp(c[0] + 0.85 * rf * math.cos(math.radians(a)), c[1] + 0.86 * ru * math.sin(math.radians(a)))
-                       for a in range(40, 100, 10)], closed=False), w=2.4, col=shade(col, -0.16), extra='opacity="0.8"')
         # empire sash just above the bump
-        band = []
         for poly in st["robe"][:1]:
             b = _band(poly, st["pel"], st["u"], 0.62 * T, 0.72 * T)
             if len(b) > 2:
-                band.append(b)
-        for b in band:
-            s += _poly(b, D["sash_col"], sw=2.6)
+                s += _poly(b, D["sash_col"], sw=2.6)
         k0 = tp(0.62 * ww, 0.66 * T)
-        s += _tube([k0, tp(0.80 * ww, 0.40 * T)], 6, D["sash_col"], ow=2.4) + _tube([k0, tp(0.62 * ww, 0.36 * T)], 6,
+        s += _tube([k0, tp(0.86 * ww, 0.42 * T)], 6, D["sash_col"], ow=2.4) + _tube([k0, tp(0.66 * ww, 0.38 * T)], 6,
                                                                                      D["sash_col"], ow=2.4)
         s += f'<circle cx="{fmt(k0[0])}" cy="{fmt(k0[1])}" r="6" fill="{D["sash_col"]}" {_st(2.4)}/>'
         return s
@@ -7685,7 +7692,13 @@ def mary(x, y, scale=1.0, facing=1, pose="stand", expr=None, phase=0.0, baby=Tru
         behind.append(_soft_glow(_clamp01(glow)))
     if pregnant:
         D["sash_col"] = D.pop("sash")
-        mid.append(_bump_mid(D))
+        mid.append(_bump_mid(D, ps["lap"]))
+        m_ = _MARY_M
+        bump_hand = ("ik", "body", 1.25 * m_["ww"], -0.62 * m_["T"], 1)     # a hand resting on top of the belly
+        if pose == "sit":
+            ps["arms"], ps["hands"] = (("ik", "knee", 0, 0.28, 1), bump_hand), ("open", "open")
+        elif pose == "ride":
+            ps["arms"], ps["hands"] = (("ik", "body", 2.6 * m_["ww"], -0.05 * m_["T"], 1), bump_hand), ("open", "open")
     if pose == "sweep":
         front.append(_broom_front(D, phase, marks))
     elif pose.startswith("carry_jar"):
