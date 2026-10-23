@@ -27,7 +27,8 @@ Tm class, chunk fallback; nothing is hard-coded to the take):
   '还和他们'     they sit down, Jesus sits; '一起吃' he breaks the bread (crumbs)
   '饭'           everyone laughs together (sit_laugh / laugh / toast)
   '旁边站着'     the camera pans right to three Pharisees standing by the fig tree, frowning
-  '守'           the elder holds up the scroll of the law, reverent; the others nod
+  '守'           the elder brings out the scroll of the law and unrolls it, reverent; the others nod; just before
+               '看不起' he rolls it up again and tucks it away
   '看不起'       they fold their arms, chin up, looking down on the guests (disdain)
   '皱着眉头'     closer: frowns; '小声说' two lean in and whisper behind a hand
   P '哼'         the elder turns to the table with a 'hmph' puff and grumbles, gesturing at the meal, his head
@@ -992,12 +993,20 @@ def build(ctx):
     hp0 = C.body_points(C.pharisee, PH[0][0], PH[0][1], K, -1, variant=0, pose="stand")["hands"]
     hx, hy = (hp0[0][0] + hp0[1][0]) / 2 - 6, (hp0[0][1] + hp0[1][1]) / 2 - 26
     t_sc0, t_sc1 = t_shou4 - 0.15, t_kan
+    def scroll_m(t):
+        """He brings the rolled scroll up into his hands and unrolls it (0.45 s); before '看不起' he rolls it up again
+        and tucks it away as his hands go behind his back (the pose cut)."""
+        if t < t_sc0 or t > t_sc1 + 0.14:
+            return Tf(alpha=0.0, px=hx, py=hy)
+        a_in = M.progress(t, t_sc0, t_sc0 + 0.18, "sine")
+        a_out = 1 - M.progress(t, t_sc1 - 0.04, t_sc1 + 0.14, "sine")
+        unroll = M.progress(t, t_sc0 + 0.1, t_sc0 + 0.45, "inout") - M.progress(t, t_sc1 - 0.44, t_sc1 - 0.08, "inout")
+        dy = 24 * (1 - a_in) + 30 * (1 - a_out)
+        return Tf(dy=dy, sx=0.13 + 0.87 * unroll, alpha=a_in * a_out, px=hx, py=hy)
     sc.add("scroll", doc3(scroll_markup(hx, hy, rot=-8, opened=True, k=0.5)), z=70.3,
-           motion=M.combine(lambda t: Tf(alpha=1.0 if t_sc0 <= t < t_sc1 else 0.0),
-                            breath((PH[0][0], PH[0][1]), g0, phase=phs[0].bphase)))
-    phs[0].fig.cut(t_sc0, ("stand", "ponder", -1, 0, 0, 0))   # same drawing: the dip hides the scroll appearing
+           motion=M.combine(scroll_m, breath((PH[0][0], PH[0][1]), g0, phase=phs[0].bphase)))
     sc.add("scroll_glow", doc3(PR._ls_glow(hx - 4, hy - 30, 90, 110, 0.6, "ls3scr", "#fff6d8", "#f6d27a")), z=70.25,
-           blend="screen", wc=0, motion=lambda t: Tf(alpha=0.8 * env(t, t_sc0 + 0.1, t_sc1, 0.3, 0.2)))
+           blend="screen", wc=0, motion=lambda t: Tf(alpha=0.8 * env(t, t_sc0 + 0.3, t_sc1 - 0.15, 0.3, 0.25)))
     for tp, (x, y), f in puff_at:
         sc.add(f"puff{tp:.2f}", puff_svg(x + f * 40 * K * TK, y - 290 * K * TK, f), z=11,
                motion=lambda t, tp=tp: Tf(alpha=env(t, tp, tp + 0.9, 0.1, 0.35), dy=-14 * M.progress(t, tp, tp + 0.9)))

@@ -10,12 +10,13 @@ Beats class; nothing hard-coded to the take):
   0 .. 1.0      identical to the end of s06 (the shepherd walking up the path, lantern glowing)
   '这时候'       cut to the rocky slope at dusk: the lamb trots in toward the big rock (bell)
   '小羊一个人'   it stops by the rock and looks around, big worried eyes; '山上' it looks back over its shoulder
-  '天黑了'       the light sinks from lavender dusk to a silver night, the moon rises, stars come out
+  '天黑了'       the light sinks gently (~1.4 s) from lavender dusk to a silver night, the moon rises, stars come out
   '风呼呼地吹'   a gust on each '呼': the thorn bush rocks, the grass bends, leaves blow across (wind); the lamb
                 scurries half behind the big rock and crouches, ears down, trembling; after '吹' the owl puffs a soft
                 'hoo' (it blinks now and then all through)
   '好害怕'       still trembling behind the rock
-  '咩——咩——'    it lifts its head and bleats on each '咩' (sound arcs, a soft baa)
+  '咩——咩——'    it lifts its head and bleats (sound arcs, a soft baa on each '咩'); the two come close together, so it
+                holds the bleat straight through with a little squash on the second '咩', then curls up
   end           it curls up small behind the rock, peeking out, blinking; calm under the big moon (page dip to s08)
 """
 import math
@@ -30,7 +31,7 @@ from engine.scene import Scene
 from stories.noah.scenes.s01_title import snap
 from stories.storm.scenes.s03_friends import Beats
 from stories.lost_sheep.scenes.s05_flock import (H5, INK, W5, Fig, cam_path, clamp01, clamp_cam, clock_loop, doc, env, f1,
-                                                 gate,
+                                                 gate, squash,
                                                  lamb_markup)
 from stories.lost_sheep.scenes.s06_count import CAM_WIDE, add_dusk_hillside, plan6
 
@@ -237,9 +238,11 @@ def build(ctx):
     shotB = gate(t_cut, 1e9)
 
     # ================================================================ shot B: the rocky slope, dusk -> night
+    # dusk -> night: a gentle ~1.4 s fall of the light on '天黑了' (sine over 2.3 s; 80 % of it in the middle 1.36 s)
+    night = lambda t: M.progress(t, t_tian - 0.25, t_tian + 2.05, "sine")
+
     def tod(t):
-        return (0.62 + 0.04 * M.progress(t, t_cut, t_tian, "sine") +
-                0.19 * M.progress(t, t_tian - 0.1, t_feng + 0.25, "inout"))
+        return 0.62 + 0.04 * M.progress(t, t_cut, t_tian, "sine") + 0.19 * night(t)
     tfa = lambda t: tod_index7(tod(t))
     sc.add("sky7", [sky7_svg(tm) for tm in TIMES7], z=20, frame_at=tfa, seed=701, motion=shotB)
     # twinkling stars as the night comes
@@ -261,12 +264,12 @@ def build(ctx):
     sc.add("slope_back", [slope_svg(tm, "back") for tm in TIMES7], z=21, frame_at=tfa, seed=703, motion=shotB)
     sc.add("far_details", [far_details_svg(tm) for tm in TIMES7], z=21.05, frame_at=tfa, seed=710, motion=shotB)
     sc.add("owl_tree", [owl_tree_svg(tm) for tm in (0.62, 0.85)], z=21.2, seed=704,
-           frame_at=lambda t: M.progress(t, t_tian - 0.1, t_feng + 0.25, "inout"), motion=shotB)
+           frame_at=night, motion=shotB)
     # the thorn bush rocks in the gusts
     gust = lambda t: (env(t, t_hu1 - 0.15, t_hu1 + 0.55, 0.15, 0.35) + env(t, t_hu2 - 0.12, t_hu2 + 0.7, 0.15, 0.45) +
                       0.35 * env(t, t_feng - 0.2, t_pa, 0.4, 0.8))
     sc.add("bush", [bush_svg(tm) for tm in (0.62, 0.85)], z=21.3, seed=705,
-           frame_at=lambda t: M.progress(t, t_tian - 0.1, t_feng + 0.25, "inout"),
+           frame_at=night,
            motion=M.combine(lambda t: Tf(rot=-(4.5 * gust(t)) * (0.8 + 0.2 * math.sin(2 * math.pi * t / 0.45))
                                          - 0.6 * math.sin(2 * math.pi * (t + g0) / 3.1), px=BUSH[0], py=BUSH[1]), shotB))
     # the owl: blinks, a soft hoot near the end
@@ -290,6 +293,7 @@ def build(ctx):
     step_t = [t_in0 + (t_in1 - t_in0) * i / n_steps for i in range(n_steps)]
     step_dx = (sx_ - LAMB_IN) / n_steps
     t_hop = t_hu1 - 0.12
+    HOP = 0.5                                     # the scurry behind the rock: one 0.5 s hop (animated)
 
     def lpos(t):
         """The lamb's anchor (continuous)."""
@@ -298,8 +302,8 @@ def build(ctx):
             y = sy_ - sum(5 * SB * math.sin(math.pi * clamp01((t - ts + 0.02) / 0.14)) for ts in step_t
                           if ts - 0.02 <= t <= ts + 0.12)
             return x, y
-        u = M.progress(t, t_hop, t_hop + 0.3, "inout")
-        return sx_ + (hx_ - sx_) * u, sy_ + (hy_ - sy_) * u - 40 * SB * math.sin(math.pi * clamp01((t - t_hop) / 0.3))
+        u = M.progress(t, t_hop, t_hop + HOP, "sine")
+        return sx_ + (hx_ - sx_) * u, sy_ + (hy_ - sy_) * u - 10 * SB * math.sin(math.pi * clamp01((t - t_hop) / HOP))
 
     def lst(pose, f=-1, at=LAMB_STAND, tm=0.66, eyes="open", ph=0.0):
         return (pose, ph, at[0], at[1], f, eyes, tm)
@@ -316,21 +320,28 @@ def build(ctx):
         lamb.cut(ts - 0.02, lst("walk_a" if i % 2 == 0 else "walk_b"), dip=False)
     look = lst("look_around")
     lamb.cut(t_in1 + 0.06, look, depth=5)
-    lamb.cut(t_shan, lst("look_around", ph=0.6), depth=4)
+    lamb.cut(max(t_shan, t_in1 + 0.62), lst("look_around", ph=0.6), depth=4)       # looks back (>= 0.5 s each)
     look2 = lst("look_around", tm=0.76)
     lamb.cut(t_tian + 0.25, look2, depth=4)
-    lamb.cut(t_hop, lst("hop", -1, LAMB_STAND, 0.85, ph=0.5), depth=4)
+    hop = lst("hop", -1, LAMB_STAND, 0.85)
+    lamb.loops[hop] = (5, lambda t: int(clamp01((t - t_hop) / HOP) * 5 - 1e-6))     # phase k/4: 0 .. 1
+    lamb.cut(t_hop, hop, depth=4)
     scared = lst("scared", 1, LAMB_HIDE, 0.85)
     lamb.loops[scared] = (4, clock_loop(g0, 0.07))
-    lamb.cut(t_hop + 0.3, scared, depth=7)
+    lamb.cut(t_hop + HOP, scared, depth=7)
     bleat = lst("bleat", 1, LAMB_HIDE, 0.85)
     lamb.loops[bleat] = (4, clock_loop(g0, 0.09))
-    lamb.cut(t_m1 - 0.08, bleat, depth=4)
-    lamb.cut(t_m1 + 0.32, scared, dip=False)
-    lamb.cut(t_m2 - 0.08, bleat, depth=4)
-    lamb.cut(t_m2 + 0.36, scared, dip=False)
     hide = lst("hide", 1, LAMB_HIDE, 0.85)
-    lamb.cut(t_m2 + 0.66, hide, depth=7)
+    lamb.cut(t_m1 - 0.08, bleat, depth=4)
+    if t_m2 - t_m1 < 0.7:
+        # the two '咩' come close together: hold the bleat straight through (a little squash accents the second one),
+        # then curl up behind the rock - no 2-frame flash of another pose in between
+        lamb.mots.append(squash(t_m2 - 0.02, SB, LAMB_HIDE, 5.0))
+    else:
+        lamb.cut(t_m1 + 0.32, scared, dip=False)
+        lamb.cut(t_m2 - 0.08, bleat, depth=4)
+    t_hide = max(t_m2 + 0.42, t_m1 + 0.55)
+    lamb.cut(t_hide, hide, depth=7)
     lamb.add_blinks({look: lst("look_around", eyes="closed"), look2: lst("look_around", tm=0.76, eyes="closed"),
                      hide: lst("hide", 1, LAMB_HIDE, 0.85, eyes="closed")}, t_in1, T, rng, every=(1.5, 2.4))
 

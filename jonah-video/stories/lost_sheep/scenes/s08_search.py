@@ -1,23 +1,27 @@
-"""Scene 8 - the search at night under a silver moon (Luke 15:4 '去找那一只'). Three picture-book shots joined by hard
-cuts at phrase boundaries, then one long shot on the rocky slope that dissolves (plain 1 s fade) into s09_found.
+"""Scene 8 - the search at night under a silver moon (Luke 15:4 '去找那一只'). Four picture-book shots joined by hard
+cuts at phrase boundaries; the last, on the rocky slope, dissolves (plain 1 s fade) into s09_found.
 
-  A  the high hills (props.high_hills + high_path_points, time=1): the winding path climbs from the bottom right up
-     over the hills to a far pass under the moon.
+  A0 over the high hill: a big moonlit hill in side view (my own drawing) against high_hills' far peaks.
+  A  the high hills (props.high_hills + high_path_points, time=1): the winding path to a far pass under the moon.
   B  the little stream at night (props.spring_hills time=1, its four stepping stones).
   C  the rocky slope (props.rocky_slope time=1 without its own rock / bush; my thorn_bush, big_rock, a trodden path,
      ridge trees, bushes and night flowers), the same place as s09: the big rock on the right; the lamb is curled up
      in the rock's shadow on its far side, just out of the frame (s09 finds it).
 
+Props never pop: the crook and the lantern are drawn by parable_shepherd while they are in his hands, and by Prop
+layers (below) whenever he sets them down, leans them somewhere or picks them up, moving smoothly in 0.3-0.45 s.
+
 Beats (syllable onsets measured in the voice clips with the Noah film's voice_marks helpers, checked for sanity,
 falling back to the subtitle chunks; nothing hard-coded to the take). Times are for the current take:
-  0 .. 0.9      calm page (the page-dip from s07 lands here): the shepherd at the foot of the steep path, lantern
-                lit, looking up the hill; stars twinkle, clouds drift, grass sways, the lantern flickers
-  '翻过' 1.55   he climbs (climb_a / climb_b, the raised foot on the higher ground, the crook planted ahead) up the
-                steep first stretch of the path, getting smaller with the perspective
-  '走过' 3.14   at the bend he turns and walks the winding path (planted-foot walk, perspective scale); the camera
-                pulls back and up: the long winding path to the pass and the moon
+  0 .. 0.9      calm page (the page-dip from s07 lands here): the shepherd on the slope of the big hill, lantern lit,
+                crook in hand; stars twinkle, clouds drift, the lantern flickers, fireflies
+  '翻过' 1.55   he climbs up the hill (climb_a / climb_b from 1.45, the raised foot on the higher ground, the crook
+                planted ahead), stands on the top against the moon at 2.55 and starts down the far side
+  '走过' 3.14   cut (2.98) to the winding path: he walks it (planted feet, perspective scale), the camera eases back
   '跨过' 4.91   cut to the stream: he hops across the four stepping stones toward us (step_a in the air, step_b
                 balanced on each stone), a silver ripple and a tiny splash on every landing, onto the near bank
+  6.62          on the near bank he stoops, sets the lantern down on the grass and plants his crook in the soft ground
+                beside him (both glide there in 0.36 s): his hands are free
   '小羊' 7.17   (H) he turns and calls into the valley, hands cupped (call): sound arcs fly out and a soft echo
                 '小羊…' answers from the far hills; '小羊' 8.27 he turns and calls the other way; '你在哪里' 9.37
                 he calls again (arcs, echo)
@@ -235,6 +239,15 @@ WALK_ADV = (29.0, 26.0, 59.0, 56.0)       # advance INTO frame i (c->a, a->c, c-
 CARRY_FRAMES = ("carry_a", "carry_c", "carry_b", "carry_c")
 
 
+def apply_tf(tf, q):
+    """Apply an engine Tf (scale, rotate about its pivot, translate) to the stage point q."""
+    px, py = tf.px, tf.py
+    x, y = (q[0] - px) * tf.sx, (q[1] - py) * tf.sy
+    r = math.radians(tf.rot)
+    c, s_ = math.cos(r), math.sin(r)
+    return px + tf.dx + c * x - s_ * y, py + tf.dy + s_ * x + c * y
+
+
 # ------------------------------------------------------------------ the figure: a flipbook with cuts
 class Fig:
     """One figure on its own flipbook layer. States are hashable keys drawn by ``draw(key)`` at the reference anchor
@@ -282,6 +295,16 @@ class Fig:
         if ground:
             y = gy
         return x + (q[0] - self.ref[0]) * k, y + (q[1] - self.ref[1]) * k
+
+    def tf(self, t):
+        """The figure layer's full transform at t (track, squash dips, breathing)."""
+        if getattr(self, "_mot", None) is None:
+            self._mot = self.motion()
+        return self._mot(t)
+
+    def full_point(self, t, q):
+        """Stage position at t of the reference-drawing point q, with every motion of the layer."""
+        return apply_tf(self.tf(t), q)
 
     def motion(self):
         px, py = self.ref
@@ -353,6 +376,7 @@ def walk_x(fig, tr, t0, t1, x0, x1, keyf, y=None, start=0, frames=WALK_FRAMES, k
 
 
 # ------------------------------------------------------------------ the shepherd
+LIT_GLOW = 0.004                 # > 0: parable_shepherd draws the lantern lit; its own glow disc is invisible at this level
 SH_DOWN = ("kneel_hug", "lift", "cheer", "dance", "call", "worried", "puzzled", "knock", "wave", "count")
 _BLINK_DONE = set()
 
@@ -374,19 +398,9 @@ SLOPE_END_KEY = shep_key("look_around", 1, "determined", 0.0)   # the s08 end / 
 
 def shep_markup(key, x, y, s=FS, tint=True):
     pose, f, expr, phase, lamb, eyes, crook, marks, lantern = key
-    m = C.parable_shepherd(x, y, s, f, pose=pose, expr=expr, phase=phase, crook=crook, lantern=lantern, glow=0.0,
+    m = C.parable_shepherd(x, y, s, f, pose=pose, expr=expr, phase=phase, crook=crook, lantern=lantern, glow=LIT_GLOW,
                            lamb=lamb, lamb_eyes=eyes, marks=marks)
     return tinted(m) if tint else m
-
-
-def lantern_ref(key, x, y, s=FS):
-    """Where the lantern's light comes from (reference drawing at anchor x, y)."""
-    pose, f, expr, phase, lamb, eyes, crook, marks, lantern = key
-    if pose in SH_DOWN:
-        return x - 92 * s * f, y - 40 * s
-    bp = C.shepherd_points(x, y, s, f, pose=pose, phase=phase, lantern=True, lamb=lamb, crook=crook)
-    hx, hy = bp["lantern"]
-    return hx + 1 * s * f, hy + 44 * s
 
 
 def rot_about(deg_fn, q, p):
@@ -425,7 +439,7 @@ class ShoulderLamb:
 
     @staticmethod
     def is_sep(key):
-        return key is not None and key[4] is False and key[0].startswith("carry")
+        return key is not None and key[4] is False and (key[0].startswith("carry") or key[0] == "knock")
 
     def anchor(self, key):
         if key not in self._cache:
@@ -469,30 +483,244 @@ class ShoulderLamb:
         return front
 
 
-def shadow_markup(x, y, s=FS, w=150, op=0.26):
-    return C.ground_shadow(x, y, s, w, op, color="#1d2440")
+# ------------------------------------------------------------------ the crook and the lantern as free props
+# parable_shepherd draws the crook / lantern itself (in-figure) for each pose in a fixed place; when he sets them down,
+# picks them up or leans them somewhere, a Prop draws them on their own layers and moves them smoothly instead (no
+# prop ever pops). Geometry mirrors art/characters.py (_sh_crook_svg / _sh_crook_back / _sh_lantern).
+CROOK_L0 = 346.0                 # local length of the crook planted in a hand (ground - 4 .. head - 1.55 R)
+HEAD_R = 44.0                    # the shepherd's head radius (characters._PSH_M['R'])
+_BP_CACHE = {}
 
 
-def add_lantern_light(sc, name, fig, key_lantern, z, g0, radius=300, k=0.9, alpha=None, extra=None, s=FS,
-                      pool=0.75):
-    """A warm light ('screen') that follows the shepherd's lantern (glow=0 in the figure), and a flat warm pool on
-    the ground under it."""
-    px, py = fig.ref
+def _resolve_sh_pose(pose, phase):
+    ph = phase % 1.0
+    if pose == "carry":
+        return ("carry_a", "carry_c", "carry_b", "carry_c")[int(ph * 4 + 1e-6) % 4]
+    if pose == "walk":
+        return "walk_" + "acbc"[int(ph * 4 + 1e-6) % 4]
+    if pose in ("climb", "step", "lead"):
+        return pose + ("_a" if ph < 0.5 else "_b")
+    return pose
+
+
+def sh_local_points(key):
+    """body_points of the shepherd for a Fig key, in local coordinates (anchor (0, 0), scale 1, facing 1)."""
+    pose, f, expr, phase, lamb, eyes, crook, marks, lantern = key
+    k = (pose, round(phase, 3), lamb, crook, lantern)
+    if k not in _BP_CACHE:
+        _BP_CACHE[k] = C.body_points(C.parable_shepherd, 0, 0, 1.0, 1, pose=pose, phase=phase, lamb=lamb,
+                                     lantern=lantern, crook=crook)
+    return _BP_CACHE[k]
+
+
+def infig_crook_where(key):
+    """Where parable_shepherd puts the crook for this key (the same decision as characters.parable_shepherd)."""
+    pose, f, expr, phase, lamb, eyes, crook, marks, lantern = key
+    kp = _resolve_sh_pose(pose, phase)
+    where = C._SH_CROOK_HAND.get(kp, "near")
+    want = (kp in C._SH_LAMB_POSES) if lamb is None else bool(lamb)
+    lamb_on = None
+    if want:
+        if kp in C._SH_LAMB_POSES:
+            lamb_on = kp
+        elif kp in C._SH_SHOULDER_OK:
+            lamb_on = "shoulders"
+    if lamb_on == "shoulders" and where in ("near", "wave"):
+        where = "lean" if kp == "wave" else "far"
+    if lantern and kp not in C._SH_LANTERN_DOWN and where == "far":
+        where = None if kp in ("carry_a", "carry_b", "carry_c", "carry_stand", "walk_a", "walk_b", "walk_c",
+                               "stand") and lamb_on else "lean"
+    return where
+
+
+def crook_local(key, where=None, curl=None):
+    """(foot, top, curl) of the crook in local coordinates for a placement of this key: 'near' / 'far' (planted in
+    that hand, as drawn in-figure), 'lean' (against the far shoulder, foot on the ground in front)."""
+    bp = sh_local_points(key)
+    where = where or infig_crook_where(key)
+    hy = bp["head"][1]
+    if where in ("near", "far", "wave"):
+        w = bp["hands"][1] if where in ("near", "wave") else bp["hands"][0]
+        return (w[0] + 2, -4.0), (w[0] + 2, hy - 1.55 * HEAD_R), 1 if curl is None else curl
+    if where == "lean":
+        s0 = bp["shoulders"][0]
+        return (s0[0] + 74, -4.0), (s0[0] - 30, hy - 1.45 * HEAD_R), -1 if curl is None else curl
+    if where == "ground":
+        return (-170.0, -6.0), (90.0, -10.0), 1 if curl is None else curl
+    raise ValueError(f"crook_local: no geometry for {where!r}")
+
+
+def lantern_local(key, ground=None):
+    """The handle of the lantern in local coordinates for this key: hanging from the far hand, or (ground=True / the
+    pose sets it down) standing on the ground behind him."""
+    pose, f, expr, phase, lamb, eyes, crook, marks, lantern = key
+    kp = _resolve_sh_pose(pose, phase)
+    if ground or (ground is None and kp in C._SH_LANTERN_DOWN):
+        return (-92.0, -68.0)
+    w = sh_local_points(key)["hands"][0]
+    return (w[0] + 1, w[1] + 2)
+
+
+class Prop:
+    """The crook or the lantern of a Fig. A timeline of segments, each entered with a transition of ``dur`` s from where
+    the prop was a frame before (a smooth move along a small arc, ``lift`` px):
+      'fig'              drawn by parable_shepherd itself (the figure's key gets crook / lantern = True);
+      ('key', fn)        attached to the figure: fn(key) -> local placement (crook: (foot, top); lantern: handle);
+      ('stage', value)   fixed in the stage (crook: (foot, top); lantern: handle) or value(t).
+    Call apply(fig) after all of the figure's cuts and before fig.build; then build(sc)."""
+
+    def __init__(self, kind, fig, s0, g0, name, z_front, z_back, curl=1, tint=None, lit=1.0, sway=3.0, gate=None):
+        self.kind, self.fig, self.s0, self.g0, self.name = kind, fig, s0, g0, name
+        self.gate = gate
+        self.z_front, self.z_back, self.curl, self.tint = z_front, z_back, curl, tint or tinted
+        self.lit, self.sway = lit, sway
+        self.segs = []
+
+    def at(self, t, src, dur=0.0, layer="front", lift=0.0):
+        t = snap(t) if t > 0 else 0.0
+        self.segs = [g for g in self.segs if g[0] != t] + [(t, src, dur, layer, lift)]
+        self.segs.sort(key=lambda g: g[0])
+        return self
+
+    # ---- timeline queries
+    def _seg(self, t):
+        cur = 0
+        for i, g in enumerate(self.segs):
+            if g[0] <= t:
+                cur = i
+        return cur
+
+    def infig(self, t):
+        i = self._seg(t)
+        t0, src, dur = self.segs[i][:3]
+        return src == "fig" and t >= t0 + dur - 1e-6
+
+    def change_times(self):
+        out = []
+        for t0, src, dur, layer, lift in self.segs:
+            out.append(t0)
+            if dur > 0:
+                out.append(snap(t0 + dur))
+        return out
+
+    # ---- placements: (x, y, ang, k) = the crook's foot / the lantern's handle, degrees from upright, scale
+    def _from_local(self, t, key, loc):
+        fig, s0 = self.fig, self.s0
+        f = key[1]
+        rx, ry = fig.ref
+
+        def st(q):
+            return fig.full_point(t, (rx + f * q[0] * s0, ry + q[1] * s0))
+        if self.kind == "crook":
+            foot, top = st(loc[0]), st(loc[1])
+            return (foot[0], foot[1], math.degrees(math.atan2(top[0] - foot[0], foot[1] - top[1])),
+                    math.hypot(top[0] - foot[0], top[1] - foot[1]) / (CROOK_L0 * s0))
+        h = st(loc)
+        return (h[0], h[1], 0.0, fig.tf(t).sx)
+
+    def _place_seg(self, i, t):
+        t0, src, dur, layer, lift = self.segs[i]
+        if src == "fig":
+            key = self.fig.key_at(t)
+            loc = crook_local(key)[:2] if self.kind == "crook" else lantern_local(key)
+            return self._from_local(t, key, loc), True
+        if src[0] == "key":
+            key = self.fig.key_at(t)
+            return self._from_local(t, key, src[1](key)), True
+        if src[0] == "keyt":                                 # attached, and the placement also depends on t (loops)
+            key = self.fig.key_at(t)
+            return self._from_local(t, key, src[1](key, t)), True
+        v = src[1](t) if callable(src[1]) else src[1]
+        if self.kind == "crook":
+            (fx, fy), (tx, ty) = v
+            return (fx, fy, math.degrees(math.atan2(tx - fx, fy - ty)), math.hypot(tx - fx, ty - fy) / (CROOK_L0 * self.s0)), False
+        return (v[0], v[1], 0.0, v[2] if len(v) > 2 else 1.0), False
+
+    def place(self, t):
+        """(placement, attached?, drawn?, layer)."""
+        i = self._seg(t)
+        t0, src, dur, layer, lift = self.segs[i]
+        if self.kind == "crook" and src == "fig" and not (dur > 0 and t < t0 + dur and i > 0):
+            return None, True, False, layer                 # drawn in-figure: no need to know where
+        p, att = self._place_seg(i, t)
+        if dur > 0 and t < t0 + dur and i > 0:
+            q, att0 = self._place_seg(i - 1, t0 - 1.0 / 60)
+            u = M.progress(t, t0, t0 + dur, "inout")
+            da = (p[2] - q[2] + 180) % 360 - 180
+            p = (q[0] + (p[0] - q[0]) * u, q[1] + (p[1] - q[1]) * u - lift * math.sin(math.pi * u),
+                 q[2] + da * u, q[3] + (p[3] - q[3]) * u)
+            return p, False, True, layer
+        drawn = src != "fig"
+        if self.kind == "lantern" and att and drawn and self.sway:
+            p = (p[0], p[1], p[2] + self.sway * math.sin(2 * math.pi * (t + self.g0) / 1.35), p[3])
+        return p, att, drawn, layer
+
+    def light_pos(self, t):
+        """The lantern's light centre (its windows)."""
+        (x, y, a, k), att, drawn, layer = self.place(t)
+        r = math.radians(a)
+        d = 42 * self.s0 * k
+        return x - math.sin(r) * d, y + math.cos(r) * d
+
+    # ---- figure flags and layers
+    def apply(self, fig):
+        """Rewrite the figure's keys so it draws this prop exactly while the prop is 'fig' (and not moving)."""
+        idx = 6 if self.kind == "crook" else 8
+        base = sorted(fig.ents, key=lambda e: e[0])
+
+        def key_at(t):
+            cur = base[0][1]
+            for tk, k in base:
+                if tk <= t:
+                    cur = k
+            return cur
+        times = sorted(set([tk for tk, _ in base] + self.change_times()))
+        ents = []
+        for t in times:
+            k = list(key_at(t))
+            k[idx] = self.infig(t)
+            ents.append((t, tuple(k)))
+        fig.ents = ents
+        return self
+
+    def build(self, sc):
+        s0 = self.s0
+        X0, Y0 = 200.0, 600.0
+        if self.kind == "crook":
+            body = C._ls_crook((0, 0), (0, -CROOK_L0), curl=self.curl)
+        else:
+            body = f'<g transform="scale(0.9)">{PR._ls_lantern(self.lit, "p" + self.name)}</g>'
+        svg = doc(self.tint(f'<g transform="translate({X0},{Y0}) scale({s0:.4f})"><g filter="url(#wobble-fine)">{body}'
+                            f'</g></g>'))
+
+        def mk(which):
+            def m(t):
+                g = self.gate(t) if self.gate else 1.0
+                if g <= 0:
+                    return Tf(alpha=0.0)
+                p, att, drawn, layer = self.place(t)
+                if not drawn or layer != which:
+                    return Tf(alpha=0.0)
+                x, y, a, k = p
+                return Tf(dx=x - X0, dy=y - Y0, rot=a, sx=k, sy=k, px=X0, py=Y0, alpha=g)
+            return m
+        for which, z in (("front", self.z_front), ("back", self.z_back)):
+            sc.add(f"{self.name}_{which}", svg, z=z, seed=len(self.name) * 13 + (1 if which == "front" else 2),
+                   motion=mk(which))
+        return self
+
+
+def add_light(sc, name, lpos, ground, z, g0, s=FS, radius=330, k=1.0, alpha=None, extra=None, pool=0.75):
+    """A warm lantern light ('screen') at lpos(t) and a flat warm pool on the ground (ground(t) -> y) under it."""
     gid = f"lglow_{name}"
     defs = S.rad_grad(gid, [(0, "#fff1c4", 0.95), (0.16, "#ffd27a", 0.6), (0.5, "#f6a43c", 0.2), (1, "#f6a43c", 0)])
     r = radius * s
     gc = f"lcore_{name}"
     defs += S.rad_grad(gc, [(0, "#fff6d6", 0.9), (0.35, "#ffdc8c", 0.45), (1, "#ffc861", 0)])
+    px, py = 400.0, 400.0
     body = (f'<ellipse cx="{f1(px)}" cy="{f1(py)}" rx="{f1(r)}" ry="{f1(r * 0.86)}" fill="url(#{gid})"/>'
             f'<ellipse cx="{f1(px)}" cy="{f1(py)}" rx="{f1(r * 0.34)}" ry="{f1(r * 0.32)}" fill="url(#{gc})"/>')
     fl = flicker(g0, 0.92, 0.08, seed=len(name))
-    cache = {}
-
-    def lpos(t):
-        key = fig.key_at(t)
-        if key not in cache:
-            cache[key] = key_lantern(key)
-        return fig.point(t, cache[key])
 
     def m(t):
         lx, ly = lpos(t)
@@ -509,14 +737,27 @@ def add_lantern_light(sc, name, fig, key_lantern, z, g0, radius=300, k=0.9, alph
 
         def mp(t):
             lx, ly = lpos(t)
-            gx, gy = fig.point(t, fig.ref, ground=True)
+            gy = ground(t)
             sc_ = extra(t) if extra else 1.0
-            lift = max(0.0, min(1.0, (gy - ly) / (260 * s * sc_)))      # a raised lantern lights a wider, softer pool
+            lift = max(0.0, min(1.0, (gy - ly) / (260 * s * sc_)))
             a = pool * k * fl(t) * (alpha(t) if alpha else 1.0) * (0.75 + 0.25 * lift)
             return Tf(dx=lx - px, dy=gy - py, sx=sc_ * (0.85 + 0.3 * lift), sy=sc_, px=px, py=py,
                       alpha=max(0.0, min(1.0, a)))
         sc.add(name + "_pool", doc(pb, dp), z=z - 0.5, wc=0, blend="screen", motion=mp)
-    return lpos
+
+
+def prop_ground(prop):
+    """ground(t) for add_light: the figure's feet while the lantern is attached, its own foot when it stands free."""
+    def g(t):
+        (x, y, a, k), att, drawn, layer = prop.place(t)
+        if att:
+            return prop.fig.full_point(t, prop.fig.ref)[1]
+        return y + 62 * prop.s0 * k
+    return g
+
+
+def shadow_markup(x, y, s=FS, w=150, op=0.26):
+    return C.ground_shadow(x, y, s, w, op, color="#1d2440")
 
 
 # ------------------------------------------------------------------ the sky
@@ -792,14 +1033,22 @@ def slope_shepherd(sc, g0, track, z=30.0):
     return Fig("shepC", lambda key: shep_markup(key, X_LOOK, WGY), (X_LOOK, WGY), z, g0, seed=541, track=track)
 
 
-def add_slope_shepherd_extras(sc, fig, g0, z=30.0, extra=None, alpha=None):
-    """Ground shadow and the lantern light (+ pool) of the slope shepherd; returns the lantern position function."""
+def add_slope_shepherd_extras(sc, fig, g0, lantern, z=30.0, extra=None, alpha=None):
+    """Ground shadow and the lantern light (+ pool) of the slope shepherd (lantern: his lantern Prop)."""
     def sm(t):
         p = fig.point(t, (X_LOOK, WGY), ground=True)
         return Tf(dx=p[0] - X_LOOK, dy=p[1] - WGY, alpha=alpha(t) if alpha else 1.0)
     sc.add("shC_shadow", doc(shadow_markup(X_LOOK, WGY, FS, 170, 0.26)), z=z - 0.1, wc=0, motion=sm)
-    return add_lantern_light(sc, "shC_light", fig, lambda key: lantern_ref(key, X_LOOK, WGY), z + 8.0, g0, radius=340,
-                             k=1.0, extra=extra, alpha=alpha)
+    add_light(sc, "shC_light", lantern.light_pos, prop_ground(lantern), z + 8.0, g0, s=FS, radius=340, k=1.0,
+              extra=extra, alpha=alpha)
+
+
+def slope_lantern(fig, g0):
+    return Prop("lantern", fig, FS, g0, "lanC", 30.6, 29.4)
+
+
+def slope_crook(fig, g0, curl=1):
+    return Prop("crook", fig, FS, g0, "crkC", 30.5, 29.5, curl=curl)
 
 
 # ------------------------------------------------------------------ the call: sound arcs and the echo
@@ -883,6 +1132,69 @@ def hills_svg():
     return doc(b + fl)
 
 
+# ------------------------------------------------------------------ shot A0: over the high hill ('翻过高高的山')
+A0_CREST = (1520.0, 640.0)
+A0_FS = 0.82
+A0_MOON = (1690, 330)
+
+
+def a0_hill_y(x):
+    """The big hill's silhouette (side view): a long near slope up to the crest, a steeper fall beyond."""
+    c = A0_CREST[0]
+    w = 720.0 if x < c else 540.0
+    return 1190.0 - 550.0 * math.exp(-((x - c) / w) ** 2)
+
+
+def a0_sky_svg():
+    sky = PR.spring_sky(-10, -10, SW + 10, 1000, time=NIGHT, moon=None, clouds=0, stars=1.0, seed=17)
+    far = PR.high_hills(-200, SW + 200, 1060, 1.0, time=NIGHT, part="back", seed=5)
+    return doc(sky + far)
+
+
+def a0_hill_svg():
+    pal = PR._ls_pal(NIGHT)
+    pts = [(x, a0_hill_y(x)) for x in range(-120, SW + 160, 40)]
+    d = S.smooth_path(pts, closed=False) + f" L{SW + 160},{SH + 40} L-120,{SH + 40} Z"
+    gid = "a0hill"
+    defs = S.lin_grad(gid, [(0, pal["near2"]), (0.5, pal["near"]), (1, S.mix(pal["near"], pal["dark"], 0.45))], 0, 0, 0, 1)
+    cid = "a0clip"
+    b = f'<defs>{defs}<clipPath id="{cid}"><path d="{d}"/></clipPath></defs>'
+    b += f'<path d="{d}" fill="url(#{gid})" stroke="{INK}" stroke-width="4"/>'
+    inner = PR._grass_strokes(-100, SW + 100, 640, SH - 10, 120, 31, S.mix(pal["dark"], pal["near"], 0.3), 1.0)
+    rng = random.Random(33)
+    for i in range(16):                                       # stones on the slope
+        x = rng.uniform(100, SW - 100)
+        y = a0_hill_y(x) + rng.uniform(60, 420)
+        r = rng.uniform(16, 34)
+        inner += (f'<ellipse cx="{f1(x)}" cy="{f1(y)}" rx="{f1(r * 1.4)}" ry="{f1(r * 0.75)}" fill="{pal["rock"]}" '
+                  f'stroke="{INK}" stroke-width="3"/><ellipse cx="{f1(x - r * 0.3)}" cy="{f1(y - r * 0.3)}" rx="{f1(r * 0.6)}" '
+                  f'ry="{f1(r * 0.22)}" fill="{S.mix(pal["rock"], pal["rim"], 0.5)}" opacity="0.7"/>')
+    b += f'<g clip-path="url(#{cid})">{inner}</g>'
+    # the silver moonlit rim along the top
+    b += (f'<path d="{S.smooth_path(pts, closed=False)}" fill="none" stroke="{pal["rim"]}" stroke-width="5" '
+          f'opacity="0.75" transform="translate(0,7)"/>')
+    # round trees and bushes on the far slope and at the foot
+    tr = PR._round_tree(2230, a0_hill_y(2230) + 26, 1.3, NIGHT, seed=21)
+    tr += PR._round_tree(2470, a0_hill_y(2470) + 40, 1.05, NIGHT, seed=22, kind="light")
+    tr += PR._round_tree(420, a0_hill_y(420) + 30, 1.4, NIGHT, seed=23)
+    for (x, r) in ((700, 34), (1900, 30), (2700, 36)):
+        y = a0_hill_y(x) + 8
+        tr += PR._cluster([(x - r * 0.8, y, r * 0.8), (x + r * 0.6, y - 2, r * 0.9), (x, y - r * 0.6, r * 0.85)],
+                          S.mix(pal["tree"], pal["near"], 0.35), 3.0)
+    b = S.g(b + tr, filter="wobble")
+    rng = random.Random(35)
+    fl, items = "", []
+    for i in range(60):
+        x = rng.uniform(40, SW - 40)
+        y = a0_hill_y(x) + rng.uniform(40, 560)
+        if y < SH - 10:
+            items.append((y, x))
+    for y, x in sorted(items):
+        fl += PR.wildflower(x, y, 0.9 + 0.6 * (y - 640) / 660, rng.choice(("daisy", "clover", "buttercup", "poppy")),
+                            sway=rng.uniform(-0.5, 0.5), time=NIGHT)
+    return doc(b + fl)
+
+
 # ------------------------------------------------------------------ shot B: the stream and the stepping stones
 BX0, BX1, BHY, BHS = -100, 2700, 820, 1.1
 B_FS = 0.86
@@ -933,9 +1245,11 @@ def build(ctx):
     t_yd = bt.at(3, "一定要找到它")
     t_yd_end = bt.end(3, "一定要找到它")
 
+    t_cutA = snap(t_zou - 0.16)                            # the winding path
     t_cutB = snap(min(t_kua - 0.16, t_lu_end + 0.12))       # the stream
     t_cutC = snap((t_call_end + t_z1) / 2 + 0.05)          # the rocky slope
-    gateA = lambda t: 1.0 if t < t_cutB else 0.0
+    gateA0 = lambda t: 1.0 if t < t_cutA else 0.0
+    gateA = lambda t: 1.0 if t_cutA <= t < t_cutB else 0.0
     gateB = lambda t: 1.0 if t_cutB <= t < t_cutC else 0.0
     gateAB = lambda t: 1.0 if t < t_cutC else 0.0
 
@@ -997,8 +1311,11 @@ def build(ctx):
                 shep_key("look_around", 1, "worried", 0.0): shep_key("look_around", 1, blink_expr("worried"), 0.0)},
                t_cutC, T - 1.3, rngC)
     shC.mots.append(breath((x_look, WGY), g0, 3.0, 0.012))
+    lanC = slope_lantern(shC, g0).at(0, "fig")
+    lanC.apply(shC)
     shC.build(sc)
-    add_slope_shepherd_extras(sc, shC, g0, extra=lambda t: 1 + LIGHT_UP * env(t, t_yd, T + 5, 0.6, 0.1))
+    lanC.build(sc)
+    add_slope_shepherd_extras(sc, shC, g0, lanC, extra=lambda t: 1 + LIGHT_UP * env(t, t_yd, T + 5, 0.6, 0.1))
 
     # the bush shakes while he pushes through
     def bush_sway(t):
@@ -1066,6 +1383,17 @@ def build(ctx):
         land_ts.append((te, b))
     t_land = land_ts[-1][0]
     shB.cut(t_land + 0.16, shep_key("stand", -1, "determined"), depth=6)
+    # on the bank he sets the lantern down and plants his crook in the soft ground beside him (a little stoop): both
+    # hands are free to call
+    t_put = snap(min(t_land + 0.46, t_x1 - 0.55))
+    shB.dips.append((t_put, 13.0))
+    xn, yn, kn = near_bank
+    lanB = Prop("lantern", shB, B_FS, g0, "lanB", zB + 30.6, zB + 29.4, gate=gateB)
+    lanB.at(0, "fig").at(t_put, ("stage", (xn - 128 * B_FS * kn, yn + 6 - 62 * B_FS * kn, kn)), dur=0.36, lift=-6)
+    crkB = Prop("crook", shB, B_FS, g0, "crkB", zB + 30.5, zB + 29.5, curl=-1, gate=gateB)
+    cfoot = (xn - 196 * B_FS * kn, yn + 4)
+    ctop = (cfoot[0] - math.sin(math.radians(5)) * CROOK_L0 * B_FS * kn, cfoot[1] - math.cos(math.radians(5)) * CROOK_L0 * B_FS * kn)
+    crkB.at(0, "fig").at(t_put, ("stage", (cfoot, ctop)), dur=0.36, lift=10)
     # he turns and calls: right, then left
     shB.cut(t_x1 - 0.12, shep_key("call", 1, "call"), depth=7)
     shB.cut(t_x2 - 0.14, shep_key("call", -1, "call"), depth=7)
@@ -1073,12 +1401,16 @@ def build(ctx):
     shB.mots.append(lambda t: Tf(rot=-3.5 * env(t, t_nzn - 0.15, t_call_end + 0.2, 0.25, 0.4), px=0, py=0))
     shB.mots.append(breath(ref_B, g0, 3.0, 0.012))
     shB.alpha = gateB
+    lanB.apply(shB)
+    crkB.apply(shB)
     shB.build(sc)
+    lanB.build(sc)
+    crkB.build(sc)
     sc.add("shB_shadow", doc(shadow_markup(ref_B[0], ref_B[1], B_FS, 170, 0.26)), z=zB + 29.9, wc=0,
            motion=lambda t: (lambda p, k: Tf(dx=p[0] - ref_B[0], dy=p[1] - ref_B[1], sx=k, sy=k, px=ref_B[0], py=ref_B[1],
                                              alpha=gateB(t)))(shB.point(t, ref_B, ground=True), trB(t)[2]))
-    add_lantern_light(sc, "shB_light", shB, lambda key: lantern_ref(key, ref_B[0], ref_B[1], s=B_FS), zB + 38, g0,
-                      radius=330, k=0.95, alpha=gateB, extra=lambda t: trB(t)[2], s=B_FS)
+    add_light(sc, "shB_light", lanB.light_pos, prop_ground(lanB), zB + 38, g0, s=B_FS, radius=330, k=0.95, alpha=gateB,
+              extra=lambda t: lanB.place(t)[0][3])
     # ripples on every landing
     for i, (te, b) in enumerate(land_ts[:-1]):
         sc.add(f"B_ripple{i}", doc(ripple_markup(b[0], b[1] + 6, 60 * b[2])), z=zB + 2, wc=0,
@@ -1122,22 +1454,13 @@ def build(ctx):
     trA = Track(p0[0], p0[1], 1.0)
     shA = Fig("shepA", lambda key: shep_markup(key, ref_A[0], ref_A[1], s=A_FS * p0[2]), ref_A, zA + 30, g0, seed=241,
               track=trA)
-    shA.cut(0, shep_key("stand", 1, "determined"))
-    # climbing ('翻过高高的山'): climb_a / climb_b, each step along the steep path
-    t_c0 = t_fan - 0.1
-    t_c1 = max(t_c0 + 1.2, t_shan + 0.05)
-    n_climb = 5
-    sg = sg0
-    for i in range(n_climb):
-        tk = snap(t_c0 + i * (t_c1 - t_c0) / n_climb)
-        shA.cut(tk, shep_key("climb_a" if i % 2 == 0 else "climb_b", 1, "determined"), dip=(i == 0), depth=5)
-        sg = sg0 + (sg_bend - sg0) * (i + 1) / n_climb
-        q = path.at(sg)
-        trA.to(tk - 0.04, tk + 0.16, q[0], q[1], q[2] / p0[2], curve="sine")
-    # turn at the bend and walk the winding path ('走过弯弯的小路')
-    t_turn = snap(max(t_c1 + 0.08, t_zou - 0.18))
-    shA.cut(t_turn, shep_key("walk_c", -1, "determined"), depth=5)
-    t_w0, t_w1 = t_turn + 0.17, t_cutB + 0.2
+    # '走过弯弯的小路': he walks the winding path from its first bend on (planted feet, perspective)
+    sg = sg_bend
+    q = path.at(sg)
+    trA.cur = (q[0], q[1], q[2] / p0[2])
+    trA.x0, trA.y0, trA.k0 = trA.cur
+    shA.cut(0, shep_key("walk_c", -1, "determined"))
+    t_w0, t_w1 = t_cutA + 0.04, t_cutB + 0.2
     per = 0.165
     n = int((t_w1 - t_w0) / per)
     for i in range(n):
@@ -1149,24 +1472,78 @@ def build(ctx):
         trA.to(tk - 0.04, tk + 0.07, q[0], q[1], q[2] / p0[2])
     shA.mots.append(breath(ref_A, g0, 3.0, 0.012))
     shA.alpha = gateA
+    lanA = Prop("lantern", shA, A_FS * p0[2], g0, "lanA", zA + 30.6, zA + 29.4, gate=gateA).at(0, "fig")
+    lanA.apply(shA)
     shA.build(sc)
     sc.add("shA_shadow", doc(shadow_markup(ref_A[0], ref_A[1], A_FS * p0[2], 170, 0.26)), z=zA + 29.9, wc=0,
            motion=lambda t: (lambda p, k: Tf(dx=p[0] - ref_A[0], dy=p[1] - ref_A[1], sx=k, sy=k, px=ref_A[0], py=ref_A[1],
                                              alpha=gateA(t)))(shA.point(t, ref_A, ground=True), trA(t)[2]))
-    add_lantern_light(sc, "shA_light", shA, lambda key: lantern_ref(key, ref_A[0], ref_A[1], s=A_FS * p0[2]), zA + 38,
-                      g0, radius=330, k=0.95, alpha=gateA, extra=lambda t: trA(t)[2], s=A_FS * p0[2])
+    add_light(sc, "shA_light", lanA.light_pos, prop_ground(lanA), zA + 38, g0, s=A_FS * p0[2], radius=330, k=0.95,
+              alpha=gateA, extra=lambda t: trA(t)[2])
     add_tufts(sc, "A_tufts", g0, (-40, SH - 60, SW + 40, SH - 8), 30, 67, zA + 36, gate=gateA)
     ffA = gfx(FX.motes, g0, rect=(900, HY - 200, A_XMAX - 60, SH - 100), count=14, color=(255, 222, 140), size=(3, 6),
               seed=73, alpha=150)
     ffB = gfx(FX.motes, g0, rect=(0, BHY - 120, BX1, SH - 100), count=16, color=(255, 222, 140), size=(3, 6), seed=75,
               alpha=150)
-    sc.fx.insert(0, lambda frame, t, view: ffA(frame, t, view) if t < t_cutB else (ffB(frame, t, view) if t < t_cutC
-                                                                                  else frame))
+    sc.fx.insert(0, lambda frame, t, view: ffA(frame, t, view) if t_cutA <= t < t_cutB else (
+        ffB(frame, t, view) if t_cutB <= t < t_cutC else frame))
+
+    # ================================================================ shot A0: up and over the high hill
+    zA0 = 300.0
+    sc.add("A0_sky", a0_sky_svg(), z=zA0, seed=401, motion=lambda t: Tf(alpha=gateA0(t)))
+    add_twinkles(sc, "A0_tw", g0, (0, 0, SW, 560), 6, zA0 + 0.05, seed=37, gate=gateA0)
+    sc.add("A0_moonglow", doc(moon_markup(*A0_MOON, MOON_R, glow=1.0, disc=False)), z=zA0 + 0.1, wc=0,
+           motion=lambda t: Tf(alpha=gateA0(t)))
+    sc.add("A0_moon", doc(moon_markup(*A0_MOON, MOON_R, glow=0.0, disc=True)), z=zA0 + 0.12, seed=403,
+           motion=lambda t: Tf(alpha=gateA0(t)))
+    for i, (cx, cy, w, v) in enumerate(((760, 250, 300, 6.0), (2280, 190, 280, 4.5))):
+        sc.add(f"A0_cloud{i}", doc(cloud_markup(cx, cy, w, seed=95 + 2 * i)), z=zA0 + 0.2, seed=405 + i,
+               motion=lambda t, v=v: Tf(dx=v * t, alpha=gateA0(t)))
+    sc.add("A0_hill", a0_hill_svg(), z=zA0 + 1, seed=411, motion=lambda t: Tf(alpha=gateA0(t)))
+    x0a = 1090.0
+    ref_A0 = (x0a, a0_hill_y(x0a))
+    trA0 = Track(*ref_A0)
+    shA0 = Fig("shepA0", lambda key: shep_markup(key, ref_A0[0], ref_A0[1], s=A0_FS), ref_A0, zA0 + 30, g0, seed=441,
+               track=trA0)
+    shA0.cut(0, shep_key("stand", 1, "determined"))
+    # '翻过高高的山': he climbs up the slope (climb_a / climb_b, the raised foot on the higher ground) ...
+    t_c0 = t_fan - 0.1
+    t_top = max(t_c0 + 0.9, t_shan - 0.25)
+    xs = [x0a + (A0_CREST[0] - 14 - x0a) * (i + 1) / 5 for i in range(5)]
+    for i, xk in enumerate(xs):
+        tk = snap(t_c0 + i * (t_top - t_c0) / 5)
+        shA0.cut(tk, shep_key("climb_a" if i % 2 == 0 else "climb_b", 1, "determined"), dip=(i == 0), depth=5)
+        trA0.to(tk - 0.04, tk + 0.14, xk, a0_hill_y(xk), None)
+    # ... stands on the top against the moon ... and goes over, down the far side
+    shA0.cut(t_top, shep_key("walk_c", 1, "determined"), depth=6)
+    x_top = A0_CREST[0] - 14
+    xd = x_top
+    for i in range(3):
+        tk = snap(t_top + 0.2 + 0.16 * i)
+        if tk >= t_cutA:
+            break
+        shA0.cut(tk, shep_key(WALK_FRAMES[i % 4], 1, "determined"), dip=False)
+        xd += WALK_ADV[i % 4] * A0_FS * 1.05
+        trA0.to(tk - 0.04, tk + 0.07, xd, a0_hill_y(xd), None)
+    shA0.mots.append(breath(ref_A0, g0, 3.0, 0.012))
+    shA0.alpha = gateA0
+    lanA0 = Prop("lantern", shA0, A0_FS, g0, "lanA0", zA0 + 30.6, zA0 + 29.4, gate=gateA0).at(0, "fig")
+    lanA0.apply(shA0)
+    shA0.build(sc)
+    sc.add("shA0_shadow", doc(shadow_markup(ref_A0[0], ref_A0[1], A0_FS, 150, 0.22)), z=zA0 + 29.9, wc=0,
+           motion=lambda t: (lambda p: Tf(dx=p[0] - ref_A0[0], dy=p[1] - ref_A0[1], alpha=gateA0(t)))(
+               shA0.point(t, ref_A0, ground=True)))
+    add_light(sc, "shA0_light", lanA0.light_pos, prop_ground(lanA0), zA0 + 38, g0, s=A0_FS, radius=330, k=0.95,
+              alpha=gateA0)
+    add_tufts(sc, "A0_tufts", g0, (-40, SH - 60, SW + 40, SH - 8), 30, 69, zA0 + 36, gate=gateA0)
+    ffA0 = gfx(FX.motes, g0, rect=(600, 500, 2400, SH - 100), count=14, color=(255, 222, 140), size=(3, 6), seed=77,
+               alpha=150)
+    sc.fx.insert(0, lambda frame, t, view: ffA0(frame, t, view) if t < t_cutA else frame)
 
     # ================================================================ camera
-    camA = cam_path([(0.0, Cam(1800, 700, 2040)), (t_fan - 0.3, Cam(1800, 700, 2040)),
-                     (t_zou, Cam(1830, 680, 1900)), (t_cutB + 0.3, Cam(1740, 660, 1940))],
-                    ["linear", "sine", "sine"], x1=A_XMAX)
+    camA = cam_path([(t_cutA, Cam(1900, 690, 1900)), (t_cutB + 0.3, Cam(1720, 650, 1960))], ["sine"], x1=A_XMAX)
+    camA0 = cam_path([(0.0, Cam(1380, 720, 1640)), (t_fan - 0.2, Cam(1380, 720, 1640)), (t_cutA, Cam(1500, 650, 1560))],
+                     ["linear", "inout"])
     camB = cam_path([(t_cutB, Cam(1160, 700, 1800)), (t_he_end + 0.2, Cam(1000, 745, 1700)),
                      (t_x2 - 0.3, Cam(990, 745, 1700)), (t_cutC, Cam(960, 750, 1680))],
                     ["inout", "sine", "sine"], x1=BX1 + 60)
@@ -1174,14 +1551,14 @@ def build(ctx):
     camC = cam_path([(t_cutC, Cam(830, 770, 1560)), (t_z2 + 0.5, Cam(850, 770, 1560)),
                      (t_push_end, Cam(1120, 765, 1600)), (t_stop + 0.7, end_cam), (T, end_cam)],
                     ["sine", "inout", "inout", "linear"])
-    sc.camera = lambda t: camA(t) if t < t_cutB else (camB(t) if t < t_cutC else camC(t))
+    sc.camera = lambda t: camA0(t) if t < t_cutA else (camA(t) if t < t_cutB else (camB(t) if t < t_cutC else camC(t)))
 
     # ================================================================ sound
     sc.sfx("night", 0, dur=T + 0.5, gain_db=-17, fade_in=0.8, fade_out=1.0)
     sc.sfx("wind_soft", 0, dur=T + 0.5, gain_db=-24, fade_in=0.8, fade_out=1.0)
     sc.sfx("cloth", t_c0, gain_db=-22)
-    sc.sfx("footsteps", t_c0, dur=t_c1 - t_c0 + 0.1, gain_db=-23, pan=0.3)
-    sc.sfx("footsteps", t_w0, dur=t_cutB - t_w0, gain_db=-24, pan=0.2)
+    sc.sfx("footsteps", t_c0, dur=t_cutA - t_c0, gain_db=-23, pan=0.3)
+    sc.sfx("footsteps", t_cutA, dur=t_cutB - t_cutA, gain_db=-24, pan=0.2)
     sc.sfx("footsteps", t_cutC, dur=t_z1 - t_cutC, gain_db=-24, pan=-0.4)
     sc.sfx("wind_soft", t_hei - 0.2, dur=2.6, gain_db=-17, fade_in=0.8, fade_out=1.0)
     sc.sfx("footsteps", t_w2, dur=t_nan - t_w2, gain_db=-24, pan=-0.3)

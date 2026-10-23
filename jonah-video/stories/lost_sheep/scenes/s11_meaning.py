@@ -1,17 +1,17 @@
-"""Scene 11 - Luke 15:7, Matthew 18:14. Back at the meal in the evening light. It opens inside Jesus' story page (the
-shepherd carrying his lamb home under the moon); the camera draws back out of the page into the courtyard, where the
-page folds up and settles back into Jesus' hands (mirroring s04). Jesus speaks of the joy in heaven: gentle golden light
+"""Scene 11 - Luke 15:7, Matthew 18:14. Back at the meal in the evening light. It opens on Jesus with his story page
+still open above him (the shepherd carrying his lamb home under the moon); the camera draws back over the courtyard
+while the page folds up and settles back into Jesus' hands (mirroring s04). Jesus speaks of the joy in heaven: gentle golden light
 and sparkles pour down over the courtyard (light only) and the guests' faces light up. He sits down and offers bread to
 the tax collector, and a round picture above them shows the shepherd hugging his found lamb: the same love. Warm light
 spreads over everyone, a little heart over each guest; the Pharisees soften and think.
 
 Beats (syllable onsets measured in the voice clip with the Noah film's voice_marks helpers through the Nativity film's
 Tm class, chunk fallback; nothing is hard-coded to the take):
-  0 .. 0.9      calm (the page-dip lands here): inside the page, the shepherd with the lamb on his shoulders, lantern,
-                moon, the flock nibbling
-  '讲完故事'     the camera draws back out of the page (one continuous log-space zoom) while the evening light fades
-                in: the courtyard, Jesus standing with the open page
-                floating above him, everyone listening; the page folds up (unfold 1 -> 0) ...
+  0 .. 0.9      calm (the page-dip lands here): the evening courtyard, Jesus standing with the open story page glowing
+                above him (the shepherd with the lamb on his shoulders, lantern, moon), the guests listening; every
+                face sits well above the subtitle band
+  '讲完故事'     the camera draws gently back to the whole courtyard (faces only ever move up, away from the
+                subtitle) while the page folds up above Jesus (unfold 1 -> 0) ...
   '耶稣说'       ... and floats down into his open hands, where it vanishes in a twinkle
   Z '一个做错事的人' Jesus speaks to everyone (tell)
   '回到'         he opens his arms wide (come back home)
@@ -41,12 +41,12 @@ from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
-from stories.lost_sheep.scenes.s03_meal import (H3, INK, K, PH, SEATS, SEAT_Y, STAND_Y, TY, W3, add_flyers, add_front,
-                                                add_gate_overlay, add_set, add_sparrows, cam3, cam_seq, coin_stack_svg, log_push, splice, doc3,
-                                                add_air, f1, lean, sunlight_svg)
-from stories.lost_sheep.scenes.s04_story import (CAM_PAGE, GY_P, PHT, PW, PX, PY, book_motion, hands_mid, hires_motion,
-                                                 hires_svg, page_frames, page_glow_svg, seated_actors, unfold_at)
-from stories.nativity.scenes.s07_shepherds import Tm, env, snap
+from stories.lost_sheep.scenes.s03_meal import (H3, INK, K, SEATS, SEAT_Y, STAND_Y, TY, W3, add_air, add_flyers,
+                                                add_front, add_gate_overlay, add_set, add_sparrows, cam_seq,
+                                                coin_stack_svg, doc3, f1, sunlight_svg)
+from stories.lost_sheep.scenes.s04_story import (GY_P, PHT, PW, book_motion, hands_mid, page_frames, page_glow_svg,
+                                                 seated_actors, unfold_at)
+from stories.nativity.scenes.s07_shepherds import Tm, env
 
 BUBBLE = (1838, 476, 142)            # the round picture above Jesus and the tax collector: centre, radius
 
@@ -165,14 +165,12 @@ def build(ctx):
     add_front(sc, g0, "evening")
     add_sparrows(sc, g0)
     add_flyers(sc, g0, n=1)
-    t_c1 = t_shuo + 0.1                     # the camera's flight back out of the page ends here
-    sc.add("sun", sunlight_svg("evening"), z=95, blend="screen", wc=0,
-           motion=lambda t: Tf(alpha=M.progress(t, 0.35, t_c1, "sine")))
+    sc.add("sun", sunlight_svg("evening"), z=95, blend="screen", wc=0)
     sc.add("coins", coin_stack_svg(0, 1.0), z=61, seed=301)
     sc.add("lamps", [table_lamps_svg(k) for k in (0, 1)], z=62,
            frame_at=lambda t: 0.5 + 0.45 * math.sin(2 * math.pi * (t + g0) / 0.9) * math.sin(2 * math.pi * (t + g0) / 2.3))
-    sc.fx.append(FX.tint((255, 200, 160), lambda t: 0.07 * M.progress(t, 0.35, t_c1, "sine"), mode="multiply"))
-    add_air(sc, g0, "evening", t0=1.2)
+    sc.fx.append(FX.tint((255, 200, 160), lambda t: 0.07, mode="multiply"))
+    add_air(sc, g0, "evening")
 
     sto = STAND_Y - SEAT_Y
     start = {
@@ -209,10 +207,6 @@ def build(ctx):
            motion=lambda t: Tf(alpha=0.8 * (1 - M.progress(t, t_f0, t_f1, "sine"))))
     sc.add("book", page_frames(inner), z=81, frame_at=unfold_at(t_f0, t_f1, reverse=True),
            motion=book_motion(hands, 0, 0, 0, g0, fold=(t_d0, t_d1)))
-    hi = [hires_svg(page_inner_night(ph)) for ph in (0.0, 0.5)]
-    t_h0, t_h1 = 0.55, t_jwgs + 0.25
-    sc.add("page_hi", hi, z=83, wc=0.5, frame_at=lambda t: 0.0 if t > t_h0 - 0.2 else float(int((t + g0) / 0.7) % 2),
-           motion=hires_motion(lambda t: 1 - M.progress(t, t_h0, t_h1, "sine"), g0))
     sc.fx.append(FX.sparkles((hands[0] - 70, hands[1] - 90, hands[0] + 70, hands[1] + 10), count=8, t0=t_d1 - 0.1,
                              t1=t_gone + 0.5, color=(255, 236, 170), size=(7, 14), period=1.0, drift=-24, seed=111))
 
@@ -320,11 +314,11 @@ def build(ctx):
     c_offer = Cam(1840, 694, 1340)
     c_all = Cam(1450, 740, 1350)
     c_soft = Cam(2050, 745, 1440)
-    base = cam_seq([
-        (0.0, CAM_PAGE), (0.35, CAM_PAGE), (t_c1, c_out, "linear"), (t_shuo + 0.6, c_out), (t_z0 + 0.9, c_talk),
+    c_open = Cam(1790, 500, 1700)           # Jesus, the open page and the guests' faces above the subtitle band
+    sc.camera = cam_seq([
+        (0.0, c_open), (0.6, c_open), (t_shuo + 0.45, c_out), (t_shuo + 0.6, c_out), (t_z0 + 0.9, c_talk),
         (t_tian - 0.3, c_talk), (t_tian + 1.3, c_sky), (t_qing + 0.2, c_sky), (t_zhexie + 0.4, c_offer),
         (t_l3 - 0.2, c_offer), (t_mei[0] + 0.4, c_all), (t_sd - 0.1, c_all), (t_shiqu + 0.6, c_soft), (T, c_soft)])
-    sc.camera = splice(base, 0.35, t_c1, log_push(0.35, t_c1, CAM_PAGE, c_out))
 
     # ---------------------------------------------------------------- sound
     sc.sfx("night", 0, dur=T, gain_db=-28, fade_in=1.0, fade_out=1.0)

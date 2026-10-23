@@ -15,12 +15,13 @@ Tm class, chunk fallback; nothing is hard-coded to the take):
   '你有一百只羊' ... and unfolds (8 frames, ~1 s) into a wide glowing page (page rustle): the spring hills, the shepherd
                 leading his big flock, the little lamb apart sniffing a poppy; on '一百' the guests look up in wonder,
                 a far bleat from the page
-  '丢了一只'     a soft golden ring pulses twice round the little lamb in the page (a tiny bleat); the camera begins
-                one slow, continuous flight into the page (a log-space zoom about the page, so it never jerks)
+  '丢了一只'     a soft golden ring pulses twice round the little lamb in the page (a tiny bleat)
   '你会怎么做呢' Jesus turns to the Pharisees with the question; everyone, the Pharisees too, leans in to think
-                (chin on the hand) and the camera flies on into the page (whoosh) until the picture fills the frame:
-                a sharp full-resolution copy of the page fades in over the zoomed page, the courtyard's warm light,
-                dust motes and the sparkles melt away
+                (chin on the hand); the camera holds on Jesus, the page and the listeners (all faces well above the
+                subtitle band)
+  pause        when the question's subtitle has gone, the camera flies into the page in one continuous log-space
+                zoom (whoosh) until the picture fills the frame: a sharp full-resolution copy of the page fades in over
+                the zoomed page, the courtyard's warm light, dust motes and the sparkles melt away
   end          calm hold inside the page (the flock nibbling) for the page-turn into s05
 The page device (page_inner, story page frames, the hi-res copy) is shared with s11_meaning.
 """
@@ -35,10 +36,10 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.lost_sheep.scenes import s03_meal as S3
 from stories.lost_sheep.scenes.s03_meal import (END3, END_CAM, H3, K, PH, SEATS, SEAT_Y, STAND_Y, W3, Actor, add_air,
-                                                add_flyers, add_front, add_gate_overlay, add_set, add_sparrows, breath,
-                                                cam3, cam_seq, coin_stack_svg, log_push, splice, doc3, f1, guest_fn, jesus_fn, lean, ph_fn,
-                                                sunlight_svg)
-from stories.nativity.scenes.s07_shepherds import Tm, env, snap
+                                                add_flyers, add_front, add_gate_overlay, add_set, add_sparrows,
+                                                cam_seq, coin_stack_svg, doc3, f1, guest_fn, jesus_fn, lean,
+                                                log_push, ph_fn, splice, sunlight_svg)
+from stories.nativity.scenes.s07_shepherds import Tm, env
 
 # ------------------------------------------------------------------ the story page (shared with s11)
 PW, PHT = 880, 528                       # the open double page
@@ -274,7 +275,10 @@ def build(ctx):
                                           sx=0.7 + 0.5 * M.progress(t, tp, tp + 0.7, "out"),
                                           sy=0.7 + 0.5 * M.progress(t, tp, tp + 0.7, "out"), px=lx, py=ly))
     # inside the page: a sharp copy fades in over the zoomed page as the camera flies in (the flock nibbles)
-    t_p0, t_p1 = t_ni + 0.05, T - 1.0
+    # the flight into the page waits until the question's subtitle has gone (it is up until the line's end + 0.3 s,
+    # see engine.compositor.Subtitles), so no face slides under it; it ends just before the page-turn dip's darkest point
+    t_sub = min(t_qend + 0.3, T - 0.3)
+    t_p0, t_p1 = t_sub - 0.02, T - 0.75
     t_h0, t_h1 = t_p0 + 0.42 * (t_p1 - t_p0), t_p1 - 0.08
     hi = [hires_svg(page_inner(ph)) for ph in (0.0, 0.5)]
     sc.add("page_hi", hi, z=83, wc=0.5,
@@ -288,8 +292,8 @@ def build(ctx):
     # ---------------------------------------------------------------- camera
     c_turn = Cam(2100, 740, 1500)
     c_tell = Cam(1720, 730, 1650)
-    c_page = Cam(1880, 594, 2112)
-    t_c0 = t_diu + 0.25                     # one continuous flight into the page (log-space zoom)
+    c_page = Cam(1800, 515, 1760)           # Jesus, the open page and the guests, every face well above the subtitles
+    t_c0 = t_p0                             # one continuous flight into the page (log-space zoom)
     # the courtyard's warm light and dust melt away as we fly into the page
     sc.add("sun", sunlight_svg("day"), z=95, blend="screen", wc=0,
            motion=lambda t: Tf(alpha=1 - M.progress(t, t_c0, t_p1, "sine")))
@@ -307,6 +311,6 @@ def build(ctx):
     sc.sfx("cloth", t_u0 + 0.15, gain_db=-17)
     sc.sfx("sheep", t_yang + 0.15, gain_db=-24, pan=0.2)
     sc.sfx("sheep", t_diu + 0.3, gain_db=-21, pan=0.4)
-    sc.sfx("whoosh", t_p0 + 0.2, gain_db=-16)
+    sc.sfx("whoosh", t_p0 + 0.1, gain_db=-16)
     sc.sfx("sparkle", t_p1 - 0.3, gain_db=-21)
     return sc

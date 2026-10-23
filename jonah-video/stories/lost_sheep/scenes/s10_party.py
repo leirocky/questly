@@ -7,16 +7,20 @@ Beats (syllable onsets measured in the voice clips with the Noah film's voice_ma
 hard-coded to the take). Times are for the current take:
   0 .. 0.9      calm page (the page-dip from s09 lands here): the lantern-lit street, the shepherd with the lamb on his
                 shoulders between the houses; lanterns flicker, stars twinkle, clouds drift
-  '回到家' 1.00  he walks to the first door (planted-foot walk, the lamb on his shoulders)
-  '牧羊人' 1.94  he knocks (knock, two knocks, wooden knocks)
+  '回到家' 1.00  he walks to the first door (planted-foot walk) exactly as s09 left him: the lamb across his shoulders
+                (drawn separately so it can nuzzle), the lantern in his far hand, the crook resting on his shoulder -
+                the crook stays there all through the street scene, the lantern stays in his hand
+  '牧羊人' 1.94  he knocks (knock 1.95, the lantern swinging from the knocking fist, wooden knocks)
   '朋友' 2.73   the door opens onto warm light: his friend stands in the doorway with a little clay lamp; the shepherd
-                hops back happily
+                hops back happily (2.88)
   '邻居' 3.48   the next door opens: a neighbour comes out holding up a lantern and steps over
   '都请来' 4.02  a child (with a lantern) and an old man (with his stick) come along the street
-  '和我一起高兴吧' 5.59 (H) he cheers, arms up (cheer, the lamb on his shoulders)
-  '我丢的那只羊' 7.31 he lifts the lamb up to show it (lift); '找到了' 8.79 everybody cheers (sparkles, a happy crowd)
-  '大家都好开心' 10.24  cut to the party: string lanterns, the table, the musicians playing (little notes), neighbours
-                dancing and clapping; the shepherd dances with the lamb on his shoulders
+  '和我一起高兴吧' 5.59 (H) he turns to everyone and holds his lantern up high, beaming (5.48)
+  '我丢的那只羊' 7.31 he turns back to his friend (7.22) and the lamb on his shoulders nuzzles him (hearts); '找到了'
+                8.79 a happy hop (8.82) and everybody cheers (sparkles, a happy crowd)
+  '大家都好开心' 10.24  cut to the party (9.75): string lanterns, the table, the musicians playing (little notes),
+                neighbours dancing and clapping; the shepherd dances with the lamb on his shoulders - his crook now
+                leans against the house wall and his lantern stands on the party table (they stay there)
   '一起唱歌' 12.14  some sing (arms open), the shepherd sings with the lamb nuzzling his cheek (a heart)
   '一起庆祝' 13.33  arms up all round (cheer)
   end           calm-ish: everyone claps gently, the lamb nuzzles the shepherd (a heart), the lanterns sway
@@ -32,8 +36,9 @@ from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.lost_sheep.scenes.s08_search import (
-    CARRY_FRAMES, NIGHT, SH, SW, Beats, Fig, ShoulderLamb, Track, blink_expr, breath, cam_path, cloud_markup, doc, f1,
-    flicker, gfx, moon_markup, shep_key, snap, walk_x)
+    CARRY_FRAMES, CROOK_L0, LIT_GLOW, NIGHT, SH, SW, Beats, Fig, Prop, ShoulderLamb, Track, add_light, blink_expr, breath,
+    cam_path, cloud_markup, crook_local, doc, f1, flicker, gfx, lantern_local, moon_markup, prop_ground, shep_key, snap,
+    walk_x)
 from stories.lost_sheep.scenes.s09_found import float_up, heart_markup
 
 INK = "#4b3426"
@@ -222,42 +227,69 @@ def build(ctx):
     def sh_draw(key):
         pose, f, expr, phase, lamb, eyes, crook, marks, lantern = key
         m = C.parable_shepherd(ref1[0], ref1[1], S10, f, pose=pose, expr=expr, phase=phase, crook=crook, lantern=lantern,
-                               glow=0.6, lamb=lamb, lamb_eyes=eyes, marks=marks)
+                               glow=LIT_GLOW, lamb=lamb, lamb_eyes=eyes, marks=marks)
         return shadow(ref1[0], ref1[1], S10, 170) + tintv(m)
-    sh = Fig("shep1", sh_draw, ref1, z1 + 3, g0, seed=641, track=tr,
-             loops={shep_key("knock", -1, "happy", 0.0, lantern=True): (4, 0.085)})
+    KNOCK_PER = 0.085
+    sh = Fig("shep1", sh_draw, ref1, z1 + 3, g0, seed=641, track=tr)
     base_sh_draw = sh.draw
     sh.draw = lambda key, k=None: base_sh_draw(key if k is None else key[:3] + (k / 4.0,) + key[4:])
-    key_cs = shep_key("carry_stand", -1, "joyful", eyes="happy")
+
+    # he comes home exactly as he left s09: the lamb across his shoulders (separate, so it can nuzzle), the lantern in
+    # his far hand, the crook resting against his shoulder. The crook stays on his shoulder all through; the lantern
+    # stays in his hand, swinging from his fist while he knocks.
+    def ck(pose, f, expr, phase=0.0, lamb=False, marks=True):
+        return shep_key(pose, f, expr, phase, lamb=lamb, eyes="happy", marks=marks)
+    key_cs = ck("carry_stand", -1, "joyful")
     sh.cut(0, key_cs)
     t_w0 = snap(max(0.85, t_hdj - 0.3))
-    t_arr = walk_x(sh, tr, t_w0, t_my - 0.3, x_start, x_knock,
-                   lambda fr: shep_key(fr, -1, "joyful", eyes="happy"), y=y_sh, start=2, frames=CARRY_FRAMES, s=S10)
-    sh.cut(t_my - 0.12, shep_key("carry_stand", -1, "happy", eyes="happy"), dip=False)
-    key_knock = shep_key("knock", -1, "happy", 0.0)
+    t_arr = walk_x(sh, tr, t_w0, t_my - 0.3, x_start, x_knock, lambda fr: ck(fr, -1, "joyful"), y=y_sh, start=2,
+                   frames=CARRY_FRAMES, s=S10)
+    sh.cut(t_my - 0.12, ck("carry_stand", -1, "happy"), dip=False)
+    key_knock = ck("knock", -1, "happy")
     t_kn = snap(t_my + 0.02)
     sh.cut(t_kn, key_knock, depth=4)
     t_kn_end = snap(t_kn + 0.68)
-    sh.cut(t_kn_end, shep_key("knock", -1, "happy", 0.0, marks=False), dip=False)
-    # from here his lantern stays where the knock pose set it down (a separate little lantern on the street)
-    lx_g, ly_g = x_knock + 92 * S10, y_sh - 68 * S10
+    key_knock2 = ck("knock", -1, "happy", marks=False)
+    sh.cut(t_kn_end, key_knock2, dip=False)
     # the door opens: a happy little hop back
     t_hop = snap(t_dA + 0.22)
-    sh.cut(t_hop, shep_key("carry_stand", -1, "joyful", eyes="happy", lantern=False), depth=8)
+    sh.cut(t_hop, ck("carry_stand", -1, "joyful"), depth=8)
     tr.to(t_hop, t_hop + 0.34, x_knock + 95, y_sh + 8, None, lift=22, curve="linear")
+    # '和我一起高兴吧': he turns to everyone and holds his lantern up high, beaming
     t_ch = snap(t_gx - 0.1)
-    sh.cut(t_ch, shep_key("cheer", 1, "joyful", lamb=True, eyes="happy", lantern=False), depth=8)
+    sh.cut(t_ch, ck("look_around", 1, "cheery", lamb=True), depth=8)
+    # '我丢的那只羊': he turns back to his friend, the lamb on his shoulders nuzzles him; '找到了' a happy hop
     t_show = snap(t_wd - 0.1)
-    sh.cut(t_show, shep_key("lift", 1, "joyful", 1.0, lantern=False), depth=8)
-    sh.cut(t_zdl + 0.1, shep_key("lift", 1, "laugh", 1.0, lantern=False), dip=False)
-    sh.blinks({key_cs: shep_key("carry_stand", -1, blink_expr("joyful"), eyes="happy")}, 0.2, t_w0, rng)
+    key_show = ck("carry_stand", -1, "joyful")
+    sh.cut(t_show, key_show, depth=7)
+    t_hp = snap(t_zdl + 0.02)
+    sh.mots.append(lambda t: Tf(dy=-20 * S10 * math.sin(math.pi * min(1.0, (t - t_hp) / 0.36))) if t_hp <= t < t_hp + 0.36
+                   else Tf())
+    sh.dips.append((t_hp - 0.02, 7.0))
+    sh.cut(t_hp + 0.4, ck("carry_stand", -1, "laugh"), dip=False)
+    sh.blinks({key_cs: ck("carry_stand", -1, blink_expr("joyful"))}, 0.2, t_w0, rng)
     sh.mots.append(breath(ref1, g0, 3.0, 0.012))
     sh.alpha = g1
-    sh.build(sc)
-    sc.add("lantern_down", doc(tintv(PR.ls_lantern(lx_g, ly_g, 0.9 * S10, lit=1.0, glow=True))), z=z1 + 2.9, seed=645,
-           motion=lambda t: Tf(alpha=(1.0 if t >= t_hop else 0.0) * g1(t)))
-    sc.add("lantern_pool", glow_pool_svg(lx_g, y_sh + 10, 230, 60, 0.8, key="ld"), z=2.6, wc=0, blend="screen",
-           motion=lambda t: Tf(alpha=(1.0 if t >= t_kn else 0.0) * g1(t) * flicker(g0, 0.9, 0.1, 1.7)(t)))
+    crk1 = Prop("crook", sh, S10, g0, "crk1", z1 + 3.05, z1 + 2.95, curl=1, tint=tintv, gate=g1)
+    crk1.at(0, ("key", lambda key: crook_local(key, "lean")[:2]), layer="back")
+
+    def knock_hand(key, t):
+        ph = (int((t + g0) / KNOCK_PER) % 4) / 4.0 if key[0] == "knock" else key[3]
+        return lantern_local(key[:3] + (ph,) + key[4:], ground=False)
+    lan1 = Prop("lantern", sh, S10, g0, "lan1", z1 + 3.06, z1 + 2.94, tint=tintv, gate=g1)
+    lan1.at(0, "fig").at(t_kn, ("keyt", knock_hand), layer="front").at(t_hop, "fig")
+    crk1.apply(sh)
+    lan1.apply(sh)
+    sh.loops = {k: (4, KNOCK_PER) for _, k in sh.ents if k[0] == "knock" and k[7]}     # the knocking fist
+    sl1 = ShoulderLamb(sh, S10, g0, z1 + 3.01, 647, nuzzle_t=[t_wd + 0.1, t_wd + 0.85, t_hp + 0.5], tint=tintv,
+                       name="lamb_front1")
+    sl1.finish(sc)
+    crk1.build(sc)
+    lan1.build(sc)
+    add_light(sc, "light1", lan1.light_pos, prop_ground(lan1), z1 + 9, g0, s=S10, radius=240, k=0.5, alpha=g1, pool=0.5)
+    for i, tn in enumerate((t_wd + 0.85, t_hp + 0.5)):
+        hx, hy = sl1.head_point(tn + 0.15)
+        sc.add(f"heart1_{i}", doc(heart_markup(hx, hy, 16)), z=z1 + 3.2, wc=0, motion=float_up(tn + 0.15, (hx, hy), 1.4, 110))
 
     # friend A in the doorway (a lamp), friend B with a lantern, then a child and an old man
     yA = GYV + 2
@@ -329,6 +361,22 @@ def build(ctx):
     xT, yT = XE + 200, GYV + 22
     sc.add("table", doc(tintv(PR.party_table(xT, yT, S10 * 1.05, 1, width=480)) + shadow(xT, yT, S10, 560, 0.2)),
            z=z2 + 1, seed=663, motion=lambda t: Tf(alpha=g2(t)))
+    # the shepherd's crook leaning on the wall by the table, his lantern on the table among the food
+    cx0, cy0 = XE - 52, GYV + 4
+    cl = CROOK_L0 * S10
+    ctop = (cx0 + math.sin(math.radians(7)) * cl, cy0 - math.cos(math.radians(7)) * cl)
+    crook_m = (f'<g transform="translate({f1(cx0)},{f1(cy0)}) rotate(7) scale({S10:.3f})"><g filter="url(#wobble-fine)">'
+               f'{C._ls_crook((0, 0), (0, -CROOK_L0), curl=1)}</g></g>')
+    sc.add("crook2", doc(tintv(crook_m) + shadow(cx0 + 6, cy0, S10, 60, 0.18)), z=z2 + 0.9, seed=665,
+           motion=lambda t: Tf(alpha=g2(t)))
+    tl_x, tl_y = xT + 30 * S10, yT - 118 * S10 * 1.05 - 60 * S10
+    sc.add("lantern2", doc(tintv(PR.ls_lantern(tl_x, tl_y, 0.9 * S10, lit=1.0, glow=False))), z=z2 + 1.1, seed=667,
+           motion=lambda t: Tf(alpha=g2(t)))
+    gid_t = "s10tl"
+    defs_t = S.rad_grad(gid_t, [(0, "#fff1c4", 0.9), (0.2, "#ffd27a", 0.5), (0.55, "#f6a43c", 0.15), (1, "#f6a43c", 0)])
+    sc.add("lantern2_glow", doc(f'<ellipse cx="{f1(tl_x)}" cy="{f1(tl_y + 40 * S10)}" rx="210" ry="180" fill="url(#{gid_t})"/>',
+                                defs_t), z=z2 + 1.15, wc=0, blend="screen",
+           motion=lambda t: Tf(alpha=g2(t) * flicker(g0, 0.9, 0.1, 2.2)(t)))
 
     def loop_fig(name, draw, ref, z, seed, key, n=4, per=0.12, track=None):
         f = person(name, draw, ref, z, g0, seed, track=track, loops={key: (n, per)})
@@ -395,21 +443,24 @@ def build(ctx):
     def sh2_draw(key):
         pose, f, expr, phase, lamb, eyes, crook, marks, lantern = key
         m = C.parable_shepherd(ref2[0], ref2[1], S10, f, pose=pose, expr=expr, phase=phase, crook=crook, lantern=lantern,
-                               glow=0.6, lamb=lamb, lamb_eyes=eyes, marks=marks)
+                               glow=LIT_GLOW, lamb=lamb, lamb_eyes=eyes, marks=marks)
         return shadow(ref2[0], ref2[1], S10, 170) + tintv(m)
-    key_dance = shep_key("dance", 1, "joyful", 0.0, lamb=True, eyes="happy", lantern=False)
+    # at the party his crook leans against the wall of the house and his lantern stands on the table (shown below):
+    # his hands are free to dance, so no key draws them
+    def pk(pose, expr, phase=0.0, lamb=True):
+        return shep_key(pose, 1, expr, phase, lamb=lamb, eyes="happy", crook=False, lantern=False)
+    key_dance = pk("dance", "joyful")
     sh2 = Fig("shep2", sh2_draw, ref2, cz(ref2[1]), g0, seed=691, track=tr2, loops={key_dance: (2, 0.3)})
     base2 = sh2.draw
     sh2.draw = lambda key, k=None: base2(key if k is None else key[:3] + (0.25 + 0.5 * (k % 2),) + key[4:])
     sh2.cut(0, key_dance)
-    key_sing = shep_key("carry_stand", 1, "cheery", lamb=False, eyes="happy", lantern=False)
+    key_sing = pk("carry_stand", "cheery", lamb=False)
     sh2.cut(t_cg - 0.08, key_sing, depth=6)
-    sh2.cut(t_qz - 0.06, shep_key("cheer", 1, "joyful", lamb=True, eyes="happy", lantern=False), depth=7)
-    key_end = shep_key("carry_stand", 1, "warm", lamb=False, eyes="happy", lantern=False)
+    sh2.cut(t_qz - 0.06, pk("cheer", "joyful"), depth=7)
+    key_end = pk("carry_stand", "warm", lamb=False)
     t_settle = snap(t_qz_end + 0.25)
     sh2.cut(t_settle, key_end, depth=6)
-    sh2.blinks({key_end: shep_key("carry_stand", 1, blink_expr("warm"), lamb=False, eyes="happy", lantern=False)},
-               t_settle + 0.3, T - 0.2, rng)
+    sh2.blinks({key_end: pk("carry_stand", blink_expr("warm"), lamb=False)}, t_settle + 0.3, T - 0.2, rng)
     sh2.mots.append(breath(ref2, g0, 3.0, 0.012))
     sh2.alpha = g2
     t_nz = [t_cg + 0.35, t_cg + 1.0, t_settle + 0.35, t_settle + 1.2]

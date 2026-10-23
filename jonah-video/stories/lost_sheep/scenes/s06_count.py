@@ -30,6 +30,7 @@ import bisect
 import math
 import random
 
+from art import characters as C
 from art import props as PR
 from art import style as S
 from engine import motion as M
@@ -464,9 +465,13 @@ def build(ctx):
     sh.cut(B["t_hai"] + 0.1, shep("count_again", "puzzled", -1, tm=tod(B["t_hai"])), dip=False)
     sh.cut(B["t_shao"] - 0.05, shep("worried", "worried", 1, tm=tod(B["t_shao"])), depth=6)
     sh.cut(B["t_wd"] - 0.05, shep("look_around", "worried", 1, 0.0, tod(B["t_wd"])), depth=5)
-    sh.cut(B["t_wd"] + 0.45, shep("look_around", "worried", 1, 0.6, tod(B["t_wd"])), depth=3)
-    sh.cut(B["t_wd"] + 0.95, shep("look_around", "worried", 1, 0.0, tod(B["t_wd"])), depth=3)
-    sh.cut(B["t_qu"] - 0.05, shep("look_around", "determined", 1, 0.0, tod(B["t_qu"]), True), depth=7)
+    sh.cut(B["t_wd"] + 0.55, shep("look_around", "worried", 1, 0.6, tod(B["t_wd"])), depth=3)
+    # he bends down to the lantern on the grass behind him and picks it up (it rises into his far hand) ...
+    t_up = snap(B["t_qu"] - 0.05)
+    t_pick = snap(min(B["t_wd"] + 1.15, t_up - 0.55))
+    sh.cut(t_pick, shep("count_again", "determined", -1, 0.0, tod(B["t_wy"])), depth=6)
+    # ... and on '去' stands up holding it high, lit
+    sh.cut(t_up, shep("look_around", "determined", 1, 0.0, tod(B["t_qu"]), True), depth=7)
     sh.add_blinks({shep("stand", "warm"): shep("stand", blink("warm")),
                    shep("stand", "happy"): shep("stand", blink("happy"))}, t_cut, B["t_shu"], rng)
     # recount jabs: little rocks forward on each count
@@ -475,8 +480,16 @@ def build(ctx):
     sh.mots.append(lambda t: Tf(sy=1 + 0.01 * math.sin(2 * math.pi * (t + g0) / 3.1)))
     sh.mots.append(lambda t: Tf(alpha=1.0 if t_cut <= t < t_go else 0.0))
     sh.build(sc)
-    sc.add("lantern0", doc(PR.ls_lantern(LANTERN0[0], LANTERN0[1] - 64 * K, K, lit=0.0, glow=False)), z=6.45,
-           seed=605, motion=lambda t: Tf(alpha=1.0 if t_cut <= t < snap(B["t_qu"] - 0.05) else 0.0))
+    hand = C.shepherd_points(SX, YS, K, -1, pose="count_again")["hands"][0]      # his far hand when he bends
+    lx0, ly0 = LANTERN0[0], LANTERN0[1] - 64 * K
+
+    def lantern_mot(t):
+        if not (t_cut <= t < t_up):
+            return Tf(alpha=0.0)
+        u = M.progress(t, t_pick + 0.1, t_pick + 0.32, "out")       # lifted off the grass into his hand
+        sw = 3 * math.sin(2 * math.pi * (t - t_pick) / 0.6) * M.progress(t, t_pick + 0.3, t_pick + 0.4)
+        return Tf(dx=(hand[0] - lx0) * u, dy=(hand[1] - ly0) * u, rot=sw, px=lx0, py=ly0)
+    sc.add("lantern0", doc(PR.ls_lantern(lx0, ly0, K, lit=0.0, glow=False)), z=6.45, seed=605, motion=lantern_mot)
     # the lantern's light blooming when he lifts it (raised in look_around), then the walk away
     lx, ly = SX + 133 * K, YS - 222 * K + 40 * K
     sc.add("lift_light", doc(PR.lantern_light(lx, ly, 1.0, radius=230)), z=6.55, wc=0, blend="screen", seed=606,
@@ -514,15 +527,16 @@ def build(ctx):
                             lambda t: Tf(dy=5 * math.sin(2 * math.pi * (t + g0) / 2.0))))
 
     # ================================================================ camera
+    # every move eased with 'sine' and long enough to stay under ~0.6 frame-widths/s (fastest frame corner)
     shot1_cam = cam_path([(0.0, CAM_END), (1.0, CAM_END), (t_cut - 0.05, Cam(3470, 800, 1660)), (t_cut, Cam(3470, 800, 1660))],
                          ["linear", "sine", "linear"])
     shot2_cam = cam_path([
-        (t_cut, CAM_COUNT), (B["t_yi"] - 0.3, CAM_COUNT), (B["t_yi"] + 0.6, Cam(1720, 1210, 1380)),
-        (B["t_zai"] - 0.2, Cam(1720, 1210, 1380)), (B["t_zai"] + 1.0, Cam(1240, 1160, 1900)),
-        (B["t_shao"] - 0.3, Cam(1240, 1160, 1900)), (B["t_shao"] + 0.6, Cam(1640, 1190, 1460)),
+        (t_cut, CAM_COUNT), (B["t_yi"] - 0.4, CAM_COUNT), (B["t_yi"] + 0.9, Cam(1720, 1210, 1380)),
+        (B["t_zai"] - 0.4, Cam(1720, 1210, 1380)), (B["t_rs"] - 0.05, Cam(1240, 1160, 1900)),
+        (B["t_99"] + 0.35, Cam(1240, 1160, 1900)), (B["t_xy"] + 0.3, Cam(1640, 1190, 1460)),
         (B["t_wd"] - 0.2, Cam(1640, 1190, 1460)), (B["t_wy"], Cam(1760, 1180, 1560)),
         (t_go + 0.2, Cam(1760, 1180, 1560)), (B["t_zj"] + 0.5, CAM_WIDE), (T, CAM_WIDE)],
-        ["linear", "inout", "linear", "inout", "linear", "inout", "linear", "inout", "linear", "inout", "linear"])
+        ["linear", "sine", "linear", "sine", "linear", "sine", "linear", "sine", "linear", "sine", "linear"])
     sc.camera = lambda t: shot1_cam(t) if t < t_cut else shot2_cam(t)
 
     # ================================================================ sound

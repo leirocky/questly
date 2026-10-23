@@ -6,34 +6,41 @@ hard-coded to the take). Times are for the current take:
   0 .. 1.0      the s08 end frame: the shepherd stands with his lantern raised high (look_around, determined), the
                 cloud half over the moon, the rock at the right edge; the lamb is tucked behind the rock, out of view
   '忽然' 1.01   he freezes (eyes wide)
-  '他听见了' 1.82 he cups his ear toward the rock (listen, the lantern raised, sound arcs)
+  '他听见了' 1.82 he cups his ear toward the rock (listen 1.72, the lantern raised; the crook tilts to rest against his
+                shoulder in 0.3 s)
   '咩' 2.96 / 3.46  a little bleat bubble floats up from behind the big rock on each 咩 (a soft bleat after them)
-  '在一块大石头后面' 4.52  he hurries to the rock (planted-foot walk), the camera pans right and finds the lamb on its
-                far side, curled in the rock's shadow
+  '在一块大石头后面' 4.52  he takes the crook back in hand (4.48, 0.3 s) and hurries to the rock (planted-foot walk), the
+                camera pans right and finds the lamb on its far side, curled in the rock's shadow
   '小羊冷得发抖' 6.54  he raises the lantern over it (look_around): the warm light falls on the lamb, trembling
                 (scared, a 4-phase jitter with tremble ticks), the shadow lifts
-  '找到了' 8.38  a warm burst of lantern light round them (sparkle); his face lights up, the lamb looks up
-  '牧羊人一点也没生气' 9.78  he kneels and hugs it, soft and kind (kneel_hug, tender; the lamb nuzzles, a little
-                heart)
-  '欢欢喜喜地' 12.43  he stands up holding the lamb (lift 0 -> 1: from his chest up beside his head) and on '扛在'
-                14.26 sets it across his shoulders (carry_stand, the lamb's eyes happy); meanwhile the cloud slides
-                away and the moon shines out brighter (moonlight over everything, the glow grows)
-  '找到你了' 16.25 (H) he turns for home and walks off to the left with the lamb on his shoulders, the lamb nuzzling his
-                cheek (its head rubs, a heart); '我们回家吧' 17.55
+  '找到了' 8.38  a warm burst of lantern light round them (sparkle); his face lights up, the lamb looks up; at 8.68 he
+                lets his crook tilt over to lean on the big rock (0.42 s) and takes two steps to the lamb
+  '牧羊人一点也没生气' 9.78  he kneels and hugs it, soft and kind (kneel_hug 9.65, tender; the lamb nuzzles, a heart);
+                as he goes down he sets the lantern on the ground behind him (0.4 s)
+  '欢欢喜喜地' 12.43  he stands up holding the lamb (lift 0 -> 1 from 12.32 to 13.76: from his chest up beside his head);
+                at 13.88 it swings up over his head in an arc (0.34 s, whoosh) and on '扛在' 14.22 lands across his
+                shoulders (carry_stand, the lamb's eyes happy); meanwhile the cloud slides away and the moon shines out
+  14.85         he turns round, stoops and picks up his lantern (15.22, 0.4 s, it rises into his hand), then takes his
+                crook from the rock onto his shoulder (15.78, 0.46 s) - exactly how he carries them in s10
+  '找到你了' 16.25 (H) he walks off home to the left (16.38) with the lamb on his shoulders, the lamb nuzzling his cheek
+                (its head rubs, a heart); '我们回家吧' 17.55
   end           he stops under the bright moon, the lamb nuzzles him: a calm last frame for the page turn into s10
 """
 import math
 import random
 
+from art import characters as C
+from art import props as PR
 from art import style as S
 from engine import fx as FX
 from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.lost_sheep.scenes.s08_search import (
-    CARRY_FRAMES, CLOUD_V, COVER_X, FS, LAMB_HIDE, LIGHT_UP, MOON_C, RGY, RX, SH, SHADE_A, SLOPE_CAM0, SLOPE_END_KEY, SW,
-    WGY, X_END, X_LOOK, Beats, Fig, ShoulderLamb, Slope, Track, add_slope_shepherd_extras, add_tufts, blink_expr, breath,
-    cam_path, doc, env, f1, gfx, lamb_markup, rock_shadow_svg, shep_key, slope_shepherd, snap, walk_x)
+    CARRY_FRAMES, CLOUD_V, COVER_X, CROOK_L0, FS, LAMB_HIDE, LIGHT_UP, MOON_C, RGY, RX, SH, SHADE_A, SLOPE_CAM0,
+    SLOPE_END_KEY, SW, WGY, X_END, X_LOOK, Beats, Fig, ShoulderLamb, Slope, Track, add_slope_shepherd_extras, add_tufts,
+    blink_expr, breath, cam_path, crook_local, doc, env, f1, gfx, lamb_markup, rock_shadow_svg, shep_key, slope_crook,
+    slope_lantern, slope_shepherd, snap, tinted, walk_x)
 
 INK = "#4b3426"
 X_KNEEL = LAMB_HIDE[0] - 92 * FS          # parable_shepherd(kneel_hug) draws the lamb at +92 (scale 1) in front
@@ -141,7 +148,9 @@ def build(ctx):
     sh = slope_shepherd(sc, g0, tr)
     sh.cut(0, SLOPE_END_KEY)
     sh.cut(max(t_hr + 0.02, 1.17), shep_key("look_around", 1, "surprised", 0.0), depth=4)
-    sh.cut(t_tj - 0.1, shep_key("listen", 1, "worried"), depth=6)
+    t_lis = snap(t_tj - 0.1)
+    key_lis = shep_key("listen", 1, "worried")
+    sh.cut(t_lis, key_lis, depth=6)
     # to the rock
     x_look2 = RX + 60
     t_w0 = snap(t_zai - 0.05)
@@ -149,15 +158,17 @@ def build(ctx):
     walk_x(sh, tr, t_w0, t_w1, X_END, x_look2, lambda fr: shep_key(fr, 1, "worried"), y=WGY, start=2)
     t_peer = snap(t_w1 + 0.2)
     sh.cut(t_peer, shep_key("look_around", 1, "worried", 0.0), depth=6)
-    # '找到了': his face lights up, then two steps to the lamb and he kneels
+    # '找到了': his face lights up; he leans his crook on the big rock, two steps to the lamb, and kneels (the lantern
+    # is set down behind him as he goes down)
     sh.cut(t_zdl - 0.02, shep_key("look_around", 1, "relieved", 0.0), depth=4)
+    t_rel = snap(t_zdl + 0.3)
     x_step = X_KNEEL - 40
-    t_s0 = snap(t_zdl + 0.62)
+    t_s0 = snap(max(t_zdl + 0.78, t_rel + 0.45))
     walk_x(sh, tr, t_s0, t_kneel - 0.18, x_look2, x_step, lambda fr: shep_key(fr, 1, "happy"), y=WGY, start=0)
     tr.to(t_kneel - 0.1, t_kneel + 0.12, X_KNEEL, Y_KNEEL, None)
     key_hug = shep_key("kneel_hug", 1, "tender")
     sh.cut(t_kneel, key_hug, depth=10)
-    # '欢欢喜喜': up with the lamb (lift 0 -> 1), then across his shoulders on '扛在'
+    # '欢欢喜喜': up with the lamb (lift 0 -> 1), it swings over onto his shoulders on '扛在'
     t_up = snap(t_hh - 0.12)
     tr.to(t_up - 0.06, t_up + 0.1, X_KNEEL - 20, WGY, None)
     n_lift = 8
@@ -165,30 +176,63 @@ def build(ctx):
     sh.cut(t_up, shep_key("lift", 1, "joyful", 0.0), depth=10)
     for i in range(1, n_lift + 1):
         sh.cut(t_l0 + (t_l1 - t_l0) * i / n_lift, shep_key("lift", 1, "joyful", i / n_lift), dip=False)
-    t_on = max(snap(t_kang - 0.05), snap(t_l1 + 0.15))
+    t_on = max(snap(t_kang - 0.05), snap(t_l1 + 0.42))
+    t_sw = snap(t_on - 0.34)                          # the swing: the lamb leaves his raised hands ...
+    key_sw = shep_key("lift", 1, "joyful", 1.0, lamb=False)
+    sh.cut(t_sw, key_sw, depth=4)
     key_cs = shep_key("carry_stand", 1, "joyful", lamb=False)
-    sh.cut(t_on, key_cs, depth=9)
-    # home: turn and walk left, stop under the moon
-    t_turn = snap(t_zdn - 0.2)
-    sh.cut(t_turn, shep_key("carry_stand", -1, "joyful", lamb=False), depth=6)
+    sh.cut(t_on, key_cs, depth=9)                     # ... and lands across his shoulders
+    # he turns round, stoops for his lantern, takes his crook from the rock - then home
+    t_tn = snap(t_on + 0.62)
+    key_cs2 = shep_key("carry_stand", -1, "joyful", lamb=False)
+    sh.cut(t_tn, key_cs2, depth=6)
+    t_pl = snap(t_tn + 0.36)                          # lantern pick-up (a stoop), into his hand at t_pl + 0.4
+    sh.dips.append((snap(t_pl + 0.12), 14.0))
+    sh.dips.append((snap(t_pl + 0.4), 6.0))
+    t_pc = snap(t_pl + 0.56)                          # crook from the rock to his shoulder
+    t_turn = snap(max(t_zdn + 0.04, t_pc + 0.6))
     x_home = X_KNEEL - 470
     t_stop = min(T - 1.0, t_hj_end + 0.5)
-    walk_x(sh, tr, t_turn + 0.24, t_stop - 0.22, X_KNEEL - 20, x_home, lambda fr: shep_key(fr, -1, "joyful", lamb=False),
+    walk_x(sh, tr, t_turn, t_stop - 0.22, X_KNEEL - 20, x_home, lambda fr: shep_key(fr, -1, "joyful", lamb=False),
            y=WGY, start=2, frames=CARRY_FRAMES)
     key_end = shep_key("carry_stand", -1, "joyful", lamb=False)
     sh.cut(t_stop, key_end, depth=4)
     # blinks (none in the first 1.3 s: the dissolve from s08 must match)
     sh.blinks({SLOPE_END_KEY: shep_key("look_around", 1, blink_expr("determined"), 0.0),
-               shep_key("listen", 1, "worried"): shep_key("listen", 1, blink_expr("worried")),
+               key_lis: shep_key("listen", 1, blink_expr("worried")),
                key_hug: shep_key("kneel_hug", 1, blink_expr("tender")),
                key_end: shep_key("carry_stand", -1, blink_expr("joyful"), lamb=False)}, 1.3, T - 0.2, rng)
     sh.mots.append(breath((X_LOOK, WGY), g0, 3.0, 0.012))
 
+    # ---- his crook and lantern (no prop ever pops; see s08 Prop)
+    lean = ("key", lambda key: crook_local(key, "lean")[:2])
+    near = ("key", lambda key: crook_local(key, "near")[:2])
+    crk = slope_crook(sh, g0, curl=1)
+    crk.at(0, "fig")
+    crk.at(t_lis, lean, dur=0.3, layer="back")               # cupping his ear: the crook rests against his shoulder
+    crk.at(t_w0, near, dur=0.3, layer="back", lift=6)        # walking on: back into his hand
+    crk.at(t_w0 + 0.3, "fig")
+    # leaning on the big rock: it tilts over from his hand (foot where his hand held it)
+    rf = (x_look2 + (crook_local(shep_key("look_around", 1, "relieved", 0.0), "near")[0][0]) * FS, WGY - 4 * FS)
+    rl = CROOK_L0 * FS
+    rt = (rf[0] - math.sin(math.radians(24)) * rl, rf[1] - math.cos(math.radians(24)) * rl)
+    crk.at(t_rel, ("stage", (rf, rt)), dur=0.42, layer="back")
+    crk.at(t_pc, lean, dur=0.46, layer="back", lift=14)      # picked up: over his shoulder for the way home
+    lan = slope_lantern(sh, g0)
+    lan.at(0, "fig")
+    gl = (X_KNEEL - 92 * FS, Y_KNEEL - 58 * FS)              # set down behind him as he kneels
+    lan.at(t_kneel, ("stage", (gl[0], gl[1], 1.0)), dur=0.4, layer="back", lift=10)
+    lan.at(t_pl, "fig", dur=0.4, layer="front", lift=8)      # and picked up again
+    crk.apply(sh)
+    lan.apply(sh)
+
     # the lamb on his shoulders as separate parts: it nuzzles his cheek (little pulses) with a heart now and then
-    t_nz = [t_on + 0.7, t_on + 1.6, t_zdn + 0.4, t_hj + 0.2, t_stop + 0.25]
+    t_nz = [t_on + 0.3, t_pc + 0.6, t_hj + 0.2, t_stop + 0.25]
     sl = ShoulderLamb(sh, FS, g0, 30.5, 561, nuzzle_t=t_nz)
     sl.finish(sc)
-    add_slope_shepherd_extras(sc, sh, g0, extra=lambda t: 1 + LIGHT_UP * (1 - M.progress(t, t_zai, t_zai + 1.5, "sine"))
+    crk.build(sc)
+    lan.build(sc)
+    add_slope_shepherd_extras(sc, sh, g0, lan, extra=lambda t: 1 + LIGHT_UP * (1 - M.progress(t, t_zai, t_zai + 1.5, "sine"))
                               + 0.22 * env(t, t_zdl - 0.1, t_kneel + 0.6, 0.25, 0.9))
     for i, tn in enumerate(t_nz[1:]):
         h_t = tn + 0.2
@@ -197,6 +241,26 @@ def build(ctx):
         follow = lambda t, p0=p0: (lambda p: Tf(dx=p[0] - p0[0], dy=p[1] - p0[1]))(sh.point(t, (X_LOOK, WGY), ground=True))
         sc.add(f"heart{i}", doc(heart_markup(hx, hy, 17)), z=31.0, wc=0,
                motion=M.combine(float_up(h_t, (hx, hy), 1.4, 110), follow))
+
+    # the swing: the lamb (held) flies from his raised hands up and over onto his shoulders
+    bp = C.body_points(C.parable_shepherd, X_LOOK, WGY, FS, 1, pose="lift", phase=1.0, lamb=False)
+    (w0x, w0y), (w1x, w1y) = bp["hands"]
+    c0 = ((w0x + w1x) / 2 + 4 * FS, (w0y + w1y) / 2 + 4 * FS)        # where parable_shepherd draws the held lamb
+    ca = sl.anchor(key_cs)
+    c1 = (ca[0] + 8 * 1.1 * FS, ca[1] - 26 * 1.1 * FS)              # the middle of the lamb draped on his shoulders
+    held = doc(tinted(PR.little_lamb(c0[0], c0[1], FS, 1, pose="held", eyes="open")))
+
+    def swing(t):
+        if not (t_sw <= t < t_on):
+            return Tf(alpha=0.0)
+        u = M.progress(t, t_sw, t_on, "inout")
+        a = sh.full_point(t, c0)
+        b = sh.full_point(t, c1)
+        x, y = a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u - 46 * FS * math.sin(math.pi * u)
+        k = 1 + 0.1 * u
+        return Tf(dx=x - c0[0], dy=y - c0[1], rot=-18 * math.sin(math.pi * u), sx=k, sy=k, px=c0[0], py=c0[1])
+    sc.add("lamb_swing", held, z=29.95, seed=571, motion=swing)   # behind his raised arms, like the held lamb
+
     # the heart over the hug
     hx, hy = LAMB_HIDE[0] + 10, LAMB_HIDE[1] - 160 * FS
     sc.add("heart_hug", doc(heart_markup(hx, hy, 20)), z=31.0, wc=0, motion=float_up(t_kneel + 0.9, (hx, hy), 1.6, 120))
@@ -247,8 +311,14 @@ def build(ctx):
     sc.sfx("footsteps", t_s0, dur=t_kneel - t_s0, gain_db=-22, pan=0.3)
     sc.sfx("cloth", t_kneel - 0.05, gain_db=-17, pan=0.3)
     sc.sfx("sheep", t_kneel + 0.9, gain_db=-21, pan=0.3, pitch=1.3)
+    sc.sfx("cloth", t_rel + 0.1, gain_db=-23, pan=0.2)
+    sc.sfx("thud", t_rel + 0.4, gain_db=-26, pan=0.1)
+    sc.sfx("thud", t_kneel + 0.38, gain_db=-27, pan=0.2)
     sc.sfx("cloth", t_up, gain_db=-18, pan=0.3)
+    sc.sfx("whoosh", t_sw, gain_db=-22, pan=0.2)
     sc.sfx("cloth", t_on, gain_db=-18, pan=0.2)
+    sc.sfx("cloth", t_pl + 0.05, gain_db=-21, pan=0.1)
+    sc.sfx("cloth", t_pc + 0.1, gain_db=-21, pan=0.0)
     sc.sfx("sparkle", t_unc0 + 0.9, gain_db=-19, pan=-0.2)
-    sc.sfx("footsteps", t_turn + 0.24, dur=t_stop - t_turn - 0.2, gain_db=-22, pan=0.0)
+    sc.sfx("footsteps", t_turn, dur=t_stop - t_turn, gain_db=-22, pan=0.0)
     return sc

@@ -715,8 +715,8 @@ def build(ctx):
     s1 = persp(h1y)
     h1 = follower("sheep_h1", 2, None, [(w2_ents[0][0] + 0.15, w2_end + 0.1, h1x, h1x2)], h1y,
                   [(0, "graze", 1, h1x), (t_bend - 0.25, "look_up", 1, h1x), (t_ai + 0.05, "look_up", 1, h1x),
-                   (t_up + 0.5, "graze", 1, h1x), (w2_ents[0][0], "stand", -1, h1x), (w2_end + 0.1, "stand", -1, h1x2),
-                   (t_chi, "graze", -1, h1x2)],
+                   (t_up + 0.5, "graze", 1, h1x), (w2_ents[0][0] - 0.45, "stand", -1, h1x),
+                   (w2_end + 0.1, "stand", -1, h1x2), (max(t_chi, w2_end + 0.65), "graze", -1, h1x2)],
                   g0, 5 + h1y / 1000, 111, None, rng, T)
     # happy closed eyes after the pats
     h1.ents = [(tk, (st[0], st[1], st[2], st[3], st[4], "happy") if (abs(tk - snap(t_ai + 0.05)) < 1e-6) else st)
@@ -729,11 +729,11 @@ def build(ctx):
         y = YS + oy
         xa, xb, xc = X_START + ox, X_PAT + ox, X_STREAM + ox
         moves = [(w1_ents[0][0] + lag, w1_end + lag, xa, xb), (w2_ents[0][0] + lag, w2_end + lag, xb, xc)]
-        spots = [(0, "graze" if var else "stand", -1, xa), (w1_ents[0][0] + lag - 0.2, "stand", -1, xa),
+        spots = [(0, "graze" if var else "stand", -1, xa), (w1_ents[0][0] + lag - 0.55, "stand", -1, xa),
                  (w1_end + lag, "stand", -1, xb), (w1_end + lag + 0.8, "graze", -1, xb),
                  (t_hd + (0.2 if var else 0.6), "look_up", -1 if var else 1, xb), (t_mt, "graze", -1, xb),
-                 (w2_ents[0][0] + lag - 0.2, "stand", -1, xb), (w2_end + lag, "stand", -1, xc),
-                 (t_chi + (0.0 if var else 0.25), "graze", -1, xc)]
+                 (w2_ents[0][0] + lag - 0.55, "stand", -1, xb), (w2_end + lag, "stand", -1, xc),
+                 (max(t_chi + (0.0 if var else 0.25), w2_end + lag + 0.55), "graze", -1, xc)]
         fl = follower(name, var, None, moves, y, spots, g0, 5 + y / 1000, seed, None, rng, T)
         fl.build(sc)
 
@@ -780,15 +780,14 @@ def build(ctx):
     lamb.cut(0, graze)
     lamb.cut(t_xy - 0.05, lst("stand"), depth=5)                 # '小羊': it lifts its head
     lamb.cut(t_c1 - 0.08, graze, depth=4)                       # '吃着吃着'
-    for i, ts in enumerate(steps):
+    for i, ts in enumerate(steps):                              # between the step pairs it pauses mid-stride
         lamb.cut(ts - 0.02, lst("walk_a" if i % 2 == 0 else "walk_b"), dip=False)
-        if i in (1, 3):
-            lamb.cut(ts + 0.2, lst("stand"), dip=False)
     lamb.cut(t_walk_end, lst("stand"), dip=False)
     sniff = lst("sniff_flower")
     lamb.loops[sniff] = (3, clock_loop(g0, 0.12))
     lamb.cut(t_wen - 0.06, sniff, depth=4)                     # '闻闻小花'
-    lamb.cut(t_zhui1 + 0.04, lst("stand"), depth=5)            # the butterfly flutters up
+    t_look_up = max(t_wen + 0.5, t_b0 - 0.55)
+    lamb.cut(t_look_up, lst("stand"), depth=5)                 # it lifts its head: the butterfly flutters up
     for i in range(nb):
         st = lst("chase", ph=i * 0.001)
 
@@ -800,8 +799,7 @@ def build(ctx):
     lamb.cut(t_yi - 0.04, lst("look_around", X_LAND), depth=4)  # '咦'
     lamb.cut(t_da - 0.02, lst("look_around", X_LAND, 0.6), depth=4)   # '大家': looks back
     lamb.cut(t_bu, LAMB_END, depth=6)                          # '不见了'
-    lamb.add_blinks({lst("stand"): lst("stand", eyes="closed"),
-                     lst("stand", X_LAND): lst("stand", X_LAND, eyes="closed")}, 0.5, t_tai + 0.9, rng)
+    lamb.add_blinks({lst("stand"): lst("stand", eyes="closed")}, 0.5, t_tai - 0.5, rng)
 
     def lamb_mot(t):
         x, y, tilt = lamb_path(t)
@@ -870,11 +868,14 @@ def build(ctx):
     sc.sfx("sparkle", t_da, pan=0.3, **dict(bell, gain_db=-24))
 
     # ================================================================ camera
+    # every move eased with 'sine' and long enough to stay under ~0.6 frame-widths/s (fastest frame corner)
+    t_sw0 = L[2].end + 0.05                      # the swoop to the lamb starts in the gap after '吃青草' ...
+    t_sw1 = t_c2 + 0.55                          # ... and lands during '吃着吃着'
     sc.camera = cam_path([
         (0.0, Cam(1900, 1137, 2000)), (t_ye, Cam(1900, 1137, 2000)), (t_mu + 0.5, Cam(1700, 1170, 1750)),
         (t_mei + 0.2, Cam(1560, 1205, 1480)), (t_yb - 0.2, Cam(1560, 1205, 1480)), (t_shan + 0.3, Cam(1440, 900, 2900)),
-        (t_mu2, Cam(1440, 900, 2900)), (t_mu2 + 2.4, Cam(1420, 1110, 2300)), (t_you - 0.6, Cam(1420, 1110, 2300)),
-        (t_xy + 0.4, Cam(2440, 1270, 1320)), (t_wen - 0.3, Cam(2700, 1270, 1320)), (t_tai + 0.4, CAM_END),
+        (t_mu2, Cam(1440, 900, 2900)), (t_mu2 + 2.4, Cam(1420, 1110, 2300)), (t_sw0, Cam(1420, 1110, 2300)),
+        (t_sw1, Cam(2440, 1270, 1320)), (t_wen - 0.3, Cam(2700, 1270, 1320)), (t_tai + 0.4, CAM_END),
         (T, CAM_END)],
-        ["linear", "sine", "inout", "linear", "inout", "linear", "inout", "linear", "inout", "sine", "inout", "linear"])
+        ["linear", "sine", "sine", "linear", "sine", "linear", "sine", "linear", "sine", "linear", "sine", "linear"])
     return sc
