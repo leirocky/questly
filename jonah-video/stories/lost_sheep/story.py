@@ -83,7 +83,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s04_story", "mood": "lesson",
+        "id": "s04_story", "mood": "lesson", "tail": 2.3,   # time to fly into the page after the question
         "note": "Luke 15:3-4. Jesus turns kindly to everyone, Pharisees included, and asks his question; the scene "
                 "opens into his story like a picture-book page unfolding from his hands (the spring hills).",
         "lines": [
@@ -180,7 +180,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s12_end", "transition": "dippaper", "mood": "end", "tail": 5.5,   # the 2 s answer pause, the end card, a hold, the fade-out
+        "id": "s12_end", "transition": "dippaper", "mood": "end", "tail": 5.7,   # the 2 s answer pause, the end card, a hold, the fade-out
         "note": "Ending: the modern child from the opening at bedtime, hugging a soft toy lamb; a picture-book "
                 "corner shows the shepherd carrying the lamb home under the moon; warm light; closing questions "
                 "with pauses.",
