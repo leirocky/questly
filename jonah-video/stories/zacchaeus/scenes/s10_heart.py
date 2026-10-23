@@ -1,6 +1,7 @@
 """Scene 10 - Zacchaeus's changed heart (a light picture of his promise, Luke 19:8; nothing beyond it). The palm grove
 and balsam gardens of Jericho in the golden evening (props.jericho_sky + palm_grove, time 'evening'). One calm shot:
-the farmer works under the palms on the left, the widow stands by the path, children play in the grove on the right.
+the farmer rests by a palm on the left (his hoe leaning on its trunk), the widow stands by the path, children play in
+the grove on the right.
 
 Beats (syllable onsets measured in the voice clips with the Noah film's voice_marks helpers through the Lost Sheep film's
 Beats; nothing is hard-coded to the take). Times are for the current take:
@@ -8,8 +9,9 @@ Beats; nothing is hard-coded to the take). Times are for the current take:
   0.3 .. ~3.1   '撒该心里好开心' 0.96: he walks happily along the path (planted-foot walk, a little lift in every
                 step; no strut), his money pouch small and light now; on '开心' 2.33 a happy little skip
   '他' 3.27      he stops by the widow and holds out coins (give, tender); she cups her hands (receive)
+  '他' +0.3      the farmer, who has been watching, is surprised
   '钱' 4.46      the coin hops into her hands (coins); she thanks him with a little bow (thank)
-                meanwhile the farmer turns from his palms and walks over (two planted steps)
+                meanwhile the farmer leaves his hoe on the palm and walks over empty-handed (three planted steps)
   '因为' 5.57    Zacchaeus turns to the farmer and holds out four coins (pay_back) - he pays him back
   '耶稣' 6.24    the coins pass into the farmer's hands (coins); he beams (delighted)
   '爱' 6.69      a warm little heart rises over Zacchaeus (sparkle)
@@ -40,7 +42,8 @@ GS = 0.8                             # the grove's scale (the palms ~1.6 adults,
 X_Z = 1082                           # Zacchaeus stops here
 X_W = X_Z + 218                      # the widow (jericho_poor receive / give recipe)
 X_F = X_Z - 160                      # the farmer when paid (pay_back recipe)
-F_START = (673, YG - 38, 0.965)      # the farmer at work further back (3 planted steps of 86 * ~0.975 to X_F)
+F_START = (673, YG - 38, 0.965)      # the farmer resting further back (3 planted steps of 86 * ~0.975 to X_F)
+PALM = (556, YG - 44, 0.6)           # the palm beside him (anchor = the foot of the trunk, scale); his hoe leans on it
 KIDS = [(1440, YG - 80, 0.88, 0), (1566, YG - 122, 0.84, 1), (1676, YG - 70, 0.89, 2)]
 ZAC_FRAMES = ("walk_a", "walk_c", "walk_b", "walk_c")
 ZAC_ADV = (22.8, 20.8, 47.2, 45.3)  # planted-foot advance INTO frame i of the cycle (scale 1), from zacchaeus_points
@@ -155,11 +158,63 @@ def farmer_key(pose, f=1, expr=None, phase=0.0, coins=True):
     return ("farmer", pose, f, expr, round(phase, 3), coins)
 
 
+def farmer_bare(x, y, s, f, pose, expr=None, phase=0.0, coins=True):
+    """jericho_folk(kind='farmer', variant 0) with empty hands: the library gives the farmer his hoe whenever item=None,
+    and its hoe swaps sides on every stride, so his hoe here is a separate prop leaning on a palm (hoe_svg)."""
+    ps = C._jr_pose(pose, phase, back_v=0)
+    D, m, _ = C._jr_design("farmer", 0, False)
+    D["front"] = C._hooks(C._jr_items(D, pose, None, phase, coins))
+    inner, _ = C._figure(D, m, ps, expr or ps["expr"], C._fsign(f), True)
+    return C._wrap_out(inner, x, y, s, f, f"jericho_folk-farmer0-{pose}-bare")
+
+
 def farmer_draw(key):
     _, pose, f, expr, phase, coins = key
-    item = None if pose == "receive" else "hoe"
     return long_shadow(X_F, YG) + C.ground_shadow(X_F, YG, 1.0, width=110, opacity=0.2) + \
-        warm(C.jericho_folk(X_F, YG, 1.0, f, kind="farmer", pose=pose, expr=expr, phase=phase, item=item, coins=coins))
+        warm(farmer_bare(X_F, YG, 1.0, f, pose, expr=expr, phase=phase, coins=coins))
+
+
+def palm_trunk_edge(h, side=-1):
+    """Stage point on the edge (side -1 left, +1 right) of PALM's trunk, h px above its foot (props._jr_palm geometry)."""
+    px, py, k = PALM
+    H = 820.0
+    best = None
+    for i in range(201):
+        t = i / 200
+        u = 1 - t
+        cy = 2 * u * t * (-H * 0.55) + t * t * (-H)
+        if best is None or abs(-cy * k - h) < abs(-best[1] * k - h):
+            best = (2 * u * t * 10, cy, t)
+    cx, cy, t = best
+    return px + (cx + side * (30 - 10 * t)) * k, py + cy * k
+
+
+def palm_svg(sway):
+    px, py, k = PALM
+    return doc(golden(C.ground_shadow(px, py, k * 1.4, width=110, opacity=0.2) +
+                      PR.date_palm(px, py, k, 1, height=1.0, lean=0.0, sway=sway, time=EVE, seed=21)))
+
+
+def hoe_svg():
+    """The farmer's hoe leaning against the left side of the palm's trunk, its blade up (the library's colours)."""
+    tx, ty = palm_trunk_edge(206, -1)
+    a, b = (tx - 96, PALM[1] + 8), (tx - 3, ty)
+    ln = math.hypot(b[0] - a[0], b[1] - a[1])
+    d = ((b[0] - a[0]) / ln, (b[1] - a[1]) / ln)
+    n = (d[1], -d[0])
+    k = 0.965
+    blade = [b, (b[0] + n[0] * 34 * k, b[1] + n[1] * 34 * k),
+             (b[0] + n[0] * 30 * k - d[0] * 14 * k, b[1] + n[1] * 30 * k - d[1] * 14 * k),
+             (b[0] - d[0] * 10 * k, b[1] - d[1] * 10 * k)]
+    shaft = f"M{f1(a[0])},{f1(a[1])} L{f1(b[0])},{f1(b[1])}"
+    body = (f'<path d="{shaft}" stroke="{INK}" stroke-width="{12.6 * k:.1f}" stroke-linecap="round" fill="none"/>'
+            f'<path d="{shaft}" stroke="#a0683e" stroke-width="{7 * k:.1f}" stroke-linecap="round" fill="none"/>'
+            f'<path d="M{f1(a[0] + 2)},{f1(a[1] - 6)} L{f1(b[0] + 1)},{f1(b[1] + 8)}" stroke="#c58c5a" stroke-width="2" '
+            f'stroke-linecap="round" fill="none" opacity="0.7"/>'
+            f'<path d="M' + " L".join(f"{f1(x)},{f1(y)}" for x, y in blade) + f' Z" fill="#8a8f8a" stroke="{INK}" '
+            f'stroke-width="{2.6 * k:.1f}" stroke-linejoin="round"/>'
+            f'<ellipse cx="{f1(a[0] - 6)}" cy="{f1(a[1] + 2)}" rx="26" ry="5" fill="#5a3426" opacity="0.18" filter="url(#soft)"/>')
+    return doc(warm(f'<g filter="url(#wobble-fine)">{body}</g>'))
 
 
 def kid_key(i, pose="smile", expr=None, phase=0.0):
@@ -237,6 +292,8 @@ def build(ctx):
     sway = lambda t: 1.0 + math.sin(2 * math.pi * (t + 0.4) / 4.6)
     sc.add("grove_mid", [grove_svg("mid", -0.3), grove_svg("mid", 0.0), grove_svg("mid", 0.3)], z=2, seed=7,
            frame_at=sway)
+    sc.add("palm", [palm_svg(-0.3), palm_svg(0.0), palm_svg(0.3)], z=2.55, seed=15, frame_at=sway)
+    sc.add("hoe", hoe_svg(), z=4.4, seed=17)
     sc.add("sun_glow", sun_glow_svg(), z=2.6, wc=0, blend="screen", seed=10,
            motion=lambda t: Tf(alpha=0.62 + 0.06 * math.sin(2 * math.pi * t / 6.1)))
     sc.add("rake", light_svg(), z=2.5, wc=0, blend="screen", seed=9,
@@ -316,12 +373,13 @@ def build(ctx):
     w.mots.append(breath((X_W, YG), g0, 3.2, 0.010, 0.4))
     w.build(sc)
 
-    # ---- the farmer: at work under the palms, turns, walks over, is paid back
+    # ---- the farmer: resting by his palm (his hoe leaning on it), watches, walks over empty-handed, is paid back
     ft = Track(X_F, YG)
     fx0, fy0, fk0 = F_START
     ft.to(0, 0, fx0, fy0, fk0)
     f = Fig("farmer", farmer_draw, (X_F, YG), 4.5, s=1.0, seed=45, track=ft, docf=doc)
-    f.cut(0, farmer_key("stand", -1, "kind"))
+    f.cut(0, farmer_key("stand", 1, "kind"))
+    f.cut(snap(t_give + 0.3), farmer_key("stand", 1, "surprised"), dip=False)    # Zacchaeus giving money away!
     t_turn = snap(t_qian + 0.06)
     f.cut(t_turn, farmer_key("walk_a", 1, "happy"), depth=4)
     x_arr = X_F + 3.0                                           # walk_b front foot (near, +20) stays planted into 'receive'

@@ -34,7 +34,7 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.nativity.scenes.s01_title import Fig, beat, breath, dip, doc, hop, keyed, snap
 from stories.noah.scenes.s01_title import f1
-from stories.zacchaeus.scenes.s01_title import EX, Confetti, Patch
+from stories.zacchaeus.scenes.s01_title import EX, Confetti, Patch, safe_camera, stepped
 
 INK = P["ink"]
 
@@ -51,7 +51,7 @@ FLOAT = (640, 0.72)                 # the parade float: drawn at this x, scale
 
 def float_dx(t):
     """The float rolls in from beyond the left edge (off-screen during the dissolve), slows down and glides on."""
-    return -820 + 738 * (1 - math.exp(-t / 2.5)) + 14.0 * t
+    return -1040 + 958 * (1 - math.exp(-t / 2.5)) + 14.0 * t
 
 
 # ================================================================== drawings
@@ -148,6 +148,9 @@ def balloon_svg(j):
     out += PR._p(f"M{f1(cx - 6 * k)},{f1(cy + 37 * k)} L{f1(cx + 6 * k)},{f1(cy + 37 * k)} L{f1(cx)},{f1(cy + 46 * k)} Z", col, 2.2 * k)
     out += PR._ell(cx - 10 * k, cy - 14 * k, 7 * k, 10 * k, "#fffaf0", 0, extra='opacity="0.7"')
     return doc(S.g(out, filter="wobble-fine")), (fx + bx_ * 0.6 * k, fy - 120 * k)
+
+
+NCB = 8                             # crowd arm-bob drawings per loop (phones and flags)
 
 
 def crowd_people(seed=5):
@@ -403,16 +406,17 @@ def build(ctx):
             if not grp:
                 continue
             ph0 = (g * 0.37 + r * 0.21) % 1
-            frames = [crowd_group_svg(grp, (k / 4 + ph0) % 1) for k in range(4)]
+            frames = [crowd_group_svg(grp, (k / NCB + ph0) % 1) for k in range(NCB)]
+            frames.append(frames[0])
             gx = sum(p[1] for p in grp) / len(grp)
             per = 2.2 + 0.37 * g + 0.5 * r
             sc.add(f"crowd{r}_{g}", frames, z=2 + (1 - r) * 0.5 + 0.01 * g, seed=100 + 10 * r + g, wc=0.8,
-                   frame_at=lambda t, ph0=ph0, per=per: 4 * ((t / per + ph0) % 1),
+                   frame_at=stepped(NCB, per, ph0, 0.05),
                    motion=lambda t, g=g, r=r, gx=gx, per=per: Tf(dy=2.2 * math.sin(2 * math.pi * (t / (per * 0.7) + 0.3 * g)),
                                                                    dx=1.5 * math.sin(2 * math.pi * (t / (per * 1.3) + 0.2 * g + r))))
     sc.add("haze", haze_svg(), z=3.0, wc=0)
-    sc.add("bunting", [bunting_svg(k / 4) for k in range(4)], z=8, seed=120, wc=0.6,
-           frame_at=lambda t: 3 * (0.5 + 0.5 * math.sin(2 * math.pi * t / 1.9)))
+    bfr = [bunting_svg(k / 8) for k in range(8)]
+    sc.add("bunting", bfr + [bfr[0]], z=8, seed=120, wc=0.6, frame_at=stepped(8, 2.0, 0.0, 0.05))
 
     # ---------------------------------------------------------------- sparkles, confetti
     sc.fx.append(Confetti(n=30, seed=4, speed=(55, 105), box=(0.0, 0.0, 1.0, 0.72)))
@@ -425,7 +429,7 @@ def build(ctx):
     c2 = Cam(1172, 712, 1400)                     # a little closer while he pouts and looks at us
     c3 = Cam(1040, 640, 1420)                     # risen and opened out: the float he can see now
     c4 = Cam(1046, 636, 1390)
-    sc.camera = M.cam_keys([(0, c0), (0.7, c0), (c_tip + 0.6, c1), (t_l0 + 0.2, c1), (t_one + 0.4, c2), (c_held - 0.2, c2),
+    sc.camera = safe_camera([(0, c0), (0.7, c0), (c_tip + 0.6, c1), (t_l0 + 0.2, c1), (t_one + 0.4, c2), (c_held - 0.2, c2),
                             (c_up + 0.6, c3), (T, c4)], "sine")
 
     # ---------------------------------------------------------------- sound

@@ -80,6 +80,41 @@ class Patch:
             setattr(PR, k, v)
 
 
+def cam_inside(c, w=W, h=H):
+    """True if the camera viewport lies inside the painted stage."""
+    hw, hh = c.w / 2, c.w * 9 / 32
+    return c.x - hw >= -0.01 and c.x + hw <= w + 0.01 and c.y - hh >= -0.01 and c.y + hh <= h + 0.01
+
+
+def clamp_cam(c, w=W, h=H):
+    """Keep the camera viewport inside the painted stage (no unpainted edges)."""
+    cw = min(c.w, w, h * 16 / 9)
+    hw, hh = cw / 2, cw * 9 / 32
+    return Cam(min(max(c.x, hw), w - hw), min(max(c.y, hh), h - hh), cw, c.rot)
+
+
+def safe_camera(keys, curve="sine", w=W, h=H):
+    """M.cam_keys with every keyframe asserted inside the stage and every in-between frame clamped to it."""
+    for tk, c in keys:
+        assert cam_inside(c, w, h), f"camera key at {tk:.2f}s leaves the {w}x{h} stage: {c}"
+    f = M.cam_keys(keys, curve)
+    return lambda t: clamp_cam(f(t), w, h)
+
+
+def stepped(n, per, ph=0.0, blend=0.08):
+    """frame_at for a looping flipbook of n drawings plus a repeat of drawing 0 at the end (n + 1 frames): each drawing
+    holds, then blends into the next over ``blend`` seconds only (no long double-exposed crossfades)."""
+    step = per / n
+    k = min(1.0, blend / step)
+
+    def fa(t):
+        u = ((t / per + ph) % 1.0) * n
+        i = math.floor(u)
+        fr = u - i
+        return i + (0.0 if fr < 1 - k else (fr - (1 - k)) / k)
+    return fa
+
+
 def tree_pts():
     return PR.sycomore_points(*TREE)
 
@@ -511,7 +546,9 @@ def build(ctx):
         bfig.at(snap(th + 0.42), bird("perch", 0.2, look=10))
     bfig.at(t_sing, bird("perch", 1.0, 1.0, -14)).at(snap(t_sing + 0.2), bird("perch", 0.9, 0.2, -10))
     bfig.at(snap(t_sing + 0.4), bird("perch", 1.0, 1.0, -16)).at(snap(t_sing + 0.64), bird("perch", 0.5, look=4))
-    bfig.at(snap(t_sing + 1.6), bird("preen", 0.2)).at(snap(t_sing + 2.3), bird("perch", 0.3, look=8))
+    bfig.at(snap(t_sing + 1.6), bird("preen", 0.2))
+    if t_sing + 2.3 < T - 1.2:                              # no pose change during the dissolve into s02
+        bfig.at(snap(t_sing + 2.3), bird("perch", 0.3, look=8))
 
     def bird_path(t):
         x, y = perch[0]
@@ -570,7 +607,7 @@ def build(ctx):
                z=10.1 + i * 0.01, motion=pop, wc=0)
 
     # ---------------- camera: a slow push-in toward the tree
-    sc.camera = M.cam_keys([(0, Cam(W / 2, H / 2, W * 0.985)), (T, CAM_END)], "sine")
+    sc.camera = safe_camera([(0, Cam(W / 2, H / 2, W * 0.985)), (T, CAM_END)], "sine")
 
     # ---------------- sparkle / light
     sc.fx.append(FX.sparkles((300, 270, 1080, 460), count=7, t0=t_done, color=(255, 238, 196), size=(9, 16),

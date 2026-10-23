@@ -1549,7 +1549,7 @@ def tree(c):
 def call(c):
     """The procession (B-flat, 2/4: soft pizzicato steps, harp, the darbuka's slow taps); a hush on '停住了' (a last
     pluck, a triangle, one high string note); warm E-flat add9 on '他抬起头' (strings swelling, the harp rolled); the
-    call on the horn under '撒该，快下来' (his tune made lyrical, B-flat); G7 on '撒该吓了一跳': the jolt (a xylophone
+    call on the horn under '撒该，快下来' (his tune made lyrical, B-flat); G7 on '他吓了一跳': the jolt (a xylophone
     'boing', a vibraslap) and the branch wobbling (a koto tremolo); C minor on '耶稣认识我': his head questioning on the
     clarinet, A-flat, F7sus4; B-flat on '他高兴极了': a xylophone chord as his arms go up, a falling scale as he slides
     down the trunk (a plucked plop as he lands), then his tune's pop and zig-zag home, with claps."""
@@ -1557,7 +1557,7 @@ def call(c):
     t_stop = c.at("停住了")
     t_up = c.at("他抬起头")
     t_call = c.gap(c.find("撒该，快下来"))
-    t_jolt = c.gap(c.find("撒该吓了一跳"))
+    t_jolt = c.gap(c.find("他吓了一跳"))
     t_ques = c.gap(c.find("耶稣认识我"))
     t_joy = c.gap(c.find("他高兴极了"))
     w = c.seg(0, t_stop, 2, "2/4", "Bb major", nominal=86, label="call-walk")
@@ -1580,7 +1580,7 @@ def call(c):
     st.sync("'停住了': he stops (a hush)", 0, t_stop)
     u.sync("'他抬起头': warm E-flat", 0, t_up, kind="change")
     k.sync("'撒该，快下来': the call (B-flat)", 0, t_call, kind="change")
-    jl.sync("'撒该吓了一跳': G7", 0, t_jolt, kind="change")
+    jl.sync("'他吓了一跳': G7", 0, t_jolt, kind="change")
     qu.sync("'耶稣认识我': C minor", 0, t_ques, kind="change")
     j.sync("'他高兴极了': joy (B-flat)", 0, t_joy, kind="change")
     # 'Jesus came to the sycamore': the procession, soft
@@ -1623,8 +1623,8 @@ def call(c):
     lv(k, ["harp"], -17)
     k.expr(STR, [(0, -21), (8, -22)])
     # 'Zacchaeus jumped': G7, the jolt, the branch wobbles
-    t_j = voice_at(c, "撒该吓了一跳")
-    t_xia = chars(c, "撒该吓了一跳", "吓")
+    t_j = voice_at(c, "他吓了一跳")
+    t_xia = chars(c, "他吓了一跳", "吓")
     t_x = t_xia[0] if t_xia else t_j + 0.3
     wob = pick_times(pics(c, "whoosh"), t_jolt - 0.2, t_ques - 0.2) or \
         pick_times(pics(c, "cloth"), t_jolt - 0.2, t_ques - 0.2)
@@ -2242,7 +2242,7 @@ REQUIRED_HITS = [
     ("s06_call", "停住了", "phrase", "hit"),                        # the hush
     ("s06_call", "他抬起头", "phrase", "change"),                   # warm E-flat
     ("s06_call", "撒该，快下来", "gap", "change"),                  # the call (B-flat)
-    ("s06_call", "撒该吓了一跳", "gap", "change"),                  # G7
+    ("s06_call", "他吓了一跳", "gap", "change"),                  # G7
     ("s06_call", "耶稣认识我", "gap", "change"),                    # C minor
     ("s06_call", "他高兴极了", "gap", "change"),                    # joy (B-flat)
     ("s07_grumble", "哼", "line", "hit"),                           # hmph!
@@ -2302,7 +2302,7 @@ PICTURE_HITS = [
     ("s05_tree", "cloth", "撒该爬呀爬", 4, 0.0, "hit", "the hoist onto the sitting branch"),
     ("s05_tree", "cloth", "撒该爬呀爬", 4, 0.0, "change", "the hoist: B-flat at the top of the tree"),
     ("s05_tree", "cloth", "嘿嘿", 0, 0.0, "hit", "'嘿嘿': the twig pushed aside (a muted-trumpet giggle)"),
-    ("s06_call", "whoosh", "撒该吓了一跳", 0, 0.0, "hit", "the jolt (a xylophone boing)"),
+    ("s06_call", "whoosh", "他吓了一跳", 0, 0.0, "hit", "the jolt (a xylophone boing)"),
     ("s06_call", "sparkle", "他高兴极了", 0, 0.0, "hit", "both arms up, bouncing (a xylophone chord)"),
     ("s06_call", "thud", "他高兴极了", 0, 0.0, "hit", "he lands at the foot of the tree (a plucked plop)"),
     ("s08_promise", "cloth", None, 0, 0.0, "hit", "he stands up (a pluck)"),

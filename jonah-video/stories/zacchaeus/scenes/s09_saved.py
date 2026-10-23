@@ -17,12 +17,13 @@ Beats; nothing is hard-coded to the take). Times are for the current take:
                 heart rises over him (sparkle); the disciples smile
   '我来' 12.65   Jesus raises his hand (sit_bless) and the camera draws back to the whole table; '就是要找到' 13.45 he
                 speaks to everyone with open arms
-  '撒该想看看耶稣' 17.65  the inset pops up above the table (pop): Zacchaeus in the tree; on '看看' 18.36 he peeks out,
+  '撒该想看看耶稣' 17.65  the inset pops up above the table (pop): Zacchaeus in the tree; on '看看' 18.24 he peeks out,
                 Jesus walks along the road below (planted-foot steps) and stops under the tree
-  '也在找撒该' 20.59  Jesus looks up; on '撒该' 21.65 Zacchaeus beams
-  '就像牧羊人' 22.69  the picture iris-opens into the moonlit hills: the shepherd carries the little lamb home (carry walk,
-                planted feet), a lit window waits on the far hill
-  '小羊' 25.05   the lamb nuzzles his cheek, a little heart (bleat)
+  '也在找撒该' 20.19  Jesus looks up; on '撒该' 20.96 Zacchaeus beams
+  '就像牧羊人' 21.97  a crisp iris opens the picture (from the sky beside Jesus, never a face) onto the moonlit
+                hills, first the lit window on the far hill, then the shepherd carrying the little lamb home (carry
+                walk, planted feet)
+  '小羊' 24.23   the lamb snuggles against his cheek, eyes closed, a little heart (bleat)
   end           he stands still with the lamb; everyone at the table smiles: a calm last frame for the page turn
 """
 import math
@@ -309,7 +310,7 @@ def build(ctx):
     sc.add("tree_front", tree_front_svg(), z=30.6, motion=pin, seed=64)
     # picture 2: the shepherd carrying the lamb home, iris-opening inside the circle on '就像'
     t_r0 = snap(t_jx - 0.04)
-    t_r1 = t_r0 + 0.65
+    t_r1 = t_r0 + 0.8
     n_walk = 7
     t_s0 = t_r0 + 0.1
     t_s1 = snap(min(t_xy - 0.3, T - 1.8))
@@ -330,24 +331,31 @@ def build(ctx):
     t_nz = snap(max(t_xy + 0.05, t_st + 0.12))
     sh_frames.append(night_frame_svg(xs[-1], "carry_stand", nuzzle=1.0))
     sh_ents.append((t_nz, len(sh_frames) - 1))
-    sh_frames.append(night_frame_svg(xs[-1], "carry_stand", nuzzle=0.4))
-    sh_ents.append((snap(min(t_nz + 0.55, T - 1.1)), len(sh_frames) - 1))
+    # (the lamb stays snuggled against his cheek, eyes closed, to the end: a calm last frame)
+
+    # a crisp iris opening from the clear sky right of Jesus in the tree picture (= the hill by the lit house in the
+    # night picture), never from a face. The compositor measures frac against the layer crop's farthest corner from the
+    # iris centre; the crop is the circle's box, so convert a radius in px into frac.
+    icx, icy = cx + 105, cy + 60
+    maxd = math.hypot(r + abs(icx - cx), r + abs(icy - cy))
+    r_end = math.hypot(icx - cx, icy - cy) + r + 12
 
     def iris(t):
-        # the crop is the circle's box, so frac ~.76 already covers the whole picture (radius + soft edge)
-        f = 0.8 * M.progress(t, t_r0, t_r1, "sine") + (0.25 if t > t_r1 else 0.0)
-        return {"mode": "radial", "frac": f, "soft": 26, "cx": cx, "cy": cy}
+        f = r_end / maxd * M.progress(t, t_r0, t_r1, "inout") + (0.3 if t > t_r1 else 0.0)
+        return {"mode": "radial", "frac": f, "soft": 5, "cx": icx, "cy": icy}
     sc.add("night", sh_frames, z=31.0, frame_at=stepped([e[0] for e in sh_ents], [e[1] for e in sh_ents]),
            reveal=iris, motion=lambda t: Tf(alpha=1.0 if t >= t_r0 - 0.01 else 0.0), seed=65)
     hx2, hy2 = xs[-1] + 40, cy + 128 - 330 * S_SHEP
     t_h2 = snap(t_nz + 0.1)
 
+    h2d = max(1.0, min(1.6, T - 0.3 - t_h2))           # gone before the last 0.3 s
+
     def heart2(t):
         if t < t_h2:
             return Tf(alpha=0.0)
         s = 0.4 + 0.6 * M.progress(t, t_h2, t_h2 + 0.3, "back")
-        a = M.progress(t, t_h2, t_h2 + 0.15, "sine") * (1 - M.progress(t, t_h2 + 1.1, t_h2 + 1.6, "sine"))
-        return Tf(dy=-36 * M.progress(t, t_h2, t_h2 + 1.6, "out"), sx=s, sy=s, px=hx2, py=hy2, alpha=a)
+        a = M.progress(t, t_h2, t_h2 + 0.15, "sine") * (1 - M.progress(t, t_h2 + h2d * 0.68, t_h2 + h2d, "sine"))
+        return Tf(dy=-36 * M.progress(t, t_h2, t_h2 + h2d, "out"), sx=s, sy=s, px=hx2, py=hy2, alpha=a)
     sc.add("lamb_heart", idoc(heart_markup(hx2, hy2, 14, fill="#ef8f9a")), z=31.2, wc=0, motion=heart2)
     sc.add("ring_front", ring_front_svg(), z=31.9, motion=pin, seed=66)
     sc.fx.append(gfx(FX.sparkles, g0, t0=t_r1, t1=T + 2, rect=(cx - 150, cy - 170, cx + 160, cy - 40), count=6,

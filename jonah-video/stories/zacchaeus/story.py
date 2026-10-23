@@ -50,7 +50,7 @@ NO_BREAK = ["耶稣", "撒该", "耶利哥", "罗马"]  # read in one breath (�
 # optional lead_in / tail seconds, and lines: (speaker, text[, pause_after_s]).
 SCENES = [
     {
-        "id": "s01_title", "mood": "title", "lead_in": 1.6, "tail": 2.4,
+        "id": "s01_title", "mood": "title", "lead_in": 1.6, "tail": 2.8,
         "note": "Title page: a big sycamore-fig tree by a dusty road in Jericho, palms behind, a little man peeking "
                 "out from its leaves with a big smile; warm golden light, a hazy turquoise sky.",
         "lines": [("N", "圣经绘本：撒该爬上桑树。")],
@@ -114,7 +114,7 @@ SCENES = [
         "lines": [
             ("N", "耶稣走到桑树下面，停住了。他抬起头，看着撒该，说："),
             ("Z", "撒该，快下来！今天我要住在你家里。"),
-            ("N", "撒该吓了一跳。"),
+            ("N", "他吓了一跳。"),
             ("S", "耶稣认识我？他还要到我家去？"),
             ("N", "他高兴极了，赶快爬下来，欢欢喜喜地接待耶稣。"),
         ],
@@ -152,7 +152,7 @@ SCENES = [
             ("Z", "今天，救恩到了这一家！"),
             ("N", "就是说：上帝救了撒该！撒该也是上帝家里的人。"),
             ("Z", "我来，就是要找到走丢的人，把他们救回来。"),
-            ("N", "撒该想看看耶稣，原来耶稣也在找撒该！就像牧羊人，去找走丢的小羊。"),
+            ("N", "你看，撒该想看看耶稣，原来耶稣也在找撒该！就像牧羊人，去找走丢的小羊。"),
         ],
     },
     {

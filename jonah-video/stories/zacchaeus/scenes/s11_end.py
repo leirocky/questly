@@ -34,7 +34,7 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.nativity.scenes.s01_title import Fig, Twinkle, beat, breath, dip, hop, keyed, snap
 from stories.noah.scenes.s01_title import f1, heart_markup
-from stories.zacchaeus.scenes.s01_title import EX
+from stories.zacchaeus.scenes.s01_title import EX, safe_camera
 
 INK = P["ink"]
 
@@ -377,13 +377,13 @@ def build(ctx):
     c1 = Cam(1386, 1036, 1120)                    # the book, the boy's finger, their faces
     c2 = Cam(1372, 1010, 1360)                    # the two of them on the sofa
     c3 = Cam(1378, 1016, 1200)                    # the hug
-    c4 = Cam(1760, 930, 1780)                     # opened out to the front door
+    c4 = Cam(1748, 930, 1780)                     # opened out to the front door (right edge 2638 < 2640)
     c5 = Cam(1700, 950, 1560)                     # the boy, dad and the door; the end card on the wall above them
     c6 = Cam(1700, 952, 1536)
     cq = Cam(1420, 1012, 1250)                    # the boy's face while he thinks and smiles at us
-    sc.camera = M.cam_keys([(0, c0), (t_friend + 0.3, c0), (t_zac + 0.3, c1), (t_l0 + 0.2, c1), (t_nomatter + 0.9, c2),
+    sc.camera = safe_camera([(0, c0), (t_friend + 0.3, c0), (t_zac + 0.3, c1), (t_l0 + 0.2, c1), (t_nomatter + 0.9, c2),
                             (t_wants - 0.3, c2), (t_wants + 0.6, c3), (t_kid - 0.2, c3), (t_home - 0.1, c4),
-                            (t_say - 0.1, c4), (t_end + 0.1, cq), (t_end + 0.7, cq), (t_end + 2.2, c5), (T, c6)], "sine")
+                            (t_say - 0.1, c4), (t_end + 0.1, cq), (t_end + 0.7, cq), (t_end + 2.2, c5), (T, c6)], "sine", W, H)
 
     # ---------------------------------------------------------------- sound
     sc.sfx("night", 0, dur=T, gain_db=-30, fade_in=0.8, fade_out=1.6)
