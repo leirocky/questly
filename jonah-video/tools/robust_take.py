@@ -1,11 +1,12 @@
 """Retake one line (delete its .cache/tts wav and takes/ flac first, or this overwrites the cache). Generate takes of one line until the raw clip passes every check AND the processed line (as the voice stage makes
 it) is heard with every name right, by toneless pinyin; save it to the line's cache path.
-PB_STORY=<story> .venv/bin/python tools/robust_take.py <story> <speaker> 'text' [--exact] [--context]"""
+PB_STORY=<story> .venv/bin/python tools/robust_take.py <story> <speaker> 'text' [--exact] [--context] [--speed S]"""
 import sys; sys.path.insert(0, '.')
 import numpy as np, soundfile as sf, voice.tts as T
 from scipy import signal
 spk, text = sys.argv[2], sys.argv[3]; v = T.VOICES[spk]
 exact = '--exact' in sys.argv   # also: the processed line's toneless pinyin must equal the script's (星 heard as 心)
+speed = float(sys.argv[sys.argv.index('--speed') + 1]) if '--speed' in sys.argv else None   # e.g. 0.85: slow a rushed line
 context = '--context' in sys.argv   # also: names heard right with the neighbouring finished lines around it (撒该 can
                                     # pass alone and turn into 撒呆 between its neighbours)
 from pypinyin import lazy_pinyin
@@ -52,8 +53,9 @@ def in_context(y):
 def heard(y, sr):
     yp = np.concatenate([np.zeros(int(.3 * sr), np.float32), y, np.zeros(int(.3 * sr), np.float32)])
     return T.asr(yp, sr)[0]
-for n, (spd, steps) in enumerate([(v["speed"], 8), (v["speed"], 12), (v["speed"] - .03, 8), (v["speed"] + .03, 12),
-                                  (v["speed"], 16), (v["speed"], 10)] * 3):
+base = speed or v["speed"]
+for n, (spd, steps) in enumerate([(base, 8), (base, 12), (base - .03, 8), (base + .03, 12),
+                                  (base, 16), (base, 10)] * 3):
     a = tts.generate(T.tts_text(text, "zipvoice"), pt, px.tolist(), psr, spd, steps)
     x = np.asarray(a.samples, np.float32); sr = a.sample_rate
     bad, err = T._take_score(text, x, sr)
