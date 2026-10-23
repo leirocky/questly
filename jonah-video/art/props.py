@@ -1,5 +1,5 @@
-"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David, Noah, Joseph and Storm picture-book
-videos.
+"""Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David, Noah, Joseph, Storm and Nativity
+picture-book videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -959,6 +959,228 @@ RENDER COST (2112 x 1188 layer, uncached, measured): fishing_boat ~0.32 s (ark 0
 ~0.33 s, mustard_plant ~0.3 s; jesus ~0.22 s (joseph 0.22), disciples_group ~0.28 s (brothers_group 0.30). Keep the skies
 and lakes on static layers or small flipbooks; quantise every 0..1 option.
 
+12. NATIVITY FILM (Luke 1-2, Matthew 2)      sheets: python3 tools/props_sheet.py nativity_stable nativity_animals
+---------------------------------------             nativity_places nativity_sky nativity_journey nativity_items nativity_home
+                                                    (+ characters_nativity_group.png: people with the props)
+Person scale as everywhere (adult 330 px). Mary, Joseph, baby_jesus, toddler_jesus, the angels, the shepherds, the wise
+men, the townsfolk and the jumper boy are in art/characters.py (NATIVITY FILM). Everything here is a new design with this
+film's palette - deep starry-night blues (NAT_NIGHT), warm golden lamplight (LAMP, LAMP_GLOW), the gold of the star
+(STAR_GOLD, STAR_CORE), soft dawn and dusk (NAT_DAWN, NAT_DUSK). time='day' | 'dusk' | 'night' | 'dawn' (NAT_TIMES) tints
+buildings and land toward that light; lit things (lamps, windows, the star) stay warm. God is never drawn: his glory is
+light only (glory, heaven_light, the_star).
+THE STABLE AND THE MANGER
+stable(x, y, scale=1.0, facing=1, part='all', lamp=1.0, time='night', manger=True, seed=0)
+    Anchor: the floor at the middle of the doorway. The humble cave-stable of Bethlehem: a rocky hillside (rounded
+    boulders, soft strata, speckles; bushes and an olive tree on top) with a cave room inside - rough stone walls warmly lit
+    by the lamp, a straw floor strewn with straws, a hay pile, a wooden rail (the animal pen), a shelf with a jar and a
+    bowl, two doves asleep on a beam - and in front a timber frame: two posts, a lintel and a thatched lean-to roof with a
+    fringe, boulders at the jambs, and a clay oil lamp hanging on three cords from the lintel (STABLE_LAMP hook).
+    lamp 0..1 (the lamplight inside and a big warm glow), time tints the rock (night: blue-mauve; the inside stays warm).
+    manger=True draws the manger inside at STABLE_MANGER = (40, -30). BBox (-1100, -1300, 1110, 86) at scale 1 - use
+    scale 0.4-0.8 (the doorway STABLE_OPENING = (-640, -650, 640, 0) is ~4 adults wide, 2 tall).
+    part 'back' (hill, cave room, floor, manger) | 'front' (posts, lintel, roof, boulders, lamp + glow) | 'all'.
+    PEOPLE INSIDE (same x, y, scale, facing for every call): stable(part='back') -> animals, Joseph, Mary (back to front,
+    feet between STABLE_BACK_Y = -110 (the back wall's base) and 0) -> baby_jesus(*stable_points(...)['bed'], s) ->
+    manger(*stable_points(...)['manger'], s, part='front', time='day') (re-covers the baby's lower edge with the trough's
+    front board and hay) -> stable(part='front'). Suggested spots STABLE_SPOTS (local): mary (-150, -10), joseph (-360, -20),
+    ox (360, -50), donkey (-470, -60), shepherds (430, -6), door_left / door_right (+-560, 0). Mary kneel / lay_baby: see
+    characters (MARY_LAY_DX). Scale animals ~0.9 x the people's scale.
+stable_points(x, y, scale=1.0, facing=1) -> {'manger', 'bed' (baby_jesus anchor), 'lamp' (the flame), 'opening' (x0, top,
+    x1, floor), 'back_floor' (stage y of the back wall's base), and every STABLE_SPOTS name} in stage px.
+manger(x, y, scale=1.0, facing=1, hay=True, part='all', glow=0.0, time='night')
+    Anchor: bottom centre (floor). A wooden feeding trough (MANGER_W = 250) on crossed legs, plank front with pegs and a
+    rim, heaped soft hay with straws hanging over the edge. MANGER_BED = (0, -124): baby_jesus(state='in_manger') anchor.
+    BBox (-142, -161, 141, 10); glow 0..1 a soft golden light round the bed (-199, -261, 198, 10). hay=False: empty.
+    part 'back' (legs, the far board, the hay bed) | 'front' (the front board, rim, hanging tufts): BABY IN THE MANGER:
+    manger(part='back') -> baby_jesus(*manger_points(...)['bed'], s) -> manger(part='front'). Its height suits an adult
+    kneeling beside it (the rim ~ an adult's knee + 20 %).
+manger_points(x, y, scale=1.0, facing=1) -> {'bed', 'rim' [left, right]}.
+gift(x, y, scale=1.0, facing=1, kind='gold', open=0.0, glow=0.0)   Anchor: bottom centre. The wise men's treasures
+    (GIFT_KINDS): 'gold' an ornate golden casket with jewels, its domed lid hinged at the back (open 0..1 swings it up and
+    back: gold coins heap up inside) (-51, -93, 50, 2), open (-106, -147, 48, 2); 'frankincense' a round cream alabaster jar
+    with gold bands and jewels, its lid lifts off to the side, resin tears and a curl of sweet smoke (-43, -124, 42, 3);
+    'myrrh' a tall dark-red glass flask with gold bands and a jewelled stopper that lifts, a fragrant wisp (-34, -130, 33, 3).
+    glow 0..1 (strongest when open) a golden glow with twinkles: about (-119, -165, 118, 24). characters.wise_men holds them
+    (gift_open / gift_glow). Quantise open in steps of ~.2 ('他们打开宝盒').
+THE ANIMALS
+ox(x, y, scale=1.0, facing=1, pose='stand', phase=0.0, eyes='open')   Anchor: ground under the middle of the body. A
+    friendly chestnut-brown ox (OX colours): cream muzzle, short curved cream horns, a forelock, big kind eyes with lashes,
+    rosy cheeks. OX_POSES: 'stand' (-147, -291, 238, 2); 'walk' + phase (diagonal gait; walk_a / walk_b); 'look' head lowered
+    forward, gazing down at the manger (-147, -218, 252, 2); 'lie' lying with the legs folded, head up (-158, -262, 221, 7);
+    'lie_look' lying, head forward and down toward the baby (-158, -207, 244, 7); 'sleep' lying, eyes closed, z's
+    (-158, -215, 276, 7). eyes 'open' | 'closed' | 'happy'.
+donkey(..., saddle=None, bridle=False, eyes='open') and the poses 'lie', 'look', 'lie_look', 'sleep' (DONKEY_REST_POSES)
+    The grey donkey of section 10 (its default output is unchanged). 'look' standing, head lowered toward the manger
+    (-114, -233, 195, 2); 'lie' (-117, -259, 166, 7), 'lie_look' (-117, -208, 200, 7), 'sleep' (-117, -217, 240, 7) - pass
+    sacks=0 in the stable. saddle 'blue' (default look for Mary) | 'red' | 'green' | 'purple' | 'sand' (SADDLE_COLS): a
+    striped riding blanket with a fringe instead of the sacks; DONKEY_SEAT = (-12, -200) = mary(pose='ride') anchor.
+    bridle=True: a red halter with a lead rope hanging forward to DONKEY_LEAD = (240, -150) (joseph_carpenter 'lead').
+    BBox saddle + bridle (-114, -303, 243, 2). eyes 'open' | 'closed' | 'happy'.
+donkey_points(x, y, scale=1.0, facing=1, pose='stand', phase=0.0) -> {'seat' (follows the walk bob), 'lead'}.
+    THE JOURNEY RECIPE: donkey(dx, dy, s, f, pose='walk', phase=ph, saddle='blue', bridle=True) -> mary(*donkey_points(dx,
+    dy, s, f, 'walk', ph)['seat'], s, f, pose='ride', pregnant=True) -> joseph_carpenter(donkey_points(...)['lead'][0] -
+    characters.JOSEPH_LEAD_HAND[0]*s*f, dy, s, f, pose='lead', phase=ph). Walk ~87*scale per cycle (as section 10).
+camel(..., saddle=None)   saddle 'red' | 'green' | 'purple' (or any SADDLE_COLS name): a wise man's riding saddle on the
+    hump - a rich blanket with stripes, fringe and tassels, a wooden saddle frame with knobbed posts and a cushion (draw
+    with load=False). CAMEL_SEAT = (-8, -336) = wise_men(pose='ride') anchor; BBox (-138, -371, 304, 1).
+camel_points(x, y, scale=1.0, facing=1, pose='stand', phase=0.0) -> {'seat' (follows the walk bob), 'lead' (CAMEL_LEAD)}.
+sheep(..., pose='lie' | 'sleep' | 'look_up')   SHEEP_REST_POSES (animal_pair keeps using SHEEP_POSES): the night
+    flock: 'lie' resting, legs tucked (-95, -121, 105, 7); 'sleep' lying, head down, eyes closed, a small z
+    (-95, -150, 156, 7); 'look_up' standing, head raised to the sky (-95, -186, 97, 1). lamb=True works too
+    ((-64, -93, 76, 6) lying).
+dog(x, y, scale=1.0, facing=1, pose='sit', eyes='open')   Anchor: ground under the middle. A brown-and-white shepherds'
+    dog (a picture detail only). DOG_POSES: sit (-80, -146, 76, 9), stand / walk_a / walk_b (-95, -136, 115, 2), lie
+    (-114, -72, 130, 8), look_up (-80, -147, 75, 9).
+THE PLACES
+nazareth_house(x, y, scale=1.0, facing=1, view='exterior', time='day', light=0.0, light_x=260.0)
+    view='exterior'  Anchor: bottom centre of the front wall. Mary's small whitewashed cube house: a soft-blotched white
+                     wall on a stone plinth, a flat roof with beam ends and a low parapet, an outside stair on the left, an
+                     arched doorway with a teal door standing open (NAZARETH_DOOR = (-200, -330, -50, 0): an adult fits at
+                     scale >= 1), a window with teal shutters and a flower pot, a water jar by the door, a broom leaning on
+                     the wall, a vine. light 0..1 warm light in the door and window. BBox (-452, -484, 442, 8).
+    view='interior'  Anchor: the middle of the floor where people stand (the back wall's base is NAZARETH_BACK_Y = -170;
+                     the floor runs down to +430). A whitewashed room ~2200 x 1300 at scale 1 (scale ~1 fills the stage): a
+                     deep window with teal shutters (NAZARETH_WINDOW, the sky outside follows time, stars at night), an
+                     arched niche with an oil lamp (lit at dusk / night), a shelf of pots, a water jar in the corner, the
+                     broom against the wall, a basket of wool with a spindle, a low stool, a striped woven mat. light 0..1:
+                     the room fills with warm heavenly light and soft rays centred at light_x (local x, height -480) - the
+                     angel appears there (Luke 1:28).
+family_house(x, y, scale=1.0, facing=1, view='exterior', time='night', star_light=0.0, lamp=1.0)
+    The house in Bethlehem where the wise men found the child with Mary (Matthew 2:11) - not the stable.
+    view='exterior'  Anchor: bottom centre. A two-storey limestone house with blocks, a flat roof, an outside stair, an
+                     arched plank door under a vine, three arched lit windows (lamp 0..1). star_light 0..1 a golden glow on
+                     the roof where the star stops: draw the_star(x, y - 700*scale, ...) above it with beam_to the roof.
+                     BBox (-372, -602, 359, 5).
+    view='interior'  Anchor: the middle of the floor (back wall base FAMILY_BACK_Y = -160). A warm room: plaster walls over
+                     exposed stone, an arched alcove with a wine curtain, a shelf of pots, Joseph's saw and mallet on the
+                     wall, a small arched window (FAMILY_WINDOW) with the star in it, flagstones with a striped rug, a lamp
+                     on a stand (lamp 0..1), and a bench with a blue cushion on the left: FAMILY_SEAT = (-200, -64) (centre x,
+                     seat top). MARY ON THE BENCH: mary(x + (FAMILY_SEAT[0] + 50)*scale*facing, y, scale, facing,
+                     pose='sit_hold'). star_light 0..1: a beam of starlight from the window onto the floor in front of her.
+bethlehem_town(x0, x1, y, scale=1.0, time='dusk', part='all', seed=0, lit=None)
+    ABSOLUTE stage coordinates (no facing). part='back': the little town on its hill - far hills, flat-roofed houses (a
+    few domes, cypresses) climbing the hill in rows with lit windows (lit 0..1, default by time), a town wall with
+    crenellations and a lit gate, palms; y = the foot of the hill (the town rises ~400*scale). part='street': house fronts
+    along the back of a busy street - doorways with steps (warm light inside), striped awnings, hanging clay lamps, windows,
+    water jars, roof beams - their doors on the line y - 30*scale (~520 tall at scale 1), and the packed-earth street from
+    there down to y + 370*scale; people stand on the street at y .. y + 300*scale. 'all' = back with the street 300*scale
+    lower. THE BUSY STREET: bethlehem_town(part='back') higher up -> bethlehem_town(part='street') -> townsfolk_crowd(...)
+    (n 20-36, rows 3-4, pose 'walk' or 'squeeze') -> Joseph and Mary in front. Static layers (~1.2 s).
+inn(x, y, scale=1.0, facing=1, part='all', time='dusk', lamp=1.0, door=1.0, full=True, seed=0)
+    Anchor: bottom centre (the doorstep). The crowded inn: a two-storey stone building, a big arched doorway
+    (INN_DOOR = (-115, -340, 115, 0): the innkeeper stands in it) with warm light and crowded silhouettes inside, the door
+    leaf (door 0 closed .. 1 open inward), stone jambs and an arch, a hanging clay lamp, a sign with a little painted bed,
+    and (full=True) faces peeking from every upper window and travellers asleep under blankets on the roof with bundles
+    ('客店里，已经没有地方了'). BBox (-424, -860, 422, 3). part 'back' (building, doorway, door leaf) | 'front' (jambs,
+    arch, sign, lamp): inn(part='back') -> townsfolk(kind='innkeeper', pose='shake_head') in the doorway -> inn(part='front').
+THE FIELDS AT NIGHT
+night_hills(x0, x1, y, scale=1.0, part='all', fire=1.0, phase=0.0, fire_x=None, fold_x=None, town=True, time='night',
+            seed=0, bottom=None)
+    ABSOLUTE coordinates, y = the near ground line where the shepherds stand (sky not included: starry_sky above). The
+    fields outside Bethlehem: a far ridge with the little town's lit houses on it (town=True), a middle ridge with olive
+    trees, the near field (grass tufts, flowers, rocks) down to bottom (default y + 360*scale), a stone sheepfold at fold_x
+    (default 0.78 of the width; False = none) and the shepherds' fire at fire_x (default 0.38; False = none; fire 0..1,
+    phase flickers it) with a pool of warm light. part 'back' (ridges) | 'front' (field, fold, fire) | 'all': shepherds,
+    sheep and the angel go between back and front (or on top of 'all').
+campfire(x, y, scale=1.0, phase=0.0, fire=1.0, glow=True)   Anchor: the middle of the fire on the ground. A ring of
+    stones, crossed sticks, flickering flames (phase 0..1 loops: 3-4 phases at ~0.1 s), sparks drifting up and a warm glow.
+    BBox (-218, -191, 216, 104); glow=False (-89, -190, 90, 25).
+sheepfold(x, y, scale=1.0, facing=1, part='all', time='night')   Anchor: the middle of its floor. A round wall of stacked
+    stones with thorn branches on top and a gap toward the viewer (the gate). BBox (-372, -198, 376, 103). Sheep inside:
+    sheepfold(part='back') -> sheep -> sheepfold(part='front').
+THE SKY: STARS, THE STAR, THE GLORY
+starry_sky(x0, y0, x1, y1, density=1.0, twinkle=0.0, milky_way=True, time='night', seed=0, scale=1.0, moon=None,
+           progress=1.0)
+    ABSOLUTE box. This film's deep-blue sky: a rich gradient (NAT_NIGHT; 'dusk' violet-rose low sky, 'dawn' pale gold,
+    'day' no stars), ~230 stars per stage area (density) in three sizes - tiny dots, soft glowing dots, little four-pointed
+    sparkles - that twinkle with twinkle 0..1 (loop 4-6 frames), an optional soft Milky Way band, moon=(x, y) a crescent
+    with a halo, progress 0..1 the stars appearing one by one. ~1.2 s per full stage: render once / a small flipbook.
+the_star(x, y, scale=1.0, intensity=1.0, pulse=0.0, rays=True, beam=0.0, beam_to=None)
+    Anchor: the centre of the star (ABSOLUTE stage px; scale ~0.4-0.6). The star of Bethlehem: a bright golden star with
+    four long points (the lowest one longest), four short ones, a white-gold core, a big soft halo and long gentle rays.
+    intensity 0..1 (appearing / shining), pulse 0..1 (loop: breathing size, slowly turning rays), beam 0..1 a soft cone of
+    light down to beam_to=(x, y) - 'the star stopped over the house' (aim it at family_house's roof). BBox at scale 1
+    about (-244, -242, 242, 252) with rays (the halo reaches r 300).
+glory(x, y, scale=1.0, progress=1.0, width=1500, height=1100, rays=True, seed=0)
+    'The glory of the Lord shone around them' (Luke 2:9): a great dome of warm white-gold light round a group ON THE GROUND
+    (anchor = the ground point under its middle; the angel stands or hovers there), soft rays from above, a bright pool of
+    light on the ground and sparkles. ABSOLUTE stage px. Draw it behind the shepherds, sheep and angel (and in front of the
+    hills); progress 0..1 grows and brightens it ('忽然…上帝的光，照亮了四周': 0 -> 1 over ~0.6 s, 5-6 frames).
+heaven_light(x, y, scale=1.0, progress=1.0, width=1800, seed=0)
+    A great light opening in the night sky (ABSOLUTE, anchor = the centre of the opening): golden-white light, soft rays,
+    sparkles and a ring of parting clouds lit on their inner edges; progress 0..1 opens it (radius width/2). Put
+    characters.angel_choir in front of it (Luke 2:13). ~2 s per frame (blur): render the few key values only.
+day_night_sky(x0, y0, x1, y1, t=0.0, stars=True, seed=0, scale=1.0, horizon=None)
+    'They walked for many days': one sky running through a whole day as t goes 0 -> 1 - dawn (0), day with the sun high
+    (.25), a violet-gold evening (.5), the starry night with the crescent moon high (.75), dawn again (1) - while a smiling
+    sun and then the moon travel along an arc over the horizon line (default y1). Loop t (8-12 frames per day).
+THE JOURNEYS AND THE EAST
+journey_road(x0, x1, y, scale=1.0, time='day', seed=0, town=True, bottom=None)
+    ABSOLUTE coordinates (sky not included: day_night_sky above). The long road over the hills to Bethlehem: three rows of
+    rolling hills, grass strokes and little flowers, a winding road from the near bottom-left (y + 230*scale) to the far
+    hills (y - 290*scale), olive trees, cypresses and rocks along it, and (town=True) the little town on the far hill.
+road_points(x0, x1, y, scale=1.0, n=11) -> [(x, y, k), ...] along journey_road from the near end (t=0) to the far end: k is
+    the perspective scale there (figure scale * k). Walk the travellers along it.
+desert_dunes(x0, x1, y, scale=1.0, time='day', seed=0, bottom=None, oasis_x=None)
+    ABSOLUTE coordinates (sky not included). Four rows of golden dunes with sunny faces and shaded lee faces and wind
+    ripples; oasis_x puts a palm oasis on the second row. Camels with riders walk on the front rows.
+oasis(x, y, scale=1.0, facing=1, time='day')   Anchor: the middle of the pool. A pool with three date palms, grass and reeds
+    (~520 px wide at scale 1; BBox (-420, -613, 354, 51)).
+observatory(x, y, scale=1.0, facing=1, time='night', part='all', lamp=1.0)
+    Anchor: the middle of the roof-terrace floor (OBSERVATORY_FLOOR = 0); the wise men stand at y .. y - 60*scale. The wise
+    men's rooftop observatory in the East: a terrace with a parapet glazed in blue with gold rosettes, a stepped tower with a
+    stair, a brass armillary sphere on a pedestal, a table with a star chart, a scroll, an astrolabe and a lit oil lamp
+    (lamp 0..1), cushions. part 'back' | 'front' (the low front parapet, ~110 px, in front of their shins). ~2000 x 1000 at
+    scale 1 (use 0.5-0.8). the_star rising over it ('他们看见天上出现了一颗特别的星星').
+astrolabe(x, y, scale=1.0, rot=0.0)   Anchor: centre. A brass astrolabe with its hanging ring (-73, -101, 72, 71).
+star_chart(x, y, scale=1.0, rot=0.0)   Anchor: centre. An open star chart with constellations and the new star
+    (-105, -72, 103, 71).
+SMALL THINGS
+hanging_lamp(x, y, scale=1.0, lit=1.0)   Anchor: the hook. A clay oil lamp on three cords, flame + glow (lit 0..1). BBox
+    (-95, -10, 135, 188); unlit (-51, -7, 47, 114).
+broom(x, y, scale=1.0, rot=0.0)   Anchor: the bristle tips. Mary's palm-fibre broom (-32, -259, 31, 6).
+water_jar(x, y, scale=1.0, facing=1, color=None)   Anchor: bottom centre. A tall clay jar with one handle (-39, -107, 43, 3)
+    (mary(pose='carry_jar') carries it).
+THE MODERN LIVING ROOM (opening and ending)
+living_room(x0, x1, y, scale=1.0, glow=0.6, window_x=None, time='night', seed=0, bottom=None)
+    ABSOLUTE coordinates, y = the floor line where the child stands (the wall meets the floor 40*scale above it). Warm
+    wallpaper with little stars, a skirting board, a window with green curtains showing the night sky and moon (window_x,
+    default 0.22 of the width; time 'night' / 'dusk' / 'day'), a framed little painting of a starry hill, a wooden floor
+    with a round red-and-gold rug, a warm lamp glow (glow 0..1).
+christmas_tree(x, y, scale=1.0, facing=1, lights=1.0, twinkle=0.0, star=1.0, top_star=True, ornaments=1.0, presents=False)
+    Anchor: bottom centre of the tub. Four soft green tiers with scalloped edges, golden tinsel swags with little coloured
+    lights (lights 0..1, twinkle 0..1 loops), red / gold / blue / cream baubles (ornaments 0..1 shows them one by one) and a
+    gold star on top (CHRISTMAS_TREE_TOP = (0, -432)) that glows with star 0..1 (top_star=False leaves it off: the child
+    puts it up). presents=True adds presents beside the tub. BBox (-192, -543, 192, 2) (star 0: top -468); ~1.9 x the jumper
+    boy at the same scale. CHRISTMAS_TREE_HOOKS: free branch tips for a bauble (child(pose='decorate')).
+presents(x, y, scale=1.0, n=3, seed=0)   Anchor: bottom centre. Wrapped boxes with ribbons and bows (n 1..5): 3 (-126, -146,
+    101, 2), 5 (-169, -155, 169, 2).
+calendar(x, y, scale=1.0, circled=1.0, month='12月', day=25, first_weekday=2, days=31)   Anchor: the nail it hangs from. A
+    wall calendar page (red header '12月', the days 1-31, weekends in red; first_weekday 0 = Sunday, 2 = Tuesday as in
+    December 2026) with 25 circled in red - circled 0..1 draws the circle (a little gold twinkle at 1). Text is LXGW WenKai,
+    not wobbled. BBox (-133, -6, 132, 342).
+nativity_set(x, y, scale=1.0, facing=1, figures=None, glow=0.0)   Anchor: bottom centre. The child's little wooden nativity
+    set: a toy stable with a pitched roof and hay and painted peg-doll figurines (figures=None: all of NATIVITY_SET_SPOTS -
+    star, angel, ox, donkey, Joseph, Mary, the baby in the manger, a shepherd, a sheep, a wise man - or a tuple of the names
+    placed so far). glow 0..1 a soft golden light inside. BBox (-228, -408, 221, 22); use ~0.45 next to the child.
+nativity_figure(x, y, scale=1.0, facing=1, kind='baby')   Anchor: bottom centre. One figurine (NATIVITY_FIGURES: mary,
+    joseph, baby (= figure), angel, shepherd, sheep, ox, donkey, star, gift, magus); people ~140-170 px at scale 1 (Mary
+    (-36, -136, 35, 5)). child(pose='place', item=...) holds one.
+Constants: NAT_NIGHT, NAT_DUSK, NAT_DAWN, NAT_DAY, NAT_TIMES, LAMP, LAMP_GLOW, STAR_GOLD, STAR_CORE, ROCK (+ _DARK /
+_LIGHT), STRAW, STRAW_DARK, WHITEWASH, NAT_WOOD (+ _DARK / _LIGHT), LIMESTONE, OX, TREE_GREEN (+ _DARK / _LIGHT),
+PRESENT_COLS, GOLD_BRIGHT, GOLD_DEEP, JEWEL_RED, JEWEL_BLUE, JEWEL_GREEN (colours); MANGER_BED, MANGER_W, STABLE_OPENING,
+STABLE_BACK_Y, STABLE_LAMP, STABLE_MANGER, STABLE_SPOTS, DONKEY_SEAT, DONKEY_LEAD, DONKEY_REST_POSES, SADDLE_COLS,
+CAMEL_SEAT, OX_POSES, DOG_POSES, SHEEP_REST_POSES, GIFT_KINDS, NAZARETH_DOOR, NAZARETH_WINDOW, NAZARETH_BACK_Y,
+FAMILY_SEAT, FAMILY_BACK_Y,
+FAMILY_WINDOW, INN_DOOR, OBSERVATORY_FLOOR, CHRISTMAS_TREE_TOP, CHRISTMAS_TREE_HOOKS, NATIVITY_SET_SPOTS,
+NATIVITY_FIGURES.
+RENDER COST (2112 x 1188 layer, uncached, measured with the same machine: jesus 0.25 s, fishing_boat 0.37 s, night_sky +
+calm_lake 1.3 s): mary / joseph_carpenter / shepherds / wise_men ~0.25 s, angel (glow) 0.4 s, angel_choir (9) 0.4 s,
+townsfolk_crowd (14) 0.3 s, stable 1.4 s, starry_sky 1.2 s, the_star 0.7 s, glory 1.5 s, heaven_light 2.2 s, night_hills
+0.6 s, bethlehem_town 1.2 s, inn 0.5 s, nazareth_house interior 1.7 s, family_house interior 1.1 s, journey_road + sky
+0.45 s, desert_dunes 1.0 s, observatory 0.7 s, living_room 1.5 s, christmas_tree 0.4 s. Keep the skies, rooms, the stable
+and the towns on static layers; quantise every 0..1 option into a small flipbook.
+
 Helpers / constants
 -------------------
 local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
@@ -971,7 +1193,8 @@ LION_POSES, DEN_FLOOR_Y, DEN_INNER, DEN_OPENING, DEN_HOLE, DEN_STONE_R, WINDOW_O
 SHUTTER; in_den_hole(...).
 Contact sheets of everything: ``python3 tools/props_sheet.py [fish ship items castor plants creatures
 buildings daniel david_items ... noah_ark noah_animals noah_pairs noah_weather noah_items joseph_items
-joseph_animals joseph_egypt storm_boat storm_lake storm_weather storm_items storm_story]``
+joseph_animals joseph_egypt storm_boat storm_lake storm_weather storm_items storm_story nativity_stable
+nativity_animals nativity_places nativity_sky nativity_journey nativity_items nativity_home]``
 -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
 """
 import hashlib
@@ -4987,6 +5210,8 @@ _SHEEP = [dict(wool="#f6efe0", face="#dcb89c", leg="#6b5040"), dict(wool="#f3ead
 
 
 def _sheep(variant=0, pose="stand", lamb=False):
+    if pose in ("lie", "look_up", "sleep"):          # Nativity film (SHEEP_REST_POSES)
+        return _sheep_rest(variant, pose, lamb)
     if pose not in SHEEP_POSES:
         raise ValueError(f"sheep: unknown pose {pose!r}; choose from {SHEEP_POSES}")
     c = _SHEEP[variant % 4]
@@ -8075,8 +8300,11 @@ def _camel_load():
     return out
 
 
-def camel(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, load=True, bridle=True, eyes="open"):
-    """A caravan camel (see module doc, section 10)."""
+def camel(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, load=True, bridle=True, eyes="open", saddle=None):
+    """A caravan camel (see module doc, section 10); Nativity film: saddle='red' / 'purple' / 'green' (a wise
+    man's riding saddle, section 12)."""
+    if saddle is not None:
+        return _camel_saddled(x, y, scale, facing, pose, phase, load, bridle, eyes, saddle)
     if pose in ("walk_a", "walk_b"):
         pose, phase = "walk", (0.0 if pose == "walk_a" else 0.5)
     if pose not in ("stand", "walk"):
@@ -8127,8 +8355,11 @@ def _donkey(pose="stand", phase=0.0, sacks=2):
     return out
 
 
-def donkey(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, sacks=2):
-    """A pack donkey (see module doc, section 10)."""
+def donkey(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, sacks=2, saddle=None, bridle=False, eyes="open"):
+    """A pack donkey (see module doc, section 10); Nativity film: saddle / bridle / eyes and the poses lie, look,
+    lie_look, sleep (section 12)."""
+    if pose in DONKEY_REST_POSES or saddle is not None or bridle or eyes != "open":
+        return _place(_donkey_nativity(pose, phase % 1.0, int(sacks), saddle, bridle, eyes), x, y, scale, facing)
     if pose in ("walk_a", "walk_b"):
         pose, phase = "walk", (0.0 if pose == "walk_a" else 0.5)
     if pose not in ("stand", "walk"):
@@ -10049,4 +10280,2305 @@ def lake_band(x0, x1, y0, y1, time="day", phase=0.0, scale=1.0, seed=0):
         yy = y0 + rng.uniform(8, max(10, y1 - y0 - 4)) if y1 - y0 > 14 else y0 + 6
         xx = x0 + ((rng.random() + phase * 0.5) % 1.0) * (x1 - x0)
         out += _line(xx, yy, xx + rng.uniform(30, 90) * s, yy, sw=2.4 * s, color=t["lite"], extra='opacity="0.6"')
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+# ====================================================================== 12. Nativity film (Luke 1-2, Matthew 2)
+DONKEY_REST_POSES = ("lie", "look", "lie_look", "sleep")
+
+
+def _water_jar(col=None):
+    """A tall clay water jar with one handle (anchor bottom centre, ~ 64 x 112)."""
+    col = col or "#c98a5a"
+    body = [(0, -100), (14, -96), (18, -84), (30, -64), (36, -36), (30, -10), (14, 0), (-14, 0), (-30, -10), (-36, -36),
+            (-30, -64), (-18, -84), (-14, -96)]
+    out = _p("M16,-92 C40,-96 44,-66 30,-56", sw=11, stroke=INK) + _p("M16,-92 C40,-96 44,-66 30,-56", sw=5, stroke=col)
+    out += _p(_sm(body), col, 4)
+    out += _ell(0, -100, 16, 5, S.shade(col, -0.35), 3)
+    out += _p("M-33,-46 Q0,-36 33,-46", sw=6, stroke=CREAM, extra='opacity="0.85"')
+    out += _p("M-34,-30 Q-22,-25 -11,-30 Q0,-35 11,-30 Q22,-25 34,-30", sw=2.6, stroke=S.shade(col, -0.35))
+    out += _ell(-15, -62, 6, 14, HILITE, 0, extra='opacity="0.35"')
+    return out
+
+
+# ---------------------------------------------------------------------- the wise men's treasures
+GIFT_KINDS = ("gold", "frankincense", "myrrh")
+GOLD_BRIGHT = "#f4cc55"
+GOLD_DEEP = "#c8902e"
+JEWEL_RED = "#c43c46"
+JEWEL_BLUE = "#3f6fc0"
+JEWEL_GREEN = "#3c9a74"
+
+
+def _gift_glow(cx, cy, r, glow, key):
+    if glow <= 0:
+        return ""
+    gid = _uid("giftg", key, round(glow, 3), round(r))
+    return (f'<defs>{S.rad_grad(gid, [(0, "#fff6d2", 0.95), (0.35, P["gold"], 0.5), (1, P["gold"], 0)])}</defs>'
+            f'<ellipse cx="{_f(cx)}" cy="{_f(cy)}" rx="{_f(r * 1.25)}" ry="{_f(r)}" fill="url(#{gid})" opacity="{_clamp(glow):.2f}"/>')
+
+
+def _twinkle(cx, cy, r, col="#fff6d0"):
+    return _p(f"M{_f(cx)},{_f(cy - r)} Q{_f(cx + r * 0.15)},{_f(cy - r * 0.15)} {_f(cx + r)},{_f(cy)} Q{_f(cx + r * 0.15)},"
+              f"{_f(cy + r * 0.15)} {_f(cx)},{_f(cy + r)} Q{_f(cx - r * 0.15)},{_f(cy + r * 0.15)} {_f(cx - r)},{_f(cy)} "
+              f"Q{_f(cx - r * 0.15)},{_f(cy - r * 0.15)} {_f(cx)},{_f(cy - r)} Z", col, 0)
+
+
+def _gift(kind="gold", open_=0.0, glow=0.0):
+    """The three treasures (Matthew 2:11), anchor bottom centre, ~90-100 px at scale 1."""
+    o = _clamp(open_)
+    out = ""
+    if kind == "gold":
+        out += _gift_glow(0, -70, 120, glow * (0.4 + 0.6 * o), "gold")
+        # box body
+        out += _p("M-46,-56 L46,-56 L42,0 L-42,0 Z", GOLD_DEEP, 4)
+        out += _p("M-46,-56 L46,-56 L44,-34 L-44,-34 Z", GOLD_BRIGHT, 0)
+        for xx in (-30, 0, 30):
+            out += _line(xx, -54, xx * 0.92, -2, sw=5, color=S.shade(GOLD_DEEP, -0.2))
+        out += _rect(-44, -14, 88, 8, S.shade(GOLD_DEEP, -0.15), 3)
+        out += _p("M-46,-56 L46,-56 L42,0 L-42,0 Z", sw=4)
+        for xx, col in ((-15, JEWEL_RED), (15, JEWEL_BLUE)):
+            out += _ell(xx, -34, 6, 7, col, 2.4) + _circ(xx - 2, -36, 1.8, HILITE, 0)
+        out += _rect(-7, -48, 14, 16, GOLD_BRIGHT, 2.6, rx=3) + _circ(0, -40, 2.5, INK, 0)
+        # inside / treasure and the lid (hinged at the back edge, swings up and back)
+        if o > 0.05:
+            out += _p("M-44,-56 Q0,-64 44,-56 L44,-50 Q0,-44 -44,-50 Z", S.shade(GOLD_DEEP, -0.45), 2.6)
+            k = _smooth(o)
+            for i, (cx, cy, r) in enumerate(((-26, -60, 9), (-10, -64, 10), (8, -62, 9), (24, -60, 9), (-2, -70, 8), (16, -69, 7),
+                                             (-18, -69, 7))):
+                cy_ = -54 + (cy + 54) * k
+                out += _ell(cx, cy_, r, r * 0.7, GOLD_BRIGHT, 2.4) + _ell(cx - r * 0.3, cy_ - r * 0.25, r * 0.3, r * 0.2, HILITE, 0)
+        a = -112 * _smooth(o)
+        lid = (_p("M-48,-56 Q-48,-86 0,-90 Q48,-86 48,-56 Z", GOLD_BRIGHT, 4) +
+               _p("M-46,-62 Q0,-70 46,-62", sw=5, stroke=S.shade(GOLD_DEEP, -0.1)) +
+               _p("M0,-89 L0,-58", sw=4, stroke=S.shade(GOLD_DEEP, -0.1)) +
+               _ell(0, -84, 8, 6, JEWEL_GREEN, 2.4) + _circ(-2, -86, 2, HILITE, 0))
+        out += _g(lid, f"rotate({a:.1f} -48 -56)") if o > 0 else lid
+        if glow > 0 and o > 0.3:
+            for cx, cy, r in ((-40, -112, 9), (34, -120, 11), (0, -138, 7), (52, -84, 6)):
+                out += _g(_twinkle(cx, cy, r), extra=f'opacity="{_clamp(glow * o):.2f}"')
+        return out
+    if kind == "frankincense":
+        stone, band = "#f1e9d8", GOLD_BRIGHT
+        out += _gift_glow(0, -66, 110, glow * (0.4 + 0.6 * o), "frank")
+        body = [(-22, -78), (-36, -60), (-40, -34), (-32, -10), (-18, 0), (18, 0), (32, -10), (40, -34), (36, -60), (22, -78)]
+        out += _p(_sm(body, closed=False) + " Z", stone, 4)
+        out += _p("M-40,-36 Q0,-26 40,-36", sw=7, stroke=band) + _p("M-40,-36 Q0,-26 40,-36", sw=2, stroke=S.shade(band, -0.35))
+        out += _p("M-30,-12 Q0,-4 30,-12", sw=4, stroke=band)
+        for xx in (-18, 0, 18):
+            out += _circ(xx, -56 + abs(xx) * 0.1, 3.4, JEWEL_BLUE if xx else JEWEL_RED, 1.6)
+        out += _ell(-18, -50, 5, 12, HILITE, 0, extra='opacity="0.4"')
+        out += _ell(0, -78, 23, 6, S.shade(stone, -0.25), 3)
+        if o > 0.05:                     # resin tears inside, a curl of sweet smoke
+            for cx, cy in ((-10, -82), (4, -84), (14, -80), (-2, -78)):
+                out += _ell(cx, cy, 5, 4, "#f2dc8c", 1.8)
+            for i in range(2):
+                yy = -96 - 34 * i
+                out += _p(f"M{-4 + 8 * i},-86 Q{-22 + 10 * i},{yy - 6} {-4 + 6 * i},{yy - 24} Q{16},{yy - 40} {2},{yy - 56}",
+                          sw=7 - 2 * i, stroke="#fbf3e0", extra=f'opacity="{0.75 * _smooth(o):.2f}"')
+        lid = (_p("M-26,-80 Q-26,-104 0,-108 Q26,-104 26,-80 Z", stone, 4) + _p("M-26,-84 Q0,-90 26,-84", sw=5, stroke=band) +
+               _circ(0, -114, 8, band, 3.2) + _circ(-2, -116, 2.4, HILITE, 0))
+        if o > 0:
+            lid = _g(lid, f"translate({30 * _smooth(o):.1f},{-26 * _smooth(o):.1f}) rotate({28 * _smooth(o):.1f} 0 -94)")
+        out += lid
+        if glow > 0 and o > 0.3:
+            for cx, cy, r in ((-36, -120, 8), (36, -128, 10), (46, -84, 6)):
+                out += _g(_twinkle(cx, cy, r), extra=f'opacity="{_clamp(glow * o):.2f}"')
+        return out
+    # myrrh: a tall slender flask of deep red-brown glass with gold bands and a stopper
+    glass, band = "#8a3b3a", GOLD_BRIGHT
+    out += _gift_glow(0, -70, 100, glow * (0.4 + 0.6 * o), "myrrh")
+    body = [(-9, -100), (-10, -86), (-26, -66), (-32, -40), (-28, -14), (-16, 0), (16, 0), (28, -14), (32, -40), (26, -66),
+            (10, -86), (9, -100)]
+    out += _p(_sm(body, closed=False) + " Z", glass, 4)
+    out += _p("M-30,-40 Q0,-30 30,-40", sw=6, stroke=band) + _p("M-11,-88 L11,-88", sw=6, stroke=band)
+    out += _p("M-24,-14 Q0,-8 24,-14", sw=4, stroke=band)
+    out += _ell(-14, -54, 4, 12, "#f2c9b8", 0, extra='opacity="0.5"')
+    out += _ell(10, -60, 7, 7, JEWEL_GREEN, 2) + _circ(8, -62, 1.8, HILITE, 0)
+    out += _ell(0, -100, 10, 3.5, S.shade(glass, -0.35), 2.6)
+    if o > 0.05:
+        for i in range(2):
+            yy = -108 - 30 * i
+            out += _p(f"M{-2 + 6 * i},-104 Q{14 + 4 * i},{yy - 8} {-2},{yy - 22} Q{-16},{yy - 36} {4},{yy - 50}",
+                      sw=6 - 2 * i, stroke="#f6e6dc", extra=f'opacity="{0.7 * _smooth(o):.2f}"')
+    stop = _p("M-8,-100 L8,-100 L6,-112 Q0,-122 -6,-112 Z", band, 3) + _circ(0, -124, 5, JEWEL_RED, 2.2)
+    if o > 0:
+        stop = _g(stop, f"translate({22 * _smooth(o):.1f},{-30 * _smooth(o):.1f}) rotate({38 * _smooth(o):.1f} 0 -110)")
+    out += stop
+    if glow > 0 and o > 0.3:
+        for cx, cy, r in ((-30, -116, 8), (30, -136, 9), (40, -80, 6)):
+            out += _g(_twinkle(cx, cy, r), extra=f'opacity="{_clamp(glow * o):.2f}"')
+    return out
+
+
+def gift(x, y, scale=1.0, facing=1, kind="gold", open=0.0, glow=0.0):    # noqa: A002
+    """One of the wise men's three treasures (see module doc, section 12)."""
+    if kind not in GIFT_KINDS:
+        raise ValueError(f"gift: unknown kind {kind!r}; choose from {GIFT_KINDS}")
+    return _place(_gift(kind, open, glow), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the little nativity set (painted wooden figurines)
+NATIVITY_FIGURES = ("mary", "joseph", "baby", "figure", "angel", "shepherd", "sheep", "ox", "donkey", "star", "gift", "magus")
+
+
+def _peg(body, head_skin="#e8b48c", cloth=None, w=34, h=112, hood=None, trim=None):
+    """A painted wooden peg doll: rounded cone body, round head (anchor bottom centre)."""
+    out = _p(f"M{-w},0 Q{-w * 0.9},{-h * 0.6} {-w * 0.45},{-h * 0.78} L{w * 0.45},{-h * 0.78} Q{w * 0.9},{-h * 0.6} {w},0 "
+             f"Q0,8 {-w},0 Z", body, 3.6)
+    if trim:
+        out += _p(f"M{-w * 0.96},{-12} Q0,{-4} {w * 0.96},{-12}", sw=6, stroke=trim)
+    out += _p(f"M{-w * 0.5},{-h * 0.62} Q{-w * 0.3},{-h * 0.3} {-w * 0.42},{-10}", sw=2.4, stroke=S.shade(body, 0.3),
+              extra='opacity="0.7"')
+    hy = -h * 0.78 - w * 0.62
+    if hood:
+        out += _ell(0, hy + 2, w * 0.78, w * 0.8, hood, 3.4)
+    out += _ell(w * 0.08, hy + 4, w * 0.55, w * 0.56, head_skin, 3.2)
+    out += _circ(w * 0.0, hy + 2, 2.6, PUPIL, 0) + _circ(w * 0.3, hy + 2, 2.6, PUPIL, 0)
+    out += _p(f"M{w * 0.02},{hy + 12} Q{w * 0.16},{hy + 17} {w * 0.3},{hy + 12}", sw=2)
+    out += _blush(-w * 0.16, hy + 10, 4, 2.5) + _blush(w * 0.45, hy + 10, 4, 2.5)
+    out += _ell(-w * 0.25, -h * 0.55, 4, 10, HILITE, 0, extra='opacity="0.35"')
+    return out
+
+
+def _nativity_figure(kind="figure"):
+    """One painted wooden figurine of the child's little nativity set (anchor bottom centre; people ~150 px tall)."""
+    if kind == "mary":
+        return _peg("#6f95cf", hood="#6f95cf", trim="#efdcb4")
+    if kind == "joseph":
+        out = _peg("#7a5338", trim="#ead9b6", h=124, w=36)
+        out += _tube("M44,0 L44,-150", 6, "#8f6440", 3) + _circ(44, -152, 5, "#a07450", 3)
+        return out
+    if kind == "shepherd":
+        return _peg("#9a7b55", hood="#7a5d48", trim="#efe5cf", h=116) + _p("M-40,0 L-40,-130 Q-40,-150 -26,-150 Q-14,-150 -14,-138",
+                                                                               sw=5, stroke="#8f6440")
+    if kind == "magus":
+        out = _peg("#9b2f3c", trim="#e9c35c", h=124, w=36)
+        out += _p("M-14,-146 L-16,-166 L-6,-156 L2,-170 L10,-156 L20,-166 L18,-146 Z", "#e9c35c", 3)
+        return out
+    if kind == "angel":
+        out = _p("M-10,-80 Q-62,-120 -54,-70 Q-48,-40 -14,-50 Z", "#fbf6e8", 3.2)
+        out += _p("M10,-80 Q62,-120 54,-70 Q48,-40 14,-50 Z", "#fbf6e8", 3.2)
+        return out + _peg("#fbf4e1", hood=None, trim="#e9c35c", h=108, w=32)
+    if kind in ("baby", "figure"):
+        out = _p("M-52,-50 L52,-50 L40,-14 L-40,-14 Z", "#b07a48", 3.4)
+        out += _p("M-36,-14 L-46,0 M36,-14 L46,0 M-20,-14 L-26,0 M20,-14 L26,0", sw=6, stroke=INK)
+        out += _p("M-36,-14 L-46,0 M36,-14 L46,0 M-20,-14 L-26,0 M20,-14 L26,0", sw=3, stroke="#b07a48")
+        for xx in range(-46, 50, 10):
+            out += _line(xx, -50, xx + 4, -62, sw=3, color="#e6c060")
+        out += _ell(4, -62, 34, 14, "#f6efdd", 3.2) + _ell(-20, -64, 12, 12, "#e8b48c", 3)
+        out += _p("M-26,-64 q3,3 6,0 M-18,-64 q3,3 6,0", sw=1.8)
+        return out
+    if kind == "sheep":
+        out = _cluster([(-20, -40, 22), (8, -44, 24), (28, -36, 18), (-4, -28, 22)], "#f6efe0", 3.4)
+        out += _ell(42, -48, 13, 15, "#5e4a40", 3) + _circ(46, -50, 2.4, HILITE, 0)
+        out += _rect(-22, -16, 9, 16, "#5e4a40", 2.6, rx=3) + _rect(16, -16, 9, 16, "#5e4a40", 2.6, rx=3)
+        return out
+    if kind in ("ox", "donkey"):
+        col = "#9a6a44" if kind == "ox" else "#aaa39b"
+        out = _p("M-50,-30 Q-50,-70 -10,-72 L30,-72 Q50,-70 50,-40 L46,-26 Q0,-18 -46,-26 Z", col, 3.4)
+        for xx in (-38, -20, 26, 40):
+            out += _rect(xx - 5, -30, 10, 30, S.shade(col, -0.15), 2.6, rx=3)
+        out += _ell(58, -70, 18, 16, col, 3.2) + _circ(62, -72, 2.4, PUPIL, 0)
+        if kind == "ox":
+            out += _p("M50,-84 Q44,-98 52,-102 M66,-84 Q72,-98 64,-102", sw=5, stroke="#efe2c0")
+        else:
+            out += _ell(52, -94, 5, 14, col, 2.6) + _ell(64, -94, 5, 14, col, 2.6)
+        return out
+    if kind == "star":
+        out = _tube("M0,0 L0,-70", 5, "#8f6440", 3)
+        return out + _p(_star_path(0, -96, 34, 14), "#f2c94e", 3.4)
+    # gift: a little wrapped box with a ribbon
+    out = _rect(-26, -44, 52, 44, "#3f8a6a", 3.4, rx=4)
+    out += _rect(-5, -44, 10, 44, "#e9c35c", 0) + _rect(-26, -26, 52, 9, "#e9c35c", 0) + _rect(-26, -44, 52, 44, "none", 3.4, rx=4)
+    out += _p("M0,-44 Q-18,-62 -20,-48 Q-16,-42 0,-44 Q18,-62 20,-48 Q16,-42 0,-44 Z", "#e9c35c", 2.6)
+    return out
+
+
+def _star_path(cx, cy, r_out, r_in, n=5, rot=-90.0):
+    pts = []
+    for k in range(2 * n):
+        a = math.radians(rot + k * 180 / n)
+        r = r_out if k % 2 == 0 else r_in
+        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    return _sm(pts, closed=True, tension=0.25)
+
+
+# ---------------------------------------------------------------------- palette and time-of-day tints
+NAT_NIGHT = ("#0c1530", "#18295a", "#2c4888", "#4f6fae", "#7a93c4")     # zenith .. horizon
+NAT_DUSK = ("#232a62", "#4f4a8c", "#9a6a9a", "#e08a78", "#f6c27a")
+NAT_DAWN = ("#5f7fb8", "#a9a6cc", "#e8b4b0", "#f6d2a0", "#fcebc6")
+NAT_DAY = ("#7fb4dc", "#a6cde4", "#cfe4ea", "#ecf2e6", "#f6efdc")
+NAT_TIMES = ("day", "dusk", "night", "dawn")
+LAMP = "#ffd36e"
+LAMP_GLOW = "#fff1c6"
+STAR_GOLD = "#ffe18a"
+STAR_CORE = "#fffbea"
+ROCK = "#a38b72"
+ROCK_DARK = "#75604e"
+ROCK_LIGHT = "#c4ad90"
+STRAW = "#e8c56a"
+STRAW_DARK = "#c49a40"
+WHITEWASH = "#f2ebd9"
+NAT_WOOD = "#9a6a42"
+NAT_WOOD_DARK = "#6e4a2e"
+NAT_WOOD_LIGHT = "#c08a58"
+_NTINT = {"day": ("#ffffff", 0.0), "dawn": ("#e9b9b0", 0.16), "dusk": ("#8a6a9a", 0.24), "night": ("#33467e", 0.40)}
+
+
+def _nt(col, time, k=1.0):
+    """Tint a colour toward this film's time-of-day light (night: deep blue, dusk: violet, dawn: rose)."""
+    c, a = _NTINT.get(time, _NTINT["day"])
+    return S.mix(col, c, a * k) if a else col
+
+
+def _check_time(time, who):
+    if time not in NAT_TIMES:
+        raise ValueError(f"{who}: unknown time {time!r}; choose from {NAT_TIMES}")
+
+
+def _rgrad(gid, stops, cx=0.5, cy=0.5, r=0.5):
+    return f'<defs>{S.rad_grad(gid, stops, cx, cy, r)}</defs>'
+
+
+def _warm_glow(cx, cy, rx, ry, k, key, col0=None, col1=None):
+    """A soft lamplight glow (no ring)."""
+    if k <= 0:
+        return ""
+    gid = _uid("nglow", key, round(cx), round(cy), round(rx), round(ry), round(k, 3), col0, col1)
+    return (_rgrad(gid, [(0, col0 or LAMP_GLOW, 0.9), (0.38, col1 or LAMP, 0.42), (1, col1 or LAMP, 0)]) +
+            f'<ellipse cx="{_f(cx)}" cy="{_f(cy)}" rx="{_f(rx)}" ry="{_f(ry)}" fill="url(#{gid})" opacity="{_clamp(k):.2f}"/>')
+
+
+def _straw_bits(x0, x1, y0, y1, n, seed, col=STRAW, dark=STRAW_DARK, sw=2.4):
+    """Scattered straw strokes on a floor band."""
+    rng = random.Random(seed)
+    d1, d2 = "", ""
+    for i in range(n):
+        x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+        a = rng.uniform(-0.5, 0.5)
+        L = rng.uniform(12, 28)
+        seg = f"M{_f(x)},{_f(y)} l{_f(L * math.cos(a))},{_f(L * math.sin(a))} "
+        if i % 3:
+            d1 += seg
+        else:
+            d2 += seg
+    return _p(d1, sw=sw, stroke=col) + _p(d2, sw=sw, stroke=dark, extra='opacity="0.8"')
+
+
+def _hay_mound(x0, x1, y, h, seed=0, col=STRAW):
+    """A soft heap of hay from x0 to x1 resting on y, h tall, with straws sticking out."""
+    rng = random.Random(seed)
+    w = x1 - x0
+    pts = [(x0, y)]
+    for i in range(1, 8):
+        u = i / 8
+        pts.append((x0 + w * u, y - h * math.sin(math.pi * u) ** 0.7 * rng.uniform(0.85, 1.08)))
+    pts.append((x1, y))
+    out = _p(_sm(pts, closed=False) + " Z", col, 3.4)
+    for i in range(int(w / 9)):
+        u = rng.uniform(0.05, 0.95)
+        bx = x0 + w * u
+        by = y - h * math.sin(math.pi * u) ** 0.7 * rng.uniform(0.25, 0.9)
+        a = rng.uniform(-2.4, -0.7)
+        L = rng.uniform(10, 22)
+        out += _line(bx, by, bx + L * math.cos(a), by + L * math.sin(a), sw=2.0, color=STRAW_DARK if i % 2 else S.shade(col, 0.2))
+    for i in range(6):                 # a few straws poking out of the top edge
+        u = 0.15 + 0.7 * i / 5
+        bx = x0 + w * u
+        by = y - h * math.sin(math.pi * u) ** 0.7
+        out += _line(bx, by + 4, bx + rng.uniform(-10, 10), by - rng.uniform(8, 16), sw=2.2, color=STRAW_DARK)
+    return out
+
+
+# ---------------------------------------------------------------------- the manger
+MANGER_BED = (0, -124)          # baby_jesus(state='in_manger') anchor (local, scale 1): the hay bed
+MANGER_W = 250
+
+
+def _manger(hay=True, part="all", time="night"):
+    wood, dark, light = _nt(NAT_WOOD, time, 0.4), _nt(NAT_WOOD_DARK, time, 0.4), _nt(NAT_WOOD_LIGHT, time, 0.4)
+    straw = _nt(STRAW, time, 0.25)
+    back, front = "", ""
+    # crossed legs at both ends (behind the trough)
+    for sx in (-1, 1):
+        for a, b in (((sx * 96, -96), (sx * 132, 0)), ((sx * 120, -96), (sx * 84, 0))):
+            back += _tube(f"M{_f(a[0])},{_f(a[1])} L{_f(b[0])},{_f(b[1])}", 13, dark if a[0] * sx > 100 else wood, 3.4)
+    # back board (inside of the far side)
+    back += _p("M-124,-122 L124,-122 L106,-84 L-106,-84 Z", dark, 3.6)
+    if hay:
+        back += _hay_mound(-118, 118, -108, 40, seed=3, col=straw)
+    # front board: a tapered plank box with plank lines and pegs
+    fb = "M-128,-118 L128,-118 L98,-60 L-98,-60 Z"
+    front += _p(fb, wood, 0)
+    inner = ""
+    for yy in (-100, -80):
+        inner += _line(-130, yy, 130, yy, sw=2.6, color=dark)
+    inner += _p("M-120,-112 Q-30,-104 60,-112", sw=4, stroke=light, extra='opacity="0.7"')
+    front += _clip(_uid("mangf", time), fb, inner) + _p(fb, sw=4)
+    for xx in (-104, 104):
+        front += _circ(xx, -88, 4, dark, 0)
+    front += _rect(-132, -126, 264, 12, light, 3.4, rx=5)
+    if hay:                          # tufts hanging over the rim
+        rng = random.Random(5)
+        for xx in range(-112, 120, 16):
+            yy = -122
+            front += _p(f"M{xx},{yy} q{rng.uniform(-6, 6):.1f},{rng.uniform(10, 22):.1f} {rng.uniform(-10, 10):.1f},{rng.uniform(16, 30):.1f}",
+                        sw=2.4, stroke=STRAW_DARK if xx % 32 else straw)
+        front += _hay_mound(-124, -60, -112, 14, seed=7, col=straw) + _hay_mound(54, 126, -112, 12, seed=8, col=straw)
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def manger(x, y, scale=1.0, facing=1, hay=True, part="all", glow=0.0, time="night"):
+    """The manger: a wooden feeding trough on crossed legs with a soft bed of hay (see module doc, section 12)."""
+    _check_time(time, "manger")
+    out = ""
+    if glow > 0 and part != "front":
+        out += _warm_glow(0, -130, 260, 170, glow, "manger", STAR_CORE, P["gold"])
+    return _place(out + _manger(hay, part, time), x, y, scale, facing)
+
+
+def manger_points(x, y, scale=1.0, facing=1):
+    """Stage points of a manger at (x, y, scale, facing): 'bed' (baby_jesus anchor), 'rim' [left, right]."""
+    return {"bed": local_to_stage(x, y, scale, facing, *MANGER_BED),
+            "rim": [local_to_stage(x, y, scale, facing, -128, -122), local_to_stage(x, y, scale, facing, 128, -122)]}
+
+
+# ---------------------------------------------------------------------- the stable (a cave in the hillside)
+STABLE_OPENING = (-640, -650, 640, 0)     # the doorway into the cave: x0, arch top, x1, floor (local, scale 1)
+STABLE_BACK_Y = -110                      # base of the back wall (the floor recedes from 0 at the front to here)
+STABLE_LAMP = (-150, -540)                # the lamp's hook on the lintel; the clay lamp hangs to y ~ -360
+STABLE_MANGER = (40, -30)                 # the manger's anchor inside (manger=True draws it there)
+STABLE_SPOTS = {"mary": (-150, -10), "joseph": (-360, -20), "ox": (360, -50), "donkey": (-470, -60),
+                "shepherds": (430, -6), "door_left": (-560, 0), "door_right": (560, 0)}
+
+
+def _stable(time="night", lamp=1.0, part="all", manger_=True, seed=0):
+    night = time in ("night", "dusk")
+    rock, rdark, rlight = _nt(ROCK, time), _nt(ROCK_DARK, time), _nt(ROCK_LIGHT, time)
+    x0, top, x1, _ = STABLE_OPENING
+    back, front = "", ""
+    # --- the hill / rock mass round the opening
+    mass = [(-960, 40), (-980, -380), (-900, -700), (-700, -900), (-380, -1000), (0, -1030), (420, -990), (760, -860),
+            (940, -620), (990, -300), (970, 40)]
+    md = _sm(mass, closed=True, tension=0.9)
+    back += _p(md, rock, 0)
+    tex = ""
+    rng = random.Random(seed + 4)
+    for j in range(5):               # soft strata following the shape of the hill
+        yy = -900 + j * 170
+        span = 900 * math.sqrt(max(0.05, 1 - ((yy + 400) / 700) ** 2))
+        for seg in range(3):
+            a0 = -span + seg * span * 0.7 + rng.uniform(0, 120)
+            a1 = a0 + rng.uniform(200, 420)
+            if yy > top - 60 and (a1 > x0 - 60 and a0 < x1 + 60):
+                continue
+            tex += _p(f"M{_f(a0)},{_f(yy + 20)} Q{_f((a0 + a1) / 2)},{_f(yy - 22)} {_f(a1)},{_f(yy + 14)}", sw=3, stroke=rdark,
+                      extra='opacity="0.45"')
+    for i in range(18):              # rounded, irregular boulders in the rock face
+        cx, cy = rng.uniform(-900, 900), rng.uniform(-930, -40)
+        if x0 - 60 < cx < x1 + 60 and cy > top - 70:
+            continue
+        rx, ry = rng.uniform(50, 120), rng.uniform(30, 64)
+        col = S.mix(rock, rlight if rng.random() < 0.5 else rdark, rng.uniform(0.2, 0.45))
+        tex += _p(S.blob(cx, cy, rx, ry, wobble=0.16, n=9, seed=seed + i), col, 3.0)
+        tex += _p(f"M{_f(cx - rx * 0.55)},{_f(cy - ry * 0.35)} Q{_f(cx)},{_f(cy - ry * 0.95)} {_f(cx + rx * 0.45)},{_f(cy - ry * 0.45)}",
+                  sw=3, stroke=rlight, extra='opacity="0.7"')
+    for i in range(40):              # little speckles
+        tex += _circ(rng.uniform(-940, 940), rng.uniform(-960, -20), rng.uniform(2, 5), rdark, 0, extra='opacity="0.5"')
+    tex += _p("M-980,-700 Q-600,-1060 0,-1040 Q600,-1040 980,-640 L980,-760 Q600,-1100 0,-1100 Q-600,-1100 -980,-800 Z",
+              _nt("#7d9a5a", time), 0)                                      # grass on top of the hill
+    for i in range(24):
+        gx = -900 + i * 78 + rng.uniform(-20, 20)
+        gy = -760 - 260 * math.sin(math.pi * (gx + 980) / 1960) ** 0.6
+        tex += _p(f"M{_f(gx - 10)},{_f(gy + 10)} l6,-22 l6,18 l6,-26 l6,22", sw=2.6, stroke=_nt("#5f7d44", time))
+    back += _clip(_uid("stmass", time, seed), md, tex) + _p(md, sw=4.5)
+    # bushes on the hill top and an olive tree on the right shoulder
+    bush = _nt("#6f8f4e", time)
+    for bx, by_, bw in ((-560, -930, 200), (-180, -1040, 150), (300, -1010, 180), (780, -820, 170), (-860, -640, 150)):
+        back += S.cloud(bx, by_, bw, bw * 0.55, fill=bush, seed=seed + int(bx), puffs=4, sw=3.6, shade_fill=_nt("#4f6f3a", time))
+    back += _tube("M560,-930 Q574,-1010 548,-1080 M556,-1000 Q600,-1040 640,-1050", 18, _nt(NAT_WOOD_DARK, time), 3.4)
+    back += S.cloud(570, -1150, 300, 150, fill=_nt("#7a9a5a", time), seed=seed + 3, puffs=5, sw=3.6, shade_fill=_nt("#5a7a42", time))
+    # --- the cave inside (clipped to the opening): lit back wall, floor, hay, a rail, a shelf with a jar
+    op = (f"M{x0},0 L{x0},{top + 230} Q{x0 + 20},{top + 30} {x0 + 260},{top} L{x1 - 260},{top} "
+          f"Q{x1 - 20},{top + 30} {x1},{top + 230} L{x1},0 Z")
+    lx, ly = STABLE_LAMP[0], STABLE_LAMP[1] + 110
+    gid = _uid("stin", time, round(lamp, 3))
+    k = _clamp(lamp)
+    wall_lit = S.mix("#6a4a34", "#e8b46a", 0.75 * k)
+    inside = _rgrad(gid, [(0, wall_lit), (0.55, S.mix("#4a3428", "#b07a48", 0.6 * k)), (1, "#2e2420")], cx=0.43, cy=0.42, r=0.62)
+    inside += f'<path d="{op}" fill="url(#{gid})"/>'
+    rng2 = random.Random(seed + 9)
+    for i in range(46):              # the rough rock of the cave wall: rounded stones, darker toward the edges
+        sx_, sy_ = rng2.uniform(x0, x1), rng2.uniform(top + 40, STABLE_BACK_Y - 20)
+        rx_, ry_ = rng2.uniform(40, 90), rng2.uniform(24, 46)
+        inside += _ell(sx_, sy_, rx_, ry_, "none", 3, stroke="#3a2c24", extra='opacity="0.28"')
+        inside += _p(f"M{_f(sx_ - rx_ * 0.5)},{_f(sy_ - ry_ * 0.4)} Q{_f(sx_)},{_f(sy_ - ry_ * 0.9)} {_f(sx_ + rx_ * 0.4)},{_f(sy_ - ry_ * 0.5)}",
+                     sw=3, stroke="#f2c47a", extra=f'opacity="{0.25 * k:.2f}"')
+    floor = f"M{x0},0 L{x0},{STABLE_BACK_Y} Q0,{STABLE_BACK_Y - 18} {x1},{STABLE_BACK_Y} L{x1},0 Z"
+    fg = _uid("stfl", time, round(lamp, 3))
+    inside += f'<defs>{S.lin_grad(fg, [(0, S.mix("#8a6a3a", STRAW, 0.5 + 0.3 * k)), (1, S.mix("#a07a40", STRAW, 0.7 * k + 0.2))])}</defs>'
+    inside += _p(floor, f"url(#{fg})", 0) + _p(f"M{x0},{STABLE_BACK_Y} Q0,{STABLE_BACK_Y - 18} {x1},{STABLE_BACK_Y}", sw=3.4)
+    inside += _straw_bits(x0, x1, STABLE_BACK_Y + 10, -6, 70, seed + 1)
+    inside += _hay_mound(x0 - 20, x0 + 330, STABLE_BACK_Y + 20, 150, seed=11, col=S.mix(STRAW, "#a07a40", 0.25 - 0.2 * k))
+    # a wooden rail (animal pen) on the right
+    rail = S.mix(NAT_WOOD, "#3a2a20", 0.35 - 0.2 * k)
+    for xx in (240, 400, 560):
+        inside += _rect(xx - 9, STABLE_BACK_Y - 150, 18, 160, rail, 3.2, rx=4)
+    for yy in (STABLE_BACK_Y - 130, STABLE_BACK_Y - 70):
+        inside += _rect(220, yy, 400, 14, S.shade(rail, 0.12), 3.2, rx=5)
+    # a niche shelf with a jar and a bowl on the left wall
+    inside += _rect(-470, top + 250, 160, 16, S.shade(rail, 0.1), 3.2, rx=4)
+    inside += _g(_water_jar(S.mix("#c98a5a", "#5a4030", 0.4 - 0.3 * k)), "translate(-430,%d) scale(0.55)" % (top + 250))
+    inside += _p(f"M-380,{top + 250} Q-376,{top + 226} -348,{top + 224} Q-320,{top + 226} -316,{top + 250} Z", "#b8603e", 2.8)
+    # doves asleep on a beam
+    inside += _rect(-300, top + 120, 520, 18, S.mix(NAT_WOOD_DARK, "#2e2420", 0.3), 3.2, rx=6)
+    for dx in (60, 120):
+        inside += _ell(dx, top + 106, 20, 15, "#ece6e0", 2.8) + _circ(dx + 15, top + 96, 9, "#ece6e0", 2.6)
+        inside += _p(f"M{dx + 10},{top + 96} q4,3 8,0", sw=1.8)
+    if manger_:
+        inside += _g(_manger(True, "all", "day"), f"translate({STABLE_MANGER[0]},{STABLE_MANGER[1]})")
+    back += _clip(_uid("stop", time, round(lamp, 3), manger_), op, inside) + _p(op, sw=4.5)
+    # --- front: timber posts and lintel, a little lean-to roof, rocks at the jambs, the hanging lamp
+    wood, wdark = _nt(NAT_WOOD, time), _nt(NAT_WOOD_DARK, time)
+    for px in (x0 + 40, x1 - 40):
+        front += _p(f"M{px - 18},6 L{px - 14},{top + 120} L{px + 16},{top + 118} L{px + 20},6 Z", wood, 4)
+        front += _line(px - 4, -20, px - 2, top + 140, sw=2.6, color=wdark)
+    front += _p(f"M{x0 - 80},{top + 100} L{x1 + 80},{top + 92} L{x1 + 84},{top + 132} L{x0 - 84},{top + 140} Z", wood, 4)
+    front += _line(x0 - 60, top + 118, x1 + 60, top + 112, sw=2.6, color=wdark)
+    for ex in (x0 - 70, x1 + 70):
+        front += _circ(ex, top + 118, 12, _nt(NAT_WOOD_LIGHT, time), 3)
+    roof = f"M{x0 - 140},{top + 104} L{x0 + 60},{top - 40} L{x1 - 60},{top - 46} L{x1 + 140},{top + 96} Z"
+    front += _p(roof, _nt("#c9a25a", time), 4)
+    rr = ""
+    for i in range(46):
+        xx = x0 - 130 + i * 34
+        rr += _line(xx, top + 104 - 4, xx + 8, top - 30, sw=2.4, color=_nt("#9a7a3a", time))
+    front += _clip(_uid("stroof", time), roof, rr) + _p(roof, sw=4)
+    fr = ""
+    for i in range(40):                # thatch fringe
+        xx = x0 - 130 + i * 36
+        yy = top + 100 - 8 * (i * 36) / 1400
+        fr += f"M{_f(xx)},{_f(yy)} l6,22 l6,-20 "
+    front += _p(fr, sw=2.6, stroke=_nt("#8a6a32", time))
+    for sx in (-1, 1):                 # boulders at the foot of the jambs
+        bx = sx * (x1 + 30)
+        front += _ell(bx, -40, 120, 70, S.mix(rock, rdark, 0.25), 4) + _ell(bx + sx * 90, -18, 80, 46, rock, 4)
+    hx, hy = STABLE_LAMP
+    if lamp > 0:
+        front += _warm_glow(hx, hy + 110, 560 * (0.6 + 0.4 * k), 460 * (0.6 + 0.4 * k), 0.85 * k, "stlamp")
+    front += _g(_hanging_lamp(k, False, "stl"), f"translate({hx},{hy}) scale(1.6)")
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def stable(x, y, scale=1.0, facing=1, part="all", lamp=1.0, time="night", manger=True, seed=0):   # noqa: A002
+    """The humble cave-stable in Bethlehem (see module doc, section 12)."""
+    _check_time(time, "stable")
+    return _place(_stable(time, _clamp(lamp), part, manger, seed), x, y, scale, facing)
+
+
+def stable_points(x, y, scale=1.0, facing=1):
+    """Stage points inside a stable at (x, y, scale, facing): 'manger' (its anchor), 'bed' (baby_jesus in the manger),
+    'lamp', 'opening' (x0, top, x1, floor), every STABLE_SPOTS name, and 'back_floor' (y of the back wall's base)."""
+    L = lambda lx, ly: local_to_stage(x, y, scale, facing, lx, ly)  # noqa: E731
+    out = {k: L(*v) for k, v in STABLE_SPOTS.items()}
+    out["manger"] = L(*STABLE_MANGER)
+    out["bed"] = L(STABLE_MANGER[0] + MANGER_BED[0], STABLE_MANGER[1] + MANGER_BED[1])
+    out["lamp"] = L(STABLE_LAMP[0], STABLE_LAMP[1] + 110)
+    a, b = L(STABLE_OPENING[0], STABLE_OPENING[1]), L(STABLE_OPENING[2], 0)
+    out["opening"] = (min(a[0], b[0]), a[1], max(a[0], b[0]), b[1])
+    out["back_floor"] = y + STABLE_BACK_Y * scale
+    return out
+
+
+# ---------------------------------------------------------------------- the ox
+OX = {"coat": "#a8714a", "dark": "#7a4e30", "light": "#d6a77a", "muzzle": "#ecd9bc", "horn": "#efe2c0"}
+OX_POSES = ("stand", "walk", "walk_a", "walk_b", "look", "lie", "lie_look", "sleep")
+
+
+def _ox_head(hx, hy, rot=0.0, eyes="open", k=1.22):
+    c = OX
+    h = ""
+    h += _tube(f"M{_f(hx - 24)},{_f(hy - 34)} Q{_f(hx - 46)},{_f(hy - 44)} {_f(hx - 44)},{_f(hy - 62)}", 10, c["horn"], 3.2)
+    h += _tube(f"M{_f(hx + 22)},{_f(hy - 36)} Q{_f(hx + 44)},{_f(hy - 46)} {_f(hx + 40)},{_f(hy - 64)}", 10, c["horn"], 3.2)
+    h += _ell(hx - 40, hy - 18, 21, 10, c["coat"], 3.4, extra=f'transform="rotate(-24 {_f(hx - 40)} {_f(hy - 18)})"')
+    h += _ell(hx + 38, hy - 20, 21, 10, c["coat"], 3.4, extra=f'transform="rotate(24 {_f(hx + 38)} {_f(hy - 20)})"')
+    h += _ell(hx - 40, hy - 18, 11, 4, "#e2a99a", 0, extra=f'transform="rotate(-24 {_f(hx - 40)} {_f(hy - 18)})"')
+    h += _p(_sm([(hx - 30, hy - 40), (hx + 26, hy - 42), (hx + 34, hy - 2), (hx + 26, hy + 30), (hx - 26, hy + 30),
+                 (hx - 36, hy - 2)]), c["coat"], 4)
+    h += _p(f"M{_f(hx - 14)},{_f(hy - 42)} q8,-12 14,-2 q8,-12 14,2", c["dark"], 2.6)          # forelock
+    h += _ell(hx, hy + 30, 32, 21, c["muzzle"], 3.8)
+    h += _ell(hx - 11, hy + 28, 3.6, 4.4, S.shade(c["muzzle"], -0.55), 0) + _ell(hx + 11, hy + 28, 3.6, 4.4, S.shade(c["muzzle"], -0.55), 0)
+    h += _p(f"M{_f(hx - 8)},{_f(hy + 40)} Q{_f(hx)},{_f(hy + 45)} {_f(hx + 8)},{_f(hy + 40)}", sw=2.4)
+    for ex in (hx - 14, hx + 14):
+        h += _dot_eye(ex, hy - 6, 5.0, eyes)
+        if eyes == "open":
+            h += _p(f"M{_f(ex - 7)},{_f(hy - 12)} l-4,-4 M{_f(ex - 2)},{_f(hy - 13)} l-1,-5", sw=1.8)
+    h += _blush(hx - 24, hy + 10, 7, 4) + _blush(hx + 24, hy + 10, 7, 4)
+    tr = f"translate({_f(hx)},{_f(hy)}) rotate({rot:.1f}) scale({k}) translate({_f(-hx)},{_f(-hy)})"
+    return _g(_upscale_keep(h, k), tr)
+
+
+def _upscale_keep(body, k):
+    """Keep ink widths when a group is scaled by k (outlines stay 3-5 px)."""
+    return re.sub(r'stroke-width="([0-9.]+)"', lambda m: f'stroke-width="{float(m.group(1)) / k:.2f}"', body)
+
+
+def _ox(pose="stand", phase=0.0, eyes="open"):
+    c = OX
+    coat, dark, light = c["coat"], c["dark"], c["light"]
+    out = ""
+    if pose in ("lie", "lie_look", "sleep"):
+        out += _p("M-136,-40 Q-162,-30 -154,-6 Q-136,8 -106,0 Z", coat, 3.4)                     # tail end
+        if pose == "lie":
+            neck, head = [(84, -112), (118, -138), (138, -156)], (150, -176, 0, eyes)
+        elif pose == "lie_look":
+            neck, head = [(84, -110), (124, -118), (150, -116)], (170, -114, 10, eyes)
+        else:
+            neck, head = [(84, -100), (124, -80), (146, -64)], (164, -58, 4, "closed")
+        out += _band(neck, 84, 70, coat)
+        bd = [(-136, -56), (-118, -132), (-60, -158), (10, -156), (64, -164), (106, -140), (124, -86), (114, -18),
+              (80, 2), (0, 4), (-80, 2), (-132, -10)]
+        out += _body(bd, coat, _ell(-50, -104, 44, 28, dark, 0, extra='opacity="0.5"') +
+                     _p("M-30,-142 Q14,-156 54,-146", sw=8, stroke=light, extra='opacity="0.6"'),
+                     _p(_sm([(-130, -30), (0, -40), (120, -30), (120, 20), (-130, 20)]), light, 0), "oxlie")
+        out += _p("M-100,-6 Q-70,-40 -30,-20 Q-20,4 -60,6 Z", coat, 3.4)                          # hind leg haunch
+        out += _p("M54,-8 Q74,-30 112,-20 Q134,-6 116,4 L62,6 Z", S.shade(coat, -0.06), 3.4)      # folded front leg
+        out += _ell(132, -4, 15, 9, S.shade(coat, -0.5), 3)
+        out += _ox_head(*head)
+        if pose == "sleep":
+            out += _zs(220, -150, 0.9)
+        return out
+    walk = pose == "walk"
+    bob = -3 * math.sin(4 * math.pi * phase) if walk else 0.0
+    for (hx, fx, hind, far, off) in ((-74, -78, True, True, 0.5), (78, 88, False, True, 0.0), (-94, -100, True, False, 0.0),
+                                     (58, 64, False, False, 0.5)):
+        dx, lf = _gait(phase, off, 26, 18) if walk else (0.0, 0.0)
+        out += _qleg((hx, -106 + bob), fx + dx, 42, 22, coat, hind=hind, far=far, hoof="cloven", bend=0.5 if hind else 0.3,
+                     ground=-lf)
+    b = ""
+    b += _p("M-126,-170 Q-146,-120 -138,-80", sw=7, stroke=INK) + _p("M-126,-170 Q-146,-120 -138,-80", sw=3, stroke=coat)
+    b += _p("M-138,-90 Q-152,-70 -138,-62 Q-124,-70 -138,-90 Z", dark, 3)
+    look = pose == "look"
+    nod = 4 * math.sin(2 * math.pi * phase) if walk else 0
+    if look:
+        neck, head = [(96, -170), (136, -158), (160, -138)], (178, -124, 12, eyes)
+    else:
+        neck, head = [(96, -176), (132, -186), (150, -196)], (166, -204 + nod, 0, eyes)
+    b += _band(neck, 88, 72, coat)
+    bd = [(-134, -140), (-122, -186), (-70, -206), (-10, -200), (50, -214), (104, -204), (132, -166), (126, -116),
+          (90, -88), (20, -78), (-56, -82), (-110, -98)]
+    pt = _ell(-62, -160, 46, 30, dark, 0, extra='opacity="0.55"') + _p("M-44,-194 Q4,-208 50,-200", sw=9, stroke=light,
+                                                                        extra='opacity="0.55"')
+    belly = _p(_sm([(-120, -110), (0, -112), (120, -112), (120, -60), (-120, -60)]), light, 0)
+    b += _body(bd, coat, pt, belly, "ox")
+    b += _ox_head(*head)
+    out += _g(b, f"translate(0,{_f(bob)})") if bob else b
+    return out
+
+
+def ox(x, y, scale=1.0, facing=1, pose="stand", phase=0.0, eyes="open"):
+    """A friendly brown ox for the stable (see module doc, section 12)."""
+    if pose in ("walk_a", "walk_b"):
+        pose, phase = "walk", (0.0 if pose == "walk_a" else 0.5)
+    if pose not in OX_POSES:
+        raise ValueError(f"ox: unknown pose {pose!r}; choose from {OX_POSES}")
+    return _place(_ox(pose, phase % 1.0, eyes), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the donkey (Nativity options) and its rider
+DONKEY_SEAT = (-12, -200)       # donkey(saddle=...): the seat on the blanket (local): mary(pose='ride') anchor
+DONKEY_LEAD = (240, -150)       # donkey(bridle=True): the end of the lead rope (local): joseph_carpenter(pose='lead')'s hand
+SADDLE_COLS = {"blue": ("#4f72ad", "#e9c35c"), "red": ("#b8473c", "#e9c35c"), "green": ("#3c7a5a", "#efe0c0"),
+               "purple": ("#5b3a8a", "#e9c35c"), "sand": ("#c9a46a", "#7a3a3a")}
+
+
+def _donkey_saddle(col):
+    base, trim = SADDLE_COLS.get(col, SADDLE_COLS["blue"])
+    out = _p("M-72,-206 Q-10,-224 52,-208 L58,-150 Q-8,-136 -70,-150 Z", base, 3.6)
+    for k in range(3):
+        y0 = -194 + k * 16
+        out += _p(f"M{-70 + k},{y0} Q-8,{y0 - 12 + k} {54 - k},{y0}", sw=3.2, stroke=trim)
+    for xx in range(-64, 56, 12):
+        out += _line(xx, -150 + abs(xx + 6) * 0.06, xx, -138 + abs(xx + 6) * 0.06, sw=2.4, color=trim)
+    out += _p("M-60,-210 Q-10,-226 42,-210", sw=8, stroke=S.shade(base, 0.25), extra='opacity="0.7"')
+    return out
+
+
+def _donkey_nativity(pose, phase, sacks, saddle, bridle, eyes):
+    coat, light, dark = "#aaa39b", "#e2d9cb", "#5e554e"
+    if pose in ("lie", "lie_look", "sleep"):
+        out = ""
+        out += _p("M-104,-40 Q-120,-20 -112,0 Q-100,8 -86,-2 Z", coat, 3.2)
+        bd = [(-104, -50), (-92, -110), (-40, -128), (10, -122), (60, -128), (96, -108), (108, -60), (96, -10), (40, 2),
+              (-40, 2), (-96, -8)]
+        out += _body(bd, coat, "", _p(_sm([(-96, -30), (0, -40), (100, -30), (100, 10), (-96, 10)]), light, 0), "donklie")
+        out += _p("M-80,-4 Q-60,-34 -26,-16 Q-20,4 -50,6 Z", coat, 3.2)
+        out += _p("M50,-6 Q70,-24 104,-16 Q120,-4 104,4 L56,6 Z", S.shade(coat, -0.06), 3.2)
+        out += _ell(114, -2, 11, 7, dark, 2.8)
+        if saddle:
+            out += _g(_donkey_saddle(saddle), "translate(0,66) scale(1,0.9)")
+        if pose == "lie":
+            hx, hy, rot = 126, -170, 0
+            out += _p("M70,-110 Q90,-150 108,-170 L140,-148 Q116,-120 106,-80 Z", coat, 4)
+        elif pose == "lie_look":
+            hx, hy, rot = 150, -120, -20
+            out += _p("M70,-108 Q100,-130 128,-140 L150,-110 Q120,-96 100,-70 Z", coat, 4)
+        else:
+            hx, hy, rot = 150, -50, -12
+            out += _p("M70,-100 Q100,-80 130,-74 L150,-40 Q114,-46 96,-50 Z", coat, 4)
+        out += _g(_donkey_head(hx, hy, coat, light, dark, "closed" if pose == "sleep" else eyes, bridle=False),
+                  f"rotate({rot} {hx} {hy})")
+        if pose == "sleep":
+            out += _zs(hx + 40, hy - 110, 0.8)
+        return out
+    walk = pose == "walk"
+    bob = -3 * math.sin(4 * math.pi * phase) if walk else 0.0
+    out = ""
+    for (hip, fx, hind, far, off) in (((-58, -118), -62, True, True, 0.5), ((64, -118), 74, False, True, 0.0),
+                                      ((-74, -116), -78, True, False, 0.0), ((50, -116), 54, False, False, 0.5)):
+        dx, lf = _gait(phase, off, 26, 18) if walk else (0.0, 0.0)
+        out += _qleg((hip[0], hip[1] + bob), fx + dx, 30 if hind else 28, 13 if far else 14, coat, hind=hind, far=far,
+                     bend=0.6 if hind else 0.4, ground=-lf)
+    b = ""
+    b += _p("M-96,-166 Q-110,-126 -106,-96", sw=7, stroke=INK) + _p("M-96,-166 Q-110,-126 -106,-96", sw=3, stroke=coat)
+    b += _p("M-106,-106 Q-118,-86 -106,-76 Q-94,-86 -106,-106 Z", dark, 3)
+    bd = [(-102, -146), (-88, -178), (-40, -188), (10, -182), (60, -190), (92, -172), (102, -142), (88, -112),
+          (40, -98), (-20, -96), (-76, -106)]
+    belly = _p(_sm([(-90, -118), (0, -118), (95, -122), (95, -80), (-90, -80)]), light, 0)
+    b += _body(bd, coat, "", belly, "donkn")
+    if saddle:
+        b += _donkey_saddle(saddle)
+    elif sacks:
+        b += _p("M-60,-196 Q0,-212 60,-198 L56,-172 Q0,-160 -56,-172 Z", CARNELIAN_P, 3.6)
+        b += _p("M-56,-180 Q0,-168 56,-182", sw=3, stroke=P["gold"])
+        b += _g(_grain_sack(False, 1), "translate(-34,-104) rotate(6) scale(0.82)")
+        if sacks > 1:
+            b += _g(_grain_sack(False, 2), "translate(30,-100) rotate(-6) scale(0.82)")
+        b += _tube("M-56,-190 Q-30,-176 -34,-176 M56,-190 Q30,-174 30,-174", 4, CORD, 2)
+    look = pose == "look"
+    if look:
+        b += _p("M58,-180 Q86,-196 112,-196 L130,-160 Q104,-160 96,-132 Z", coat, 4)
+        b += _p("M66,-184 Q90,-200 114,-200", sw=12, stroke=INK) + _p("M66,-184 Q90,-200 114,-200", sw=6, stroke=dark)
+        b += _g(_donkey_head(142, -150, coat, light, dark, eyes, bridle), "rotate(-30 142 -150)")
+    else:
+        b += _p("M58,-180 Q80,-220 102,-240 L134,-214 Q106,-182 96,-132 Z", coat, 4)
+        b += _p("M66,-186 Q86,-224 106,-246", sw=12, stroke=INK) + _p("M66,-186 Q86,-224 106,-246", sw=6, stroke=dark)
+        nod = 4 * math.sin(2 * math.pi * phase) if walk else 0
+        h = _donkey_head(128, -214, coat, light, dark, eyes, bridle)
+        b += _g(h, f"translate(0,{_f(nod)})") if nod else h
+    out += _g(b, f"translate(0,{_f(bob)})") if bob else b
+    return out
+
+
+def _donkey_head(hx, hy, coat, light, dark, eyes, bridle):
+    """The donkey head of _donkey with (hx, hy) = the centre of the head (128, -214 in _donkey)."""
+    dx, dy = hx - 128, hy + 214
+    h = ""
+    for ex, rot in ((110, -16), (126, 12)):
+        ex += dx
+        h += _ell(ex, -268 + dy, 10, 34, coat, 3.6, extra=f'transform="rotate({rot} {ex} {-240 + dy})"')
+        h += _ell(ex, -278 + dy, 4.5, 18, "#d7b2a8", 0, extra=f'transform="rotate({rot} {ex} {-240 + dy})"')
+        h += _p(f"M{ex - 9},{-292 + dy} Q{ex},{-308 + dy} {ex + 9},{-292 + dy} Z", dark, 2.5,
+                extra=f'transform="rotate({rot} {ex} {-240 + dy})"')
+    h += _ell(hx, hy, 26, 30, coat, 4)
+    h += _ell(hx + 14, hy + 28, 26, 19, light, 3.8, extra=f'transform="rotate(20 {hx + 14} {hy + 28})"')
+    h += _circ(hx + 20, hy + 28, 2.6, INK, 0) + _circ(hx + 30, hy + 32, 2.6, INK, 0)
+    h += _dot_eye(hx + 8, hy - 6, 4.4, eyes if eyes in ("open", "closed", "happy") else "open") + _blush(hx + 14, hy + 10, 6, 3.5)
+    h += _p(f"M{hx + 16},{hy + 40} Q{hx + 22},{hy + 44} {hx + 28},{hy + 40}", sw=2.5)
+    if bridle:
+        h += _p(f"M{hx - 14},{hy - 18} Q{hx - 22},{hy + 10} {hx - 4},{hy + 34} M{hx - 6},{hy + 28} Q{hx + 16},{hy + 44} {hx + 36},{hy + 30}",
+                sw=7, stroke=INK)
+        h += _p(f"M{hx - 14},{hy - 18} Q{hx - 22},{hy + 10} {hx - 4},{hy + 34} M{hx - 6},{hy + 28} Q{hx + 16},{hy + 44} {hx + 36},{hy + 30}",
+                sw=3.6, stroke="#b8473c")
+        rx, ry = DONKEY_LEAD
+        h += _tube(f"M{hx + 34},{hy + 32} Q{(hx + rx) / 2 + 10},{max(hy + 32, ry) + 46} {rx},{ry}", 4, P["wood_light"], 2.2)
+    return h
+
+
+def donkey_points(x, y, scale=1.0, facing=1, pose="stand", phase=0.0):
+    """Stage points of a donkey: 'seat' (mary(pose='ride') anchor on the saddle blanket; follows the walk bob), 'lead'
+    (end of the lead rope with bridle=True; joseph_carpenter(pose='lead') puts his near hand there)."""
+    bob = -3 * math.sin(4 * math.pi * (phase % 1.0)) if pose in ("walk", "walk_a", "walk_b") else 0.0
+    if pose == "walk_b":
+        bob = 0.0
+    return {"seat": local_to_stage(x, y, scale, facing, DONKEY_SEAT[0], DONKEY_SEAT[1] + bob),
+            "lead": local_to_stage(x, y, scale, facing, *DONKEY_LEAD)}
+
+
+# ---------------------------------------------------------------------- sheep resting (the night flock)
+SHEEP_REST_POSES = ("lie", "look_up", "sleep")      # extra poses of sheep() (SHEEP_POSES itself is unchanged)
+
+
+def _sheep_rest(variant, pose, lamb):
+    c = _SHEEP[variant % 4]
+    wool, face, leg = c["wool"], c["face"], c["leg"]
+    k = 0.66 if lamb else 1.0
+    hk = (1.18 * 0.78) if lamb else 1.0
+    out = ""
+    if pose == "look_up":                  # standing, head raised to the sky
+        for x_ in (-28, 44):
+            out += _leg(x_ * k, -46 * k, 0, 13 * k + 1, S.shade(leg, -0.15))
+        circles = [(-74 * k, -84 * k, 16 * k)] + [(70 * k * math.cos(2 * math.pi * i / 12) * 0.95,
+                                                  -80 * k + 38 * k * math.sin(2 * math.pi * i / 12), 24 * k) for i in range(12)]
+        circles.append((0, -80 * k, 52 * k))
+        for x_ in (-46, 24):
+            out += _leg(x_ * k, -46 * k, 0, 14 * k + 1, leg)
+        out += _cluster(circles, wool, 3.8)
+        hx, hy, rot = 66 * k, -138 * k, -40
+    else:                                   # lying down: legs tucked, body on the ground
+        circles = [(-70 * k, -46 * k, 16 * k)] + [(72 * k * math.cos(2 * math.pi * i / 12) * 0.95,
+                                                  -44 * k + 30 * k * math.sin(2 * math.pi * i / 12), 22 * k) for i in range(12)]
+        circles.append((0, -46 * k, 46 * k))
+        circles = [(x_, min(y_, -r_ + 4 * k), r_) for x_, y_, r_ in circles]
+        out += _ell(46 * k, -6 * k, 14 * k, 7 * k, leg, 2.6) + _ell(-40 * k, -5 * k, 13 * k, 6 * k, S.shade(leg, -0.15), 2.6)
+        out += _cluster(circles, wool, 3.8)
+        if pose == "sleep":
+            hx, hy, rot = 80 * k, -26 * k, 62
+        else:
+            hx, hy, rot = 78 * k, -72 * k, 18
+    for cx, cy in ((-30, -96), (10, -104), (-10, -72), (30, -78)):
+        yy = cy * k if pose == "look_up" else (cy + 40) * k
+        out += _p(f"M{_f(cx * k - 8 * k)},{_f(yy)} q{_f(4 * k)},{_f(-7 * k)} {_f(8 * k)},0 q{_f(4 * k)},{_f(7 * k)} {_f(8 * k)},0",
+                  sw=2.4, stroke=S.shade(wool, -0.2))
+    h = hk
+    head = _ell(hx - 22 * h, hy - 14 * h, 17 * h, 8 * h, face, 3.4, extra=f'transform="rotate({rot - 46} {_f(hx - 22 * h)} {_f(hy - 14 * h)})"')
+    head += _ell(hx, hy, 25 * h, 31 * h, face, 3.8, extra=f'transform="rotate({rot} {_f(hx)} {_f(hy)})"')
+    head += _cluster([(hx - 14 * h, hy - 28 * h, 12 * h), (hx - 2 * h, hy - 32 * h, 13 * h), (hx + 10 * h, hy - 26 * h, 11 * h)],
+                     wool, 3.2)
+    ex, ey = hx + 8 * h, hy - 4 * h
+    if variant % 4 == 1:
+        head += _circ(ex, ey, 6 * h, "#e8dccb", 0)
+    head += _dot_eye(ex, ey, 4.2 * h, "closed" if pose == "sleep" else "open") + _blush(ex + 4 * h, ey + 12 * h, 6 * h, 3.6 * h)
+    head += _p(f"M{_f(hx + 15 * h)},{_f(hy + 16 * h)} q4,4 8,0", sw=2.6)
+    if pose == "look_up":
+        head = _g(head, f"rotate(-14 {_f(hx)} {_f(hy)})")
+    out += head
+    if pose == "sleep":
+        out += _zs(hx + 30 * k, hy - 70 * k, 0.55 * k + 0.2)
+    return out
+
+
+# ---------------------------------------------------------------------- a riding saddle for the wise men's camels
+CAMEL_SEAT = (-8, -336)         # camel(saddle=...): the rider's seat (local; wise_men(pose='ride') anchor)
+
+
+def _camel_saddle(col):
+    base, trim = SADDLE_COLS.get(col, SADDLE_COLS["red"])
+    out = _p("M-110,-248 Q-70,-270 -46,-300 Q0,-336 46,-300 Q70,-270 108,-252 L104,-178 Q0,-160 -104,-180 Z", base, 4)
+    for k_, cc in enumerate((trim, S.shade(base, 0.3), trim)):
+        y0 = -200 + k_ * 9
+        out += _p(f"M-104,{y0} Q0,{y0 + 18} 104,{y0 - 2}", sw=4, stroke=cc)
+    for xx in range(-98, 104, 14):
+        out += _line(xx, -180 + abs(xx) * 0.02, xx, -164 + abs(xx) * 0.02, sw=2.8, color=trim)
+    for xx in (-90, 90):
+        out += _p(f"M{xx},-176 l-5,20 l10,0 Z", trim, 2)
+    # the wooden saddle frame with front and back posts, a cushion on top
+    out += _p("M-62,-318 Q0,-344 62,-318 L56,-300 Q0,-318 -56,-300 Z", NAT_WOOD, 3.6)
+    out += _tube("M-60,-316 L-74,-360", 9, NAT_WOOD, 3) + _tube("M58,-318 L70,-358", 9, NAT_WOOD, 3)
+    out += _circ(-74, -362, 7, trim, 2.6) + _circ(70, -360, 7, trim, 2.6)
+    out += _p("M-50,-330 Q0,-352 50,-330 Q0,-318 -50,-330 Z", S.shade(base, -0.15), 3)
+    return out
+
+
+def _camel_saddled(x, y, scale, facing, pose, phase, load, bridle, eyes, saddle):
+    if pose in ("walk_a", "walk_b"):
+        pose, phase = "walk", (0.0 if pose == "walk_a" else 0.5)
+    if pose not in ("stand", "walk"):
+        raise ValueError(f"camel: pose must be stand / walk / walk_a / walk_b, not {pose!r}")
+    if saddle not in SADDLE_COLS:
+        raise ValueError(f"camel: unknown saddle {saddle!r}; choose from {tuple(SADDLE_COLS)}")
+    ph = phase % 1.0
+    body = _camel(pose, ph, False, bridle, eyes)
+    bob = -4 * math.sin(4 * math.pi * ph) if pose == "walk" else 0.0
+    sad = _camel_saddle(saddle)
+    body += _g(sad, f"translate(0,{_f(bob)})") if bob else sad
+    return _place(body, x, y, scale, facing)
+
+
+def camel_points(x, y, scale=1.0, facing=1, pose="stand", phase=0.0):
+    """Stage points of a camel: 'seat' (wise_men(pose='ride') anchor on camel(saddle=...); follows the walk bob), 'lead'
+    (the end of the lead rope, CAMEL_LEAD)."""
+    ph = (0.0 if pose == "walk_a" else 0.5 if pose == "walk_b" else phase) % 1.0
+    bob = -4 * math.sin(4 * math.pi * ph) if pose in ("walk", "walk_a", "walk_b") else 0.0
+    return {"seat": local_to_stage(x, y, scale, facing, CAMEL_SEAT[0], CAMEL_SEAT[1] + bob),
+            "lead": local_to_stage(x, y, scale, facing, *CAMEL_LEAD)}
+
+
+# ---------------------------------------------------------------------- the shepherds' dog
+DOG_POSES = ("sit", "stand", "lie", "look_up", "walk_a", "walk_b")
+
+
+def _dog(pose="sit", eyes="open"):
+    coat, white, dark = "#8a5a3a", "#f3ead8", "#4a3226"
+    out = ""
+    if pose in ("stand", "walk_a", "walk_b"):
+        lx = {"stand": ((-40, 40), (-56, 26)), "walk_a": ((-28, 54), (-66, 16)), "walk_b": ((-52, 30), (-40, 44))}[pose]
+        for fx in lx[0]:
+            out += _qleg((fx * 0.9, -62), fx, 16, 10, coat, hind=fx < 0, far=True, bend=0.6)
+        out += _p("M-60,-74 Q-96,-100 -92,-122 Q-76,-108 -54,-90 Z", coat, 3.2)
+        out += _p(_sm([(-66, -66), (-58, -96), (0, -104), (50, -98), (66, -70), (40, -52), (-40, -52)]), coat, 4)
+        out += _p("M20,-58 Q40,-60 56,-76 L60,-56 Q40,-48 22,-52 Z", white, 0)
+        for fx in lx[1]:
+            out += _qleg((fx * 0.9, -60), fx, 17, 11, coat, hind=fx < 0, bend=0.6)
+        hx, hy = 70, -110
+    elif pose == "lie":
+        out += _p("M-70,-20 Q-110,-24 -112,-6 Q-96,2 -70,-4 Z", coat, 3.2)
+        out += _p(_sm([(-76, -8), (-66, -48), (0, -58), (50, -50), (70, -24), (60, 0), (-60, 0)]), coat, 4)
+        out += _p("M40,-4 L104,-4 Q112,4 100,6 L40,6 Z", coat, 3.2) + _p("M30,-2 L96,4", sw=2, stroke=dark)
+        hx, hy = 84, -46
+    else:                                   # sit / look_up
+        out += _p("M-30,-12 Q-74,-10 -78,6 Q-50,10 -26,2 Z", coat, 3.2)
+        out += _p(_sm([(-40, 0), (-44, -50), (-10, -96), (26, -96), (36, -50), (28, 0)]), coat, 4)
+        out += _p("M10,-92 Q30,-80 28,-40 Q14,-30 4,-44 Q0,-76 10,-92 Z", white, 0)
+        out += _rect(4, -48, 14, 48, coat, 3.2, rx=6) + _ell(14, -2, 13, 7, white, 2.8)
+        out += _ell(-26, -8, 26, 16, S.shade(coat, -0.08), 3.2)
+        hx, hy = 30, -120
+    up = pose == "look_up"
+    rot = -26 if up else 0
+    h = ""
+    h += _p(f"M{hx - 22},{hy - 20} Q{hx - 40},{hy - 4} {hx - 34},{hy + 22} Q{hx - 20},{hy + 10} {hx - 14},{hy - 8} Z", dark, 3)
+    h += _ell(hx, hy, 26, 24, coat, 3.8)
+    h += _p(f"M{hx + 6},{hy - 22} Q{hx + 14},{hy + 4} {hx + 4},{hy + 22} Q{hx + 30},{hy + 20} {hx + 34},{hy + 2} Q{hx + 28},{hy - 18} {hx + 6},{hy - 22} Z", white, 0)
+    h += _ell(hx + 26, hy + 8, 18, 13, white, 3.4) + _ell(hx + 40, hy + 2, 6, 5, dark, 0)
+    h += _dot_eye(hx + 8, hy - 6, 4.2, eyes) + _blush(hx + 14, hy + 8, 5, 3)
+    h += _p(f"M{hx + 30},{hy + 16} q4,3 8,0", sw=2.2)
+    out += _g(h, f"rotate({rot} {hx} {hy})") if rot else h
+    return out
+
+
+def dog(x, y, scale=1.0, facing=1, pose="sit", eyes="open"):
+    """A shepherd's dog (a picture detail only; see module doc, section 12)."""
+    if pose not in DOG_POSES:
+        raise ValueError(f"dog: unknown pose {pose!r}; choose from {DOG_POSES}")
+    return _place(_dog(pose, eyes), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- small things: a hanging clay lamp, a broom, a water jar
+def _hanging_lamp(lit=1.0, k_glow=True, key="hl"):
+    """A clay oil lamp hanging from three cords (hook at (0, 0)); the flame is at about (26, 92)."""
+    out = ""
+    k = _clamp(lit)
+    if k > 0 and k_glow:
+        out += _warm_glow(20, 90, 150, 130, k, key)
+    for dx in (-26, 0, 26):
+        out += _line(0, 2, dx, 78, sw=2.2, color="#6a4a30")
+    out += _circ(0, 0, 5, "#6a4a30", 2.4)
+    out += _g(_oil_lamp(False, key + "o"), "translate(-4,112)")
+    if k > 0:
+        out += _p("M44,96 Q34,78 44,60 Q48,74 56,78 Q60,92 44,96 Z", P["sun_hot"], 3)
+        out += _p("M45,92 Q41,82 45,72 Q51,82 45,92 Z", LAMP_GLOW, 0)
+    return out
+
+
+def hanging_lamp(x, y, scale=1.0, lit=1.0):
+    """A clay oil lamp hanging on three cords; anchor = the hook (see module doc, section 12)."""
+    return _place(_hanging_lamp(lit, True, _uid("hlamp", round(lit, 3))), x, y, scale)
+
+
+def _broom(straw=STRAW):
+    """A palm-fibre broom; anchor = the bottom of the bristles, the handle rises along -y (~250 long)."""
+    out = _tube("M0,-60 L0,-252", 8, NAT_WOOD, 3)
+    out += _p("M-8,-64 L8,-64 L30,2 Q0,8 -30,2 Z", straw, 3.4)
+    for xx in (-18, -8, 2, 12, 22):
+        out += _line(xx * 0.3, -60, xx, 0, sw=1.8, color=STRAW_DARK)
+    out += _rect(-10, -70, 20, 10, P["terracotta"], 2.6, rx=3)
+    return out
+
+
+def broom(x, y, scale=1.0, rot=0.0):
+    """Mary's broom on its own (anchor = the bristle tips; rot leans it, e.g. 14 against a wall)."""
+    return _place(_broom(), x, y, scale, 1, rot)
+
+
+def water_jar(x, y, scale=1.0, facing=1, color=None):
+    """A tall clay water jar with one handle (anchor bottom centre, BBox about (-38, -104, 44, 2))."""
+    return _place(_water_jar(color), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- Nazareth: Mary's whitewashed house
+NAZARETH_DOOR = (-200, -330, -50, 0)       # exterior: the door opening (local)
+NAZARETH_WINDOW = (330, -760, 520, -500)   # interior: the window in the back wall (local)
+NAZARETH_BACK_Y = -170                     # interior: base of the back wall (the floor runs from here to the front)
+
+
+def _sky_in(x0, y0, x1, y1, time, seed=0):
+    """A little piece of sky for windows and doorways."""
+    cols = {"day": NAT_DAY, "dawn": NAT_DAWN, "dusk": NAT_DUSK, "night": NAT_NIGHT}[time]
+    gid = _uid("skin", time, x0, y0, x1, y1)
+    out = (f'<defs>{S.lin_grad(gid, [(0, cols[0]), (0.6, cols[2]), (1, cols[4])])}</defs>'
+           f'<rect x="{_f(x0)}" y="{_f(y0)}" width="{_f(x1 - x0)}" height="{_f(y1 - y0)}" fill="url(#{gid})"/>')
+    if time in ("night", "dusk"):
+        rng = random.Random(seed)
+        for i in range(10):
+            sx, sy = rng.uniform(x0, x1), rng.uniform(y0, y0 + (y1 - y0) * 0.7)
+            out += _circ(sx, sy, rng.uniform(1.6, 3.4), "#fff6d2", 0, extra='opacity="0.9"')
+    return out
+
+
+def _nazareth_exterior(time="day", light=0.0):
+    wall, side = _nt(WHITEWASH, time), _nt(S.shade(WHITEWASH, -0.14), time)
+    teal = _nt("#4f8fa8", time)
+    out = ""
+    w, h, dep = 620, 430, 120
+    # outside stair on the left
+    for i in range(7):
+        yy = -i * 58
+        out += _rect(-w / 2 - 140 + i * 14, yy - 58, 150 - i * 6, 58, _nt(S.shade(WHITEWASH, -0.06), time), 3.4)
+    out += _p(_poly([(w / 2, 0), (w / 2 + dep, -46), (w / 2 + dep, -h - 46), (w / 2, -h)]), side, 4)
+    out += _rect(-w / 2, -h, w, h, wall, 4)
+    rng = random.Random(3)
+    blot = ""
+    for i in range(8):
+        blot += _ell(rng.uniform(-w / 2, w / 2), rng.uniform(-h, 0), rng.uniform(30, 70), rng.uniform(14, 30),
+                     _nt(S.shade(WHITEWASH, -0.08), time), 0, extra='opacity="0.5"')
+    out += _clip(_uid("nzw", time), f"M{-w / 2},{-h} h{w} v{h} h{-w} Z", blot)
+    out += _rect(-w / 2, -26, w, 26, _nt("#d9c8a0", time), 3)          # a stone plinth
+    # roof: beams and a little parapet
+    out += _p(_poly([(-w / 2 - 12, -h - 4), (w / 2 + 12, -h - 4), (w / 2 + dep + 12, -h - 50), (-w / 2 + dep - 12, -h - 50)]),
+              _nt("#cdb894", time), 4)
+    for xx in range(int(-w / 2) + 26, int(w / 2), 56):
+        out += _circ(xx, -h + 12, 7, _nt(NAT_WOOD_DARK, time), 2.6)
+    out += _rect(-w / 2 - 12, -h - 30, w + 24, 26, wall, 3.6, rx=4)
+    # door and window (light inside at night / when the angel's light fills the room)
+    lit = S.mix(_nt("#5a4436", time), LAMP_GLOW, _clamp(light))
+    x0, top, x1, _ = NAZARETH_DOOR
+    out += _p(f"M{x0},0 L{x0},{top + 40} Q{(x0 + x1) / 2},{top - 20} {x1},{top + 40} L{x1},0 Z", lit, 4)
+    out += _p(f"M{x0},0 L{x0},{top + 40} Q{(x0 + x1) / 2},{top - 20} {x1},{top + 40} L{x0 + 6},{top + 46} L{x0 + 6},0 Z",
+              teal, 3.6)                                                      # the door leaf, open inward
+    out += _line(x0 + 30, top + 60, x0 + 30, -10, sw=2.4, color=S.shade(teal, -0.3))
+    wx, wy = 170, -270
+    out += _rect(wx - 50, wy - 50, 100, 100, lit, 4, rx=6)
+    out += _line(wx, wy - 50, wx, wy + 50, sw=3, color=_nt(NAT_WOOD_DARK, time))
+    for sx in (-1, 1):
+        out += _p(_poly([(wx + sx * 50, wy - 50), (wx + sx * 96, wy - 58), (wx + sx * 96, wy + 58), (wx + sx * 50, wy + 50)]), teal, 3.4)
+        out += _line(wx + sx * 73, wy - 48, wx + sx * 73, wy + 48, sw=2, color=S.shade(teal, -0.3))
+    out += _rect(wx - 62, wy + 50, 124, 12, _nt("#d9c8a0", time), 3)
+    out += _p(f"M{wx - 30},{wy + 50} Q{wx - 26},{wy + 22} {wx - 6},{wy + 22} Q{wx + 14},{wy + 22} {wx + 18},{wy + 50} Z",
+              _nt(P["terracotta"], time), 3)                                  # a flower pot on the sill
+    for k_, (dx, dy) in enumerate(((-16, -6), (0, -16), (14, -4))):
+        out += _circ(wx + dx, wy + 18 + dy, 8, _nt(("#e86a6a", "#f2c94e", "#e86a6a")[k_], time), 2.4)
+    if light > 0:
+        out += _warm_glow(wx, wy, 160, 140, light * 0.8, "nzwin") + _warm_glow((x0 + x1) / 2, -170, 160, 220, light * 0.8, "nzdoor")
+    # the water jar by the door, the broom leaning on the wall, a little vine
+    out += _g(_water_jar(_nt("#c98a5a", time)), f"translate({x1 + 60},0) scale(0.95)")
+    out += _g(_broom(_nt(STRAW, time)), f"translate({x0 - 50},0) rotate(10)")
+    out += _tube(f"M{w / 2 - 30},0 Q{w / 2 - 10},-150 {w / 2 - 40},-300 Q{w / 2 - 80},-380 {w / 2 - 170},-400", 9, _nt(NAT_WOOD, time), 3)
+    for i in range(9):
+        lx, ly = w / 2 - 40 - i * 16, -300 - 10 * math.sin(i)
+        out += _ell(lx, ly - (i % 2) * 18, 16, 10, _nt("#6f9a52", time), 2.6, extra=f'transform="rotate({-20 + 15 * i} {lx} {ly})"')
+    return out
+
+
+def _nazareth_interior(time="day", light=0.0, light_x=260.0):
+    wall = _nt(WHITEWASH, time, 0.7)
+    wd = _nt(S.shade(WHITEWASH, -0.1), time, 0.7)
+    out = ""
+    by = NAZARETH_BACK_Y
+    out += _rect(-1100, -1300, 2200, 1300 + by, wall, 0)
+    rng = random.Random(9)
+    for i in range(14):
+        out += _ell(rng.uniform(-1000, 1000), rng.uniform(-1200, by - 40), rng.uniform(60, 160), rng.uniform(30, 70), wd, 0,
+                    extra='opacity="0.45"')
+    out += _rect(-1100, by - 40, 2200, 40, _nt("#d6bf92", time, 0.7), 3.4)            # an ochre plinth band
+    # the floor (packed earth) and a striped woven mat
+    gid = _uid("nzfl", time)
+    out += (f'<defs>{S.lin_grad(gid, [(0, _nt("#c9a272", time, 0.7)), (1, _nt("#b08a5a", time, 0.7))])}</defs>'
+            f'<rect x="-1100" y="{by}" width="2200" height="600" fill="url(#{gid})"/>')
+    out += _line(-1100, by, 1100, by, sw=4)
+    md = _poly([(-380, by + 60), (300, by + 60), (420, 120), (-460, 120)])
+    stripes = ""
+    for k_, col in enumerate(("#e9c35c", "#3f62a2", "#e9c35c")):
+        yy = by + 90 + k_ * 34
+        stripes += _line(-500, yy, 460, yy, sw=8, color=_nt(col, time, 0.7))
+    out += _p(md, _nt("#b8503e", time, 0.7), 0) + _clip(_uid("nzmat", time), md, stripes) + _p(md, "none", 3.6)
+    # the window
+    x0, y0, x1, y1 = NAZARETH_WINDOW
+    out += _rect(x0 - 24, y0 - 24, x1 - x0 + 48, y1 - y0 + 48, _nt(S.shade(WHITEWASH, -0.2), time, 0.7), 4, rx=10)
+    out += _sky_in(x0, y0, x1, y1, time, seed=4) + _rect(x0, y0, x1 - x0, y1 - y0, "none", 4)
+    out += _line((x0 + x1) / 2, y0, (x0 + x1) / 2, y1, sw=4, color=_nt(NAT_WOOD_DARK, time, 0.7))
+    for sx, xx in ((-1, x0), (1, x1)):
+        out += _p(_poly([(xx, y0), (xx + sx * 80, y0 - 10), (xx + sx * 80, y1 + 10), (xx, y1)]), _nt("#4f8fa8", time, 0.7), 3.4)
+    out += _rect(x0 - 40, y1 + 24, x1 - x0 + 80, 18, _nt("#d6bf92", time, 0.7), 3.4, rx=4)
+    # a niche with an oil lamp (lit at dusk / night) and a shelf with pots
+    nx = -460
+    out += _p(f"M{nx - 70},-470 L{nx - 70},-600 Q{nx},-680 {nx + 70},-600 L{nx + 70},-470 Z", _nt("#c9b48e", time, 0.7), 4)
+    lamp_on = 1.0 if time in ("dusk", "night") else 0.0
+    out += _g(_oil_lamp(lamp_on > 0, _uid("nzl", time)), f"translate({nx - 6},-470) scale(0.85)")
+    out += _rect(-200, -560, 280, 16, _nt(NAT_WOOD, time, 0.7), 3.4, rx=4)
+    for k_, (dx, col, hh) in enumerate(((-150, "#c9714a", 60), (-70, "#d9a066", 44), (10, "#b8603e", 70))):
+        out += _p(f"M{dx - 22},-560 Q{dx - 30},-{560 + hh * 0.5} {dx - 10},-{560 + hh} L{dx + 10},-{560 + hh} Q{dx + 30},-{560 + hh * 0.5} {dx + 22},-560 Z",
+                  _nt(col, time, 0.7), 3)
+    # the water jar in the corner, the broom against the wall, a basket of wool with a spindle, a low stool
+    out += _g(_water_jar(_nt("#c98a5a", time, 0.7)), f"translate(760,{by + 40}) scale(1.25)")
+    out += _g(_broom(_nt(STRAW, time, 0.7)), f"translate(600,{by + 20}) rotate(12) scale(1.1)")
+    out += _p(f"M-860,{by + 60} Q-860,{by + 110} -780,{by + 112} Q-700,{by + 110} -700,{by + 60} Z", _nt("#c9995a", time, 0.7), 3.4)
+    out += _cluster([(-810, by + 54, 26), (-770, by + 50, 24), (-740, by + 58, 20)], _nt("#f2ead8", time, 0.7), 3)
+    out += _tube(f"M-760,{by + 40} L-700,{by - 40}", 4, _nt(NAT_WOOD, time, 0.7), 2.2)
+    out += _rect(-640, by + 130, 140, 22, _nt(NAT_WOOD_LIGHT, time, 0.7), 3.4, rx=5)
+    for xx in (-626, -514):
+        out += _rect(xx - 7, by + 152, 14, 50, _nt(NAT_WOOD, time, 0.7), 3, rx=3)
+    # the angel's light filling the room
+    if light > 0:
+        k = _clamp(light)
+        out += _warm_glow(light_x, -480, 1100 * (0.5 + 0.5 * k), 900 * (0.5 + 0.5 * k), 0.95 * k, "nzangel", STAR_CORE, P["gold"])
+        out += _p(S.rays(light_x, -480, 150, 1300, n=16, width_deg=6, rot=8), "#fff3c8", 0, extra=f'opacity="{0.35 * k:.2f}"')
+    return out
+
+
+def nazareth_house(x, y, scale=1.0, facing=1, view="exterior", time="day", light=0.0, light_x=260.0):
+    """Mary's small whitewashed house in Nazareth, outside or inside (see module doc, section 12)."""
+    _check_time(time, "nazareth_house")
+    if view == "exterior":
+        body = _nazareth_exterior(time, _clamp(light))
+    elif view == "interior":
+        body = _nazareth_interior(time, _clamp(light), light_x)
+    else:
+        raise ValueError(f"nazareth_house: view must be 'exterior' or 'interior', not {view!r}")
+    return _place(body, x, y, scale, facing, filt="wobble" if view == "interior" else "wobble-fine")
+
+
+# ---------------------------------------------------------------------- Bethlehem: the house where the wise men find the child
+FAMILY_SEAT = (-200, -64)        # interior: the bench (centre x, seat top): mary(pose='sit_hold') at (x + -150*scale, y)
+FAMILY_BACK_Y = -160
+FAMILY_WINDOW = (240, -820, 420, -600)
+LIMESTONE = "#dcc6a2"
+
+
+def _family_exterior(time="night", star_light=0.0, lit=1.0):
+    st, sd = _nt(LIMESTONE, time), _nt(S.shade(LIMESTONE, -0.18), time)
+    out = ""
+    w, h, dep = 520, 560, 110
+    for i in range(8):                            # outside stair to the roof, on the right side
+        yy = -i * 62
+        out += _rect(w / 2 + 6 + i * 4, yy - 62, 90 - i * 4, 62, _nt(S.shade(LIMESTONE, -0.06), time), 3.4)
+    out += _p(_poly([(-w / 2, 0), (-w / 2 - dep, -40), (-w / 2 - dep, -h - 40), (-w / 2, -h)]), sd, 4)
+    out += _rect(-w / 2, -h, w, h, st, 4)
+    rng = random.Random(21)
+    blocks = ""
+    for row, yy in enumerate(range(-h + 30, 0, 34)):
+        off = 0 if row % 2 else 30
+        for xx in range(int(-w / 2) + off, int(w / 2), 60):
+            if rng.random() < 0.5:
+                blocks += _rect(xx + 4, yy - 28, 52, 26, S.mix(st, sd, rng.uniform(0.2, 0.5)), 0, rx=5)
+    out += _clip(_uid("fhb", time), f"M{-w / 2},{-h} h{w} v{h} h{-w} Z", blocks)
+    out += _rect(-w / 2 - 10, -h - 28, w + 20, 28, _nt(S.shade(LIMESTONE, 0.15), time), 3.6, rx=4)
+    for xx in range(int(-w / 2) + 24, int(w / 2), 50):
+        out += _circ(xx, -h + 12, 6, _nt(NAT_WOOD_DARK, time), 2.4)
+    warm = S.mix(_nt("#5a4436", time), LAMP, _clamp(lit))
+    # arched door, two windows, a vine
+    out += _p(f"M-70,0 L-70,-230 Q0,-310 70,-230 L70,0 Z", _nt(NAT_WOOD, time), 4)
+    for xx in (-40, -10, 20, 50):
+        out += _line(xx, -10, xx, -250 + abs(xx) * 0.6, sw=2.2, color=_nt(NAT_WOOD_DARK, time))
+    out += _circ(44, -120, 6, _nt(P["gold"], time), 2.4)
+    for wx, wy in ((-160, -380), (150, -380), (150, -170)):
+        out += _p(f"M{wx - 36},{wy + 40} L{wx - 36},{wy - 20} Q{wx},{wy - 56} {wx + 36},{wy - 20} L{wx + 36},{wy + 40} Z", warm, 4)
+        if lit > 0:
+            out += _warm_glow(wx, wy, 110, 100, 0.7 * lit, f"fhw{wx}{wy}")
+    out += _tube("M-120,0 Q-110,-200 -60,-300 Q0,-340 80,-300", 8, _nt(NAT_WOOD, time), 3)
+    for i in range(10):
+        lx, ly = -110 + i * 20, -240 - 70 * math.sin(i / 9 * math.pi)
+        out += _ell(lx, ly, 15, 9, _nt("#6f9a52", time), 2.4, extra=f'transform="rotate({-30 + 9 * i} {lx} {ly})"')
+    if star_light > 0:
+        out += _warm_glow(0, -h - 80, 520, 300, _clamp(star_light), "fhstar", STAR_CORE, STAR_GOLD)
+    return out
+
+
+def _family_interior(time="night", star_light=0.0, lamp=1.0):
+    plaster = _nt("#ecd6b0", time, 0.3)
+    stone = _nt(LIMESTONE, time, 0.3)
+    by = FAMILY_BACK_Y
+    out = _rect(-1100, -1300, 2200, 1300 + by, plaster, 0)
+    rng = random.Random(31)
+    for row, yy in enumerate(range(by - 40, by - 300, -46)):           # exposed stone at the foot of the wall
+        off = 0 if row % 2 else 40
+        for xx in range(-1100 + off, 1100, 92):
+            out += _rect(xx, yy - 40, 84, 40, S.mix(stone, _nt("#b89a72", time, 0.3), rng.uniform(0.1, 0.5)), 2.6, rx=10)
+    out += _p(f"M-1100,{by - 300} Q0,{by - 330} 1100,{by - 296}", sw=3, stroke=_nt("#b89a72", time, 0.3))
+    # an arched alcove with a curtain, a shelf with pots, carpentry tools on the wall (Joseph's)
+    out += _p(f"M-120,{by} L-120,-640 Q0,-800 120,-640 L120,{by} Z", _nt("#8a5a42", time, 0.3), 4)
+    out += _p(f"M-120,-640 Q0,-800 120,-640 Q60,-560 50,{by} L-50,{by} Q-60,-560 -120,-640 Z", _nt("#4a3428", time, 0.3), 0)
+    out += _p(f"M-120,-640 Q-60,-560 -40,{by} L-120,{by} Z M120,-640 Q60,-560 40,{by} L120,{by} Z", _nt("#9b3a4a", time, 0.3), 3.4)
+    for sx in (-1, 1):
+        out += _p(f"M{sx * 100},-600 Q{sx * 70},-420 {sx * 60},{by}", sw=2.4, stroke=_nt("#7a2a3a", time, 0.3))
+    out += _ell(0, -640, 20, 12, _nt(P["gold"], time, 0.3), 2.6)
+    out += _rect(420, -560, 300, 16, _nt(NAT_WOOD, time, 0.3), 3.4, rx=4)
+    for k_, (dx, col, hh) in enumerate(((460, "#c9714a", 50), (540, "#d9a066", 70), (630, "#b8603e", 44), (690, "#3f62a2", 36))):
+        out += _p(f"M{dx - 20},-560 Q{dx - 28},-{560 + hh * 0.5} {dx - 8},-{560 + hh} L{dx + 8},-{560 + hh} Q{dx + 28},-{560 + hh * 0.5} {dx + 20},-560 Z",
+                  _nt(col, time, 0.3), 3)
+    out += _g(_saw_shape(), "translate(-640,-640) rotate(-8) scale(1.0)")
+    out += _g(_hammer_shape(), "translate(-480,-700) rotate(80) scale(1.1)")
+    out += _rect(-760, -720, 30, 30, _nt(NAT_WOOD, time, 0.3), 2.6, rx=4)
+    # the window with the star's light streaming in
+    x0, y0, x1, y1 = FAMILY_WINDOW
+    out += _p(f"M{x0 - 20},{y1 + 20} L{x0 - 20},{y0 + 40} Q{(x0 + x1) / 2},{y0 - 50} {x1 + 20},{y0 + 40} L{x1 + 20},{y1 + 20} Z",
+              _nt(S.shade("#e8d6b4", -0.2), time, 0.3), 4)
+    out += _clip(_uid("fhwin", time), f"M{x0},{y1} L{x0},{y0 + 40} Q{(x0 + x1) / 2},{y0 - 30} {x1},{y0 + 40} L{x1},{y1} Z",
+                 _sky_in(x0 - 10, y0 - 40, x1 + 10, y1 + 10, time, seed=2) + (_p(_star_path((x0 + x1) / 2 + 20, y0 + 40, 26, 9, 4, -90), STAR_GOLD, 2.4) if star_light > 0 else ""))
+    out += _p(f"M{x0},{y1} L{x0},{y0 + 40} Q{(x0 + x1) / 2},{y0 - 30} {x1},{y0 + 40} L{x1},{y1} Z", sw=4)
+    # the floor: stone flags and rugs
+    gid = _uid("fhfl", time)
+    out += (f'<defs>{S.lin_grad(gid, [(0, _nt("#c4a57a", time, 0.3)), (1, _nt("#a8875e", time, 0.3))])}</defs>'
+            f'<rect x="-1100" y="{by}" width="2200" height="600" fill="url(#{gid})"/>') + _line(-1100, by, 1100, by, sw=4)
+    for yy, n_ in ((by + 50, 12), (by + 130, 10), (by + 240, 8)):
+        out += _line(-1100, yy, 1100, yy, sw=2.4, color=_nt("#8a6a48", time, 0.3), extra='opacity="0.5"')
+    rug = _poly([(-520, by + 70), (360, by + 70), (480, 160), (-640, 160)])
+    out += _p(rug, _nt("#9c3a3a", time, 0.3), 3.6)
+    for k_, col in enumerate(("#e9c35c", "#2f4a7a", "#e9c35c")):
+        yy = by + 100 + k_ * 50
+        out += _line(-540 - k_ * 30, yy, 390 + k_ * 30, yy, sw=9, color=_nt(col, time, 0.3))
+    out += _p(rug, "none", 3.6)
+    # the bench along the left (seat top FAMILY_SEAT[1]), with a cushion
+    bx, sy = FAMILY_SEAT
+    out += _rect(bx - 150, sy - 6, 300, 26, _nt(NAT_WOOD_LIGHT, time, 0.3), 3.6, rx=6)
+    for xx in (bx - 130, bx + 130):
+        out += _rect(xx - 9, sy + 20, 18, -sy - 20, _nt(NAT_WOOD, time, 0.3), 3, rx=4)
+    out += _p(f"M{bx - 120},{sy - 4} Q{bx - 110},{sy - 30} {bx - 50},{sy - 28} Q{bx},{sy - 26} {bx + 10},{sy - 4} Z", _nt("#3f62a2", time, 0.3), 3)
+    # a lamp on a stand
+    out += _tube(f"M420,{by + 70} L420,-330", 8, _nt(NAT_WOOD_DARK, time, 0.3), 3)
+    out += _ell(420, by + 76, 46, 12, _nt(NAT_WOOD_DARK, time, 0.3), 3.4)
+    out += _rect(380, -340, 80, 14, _nt(NAT_WOOD_DARK, time, 0.3), 3, rx=4)
+    out += _g(_oil_lamp(lamp > 0, _uid("fhl", time, round(lamp, 2))), "translate(410,-340) scale(0.8)")
+    if lamp > 0:
+        out += _warm_glow(450, -380, 520, 420, 0.7 * _clamp(lamp), "fhlamp")
+    if star_light > 0:
+        k = _clamp(star_light)
+        beam = f"M{x0 + 10},{y0 + 30} L{x1 - 10},{y0 + 30} L{x1 - 120},{by + 120} L{x0 - 320},{by + 120} Z"
+        gb = _uid("fhbeam", time)
+        out += (f'<defs>{S.lin_grad(gb, [(0, "#fff3c8", 0.75), (1, "#ffe08a", 0.05)])}</defs>'
+                f'<path d="{beam}" fill="url(#{gb})" opacity="{0.8 * k:.2f}"/>')
+        out += _warm_glow(x0 - 120, by + 120, 340, 90, 0.6 * k, "fhpool", STAR_CORE, STAR_GOLD)
+    return out
+
+
+def family_house(x, y, scale=1.0, facing=1, view="exterior", time="night", star_light=0.0, lamp=1.0):
+    """The house in Bethlehem where the wise men find the child Jesus with Mary (Matthew 2:11): outside (the star stops
+    above it) or inside (a warm room with a bench for Mary). See module doc, section 12."""
+    _check_time(time, "family_house")
+    if view == "exterior":
+        return _place(_family_exterior(time, _clamp(star_light), _clamp(lamp)), x, y, scale, facing)
+    if view == "interior":
+        return _place(_family_interior(time, _clamp(star_light), _clamp(lamp)), x, y, scale, facing, filt="wobble")
+    raise ValueError(f"family_house: view must be 'exterior' or 'interior', not {view!r}")
+
+
+# ---------------------------------------------------------------------- the town of Bethlehem on its hill
+def _town_house(cx, base, w, h, col, time, lit, rng, dome=False, s=1.0):
+    side = S.shade(col, -0.2)
+    d = 0.18 * w
+    out = _p(_poly([(cx + w / 2, base), (cx + w / 2 + d, base - d * 0.4), (cx + w / 2 + d, base - h - d * 0.4), (cx + w / 2, base - h)]),
+             side, 3 * s)
+    out += _rect(cx - w / 2, base - h, w, h, col, 3 * s)
+    out += _rect(cx - w / 2 - 3 * s, base - h - 8 * s, w + 6 * s, 9 * s, S.shade(col, 0.12), 2.4 * s)
+    if dome:
+        out += _p(f"M{_f(cx - w * 0.3)},{_f(base - h - 6 * s)} Q{_f(cx - w * 0.3)},{_f(base - h - w * 0.45)} {_f(cx)},{_f(base - h - w * 0.5)} "
+                  f"Q{_f(cx + w * 0.3)},{_f(base - h - w * 0.45)} {_f(cx + w * 0.3)},{_f(base - h - 6 * s)} Z", S.shade(col, 0.08), 3 * s)
+    win = S.mix(S.shade(col, -0.45), LAMP, lit)
+    n = max(1, int(w / (34 * s)))
+    for i in range(n):
+        if rng.random() < 0.65:
+            wx = cx - w / 2 + (i + 0.5) * w / n
+            wy = base - h * rng.uniform(0.35, 0.7)
+            out += _rect(wx - 6 * s, wy - 8 * s, 12 * s, 16 * s, win if rng.random() < 0.8 else S.shade(col, -0.45), 2 * s, rx=3 * s)
+            if lit > 0.3 and rng.random() < 0.5:
+                out += _circ(wx, wy, 16 * s, LAMP, 0, extra=f'opacity="{0.18 * lit:.2f}"')
+    if rng.random() < 0.5:
+        out += _p(f"M{_f(cx - 9 * s)},{_f(base)} L{_f(cx - 9 * s)},{_f(base - 22 * s)} Q{_f(cx)},{_f(base - 32 * s)} {_f(cx + 9 * s)},"
+                  f"{_f(base - 22 * s)} L{_f(cx + 9 * s)},{_f(base)} Z", S.shade(col, -0.5), 2 * s)
+    return out
+
+
+def _town_back(x0, x1, y, s, time, seed, lit):
+    rng = random.Random(seed)
+    W_ = x1 - x0
+    hillc = _nt("#7f8f5e", time)
+    out = ""
+    far = S.hill(x0 - 60, x1 + 60, y - 120 * s, 120 * s, seed=seed + 2, bottom=y + 10, bumps=4)
+    out += _p(far, _nt("#8a8a6a", time, 1.1), 3 * s)
+    cx = x0 + W_ * 0.55
+    hill = [(x0 - 60, y), (x0 + W_ * 0.1, y - 60 * s), (cx - W_ * 0.25, y - 300 * s), (cx, y - 400 * s),
+            (cx + W_ * 0.25, y - 310 * s), (x1 - W_ * 0.08, y - 80 * s), (x1 + 60, y)]
+    hd = _sm(hill, closed=False) + f" L{_f(x1 + 60)},{_f(y + 20)} L{_f(x0 - 60)},{_f(y + 20)} Z"
+    out += _p(hd, hillc, 3.4 * s)
+    # houses stepping up the hill (back rows first)
+    cols = [_nt(c, time) for c in ("#e8d8b8", "#dcc6a2", "#f0e4cc", "#d8bf98", "#e4cfae")]
+    rows = []
+    for r in range(5):
+        ry = y - (360 - r * 70) * s
+        half = (0.10 + 0.07 * r) * W_
+        rows.append((ry, cx - half, cx + half))
+    for ry, a, b in rows:
+        xx = a
+        while xx < b:
+            w = rng.uniform(70, 120) * s
+            h = rng.uniform(60, 110) * s
+            out += _town_house(xx + w / 2, ry + rng.uniform(-8, 8) * s, w, h, rng.choice(cols), time, lit, rng,
+                               dome=rng.random() < 0.15, s=s)
+            if rng.random() < 0.18:
+                tx = xx + w + 6 * s
+                out += _p(f"M{_f(tx)},{_f(ry)} Q{_f(tx - 12 * s)},{_f(ry - 60 * s)} {_f(tx)},{_f(ry - 110 * s)} Q{_f(tx + 12 * s)},{_f(ry - 60 * s)} {_f(tx)},{_f(ry)} Z",
+                          _nt("#4f6a3e", time), 2.4 * s)
+                xx += 14 * s
+            xx += w + rng.uniform(2, 12) * s
+    # the town wall at the foot of the hill and a gate
+    wy = y - 40 * s
+    out += _rect(x0 + W_ * 0.12, wy - 70 * s, W_ * 0.76, 80 * s, _nt("#cdb48c", time), 3.4 * s)
+    for i in range(int(W_ * 0.76 / (40 * s))):
+        out += _rect(x0 + W_ * 0.12 + i * 40 * s, wy - 86 * s, 24 * s, 18 * s, _nt("#cdb48c", time), 2.6 * s)
+    gx = cx - 40 * s
+    out += _p(f"M{_f(gx - 40 * s)},{_f(wy + 10 * s)} L{_f(gx - 40 * s)},{_f(wy - 40 * s)} Q{_f(gx)},{_f(wy - 80 * s)} {_f(gx + 40 * s)},"
+              f"{_f(wy - 40 * s)} L{_f(gx + 40 * s)},{_f(wy + 10 * s)} Z", S.mix(_nt("#4a3a30", time), LAMP, 0.5 * lit), 3 * s)
+    for px in (x0 + W_ * 0.06, x1 - W_ * 0.1):              # palms beside the town
+        out += _g(_palm(0.04, 0.0, False, False), f"translate({_f(px)},{_f(y)}) scale({0.55 * s:.3f})")
+    return out
+
+
+def _street_front(x0, x1, y, s, time, seed, lit):
+    """House fronts along the back of a street (their doors on the line y - 30*s) and the street surface."""
+    rng = random.Random(seed + 50)
+    out = ""
+    gid = _uid("strt", time, x0, x1, y)
+    out += (f'<defs>{S.lin_grad(gid, [(0, _nt("#c9ad80", time)), (1, _nt("#a88a62", time))])}</defs>'
+            f'<rect x="{_f(x0 - 10)}" y="{_f(y - 30 * s)}" width="{_f(x1 - x0 + 20)}" height="{_f(400 * s)}" fill="url(#{gid})"/>')
+    for i in range(int((x1 - x0) / (60 * s)) + 2):
+        for j in range(5):
+            cxx = x0 + i * 60 * s + (30 * s if j % 2 else 0)
+            out += _ell(cxx, y + (10 + j * 50) * s, 26 * s, 12 * s, _nt("#b8996e", time), 0, extra='opacity="0.6"')
+    base = y - 30 * s
+    xx = x0 - 40 * s
+    cols = [_nt(c, time) for c in ("#e8d8b8", "#dcc6a2", "#f0e4cc", "#d8bf98", "#e4cfae", "#cfb38c")]
+    while xx < x1 + 40 * s:
+        w = rng.uniform(300, 420) * s
+        h = rng.uniform(380, 520) * s
+        col = rng.choice(cols)
+        out += _rect(xx, base - h, w, h, col, 4 * s)
+        out += _rect(xx - 6 * s, base - h - 22 * s, w + 12 * s, 24 * s, S.shade(col, 0.12), 3 * s, rx=4 * s)
+        for bx in range(int(w / (50 * s))):
+            out += _circ(xx + (25 + bx * 50) * s, base - h + 12 * s, 6 * s, _nt(NAT_WOOD_DARK, time), 2.4 * s)
+        dx = xx + w * rng.uniform(0.25, 0.55)
+        dw, dh = 110 * s, 230 * s
+        warm = S.mix(_nt("#4a3a30", time), LAMP, 0.6 * lit)
+        out += _p(f"M{_f(dx)},{_f(base)} L{_f(dx)},{_f(base - dh)} Q{_f(dx + dw / 2)},{_f(base - dh - 50 * s)} {_f(dx + dw)},{_f(base - dh)} "
+                  f"L{_f(dx + dw)},{_f(base)} Z", warm, 3.4 * s)
+        out += _rect(dx - 14 * s, base, dw + 28 * s, 14 * s, S.shade(col, -0.1), 2.6 * s)
+        if rng.random() < 0.7:                                   # a striped awning
+            aw = rng.choice(("#b8473c", "#3f62a2", "#3c7a5a", "#c9a24a"))
+            ax0, ax1 = dx - 40 * s, dx + dw + 40 * s
+            ay = base - dh - 70 * s
+            out += _p(_poly([(ax0, ay), (ax1, ay), (ax1 + 20 * s, ay + 50 * s), (ax0 - 20 * s, ay + 50 * s)]), _nt(aw, time), 3 * s)
+            for k in range(6):
+                sx0 = ax0 + (ax1 - ax0) * k / 6
+                out += _p(_poly([(sx0, ay), (sx0 + (ax1 - ax0) / 12, ay), (sx0 + (ax1 - ax0) / 12 - 6 * s, ay + 50 * s), (sx0 - 6 * s, ay + 50 * s)]),
+                          _nt("#f2e8d4", time), 0)
+            out += _p(_poly([(ax0, ay), (ax1, ay), (ax1 + 20 * s, ay + 50 * s), (ax0 - 20 * s, ay + 50 * s)]), "none", 3 * s)
+        wx = xx + w * (0.78 if dx < xx + w * 0.45 else 0.18)
+        wy = base - h * 0.62
+        out += _rect(wx - 28 * s, wy - 34 * s, 56 * s, 68 * s, S.mix(_nt("#4a3a30", time), LAMP, lit), 3 * s, rx=6 * s)
+        if lit > 0:
+            out += _warm_glow(wx, wy, 90 * s, 80 * s, 0.6 * lit, f"stw{_f(wx)}")
+            lx = dx + dw + 30 * s
+            out += _g(_hanging_lamp(lit, True, _uid("stl", _f(lx))), f"translate({_f(lx)},{_f(base - dh - 10 * s)}) scale({0.7 * s:.3f})")
+        if rng.random() < 0.6:
+            out += _g(_water_jar(_nt("#c98a5a", time)), f"translate({_f(xx + w - 40 * s)},{_f(base)}) scale({0.8 * s:.3f})")
+        xx += w + rng.uniform(0, 16) * s
+    return out
+
+
+def bethlehem_town(x0, x1, y, scale=1.0, time="dusk", part="all", seed=0, lit=None):
+    """Bethlehem: a little town of flat-roofed houses climbing its hill, lit windows at dusk / night, a town wall and
+    gate; part='street' = house fronts with doorways, awnings and lamps along the back of a busy street plus the street
+    surface (see module doc, section 12). ABSOLUTE stage coordinates."""
+    _check_time(time, "bethlehem_town")
+    lt = ({"day": 0.0, "dawn": 0.2, "dusk": 0.75, "night": 1.0}[time] if lit is None else _clamp(lit))
+    out = ""
+    if part in ("all", "back"):
+        out += _town_back(x0, x1, y, scale, time, seed, lt)
+    if part in ("all", "street"):
+        out += _street_front(x0, x1, y + (0 if part == "street" else 300 * scale), scale, time, seed, lt)
+    if part not in ("all", "back", "street"):
+        raise ValueError(f"bethlehem_town: part must be 'all', 'back' or 'street', not {part!r}")
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+# ---------------------------------------------------------------------- the inn ('there was no room for them')
+INN_DOOR = (-115, -340, 115, 0)          # the doorway (x0, top, x1, sill) local: the innkeeper stands in it
+
+
+def _inn(time="dusk", part="all", lamp=1.0, door=1.0, full=True, seed=0):
+    st, sd = _nt("#d8c09a", time), _nt("#b89a72", time)
+    lt = _clamp(lamp)
+    back, front = "", ""
+    w, h = 820, 700
+    back += _rect(-w / 2, -h, w, h, st, 4)
+    rng = random.Random(seed + 7)
+    blocks = ""
+    for row, yy in enumerate(range(-h + 30, 0, 36)):
+        off = 0 if row % 2 else 34
+        for xx in range(int(-w / 2) + off, int(w / 2), 68):
+            if rng.random() < 0.45:
+                blocks += _rect(xx + 4, yy - 30, 60, 28, S.mix(st, sd, rng.uniform(0.2, 0.5)), 0, rx=6)
+    back += _clip(_uid("innb", time), f"M{-w / 2},{-h} h{w} v{h} h{-w} Z", blocks)
+    back += _rect(-w / 2 - 12, -h - 30, w + 24, 30, _nt("#e6d2ae", time), 3.6, rx=4)
+    back += _line(-w / 2, -360, w / 2, -360, sw=3, color=sd)
+    # windows of the upper floor: full of faces and lamplight
+    for i, wx in enumerate((-280, -100, 100, 280)):
+        wy = -520
+        back += _p(f"M{wx - 56},{wy + 70} L{wx - 56},{wy - 30} Q{wx},{wy - 80} {wx + 56},{wy - 30} L{wx + 56},{wy + 70} Z",
+                   S.mix(_nt("#4a3a30", time), LAMP, 0.85 * lt), 4)
+        if full:
+            for j, (dx, skin, hat) in enumerate(((-24, "#d9a37a", "#efe4cc"), (18, "#a46b47", "#b8473c"), (0, "#e2a882", None))[: 2 + (i % 2)]):
+                hy = wy + 20 - (j == 2) * 26
+                back += _ell(wx + dx, hy + 30, 22, 20, _nt(("#4a5a8a", "#a8503a", "#6f7a48")[(i + j) % 3], time), 3)
+                back += _circ(wx + dx, hy, 17, _nt(skin, time, 0.5), 3)
+                if hat:
+                    back += _p(f"M{wx + dx - 18},{hy - 2} Q{wx + dx},{hy - 30} {wx + dx + 18},{hy - 2} Z", _nt(hat, time, 0.5), 2.6)
+                back += _circ(wx + dx + 4, hy - 1, 2.2, PUPIL, 0) + _circ(wx + dx + 11, hy - 1, 2.2, PUPIL, 0)
+                back += _p(f"M{wx + dx + 3},{hy + 7} q4,3 8,0", sw=1.8)
+        back += _rect(wx - 66, wy + 70, 132, 14, sd, 3, rx=4)
+    # people sleeping on the roof under blankets (it is full!), bundles
+    if full:
+        for i, (rx_, col) in enumerate(((-250, "#3f62a2"), (-90, "#b8473c"), (120, "#3c7a5a"))):
+            back += _p(f"M{rx_ - 70},{-h - 30} Q{rx_ - 60},{-h - 74} {rx_},{-h - 70} Q{rx_ + 60},{-h - 66} {rx_ + 70},{-h - 30} Z", _nt(col, time), 3.4)
+            back += _circ(rx_ - 82, -h - 46, 16, _nt("#d9a37a", time, 0.5), 3) + _p(f"M{rx_ - 90},{-h - 46} q4,4 8,0 M{rx_ - 80},{-h - 46} q4,4 8,0", sw=1.8)
+        back += _zs(-320, -h - 110, 0.7)
+        back += _g(_sack(1.0, _nt("#c9a46a", time), 4), f"translate(300,{-h - 30}) scale(0.6)")
+        back += _g(_sack(1.0, _nt("#b98552", time), 6), f"translate(350,{-h - 30}) scale(0.5)")
+    # the doorway: warm, crowded inside
+    x0, top, x1, _ = INN_DOOR
+    dd = f"M{x0},0 L{x0},{top + 60} Q0,{top - 30} {x1},{top + 60} L{x1},0 Z"
+    gid = _uid("innin", time, round(lt, 2))
+    inside = _rgrad(gid, [(0, S.mix("#6a4a34", LAMP_GLOW, 0.8 * lt)), (1, S.mix("#3a2a22", "#b07a48", 0.5 * lt))], cy=0.45, r=0.7)
+    inside += f'<path d="{dd}" fill="url(#{gid})"/>'
+    if full:
+        for i, (dx, dy, col) in enumerate(((-70, -150, "#4a5a8a"), (-20, -170, "#7a4a6a"), (40, -160, "#a8503a"), (85, -140, "#6f7a48"))):
+            inside += _ell(dx, dy + 60, 34, 50, S.mix(col, "#2a2020", 0.4), 0, extra='opacity="0.75"')
+            inside += _circ(dx, dy, 22, S.mix("#c08060", "#2a2020", 0.35), 0, extra='opacity="0.8"')
+    back += _clip(_uid("innd", time, round(lt, 2), full), dd, inside) + _p(dd, sw=4)
+    # the door leaf (open inward: a sliver at the left jamb; closed: fills the doorway)
+    o = _clamp(door)
+    leaf_w = (x1 - x0) * (1 - 0.82 * o)
+    leaf = f"M{x0},0 L{x0},{top + 60} Q{x0 + leaf_w * 0.5},{top + 10} {x0 + leaf_w},{top + 64} L{x0 + leaf_w},0 Z"
+    back += _p(leaf, _nt(NAT_WOOD, time), 4)
+    for k in range(1, 4):
+        xx = x0 + leaf_w * k / 4
+        back += _line(xx, -8, xx, top + 70, sw=2.2, color=_nt(NAT_WOOD_DARK, time))
+    # front: jambs and lintel stones, the lamp, a hanging sign, a bench with bundles
+    for sx in (-1, 1):
+        jx = x0 - 30 if sx < 0 else x1 + 30
+        front += _rect(jx - 30, top + 40, 60, -top - 40, _nt("#c9ad86", time), 4, rx=4)
+        for yy in range(int(top) + 80, 0, 70):
+            front += _line(jx - 30, yy, jx + 30, yy, sw=2.4, color=sd)
+    front += _p(f"M{x0 - 62},{top + 60} Q0,{top - 70} {x1 + 62},{top + 60} L{x1 + 30},{top + 64} Q0,{top - 34} {x0 - 30},{top + 64} Z",
+                _nt("#c9ad86", time), 4)
+    front += _line(x1 + 70, top + 30, x1 + 150, top + 30, sw=6, color=_nt(NAT_WOOD_DARK, time))
+    front += _line(x1 + 110, top + 30, x1 + 110, top + 60, sw=2.4, color="#5a4030")
+    front += _rect(x1 + 70, top + 60, 84, 64, _nt(NAT_WOOD_LIGHT, time), 3.4, rx=6)
+    front += _p(f"M{x1 + 84},{top + 108} L{x1 + 84},{top + 88} L{x1 + 140},{top + 88} L{x1 + 140},{top + 108} M{x1 + 84},{top + 92} "
+                f"q4,-12 16,-10", sw=3)                                             # a little painted bed on the sign
+    front += _g(_hanging_lamp(lt, True, _uid("innlamp", round(lt, 2))), f"translate({x0 - 90},{top + 20}) scale(0.9)")
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def inn(x, y, scale=1.0, facing=1, part="all", time="dusk", lamp=1.0, door=1.0, full=True, seed=0):
+    """The crowded inn of Bethlehem (Luke 2:7, 'no room'): see module doc, section 12."""
+    _check_time(time, "inn")
+    return _place(_inn(time, part, lamp, door, full, seed), x, y, scale, facing)
+
+
+def _tiny_town(cx, base, s, time, seed, col, lit=True):
+    """A little far-away town on its own mound: two rows of small flat-roofed houses with lit windows."""
+    rng = random.Random(seed)
+    out = _p(f"M{_f(cx - 240 * s)},{_f(base + 30 * s)} Q{_f(cx - 150 * s)},{_f(base - 120 * s)} {_f(cx)},{_f(base - 130 * s)} "
+             f"Q{_f(cx + 150 * s)},{_f(base - 120 * s)} {_f(cx + 240 * s)},{_f(base + 30 * s)} Z", col, 3 * s)
+    wall = _nt("#e2d2b0", time, 1.1)
+    for row, (n, dy, spread) in enumerate(((6, -112, 120), (8, -78, 175))):
+        for i in range(n):
+            u = (i + 0.5) / n - 0.5
+            hx = cx + u * 2 * spread * s + rng.uniform(-6, 6) * s
+            hy = base + (dy + 60 * abs(u) ** 1.6) * s + rng.uniform(-4, 4) * s
+            hw_, hh_ = rng.uniform(24, 36) * s, rng.uniform(18, 30) * s
+            out += _rect(hx - hw_ / 2, hy - hh_, hw_, hh_, S.shade(wall, -0.06 * row), 1.8 * s)
+            if rng.random() < 0.2:
+                out += _p(f"M{_f(hx - hw_ * 0.3)},{_f(hy - hh_)} Q{_f(hx)},{_f(hy - hh_ - hw_ * 0.5)} {_f(hx + hw_ * 0.3)},{_f(hy - hh_)} Z",
+                          S.shade(wall, 0.05), 1.6 * s)
+            if lit and rng.random() < 0.8:
+                out += _rect(hx - 3.5 * s, hy - hh_ * 0.62, 7 * s, 8 * s, LAMP, 0)
+                out += _circ(hx, hy - hh_ * 0.55, 12 * s, LAMP, 0, extra='opacity="0.2"')
+    return out
+
+
+# ---------------------------------------------------------------------- the fields: campfire, sheepfold, night hills
+def _flames(phase, k=1.0):
+    out = ""
+    for i, (dx, hgt, wd, col) in enumerate(((-16, 64, 22, P["sun_hot"]), (14, 74, 22, "#f08a3c"), (0, 96, 26, P["sun_hot"]),
+                                             (0, 60, 14, P["gold"]))):
+        fl = math.sin(2 * math.pi * (phase + i * 0.27))
+        hh = hgt * k * (0.86 + 0.14 * fl)
+        tip = dx * k + 8 * fl * k
+        out += _p(f"M{_f(dx * k - wd * k / 2)},0 Q{_f(dx * k - wd * k * 0.7)},{_f(-hh * 0.5)} {_f(tip)},{_f(-hh)} "
+                  f"Q{_f(dx * k + wd * k * 0.7)},{_f(-hh * 0.5)} {_f(dx * k + wd * k / 2)},0 Z", col, 3 if i < 3 else 0)
+    out += _p(f"M{_f(-8 * k)},0 Q{_f(-6 * k)},{_f(-26 * k)} 0,{_f(-34 * k)} Q{_f(6 * k)},{_f(-26 * k)} {_f(8 * k)},0 Z", LAMP_GLOW, 0)
+    return out
+
+
+def _campfire(phase=0.0, fire=1.0, glow=True):
+    k = _clamp(fire)
+    out = ""
+    if glow and k > 0:
+        out += _warm_glow(0, -40, 300 * (0.6 + 0.4 * k), 200 * (0.6 + 0.4 * k), 0.85 * k, "fire", LAMP_GLOW, "#f6a43c")
+    out += _ell(0, 4, 78, 18, "#3a2a22", 0, extra='opacity="0.35"')
+    for a in range(0, 360, 36):                                   # a ring of stones
+        sx, sy = 70 * math.cos(math.radians(a)), 16 * math.sin(math.radians(a)) - 4
+        if 0 < a < 180:
+            continue
+        out += _ell(sx, sy, 18, 12, "#8a7f78", 3)
+    out += _tube("M-50,-6 L46,-30", 12, NAT_WOOD_DARK, 3) + _tube("M-44,-30 L52,-4", 12, NAT_WOOD, 3)
+    if k > 0:
+        out += _flames(phase, 0.6 + 0.4 * k)
+        rng = random.Random(3)
+        for i in range(7):                                        # sparks drifting up
+            u = (phase + i / 7) % 1.0
+            sx_ = rng.uniform(-30, 30) + 14 * math.sin(2 * math.pi * (u + i * 0.3))
+            sy_ = -60 - 150 * u
+            out += _circ(sx_, sy_, 3.2 * (1 - u) + 1, LAMP, 0, extra=f'opacity="{(1 - u) * k:.2f}"')
+    for a in range(0, 180, 36):
+        sx, sy = 70 * math.cos(math.radians(a)), 16 * math.sin(math.radians(a)) - 4
+        out += _ell(sx, sy, 18, 12, "#9a8f86", 3)
+    return out
+
+
+def campfire(x, y, scale=1.0, phase=0.0, fire=1.0, glow=True):
+    """The shepherds' little fire: a ring of stones, crossed sticks, flickering flames (phase 0..1), sparks and a warm glow
+    (see module doc, section 12)."""
+    return _place(_campfire(phase % 1.0, fire, glow), x, y, scale)
+
+
+def _sheepfold(part="all", time="night"):
+    stone = _nt("#a49a8a", time)
+    sdark = _nt("#7a7064", time)
+    back, front = "", ""
+    rx, ry = 340, 110
+    back += _ell(0, 0, rx - 20, ry - 14, _nt("#6f8050", time), 0)
+    rng = random.Random(11)
+
+    def wall(a0, a1, sh):
+        s = ""
+        for a in range(a0, a1, 12):
+            if 60 < a % 360 < 100:                                 # the gate opening toward the viewer
+                continue
+            ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
+            cx, cy = rx * ca, ry * sa
+            for layer in range(3):
+                s += _ell(cx + rng.uniform(-6, 6), cy - 18 - layer * 26, 30, 16, S.mix(stone, sdark if sh else stone, 0.3 * layer), 3)
+        return s
+    back += wall(180, 360, True)
+    back += _p("M-300,-120 l20,-18 l14,12 l16,-20 l12,16 l18,-14 M60,-150 l16,-16 l14,14 l16,-18 l12,14", sw=3, stroke=_nt("#5a4a38", time))
+    front += wall(0, 180, False)
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def sheepfold(x, y, scale=1.0, facing=1, part="all", time="night"):
+    """A round stone sheepfold with a gap for a gate (anchor = the middle of its floor; sheep inside go between part='back'
+    and part='front'). See module doc, section 12."""
+    _check_time(time, "sheepfold")
+    return _place(_sheepfold(part, time), x, y, scale, facing)
+
+
+def night_hills(x0, x1, y, scale=1.0, part="all", fire=1.0, phase=0.0, fire_x=None, fold_x=None, town=True, time="night",
+                seed=0, bottom=None):
+    """The fields outside Bethlehem at night: far ridges (the little town's lights on the far hill), olive trees, the near
+    field with rocks and grass, a stone sheepfold and the shepherds' fire (see module doc, section 12). ABSOLUTE coords:
+    y = the near ground line where the shepherds stand."""
+    _check_time(time, "night_hills")
+    s = scale
+    W_ = x1 - x0
+    bottom = y + 360 * s if bottom is None else bottom
+    rng = random.Random(seed)
+    fx = x0 + W_ * 0.38 if fire_x is None else fire_x
+    gx = x0 + W_ * 0.78 if fold_x is None else fold_x
+    back, front = "", ""
+    far_c, mid_c, near_c = _nt("#6f7f62", time, 1.25), _nt("#5f7a4e", time, 1.1), _nt("#5e7d48", time)
+    back += _p(S.hill(x0 - 60, x1 + 60, y - 260 * s, 140 * s, seed=seed + 1, bottom=y + 10, bumps=4), far_c, 3 * s)
+    if town:
+        tx = x0 + W_ * 0.22
+        back += _tiny_town(tx, y - 270 * s, s, time, seed + 77, far_c)
+    back += _p(S.hill(x0 - 60, x1 + 60, y - 150 * s, 110 * s, seed=seed + 3, bottom=y + 10, bumps=3), mid_c, 3.4 * s)
+    for i in range(5):                                            # olive tree silhouettes on the mid ridge
+        ox_ = x0 + W_ * (0.08 + 0.21 * i) + rng.uniform(-40, 40) * s
+        oy_ = y - 150 * s - 60 * s * math.sin(math.pi * (ox_ - x0) / W_)
+        back += _tube(f"M{_f(ox_)},{_f(oy_ + 10 * s)} Q{_f(ox_ + 6 * s)},{_f(oy_ - 30 * s)} {_f(ox_ - 4 * s)},{_f(oy_ - 60 * s)}", 9 * s,
+                      _nt(NAT_WOOD_DARK, time), 2.4 * s)
+        back += S.cloud(ox_, oy_ - 80 * s, 120 * s, 70 * s, fill=_nt("#556a44", time), seed=seed + 10 + i, puffs=4, sw=2.6 * s)
+    gid = _uid("nhfield", time, x0, x1, y)
+    front += (f'<defs>{S.lin_grad(gid, [(0, near_c), (1, S.shade(near_c, -0.25))])}</defs>'
+              f'<path d="{S.hill(x0 - 60, x1 + 60, y - 40 * s, 40 * s, seed=seed + 5, bottom=bottom, bumps=3)}" fill="url(#{gid})" {_st(3.6 * s)}/>')
+    for i in range(int(W_ / (70 * s))):                           # grass tufts and a few little flowers
+        tx_ = x0 + rng.uniform(0, W_)
+        ty_ = y + rng.uniform(-20, 300) * s
+        if ty_ > bottom - 10:
+            continue
+        front += _p(f"M{_f(tx_ - 8 * s)},{_f(ty_)} l{_f(5 * s)},{_f(-18 * s)} l{_f(5 * s)},{_f(14 * s)} l{_f(5 * s)},{_f(-20 * s)} l{_f(5 * s)},{_f(16 * s)}",
+                    sw=2.4 * s, stroke=_nt("#3f5a30", time))
+    for i in range(4):
+        rx_ = x0 + W_ * (0.1 + 0.27 * i) + rng.uniform(-60, 60) * s
+        front += _ell(rx_, y + 80 * s + rng.uniform(0, 140) * s, rng.uniform(40, 70) * s, rng.uniform(20, 34) * s, _nt("#8a8478", time),
+                      3 * s)
+    if fold_x is not False:
+        front += _g(_sheepfold("all", time), f"translate({_f(gx)},{_f(y - 30 * s)}) scale({0.8 * s:.3f})")
+    if fire_x is not False and fire > 0:
+        front += _warm_glow(fx, y + 40 * s, 520 * s, 160 * s, 0.5 * _clamp(fire), "nhpool", LAMP_GLOW, "#f6a43c")
+        front += _g(_campfire(phase % 1.0, fire, True), f"translate({_f(fx)},{_f(y + 40 * s)}) scale({s:.3f})")
+    out = ""
+    if part in ("all", "back"):
+        out += back
+    if part in ("all", "front"):
+        out += front
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+# ---------------------------------------------------------------------- the sky: stars, the star, heavenly light
+def _sky_grad(gid, cols):
+    return S.lin_grad(gid, [(0, cols[0]), (0.32, cols[1]), (0.62, cols[2]), (0.86, cols[3]), (1, cols[4])])
+
+
+def starry_sky(x0, y0, x1, y1, density=1.0, twinkle=0.0, milky_way=True, time="night", seed=0, scale=1.0, moon=None,
+               progress=1.0):
+    """This film's deep-blue starry sky (ABSOLUTE box): a rich gradient, hundreds of stars of three sizes (tiny dots, soft
+    dots, little four-pointed sparkles) that twinkle with twinkle 0..1, an optional soft Milky Way band, an optional moon
+    =(x, y). progress 0..1 lets the stars appear one by one. See module doc, section 12."""
+    _check_time(time, "starry_sky")
+    s = scale
+    W_, H_ = x1 - x0, y1 - y0
+    cols = {"night": NAT_NIGHT, "dusk": NAT_DUSK, "dawn": NAT_DAWN, "day": NAT_DAY}[time]
+    gid = _uid("nsky", time, x0, y0, x1, y1)
+    out = (f'<defs>{_sky_grad(gid, cols)}</defs>'
+           f'<rect x="{_f(x0 - 4)}" y="{_f(y0 - 4)}" width="{_f(W_ + 8)}" height="{_f(H_ + 8)}" fill="url(#{gid})"/>')
+    rng = random.Random(seed)
+    starvis = {"night": 1.0, "dusk": 0.55, "dawn": 0.35, "day": 0.0}[time]
+    if milky_way and starvis > 0:
+        a, b = (x0 - 0.05 * W_, y0 + 0.82 * H_), (x1 + 0.05 * W_, y0 + 0.02 * H_)
+        c = (x0 + 0.45 * W_, y0 + 0.30 * H_)
+        d = f"M{_f(a[0])},{_f(a[1])} Q{_f(c[0])},{_f(c[1])} {_f(b[0])},{_f(b[1])}"
+        out += f'<path d="{d}" fill="none" stroke="#b8c6ee" stroke-width="{_f(260 * s)}" opacity="{0.20 * starvis:.2f}" filter="url(#blur-lg)"/>'
+        out += f'<path d="{d}" fill="none" stroke="#e6ecff" stroke-width="{_f(90 * s)}" opacity="{0.16 * starvis:.2f}" filter="url(#blur-md)"/>'
+        dots = ""
+        for i in range(int(160 * density)):
+            u = rng.random()
+            px = (1 - u) ** 2 * a[0] + 2 * u * (1 - u) * c[0] + u * u * b[0]
+            py = (1 - u) ** 2 * a[1] + 2 * u * (1 - u) * c[1] + u * u * b[1]
+            off = rng.gauss(0, 55 * s)
+            dots += f'<circle cx="{_f(px + off * 0.5)}" cy="{_f(py + off)}" r="{_f(rng.uniform(0.8, 1.8) * s)}"/>'
+        out += f'<g fill="#f2f4ff" opacity="{0.75 * starvis:.2f}">{dots}</g>'
+    n = int(230 * density * (W_ * H_) / (2112 * 1188))
+    pr = _clamp(progress)
+    tiny, soft, spark = "", "", ""
+    for i in range(n):
+        sx_, sy_ = x0 + rng.random() * W_, y0 + rng.random() ** 1.25 * H_ * 0.92
+        kind = rng.random()
+        ph = rng.random()
+        a_ = _clamp(pr * n - i) * starvis
+        if time in ("dusk", "dawn"):
+            a_ *= _clamp(1.15 - (sy_ - y0) / (H_ * 0.75))
+        if a_ <= 0:
+            continue
+        tw = 0.5 + 0.5 * math.sin(2 * math.pi * (twinkle + ph))
+        if kind < 0.72:
+            tiny += f'<circle cx="{_f(sx_)}" cy="{_f(sy_)}" r="{_f((1.1 + 0.9 * rng.random()) * s)}" opacity="{a_ * (0.55 + 0.45 * tw):.2f}"/>'
+        elif kind < 0.93:
+            r = (2.2 + 1.2 * rng.random()) * s
+            soft += (f'<circle cx="{_f(sx_)}" cy="{_f(sy_)}" r="{_f(r * 3)}" fill="#fff4cc" opacity="{0.18 * a_ * tw:.2f}"/>'
+                     f'<circle cx="{_f(sx_)}" cy="{_f(sy_)}" r="{_f(r)}" fill="#fffbe8" opacity="{a_ * (0.7 + 0.3 * tw):.2f}"/>')
+        else:
+            r = (7 + 5 * rng.random()) * s * (0.8 + 0.3 * tw)
+            spark += _g(_twinkle(sx_, sy_, r, "#fff6d0") + _circ(sx_, sy_, r * 0.22, "#fffdf2", 0), extra=f'opacity="{a_:.2f}"')
+    out += f'<g fill="#f6f2dc">{tiny}</g>' + soft + spark
+    if moon:
+        mx, my = moon
+        mr = 54 * s
+        mg = _uid("nmoon", mx, my, mr)
+        out += _rgrad(mg, [(0, "#f6f0da", 0.45), (0.4, "#c8d2f0", 0.18), (1, "#c8d2f0", 0)])
+        out += f'<circle cx="{_f(mx)}" cy="{_f(my)}" r="{_f(mr * 4)}" fill="url(#{mg})"/>'
+        out += _p(f"M{_f(mx + mr * 0.2)},{_f(my - mr)} A{_f(mr)},{_f(mr)} 0 1 0 {_f(mx + mr * 0.2)},{_f(my + mr)} "
+                  f"A{_f(mr * 0.78)},{_f(mr * 0.86)} 0 1 1 {_f(mx + mr * 0.2)},{_f(my - mr)} Z", "#f6eed2", 3 * s,
+                  stroke=S.mix(INK, "#f6eed2", 0.5))
+    cid = _uid("nskyc", x0, y0, x1, y1)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0)}" y="{_f(y0)}" width="{_f(W_)}" height="{_f(H_)}"/></clipPath>'
+            f'<g clip-path="url(#{cid})">{out}</g>')
+
+
+def _star_flare(cx, cy, up, down, side, w, col, edge):
+    pts = [(cx, cy - up), (cx + w, cy - w), (cx + side, cy), (cx + w, cy + w), (cx, cy + down), (cx - w, cy + w), (cx - side, cy),
+           (cx - w, cy - w)]
+    return _p(_sm(pts, closed=True, tension=0.35), col, 2.6, stroke=edge)
+
+
+def the_star(x, y, scale=1.0, intensity=1.0, pulse=0.0, rays=True, beam=0.0, beam_to=None):
+    """The star the wise men followed: a big, bright golden star with a soft halo and long gentle rays (anchor = its
+    centre). intensity 0..1 (it appears / shines), pulse 0..1 (loop: gentle breathing and slowly turning rays), beam 0..1
+    a soft cone of light down to beam_to=(x, y) (the star stops over the house). See module doc, section 12."""
+    k = _clamp(intensity)
+    if k <= 0:
+        return ""
+    s = scale
+    br = 1 + 0.06 * math.sin(2 * math.pi * pulse)
+    out = ""
+    if beam > 0 and beam_to:
+        bx, by = beam_to
+        dx, dy = bx - x, by - y
+        L = math.hypot(dx, dy) or 1
+        nx, ny = -dy / L, dx / L
+        w0, w1 = 26 * s, 0.32 * L
+        poly = [(x + nx * w0, y + ny * w0), (bx + nx * w1, by + ny * w1), (bx - nx * w1, by - ny * w1), (x - nx * w0, y - ny * w0)]
+        gid = _uid("starbeam", x, y, bx, by)
+        out += (f'<defs><linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="{_f(x)}" y1="{_f(y)}" x2="{_f(bx)}" y2="{_f(by)}">'
+                f'<stop offset="0" stop-color="{STAR_CORE}" stop-opacity="0.8"/><stop offset="1" stop-color="{STAR_GOLD}" stop-opacity="0.08"/>'
+                f'</linearGradient></defs><path d="{_poly(poly)}" fill="url(#{gid})" opacity="{_clamp(beam) * k:.2f}" filter="url(#soft)"/>')
+    hg = _uid("starhalo", round(k, 3))
+    out += (_rgrad(hg, [(0, STAR_CORE, 0.95), (0.22, STAR_GOLD, 0.5), (0.6, "#fff2cc", 0.14), (1, "#fff2cc", 0)]) +
+            f'<circle cx="{_f(x)}" cy="{_f(y)}" r="{_f(300 * s * br * (0.6 + 0.4 * k))}" fill="url(#{hg})" opacity="{k:.2f}"/>')
+    if rays:
+        rot = 22.5 * pulse
+        out += _p(S.rays(x, y, 40 * s, 520 * s * k, n=12, width_deg=2.6, rot=rot), STAR_CORE, 0,
+                  extra=f'opacity="{0.30 * k:.2f}" filter="url(#soft)"')
+        out += _p(S.rays(x, y, 40 * s, 300 * s * k, n=12, width_deg=5, rot=rot + 15), "#fff4d4", 0,
+                  extra=f'opacity="{0.16 * k:.2f}" filter="url(#soft)"')
+    core = ""
+    core += _star_flare(x, y, 150 * s * br, 250 * s * br, 120 * s * br, 13 * s, STAR_CORE, S.mix(STAR_GOLD, INK, 0.25))
+    d = 70 * s * br * 0.707
+    core += _g(_star_flare(x, y, d * 1.0, d * 1.0, d * 1.0, 10 * s, STAR_GOLD, S.mix(STAR_GOLD, INK, 0.3)),
+               f"rotate(45 {_f(x)} {_f(y)})")
+    core += _p(_star_path(x, y, 46 * s * br, 20 * s * br, 4, -90), STAR_GOLD, 3 * s, stroke=S.mix(STAR_GOLD, INK, 0.4))
+    core += _circ(x, y, 18 * s * br, STAR_CORE, 0)
+    out += _g(core, extra=f'opacity="{min(1.0, 0.4 + 0.6 * k):.2f}"')
+    return f'<g filter="url(#wobble-fine)">{out}</g>'
+
+
+def heaven_light(x, y, scale=1.0, progress=1.0, width=1800, seed=0):
+    """A great light opening in the night sky (Luke 2:9, 13): golden-white light breaking through a ring of parting
+    clouds, rays and sparkles (anchor = the centre of the opening; ABSOLUTE stage px). progress 0..1 opens it (radius
+    width/2 at 1). God is never drawn: this is light only. See module doc, section 12."""
+    k = _smooth(progress)
+    if k <= 0:
+        return ""
+    s = scale
+    r = width / 2 * k * s
+    out = ""
+    gid = _uid("hvl", round(k, 3), width)
+    out += (_rgrad(gid, [(0, STAR_CORE, 1.0), (0.3, LAMP_GLOW, 0.85), (0.62, "#fff0c4", 0.32), (1, "#fff0c4", 0)]) +
+            f'<ellipse cx="{_f(x)}" cy="{_f(y)}" rx="{_f(r * 1.35)}" ry="{_f(r * 0.95)}" fill="url(#{gid})"/>')
+    out += _p(S.rays(x, y, r * 0.2, r * 1.5, n=20, width_deg=3.5, rot=7 * k), STAR_CORE, 0,
+              extra=f'opacity="{0.32 * k:.2f}" filter="url(#soft)"')
+    rng = random.Random(seed)
+    for i in range(8):                                    # the parting clouds round the opening, lit gold on their inner edge
+        a = 2 * math.pi * (i + 0.5) / 8 + rng.uniform(-0.12, 0.12)
+        cx, cy = x + math.cos(a) * r * 1.22, y + math.sin(a) * r * 0.86
+        cw = rng.uniform(220, 320) * s * (0.6 + 0.4 * k)
+        cl = S.mix("#c9c6dc", "#efe4cc", 0.5 + 0.3 * k)
+        out += S.cloud(cx, cy, cw, cw * 0.42, fill=cl, seed=seed + i, puffs=5, sw=3 * s, shade_fill=S.mix(cl, "#8a84a8", 0.45))
+        ix, iy = cx - math.cos(a) * cw * 0.30, cy - math.sin(a) * cw * 0.12
+        out += f'<ellipse cx="{_f(ix)}" cy="{_f(iy)}" rx="{_f(cw * 0.34)}" ry="{_f(cw * 0.12)}" fill="{LAMP_GLOW}" opacity="{0.55 * k:.2f}" filter="url(#soft)"/>'
+    out += f'<ellipse cx="{_f(x)}" cy="{_f(y)}" rx="{_f(r * 0.5)}" ry="{_f(r * 0.36)}" fill="{STAR_CORE}" opacity="{0.8 * k:.2f}" filter="url(#blur-md)"/>'
+    for i in range(14):
+        a, d = rng.uniform(0, 2 * math.pi), rng.uniform(0.2, 1.0)
+        out += _twinkle(x + math.cos(a) * r * d, y + math.sin(a) * r * 0.7 * d, rng.uniform(6, 14) * s, "#fffaf0")
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+def glory(x, y, scale=1.0, progress=1.0, width=1500, height=1100, rays=True, seed=0):
+    """'The glory of the Lord shone around them' (Luke 2:9): a great dome of warm golden-white light round a group on
+    the ground (anchor = the ground point under its middle; the angel stands or hovers there), with rays from above, a
+    bright pool of light on the ground and sparkles. Draw it BEHIND the shepherds, sheep and angel (ABSOLUTE stage px).
+    progress 0..1 grows and brightens it. Light only - God is never drawn. See module doc, section 12."""
+    k = _smooth(progress)
+    if k <= 0:
+        return ""
+    s = scale
+    w, h = width * s * (0.55 + 0.45 * k), height * s * (0.55 + 0.45 * k)
+    cy = y - h * 0.45
+    out = ""
+    gid = _uid("glory", round(k, 3), width, height)
+    out += (_rgrad(gid, [(0, STAR_CORE, 0.95), (0.35, LAMP_GLOW, 0.7), (0.7, "#fff0c4", 0.24), (1, "#fff0c4", 0)]) +
+            f'<ellipse cx="{_f(x)}" cy="{_f(cy)}" rx="{_f(w / 2)}" ry="{_f(h / 2)}" fill="url(#{gid})" opacity="{k:.2f}"/>')
+    if rays:
+        out += _p(S.rays(x, y - h * 0.62, 60 * s, max(w, h) * 0.62, n=18, width_deg=3.5, rot=4 + 6 * k), STAR_CORE, 0,
+                  extra=f'opacity="{0.22 * k:.2f}" filter="url(#soft)"')
+    pg = _uid("glorypool", round(k, 3), width)
+    out += (_rgrad(pg, [(0, STAR_CORE, 0.95), (0.5, LAMP_GLOW, 0.5), (1, LAMP_GLOW, 0)]) +
+            f'<ellipse cx="{_f(x)}" cy="{_f(y)}" rx="{_f(w * 0.48)}" ry="{_f(80 * s)}" fill="url(#{pg})" opacity="{k:.2f}"/>')
+    rng = random.Random(seed)
+    for i in range(18):
+        a, d = rng.uniform(0, 2 * math.pi), rng.uniform(0.25, 0.95)
+        out += _g(_twinkle(x + math.cos(a) * w / 2 * d, cy + math.sin(a) * h / 2 * d, rng.uniform(6, 13) * s, "#fffaf0"),
+                  extra=f'opacity="{k:.2f}"')
+    return out
+
+
+_SKY_KEYS = ((0.0, NAT_DAWN), (0.12, NAT_DAY), (0.38, NAT_DAY), (0.5, NAT_DUSK), (0.62, NAT_NIGHT), (0.88, NAT_NIGHT),
+             (1.0, NAT_DAWN))
+
+
+def _sky_at(t):
+    t = t % 1.0
+    for (t0, c0), (t1, c1) in zip(_SKY_KEYS, _SKY_KEYS[1:]):
+        if t0 <= t <= t1:
+            u = (t - t0) / (t1 - t0) if t1 > t0 else 0
+            return tuple(S.mix(a, b, u) for a, b in zip(c0, c1))
+    return NAT_DAY
+
+
+def day_night_sky(x0, y0, x1, y1, t=0.0, stars=True, seed=0, scale=1.0, horizon=None):
+    """Days passing on a long journey (ABSOLUTE box): one sky that runs through a whole day as t goes 0 -> 1 - dawn (0),
+    bright day with the sun high (.25), a violet-gold evening (.5), the starry night with the moon high (.75), dawn
+    again (1) - while a smiling sun and then a crescent moon travel along an arc from left to right over the horizon
+    line (horizon, default y1). Loop t for 'walked for many days'. See module doc, section 12."""
+    s = scale
+    W_, H_ = x1 - x0, y1 - y0
+    hz = y1 if horizon is None else horizon
+    tt = t % 1.0
+    cols = _sky_at(tt)
+    gid = _uid("dns", round(tt, 3), x0, y0, x1, y1)
+    out = (f'<defs>{_sky_grad(gid, cols)}</defs>'
+           f'<rect x="{_f(x0 - 4)}" y="{_f(y0 - 4)}" width="{_f(W_ + 8)}" height="{_f(H_ + 8)}" fill="url(#{gid})"/>')
+    night = _clamp(1 - abs(tt - 0.75) / 0.17) if 0.55 < tt < 0.95 else 0.0
+    if stars and night > 0:
+        rng = random.Random(seed)
+        dots = ""
+        for i in range(int(90 * W_ * H_ / (2112 * 1188))):
+            dots += f'<circle cx="{_f(x0 + rng.random() * W_)}" cy="{_f(y0 + rng.random() ** 1.3 * (hz - y0) * 0.9)}" r="{_f(rng.uniform(1.2, 2.8) * s)}"/>'
+        out += f'<g fill="#fff6d2" opacity="{night:.2f}">{dots}</g>'
+    cx, R, rise = (x0 + x1) / 2, W_ * 0.42, min(H_ * 0.72, W_ * 0.4)
+
+    def arc(u):
+        a = math.pi * (1 - u)
+        return cx + R * math.cos(a), hz - rise * math.sin(a)
+    if tt <= 0.5:
+        sx_, sy_ = arc(tt / 0.5)
+        out += _warm_glow(sx_, sy_, 150 * s, 150 * s, 0.7, "dnsun", "#fff6d2", P["sun"])
+        out += _g(_sun_icon(48 * s), f"translate({_f(sx_)},{_f(sy_)})")
+    else:
+        mx, my = arc((tt - 0.5) / 0.5)
+        mr = 40 * s
+        out += _p(f"M{_f(mx + mr * 0.2)},{_f(my - mr)} A{_f(mr)},{_f(mr)} 0 1 0 {_f(mx + mr * 0.2)},{_f(my + mr)} "
+                  f"A{_f(mr * 0.78)},{_f(mr * 0.86)} 0 1 1 {_f(mx + mr * 0.2)},{_f(my - mr)} Z", "#f6eed2", 3 * s)
+    cid = _uid("dnsc", x0, y0, x1, y1)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0)}" y="{_f(y0)}" width="{_f(W_)}" height="{_f(H_)}"/></clipPath>'
+            f'<g clip-path="url(#{cid})">{out}</g>')
+
+
+# ---------------------------------------------------------------------- the long road to Bethlehem
+def road_points(x0, x1, y, scale=1.0, n=11):
+    """Points along journey_road from the near end (t=0, bottom left) to the far end (t=1, on the far hills): a list of
+    (x, y, k) - stage x, y of the road's middle and k = the perspective scale there (multiply your figure scale by k)."""
+    s = scale
+    W_ = x1 - x0
+    P0, P1, P2, P3 = (x0 + 0.12 * W_, y + 230 * s), (x0 + 0.62 * W_, y + 140 * s), (x0 + 0.30 * W_, y - 150 * s), (x0 + 0.80 * W_, y - 290 * s)
+    out = []
+    for i in range(n):
+        t = i / (n - 1)
+        bx = (1 - t) ** 3 * P0[0] + 3 * t * (1 - t) ** 2 * P1[0] + 3 * t * t * (1 - t) * P2[0] + t ** 3 * P3[0]
+        by = (1 - t) ** 3 * P0[1] + 3 * t * (1 - t) ** 2 * P1[1] + 3 * t * t * (1 - t) * P2[1] + t ** 3 * P3[1]
+        out.append((bx, by, 1 - 0.8 * t))
+    return out
+
+
+def journey_road(x0, x1, y, scale=1.0, time="day", seed=0, town=True, bottom=None):
+    """The long road over the hills to Bethlehem (ABSOLUTE coords, sky not included): layered rolling hills, a winding
+    road from the near bottom-left to the far hills, olive trees, cypresses and rocks along it, and (town=True) the
+    little town of Bethlehem on the far hill at the road's end. Walk travellers along road_points(). See module doc,
+    section 12."""
+    _check_time(time, "journey_road")
+    s = scale
+    W_ = x1 - x0
+    bottom = y + 420 * s if bottom is None else bottom
+    rng = random.Random(seed)
+    out = ""
+    hills = [(_nt("#a9b48c", time, 1.2), y - 330 * s, 110 * s), (_nt("#9fb07a", time, 1.1), y - 230 * s, 130 * s),
+             (_nt("#8fab62", time), y - 80 * s, 120 * s)]
+    for i, (col, hy, pk) in enumerate(hills):
+        out += _p(S.hill(x0 - 80, x1 + 80, hy, pk, seed=seed + 7 + i, bottom=bottom + 10, bumps=3 + i % 2), col, 3.2 * s)
+        if i == 0 and town:
+            tx = x0 + 0.80 * W_
+            out += _tiny_town(tx, hy - 20 * s, s, time, seed + 70, col, lit=time in ("dusk", "night"))
+    tex = ""
+    for i in range(int(90 * W_ / 2112)):                        # grass strokes and little flowers, bigger near the front
+        tx_ = x0 + rng.uniform(0, W_)
+        u = rng.random() ** 0.7
+        ty_ = y - 200 * s + u * (bottom - y + 200 * s)
+        kk = 0.5 + 0.8 * u
+        tex += _p(f"M{_f(tx_ - 8 * s * kk)},{_f(ty_)} l{_f(5 * s * kk)},{_f(-16 * s * kk)} l{_f(5 * s * kk)},{_f(13 * s * kk)} "
+                  f"l{_f(5 * s * kk)},{_f(-18 * s * kk)} l{_f(5 * s * kk)},{_f(15 * s * kk)}", sw=2.2 * s, stroke=_nt("#5f8a40", time))
+        if rng.random() < 0.3:
+            tex += _circ(tx_ + 14 * s * kk, ty_ - 8 * s * kk, 4.5 * s * kk, _nt(rng.choice(("#f2c94e", "#f2e8d4", "#e88a8a")), time), 1.6 * s)
+    out += tex
+    pts = road_points(x0, x1, y, s, 24)
+    left = [(px - 120 * s * k, py) for px, py, k in pts]
+    right = [(px + 120 * s * k, py) for px, py, k in pts]
+    rd = _sm(left, closed=False, tension=0.8) + " L" + " L".join(f"{_f(px)},{_f(py)}" for px, py in reversed(right)) + " Z"
+    road = _nt("#e2c99a", time)
+    out += _p(rd, road, 3.2 * s)
+    for i, (px, py, k) in enumerate(pts[::2]):                  # wheel ruts and pebbles
+        out += _ell(px + rng.uniform(-40, 40) * s * k, py, 10 * s * k, 4 * s * k, _nt("#c9a878", time), 0)
+    for i in range(14):                                           # trees and rocks along the road
+        j = rng.randrange(2, len(pts) - 2)
+        px, py, k = pts[j]
+        side = 1 if rng.random() < 0.5 else -1
+        tx_ = px + side * (190 + rng.uniform(0, 160)) * s * k
+        if rng.random() < 0.45:
+            out += _tube(f"M{_f(tx_)},{_f(py)} Q{_f(tx_ + 6 * s * k)},{_f(py - 40 * s * k)} {_f(tx_ - 4 * s * k)},{_f(py - 70 * s * k)}", 10 * s * k,
+                         _nt(NAT_WOOD_DARK, time), 2.4 * s)
+            out += S.cloud(tx_, py - 92 * s * k, 140 * s * k, 80 * s * k, fill=_nt("#7f9a5a", time), seed=seed + i, puffs=4, sw=3 * s * k,
+                           shade_fill=_nt("#5f7a42", time))
+        elif rng.random() < 0.6:
+            out += _p(f"M{_f(tx_)},{_f(py)} Q{_f(tx_ - 16 * s * k)},{_f(py - 80 * s * k)} {_f(tx_)},{_f(py - 160 * s * k)} Q{_f(tx_ + 16 * s * k)},"
+                      f"{_f(py - 80 * s * k)} {_f(tx_)},{_f(py)} Z", _nt("#4f6a3e", time), 2.6 * s)
+        else:
+            out += _ell(tx_, py - 10 * s * k, 40 * s * k, 22 * s * k, _nt("#b4aa98", time), 2.6 * s)
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+# ---------------------------------------------------------------------- the East: dunes, an oasis, the rooftop observatory
+def desert_dunes(x0, x1, y, scale=1.0, time="day", seed=0, bottom=None, oasis_x=None):
+    """Golden desert dunes for the wise men's journey (ABSOLUTE coords, sky not included): four rows of dunes with lit and
+    shaded faces and wind ripples; oasis_x=<stage x> puts a palm oasis on the middle row. See module doc, section 12."""
+    _check_time(time, "desert_dunes")
+    s = scale
+    bottom = y + 380 * s if bottom is None else bottom
+    rng = random.Random(seed)
+    W_ = x1 - x0
+    out = ""
+    rows = ((y - 300 * s, 90, "#f4dcaa"), (y - 200 * s, 120, "#f0cf94"), (y - 80 * s, 140, "#ecc27e"), (y + 60 * s, 120, "#e6b670"))
+    for i, (ry, pk, col) in enumerate(rows):
+        lit = _nt(col, time)
+        shd = _nt(S.shade(col, -0.18), time)
+        n = 3 + i % 2
+        crest = []
+        for j in range(n * 2 + 1):
+            u = j / (n * 2)
+            crest.append((x0 - 80 + (W_ + 160) * u, ry - (pk * s if j % 2 else 10 * s) * rng.uniform(0.75, 1.1)))
+        d = _sm(crest, closed=False) + f" L{_f(x1 + 80)},{_f(bottom + 10)} L{_f(x0 - 80)},{_f(bottom + 10)} Z"
+        out += _p(d, lit, 3.2 * s)
+        sh = ""
+        for j in range(1, len(crest) - 1, 2):                    # the shaded lee face to the right of each crest
+            a, b = crest[j], crest[j + 1]
+            dx = b[0] - a[0]
+            sh += _p(f"M{_f(a[0])},{_f(a[1] - 30 * s)} L{_f(b[0] + dx * 0.4)},{_f(b[1] - 60 * s)} L{_f(b[0] + dx * 0.4)},{_f(bottom + 10)} "
+                     f"L{_f(a[0] + dx * 0.55)},{_f(bottom + 10)} Q{_f(a[0] + dx * 0.12)},{_f((a[1] + bottom) / 2)} {_f(a[0])},{_f(a[1] - 30 * s)} Z", shd, 0)
+            for k in range(3):                                    # wind ripples on the sunny face
+                yy = a[1] + (46 + 38 * k) * s
+                sh += _p(f"M{_f(a[0] - 150 * s)},{_f(yy + 24 * s)} Q{_f(a[0] - 70 * s)},{_f(yy)} {_f(a[0] - 10 * s)},{_f(yy + 18 * s)}", sw=2.2 * s,
+                         stroke=_nt(S.shade(col, -0.12), time), extra='opacity="0.7"')
+        out += _clip(_uid("dune", time, i, seed, x0, x1), d, sh) + _p(_sm(crest, closed=False), sw=3.2 * s)
+        if oasis_x is not None and i == 1:
+            out += _g(_oasis(time), f"translate({_f(oasis_x)},{_f(ry + 30 * s)}) scale({0.6 * s:.3f})")
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+def _oasis(time="day"):
+    out = _ell(0, 0, 260, 50, _nt("#7fae6a", time), 3.4)
+    out += _ell(0, 4, 190, 32, _nt("#5fa8b8", time), 3.4) + _p("M-120,0 Q0,-10 110,2", sw=4, stroke=_nt("#bfe2ea", time), extra='opacity="0.8"')
+    for dx, sc, lean in ((-180, 1.0, -0.12), (150, 0.86, 0.1), (-40, 0.72, 0.04)):
+        out += _g(_palm(lean, 0.0, True, False), f"translate({dx},{-10 if dx else -30}) scale({sc})")
+    for dx in (-230, 210, 90):
+        out += _p(f"M{dx - 14},0 l6,-34 l6,28 l6,-40 l6,34 l6,-26", sw=3, stroke=_nt("#4f7a36", time))
+    return out
+
+
+def oasis(x, y, scale=1.0, facing=1, time="day"):
+    """A little palm oasis: a pool with palms and reeds (anchor = the middle of the pool; ~520 px wide at scale 1)."""
+    _check_time(time, "oasis")
+    return _place(_oasis(time), x, y, scale, facing)
+
+
+def _astrolabe(k=1.0):
+    brass, dark = "#d9a94a", "#9a6e2a"
+    out = _circ(0, -86, 12, "none", 5, stroke=dark) + _rect(-8, -78, 16, 10, brass, 2.6, rx=3)
+    out += _circ(0, 0, 70, brass, 4)
+    out += _circ(0, 0, 54, S.shade(brass, -0.12), 2.6)
+    for a in range(0, 360, 15):
+        ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
+        out += _line(ca * 62, sa * 62, ca * 68, sa * 68, sw=2, color=dark)
+    out += _p("M-44,10 Q0,-56 44,10", sw=3, stroke=dark) + _circ(0, 6, 30, "none", 2.6, stroke=dark)
+    out += _p("M-50,-10 L50,10", sw=5, stroke=INK) + _p("M-50,-10 L50,10", sw=2.4, stroke=S.shade(brass, 0.3))
+    out += _twinkle(-22, -26, 8, "#fff6d0") + _circ(0, 0, 6, dark, 2)
+    return out
+
+
+def astrolabe(x, y, scale=1.0, rot=0.0):
+    """A brass astrolabe hanging from its ring (anchor = its centre)."""
+    return _place(_astrolabe(), x, y, scale, 1, rot)
+
+
+def _chart():
+    parch, roll = "#efdfb8", "#e2cb98"
+    out = _p("M-90,-60 L90,-60 L94,60 L-90,60 Z", parch, 3.6)
+    for x0_, x1_ in ((-102, -82), (82, 102)):
+        out += _rect(x0_, -70, x1_ - x0_, 140, roll, 3.2, rx=8)
+    for pts in (((-60, -30), (-40, -10), (-50, 20), (-20, 34)), ((10, -36), (34, -20), (56, -32), (46, 4)), ((14, 22), (40, 36))):
+        out += _p(_poly(pts, closed=False), sw=2, stroke=P["ink_soft"], extra='stroke-dasharray="4 4"')
+        for p_ in pts:
+            out += _circ(p_[0], p_[1], 3.2, P["ink_soft"], 0)
+    out += _twinkle(-6, -8, 16, "#e8b33c") + _circ(-6, -8, 4, "#fff6d0", 0)
+    out += _p("M-70,48 L-30,48 M-20,48 L30,48", sw=2, stroke=P["ink_soft"], extra='opacity="0.7"')
+    return out
+
+
+def star_chart(x, y, scale=1.0, rot=0.0):
+    """An open star chart (parchment with constellations and the new star marked; anchor = its centre)."""
+    return _place(_chart(), x, y, scale, 1, rot)
+
+
+OBSERVATORY_FLOOR = 0           # the roof terrace floor at the anchor; the wise men stand at y .. y - 60*scale
+
+
+def _observatory(time="night", part="all", lamp=1.0):
+    tile, tdark = _nt("#dcc29a", time, 0.6), _nt("#b39a72", time, 0.6)
+    blue, gold = _nt("#2f5f9a", time, 0.5), _nt("#e3b44f", time, 0.3)
+    back, front = "", ""
+    # a stepped tower at the back right with a stair
+    for i, (w, h) in enumerate(((520, 260), (400, 220), (280, 200))):
+        yy = -120 - sum(hh for _, hh in ((520, 260), (400, 220), (280, 200))[:i])
+        back += _rect(380 - w / 2, yy - h, w, h, S.mix(tile, tdark, 0.15 * i), 4)
+        back += _rect(380 - w / 2, yy - h, w, 26, blue, 3)
+        for k in range(int(w / 52)):
+            back += _circ(380 - w / 2 + 26 + k * 52, yy - h + 13, 7, gold, 1.8)
+    back += _p("M140,-120 L300,-380 L340,-380 L180,-120 Z", tdark, 3.4)
+    for k in range(9):
+        yy = -120 - k * 29
+        back += _line(140 + k * 17.8, yy, 180 + k * 17.8, yy, sw=2.4, color=S.shade(tdark, -0.2))
+    # back parapet with a glazed tile band
+    back += _rect(-1000, -260, 2000, 140, tile, 4)
+    back += _rect(-1000, -230, 2000, 34, blue, 3)
+    for k in range(40):
+        back += _circ(-980 + k * 52, -213, 8, gold, 2)
+    for k in range(20):
+        back += _rect(-990 + k * 100, -290, 60, 34, tile, 3.4)
+    # the floor of the roof terrace
+    gid = _uid("obsfl", time)
+    back += (f'<defs>{S.lin_grad(gid, [(0, S.shade(tile, -0.05)), (1, S.shade(tile, -0.2))])}</defs>'
+             f'<rect x="-1000" y="-120" width="2000" height="240" fill="url(#{gid})"/>') + _line(-1000, -120, 1000, -120, sw=4)
+    for k in range(-10, 11):
+        back += _line(k * 100, -120, k * 130, 120, sw=2, color=tdark, extra='opacity="0.6"')
+    # the armillary sphere on a pedestal (left) and a table with charts, scrolls and the astrolabe (right of centre)
+    ax_ = -560
+    back += _rect(ax_ - 30, -320, 60, 230, _nt("#a8886a", time), 4, rx=6) + _rect(ax_ - 60, -110, 120, 24, _nt("#a8886a", time), 3.4, rx=6)
+    brass = _nt("#d9a94a", time, 0.4)
+    back += _ell(ax_, -420, 110, 110, "none", 7, stroke=INK) + _ell(ax_, -420, 110, 110, "none", 3.6, stroke=brass)
+    back += _ell(ax_, -420, 110, 34, "none", 7, stroke=INK) + _ell(ax_, -420, 110, 34, "none", 3.6, stroke=brass)
+    back += _g(_ell(ax_, -420, 110, 30, "none", 7, stroke=INK) + _ell(ax_, -420, 110, 30, "none", 3.6, stroke=brass),
+               extra=f'transform="rotate(-35 {ax_} -420)"')
+    back += _ell(ax_, -420, 36, 110, "none", 7, stroke=INK) + _ell(ax_, -420, 36, 110, "none", 3.6, stroke=brass)
+    back += _circ(ax_, -420, 18, gold, 3) + _line(ax_ - 20, -540, ax_ + 20, -300, sw=4, color=_nt(NAT_WOOD_DARK, time))
+    tx = 640
+    back += _rect(tx - 170, -200, 340, 22, _nt(NAT_WOOD, time), 3.6, rx=5)
+    for xx in (tx - 150, tx + 150):
+        back += _rect(xx - 9, -178, 18, 90, _nt(NAT_WOOD_DARK, time), 3, rx=3)
+    back += _g(_chart(), f"translate({tx - 40},-222) scale(0.7) rotate(-6)")
+    back += _g(_scroll(False), f"translate({tx + 110},-214) scale(0.55) rotate(10)")
+    back += _g(_astrolabe(), f"translate({tx + 100},-290) scale(0.55)")
+    back += _g(_oil_lamp(lamp > 0, _uid("obsl", time, round(lamp, 2))), f"translate({tx - 130},-200) scale(0.6)")
+    if lamp > 0:
+        back += _warm_glow(tx - 100, -250, 260, 200, 0.6 * _clamp(lamp), "obslamp")
+    # cushions on the floor
+    for cx_, col in ((-250, "#9b2f3c"), (-150, "#2f6e5a")):
+        back += _p(f"M{cx_ - 60},-60 Q{cx_ - 64},-96 {cx_},-96 Q{cx_ + 64},-96 {cx_ + 60},-60 Q{cx_},-50 {cx_ - 60},-60 Z", _nt(col, time, 0.3), 3.4)
+    # front parapet (covers the shins of people standing near the front edge)
+    front += _rect(-1000, 40, 2000, 110, tile, 4)
+    front += _rect(-1000, 64, 2000, 30, blue, 3)
+    for k in range(40):
+        front += _circ(-980 + k * 52, 79, 7, gold, 2)
+    front += _rect(-1010, 30, 2020, 20, S.shade(tile, 0.12), 3.4, rx=4)
+    if part == "back":
+        return back
+    if part == "front":
+        return front
+    return back + front
+
+
+def observatory(x, y, scale=1.0, facing=1, time="night", part="all", lamp=1.0):
+    """The wise men's rooftop observatory in the East: a roof terrace with a blue-and-gold glazed parapet, a stepped tower,
+    a brass armillary sphere, a table with star charts, scrolls and an astrolabe, a lamp and cushions (anchor = the
+    middle of the terrace floor; part 'back' / 'front' = the low front parapet). See module doc, section 12."""
+    _check_time(time, "observatory")
+    return _place(_observatory(time, part, _clamp(lamp)), x, y, scale, facing, filt="wobble")
+
+
+# ---------------------------------------------------------------------- the modern living room at Christmas
+TREE_GREEN = "#3f7a52"
+TREE_DARK = "#2c5a3e"
+TREE_LIGHT = "#62a06a"
+CHRISTMAS_TREE_TOP = (0, -432)          # christmas_tree: the centre of the star on top (local, scale 1)
+CHRISTMAS_TREE_HOOKS = ((-70, -170), (60, -250), (-30, -320), (100, -130))   # empty branch tips: where a bauble can go
+_TREE_TIERS = ((-60, -150, 190), (-150, -240, 158), (-240, -320, 122), (-320, -392, 84))   # (bottom y, top y, half width)
+_BAUBLES = [(-120, -90, "#d9453f"), (40, -100, "#e9c35c"), (130, -84, "#3f62a2"), (-50, -176, "#e9c35c"), (90, -190, "#d9453f"),
+            (-110, -200, "#f2ead8"), (0, -262, "#d9453f"), (-70, -272, "#3f62a2"), (66, -280, "#e9c35c"), (-24, -340, "#f2ead8"),
+            (34, -352, "#d9453f"), (150, -150, "#f2ead8")]
+
+
+def _tier(yb, yt, hw, seed):
+    rng = random.Random(seed)
+    pts = [(0, yt)]
+    n = 6
+    for i in range(n + 1):                    # scalloped lower edge of the bough
+        u = i / n
+        pts.append((hw - 2 * hw * u, yb + (10 if i % 2 else 0) + rng.uniform(-3, 3)))
+    pts = [pts[0]] + pts[1:] + [(0, yt)]
+    d = f"M0,{_f(yt)} L{_f(hw)},{_f(yb)} "
+    for i in range(n):
+        x_a = hw - 2 * hw * i / n
+        x_b = hw - 2 * hw * (i + 1) / n
+        d += f"Q{_f((x_a + x_b) / 2)},{_f(yb + 26)} {_f(x_b)},{_f(yb)} "
+    d += "Z"
+    return d
+
+
+def _christmas_tree(lights=1.0, twinkle=0.0, star=1.0, top_star=True, ornaments=1.0, presents_=False):
+    out = ""
+    # the pot: a wooden tub with a red band
+    out += _p("M-62,-70 L62,-70 L52,0 L-52,0 Z", "#c08a58", 4) + _rect(-66, -78, 132, 16, "#b8473c", 3.4, rx=5)
+    for xx in (-30, 0, 30):
+        out += _line(xx, -60, xx * 0.86, -4, sw=2.4, color=NAT_WOOD_DARK)
+    out += _rect(-12, -100, 24, 34, NAT_WOOD_DARK, 3, rx=4)
+    for i, (yb, yt, hw) in enumerate(_TREE_TIERS):
+        d = _tier(yb, yt, hw, i)
+        out += _p(d, TREE_GREEN, 4)
+        inner = _p(f"M{-hw * 0.2},{yt + 20} L{-hw * 0.9},{yb}", sw=10, stroke=TREE_LIGHT, extra='opacity="0.5"')
+        inner += _p(f"M{hw * 0.3},{yt + 30} L{hw * 0.95},{yb + 4} L{hw * 0.2},{yb + 4} Z", TREE_DARK, 0, extra='opacity="0.45"')
+        for k in range(-3, 4):                # needle tufts
+            inner += _p(f"M{k * hw / 4},{yb - 6} l-6,-16 M{k * hw / 4 + 6},{yb - 4} l4,-18", sw=2, stroke=TREE_DARK)
+        out += _clip(_uid("tier", i), d, inner) + _p(d, sw=4)
+    # tinsel swags with little lights
+    lt = _clamp(lights)
+    bulbs = ""
+    for i, (yb, yt, hw) in enumerate(_TREE_TIERS):
+        y0 = yb - 26
+        x0_, x1_ = -hw * 0.82, hw * 0.82
+        out += _p(f"M{_f(x0_)},{_f(y0 - 12)} Q0,{_f(y0 + 22)} {_f(x1_)},{_f(y0 - 18)}", sw=5, stroke="#e9c35c")
+        for k in range(7):
+            u = k / 6
+            bx = x0_ + (x1_ - x0_) * u
+            by = (1 - u) ** 2 * (y0 - 12) + 2 * u * (1 - u) * (y0 + 22) + u * u * (y0 - 18)
+            col = ("#ffd36e", "#ff9a8a", "#9fd0ff", "#ffe9a0")[(k + i) % 4]
+            tw = 0.55 + 0.45 * math.sin(2 * math.pi * (twinkle + 0.37 * k + 0.19 * i))
+            if lt > 0:
+                bulbs += f'<circle cx="{_f(bx)}" cy="{_f(by + 6)}" r="16" fill="{col}" opacity="{0.35 * lt * tw:.2f}"/>'
+            bulbs += _circ(bx, by + 6, 5, S.mix("#8a7a6a", col, 0.3 + 0.7 * lt * tw), 2)
+    out += bulbs
+    # baubles (ornaments 0..1 shows them one by one)
+    shown = int(round(_clamp(ornaments) * len(_BAUBLES)))
+    for bx, by, col in _BAUBLES[:shown]:
+        out += _line(bx, by - 18, bx, by - 10, sw=1.6)
+        out += _circ(bx, by, 11, col, 3) + _rect(bx - 4, by - 14, 8, 5, "#e9c35c", 1.6, rx=1.5)
+        out += _circ(bx - 4, by - 4, 3, HILITE, 0, extra='opacity="0.85"')
+    if top_star:
+        cx, cy = CHRISTMAS_TREE_TOP
+        k = _clamp(star)
+        if k > 0:
+            out += _warm_glow(cx, cy, 130, 130, k, "treestar", STAR_CORE, STAR_GOLD)
+            out += _p(S.rays(cx, cy, 30, 110, n=12, width_deg=5), STAR_CORE, 0, extra=f'opacity="{0.3 * k:.2f}" filter="url(#soft)"')
+        out += _p(_star_path(cx, cy, 34, 15), S.mix("#e2a83c", STAR_GOLD, k), 3.4)
+        out += _circ(cx - 6, cy - 6, 4, HILITE, 0, extra='opacity="0.7"')
+    if presents_:
+        out += _presents(3, 2).replace("<g", "<g", 1)
+    return out
+
+
+def christmas_tree(x, y, scale=1.0, facing=1, lights=1.0, twinkle=0.0, star=1.0, top_star=True, ornaments=1.0,
+                   presents=False):
+    """A Christmas tree in its tub: four soft green tiers, golden tinsel, twinkling lights (lights 0..1, twinkle 0..1
+    loops), baubles (ornaments 0..1 shows them one by one) and a gold star on top that can glow (star 0..1; top_star=False
+    leaves it off for the child to put up). ~440 px at scale 1. See module doc, section 12."""
+    body = _christmas_tree(lights, twinkle % 1.0, star, top_star, ornaments, False)
+    if presents:
+        body += _g(_presents(3, 2), "translate(-150,0) scale(0.8)") + _g(_presents(2, 5), "translate(150,0) scale(0.7)")
+    return _place(body, x, y, scale, facing)
+
+
+PRESENT_COLS = (("#d9453f", "#e9c35c"), ("#3c7a5a", "#d9453f"), ("#e9c35c", "#3f62a2"), ("#3f62a2", "#f2ead8"),
+                ("#f2ead8", "#d9453f"))
+
+
+def _present(w, h, col, rib):
+    out = _rect(-w / 2, -h, w, h, col, 3.6, rx=5)
+    out += _rect(-6, -h, 12, h, rib, 0) + _rect(-w / 2, -h * 0.55 - 6, w, 12, rib, 0) + _rect(-w / 2, -h, w, h, "none", 3.6, rx=5)
+    out += _p(f"M0,{-h} Q{-w * 0.32},{-h - 30} {-w * 0.34},{-h - 10} Q{-w * 0.2},{-h + 2} 0,{-h} Q{w * 0.32},{-h - 30} {w * 0.34},{-h - 10} "
+              f"Q{w * 0.2},{-h + 2} 0,{-h} Z", rib, 2.8)
+    return out
+
+
+def _presents(n=3, seed=0):
+    rng = random.Random(seed)
+    out = ""
+    xs = [-70, 60, -10, 110, -120][:n]
+    for i, xx in enumerate(xs):
+        w, h = rng.uniform(70, 110), rng.uniform(56, 90)
+        col, rib = PRESENT_COLS[(i + seed) % len(PRESENT_COLS)]
+        yy = 0 if i < 2 else -rng.uniform(50, 70)
+        out += _g(_present(w, h, col, rib), f"translate({xx:.1f},{yy:.1f}) rotate({rng.uniform(-6, 6):.1f})")
+    return out
+
+
+def presents(x, y, scale=1.0, n=3, seed=0):
+    """Wrapped Christmas presents with ribbons and bows (n 1..5, anchor bottom centre)."""
+    return _place(_presents(max(1, min(5, int(n))), seed), x, y, scale)
+
+
+def calendar(x, y, scale=1.0, circled=1.0, month="12月", day=25, first_weekday=2, days=31):
+    """A wall calendar page for December with the 25th circled in red (circled 0..1 draws the circle; anchor = the nail it
+    hangs on; ~260 x 330 at scale 1). Text in LXGW WenKai is not wobbled. See module doc, section 12."""
+    s = scale
+    paper = ""
+    paper += _line(0, 0, -60, 40, sw=2.4) + _line(0, 0, 60, 40, sw=2.4) + _circ(0, 0, 5, "#8a7a6a", 2.4)
+    paper += _rect(-130, 40, 260, 300, "#fbf5e6", 4, rx=6) + _rect(-130, 40, 260, 70, "#c8443e", 4, rx=6)
+    for xx in (-90, -45, 0, 45, 90):
+        paper += _circ(xx, 50, 5, "#f2ead8", 2)
+    txt = S.text(0, 96, month, size=44, fill="#fbf5e6")
+    cell_w, cell_h = 34, 40
+    for i in range(days):
+        k = i + first_weekday
+        col, row = k % 7, k // 7
+        cx, cy = -103 + col * cell_w, 150 + row * cell_h
+        weekend = col in (0, 6)
+        txt += S.text(cx, cy, str(i + 1), size=20, fill="#c8443e" if weekend else P["ink"], weight="normal")
+        if i + 1 == day:
+            dx, dy = cx, cy - 7
+    c = _clamp(circled)
+    ring = ""
+    if c > 0:
+        L = 2 * math.pi * 22
+        ring = (f'<ellipse cx="{_f(dx)}" cy="{_f(dy)}" rx="25" ry="20" fill="none" stroke="#d9453f" stroke-width="4" '
+                f'stroke-linecap="round" stroke-dasharray="{_f(L * c)} {_f(L)}" transform="rotate(-20 {_f(dx)} {_f(dy)})"/>')
+        ring += _twinkle(dx + 22, dy - 22, 9, "#e9c35c") if c >= 1 else ""
+    sx = s
+    return (f'<g transform="translate({_f(x)},{_f(y)}) scale({sx:.4f})"><g filter="url(#wobble-fine)">{paper}</g>{txt}'
+            f'<g filter="url(#wobble-fine)">{ring}</g></g>')
+
+
+NATIVITY_SET_SPOTS = {"star": (0, -312), "angel": (-60, -246), "ox": (-110, -60), "donkey": (110, -62), "mary": (-80, -10),
+                      "joseph": (90, -12), "baby": (0, -4), "shepherd": (180, 10), "sheep": (-170, 16), "magus": (-200, 10)}
+
+
+def _nativity_set(figures=None, glow=0.0):
+    out = ""
+    # the little wooden stable: floor board, back wall, posts, a pitched roof
+    out += _p("M-200,20 L200,20 L180,-10 L-180,-10 Z", "#b07a48", 3.4)
+    out += _rect(-160, -200, 320, 190, "#c99060", 3.6)
+    for xx in range(-140, 160, 40):
+        out += _line(xx, -196, xx, -12, sw=2.2, color="#9a6a42")
+    out += _rect(-176, -210, 22, 220, "#9a6a42", 3.4, rx=4) + _rect(154, -210, 22, 220, "#9a6a42", 3.4, rx=4)
+    out += _p("M-220,-196 L0,-290 L220,-196 L204,-180 L0,-262 L-204,-180 Z", "#8a5a36", 3.6)
+    out += _p("M-60,-120 Q0,-60 60,-120", sw=0) + _hay_mound(-150, 150, -8, 26, seed=4)
+    if glow > 0:
+        out += _warm_glow(0, -60, 200, 150, _clamp(glow), "nset", STAR_CORE, P["gold"])
+    names = NATIVITY_SET_SPOTS if figures is None else figures
+    order = ("star", "angel", "ox", "donkey", "joseph", "mary", "baby", "shepherd", "sheep", "magus")
+    for nm in order:
+        if nm not in names:
+            continue
+        fx, fy = NATIVITY_SET_SPOTS[nm]
+        k = 0.62 if nm in ("ox", "donkey") else 0.72
+        fac = -1 if nm in ("joseph", "donkey", "shepherd") else 1
+        out += _g(_nativity_figure(nm), f"translate({fx},{fy}) scale({fac * k},{k})")
+    return out
+
+
+def nativity_set(x, y, scale=1.0, facing=1, figures=None, glow=0.0):
+    """The child's little wooden nativity set: a toy stable with painted figurines (figures=None: all of
+    NATIVITY_SET_SPOTS - star, angel, ox, donkey, Joseph, Mary, baby in the manger, shepherd, sheep, a wise man; or a
+    tuple of names = the ones placed so far). ~440 x 340 at scale 1 (use ~0.45 next to the child). See module doc,
+    section 12. nativity_figure(x, y, scale, kind) draws one figurine."""
+    if figures is not None:
+        bad = [f for f in figures if f not in NATIVITY_SET_SPOTS]
+        if bad:
+            raise ValueError(f"nativity_set: unknown figures {bad}; choose from {tuple(NATIVITY_SET_SPOTS)}")
+    return _place(_nativity_set(figures, glow), x, y, scale, facing)
+
+
+def nativity_figure(x, y, scale=1.0, facing=1, kind="baby"):
+    """One painted wooden figurine of the little nativity set (anchor bottom centre). NATIVITY_FIGURES."""
+    if kind not in NATIVITY_FIGURES:
+        raise ValueError(f"nativity_figure: unknown kind {kind!r}; choose from {NATIVITY_FIGURES}")
+    return _place(_nativity_figure(kind), x, y, scale, facing)
+
+
+def living_room(x0, x1, y, scale=1.0, glow=0.6, window_x=None, time="night", seed=0, bottom=None):
+    """The child's cosy living room (ABSOLUTE coords): warm patterned wallpaper, a skirting board, a window with curtains
+    showing the starry night (time 'night' / 'dusk' / 'day'), a wooden floor with a round rug, a picture frame and a
+    warm lamp glow (glow 0..1). y = the floor line where the child stands (the wall meets the floor 40*scale above it).
+    See module doc, section 12."""
+    _check_time(time, "living_room")
+    s = scale
+    W_ = x1 - x0
+    bottom = y + 380 * s if bottom is None else bottom
+    wy = y - 40 * s
+    top = y - 1400 * s
+    wall = "#f1dfc0"
+    out = _rect(x0 - 10, top, W_ + 20, wy - top, wall, 0)
+    pat = ""
+    rng = random.Random(seed)
+    for row in range(int((wy - top) / (90 * s)) + 1):
+        for col in range(int(W_ / (90 * s)) + 2):
+            px = x0 + col * 90 * s + (45 * s if row % 2 else 0)
+            py = top + row * 90 * s + 40 * s
+            pat += _twinkle(px, py, 7 * s, "#e6cfa6") if (row + col) % 2 else _circ(px, py, 3 * s, "#e6cfa6", 0)
+    out += pat
+    out += _rect(x0 - 10, wy - 34 * s, W_ + 20, 34 * s, "#c8a27a", 3 * s)
+    gid = _uid("lrfl", x0, x1, y)
+    out += (f'<defs>{S.lin_grad(gid, [(0, "#c08a5a"), (1, "#a8744a")])}</defs>'
+            f'<rect x="{_f(x0 - 10)}" y="{_f(wy)}" width="{_f(W_ + 20)}" height="{_f(bottom - wy + 10)}" fill="url(#{gid})"/>')
+    for k in range(int(W_ / (120 * s)) + 2):
+        xx = x0 + k * 120 * s
+        out += _line(xx, wy, xx - (xx - (x0 + W_ / 2)) * 0.4, bottom, sw=2.4 * s, color="#8a5a36", extra='opacity="0.5"')
+    out += _line(x0 - 10, wy, x1 + 10, wy, sw=4 * s)
+    # the round rug
+    rx_ = x0 + W_ * 0.5
+    out += _ell(rx_, y + 60 * s, 520 * s, 90 * s, "#b8473c", 4 * s) + _ell(rx_, y + 60 * s, 430 * s, 70 * s, "#e9c35c", 0, extra='opacity="0.8"')
+    out += _ell(rx_, y + 60 * s, 340 * s, 52 * s, "#b8473c", 0) + _ell(rx_, y + 60 * s, 520 * s, 90 * s, "none", 4 * s)
+    # the window
+    wx = x0 + W_ * 0.22 if window_x is None else window_x
+    wx0, wx1, wy0, wy1 = wx - 190 * s, wx + 190 * s, wy - 860 * s, wy - 330 * s
+    out += _rect(wx0 - 24 * s, wy0 - 24 * s, wx1 - wx0 + 48 * s, wy1 - wy0 + 48 * s, "#f6ead4", 4 * s, rx=8 * s)
+    out += _sky_in(wx0, wy0, wx1, wy1, time if time != "dawn" else "day", seed=7)
+    if time in ("night", "dusk"):
+        out += _p(f"M{_f(wx1 - 80 * s)},{_f(wy0 + 40 * s)} a{_f(30 * s)},{_f(30 * s)} 0 1 0 {_f(10 * s)},{_f(56 * s)} "
+                  f"a{_f(24 * s)},{_f(24 * s)} 0 1 1 {_f(-10 * s)},{_f(-56 * s)} Z", "#f6eed2", 2.6 * s)
+    out += _rect(wx0, wy0, wx1 - wx0, wy1 - wy0, "none", 4 * s)
+    out += _line(wx, wy0, wx, wy1, sw=8 * s, color="#f6ead4") + _line(wx0, (wy0 + wy1) / 2, wx1, (wy0 + wy1) / 2, sw=8 * s, color="#f6ead4")
+    out += _rect(wx0 - 44 * s, wy1 + 20 * s, wx1 - wx0 + 88 * s, 20 * s, "#e6d2ae", 3.4 * s, rx=5 * s)
+    for sx in (-1, 1):                                            # green curtains with a gold tie
+        cx0 = wx0 - 60 * s if sx < 0 else wx1 + 60 * s
+        cx1 = wx0 + 30 * s if sx < 0 else wx1 - 30 * s
+        cd = (f"M{_f(cx0)},{_f(wy0 - 60 * s)} L{_f(cx1)},{_f(wy0 - 60 * s)} Q{_f(cx1 - sx * 20 * s)},{_f(wy0 + 200 * s)} "
+              f"{_f((cx0 + cx1) / 2 - sx * 20 * s)},{_f(wy0 + 330 * s)} Q{_f(cx0 + sx * 30 * s)},{_f(wy1 + 120 * s)} {_f(cx0)},{_f(wy1 + 140 * s)} Z")
+        out += _p(cd, "#3c7a5a", 4 * s)
+        for k in range(3):
+            fx = cx0 + (cx1 - cx0) * (0.25 + 0.25 * k)
+            out += _p(f"M{_f(fx)},{_f(wy0 - 50 * s)} Q{_f(fx - sx * 10 * s)},{_f(wy0 + 200 * s)} {_f(fx - sx * 30 * s)},{_f(wy1 + 100 * s)}",
+                      sw=2.4 * s, stroke="#2c5a42")
+        out += _ell((cx0 + cx1) / 2 - sx * 18 * s, wy0 + 330 * s, 22 * s, 12 * s, "#e9c35c", 2.6 * s)
+    out += _rect(wx0 - 100 * s, wy0 - 76 * s, wx1 - wx0 + 200 * s, 14 * s, "#8a5a36", 3 * s, rx=6 * s)
+    # a picture frame (a little painting of a starry hill) and a warm lamp glow
+    fx0 = x0 + W_ * 0.62
+    out += _rect(fx0, wy - 820 * s, 220 * s, 170 * s, "#b07a48", 4 * s, rx=6 * s)
+    out += _rect(fx0 + 18 * s, wy - 802 * s, 184 * s, 134 * s, "#2c4888", 3 * s)
+    out += _p(f"M{_f(fx0 + 18 * s)},{_f(wy - 690 * s)} Q{_f(fx0 + 110 * s)},{_f(wy - 760 * s)} {_f(fx0 + 202 * s)},{_f(wy - 700 * s)} "
+              f"L{_f(fx0 + 202 * s)},{_f(wy - 668 * s)} L{_f(fx0 + 18 * s)},{_f(wy - 668 * s)} Z", "#5f7d48", 0)
+    out += _twinkle(fx0 + 150 * s, wy - 770 * s, 12 * s, STAR_GOLD)
+    if glow > 0:
+        out += _warm_glow(x0 + W_ * 0.5, wy - 400 * s, W_ * 0.6, 700 * s, 0.45 * _clamp(glow), "lrglow")
     return f'<g filter="url(#wobble)">{out}</g>'

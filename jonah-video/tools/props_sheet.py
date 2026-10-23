@@ -14,6 +14,8 @@ David film: python3 tools/props_sheet.py david_items david_creatures david_camp 
 Noah film: python3 tools/props_sheet.py noah_ark noah_animals noah_pairs noah_weather noah_items
 Joseph film: python3 tools/props_sheet.py joseph_items joseph_animals joseph_egypt
 Storm film: python3 tools/props_sheet.py storm_boat storm_lake storm_weather storm_items storm_story
+Nativity film: python3 tools/props_sheet.py nativity_stable nativity_animals nativity_places nativity_sky nativity_journey
+  nativity_items nativity_home
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -963,6 +965,224 @@ def sheet_storm_story():
     return render_sheet("storm_story", "props — Storm: the mustard seed (Mark 4:30-32): growth, the seed in a hand, nests", rows)
 
 
+# ------------------------------------------------------------------ Nativity film
+NIGHT = "#1c2c5c"
+
+
+def _nat_c(label, fn, w=300, ax=150, ay=330, ref=None, bg=None, h=None):
+    def art(ox, oy):
+        b = f'<rect x="{ox}" y="{oy}" width="{w}" height="{h or 2000}" fill="{bg}"/>' if bg else ""
+        return b + fn(ox + ax, oy + ay)
+    ov = (lambda ox, oy: person_ref(ox + ref[0], oy + ref[1], ref[2])) if ref else ""
+    return Cell(label, art, w, [(ax, ay)], ov)
+
+
+def sheet_nativity_stable():
+    def scene(ox, oy, k, lamp=1.0, time="night", baby=True, people=True):
+        x, y = ox + 600, oy + 600
+        s = PR.starry_sky(ox, oy, ox + 1200, oy + 640, density=0.8, seed=2) if hasattr(PR, "starry_sky") else ""
+        s += PR.stable(x, y, k, part="back", lamp=lamp, time=time)
+        pts = PR.stable_points(x, y, k)
+        if people:
+            s += PR.ox(*pts["ox"], k * 0.9, -1, pose="look")
+            s += PR.donkey(*pts["donkey"], k * 0.9, 1, pose="lie_look", sacks=0)
+            s += CH.joseph_carpenter(*pts["joseph"], k, 1, pose="watch")
+            s += CH.mary(*pts["mary"], k, 1, pose="kneel")
+        if baby:
+            s += CH.baby_jesus(*pts["bed"], k, 1)
+            s += PR.manger(*pts["manger"], k, part="front", time="day")
+        s += PR.stable(x, y, k, part="front", lamp=lamp, time=time)
+        return s
+    rows = [
+        (640, [Cell("stable (night, lamp=1) + ox look, donkey lie_look, Joseph watch, Mary kneel, baby in the manger (scale .5)",
+                    lambda ox, oy: scene(ox, oy, 0.5), 1200, [(600, 600)]),
+               Cell("stable time='day' lamp=.4, empty (manger=True)", lambda ox, oy: f'<rect x="{ox}" y="{oy}" width="1100" height="640" fill="#bfe0ea"/>'
+                    + PR.stable(ox + 550, oy + 600, 0.5, time="day", lamp=0.4), 1100, [(550, 600)])]),
+        (300, [_nat_c("manger", lambda x, y: PR.manger(x, y, 1.0), 280, 140, 280),
+               _nat_c("manger + baby (back / baby / front)", lambda x, y: PR.manger(x, y, 1.0, part="back") + CH.baby_jesus(*PR.manger_points(x, y, 1.0)["bed"], 1.0)
+                      + PR.manger(x, y, 1.0, part="front"), 280, 140, 280),
+               _nat_c("manger glow=1, baby awake", lambda x, y: PR.manger(x, y, 1.0, part="back", glow=1.0) + CH.baby_jesus(*PR.manger_points(x, y, 1.0)["bed"], 1.0, state="awake")
+                      + PR.manger(x, y, 1.0, part="front"), 280, 140, 280, bg=NIGHT),
+               _nat_c("hay=False time='night'", lambda x, y: PR.manger(x, y, 1.0, hay=False, time="night"), 280, 140, 280)]
+         + [_nat_c(f"gift {k} open={o} glow={g}", lambda x, y, k=k, o=o, g=g: PR.gift(x, y, 1.3, kind=k, open=o, glow=g), 180, 90, 280, bg=NIGHT if g else None)
+            for k, o, g in (("gold", 0, 0), ("gold", 1, 1), ("frankincense", 0, 0), ("frankincense", 1, 1), ("myrrh", 0, 0), ("myrrh", 1, 1))]),
+    ]
+    return render_sheet("nativity_stable", "props — Nativity: the cave-stable (parts, people inside), the manger, the three treasures", rows)
+
+
+def sheet_nativity_animals():
+    rows = [
+        (320, [_nat_c(f"ox {p}", lambda x, y, p=p: PR.ox(x, y, 0.9, pose=p), 300, 130, 300) for p in PR.OX_POSES if p != "walk"]),
+        (330, [_nat_c(f"donkey {p}", lambda x, y, p=p: PR.donkey(x, y, 0.9, pose=p, sacks=0), 260, 120, 310) for p in PR.DONKEY_REST_POSES]
+         + [_nat_c("donkey saddle='blue' bridle", lambda x, y: PR.donkey(x - 40, y, 0.9, saddle="blue", bridle=True), 320, 140, 310),
+            _nat_c("Mary ride on donkey_points seat; Joseph lead", lambda x, y: PR.donkey(x - 120, y, 0.9, pose="walk_a", saddle="blue", bridle=True)
+                   + CH.mary(*PR.donkey_points(x - 120, y, 0.9, pose="walk_a")["seat"], 0.9, pose="ride", pregnant=True)
+                   + CH.joseph_carpenter(PR.donkey_points(x - 120, y, 0.9)["lead"][0] - CH.JOSEPH_LEAD_HAND[0] * 0.9, y, 0.9, pose="lead_a"), 620, 250, 310)]),
+        (330, [_nat_c(f"sheep {p}", lambda x, y, p=p, v=v: PR.sheep(x, y, 1.0, variant=v, pose=p), 230, 110, 300) for v, p in ((0, "lie"), (1, "sleep"), (2, "look_up"))]
+         + [_nat_c("lamb lie / look_up", lambda x, y: PR.sheep(x - 50, y, 1.0, pose="lie", lamb=True) + PR.sheep(x + 60, y, 1.0, pose="look_up", lamb=True), 260, 130, 300)]
+         + [_nat_c(f"dog {p}", lambda x, y, p=p: PR.dog(x, y, 1.0, pose=p), 200, 90, 300) for p in PR.DOG_POSES[:4]]),
+        (520, [_nat_c("camel saddle='red' + wise man ride at camel_points seat", lambda x, y: PR.camel(x, y, 0.8, saddle="red", load=False)
+                      + CH.wise_men(*PR.camel_points(x, y, 0.8)["seat"], 0.8, variant=0, pose="ride"), 520, 220, 500),
+               _nat_c("walk phase .25, saddle purple, Balthasar", lambda x, y: PR.camel(x, y, 0.8, pose="walk", phase=0.25, saddle="purple")
+                      + CH.wise_men(*PR.camel_points(x, y, 0.8, pose="walk", phase=0.25)["seat"], 0.8, variant=2, pose="ride"), 520, 220, 500),
+               _nat_c("saddle green, Caspar", lambda x, y: PR.camel(x, y, 0.8, saddle="green")
+                      + CH.wise_men(*PR.camel_points(x, y, 0.8)["seat"], 0.8, variant=1, pose="ride"), 520, 220, 500)]),
+    ]
+    return render_sheet("nativity_animals", "props — Nativity: ox, donkey (rest poses, saddle, bridle, riders), resting sheep, the dog, camels with riders", rows)
+
+
+def sheet_nativity_places():
+    def naz_in(ox, oy):
+        x, y = ox + 600, oy + 560
+        s = PR.nazareth_house(x, y, 0.55, view="interior", light=0.8, light_x=300)
+        s += CH.mary(x - 120, y, 0.55, pose="startled") + CH.angel(x + 160, y, 0.55, -1, pose="announce", glow=0.8)
+        return s
+
+    def fam_in(ox, oy):
+        x, y = ox + 550, oy + 560
+        s = PR.family_house(x, y, 0.55, view="interior", star_light=0.8)
+        s += CH.mary(x + PR.FAMILY_SEAT[0] * 0.55 + 50 * 0.55, y, 0.55, pose="sit_hold")
+        s += CH.joseph_carpenter(x - 330 * 0.55, y - 20 * 0.55, 0.52, pose="watch")
+        s += CH.wise_men(x + 120, y, 0.55, -1, variant=0, pose="kneel_offer", gift_open=1.0, gift_glow=1.0)
+        s += CH.wise_men(x + 270, y - 10, 0.53, -1, variant=1, pose="carry_gift")
+        return s
+
+    def inn_c(ox, oy):
+        x, y = ox + 480, oy + 600
+        s = f'<rect x="{ox}" y="{oy}" width="960" height="640" fill="{NIGHT}"/>' + PR.starry_sky(ox, oy, ox + 960, oy + 640, time="dusk", density=0.6)
+        s += PR.inn(x, y, 0.62, part="back", time="dusk")
+        s += CH.townsfolk(x, y - 6, 0.62, -1, kind="innkeeper", pose="shake_head", phase=0.25)
+        s += PR.inn(x, y, 0.62, part="front", time="dusk")
+        s += CH.joseph_carpenter(x + 230, y + 10, 0.62, -1, pose="knock", phase=0.5)
+        s += CH.mary(x + 360, y + 14, 0.62, -1, pose="stand", pregnant=True, expr="tired")
+        return s
+    rows = [
+        (640, [Cell("nazareth_house view='interior' light=.8 (Mary startled, angel announce)", naz_in, 1200, [(600, 560)]),
+               Cell("nazareth_house exterior (day)", lambda ox, oy: f'<rect x="{ox}" y="{oy}" width="1000" height="640" fill="#bfe0ea"/>'
+                    + PR.nazareth_house(ox + 520, oy + 600, 0.85) + CH.mary(ox + 820, oy + 610, 0.85, -1, pose="carry_jar_walk_a"), 1000, [(520, 600)])]),
+        (640, [Cell("family_house interior, star_light=.8: Mary sit_hold on the bench, Joseph, wise men", fam_in, 1100, [(550, 560)]),
+               Cell("family_house exterior (night) + the_star beam", lambda ox, oy: PR.starry_sky(ox, oy, ox + 560, oy + 640, density=0.8)
+                    + PR.the_star(ox + 280, oy + 90, 0.45, beam=0.8, beam_to=(ox + 280, oy + 300)) + PR.family_house(ox + 280, oy + 620, 0.6, star_light=0.8), 560, [(280, 620)]),
+               Cell("inn (dusk, full) + innkeeper shake_head, Joseph knock, Mary", inn_c, 700, [(480, 600)])]),
+        (700, [Cell("bethlehem_town part='back' (dusk) + part='street' + townsfolk_crowd(walk) + crowd(squeeze)", lambda ox, oy: PR.starry_sky(ox, oy, ox + 2300, oy + 700, time="dusk", density=0.5)
+                    + PR.bethlehem_town(ox, ox + 2300, oy + 300, 0.55, time="dusk", part="back")
+                    + PR.bethlehem_town(ox, ox + 2300, oy + 520, 0.5, time="dusk", part="street")
+                    + CH.townsfolk_crowd(ox + 700, oy + 640, 0.45, n=16, width=1300, rows=3, seed=1)
+                    + CH.townsfolk_crowd(ox + 1750, oy + 650, 0.45, pose="squeeze", n=10, width=900, rows=2, seed=4), 2300, [(0, 520)])]),
+    ]
+    return render_sheet("nativity_places", "props — Nativity: Nazareth (inside / outside), the Bethlehem house (Matthew 2), the inn, the town and its busy street", rows)
+
+
+def sheet_nativity_sky():
+    def fields(ox, oy, glory=False):
+        x0, x1, gy = ox, ox + 1150, oy + 520
+        s = PR.starry_sky(ox, oy, x1, oy + 700, density=1.0, seed=3)
+        s += PR.night_hills(x0, x1, gy, 0.6, part="back")
+        if glory:
+            s += PR.glory(ox + 640, gy + 40, 0.6, progress=1.0)
+        s += PR.night_hills(x0, x1, gy, 0.6, part="front", fire=0.0 if glory else 1.0, phase=0.3, fire_x=ox + 430)
+        for i, (dx, p, v) in enumerate(((330, "shield_eyes" if glory else "sit_warm", 0), (480, "shield_eyes" if glory else "sit", 1), (560, "kneel" if glory else "lean", 5),
+                                        (250, "hold_lamb", 2))):
+            s += CH.shepherds(ox + dx, gy + 60, 0.42, 1 if i < 3 else 1, variant=v, pose=p, expr="sleepy" if (not glory and p == "sit") else None)
+        for i, dx in enumerate((700, 820, 900)):
+            s += PR.sheep(ox + dx, gy + 70 + 10 * i, 0.4, -1, variant=i, pose="look_up" if glory else ("lie", "sleep", "lie")[i])
+        s += PR.dog(ox + 160, gy + 70, 0.45, pose="look_up" if glory else "lie")
+        if glory:
+            s += CH.angel(ox + 700, gy - 20, 0.5, -1, pose="float", glow=1.0, lift=60)
+        return s
+    rows = [
+        (700, [Cell("night_hills back/front (fire phase .3, fold) + shepherds by the fire, sheep lie / sleep, dog", lambda ox, oy: fields(ox, oy), 1150, [(0, 520)]),
+               Cell("glory(...) round the group + angel float lift=60; shepherds shield_eyes, kneel; sheep look_up", lambda ox, oy: fields(ox, oy, True), 1150, [(640, 560)])]),
+        (560, [Cell("starry_sky (milky way) + the_star intensity 1, pulse 0", lambda ox, oy: PR.starry_sky(ox, oy, ox + 760, oy + 560) + PR.the_star(ox + 380, oy + 220, 0.6), 760, [(380, 220)]),
+               Cell("starry_sky time='dusk' + moon; the_star intensity .4", lambda ox, oy: PR.starry_sky(ox, oy, ox + 760, oy + 560, time="dusk", moon=(ox + 600, oy + 140)) + PR.the_star(ox + 300, oy + 200, 0.5, intensity=0.4), 760, [(300, 200)]),
+               Cell("heaven_light progress .5 / 1 + angel_choir", lambda ox, oy: PR.starry_sky(ox, oy, ox + 760, oy + 560, seed=5) + PR.heaven_light(ox + 380, oy + 230, 0.45, progress=1.0)
+                    + CH.angel_choir(ox + 60, ox + 700, oy + 380, n=9, scale=0.2, rows=2), 760, [(380, 230)])]),
+        (300, [Cell(f"day_night_sky t={tt}", lambda ox, oy, tt=tt: PR.day_night_sky(ox, oy, ox + 380, oy + 300, t=tt, scale=0.5)
+                    + f'<rect x="{ox}" y="{oy + 250}" width="380" height="50" fill="#7f9a5a"/>', 380, []) for tt in (0.0, 0.25, 0.45, 0.6, 0.75, 0.95)]),
+    ]
+    return render_sheet("nativity_sky", "props — Nativity: the fields at night, the glory of the Lord, the star, heaven's light and the choir, days passing", rows)
+
+
+def sheet_nativity_journey():
+    def road(ox, oy):
+        x0, x1, y = ox, ox + 1150, oy + 300
+        s = PR.day_night_sky(ox, oy, x1, oy + 400, t=0.3, scale=0.6) + PR.journey_road(x0, x1, y, 0.6)
+        pts = PR.road_points(x0, x1, y, 0.6)
+        px, py, k = pts[2]
+        kk = 0.42 * k
+        s += PR.donkey(px, py, kk, 1, pose="walk_a", saddle="blue", bridle=True)
+        s += CH.mary(*PR.donkey_points(px, py, kk, pose="walk_a")["seat"], kk, pose="ride", pregnant=True)
+        s += CH.joseph_carpenter(PR.donkey_points(px, py, kk)["lead"][0] - CH.JOSEPH_LEAD_HAND[0] * kk, py, kk, pose="lead_a")
+        return s
+
+    def dunes(ox, oy):
+        s = PR.day_night_sky(ox, oy, ox + 1150, oy + 640, t=0.58, scale=0.6) + PR.the_star(ox + 900, oy + 110, 0.4)
+        s += PR.desert_dunes(ox, ox + 1150, oy + 420, 0.6, time="dusk", oasis_x=ox + 300)
+        for i, v in enumerate((0, 1, 2)):
+            cx, cy = ox + 520 + i * 200, oy + 560 + 6 * i
+            s += PR.camel(cx, cy, 0.36, pose="walk", phase=0.3 * i, saddle=("red", "green", "purple")[v], load=False)
+            s += CH.wise_men(*PR.camel_points(cx, cy, 0.36, pose="walk", phase=0.3 * i)["seat"], 0.36, variant=v, pose="ride")
+        return s
+
+    def obs(ox, oy):
+        x, y = ox + 560, oy + 520
+        s = PR.starry_sky(ox, oy, ox + 1150, oy + 640, seed=8) + PR.the_star(ox + 900, oy + 120, 0.5, pulse=0.3)
+        s += PR.observatory(x, y, 0.55, part="back")
+        s += CH.wise_men(x - 120, y + 20, 0.55, 1, variant=0, pose="point_up") + CH.wise_men(x + 30, y + 24, 0.55, 1, variant=1, pose="study")
+        s += CH.wise_men(x + 170, y + 18, 0.55, -1, variant=2, pose="look_up")
+        s += PR.observatory(x, y, 0.55, part="front")
+        return s
+    rows = [
+        (640, [Cell("journey_road + day_night_sky t=.3; Mary rides (pregnant), Joseph leads, at road_points()[2]", road, 1150, [(0, 300)]),
+               Cell("desert_dunes (dusk, oasis) + camels walk with saddles + riders at camel_points seat; the star", dunes, 1150, [(0, 420)])]),
+        (640, [Cell("observatory back / wise men point_up, study, look_up / front parapet; the star", obs, 1150, [(560, 520)]),
+               Cell("oasis (scale .7) / astrolabe / star_chart", lambda ox, oy: f'<rect x="{ox}" y="{oy}" width="1150" height="640" fill="#f0d7a0"/>' + PR.oasis(ox + 330, oy + 420, 0.8)
+                    + PR.astrolabe(ox + 780, oy + 260, 1.3) + PR.star_chart(ox + 960, oy + 500, 1.2, rot=-8), 1150, [(330, 420)])]),
+    ]
+    return render_sheet("nativity_journey", "props — Nativity: the long road (days passing), the desert journey of the wise men, the observatory in the East", rows)
+
+
+def sheet_nativity_items():
+    def c(label, fn, w=300, ax=150, ay=300, bg=None):
+        return _nat_c(label, fn, w, ax, ay, bg=bg)
+    rows = [
+        (330, [c(f"campfire phase={ph}", lambda x, y, ph=ph: PR.campfire(x, y, 1.0, phase=ph), 260, 130, 300, NIGHT) for ph in (0.0, 0.33, 0.66)]
+         + [c("sheepfold + sheep inside (back / sheep / front)", lambda x, y: PR.sheepfold(x, y - 40, 0.6, part="back") + PR.sheep(x - 40, y - 50, 0.4, pose="lie")
+              + PR.sheep(x + 60, y - 40, 0.4, pose="sleep", variant=1) + PR.sheepfold(x, y - 40, 0.6, part="front"), 460, 230, 300),
+            c("hanging_lamp lit 1 / 0", lambda x, y: PR.hanging_lamp(x - 60, y - 240, 1.3) + PR.hanging_lamp(x + 60, y - 240, 1.3, lit=0), 300, 150, 300, NIGHT),
+            c("broom / water_jar", lambda x, y: PR.broom(x - 60, y, 1.0, rot=8) + PR.water_jar(x + 60, y, 1.4), 300, 150, 300)]),
+        (330, [c("presents n=1..5", lambda x, y: PR.presents(x - 200, y, 0.9, n=2) + PR.presents(x + 100, y, 0.9, n=5, seed=3), 560, 280, 300),
+               c("calendar circled 0 / .5 / 1", lambda x, y: PR.calendar(x - 270, y - 290, 0.75, circled=0) + PR.calendar(x, y - 290, 0.75, circled=0.5)
+                 + PR.calendar(x + 270, y - 290, 0.75), 820, 410, 300)]
+         + [c(f"figure {k}", lambda x, y, k=k: PR.nativity_figure(x, y, 1.1, kind=k), 140, 70, 300) for k in ("mary", "joseph", "baby", "angel")]),
+        (330, [c(f"figure {k}", lambda x, y, k=k: PR.nativity_figure(x, y, 1.1, kind=k), 150, 75, 300) for k in ("shepherd", "magus", "sheep", "ox", "donkey", "star", "gift")]
+         + [c("nativity_set (all) / figures=('star','baby','mary')", lambda x, y: PR.nativity_set(x - 230, y, 0.75) + PR.nativity_set(x + 230, y, 0.75, figures=("star", "baby", "mary")), 900, 450, 300)]),
+    ]
+    return render_sheet("nativity_items", "props — Nativity: campfire, sheepfold, lamp, broom, jar, presents, calendar, the little nativity set", rows)
+
+
+def sheet_nativity_home():
+    def room(ox, oy, end=False):
+        x0, x1, y = ox, ox + 1150, oy + 560
+        s = PR.living_room(x0, x1, y, 0.6, glow=0.8)
+        s += PR.calendar(ox + 980, oy + 120, 0.6)
+        s += PR.christmas_tree(ox + 620, y, 1.0, star=1.0 if end else 0.3, twinkle=0.3, ornaments=1.0 if end else 0.6)
+        if end:
+            s += PR.presents(ox + 820, y + 20, 0.6, n=3) + PR.nativity_set(ox + 420, y + 30, 0.42, glow=0.6)
+            s += CH.child(ox + 250, y + 40, 1.0, pose="place", outfit="jumper", item="sheep")
+        else:
+            s += CH.child(ox + 470, y + 40, 1.0, pose="decorate", outfit="jumper")
+        return s
+    rows = [
+        (640, [Cell("living_room + calendar + christmas_tree (star .3, ornaments .6) + child decorate (jumper)", lambda ox, oy: room(ox, oy), 1150, [(0, 560)]),
+               Cell("the ending: tree star=1, presents, nativity_set glow .6, child place item='sheep'", lambda ox, oy: room(ox, oy, True), 1150, [(0, 560)])]),
+        (520, [_nat_c(f"christmas_tree twinkle={tw} star={st}", lambda x, y, tw=tw, st=st, tp=tp, orn=orn: PR.christmas_tree(x, y, 1.0, twinkle=tw, star=st, top_star=tp, ornaments=orn), 380, 190, 490)
+               for tw, st, tp, orn in ((0.0, 1.0, True, 1.0), (0.5, 0.0, True, 1.0), (0.25, 0.0, False, 0.3))]
+         + [_nat_c("christmas_tree lights=0 presents=True", lambda x, y: PR.christmas_tree(x, y, 1.0, lights=0, presents=True), 520, 260, 490)]),
+    ]
+    return render_sheet("nativity_home", "props — Nativity: the living room, the Christmas tree, the child and the nativity set", rows)
+
+
 SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor": sheet_castor,
           "plants": sheet_plants, "creatures": sheet_creatures, "buildings": sheet_buildings,
           "lions": sheet_lions, "daniel": sheet_daniel, "david_items": sheet_david_items,
@@ -971,7 +1191,10 @@ SHEETS = {"fish": sheet_fish, "ship": sheet_ship, "items": sheet_items, "castor"
           "noah_animals": sheet_noah_animals, "noah_pairs": sheet_noah_pairs,
           "joseph_items": sheet_joseph_items, "joseph_animals": sheet_joseph_animals, "joseph_egypt": sheet_joseph_egypt,
           "storm_boat": sheet_storm_boat, "storm_lake": sheet_storm_lake, "storm_weather": sheet_storm_weather,
-          "storm_items": sheet_storm_items, "storm_story": sheet_storm_story}
+          "storm_items": sheet_storm_items, "storm_story": sheet_storm_story,
+          "nativity_stable": sheet_nativity_stable, "nativity_animals": sheet_nativity_animals,
+          "nativity_places": sheet_nativity_places, "nativity_sky": sheet_nativity_sky, "nativity_journey": sheet_nativity_journey,
+          "nativity_items": sheet_nativity_items, "nativity_home": sheet_nativity_home}
 
 
 def main():

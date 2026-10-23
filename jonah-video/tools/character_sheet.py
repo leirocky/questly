@@ -28,6 +28,10 @@ Output: build/preview/characters_*.png (each <= 2400 px wide):
   storm_disciples (the twelve), storm_disciple_poses (poses and action phases), storm_villagers, storm_child (pyjamas)
   and storm_group (Jesus with the twelve, crowds, the crew in the fishing boat: teaching, rowing, the storm, waking him,
   the calm, scale checks).
+  Nativity film (python3 tools/character_sheet.py nativity): nativity_mary (poses, pregnant, sweep), nativity_expr
+  (close-ups), nativity_joseph, nativity_baby (baby_jesus, toddler_jesus), nativity_angel, nativity_shepherds,
+  nativity_magi (wise men, gifts), nativity_townsfolk, nativity_child (child(outfit='jumper')) and nativity_group (scale
+  line-up, the journey, the stable, the shepherds with the glory and the choir, the wise men's visit).
 Environment (optional): PB_PREVIEW_DIR=<dir> writes the sheets there instead of build/preview; PB_RASTER_CACHE=<dir>
 uses a separate raster cache (e.g. a scratch folder you delete afterwards).
 """
@@ -201,6 +205,7 @@ def sheets():
     out += noah_sheets()
     out += joseph_sheets()
     out += storm_sheets()
+    out += nativity_sheets()
     return out
 
 
@@ -655,6 +660,171 @@ def storm_group():
     return path
 
 
+def nativity_sheets():
+    """Sheets for the Nativity film (Luke 1-2, Matthew 2)."""
+    out = []
+    items = [(p, lambda x, y, s, p=p: C.mary(x, y, s, pose=p)) for p in C.MARY_POSES if p not in ("walk",)]
+    items += [(f"pregnant {p}", lambda x, y, s, p=p: C.mary(x, y, s, pose=p, pregnant=True))
+              for p in ("stand", "walk_a", "walk_b", "sit", "ride", "startled")]
+    items += [(f"sweep phase={ph}", lambda x, y, s, ph=ph: C.mary(x, y, s, pose="sweep", phase=ph)) for ph in (0.25, 0.75)]
+    items += [("glow=.8", lambda x, y, s: C.mary(x, y, s, glow=0.8)), ("facing=-1 hold_baby", lambda x, y, s: C.mary(x, y, s, -1, pose="hold_baby"))]
+    out.append(("nativity_mary", "Mary — poses, pregnant=True, sweep phases (scale 0.8; ride / sit anchors: see doc)", items, 9,
+                250, 360, 0.8, {"ground_pad": 24}))
+    items = [(e, lambda x, y, s, e=e: C.mary(x, y, s, expr=e)) for e in C.MARY_EXPRESSIONS]
+    items += [(f"joseph {e}", lambda x, y, s, e=e: C.joseph_carpenter(x, y - 22 * s, s, expr=e)) for e in C.JOSEPH_CARPENTER_EXPRESSIONS]
+    out.append(("nativity_expr", "Nativity expressions (close-ups, scale 1.4): Mary; Joseph", items, 10, 240, 330, 1.4,
+                {"clip_cells": True, "ground_pad": -190}))
+    items = [(p, lambda x, y, s, p=p: C.joseph_carpenter(x, y, s, pose=p)) for p in C.JOSEPH_CARPENTER_POSES if p not in ("walk", "lead")]
+    items += [("staff=False", lambda x, y, s: C.joseph_carpenter(x, y, s, staff=False)),
+              ("knock phase=.5", lambda x, y, s: C.joseph_carpenter(x, y, s, pose="knock", phase=0.5)),
+              ("hold_lamp lamp=.4", lambda x, y, s: C.joseph_carpenter(x, y, s, pose="hold_lamp", lamp=0.4))]
+    out.append(("nativity_joseph", "Joseph the carpenter — poses (scale 0.8)", items, 10, 230, 380, 0.8, {"ground_pad": 24}))
+    items = [(f"baby {st}", lambda x, y, s, st=st: C.baby_jesus(x, y, s, state=st)) for st in C.BABY_STATES]
+    items += [("baby glow=.8", lambda x, y, s: C.baby_jesus(x, y, s, glow=0.8)), ("baby hand=True facing=-1", lambda x, y, s: C.baby_jesus(x, y, s, -1, hand=True))]
+    items += [(f"toddler {p}", lambda x, y, s, p=p: C.toddler_jesus(x, y, s, pose=p)) for p in C.TODDLER_POSES]
+    items += [("toddler laugh", lambda x, y, s: C.toddler_jesus(x, y, s, pose="stand", expr="laugh"))]
+    out.append(("nativity_baby", "baby_jesus states and toddler_jesus poses (scale 1.6)", items, 7, 300, 330, 1.6, {"ground_pad": 30}))
+    items = [(p, lambda x, y, s, p=p: C.angel(x, y, s, pose=p)) for p in C.ANGEL_POSES]
+    items += [(f"wings={w}", lambda x, y, s, w=w: C.angel(x, y, s, wings=w)) for w in (0.0, 0.5, 1.0)]
+    items += [("float phase=.25", lambda x, y, s: C.angel(x, y, s, pose="float", phase=0.25)),
+              ("glow=0", lambda x, y, s: C.angel(x, y, s, glow=0.0)), ("glow=1 announce -1", lambda x, y, s: C.angel(x, y, s, -1, pose="announce", glow=1.0))]
+    items += [(f"variant {v} sing", lambda x, y, s, v=v: C.angel(x, y, s, pose="sing", variant=v)) for v in range(1, 6)]
+    out.append(("nativity_angel", "angel — poses, wings, glow, variants (scale 0.6; float hovers ANGEL_FLOAT_LIFT above the anchor)",
+                items, 8, 300, 420, 0.6, {"ground_pad": 30}))
+    items = [(f"{v} stand", lambda x, y, s, v=v: C.shepherds(x, y, s, variant=v)) for v in range(6)]
+    for i, p in enumerate(C.SHEPHERD_POSES):
+        if p in ("stand", "walk", "run"):
+            continue
+        items.append((f"{i % 6} {p}", lambda x, y, s, i=i, p=p: C.shepherds(x, y, s, variant=i % 6, pose=p)))
+    items += [("2 hold_lamb (boy)", lambda x, y, s: C.shepherds(x, y, s, variant=2, pose="hold_lamb")),
+              ("1 sit sleepy", lambda x, y, s: C.shepherds(x, y, s, variant=1, pose="sit", expr="sleepy"))]
+    out.append(("nativity_shepherds", "shepherds — variants 0-5 (2 = the boy, 1 = the old shepherd) and poses (scale 0.7)",
+                items, 8, 250, 330, 0.7, {"ground_pad": 22}))
+    items = []
+    for v in range(3):
+        for p in C.WISE_MEN_POSES:
+            if p in ("walk",):
+                continue
+            items.append((f"{v} {p}", lambda x, y, s, v=v, p=p: C.wise_men(x, y, s, variant=v, pose=p)))
+    items += [(f"{v} kneel_offer open=1 glow=1", lambda x, y, s, v=v: C.wise_men(x, y, s, variant=v, pose="kneel_offer", gift_open=1.0, gift_glow=1.0)) for v in range(3)]
+    out.append(("nativity_magi", "wise_men — variants 0-2 x poses; gifts open and glow (scale 0.62)", items, 12, 200, 360, 0.62,
+                {"ground_pad": 22}))
+    items = []
+    for k in C.TOWNSFOLK_KINDS:
+        for v in range(3):
+            items.append((f"{k} {v}", lambda x, y, s, k=k, v=v: C.townsfolk(x, y, s, kind=k, variant=v)))
+    for p, k, it in (("carry_walk_a", "traveller", "bundle"), ("carry_walk_b", "traveller_woman", "bundle"), ("carry", "woman", "jar"),
+                     ("carry_walk_a", "man", "pots"), ("carry", "traveller", "hen"), ("squeeze", "man", "bundle"), ("squeeze", "woman", "pots"),
+                     ("look_around", "traveller", None), ("shake_head", "innkeeper", None), ("hold_lamp", "innkeeper", None),
+                     ("point", "innkeeper", None), ("read", "herald", None), ("announce", "herald", None), ("talk", "woman", None),
+                     ("wave", "child", None), ("listen", "elder", None), ("sit", "man", None), ("cheer", "child", None)):
+        items.append((f"{k} {p} {it or ''}", lambda x, y, s, p=p, k=k, it=it: C.townsfolk(x, y, s, kind=k, variant=1, pose=p, item=it)))
+    out.append(("nativity_townsfolk", "townsfolk — kinds x variants, travellers, the innkeeper, the herald, comic carriers (scale 0.6)",
+                items, 12, 200, 300, 0.6, {"ground_pad": 20}))
+    items = [(f"jumper {p}", lambda x, y, s, p=p: C.child(x, y, s, pose=p, outfit="jumper")) for p in ("stand", "walk_a") + C.NATIVITY_CHILD_POSES + ("smile_up", "point_up", "wave", "cheer", "pray")]
+    items += [("decorate item='star'", lambda x, y, s: C.child(x, y, s, pose="decorate", outfit="jumper", item="star")),
+              ("place item='sheep'", lambda x, y, s: C.child(x, y, s, pose="place", outfit="jumper", item="sheep")),
+              ("raincoat decorate", lambda x, y, s: C.child(x, y, s, pose="decorate")),
+              ("pyjamas place", lambda x, y, s: C.child(x, y, s, pose="place", outfit="pyjamas"))]
+    out.append(("nativity_child", "child(outfit='jumper') — the boy at the Christmas tree; the new poses (scale 1.1)", items, 8, 240, 330,
+                1.1, {"ground_pad": 22}))
+    return out
+
+
+def _panel(x0, y0, w, h, markup, key):
+    """Clip one composition panel to its rectangle."""
+    cid = f"natpanel{key}"
+    return (f'<clipPath id="{cid}"><rect x="{x0}" y="{y0}" width="{w}" height="{h}"/></clipPath>'
+            f'<g clip-path="url(#{cid})">{markup}</g>')
+
+
+def nativity_group():
+    """Compositions: the scale line-up, the journey, the stable, the shepherds and the angel, the wise men's visit."""
+    PR = C._prp()
+    W, H = 2300, 64 + 4 * 600
+    top = 64
+    body = ""
+    labels = []
+    gy = top + 540
+    b = f'<rect x="0" y="{top}" width="{W}" height="600" fill="#e8d6ae"/>'
+    xs = 80
+    for fn, kw, w in ((C.mary, {}, 150), (C.mary, {"pregnant": True}, 150), (C.joseph_carpenter, {}, 180), (C.angel, {"glow": 0.4}, 260),
+                      (C.shepherds, {"variant": 1}, 170), (C.shepherds, {"variant": 2, "pose": "hold_lamb"}, 140), (C.shepherds, {"variant": 3}, 170),
+                      (C.wise_men, {"variant": 0}, 160), (C.wise_men, {"variant": 1}, 160), (C.wise_men, {"variant": 2}, 170),
+                      (C.townsfolk, {"kind": "innkeeper"}, 170), (C.townsfolk, {"kind": "herald"}, 160), (C.child, {"outfit": "jumper"}, 120)):
+        b += fn(xs, gy, 1.0, **kw)
+        xs += w
+    b += C.toddler_jesus(xs, gy, 1.0, pose="stand") + C.baby_jesus(xs + 100, gy, 1.0)
+    body += _panel(0, top, W, 600, b, 1)
+    labels.append((20, gy + 14, "scale 1, one ground line: Mary, Mary pregnant, Joseph, angel, shepherds (old, boy with lamb, sturdy), wise men 0-2, innkeeper, herald, the jumper boy, toddler, baby"))
+    gy2 = gy + 600
+    b = PR.day_night_sky(0, gy2 - 540, 1150, gy2 + 60, t=0.47, scale=0.6)
+    b += PR.journey_road(0, 1150, gy2 - 260, 0.6, time="dusk")
+    pts = PR.road_points(0, 1150, gy2 - 260, 0.6)
+    px, py, kk = pts[1]
+    kk *= 0.5
+    b += PR.donkey(px, py, kk, 1, pose="walk_b", saddle="blue", bridle=True)
+    b += C.mary(*PR.donkey_points(px, py, kk, pose="walk_b")["seat"], kk, pose="ride", pregnant=True, expr="tired")
+    b += C.joseph_carpenter(PR.donkey_points(px, py, kk)["lead"][0] - C.JOSEPH_LEAD_HAND[0] * kk, py, kk, pose="lead_b")
+    body += _panel(0, gy2 - 540, 1150, 600, b, 2)
+    sx, sy = 1720, gy2 + 30
+    b = PR.starry_sky(1150, gy2 - 540, W, gy2 + 60, density=0.6)
+    b += PR.stable(sx, sy, 0.42, part="back")
+    sp = PR.stable_points(sx, sy, 0.42)
+    b += PR.ox(*sp["ox"], 0.42 * 0.9, -1, pose="lie_look") + PR.donkey(*sp["donkey"], 0.42 * 0.9, 1, pose="look", sacks=0)
+    b += C.joseph_carpenter(*sp["joseph"], 0.42, 1, pose="hold_lamp")
+    b += C.mary(sp["mary"][0] - 30, sp["mary"][1], 0.42, 1, pose="lay_baby")
+    b += PR.manger(*sp["manger"], 0.42, part="front", time="day")
+    b += PR.stable(sx, sy, 0.42, part="front")
+    body += _panel(1150, gy2 - 540, 1150, 600, b, 3)
+    labels.append((20, gy2 + 30, "the journey: journey_road, donkey walk + Mary ride (pregnant, tired) + Joseph lead | the stable: Mary lay_baby over the manger, Joseph hold_lamp, ox lie_look, donkey look"))
+    gy3 = gy2 + 600
+    b = PR.starry_sky(0, gy3 - 540, 1150, gy3 + 60, density=0.9, seed=4)
+    b += PR.night_hills(0, 1150, gy3 - 60, 0.55, part="back", town=True)
+    b += PR.glory(600, gy3, 0.5)
+    b += PR.night_hills(0, 1150, gy3 - 60, 0.55, part="front", fire=0.0, fire_x=False, fold_x=980)
+    for i, (dx, v, p) in enumerate(((380, 0, "shield_eyes"), (480, 1, "kneel"), (560, 5, "shield_eyes"), (290, 2, "hold_lamb"))):
+        b += C.shepherds(dx, gy3 + 10, 0.5, 1, variant=v, pose=p)
+    b += C.angel(740, gy3, 0.5, -1, pose="float", glow=1.0, lift=50)
+    b += PR.sheep(850, gy3 + 20, 0.42, -1, pose="look_up") + PR.sheep(930, gy3 + 30, 0.42, -1, variant=2, pose="look_up")
+    body += _panel(0, gy3 - 540, 1150, 600, b, 4)
+    b = PR.starry_sky(1150, gy3 - 540, W, gy3 + 60, density=0.9, seed=6)
+    b += PR.night_hills(1150, W, gy3 - 60, 0.55, part="back", town=False)
+    b += PR.heaven_light(1720, gy3 - 330, 0.5, progress=0.8) + C.angel_choir(1250, 2200, gy3 - 200, n=10, scale=0.22, rows=2)
+    b += PR.night_hills(1150, W, gy3 - 60, 0.55, part="front", fire=0.6, fire_x=1300, fold_x=False)
+    b += C.shepherds(1500, gy3 + 10, 0.5, 1, variant=3, pose="kneel") + C.shepherds(1640, gy3 + 14, 0.5, 1, variant=0, pose="point_up")
+    b += C.shepherds(1800, gy3 + 10, 0.5, -1, variant=4, pose="cheer") + PR.sheep(1950, gy3 + 30, 0.4, -1, pose="look_up", lamb=True)
+    body += _panel(1150, gy3 - 540, 1150, 600, b, 5)
+    labels.append((20, gy3 + 30, "the shepherds: glory round the group, angel float (lift 50) beside them, shield_eyes / kneel / hold_lamb, sheep look_up | heaven_light + angel_choir; kneel, point_up, cheer"))
+    gy4 = gy3 + 600
+    b = PR.family_house(560, gy4 - 30, 0.5, view="interior", star_light=0.7)
+    b += C.mary(560 + (PR.FAMILY_SEAT[0] + 50) * 0.5, gy4 - 30, 0.5, pose="sit_hold")
+    b += C.joseph_carpenter(330, gy4 - 40, 0.48, pose="watch")
+    for i, (dx, v, p, o) in enumerate(((640, 0, "kneel_offer", 1.0), (760, 2, "bow", 0.0), (880, 1, "present", 0.6))):
+        b += C.wise_men(dx, gy4 - 26 + 4 * i, 0.5, -1, variant=v, pose=p, gift_open=o, gift_glow=o)
+    body += _panel(0, gy4 - 540, 1150, 600, b, 6)
+    b = PR.starry_sky(1150, gy4 - 540, W, gy4 + 60, density=0.7, seed=9)
+    b += PR.bethlehem_town(1150, W, gy4 - 200, 0.4, time="night", part="back")
+    b += PR.the_star(1700, gy4 - 470, 0.4, beam=0.8, beam_to=(1700, gy4 - 300))
+    b += PR.family_house(1700, gy4 - 20, 0.42, star_light=0.8)
+    for i, v in enumerate((0, 1, 2)):
+        cx = 1300 + i * 150
+        b += PR.camel(cx, gy4 + 30, 0.3, pose="walk", phase=0.25 * i, saddle=("red", "green", "purple")[v], load=False)
+        b += C.wise_men(*PR.camel_points(cx, gy4 + 30, 0.3, pose="walk", phase=0.25 * i)["seat"], 0.3, variant=v, pose="ride")
+    body += _panel(1150, gy4 - 540, 1150, 600, b, 7)
+    labels.append((20, gy4 + 30, "the visit (Matthew 2): family_house interior, Mary sit_hold on the bench, Joseph watch, wise men kneel_offer / bow / present (gifts open, glowing) | the star stops over the house; camels with riders"))
+    svg = S.svg_doc(body, w=W, h=H).replace(BOIL_TOKEN, "1")
+    fig = watercolor(raster.rasterize(svg, W, H), seed=11)
+    sheet, d = _finish(fig, W, H, "Nativity film — scale line-up, the journey, the stable, the shepherds and the angels, the wise men's visit")
+    font = ImageFont.truetype(str(FONT_REGULAR), 22)
+    for x0, y0, text in labels:
+        d.text((x0, y0), text, fill=INK_RGB, font=font)
+    OUT.mkdir(parents=True, exist_ok=True)
+    path = OUT / "characters_nativity_group.png"
+    sheet.save(path)
+    return path
+
+
 # ---------------------------------------------------------------- compositions
 
 
@@ -830,6 +1000,8 @@ def main():
         print(joseph_group())
     if not filt or any(f in "storm_group" for f in filt):
         print(storm_group())
+    if not filt or any(f in "nativity_group" for f in filt):
+        print(nativity_group())
     raster.close()
 
 
