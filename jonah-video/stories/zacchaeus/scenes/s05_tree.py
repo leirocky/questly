@@ -11,20 +11,24 @@ Beats (syllable onsets measured in the voice clips with the Noah film's voice_ma
 nothing hard-coded to the take). Times are for the current take:
   0 .. 0.9      calm page (the page-dip from s04 lands here): Zacchaeus behind the wall of backs, a fist at his chin
                 (think), the crowd shuffling, the far side lining the road
-  '有' 0.94     the idea: finger up, a glowing light bulb pops over his head (pop + sparkle, a little hop)
-  '撒该往前跑' 1.96  the comic run: robe hitched up, legs churning, dust puffs, down the road ahead of the crowd; the
+  '有' 0.95     the idea: finger up, a glowing light bulb pops over his head (pop + sparkle, a little hop)
+  '撒该往前跑' 1.87  the comic run: robe hitched up, legs churning, dust puffs, down the road ahead of the crowd; the
                 camera runs with him (footsteps_run)
-  '路上' 5.04   he screeches to a halt by the tree (leaning back, a dust cloud)
-  '那里' 6.18   he looks up at it, wide-eyed; the camera pulls back and up: the big sycamore-fig; '大大' 7.33 he spreads
+  '路上' 4.98   he screeches to a halt by the tree (leaning back, a dust cloud)
+  '那里' 6.12   he looks up at it, wide-eyed; the camera pulls back and up: the big sycamore-fig; '大大' 7.27 he spreads
                 his arms ('so big!')
-  '树枝' 9.00   he points up at the low branches; '低' 9.68 / '粗' 10.24 a soft golden glow runs along the low, thick limbs
-  '正好可以爬' 10.78  a determined nod, three quick steps to the trunk; '爬' 11.67 hands on the fork (climb_a)
-  '爬呀爬，爬呀爬，爬上了' 13.19 / 13.74 / 14.29 / 14.87 / 15.43  one climbing stage on every 爬 (a foot on the knob, a
-                knee onto the low branch, standing on it, a foot on the stub, then the hoist onto the sitting branch); each
-                stage holds ~0.35 s with an eased 0.2 s pull between them; the camera climbs with him
-  '桑树' 16.07  he scoots along the branch to the sitting spot and settles, overjoyed
-  '嘿嘿' 17.44  he leans out and pushes a twig of leaves aside: a big grin (two giggle bobs, a leaf flutters down)
-  '这下看得清清楚楚了' 18.18  the camera glides right along his view: the road, the people lining it, and Jesus walking
+  '树枝' 8.94   he points up at the low branches; '低' 9.61 / '粗' 10.17 a soft golden glow runs along the low, thick limbs
+  '正好可以爬' 10.72  a determined nod, quick steps to the trunk; '爬' 11.61 hands on the fork (climb_a)
+  '爬呀爬，爬呀爬' 13.12 / 13.67 / 14.22 / 14.81  one climbing stage on every 爬 (a foot on the knob, a knee onto the low
+                branch, standing on it, a foot on the stub): an eased 0.18 s pull, then a ~0.37 s hold; the camera
+                climbs with him
+  '爬上了' 15.36  the hoist: an eased 0.3 s pull from where he stands - one drawing per film frame, the body rising past
+                the hands that stay on the sitting branch, the legs coming up from hanging to seated - then he sits
+                (15.58)
+  '桑树' 16.00  he holds there through '桑树', beaming (a little bounce on 桑); at the end of the line (16.39) he scoots
+                along the branch to the sitting spot by the leaves and settles with a wiggle
+  '嘿嘿' 17.37  he leans out and pushes a twig of leaves aside: a big grin (two giggle bobs, a leaf flutters down)
+  '这下看得清清楚楚了' 18.11  the camera glides right along his view: the road, the people lining it, and Jesus walking
                 towards the tree at the head of the crowd with two disciples and the townsfolk behind him
   end           calm: the camera holds (CAM_HANDOFF); the last second is s06_call's first second
 
@@ -81,6 +85,13 @@ def doc(body, defs=""):
 
 def f1(v):
     return f"{v:.1f}"
+
+
+def loop_idx(t, g0, period, n):
+    """Index of an idle loop of n drawings, period s each, on the film's global clock: counted in whole film frames,
+    so two scenes joined by a fade (whose t + g0 differ only by float error) always pick the same drawing."""
+    g = int(round((t + g0) * 30))
+    return int(g // (period * 30)) % n
 
 
 def clamp01(v):
@@ -263,7 +274,7 @@ class Fig:
                     cur = n
             if cur in loops:
                 nl, per = loops[cur]
-                return float(index[(cur, int(math.floor((t + g0) / per)) % nl)])
+                return float(index[(cur, loop_idx(t, g0, per, nl))])
             return float(index[(cur, 0)])
         sc.add(self.name, frames if len(frames) > 1 else frames[0], frame_at=fa if len(frames) > 1 else None,
                z=self.z, seed=self.seed, wc=self.wc, motion=self.motion(), blend=blend)
@@ -311,6 +322,20 @@ ZMODS = {
 }
 
 
+def _hoist_mod(t_, h_, legs, hands_local):
+    """'sit_branch' rebuilt mid-hoist: the robe hitched up as when climbing, legs from hanging to seated, the hands
+    (pelvis-relative targets) kept on the sitting branch while the body rises past them."""
+    (fx, fy), (nx, ny) = hands_local
+    return dict(t=t_, h=h_, legs=legs, arms=(("ik", "body", fx, fy, 1), ("ik", "body", nx, ny, -1)), hands=("fist", "fist"),
+                lap=False, hem=C.ZAC_HITCH, flare=-2, tail=-40, look=(0.03, -0.06))
+
+
+def mod_dict(mod):
+    if isinstance(mod, tuple):                     # ("hoist", t, h, legs, hands) - see _hoist_mod
+        return _hoist_mod(*mod[1:])
+    return ZMODS.get(mod)
+
+
 def zk(pose, f=1, expr=None, phase=0.0, mod=None, marks=True):
     """Hashable key of a Zacchaeus drawing."""
     return ("Z", pose, f, expr, round(phase, 3), mod, marks)
@@ -319,7 +344,7 @@ def zk(pose, f=1, expr=None, phase=0.0, mod=None, marks=True):
 def zac_svg(x, y, k, key):
     _, pose, f, expr, phase, mod, marks = key
     ps, pk = C._zac_pose(pose, phase)
-    ps = _apply(ps, ZMODS.get(mod))
+    ps = _apply(ps, mod_dict(mod))
     D = C._zac_design(pk, lap=bool(ps["lap"]), purse=True)
     fronts = []
     if marks:
@@ -333,7 +358,8 @@ def zac_svg(x, y, k, key):
     elif pk == "climb_down":
         h0, h1 = C._LAST["hands"]
         inner = C._reanchor(inner, (h0[0] + h1[0]) / 2, (h0[1] + h1[1]) / 2)
-    return C._wrap_out(inner, x, y, k, f, f"zq-zac-{pk}-{mod}")
+    tag = mod if not isinstance(mod, tuple) else f"{mod[0]}{abs(hash(mod)) % 100000}"
+    return C._wrap_out(inner, x, y, k, f, f"zq-zac-{pk}-{tag}")
 
 
 def zac_blink(key):
@@ -715,19 +741,19 @@ def add_town_crowds(sc, g0, wall=True, line=True):
         frames = [doc(C.jericho_crowd(2290, CY, CK, 1, n=11, pose="line", rows=1, width=1250, seed=1, phase=p))
                   for p in (0.0, 0.25, 0.5, 0.75)]
         sc.add("c_line", frames, z=Z_FARCROWD, seed=151,
-               frame_at=lambda t: float(int(math.floor((t + g0) / 0.42)) % 4))
+               frame_at=lambda t: float(loop_idx(t, g0, 0.42, 4)))
     if wall:
         frames = [doc(C.jericho_crowd(2150, 1062, K, 1, n=22, pose="back", rows=2, width=1000, seed=2, phase=p))
                   for p in (0.0, 0.25, 0.5, 0.75)]
         sc.add("c_wall", frames, z=Z_WALL, seed=157,
-               frame_at=lambda t: float(int(math.floor((t + g0) / 0.36)) % 4))
+               frame_at=lambda t: float(loop_idx(t, g0, 0.36, 4)))
 
 
 def add_right_crowd(sc, g0):
     """The people lining the far side of the road to the right of the tree (watching Jesus come)."""
     frames = [doc(C.jericho_crowd(5020, CY, CK, -1, n=10, pose="line", rows=1, width=1050, seed=5, phase=p))
               for p in (0.0, 0.25, 0.5, 0.75)]
-    sc.add("c_right", frames, z=Z_FARCROWD, seed=163, frame_at=lambda t: float(int(math.floor((t + g0) / 0.4)) % 4))
+    sc.add("c_right", frames, z=Z_FARCROWD, seed=163, frame_at=lambda t: float(loop_idx(t, g0, 0.4, 4)))
 
 
 # The people at the tree (far edge): kind, variant, x0 (gathered, s05) -> x1 (parted, s06), and their drawing per state:
@@ -812,7 +838,7 @@ def tree_crowd_layer(sc, g0, ents, z=Z_FARCROWD + 0.1, idle=(0.0, 0.25, 0.5, 0.7
             if t >= tk:
                 cur = s_
         if cur == "closed":
-            return float(index[(cur, int(math.floor((t + g0) / 0.45)) % len(idle))])
+            return float(index[(cur, loop_idx(t, g0, 0.45, len(idle)))])
         return float(index[(cur, 0)])
     sc.add("c_tree", frames if len(frames) > 1 else frames[0], z=z, seed=171, frame_at=fa if len(frames) > 1 else None)
 
@@ -1008,33 +1034,63 @@ def build(ctx):
     t_atr = snap(t_w0 + 4 * per)
     # '爬': hands on the fork
     zac.cut(snap(t_pa0 - 0.04), zk("climb_a", 1, "determined"), depth=5)
-    # the climb: one stage on every 爬 (the anchor slides up in an eased 0.2 s pull)
+    # the climb: one stage on every 爬 (the anchor slides up in an eased 0.18 s pull, then holds ~0.37 s)
     stages = [("climb_b", st[1]["anchor"]), ("climb_c", st[2]["anchor"]), ("climb_d", st[3]["anchor"]),
               ("climb_c", st[4]["anchor"])]
     exprs = ("determined", "determined", "eager", "determined")
     for i, (pose, (ax, ay)) in enumerate(stages):
         tc = snap(t_pa[i] - 0.06)
         zac.cut(tc, zk(pose, 1, exprs[i]), dip=False)
-        zac.track.to(tc, tc + 0.2, ax, ay, curve="out")
-        zac.mots.append(squash(tc + 0.22, K, REF, 4.0))
-    # '爬上了': the hoist onto the sitting branch, then a scoot along it to the sitting spot on '桑树'
+        zac.track.to(tc, tc + 0.18, ax, ay, curve="sine")
+        zac.mots.append(squash(tc + 0.2, K, REF, 4.0))
+    # '爬上了': the hoist onto the sitting branch - an eased 0.3 s pull from where he stands on the low branch: one
+    # drawing per film frame, the body rising past the hands that stay on the sitting branch, the legs coming up from
+    # hanging to seated; his pelvis moves continuously from the last stage's to the seated one's
     LX = lambda lx, ly: PR.local_to_stage(XT, YT, K, 1, lx, ly)   # noqa: E731
     seat_a = LX(48, -470)
-    tc = snap(t_pa[4] - 0.06)
-    zac.cut(tc, zk("sit_branch", 1, "determined", mod="sit_up"), dip=False)
-    zac.track.to(tc - 0.001, tc, seat_a[0] - 26, seat_a[1] + 70)
-    zac.track.to(tc + 0.001, tc + 0.26, seat_a[0], seat_a[1], curve="out")
-    zac.mots.append(squash(tc + 0.28, K, REF, 6.0))
-    t_sc = snap(max(t_sang - 0.05, tc + 0.5))
+    last = st[4]
+    bp0 = C.body_points(C.zacchaeus, *last["anchor"], K, 1, pose=last["pose"])
+    bp1 = C.body_points(C.zacchaeus, *seat_a, K, 1, pose="sit_branch")
+    P0, P1 = bp0["pelvis"], bp1["pelvis"]
+    H0, H1 = bp0["hands"], bp1["hands"]
+    seat_dy = seat_a[1] - P1[1]                                   # seat anchor below the pelvis (stage px)
+    ps_sit = C._zac_pose("sit_branch", 0.0)[0]
+    (lf0, lf1), (ln0, ln1) = (14, 2), (62, -8)                    # legs at the start: far one hanging, near knee coming up
+    (sf0, sf1), (sn0, sn1) = ps_sit["legs"]
+    t_h0 = snap(t_pa[4] - 0.06)
+    n_h = 9
+    ease_y, ease_x = M.ease("sine"), M.ease("inout")
+    for i in range(n_h):
+        u = i / (n_h - 1)
+        uy, ux = ease_y(min(1.0, u * 1.15)), ease_x(u)
+        px_, py_ = P0[0] + (P1[0] - P0[0]) * ux, P0[1] + (P1[1] - P0[1]) * uy
+        hands = []
+        for (ax_, ay_), (bx_, by_) in zip(H0, H1):
+            hx, hy = ax_ + (bx_ - ax_) * ux, ay_ + (by_ - ay_) * ux
+            hands.append((round((hx - px_) / K, 1), round((hy - py_) / K, 1)))
+        lu = M.ease("inout")(u)
+        legs = ((round(lf0 + (sf0 - lf0) * lu, 1), round(lf1 + (sf1 - lf1) * lu, 1)),
+                (round(ln0 + (sn0 - ln0) * lu, 1), round(ln1 + (sn1 - ln1) * lu, 1)))
+        key = zk("sit_branch", 1, "determined", mod=("hoist", round(12 - 10 * u, 1), round(-14 + 18 * u, 1), legs,
+                                                       tuple(hands)))
+        ti = t_h0 + i / 30.0
+        zac.cut(ti, key, dip=False)
+        zac.track.to(ti - 0.002, ti - 0.001, px_, py_ + seat_dy)
+    t_seat = snap(t_h0 + n_h / 30.0)
+    zac.cut(t_seat, zk("sit_branch", 1, "determined", mod="sit_up"), depth=4)
+    zac.track.to(t_seat - 0.002, t_seat - 0.001, seat_a[0], seat_a[1])
+    # he holds there on the branch through '桑树' (beaming on 桑), then scoots out to the sitting spot by the leaves
+    t_beam = snap(max(t_sang - 0.05, t_seat + 0.3))
+    zac.cut(t_beam, zk("sit_branch", 1, "overjoyed"), dip=False)
+    zac.mots.append(bump(t_beam, K, REF, 7, 0.24))
+    t_sc = snap(max(t_l2e - 0.05, t_beam + 0.5))
     sx, sy = SP["sit"]
-    zac.cut(t_sc, zk("sit_branch", 1, "overjoyed"), dip=False)
     mid = ((seat_a[0] + sx) / 2, (seat_a[1] + sy) / 2)
     zac.track.to(t_sc, t_sc + 0.2, mid[0], mid[1], lift=8 * K)
     zac.track.to(t_sc + 0.22, t_sc + 0.42, sx, sy, lift=8 * K)
     zac.mots.append(squash(t_sc + 0.44, K, REF, 5.0))
-    # settled, a happy wiggle
-    zac.mots.append(bump(t_l2e + 0.15, K, REF, 8, 0.24))
-    zac.mots.append(bump(t_l2e + 0.42, K, REF, 6, 0.22))
+    # settled: a happy wiggle
+    zac.mots.append(bump(min(t_sc + 0.62, t_hei - 0.45), K, REF, 7, 0.22))
     # '嘿嘿': peek out with a big grin, two giggle bobs; then eager, watching the road
     t_pk = snap(t_hei - 0.06)
     zac.cut(t_pk, zk("peek", 1, "laugh"), depth=6)
@@ -1099,7 +1155,8 @@ def build(ctx):
     c_peek = Cam(3860, 510, 1260)
     sc.camera = cam_path([(0.0, c_open), (t_r0 + 0.1, c_open), (t_halt + 0.35, c_arrive), (t_nali, c_arrive),
                           (t_nali + 1.9, c_tree), (t_shuzhi - 0.2, c_tree), (t_di + 0.8, c_branch),
-                          (t_pa0, c_climb0), (t_pa[1], c_climb0), (t_sc + 0.4, c_climb1), (t_hei - 0.35, c_climb1),
+                          (t_pa0, c_climb0), (t_pa[1], c_climb0), (min(t_sc + 0.4, t_hei - 0.45), c_climb1),
+                          (t_hei - 0.35, c_climb1),
                           (t_hei + 0.55, c_peek), (t_zx + 0.15, c_peek), (min(T - 1.25, t_l3e + 0.3), CAM_HANDOFF),
                           (T, CAM_HANDOFF)],
                          ["linear", "sine", "linear", "inout", "linear", "inout", "linear", "inout", "linear", "inout",

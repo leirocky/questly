@@ -68,18 +68,18 @@ STREET_TARGET = {
     "kid":   (1290, NEAR_F + 6, ("crowd_back", "neutral", -1, 0.3)),
     "men1":  (1600, NEAR_B, ("crowd_back", "neutral", -1, 0.5)),
     "men2":  (1700, NEAR_F, ("crowd_back", "neutral", 1, 0.2)),
-    "elder": (820, NEAR_B, ("crowd_back", "neutral", -1, 0.7)),
+    "elder": (820, NEAR_B, ("stand", "eager", -1)),     # front view: his stick shows only in stand / frown / walk
     "w1":    (700, FAR_Y, ("look", "eager", -1)),
     "w2":    (820, FAR_Y + 2, ("point", "eager", -1)),
-    "fs":    (1250, FAR_Y - 2, ("cheer", "happy", -1)),
+    "fs":    (1250, FAR_Y - 2, ("look", "eager", -1)),   # look keeps his basket of dates
     "m3":    (1830, FAR_Y + 4, ("wave", "happy", -1)),
 }
 # groups running in from off the page: (name, side (-1 = from the left), y, members [(kind, variant, x, final key)])
 GROUPS = [
     ("g_farL", -1, FAR_Y, [("man", 1, 150, ("point", "eager", -1)), ("child", 2, 245, ("cheer", "eager", -1)),
-                           ("woman", 4, 340, ("look", "eager", -1)), ("farmer", 0, 455, ("stand", "happy", -1))]),
+                           ("woman", 4, 340, ("look", "eager", -1)), ("farmer", 0, 455, ("cheer", "happy", -1))]),
     ("g_farR", 1, FAR_Y, [("woman", 2, 1460, ("look", "eager", -1)), ("man", 0, 1565, ("point", "eager", -1)),
-                          ("child", 3, 1660, ("wave", "happy", -1)), ("elder", 3, 1960, ("look", "kind", -1))]),
+                          ("child", 3, 1660, ("wave", "happy", -1)), ("elder", 3, 1960, ("stand", "kind", -1))]),
     ("g_nearL", -1, NEAR_F, [("man", 3, 120, ("crowd_back", "neutral", -1, 0.1)), ("woman", 0, 222, ("crowd_back", "neutral", -1, 0.6)),
                              ("fruit_seller", 1, 330, ("crowd_back", "neutral", -1, 0.3)), ("man", 5, 440, ("crowd_back", "neutral", 1, 0.8)),
                              ("woman", 5, 545, ("crowd_back", "neutral", -1, 0.4))]),
@@ -88,7 +88,7 @@ GROUPS = [
                              ("fruit_seller", 2, 1340, ("crowd_back", "neutral", -1, 0.6))]),
     ("g_nearR", 1, NEAR_F, [("man", 0, 1405, ("crowd_back", "neutral", -1, 0.7)), ("woman", 1, 1505, ("crowd_back", "neutral", -1, 0.1)),
                             ("man", 2, 1830, ("crowd_back", "neutral", -1, 0.4)), ("farmer", 1, 1935, ("crowd_back", "neutral", 1, 0.6)),
-                            ("elder", 2, 2040, ("crowd_back", "neutral", -1, 0.3))]),
+                            ("man", 1, 2040, ("crowd_back", "neutral", -1, 0.3))]),
 ]
 BOY = (640, SRY + 8)                 # the news-bringer stops here (road centre)
 
@@ -415,8 +415,9 @@ def build(ctx):
         t_go = snap(t_pao - 0.1 + 0.07 * i)
         x_now = hx + ox
         f_boy = -1 if x_now > BOY[0] else 1
-        turn_key = {"kid": ("point", "eager", f_boy), "w2": ("point", "eager", f_boy), "fs": ("smile", "surprised", f_boy)}.get(
-            name, ("stand", "surprised", f_boy))
+        # (props stay put: the farmer is drawn without his hoe here, the elder keeps his stick, the date seller his basket)
+        turn_key = {"kid": ("point", "eager", f_boy), "w2": ("point", "eager", f_boy), "fs": ("smile", "surprised", f_boy),
+                    "men2": ("look", "surprised", f_boy)}.get(name, ("stand", "surprised", f_boy))
         draw = (lambda k, name=name: street_folk_markup(name, k))
         # 1) exactly as at the end of s03, then turning to the boy
         a1 = Actor(f"c_{name}", (hx, hy), SK, draw, street_z(name), 410 + i, g0,
@@ -552,9 +553,11 @@ def build(ctx):
     t_look = snap(L[3].start + 0.2)
     zd.cut(t_look, ("tiptoe", "worried"), dip=4)
     t_stretch = snap(t_ai - 0.15)
-    zd.extra.append(lambda t, t0=t_stretch: Tf(sy=1 + 0.06 * math.sin(math.pi * min(1.0, max(0.0, (t - t0) / 0.7)))
-                                               * (1.0 if t < t0 + 0.7 else 0.0)))
-    zd.cut(snap(t_stretch + 0.75), ("stand", "frustrated"), dip=6)
+    # stretch up tall, then sag (the frustrated stand holds >= 0.55 s before the first jump's crouch)
+    st_d = max(0.45, min(0.7, t_tiao1 - 0.1 - 0.55 - t_stretch))
+    zd.extra.append(lambda t, t0=t_stretch, d=st_d: Tf(sy=1 + 0.06 * math.sin(math.pi * min(1.0, max(0.0, (t - t0) / d)))
+                                                     * (1.0 if t < t0 + d else 0.0)))
+    zd.cut(snap(t_stretch + st_d + 0.03), ("stand", "frustrated"), dip=6)
     # the two jumps: take-off on each 跳
     jump_keys = []
     phs = (0.1, 0.25, 0.38, 0.5, 0.62, 0.75, 0.88)
@@ -594,12 +597,14 @@ def build(ctx):
     t_stand2 = snap(t_bump + 0.75)
     zd.cut(t_stand2, ("stand", "frustrated"), dip=6)
     # pacing: three steps left, turn, three steps right, turn (a little circle)
-    t_p0 = snap(min(t_tuan - 0.75, t_stand2 + 0.55))
+    t_p0 = snap(min(t_tuan - 0.85, t_stand2 + 0.5))
     pace = (("pace_a", 68), ("pace_b", 68))
-    t_p1 = zd.walk(t_p0, [((k, "frustrated", 0.0, -1), a_) for k, a_ in pace], 2, 0.24, -1, first_adv=30, slope=-0.12)
-    t_p2 = zd.walk(snap(t_p1), [((k, "frustrated", 0.0, 1), a_) for k, a_ in pace], 4, 0.24, 1, first_adv=40, slope=-0.08)
-    t_p3 = zd.walk(snap(t_p2), [((k, "frustrated", 0.0, -1), a_) for k, a_ in pace], 2, 0.24, -1, first_adv=40, slope=0.0)
-    t_th = snap(max(t_p3, t_xpy - 0.75))
+    # 2 + 3 + 2 steps, paced so he stops and thinks >= 0.55 s before the cut to the close-up
+    p_per = max(0.18, min(0.26, (t_cutZ - 0.55 - t_p0) / 7))
+    t_p1 = zd.walk(t_p0, [((k, "frustrated", 0.0, -1), a_) for k, a_ in pace], 2, p_per, -1, first_adv=30, slope=-0.12)
+    t_p2 = zd.walk(snap(t_p1), [((k, "frustrated", 0.0, 1), a_) for k, a_ in pace], 3, p_per, 1, first_adv=40, slope=-0.1)
+    t_p3 = zd.walk(snap(t_p2), [((k, "frustrated", 0.0, -1), a_) for k, a_ in pace], 2, p_per, -1, first_adv=40, slope=0.0)
+    t_th = snap(t_p3)
     zd.cut(t_th, ("think", "ponder"), dip=6)
     zd.extra.append(breathm(g0, 3.0, 0.011))
     zd.blinks([t_cutB + 0.6, t_think + 1.2],
@@ -677,7 +682,7 @@ def build(ctx):
     zz.extra.append(breathm(g0, 3.2, 0.010))
     zz.extra.append(lambda t: Tf(rot=1.2 * math.sin(2 * math.pi * (t - t_cutZ) / 3.6) * min(1.0, max(0.0, t - t_cutZ) / 1.0),
                                  px=ZZ[0], py=ZZ[1]))
-    zz.blinks([t_cutZ + 0.9, t_thoughtful + 1.4, t_fa + 0.5],
+    zz.blinks([t_cutZ + 0.9, t_thoughtful + 1.4, t_fa + 0.5] + ([t_fa + 2.2] if t_fa + 2.2 < T - 0.9 else []),
               {("think", "ponder"): ("think", blink("ponder")), ("think", "thoughtful"): ("think", blink("thoughtful"))})
     zz.build(sc)
     zth = C.body_points(C.zacchaeus, *ZZ, ZK, 1, pose="think")["head"]

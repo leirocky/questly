@@ -18,8 +18,9 @@ nothing hard-coded to the take). Times are for the current take:
   '大家都说' 9.02  hard cut to his house: the two walk in along the street, a few grumblers by the road muttering
   '坏' 11.12    Zacchaeus stops and glances back at the grumblers, his smile gone; they fold their arms and turn away;
                 Jesus stops beside him; '可是耶稣' 12.09 he bows his head (lonely) and Jesus looks down at him kindly
-  '愿' 13.54    Jesus puts a kind hand on his shoulder; Zacchaeus looks up at him, touched
-  '到他家里去' 13.92  overjoyed, he turns to his gate and pushes it open: warm light spills out (chime); 'come in!'
+  '还是愿意' 13.17  Jesus puts a kind hand on his shoulder; Zacchaeus looks up at him, grateful
+  '家里' 14.30  overjoyed, he turns and trots to his gate and pushes it open (14.75): the doors swing open, warm light
+                spills out (chime); 'come in!' (15.42) - Jesus steps after him, smiling
   end           calm last frame (page turn into s08): the open gate, Zacchaeus inviting Jesus in, Jesus smiling
 """
 import math
@@ -37,7 +38,7 @@ from stories.noah.scenes.s01_title import snap
 from stories.zacchaeus.scenes.s05_tree import (
     CK, CY, FOLLOWERS, H5, HOUSE_X, HOUSE_Y, K, STRIDE, TREE_CROWD, W5, YT, YU, ZREF, Z_FARCROWD, Z_FX, Z_ZAC, Fig,
     Track, add_ambient, add_right_crowd, add_twig, add_world, breath, cam_path, dk, doc, f1, fk, folk_svg, jes_blink, jk,
-    procession, tree_crowd_layer, zac_blink, zac_svg, zk)
+    loop_idx, procession, tree_crowd_layer, zac_blink, zac_svg, zk)
 from stories.zacchaeus.scenes.s06_call import (CAM_END6, FOLK_END, JES_END, JOHN_END, PETER_END, TREE_END, ZAC_END,
                                                ZAC_END_X)
 
@@ -152,7 +153,7 @@ def build(ctx):
 
     # ---- the house gate opens on '到他家里去'
     t_jia = b(2, "家里")
-    t_push = snap(t_jia + 0.36)
+    t_push = snap(t_jia + 0.46)
     door_t = [t_push + 0.06 + 0.1 * k for k in range(len(DOORS))]
 
     def door_fa(t):
@@ -174,7 +175,7 @@ def build(ctx):
     grum_frames = [doc(C.jericho_crowd(2290, CY, CK, 1, n=11, pose="grumble", rows=1, width=1250, seed=1, phase=p))
                    for p in (0.0, 0.5)]
     sc.add("c_line", line_frames + grum_frames, z=Z_FARCROWD, seed=151,
-           frame_at=lambda t: float((2 if t >= t_bgx + 0.1 else 0) + int(math.floor((t + g0) / 0.5)) % 2))
+           frame_at=lambda t: float((2 if t >= t_bgx + 0.1 else 0) + loop_idx(t, g0, 0.5, 2)))
     # shot B: grumblers by the road near his house
     gb_ents = [(0, "mutter"), (snap(t_huai - 0.5), "point"), (snap(t_huai + 0.25), "glare"), (snap(t_dao), "mutter")]
     gstates = ["mutter", "point", "glare"]
@@ -222,7 +223,7 @@ def build(ctx):
     t_go = snap(t_jia - 0.12)
     zac.cut(t_go, zk("stand", -1, "overjoyed"), depth=6)
     x_push = GATE_X + 112
-    zac_walk(zac, snap(t_go + 0.1), XZ_STOP, x_push, YB, -1, "overjoyed", max(0.08, (t_push - t_go - 0.16) / 5))
+    zac_walk(zac, t_go, XZ_STOP, x_push, YB, -1, "overjoyed", max(0.08, (t_push - t_go - 0.06) / 5))   # turns and trots
     zac.cut(t_push, zk("stand", -1, "happy", mod="push"), depth=5)
     zac.track.to(t_push - 0.06, t_push + 0.05, x_push, YB)
     t_host = snap(door_t[-1] + 0.2)
@@ -252,8 +253,7 @@ def build(ctx):
     lx, ly = (zsh[0] + 5 * K - XJ_STOP) * -1 / K, (zsh[1] + 11 * K - YB) / K
     hand = ((("ik", "abs", lx, ly, 1), ("fk", -8, -3)), ("open", "fist"))
     jf.cut(t_hand, jk("stand", -1, "warm", "down", arms=hand), depth=4)
-    t_jg = snap(t_go + 0.3)
-    jf.cut(snap(t_go + 0.12), jk("stand", -1, "warm"), depth=4)
+    t_jg = snap(t_go + 0.14)
     walk2(jf, t_jg, XJ_STOP, XJ_STOP - 0.55 * STRIDE["jesus"] * K, YB, lambda fr: jk(fr, -1, "warm"), STRIDE["jesus"] * K, 0.36)
     jf.cut(snap(t_jg + 0.4), jk("smile", -1, None, "down"), depth=4)
     jf.cut(snap(t_host + 0.15), jk("smile", -1, None), depth=4)

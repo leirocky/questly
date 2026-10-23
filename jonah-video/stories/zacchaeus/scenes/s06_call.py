@@ -17,15 +17,15 @@ nothing hard-coded to the take). Times are for the current take:
                 swings back in front of the leaves
   '撒' 7.17     '撒该，快下来！' Jesus raises his hand to him (call_up, warm); the crowd gasps (they look up, hands to
                 their cheeks, '!' marks pop); Zacchaeus sits bolt upright, astonished
-  '今天' 9.01   the crowd turns to murmur to one another
-  '吓' 12.31    Zacchaeus jumps so hard he nearly falls off backwards (wobble, rocking), a flurry of leaves, the crown
-                shakes (whoosh); the crowd gasps again; the camera has pushed in on him
-  '耶稣认识我' 14.27  he points at himself; '他还要到我家去' 15.91 a hand on his heart; '家' 17.09 overjoyed
-  '他高兴极了' 18.49  both arms up, bouncing on the branch (sparkle)
-  '赶快' 19.83  he swings down to hang from the branch (climb_down); '爬' 20.27 slides down the trunk (slide_down, speed
-                lines) and lands; a happy hop towards Jesus
-  '欢欢喜喜' 21.28  a deep welcoming bow, hand on his heart; '接待' 22.61 'come!' - an open hand (host); Jesus smiles
-                down at him
+  '今天' 8.98   the crowd turns to murmur to one another; '家' 10.42 a startled little bob
+  '吓' 11.98    ('他吓了一跳。') Zacchaeus jumps so hard he nearly falls off backwards (wobble, rocking), a flurry of
+                leaves, the crown shakes (whoosh); the crowd gasps again; the camera pushes in on him
+  '耶稣认识我' 13.71  he points at himself; '他还要到我家去' 15.35 a hand on his heart; '家' 16.52 overjoyed
+  '他高兴极了' 17.93  both arms up, bouncing on the branch (sparkle)
+  '赶快' 19.27  he swings down to hang from the branch (climb_down); '爬' 19.70 slides down the trunk (slide_down, speed
+                lines) and lands with a squash, arms up; a happy hop towards Jesus
+  '欢欢喜喜' 20.72  a deep welcoming bow, hand on his heart; '接待' 22.04 'come!' - an open hand (host); Jesus smiles
+                down at him and nods
   end           calm two-shot (CAM_END6), the crowd watching: s07's first second
 """
 import math

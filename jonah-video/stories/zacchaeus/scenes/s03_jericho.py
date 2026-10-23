@@ -26,8 +26,13 @@ Tm class, chunk fallback; nothing is hard-coded to the take):
                 after the other (coins pour, clinks)
   '他很有钱'     the chest overflows (coins spill, golden shine, twinkles), Zacchaeus beams
   '可是'         he hops off his stool and struts out to the end of his table; '不喜欢' the queue frowns and folds arms
-  '常常'         the farmer pays: a coin into his palm ('常'); '多收' with a sly look he snatches an extra coin
-  '放进'         he slips both coins into his plum money pouch (clink, twinkle); the farmer frowns and stomps off
+  '常常'         the farmer (his hoe in his hand throughout) holds out two coins: one hops into Zacchaeus's palm
+                ('常'); '多收' with a sly look Zacchaeus snatches the other one too
+  '放进'         he slips both coins into his plum money pouch (clink, twinkle); the farmer frowns and walks off with
+                his hoe
+Props never pop: the farmer's hoe, the elders' sticks and the date seller's basket stay in hand at every pose cut
+(only poses that draw them, or the hoe drawn into his hand by hoe_in_hand); coins held out lie on the palm as
+separate coins until they move; the emptied money bags drop beside the chest.
   '大家看见'     cut to the street: Zacchaeus struts along the near side of the road, chin up
   '躲得远远的'   the people in his way step back, turn away and whisper behind their hands; he slows, stops and his
                 head drops (lonely); calm hold - s04 opens on exactly this frame (plain fade; ambient motion runs on
@@ -440,8 +445,8 @@ def a_folk_svg(k):
     b = ""
     for i, (x, y, kind, v, f, poses) in enumerate((
             (520, HZ + 300, "woman", 1, 1, ("stand", "point")), (650, HZ + 296, "man", 2, -1, ("look", "stand")),
-            (850, HZ + 290, "child", 1, 1, ("wave", "stand")), (1290, HZ + 292, "fruit_seller", 0, 1, ("smile", "point")),
-            (1460, HZ + 300, "woman", 4, -1, ("stand", "mutter")), (1640, HZ + 306, "elder", 0, -1, ("stand", "look")))):
+            (850, HZ + 290, "child", 1, 1, ("wave", "stand")), (1290, HZ + 292, "fruit_seller", 0, 1, ("smile", "look")),
+            (1460, HZ + 300, "woman", 4, -1, ("stand", "mutter")), (1640, HZ + 306, "elder", 0, -1, ("look", "smile")))):
         p = poses[(k + i) % 2]
         b += C.jericho_folk(x, y, 0.27, f, kind=kind, variant=v, pose=p, phase=0.3 * k + 0.2 * i)
     return doc(b)
@@ -617,6 +622,28 @@ def zac_b_markup(key):
     return C.zacchaeus(x, y, BK, 1, pose=pose, expr=expr, **kw)
 
 
+FARMER_SKIN = "#a8714c"
+
+
+def hoe_in_hand(x, y, s, facing, pose):
+    """The farmer's hoe held in his far hand, drawn exactly like characters.jericho_folk draws it in stand / frown / walk
+    (shaft from the hand down-back to the ground and up-forward to the blade, the fist over it), for the poses where
+    the library leaves it out (e.g. 'pay'), so it never pops in or out at a pose cut."""
+    bp = C.body_points(C.jericho_folk, x, y, s, facing, kind="farmer", variant=0, pose=pose)
+    sx = s * (1 if facing >= 0 else -1)
+    hx, hy = bp["hands"][0]
+    W = ((hx - x) / sx, (hy - y) / s)
+    a, b = (W[0] - 52, W[1] + 108), (W[0] + 34, W[1] - 120)
+    d = C._nrm(C._sub(b, a))
+    perp = (d[1], -d[0])
+    body = C._tube([a, b], 7, "#a0683e", ow=2.8)
+    body += C._poly([b, C._add(b, C._mul(perp, 34)), C._add(C._add(b, C._mul(perp, 30)), C._mul(d, -14)),
+                     C._add(b, C._mul(d, -10))], "#8a8f8a", sw=2.6)
+    body += C._fist(W, 11.0, FARMER_SKIN)
+    return (f'<g transform="translate({x:.2f},{y:.2f}) scale({sx:.5g},{s:.5g})">'
+            f'<g filter="url(#wobble-fine)">{body}</g></g>')
+
+
 def folk_markup(x, y, s, kind, v, key, facing, sh=True):
     pose, expr = key[0], (key[1] if len(key) > 1 else None)
     f = key[2] if len(key) > 2 else facing
@@ -624,6 +651,8 @@ def folk_markup(x, y, s, kind, v, key, facing, sh=True):
     item = key[4] if len(key) > 4 else None
     m = C.jericho_folk(x, y, s, f, kind=kind, variant=v, pose=pose, expr=expr, phase=ph, item=item, coins=pose != "pay"
                        or (len(key) > 5 and key[5]))
+    if kind == "farmer" and item in (None, "hoe") and pose == "pay":
+        m += hoe_in_hand(x, y, s, f, pose)
     return (shadow(x, y, s, 120, 0.16) if sh else "") + m
 
 
@@ -778,6 +807,7 @@ def build(ctx):
     zb.cut(t_rich - 0.08, ("count", 0.5, "delighted"), dip=5)
     zb.loop(t_rich + 0.75, [("count", k / 6, "delighted") for k in range(6)], 0.11)
     t_up = snap(t_keshi + 0.02)
+    zb.cut(t_up - 0.2, ("count", 0.0, "delighted"))   # the hand rests on the heap: the coin stays there when he gets up
     zb.cut(t_up, ("stand", "smug"))
     zb.extra.append(hopm(t_up, BK, 24, 0.32))
     n_strut = 5
@@ -802,8 +832,7 @@ def build(ctx):
     p1 = Actor("b_p1", P1, BK, lambda k: folk_markup(*P1, BK, "man", 1, k, -1), 10.4, 221, g0, gB)
     p1.cut(0, ("stand", "grumble"))
     t_pay1 = snap(t_xiang - 0.05)
-    p1.cut(t_pay1, ("pay", "grumble", -1, 0.0, None, True), dip=5)
-    p1.cut(t_pay1 + 0.35 + 0.22 * 2 + 0.02, ("pay", "grumble", -1, 0.0, None, False))
+    p1.cut(t_pay1, ("pay", "grumble", -1, 0.0, None, False), dip=5)
     t_p1f = snap(t_pay1 + 1.25)
     p1.cut(t_p1f, ("frown", "cross"), dip=5)
     t_p1w = snap(t_p1f + 0.55)
@@ -815,11 +844,12 @@ def build(ctx):
     hp1 = C.body_points(C.jericho_folk, *P1, BK, -1, kind="man", variant=1, pose="pay")["hands"][1]
     for j in range(3):
         tc = t_pay1 + 0.35 + 0.22 * j
-        cs = doc(PR.coin(*hp1, BK * 0.8, tilt=0.3))
-        dxh, dyh = HEAP[0] + 14 * (j - 1) - hp1[0], HEAP[1] - 4 * j - hp1[1]
+        on_palm = (hp1[0] - (3 + 7 * j) * BK, hp1[1] - (6 + 3 * (j % 2)) * BK)
+        cs = doc(PR.coin(*on_palm, BK * 0.8, tilt=0.4))
+        dxh, dyh = HEAP[0] + 14 * (j - 1) - on_palm[0], HEAP[1] - 4 * j - on_palm[1]
 
         def cm(t, tc=tc, dxh=dxh, dyh=dyh):
-            if t < tc - 0.2 or t > tc + 0.32:
+            if t < t_pay1 or t > tc + 0.32:
                 return Tf(alpha=0.0)
             if t < tc:
                 return Tf(alpha=1.0)
@@ -833,14 +863,14 @@ def build(ctx):
     fm.cut(0, ("stand", "grumble"))
     fm.cut(snap(t_bu + 0.05), ("frown", "cross"), dip=5)
     t_fpay = snap(t_yin + 0.05)
-    fm.cut(t_fpay, ("pay", "grumble", -1, 0.0, None, True), dip=5)
+    fm.cut(t_fpay, ("pay", "grumble", -1, 0.0, None, False), dip=5)
     t_coinA = t_chang
     t_surp = snap(t_duo + 0.25)
     fm.cut(t_surp, ("pay", "surprised", -1, 0.0, None, False), dip=4)
     t_fcross = snap(t_surp + 0.75)
     fm.cut(t_fcross, ("frown", "cross"), dip=5)
     t_fwalk = snap(max(t_kou + 0.15, t_fcross + 0.6))
-    fm.walk(t_fwalk, (("grumble_walk_a", 86), ("grumble_walk_b", 86)), 7, 0.3, 1, first_adv=40, slope=0.1)
+    fm.walk(t_fwalk, (("walk_a", 86), ("walk_b", 86)), 7, 0.3, 1, first_adv=40, slope=0.1)
     fm.ents = [(tk, (k if isinstance(k, tuple) else (k, "grumble", 1))) for tk, k in fm.ents]
     fm.extra.append(breathm(g0, 3.0, 0.01, 0.6))
     fm.blinks([4.0 + t_cutB, t_cutB + 7.3], {("stand", "grumble"): ("stand", blink("grumble"))})
@@ -849,8 +879,12 @@ def build(ctx):
         q = Actor(f"b_q{i}", (x, y), BK, lambda k, kind=kind, v=v, x=x, y=y: folk_markup(x, y, BK, kind, v, k, -1),
                   10.36 - 0.01 * i, 251 + i, g0, gB)
         q.cut(0, (p0, "grumble"))
-        q.cut(snap(t_bu + 0.15 + 0.2 * i), ("arms_folded", "grumble", 1 if i == 0 else -1), dip=5)
-        q.cut(snap(t_kou + 0.1 + 0.25 * i), ("mutter", "mutter", 1 if i == 0 else -1), dip=4)
+        if kind == "elder":                     # his walking stick shows only in stand / frown / walk: keep to those
+            q.cut(snap(t_bu + 0.15 + 0.2 * i), ("frown", "cross", -1), dip=5)
+            q.cut(snap(t_kou + 0.1 + 0.25 * i), ("frown", "mutter", 1), dip=4)
+        else:
+            q.cut(snap(t_bu + 0.15 + 0.2 * i), ("arms_folded", "grumble", 1 if i == 0 else -1), dip=5)
+            q.cut(snap(t_kou + 0.1 + 0.25 * i), ("mutter", "mutter", 1 if i == 0 else -1), dip=4)
         q.extra.append(breathm(g0, 3.2 + 0.3 * i, 0.01, 0.2 * i))
         q.blinks([t_cutB + 2.1 + i, t_cutB + 6.4 + i, t_cutB + 10.8], {(p0, "grumble"): (p0, blink("grumble"))})
         q.build(sc)
@@ -862,15 +896,17 @@ def build(ctx):
     zh = zpts("give")["hands"][0]
     zpurse = zpts("stand")["purse"]
     fh = C.body_points(C.jericho_folk, *FARMER, BK, -1, kind="farmer", variant=0, pose="pay")["hands"][1]
-    for j, (t_on, src) in enumerate(((t_coinA, fh), (t_duo + 0.02, fh))):
+    for j, (t_on, src) in enumerate(((t_coinA, (fh[0] - 2, fh[1] - 7)), (t_duo + 0.02, (fh[0] - 10, fh[1] - 10)))):
         land = (zh[0] + 2 + 12 * j, zh[1] - 6 - 4 * j)
         cs = doc(PR.coin(*land, BK * 0.8, tilt=0.4))
 
         def cm(t, t_on=t_on, src=src, land=land, j=j):
             dur = 0.24 if j == 0 else 0.16
             t_p0 = t_pocket + 0.02
-            if t < t_on:
+            if t < t_fpay:
                 return Tf(alpha=0.0)
+            if t < t_on:                            # lying on the farmer's palm until it is taken
+                return Tf(dx=src[0] - land[0], dy=src[1] - land[1])
             if t < t_on + dur:
                 u = M.ease("out")((t - t_on) / dur)
                 return Tf(dx=(src[0] - land[0]) * (1 - u), dy=(src[1] - land[1]) * (1 - u) - 40 * math.sin(math.pi * u))
@@ -881,7 +917,7 @@ def build(ctx):
                 return Tf(alpha=0.0)
             return Tf(dx=(zpurse[0] - land[0]) * M.ease("inout")(u), dy=(zpurse[1] - land[1]) * M.ease("inout")(u) -
                       30 * math.sin(math.pi * u), sx=1 - 0.4 * u, sy=1 - 0.4 * u, px=land[0], py=land[1])
-        sc.add(f"b_zcoin{j}", cs, z=10.17 if j else 10.171, wc=0.4, seed=260 + j, motion=M.combine(cm, gB))
+        sc.add(f"b_zcoin{j}", cs, z=10.39 if j else 10.391, wc=0.4, seed=260 + j, motion=M.combine(cm, gB))
         sc.sfx("coins", t_on + (0.24 if j == 0 else 0.16), gain_db=-12)
     sc.sfx("coins", t_pocket + 0.3, gain_db=-11)
     sc.add("b_purse_tw", doc(sparkle(zpurse[0] + 6, zpurse[1] - 10, 20)), z=10.19, wc=0, seed=265,
@@ -949,16 +985,21 @@ def build(ctx):
             if u < 0.75:                         # pouring
                 return Tf(dx=rim[0] - sx0, dy=rim[1] - sy0 + 4 * math.sin(u * 30), rot=110 + 15 * math.sin((u - 0.3) * 14),
                           px=sx0, py=sy0 - 28)
-            if u < 1.05:                         # drops beside the chest
-                v_ = M.ease("in")((u - 0.75) / 0.3)
-                return Tf(dx=rim[0] - sx0 + (rest[0] - rim[0]) * v_, dy=rim[1] - sy0 + (rest[1] - rim[1]) * v_,
-                          rot=110 + (250 - 110) * v_, px=sx0, py=sy0 - 28, alpha=0.0)
             return Tf(alpha=0.0)
         sc.add(f"b_bag{ci}", full, z=10.55, seed=291 + ci, motion=M.combine(bag_m, gB))
         rest_svg = doc(coin_sack(*rest, BK * 0.6, empty=True))
-        sc.add(f"b_bagrest{ci}", rest_svg, z=10.29, seed=293 + ci,
-               motion=M.combine(lambda t, t_pour=t_pour: Tf(alpha=1.0 if t >= t_pour + 1.0 else 0.0),
-                                dipm(t_pour + 1.0, BK, 4), gB))
+
+        def empty_m(t, t_pour=t_pour, rim=rim, rest=rest, sx0=sx0, sy0=sy0):
+            u = t - (t_pour - 0.05)
+            if u < 0.75:
+                return Tf(alpha=0.0)
+            v_ = M.ease("in")(min(1.0, (u - 0.75) / 0.32))
+            # from the rim (tipped over like the full bag) down to its resting place, turning upright
+            x0, y0 = rim[0], rim[1] - 20
+            return Tf(dx=(x0 - rest[0]) * (1 - v_), dy=(y0 - rest[1]) * (1 - v_) - 30 * math.sin(math.pi * v_) * (1 - v_),
+                      rot=110 * (1 - v_), px=rest[0], py=rest[1] - 14)
+        sc.add(f"b_bagrest{ci}", rest_svg, z=10.31 if ci else 10.311, seed=293 + ci,
+               motion=M.combine(empty_m, dipm(t_pour + 1.02, BK, 4), gB))
         # coins tumbling out of the bag into the chest
         for j in range(5):
             tj = t_pour + 0.3 + 0.08 * j
@@ -1065,16 +1106,16 @@ def street_folk_entries(t_cutC, t_see, t_duo3, t_yuan, zc_end_x):
     plans["men1"] = dict(cuts=[(0, ("mutter", "mutter", 1)), (tg - 0.1, ("frown", "cross", 1)), (tg + 0.45, ("walk_b", "cross", 1)),
                                (tg + 1.05, ("mutter", "mutter", 1))],
                          walks=[(tg + 0.45, (("walk_b", 84), ("walk_a", 84)), 2, 0.28, 1, -0.45)])
-    plans["men2"] = dict(cuts=[(0, ("mutter", "mutter", -1)), (tg + 0.05, ("frown", "cross", -1)), (tg + 0.5, ("walk_a", "cross", 1)),
-                               (tg + 1.15, ("mutter", "mutter", -1))],
-                         walks=[(tg + 0.5, (("walk_a", 86), ("walk_b", 86)), 2, 0.28, 1, -0.2)])
-    plans["elder"] = dict(cuts=[(0, ("stand", "kind", 1)), (t_see + 0.5, ("frown", "grumble", 1)), (tg + 0.2, ("arms_folded", "grumble", -1))],
+    plans["men2"] = dict(cuts=[(0, ("mutter", "mutter", -1)), (tg + 0.05, ("arms_folded", "cross", -1)),
+                               (tg + 0.5, ("grumble_walk_a", "cross", 1)), (tg + 1.15, ("mutter", "mutter", -1))],
+                         walks=[(tg + 0.5, (("grumble_walk_a", 86), ("grumble_walk_b", 86)), 2, 0.28, 1, -0.2)])
+    plans["elder"] = dict(cuts=[(0, ("stand", "kind", 1)), (t_see + 0.5, ("frown", "grumble", 1)), (tg + 0.2, ("frown", "mutter", -1))],
                           walks=[])
     plans["w1"] = dict(cuts=[(0, ("mutter", "mutter", 1)), (t_see + 0.9, ("look", "worried", 1)), (tg + 0.3, ("mutter", "mutter", 1))],
                        walks=[])
     plans["w2"] = dict(cuts=[(0, ("mutter", "mutter", -1)), (t_see + 0.6, ("look", "worried", 1)), (tg + 0.15, ("mutter", "mutter", -1))],
                        walks=[])
-    plans["fs"] = dict(cuts=[(0, ("smile", "happy", -1)), (t_see + 1.2, ("frown", "worried", -1)), (tg + 0.45, ("arms_folded", "grumble", 1))],
+    plans["fs"] = dict(cuts=[(0, ("smile", "happy", -1)), (t_see + 1.2, ("frown", "worried", -1)), (tg + 0.45, ("frown", "grumble", 1))],
                        walks=[])
     plans["m3"] = dict(cuts=[(0, ("stand", "kind", -1)), (tg + 0.5, ("frown", "cross", 1))], walks=[])
     del t_yuan, zc_end_x
@@ -1106,7 +1147,7 @@ def street_folk_actor(name, g0, gatef, z, seed, plan, tshift=0.0):
     d = STREET_FOLK[name]
     a = Actor(f"c_{name}", d["home"], SK, lambda k, name=name: street_folk_markup(name, k), z, seed, g0, gatef)
     for t, k in plan["cuts"]:
-        a.cut(t - tshift if t > 0 else 0, k, dip=4 if t > 0 and not k[0].startswith("walk") else None)
+        a.cut(t - tshift if t > 0 else 0, k, dip=4 if t > 0 and "walk" not in k[0] else None)
     for (t0, cyc, n, per, f, slope) in plan["walks"]:
         a.walk(t0 - tshift, [((c[0], plan_expr(plan, t0), f), c[1]) for c in cyc], n, per, f, slope=slope)
     return a
