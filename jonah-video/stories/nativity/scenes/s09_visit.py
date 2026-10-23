@@ -1,5 +1,7 @@
-"""Scene 9 - Luke 2:15-20. The shepherds visit the baby. Six shots joined by short cross-dissolves inside the scene
-(the page dips into it from s08 and out of it to s10):
+"""Scene 9 - Luke 2:15-20. The shepherds visit the baby. Six shots, never cross-dissolved (nobody shows twice): a
+page-turn dip through the paper colour (0.9 s) from the fields to the hillside path and (0.84 s) from the night stable
+to the morning street, hard cuts on phrase boundaries elsewhere (the page dips into the scene from s08 and out of it
+to s10):
 
   A  the fields (s07/s08's stage): the host rises back into heaven, the opening in the sky closes, the glory fades
      and the night is quiet again; the shepherds look at each other; the boy cheers 'let's go!' and points at the town
@@ -31,7 +33,7 @@ Beats (syllable onsets measured in the voice clip, see s07_shepherds.Tm; nothing
                more people walk up to listen
   '惊讶'        E: the listeners start, '!' marks
   '马利亚呢'    F: Mary with the baby, thoughtful; '这些事' the memory bubble opens with the angel; '记在心里' the
-               angel over the kneeling shepherds dissolves in; '想了又想' the bubble swells softly twice; it fades,
+               kneeling shepherds fade in below the same angel; '想了又想' the bubble swells softly twice; it fades,
                Mary closes her eyes peacefully: calm hold (page dip to s10)
 """
 import math
@@ -256,21 +258,23 @@ def build(ctx):
     t_xx1 = tm.at(5, "想了又想")
     t_xx2 = tm.at(5, "想了又想", 3)
 
-    # ---- shot windows (dissolve start, fully in)
-    dis = {"B": (ctx.lines[1].end + 0.35, ctx.lines[1].end + 0.75),
-           "C": (t_blh2 + 0.45, t_blh2 + 0.85),
-           "D": (t_found + 0.4, t_found + 0.8),
-           "E": (tm.end(3, "那一位") + 0.25, tm.end(3, "那一位") + 0.65),
-           "F": (tm.end(5, "都很惊讶") - 0.25, tm.end(5, "都很惊讶") + 0.15)}
+    # ---- shot changes: no cross-dissolves (people must never show twice). A paper dip (a page turn, 0.9 / 0.84 s)
+    # where there is a pause between lines (fields -> path, night stable -> morning street), hard cuts on the
+    # phrase boundaries elsewhere. Cut times sit in the middle of a frame interval.
+    DIP_AB, DIP_DE = 0.45, 0.42
+    c_AB = snap(0.5 * (ctx.lines[1].end + ctx.lines[2].start))
+    c_BC = snap(0.5 * (tm.end(2, "伯利恒") + t_zhao1))
+    c_CD = snap(0.5 * (tm.end(2, "找到了") + t_ym))
+    c_DE = snap(0.5 * (ctx.lines[3].end + ctx.lines[4].start))
+    c_EF = snap(0.5 * (tm.end(5, "都很惊讶") + t_mly))
     order = ["A", "B", "C", "D", "E", "F"]
+    starts = {"A": -1e9, "B": c_AB, "C": c_BC, "D": c_CD, "E": c_DE, "F": c_EF}
 
     def shot_alpha(name):
         i = order.index(name)
-        nxt = dis[order[i + 1]][1] if i + 1 < len(order) else 1e9
-        if name == "A":
-            return lambda t: 1.0 if t < nxt else 0.0
-        a0, a1 = dis[name]
-        return lambda t: (M.progress(t, a0, a1, "sine") if t < nxt else 0.0)
+        t0 = starts[name]
+        t1 = starts[order[i + 1]] if i + 1 < len(order) else 1e9
+        return lambda t: 1.0 if t0 <= t < t1 else 0.0
 
     def zb(name):
         return 100 * order.index(name)
@@ -391,11 +395,11 @@ def build(ctx):
            seed=SEED["lamb"], motion=M.combine(breath((xb + 70, yb + 12), g0, 2.0, 0.025), shot_m("A")))
     add_crook(sc, motion=lambda t: Tf(alpha=(1.0 if t < snap(t_yup) else 0.0) * aA(t)))
     sc.fx.append(gsparkles((TOWN[0] - 220, TOWN[1] - 170, TOWN[0] + 220, TOWN[1] - 30), g0, t0=t_blh - 0.1,
-                           t1=dis["B"][0], count=10, color=(255, 230, 160), size=(7, 13), period=1.3, drift=-6,
+                           t1=c_AB - DIP_AB, count=10, color=(255, 230, 160), size=(7, 13), period=1.3, drift=-6,
                            seed=86))
     sc.add("town_call", doc7(f'<defs>{S.rad_grad("tcl", [(0, "#ffe2a0", 0.9), (1, "#ffe2a0", 0)])}</defs>'
                              f'<ellipse cx="{f1(TOWN[0])}" cy="{f1(TOWN[1] - 70)}" rx="300" ry="140" fill="url(#tcl)"/>'),
-           z=1.08, wc=0, blend="screen", motion=lambda t: Tf(alpha=env(t, t_blh - 0.2, dis["B"][1], 0.5, 0.4)))
+           z=1.08, wc=0, blend="screen", motion=lambda t: Tf(alpha=env(t, t_blh - 0.2, c_AB, 0.5, 0.4)))
 
     # ================================================================ B: running down the hillside to the town
     zB = zb("B")
@@ -403,8 +407,8 @@ def build(ctx):
     runners = [("boy", 0.0, 2140, 4, -70, 20), ("young", 0.12, 2290, 5, -88, 24),
                ("beard", 0.2, 2420, 5, -88, 24), ("sturdy", 0.3, 2560, 5, -88, 24),
                ("old", 0.38, 2700, 5, -82, 18)]
-    tB0 = dis["B"][0] - 0.1
-    tB_end = dis["C"][1]
+    tB0 = c_AB - DIP_AB                          # they set off under the page turn
+    tB_end = c_BC
     for key, dt, x0, per, step, lift in runners:
         n = int((tB_end - tB0 - dt) / (per / 30.0)) + 1
         xf, bf, flips = stride_track(tB0 + dt, x0, step, per, n, lift, KB)
@@ -525,8 +529,8 @@ def build(ctx):
     for key, (kx, ky) in KNEEL_D.items():
         spots_d[key + "_w"] = (kx, ky)
     dfigs = {}
-    walk_in = {"boy": (0.0, 5), "old": (0.25, 5), "beard": (0.45, 5), "young": (0.6, 5), "sturdy": (0.75, 5)}
-    t_in0 = dis["D"][0] + 0.1
+    walk_in = {"boy": (0.0, 5), "old": (0.1, 5), "beard": (0.18, 5), "young": (0.26, 5), "sturdy": (0.34, 5)}
+    t_in0 = c_CD - 0.3                           # already walking in when the picture cuts to the stable
     for key, (kx, ky) in KNEEL_D.items():
         dt, nst = walk_in[key]
         stride = (62 if key != "boy" else 46) * KD
@@ -550,7 +554,7 @@ def build(ctx):
     # kneel at '都在那里' (staggered); the boy offers his lamb at the manger, then lays it down and kneels
     for i, key in enumerate(("old", "beard", "young", "sturdy")):
         f_, t_arr = dfigs[key]
-        t_kn = max(t_arr + 0.35, t_dou + 0.15 * i)
+        t_kn = max(t_arr + 0.55, t_dou + 0.15 * i)
         f_.cut(t_arr, f"stand|happy|-1|{key}|", depth=3)
         f_.cut(t_kn, f"kneel|awed|-1|{key}|", depth=8)
         f_.cut(t_ta + 0.25 + 0.15 * i, f"kneel|{'joyful' if i % 2 else 'peaceful'}|-1|{key}|", dip=False)
@@ -585,7 +589,7 @@ def build(ctx):
     sc.add("d_babyglow", warm_glow_svg(bx_, by_ - 30, 260, 170, 0.95, "#fff0c0", gid="dbg"), z=zD + 9.6, wc=0,
            blend="screen", motion=lambda t: Tf(alpha=shot_alpha("D")(t) * (0.15 + 0.85 * glow_k(t)) * (
                0.88 + 0.12 * math.sin(2 * math.pi * (t + g0) / 2.2))))
-    sc.fx.append(gsparkles((bx_ - 260, by_ - 260, bx_ + 260, by_ + 20), g0, t0=t_jz - 0.1, t1=dis["E"][0], count=14,
+    sc.fx.append(gsparkles((bx_ - 260, by_ - 260, bx_ + 260, by_ + 20), g0, t0=t_jz - 0.1, t1=c_DE - DIP_DE, count=14,
                            color=(255, 240, 190), size=(7, 14), period=1.5, drift=-8, seed=90))
 
     # ================================================================ E: the street in the morning
@@ -670,7 +674,7 @@ def build(ctx):
         x, y = tf_spots[key]
         top = y - {"child": 250, "woman": 400, "man": 360}.get(key, 340) * KE - 34
         sc.add(f"e_mark{i}", mark_svg(x + 10, top, "!", 104, "#ffe08a"), z=zE + 30, wc=0,
-               motion=M.combine(pop_motion(t_jy + 0.08 + 0.09 * i, (x + 10, top), 0.35, t1=dis["F"][1], out=0.3),
+               motion=M.combine(pop_motion(t_jy + 0.08 + 0.06 * i, (x + 10, top), 0.35),
                                 shot_m("E")))
     sc.fx.append(gsparkles((300, R + 300, 1900, R + 700), g0, t0=t_kx, t1=t_kx + 1.8, count=16, color=(255, 236, 170),
                            size=(8, 15), period=1.0, drift=-20, seed=92))
@@ -704,7 +708,7 @@ def build(ctx):
            wc=0, blend="screen", motion=lambda t: Tf(alpha=shot_alpha("F")(t) * (0.8 + 0.2 * math.sin(
                2 * math.pi * (t + g0) / 2.6))))
     from engine import fx as FX
-    sc.fx.append(FX.motes((900, R + 60, 2000, R + 1100), count=26, t0=dis["F"][0], t1=T + 1, color=(255, 246, 214),
+    sc.fx.append(FX.motes((900, R + 60, 2000, R + 1100), count=26, t0=c_EF - 0.6, t1=T + 1, color=(255, 246, 214),
                           size=(3, 6), seed=97, alpha=120))
     # the memory bubble: the angel, then the shepherds kneeling
     bcx, bcy, brx, bry = 1440, R + 290, 300, 210
@@ -727,13 +731,13 @@ def build(ctx):
         px = head[0] + (bcx - brx * 0.8 - head[0]) * u + 60
         py = head[1] + (bcy + bry * 0.6 - head[1]) * u - 40
         dots += f'<circle cx="{f1(px)}" cy="{f1(py)}" r="{9 + 7 * i}" fill="#fff6dc" stroke="{INK}" stroke-width="2.6"/>'
-    angel_pic = C.angel(bcx, bcy + 175, 0.5, -1, pose="announce", glow=0.6, lift=0)
-    angel_pic += C.ground_shadow(bcx, bcy + 175, 0.5, 140, 0.15)
-    shep_pic = (C.angel(bcx + 150, bcy + 40, 0.36, -1, pose="float", glow=0.6, lift=0) +
-                shep_s("old", "kneel", "awed", 1, bcx - 190, bcy + 168, 0.46) +
-                shep_s("beard", "kneel", "awed", 1, bcx - 90, bcy + 160, 0.46) +
-                shep_s("young", "kneel", "awed", 1, bcx + 10, bcy + 172, 0.46) +
-                shep_s("boy", "hold_lamb", "happy", 1, bcx - 250, bcy + 178, 0.46))
+    # the same angel in both pictures (identical drawing), so the second only adds the shepherds below it
+    angel_pic = C.angel(bcx + 130, bcy + 40, 0.4, -1, pose="float", glow=0.6, lift=0)
+    shep_pic = (angel_pic +
+                shep_s("boy", "hold_lamb", "happy", 1, bcx - 200, bcy + 156, 0.42) +
+                shep_s("old", "kneel", "awed", 1, bcx - 125, bcy + 150, 0.42) +
+                shep_s("beard", "kneel", "awed", 1, bcx - 50, bcy + 146, 0.42) +
+                shep_s("young", "kneel", "awed", 1, bcx + 25, bcy + 152, 0.42))
     sky_bits = (f'<rect x="{bcx - brx}" y="{bcy - bry}" width="{2 * brx}" height="{2 * bry}" fill="#2a3a64"/>'
                 f'<ellipse cx="{bcx}" cy="{bcy + bry}" rx="{brx * 1.2}" ry="{bry * 0.45}" fill="#4f6a46"/>')
     glow_bits = (f'<defs>{S.rad_grad("mbgl", [(0, "#fff6d0", 0.95), (1, "#fff6d0", 0)])}</defs>'
@@ -753,57 +757,77 @@ def build(ctx):
     sc.add("f_bub_angel", membub(sky_bits + glow_bits + angel_pic, "a"), z=zF + 9.1, seed=504, motion=M.combine(
         pop_motion(t_m1, (bcx - brx * 0.6, bcy + bry * 0.6), 0.55), bob,
         lambda t: Tf(alpha=bub_out(t)), shot_m("F")))
-    # the shepherds' picture dissolves in over the angel's (same bubble), then they alternate softly
+    # the second picture (same sky, glow and angel) fades in over the first: only the shepherds appear
     sw = lambda t: M.progress(t, t_m2, t_m2 + 0.7, "sine")
-    sc.add("f_bub_shep", membub(sky_bits + shep_pic, "s"), z=zF + 9.2, seed=505, motion=M.combine(
+    sc.add("f_bub_shep", membub(sky_bits + glow_bits + shep_pic, "s"), z=zF + 9.2, seed=505, motion=M.combine(
         lambda t: Tf(alpha=sw(t) * bub_out(t)), bob, shot_m("F")))
     sc.fx.append(gsparkles((bcx - brx, bcy - bry - 40, bcx + brx, bcy + bry), g0, t0=t_m1, t1=t_mout + 0.6, count=10,
                            color=(255, 244, 210), size=(6, 12), period=1.6, drift=-6, seed=94))
 
     # ================================================================ camera
-    # one continuous camera: it never jumps at a dissolve (both shots are seen through it); each shot's framing
-    # is chosen so the incoming picture already works in the outgoing shot's last framing
-    cA0 = Cam(1056, 1090, 2112)
-    cA1 = Cam(880, 1292, 1600)
-    cAB = Cam(1000, 1262, 1820)          # end of A / start of B
-    cBC = Cam(900, 1262, 1800)           # end of B / start of C
-    cCD = Cam(860, 1262, 1800)           # end of C / start of D
-    cDE = Cam(1080, 1262, 1700)          # end of D / start of E
-    cEF = Cam(1060, 1250, 1640)          # end of E / start of F
-    sc.camera = cam_path([
-        (0.0, cA0), (t_hui - 0.3, cA0), (t_hui + 1.9, cA1), (t_s0, Cam(860, 1288, 1620)), (dis["B"][0], cAB),
-        (dis["B"][1], cAB), (dis["C"][0], cBC), (dis["C"][1], cBC), (t_found - 0.15, Cam(920, 1262, 1800)),
-        (dis["D"][0], cCD), (dis["D"][1], cCD), (t_dou + 0.3, Cam(1060, 1252, 1820)),
-        (t_xyh - 0.1, Cam(1060, 1252, 1820)), (t_mc + 0.5, Cam(1150, 1280, 1520)), (t_pai, Cam(1140, 1276, 1540)),
-        (dis["E"][0], cDE), (dis["E"][1], cDE), (t_tj, Cam(1040, 1254, 1660)), (dis["F"][0], cEF),
-        (dis["F"][1], cEF), (dis["F"][1] + 1.6, Cam(1100, 1184, 1880)), (T, Cam(1084, 1182, 1850))],
-        ["linear", "sine", "sine", "inout", "linear", "sine", "linear", "sine", "sine", "linear", "inout", "linear",
-         "sine", "sine", "inout", "linear", "sine", "sine", "linear", "inout", "sine"])
+    # each shot has its own framing; the camera jumps only on a hard cut or at the middle of a paper dip
+    keys = []
+
+    def shot(*pts):
+        for t, c, crv in pts:
+            keys.append((t, c, crv))
+
+    def cut_at(tc, cam_in):
+        keys.append((tc - 0.004, keys[-1][1], "linear"))
+        keys.append((tc + 0.004, cam_in, "linear"))
+    shot((0.0, Cam(1056, 1090, 2112), "linear"), (t_hui - 0.3, Cam(1056, 1090, 2112), "linear"),
+         (t_hui + 1.9, Cam(880, 1292, 1600), "sine"), (t_s0, Cam(860, 1288, 1620), "sine"),
+         (c_AB, Cam(830, 1284, 1650), "sine"))
+    cut_at(c_AB, Cam(1120, 1262, 1840))
+    shot((c_BC, Cam(920, 1262, 1840), "sine"))
+    cut_at(c_BC, Cam(1000, 1262, 1800))
+    shot((t_found - 0.15, Cam(960, 1262, 1800), "sine"), (c_CD, Cam(900, 1262, 1800), "sine"))
+    cut_at(c_CD, Cam(1060, 1252, 1820))
+    shot((t_xyh - 0.1, Cam(1060, 1252, 1820), "linear"), (t_mc + 0.5, Cam(1150, 1280, 1520), "sine"),
+         (t_pai, Cam(1140, 1276, 1540), "sine"), (c_DE, Cam(1110, 1266, 1600), "sine"))
+    cut_at(c_DE, Cam(1040, 1254, 1660))
+    shot((c_EF, Cam(1060, 1250, 1640), "sine"))
+    cut_at(c_EF, Cam(1100, 1184, 1880))
+    shot((T, Cam(1084, 1182, 1850), "sine"))
+    sc.camera = cam_path([(t, c) for t, c, _ in keys], [crv for _, _, crv in keys[1:]])
+
+    # the page turns inside the scene (through the paper colour, like the film's 'dippaper' transitions)
+    def paper_dip(mid, half, col=(247, 240, 226)):
+        from PIL import Image
+
+        def fx(frame, t, view):
+            u = abs(t - mid) / half
+            if u >= 1.0:
+                return frame
+            a = 0.5 + 0.5 * math.cos(math.pi * u)
+            return Image.alpha_composite(frame, Image.new("RGBA", frame.size, (*col, int(255 * a + 0.5))))
+        return fx
+    sc.fx.append(paper_dip(c_AB, DIP_AB))
+    sc.fx.append(paper_dip(c_DE, DIP_DE))
 
     # ================================================================ sound
-    sc.sfx("night", 0, dur=dis["D"][1] + 1.0, gain_db=-18, fade_in=0.8, fade_out=1.2)
-    sc.sfx("fire", 0, dur=dis["B"][1], gain_db=-21, fade_in=0.8, fade_out=0.8, pan=-0.2)
+    sc.sfx("night", 0, dur=c_DE + 0.2, gain_db=-18, fade_in=0.8, fade_out=1.0)
+    sc.sfx("fire", 0, dur=c_AB, gain_db=-21, fade_in=0.8, fade_out=0.6, pan=-0.2)
     sc.sfx("whoosh", t_hui - 0.2, gain_db=-17)
     sc.sfx("chime", t_hui, gain_db=-16)
     sc.sfx("sheep", t_hui + 2.0, gain_db=-24, pan=0.5)
     sc.sfx("cloth", t_shuo + 0.3, gain_db=-21)
     sc.sfx("cheer", t_s0 + 0.1, dur=1.2, gain_db=-24, fade_in=0.1, fade_out=0.6)
-    sc.sfx("footsteps_run", dis["B"][0], dur=dis["C"][1] - dis["B"][0], gain_db=-17, fade_in=0.2, fade_out=0.4)
-    sc.sfx("sheep", dis["B"][0] + 1.2, gain_db=-23, pan=0.3)
-    sc.sfx("footsteps", dis["C"][0], dur=1.0, gain_db=-23, fade_out=0.4)
+    sc.sfx("footsteps_run", c_AB - 0.2, dur=c_BC - c_AB + 0.25, gain_db=-17, fade_in=0.3, fade_out=0.15)
+    sc.sfx("sheep", c_AB + 1.2, gain_db=-23, pan=0.3)
     sc.sfx("pop", t_zhao1 + 0.1, gain_db=-20, pan=0.2)
     sc.sfx("pop", t_zhao2 + 0.1, gain_db=-20, pan=0.5)
     sc.sfx("sheep", t_found + 0.2, gain_db=-19, pan=-0.4)
     sc.sfx("sparkle", t_found, gain_db=-19, pan=-0.6)
-    sc.sfx("footsteps", t_in0, dur=1.6, gain_db=-23, pan=0.4, fade_out=0.5)
+    sc.sfx("footsteps", c_CD, dur=t_in0 + 1.7 - c_CD, gain_db=-23, pan=0.4, fade_in=0.05, fade_out=0.5)
     sc.sfx("cloth", t_dou + 0.2, gain_db=-21)
     sc.sfx("sheep", t_lay, gain_db=-22, pan=0.1)
     sc.sfx("chime", t_ta, gain_db=-15)
     sc.sfx("sparkle", t_jz, gain_db=-18)
-    sc.sfx("rooster", dis["E"][0] + 0.1, gain_db=-21, pan=-0.5)
-    sc.sfx("birds", dis["E"][0], dur=T - dis["E"][0] + 0.3, gain_db=-22, fade_in=0.6, fade_out=1.0)
+    sc.sfx("rooster", c_DE + 0.3, gain_db=-21, pan=-0.5)
+    sc.sfx("birds", c_DE, dur=T - c_DE + 0.3, gain_db=-22, fade_in=0.6, fade_out=1.0)
     sc.sfx("cheer", t_kx + 0.1, dur=1.4, gain_db=-21, fade_in=0.1, fade_out=0.6)
-    sc.sfx("crowd", t_jian, dur=dis["F"][1] - t_jian, gain_db=-25, fade_in=0.6, fade_out=0.6)
+    sc.sfx("crowd", t_jian, dur=c_EF - t_jian, gain_db=-25, fade_in=0.6, fade_out=0.3)
     sc.sfx("footsteps", t_jian + 0.3, dur=1.4, gain_db=-25)
     sc.sfx("pop", t_jy + 0.05, gain_db=-19)
     sc.sfx("chime", t_m1, gain_db=-18, pan=0.4)

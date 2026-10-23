@@ -21,9 +21,10 @@ voice clip with the speech recogniser, see syllables(); nothing is hard-coded to
           '我们去'  all three bend to their treasures;  '拜'  they stand holding them (carry_gift) - the cushions are empty.
   line 3  a page-turn dip through the paper colour (no two shots' people overlap) to THE JOURNEY: the three camels with
           their riders (props.camel saddles + wise_men 'ride') walk in place while their ground strip scrolls with the
-          planted feet; '走' '走' '走' '走' '走' each land a footfall (soft thud); the day-phase sky runs from night through
-          dawn, a smiling sun with clouds, evening and night again twice (sun and moon on their own arcs, a light tint
-          follows the sky); the landscape changes on the 走 beats: dunes with the city far behind -> rose rocky mesas ->
+          planted feet; '走' '走' '走' '走' '走' each land a footfall (soft thud); the day-phase sky runs at an even, calm
+          pace through two days, dawn -> a smiling sun with clouds -> evening -> night -> dawn -> day -> evening -> night
+          (~2.9 s per day; sun and moon on their own arcs, a light tint follows the sky); the dip is ~0.9 s, like the
+          dips between scenes; the landscape changes on the 走 beats: dunes with the city far behind -> rose rocky mesas ->
           dunes past a palm oasis -> the night road with dark hills and olive trees ahead. The star does not lead them
           (Matthew 2:9: it appears again in s11).
   end     the caravan on the night road, still walking. s11_gifts draws the same layers (add_journey(late=True)) at
@@ -47,7 +48,7 @@ from engine import motion as M
 from engine.motion import Cam, Tf
 from engine.paths import BUILD
 from engine.scene import Scene
-from stories.david.scenes.s08_saul import Actor, TightSprite, sparkle_dyn
+from stories.david.scenes.s08_saul import Actor, TightSprite, sparkle_dyn, voice_segs
 from stories.noah.scenes.s01_title import char_times, snap, voice_marks
 
 # ================================================================== stage and geometry (s11_gifts shares the stage)
@@ -164,9 +165,10 @@ def syllables(ctx, li):
                 hyp_t.append(float(tm))
         anchors = {}
         sm = difflib.SequenceMatcher(None, hyp, ref, autojunk=False)
-        for a, b, n in sm.get_matching_blocks():
-            for k in range(n):
-                anchors[b + k] = hyp_t[a + k]
+        for op, a0, a1, b0, b1 in sm.get_opcodes():
+            if op == "equal" or (op == "replace" and a1 - a0 == b1 - b0):   # misheard homophones map one to one
+                for k in range(b1 - b0):
+                    anchors[b0 + k] = hyp_t[a0 + k]
         if len(anchors) < max(2, len(ref) // 2):
             raise ValueError(f"recognised {hyp!r}")
         xs = sorted(anchors)
@@ -179,6 +181,20 @@ def syllables(ctx, li):
         for i in range(1, len(vals)):
             vals[i] = max(vals[i], vals[i - 1] + 0.02)
         out = [ln.start + max(0.0, v) for v in vals]
+        # a phrase that starts after a pause: snap its first syllable to the voiced onset found in the clip
+        segs = voice_segs(ctx, li) or []
+        firsts, j = set(), 0
+        for n, ch in enumerate(ln.text):
+            if ch in PUNCT:
+                continue
+            if n == 0 or ln.text[n - 1] in PUNCT:
+                firsts.add(j)
+            j += 1
+        for i in sorted(firsts):
+            near = [sg[0] for sg in segs if abs(sg[0] - out[i]) <= 0.2]
+            if near:
+                lo = out[i - 1] + 0.05 if i else -1e9
+                out[i] = max(lo, min(near, key=lambda v: abs(v - out[i])))
     except Exception as ex:                        # no model / no clip: energy-pause marks
         print(f"[{ctx.id}] line {li}: recogniser timing unavailable ({ex}); using voice_marks", file=sys.stderr)
         out = []
@@ -957,17 +973,39 @@ def journey_plan(ctx10):
     tB = steps[2] - 0.22
     tC = steps[4] - 0.22
     tD = min(ctx10.lines[3].end - 0.1, ctx10.duration - XF - 0.6)   # card D is complete before the dissolve to s11
-    sky = keyed([(tA, 0.80), (tB, 1.45), (tC, 1.85), (tD, 2.55), (tD + 0.5, 2.75)], "linear")
+    # two calm days: from dawn as they set off to the second night, at an even pace (~3 s per day)
+    sky = keyed([(tA, 1.0), (max(tD + 0.5, ctx10.duration - XF), 2.75)], "linear")
     return dict(ph=ph, steps=steps, t_in=t_in, tA=tA, tB=tB, tC=tC, tD=tD, sky=sky)
 
 
-def add_journey(sc, ctx10, toff=0.0, rider_sched=None, z0=50.0, late=False, alpha=None):
+def add_journey(sc, ctx10, toff=0.0, rider_sched=None, z0=50.0, late=False, alpha=None, release=None):
     """All journey layers (cards A-D, sky, sun, moon, stars, caravan, light) keyed to journey time jt = t + toff.
     late=True (s11): only the night road of card D, whose drawings, seeds and order are the same as s10's, so s11's
-    first second is s10's last second; alpha(t) then hides it all (after s11's page-turn dip)."""
+    first second is s10's last second; alpha(t) then hides it all (after s11's page-turn dip).
+    release=(r0, r1, k) (journey times, s11 only): from r0 the view stops following the caravan (eased in by r1), so the
+    ground stands still and the camels walk forward across it (planted steps), their pace raised by the factor k."""
     J = journey_plan(ctx10)
-    ph, sky = J["ph"], J["sky"]
+    ph0, sky = J["ph"], J["sky"]
     jt = lambda t: t + toff                                   # noqa: E731
+    ph, adv = ph0, (lambda v: 0.0)
+    if release is not None:
+        r0, r1, kspeed = release
+        dt = 1 / 240.0
+        ts = [r0 + i * dt for i in range(int(30 / dt) + 1)]
+        extra, advs = [0.0], [0.0]
+        for a, b_ in zip(ts, ts[1:]):
+            dph = ph0(b_) - ph0(a)
+            bm = M.progress((a + b_) / 2, r0, r1, "sine")
+            de = dph * (1 + (kspeed - 1) * bm)
+            extra.append(extra[-1] + de - dph)
+            advs.append(advs[-1] + de * bm * STRIDE)
+
+        def ph(v):
+            return ph0(v) + (0.0 if v <= r0 else float(np.interp(v, ts, extra)))
+
+        def adv(v):
+            return 0.0 if v <= r0 else float(np.interp(v, ts, advs))
+    J["ph_eff"], J["adv"] = ph, adv
     dA, dX, dD = 0.55, 0.28, 0.5
 
     def card_alpha(name):
@@ -1019,7 +1057,7 @@ def add_journey(sc, ctx10, toff=0.0, rider_sched=None, z0=50.0, late=False, alph
         sc.add("j_clouds", jclouds_svg(), z=z0 + 0.3, wc=0.6, seed=509,
                motion=lambda t: Tf(dx=-14 * jt(t), alpha=aA(t) * day(t)))
     # cards: far (static) + ground strip (scrolls with the walk)
-    gx = lambda t: -(ph(jt(t)) * STRIDE)                       # noqa: E731
+    gx = lambda t: -(ph(jt(t)) * STRIDE - adv(jt(t)))          # noqa: E731
     for n, a, z in (("A", aA, 1.0), ("B", aB, 2.0), ("C", aC, 3.0), ("D", aD, 4.0)):
         if late and n != "D":
             continue
@@ -1028,8 +1066,8 @@ def add_journey(sc, ctx10, toff=0.0, rider_sched=None, z0=50.0, late=False, alph
         sc.add(f"j_far{n}", card_far_svg(n), z=z0 + z, seed=511 + int(z) * 10, motion=alpha_m(vis))
         if n == "C":
             sc.add("j_oasis", card_oasis_svg(), z=z0 + z + 0.1, seed=545,
-                   motion=lambda t, vis=vis: Tf(dx=0.8 * (gx(t) + J["ph"](J["tC"]) * STRIDE), alpha=clamp(vis(t))))
-        g0 = ph(J[f"t{n}"]) * STRIDE                          # the strip starts at its painted position
+                   motion=lambda t, vis=vis: Tf(dx=0.8 * (gx(t) + ph0(J["tC"]) * STRIDE), alpha=clamp(vis(t))))
+        g0 = ph0(J[f"t{n}"]) * STRIDE                         # the strip starts at its painted position
         strip = ground_strip(n, 513 + int(z) * 10)
         sc.add_dynamic(f"j_ground{n}", lambda t, sp=strip, vis=vis, g0=g0: (
             None if vis(t) <= 0.002 else sp.place(0, JX0 + gx(t) + g0, JY0 + STRIP_V0, alpha=clamp(vis(t)))),
@@ -1047,13 +1085,14 @@ def add_journey(sc, ctx10, toff=0.0, rider_sched=None, z0=50.0, late=False, alph
         return tuple(1 - k * (1 - c) for c in f)
     if not late:
         sc.fx.append(mult_fx(light))
-    add_camels(sc, "car", CS, (JX0, JY0 + GV), CAR_U, lambda t: ph(jt(t)), rider_sched=rider_sched,
+    add_camels(sc, "car", CS, (JX0, JY0 + GV), CAR_U, lambda t: ph(jt(t)), dx=lambda t: adv(jt(t)),
+               rider_sched=rider_sched,
                tint=lambda t: 0.42 * aD_raw(t),
                alpha=aA, z=z0 + 10, bphase=toff)
     return J
 
 
-def paper_dip(t_mid, half=0.32):
+def paper_dip(t_mid, half=0.45):
     """A page-turn dip through the cream paper colour centred on t_mid (the film's own transition between places)."""
     col = (247, 240, 226)
 

@@ -129,7 +129,7 @@ def build(ctx):
     boy.at(c_turn, Q.boy(X, Y, "kneel_look", "nq_us", -1))
     boy.at(c_think, Q.boy(X, Y, "kneel_look", "ne_think", -1))
     boy.at(c_smile, Q.boy(X, Y, "kneel_look", "nq_us", -1))
-    for tb in (c_smile + 1.3,):
+    for tb in (c_smile + 1.3, c_smile + 3.0, c_smile + 4.7):      # alive but calm through the long end hold
         if tb + 0.14 < T:
             boy.at(snap(tb), Q.boy(X, Y, "kneel_look", "ne_blink", -1))
             boy.at(snap(tb + 0.14), Q.boy(X, Y, "kneel_look", "nq_us", -1))

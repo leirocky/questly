@@ -1,6 +1,6 @@
 """Scene 6 - Luke 2:7: night in the cave-stable of Bethlehem (the same stable() as s05, default look and lamp). Baby
 Jesus is born: Mary holds the newborn, Joseph lifts his little clay lamp, a soft warm glow shines on the baby; Mary sits
-on a hay bale and wraps him in cloth bands, then lays him gently in the manger on the fresh hay; a little picture
+on a small straw bundle (hidden behind her skirt when she stands) and wraps him in cloth bands, then lays him gently in the manger on the fresh hay; a little picture
 shows what a manger is (the ox and the donkey munching hay from one); the baby falls asleep; outside, the stars of
 Bethlehem twinkle.
 
@@ -13,7 +13,7 @@ Beats (phrase / syllable onsets measured in the voice clip with the Noah film's 
   '他们在伯利恒的时候' the far stars breathe; the camera begins to glide in
   '小耶稣出生了' a soft warm glow blooms on the baby in Mary's arms (chime); Joseph's face lights up; the ox and the
                donkey turn their heads to look
-  '用布把他包起来' Mary sits down on the hay bale and wraps him in the cloth (wrap pose; cloth rustle); Joseph leans on
+  '用布把他包起来' Mary sits down on the straw bundle and wraps him in the cloth (wrap pose; cloth rustle); Joseph leans on
                his staff and watches tenderly
   '轻轻地放在马槽里' she rises, turns to the manger and lays him down gently on the fresh hay (lay_baby, a slow
                lowering); on '马槽' he lies in the manger (a little glow pulse), she straightens and smiles down at him;
@@ -22,7 +22,8 @@ Beats (phrase / syllable onsets measured in the voice clip with the Noah film's 
                ('牛') and the donkey from the other ('驴') (crunch); it pops away after the line
   '小耶稣睡着了' the baby's eyes close (the glow softens and warms); Mary smiles down; Joseph kneels; the ox and the
                donkey close their eyes too
-  '天上的星星'  the camera glides back out to the stable on its hill under the stars
+  '睡着了'…'闪'  the camera glides back out (~3.1 s, from 'sleep' to just after the first 闪, even log-zoom about
+               the stable, peak ~1.4 %/frame) to the stable on its hill under the stars
   '一闪一闪亮晶晶' the stars flare exactly on 闪 (left sky), 闪 (right sky), 晶 (over the hill), 晶 (all) (sparkles)
   end          calm wide hold for the page dip into s07 (another illustrator)
 """
@@ -107,9 +108,49 @@ def manger_front_svg():
 
 
 def bale_svg():
-    x, y = MARY
-    return doc(f'<ellipse cx="{x}" cy="{y + 2}" rx="70" ry="10" fill="#4a3020" opacity="0.3" filter="url(#soft)"/>' +
-               PR.hay(x - 6, y, 0.6))
+    """Mary's seat: a small tied bundle of straw, no wider than her skirt, so it hides behind her when she stands
+    and only shows under her when she sits (no box round her feet)."""
+    x, y = MARY[0] + 2, MARY[1]
+    w, h = 60, 62
+    hay, dk = "#e3b955", "#b8892e"
+    o = (f'<path d="M{x - w / 2},{y} L{x - w / 2},{y - h} Q{x},{y - h - 8} {x + w / 2},{y - h} L{x + w / 2},{y} Z" '
+         f'fill="{hay}" stroke="{INK}" stroke-width="3.4" stroke-linejoin="round"/>')
+    for i in range(7):
+        xx = x - w / 2 + 6 + i * (w - 12) / 6
+        o += f'<path d="M{f1(xx)},{y - 4} L{f1(xx + 2)},{y - h + 6}" stroke="{dk}" stroke-width="2" opacity="0.6"/>'
+    o += f'<path d="M{x - w / 2},{y - h * 0.5} Q{x},{y - h * 0.5 + 5} {x + w / 2},{y - h * 0.5}" stroke="#7a5230" stroke-width="4" fill="none"/>'
+    return doc(S.g(o, filter="wobble-fine"))
+
+
+# wall stones of stable() (seed 0) that would sit round Mary's head like a ring in the close-up: painted out
+HALO_STONES = (2, 5, 21, 45)
+STABLE_SEED = 401
+
+
+def wall_patch_svg():
+    """The cave's back wall exactly as stable() paints it (same lit gradient, same stones in the same places, same
+    wobble), minus the HALO_STONES, clipped to just round those stones. Laid over the stable on the same watercolour
+    seed (and no edge pooling), it paints those rings out without a seam."""
+    x0, top, x1, _ = PR.STABLE_OPENING
+    op = (f"M{x0},0 L{x0},{top + 230} Q{x0 + 20},{top + 30} {x0 + 260},{top} L{x1 - 260},{top} "
+          f"Q{x1 - 20},{top + 30} {x1},{top + 230} L{x1},0 Z")
+    k = 1.0
+    wall_lit = S.mix("#6a4a34", "#e8b46a", 0.75 * k)
+    body = (f'<defs>{S.rad_grad("n6wall", [(0, wall_lit), (0.55, S.mix("#4a3428", "#b07a48", 0.6 * k)), (1, "#2e2420")], 0.43, 0.42, 0.62)}</defs>'
+            f'<path d="{op}" fill="url(#n6wall)"/>')
+    rng2 = random.Random(0 + 9)
+    holes = ""
+    for i in range(46):
+        sx_, sy_ = rng2.uniform(x0, x1), rng2.uniform(top + 40, PR.STABLE_BACK_Y - 20)
+        rx_, ry_ = rng2.uniform(40, 90), rng2.uniform(24, 46)
+        if i in HALO_STONES:
+            holes += f'<ellipse cx="{f1(sx_)}" cy="{f1(sy_)}" rx="{f1(rx_ + 14)}" ry="{f1(ry_ + 14)}"/>'
+            continue
+        body += PR._ell(sx_, sy_, rx_, ry_, "none", 3, stroke="#3a2c24", extra='opacity="0.28"')
+        body += PR._p(f"M{f1(sx_ - rx_ * 0.5)},{f1(sy_ - ry_ * 0.4)} Q{f1(sx_)},{f1(sy_ - ry_ * 0.9)} "
+                      f"{f1(sx_ + rx_ * 0.4)},{f1(sy_ - ry_ * 0.5)}", sw=3, stroke="#f2c47a", extra=f'opacity="{0.25 * k:.2f}"')
+    clip = f'<clipPath id="n6holes">{holes}</clipPath><g clip-path="url(#n6holes)">{body}</g>'
+    return doc(PR._place(clip, *STAB))
 
 
 def mary_body(pose, facing=1, expr=None, baby=True):
@@ -245,6 +286,34 @@ def sky_points(n=40, seed=3):
     return out
 
 
+# ================================================================== camera
+
+
+def zoom_path(keys, curves):
+    """Camera keyframes where every zoom happens about a fixed point of the picture, at an even rate in log-width
+    (a plain linear width runs fastest at the close end): w = exp(lerp(ln w0, ln w1, u)), and the centre moves in
+    step with w, so the picture never swims and the zoom speed peaks gently."""
+    ks = sorted(keys, key=lambda k: k[0])
+
+    def cam(t):
+        if t <= ks[0][0]:
+            return ks[0][1]
+        if t >= ks[-1][0]:
+            return ks[-1][1]
+        for i in range(len(ks) - 1):
+            (t0, a), (t1, b) = ks[i], ks[i + 1]
+            if t0 <= t <= t1:
+                u = M.progress(t, t0, t1, curves[min(i, len(curves) - 1)])
+                if abs(b.w - a.w) > 1:
+                    w = math.exp(M.lerp(math.log(a.w), math.log(b.w), u))
+                    v = (w - a.w) / (b.w - a.w)
+                else:
+                    w, v = M.lerp(a.w, b.w, u), u
+                return Cam(M.lerp(a.x, b.x, v), M.lerp(a.y, b.y, v), w)
+        return ks[-1][1]
+    return cam
+
+
 # ================================================================== build
 
 
@@ -290,7 +359,8 @@ def build(ctx):
     sc.add("sky", sky_svg(), z=0, wc=0.55)
     sc.add("hills", hills_svg(), z=0.5, wc=0.8)
     sc.add("field", field_svg(), z=1, wc=0.8)
-    sc.add("stable", stable_svg("back"), z=2, wc=0.9)
+    sc.add("stable", stable_svg("back"), z=2, wc=0.9, seed=STABLE_SEED)
+    sc.add("wallpatch", wall_patch_svg(), z=2.01, wc=0.9, wc_edge=0.0, seed=STABLE_SEED)
 
     # ---------------- the animals
     dk = Fig(ctx, "donkey", DONKEY, 3.0, seed=101)
@@ -386,11 +456,11 @@ def build(ctx):
     c_end = Cam(1700, 948, 3280)
     t_push0 = max(1.2, t_small - 1.6)
     t_push1 = t_born + 1.0
-    t_back0 = t_sky - 0.05
-    t_back1 = min(flare_ts[0] - 0.1, t_back0 + 2.0)
-    sc.camera = M.cam_keys([(0, c_wide0), (t_push0, c_wide1), (t_push1, c_close), (c_lay, c_close),
-                            (t_gloss - 0.15, c_close2), (t_back0, c_close2), (t_back1, c_end), (T, Cam(1700, 950, 3296))],
-                           ["sine", "inout", "sine", "sine", "sine", "inout", "sine"])
+    t_back0 = t_sleep - 0.1                       # the pull-out starts as he falls asleep ...
+    t_back1 = flare_ts[0] + 0.4                   # ... and settles just after the first 闪 (~3.1 s)
+    sc.camera = zoom_path([(0, c_wide0), (t_push0, c_wide1), (t_push1, c_close), (c_lay, c_close),
+                           (t_gloss - 0.15, c_close2), (t_back0, c_close2), (t_back1, c_end), (T, Cam(1700, 950, 3296))],
+                          ["sine", "sine", "sine", "sine", "sine", "sine", "sine"])
 
     # ---------------- stars: soft twinkles all the time, flares on 闪 闪 晶 晶
     stars = sky_points(42)
@@ -406,7 +476,7 @@ def build(ctx):
     sc.fx.append(FX.motes((1100, 820, 2330, 1420), count=22, color=(255, 236, 190), seed=17, alpha=110))
     sc.fx.append(FX.sparkles((bed_c[0] - 110, bed_c[1] - 90, bed_c[0] + 110, bed_c[1] + 30), count=5, t0=t_born + 0.3,
                              t1=c_sit, size=(8, 14), period=1.5, drift=-6, seed=19))
-    sc.fx.append(FX.sparkles((bed_c[0] - 140, bed_c[1] - 110, bed_c[0] + 140, bed_c[1] + 20), count=6, t0=c_in,
+    sc.fx.append(FX.sparkles((bed_c[0] - 130, bed_c[1] - 80, bed_c[0] + 60, bed_c[1] + 20), count=6, t0=c_in,
                              size=(8, 14), period=1.7, drift=-6, seed=21))
 
     # ---------------- sound

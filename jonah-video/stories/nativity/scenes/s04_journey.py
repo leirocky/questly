@@ -24,11 +24,15 @@ Beats (syllable onsets measured in the voice clip through the Storm film's Beats
                hops); it arrives on the second '伯利恒' (sparkle)
   '这时候'      cut: morning at the start of the long road: Mary on the donkey (pregnant, hand on her belly, tender),
                Joseph holding the lead rope, looking back at her; the camera eases in
-  '小宝宝'      a little heart pops over her belly (sparkle); '出生了' a few warm twinkles
-  '走啊走'      on the first '走' Joseph turns and leads off (planted strides on every '走'), the donkey walks; the sky
-               runs through a day and a night (sun sets, moon crosses, dawn) while the land darkens and brightens
-  '走了好多天'  cut: dusk, the hills of Bethlehem with the lit little town ahead; they walk toward it and stop;
-               calm hold - s05 starts on exactly this frame (plain 1 s cross-dissolve; s05 imports add_arrival).
+  '小宝宝'      a little heart pops over her belly (sparkle); '出生了' a few warm twinkles, and the sky begins to turn:
+               from here to the end of line 5 it runs at one steady pace (~1.85 s a day) through two nights - the
+               sun sets, stars and moon cross, dawn (a rooster), day again - and lands on the third evening; the land
+               darkens and warms with it
+  '走啊走'      from the end of line 4 the camera makes one slow 4 s pull-back and pan; on the first '走' Joseph turns and
+               leads off (planted strides on the '走's and between them), the donkey walks, the rope sags and tightens
+  '好多天'      at the end of the line, cut (dusk to dusk): the hills of Bethlehem with the lit little town ahead, the
+               travellers arrived and still; calm hold - s05 starts on exactly this frame (plain 1 s cross-dissolve;
+               s05 imports add_arrival).
 """
 import math
 import random
@@ -785,7 +789,7 @@ def build(ctx):
         for ch, tc in zip(ent[0], char_times(ent)):
             if ch == "走":
                 z_on.append(tc)
-    t_cutX = snap(z_on[4] - 0.08) if len(z_on) >= 5 else snap(L[4].start + 2.2)
+    t_cutX = snap(L[4].end - 0.02)      # the whole line is on the road; Bethlehem at dusk after '好多天'
 
     # ================================================================ SHOT P: the village panorama (static base)
     sc.add("p_back", pano_back_svg(), z=0.0, wc=0.9)
@@ -996,15 +1000,14 @@ def build(ctx):
     # ================================================================ SHOT R: the road
     gR = gate(t_cutR, t_cutX)
     t_walk = snap(z_on[0] - 0.02) if z_on else snap(L[4].start + 0.3)
-    jsteps = [snap(t_walk + 0.45 * j) for j in range(5)]
-    if len(z_on) >= 4:
-        jsteps = [snap(z_on[0]), snap((z_on[1] + z_on[2]) / 2), snap(z_on[2] + 0.02), snap(z_on[3]),
-                  snap(z_on[3] + 0.45)]
+    jsteps = [snap(t_walk + 0.48 * j) for j in range(6)]
+    if len(z_on) >= 5:          # a planted stride on every '走' but the quick second one, plus the strides between
+        jsteps = [snap(z_on[0]), snap(z_on[0] + 0.44), snap(z_on[2]), snap(z_on[3]), snap(z_on[4]), snap(z_on[4] + 0.48)]
     jsteps = [tj for tj in jsteps if tj < t_cutX - 0.12]
     D0 = 660.0                                     # the donkey's x at the start
     stepd = JOSEPH_STEP * KR
     dist_total = stepd * len(jsteps)
-    v_d = dist_total / max(0.5, (jsteps[-1] + 0.2 - t_walk)) if jsteps else 0.0
+    v_d = dist_total / max(0.5, (t_cutX - t_walk)) if jsteps else 0.0
     jdx, jdy, jn = stepper(jsteps, stepd, KR, lift=5)
     lead_off = (PR.DONKEY_LEAD[0] - C.JOSEPH_LEAD_HAND[0]) * KR
     ACC = 0.35
@@ -1057,11 +1060,17 @@ def build(ctx):
              mextra=M.combine(dipm(t_joy, KR, mpivR, 5), dipm(t_turn, KR, mpivR, 4)))
 
     # sky (pinned to the screen), sun, moon, stars, land
+    # days passing: from the morning of line 4 the sky turns steadily through two nights and lands on the third
+    # evening (dusk) at the cut to Bethlehem at dusk; a soft start, then one even pace (~1.85 s per day)
+    t_s0 = snap(t_cs + 0.2)
+    SKY0, SKY1, SOFT = 0.16, 2.5, 0.12
+
     def sky_t(t):
-        t_s0 = max(t_cs + 0.9, t_walk - 0.9)
-        if t < t_s0:
-            return 0.16
-        return 0.16 + 1.04 * M.progress(t, t_s0, t_cutX - 0.05, "linear")
+        if t <= t_s0:
+            return SKY0
+        u = min(1.0, (t - t_s0) / (t_cutX - t_s0))
+        g_ = u * u / (2 * SOFT) if u < SOFT else u - SOFT / 2
+        return SKY0 + (SKY1 - SKY0) * g_ / (1 - SOFT / 2)
     NSK = 12
     sc.add("r_sky", [sky_grad_svg(k / NSK) for k in range(NSK + 1)], z=10.5, wc=0.5, seed=4301,
            frame_at=lambda t: (sky_t(t) % 1.0) * NSK,
@@ -1074,7 +1083,7 @@ def build(ctx):
         tf = Tf(dx=c.x - REF.x, dy=c.y - REF.y, sx=s_, sy=s_, px=REF.x, py=REF.y, alpha=a)
         return tf
 
-    def arc_pos(u, R=820, rise=520, hz=760):
+    def arc_pos(u, R=440, rise=440, hz=700):
         a = math.pi * (1 - u)
         return 1056 + R * math.cos(a), hz - rise * math.sin(a)
 
@@ -1137,58 +1146,28 @@ def build(ctx):
     # ================================================================ SHOT X: arrival at dusk
     gX = gate(t_cutX, 1e9)
     zt = add_arrival(sc, lambda t: t, gX, z0=20.0)
-    t_still = T - 1.0 - 0.3                      # everything is still for the 1 s dissolve into s05
-    xsteps = [snap(t_cutX + 0.12 + (t_still - 0.14 - t_cutX - 0.12) * j / 2) for j in range(3)]
-    t_stopX = snap(t_still)
-    stepx = JOSEPH_STEP * AK
-    xjdx, xjdy, xjn = stepper(xsteps, stepx, AK, lift=5)
-    DX_END = 640.0                                   # the donkey's anchor x when they stop
-    dist_x = stepx * len(xsteps)
+    # they have arrived: the page holds still (s05 starts on exactly this frame and walks them on to the gate)
+    DX_END = 640.0                                   # the donkey's anchor x
     lead_x = (PR.DONKEY_LEAD[0] - C.JOSEPH_LEAD_HAND[0]) * AK
-
-    def dX(t):
-        u = M.progress(t, t_cutX, t_stopX, lambda v: v * (1.2 - 0.2 * v) if v < 1 else 1)  # near-constant, soft stop
-        return DX_END - dist_x * (1 - u)
-
-    def dposX(t):
-        return dX(t), AY, 1.0
-
-    def dphaseX(t):
-        if t >= t_stopX:
-            return None
-        return ((dX(t) - DX_END) / (DONKEY_CYCLE * AK)) % 1.0
-
-    def jposX(t):
-        return DX_END - dist_x + lead_x + xjdx(t), AY + xjdy(t), 1.0
     xj = [("lead_a", 1, "kind"), ("lead_b", 1, "kind"), ("stand", 1, "kind"), ("stand", 1, blink("kind"))]
     xm = ["weary", "kind", blink("kind")]
-
-    def xjf(t):
-        if t >= t_stopX:
-            return 2
-        return (xjn(t) + 1) % 2
-
-    def xmf(t):
-        if t >= t_stopX:
-            return 1
-        return 0
     travX = Travellers(sc, "x", AK, DX_END, AY, xj, xm, z=zt, gatef=gX, seed=4400)
-    travX.add(dposX, dphaseX, jposX, xjf, xmf, jextra=dipm(t_stopX, AK, lambda t: jposX(t)[:2], 6),
-              mextra=dipm(t_stopX, AK, lambda t: travX.seat, 4))
+    travX.add(lambda t: (DX_END, AY, 1.0), lambda t: None, lambda t: (DX_END + lead_x, AY, 1.0), lambda t: 2,
+              lambda t: 1)
 
     # ================================================================ camera
     camP1 = Cam(1150, 650, 1640)
-    camP2 = M.cam_keys([(t_cutP, Cam(2760, 640, 1800)), (t_count - 0.6, Cam(2760, 640, 1800)),
-                        (t_count + 0.8, Cam(2790, 650, 1720)), (t_mei, Cam(2790, 650, 1720)),
-                        (t_mei + 1.4, Cam(2760, 640, 1800)), (t_cutM, Cam(2800, 620, 1780))], "sine")
+    camP2 = M.cam_keys([(t_cutP, Cam(2760, 640, 1800)), (t_count - 1.3, Cam(2760, 640, 1800)),
+                        (t_count + 0.8, Cam(2790, 650, 1720)), (t_mei - 0.3, Cam(2790, 650, 1720)),
+                        (t_mei + 1.8, Cam(2760, 640, 1800)), (t_cutM, Cam(2800, 620, 1780))], "sine")
     camM = M.cam_keys([(t_cutM, Cam(1056, 560, 2050)), (t_cutR, Cam(1040, 570, 1960))], "sine")
     xg, yg, _ = road_at(D0)
+    t_pb0 = snap(L[3].end - 0.1)               # one slow 4 s pull-back + pan over the whole walking line
     camR = M.cam_keys([(t_cutR, Cam(xg + 120, 790, 1300)), (t_dada, Cam(xg + 60, 780, 1180)),
-                       (t_walk - 0.15, Cam(xg + 70, 780, 1170)), (t_walk + 1.1, Cam(xg + 340, 700, 1720)),
-                       (t_cutX, Cam(xg + 470, 700, 1720))], ["sine", "sine", "inout", "sine"])
+                       (t_pb0, Cam(xg + 60, 780, 1180)), (t_cutX, Cam(xg + 430, 700, 1720))], "sine")
     camR_c = camR
     camR = lambda t: clamp_cam(camR_c(t))                     # noqa: E731
-    camX = M.cam_keys([(t_cutX, Cam(900, 630, 1800)), (t_stopX, ARRIVAL_CAM), (T, ARRIVAL_CAM)], "sine")
+    camX = lambda t: ARRIVAL_CAM                                # noqa: E731
 
     def cam(t):
         if t < t_cutP:
@@ -1216,8 +1195,16 @@ def build(ctx):
     sc.sfx("wind_soft", t_cutR, dur=t_cutX - t_cutR + 0.2, gain_db=-22, fade_in=0.3, fade_out=0.2)
     sc.sfx("birds", t_cutR, dur=t_walk - t_cutR + 0.4, gain_db=-22, fade_in=0.4, fade_out=0.6)
     sc.sfx("sparkle", t_heart, gain_db=-14)
-    sc.sfx("footsteps", t_walk, dur=t_cutX - t_walk + 1.6, gain_db=-17, fade_in=0.2, fade_out=0.3)
-    sc.sfx("night", t_walk + 0.7, dur=1.3, gain_db=-22, fade_in=0.3, fade_out=0.4)
+    sc.sfx("footsteps", t_walk, dur=t_cutX - t_walk + 0.1, gain_db=-17, fade_in=0.2, fade_out=0.3)
+    def when(v):                                   # first time sky_t reaches v
+        lo, hi = t_s0, t_cutX
+        for _ in range(40):
+            mid = (lo + hi) / 2
+            lo, hi = (mid, hi) if sky_t(mid) < v else (lo, mid)
+        return hi
+    for n in (0, 1):
+        sc.sfx("night", when(n + 0.56), dur=when(n + 0.95) - when(n + 0.56), gain_db=-21, fade_in=0.25, fade_out=0.3)
+        sc.sfx("rooster", when(n + 1.0) - 0.05, gain_db=-21, pan=-0.3 + 0.6 * n)
     sc.sfx("night", t_cutX, dur=T - t_cutX + 0.3, gain_db=-24, fade_in=0.4, fade_out=0.6)
     sc.sfx("wind_soft", t_cutX, dur=T - t_cutX + 0.3, gain_db=-26, fade_in=0.4, fade_out=0.6)
     return sc

@@ -7,10 +7,11 @@ falling back to the subtitle chunk; nothing hard-coded to the take). Times are f
                the old shepherd sleeps (z's), the young one dozes by the fire, the sturdy one leans on his crook
                watching the flock, a man and the boy warm their hands; the dog sleeps, sheep breathe
   '有一群牧羊人' a slow push-in on the group
-  '夜里'        the watcher turns and walks over to the dozing young shepherd
-  '轮流'        he nudges him awake (a little shake of the shoulder, the z's stop; the young one wakes, smiles)
-  '守着'        the young one stands up and takes the crook (hidden in a squash hop); '羊群' he steps over to the
-               watch spot and leans on the crook while the other sits down and lies down by the fire
+  '夜里'        the watcher turns into a walk (planted strides) over to the dozing young shepherd
+  '轮流'        he leans over and gives the sleeper's shoulder two little shakes; the young one wakes (surprised)
+  ~0.6 s later the young one stands up with the crook (the handover, hidden in a squash dip); on '羊群' he walks
+               to the watch spot and stands there with the crook, while the other sits down by the fire and lies
+               down; every pose holds >= 0.5 s
   '忽然'        a light flashes beside the flock and an angel appears in it, floating a little above the grass
                (chime); the shepherds and the dog startle one after another
   '上帝的光'    the glory of the Lord grows round the whole group (a great dome of white-gold light, rays) and on
@@ -805,29 +806,39 @@ def build(ctx):
     sc.add("lamb", doc7(sheep_markup(lx, ly, 1, 3, "lie", lamb=True)), z=zorder(ly), seed=SEED["lamb"],
            motion=M.combine(breath((lx, ly), g0, 2.0, 0.025), lambda t: Tf(alpha=1.0 if t < snap(t_grab) else 0.0)))
 
+    # the turn-taking ('夜里，他们轮流守着羊群'): the watcher walks over on '夜里' and leans over the dozing young
+    # shepherd; the young one wakes on '轮流', stands up with the crook ~0.6 s later and walks to the watch spot on
+    # '羊群'; the watcher sits down and lies down. Every pose holds >= 0.5 s (walk strides are a cycle).
+    xs, ys = SHEP["sturdy"][1:]
+    nx = NUDGE[0]
+    t_turn = t_ye - 0.1
+    a_ents, a_off, a_end = walk_steps(t_turn, 2, (nx - xs) / 2, period=0.27)
+    t_wake = max(t_lun, a_end + 0.5)             # the nudge (0.45 s) starts after he has arrived
+    t_n0 = t_wake - 0.45
+    t_up = t_wake + 0.62
+    t_walk = max(t_up + 0.5, t_yang + 0.2)
+    t_sit = t_up + 0.55
+    t_lie = max(t_sit + 0.55, t_hu - 0.45)
+
     # the young shepherd: dozing by the fire, nudged awake, takes the crook and keeps watch
     xg, yg = SHEP["young"][1:]
     yn = Fig("young", shep_draw("young"), YOUNG_WATCH, K, zorder(YOUNG_UP[1]), g0, seed=SEED["young"])
     yn.cut(0, "sit|sleepy|-1|a|m")
-    t_wake = t_lun + 0.22
     yn.cut(t_wake, "sit|surprised|-1|a|", dip=False)
-    yn.cut(t_wake + 0.45, "sit|happy|-1|a|", dip=False)
-    t_up = t_shou
     yn.cut(t_up, "stand|happy|1|u|c", depth=8)
-    w_ents, w_off, w_end = walk_steps(t_up + 0.3, 3, (YOUNG_WATCH[0] - YOUNG_UP[0]) / 3, period=0.26)
+    w_ents, w_off, w_end = walk_steps(t_walk, 3, (YOUNG_WATCH[0] - YOUNG_UP[0]) / 3, period=0.26)
     for tk, n in w_ents:
         yn.cut(tk, f"{n}|happy|1|u|c", dip=False)
-    yn.cut(w_end, "lean|kind|1|w|", depth=5)
+    yn.cut(w_end, "stand|kind|1|w|c", depth=4)
     yn.mots.append(lambda t: Tf(dx=w_off(t)[0], dy=w_off(t)[1] + (YOUNG_WATCH[1] - YOUNG_UP[1]) * M.progress(
         t, w_ents[0][0], w_end, "linear")) if w_ents[0][0] - 0.1 <= t < w_end else Tf())
-    yn.cut(t_hu + 0.15, "stand|surprised|1|w|c", depth=6)
+    yn.cut(max(t_hu + 0.45, w_end + 0.55), "stand|surprised|1|w|c", depth=6)     # startled by the flash
     yn.cut(t_xia - 0.1, "shield_eyes|scared|1|w|m", depth=10)
     yn.cut(t_bu + 0.3, "look_up|amazed|1|w|", depth=6)
     yn.cut(t_hao + 0.15, "look_up|happy|1|w|", dip=False)
     yn.cut(t_bl + 0.15, "look_up|amazed|-1|w|", depth=5)
     yn.cut(t_kan + 0.2, FINAL["young"], depth=5)
-    yn.add_blinks({"sit|happy|-1|a|": "sit|" + blink("happy") + "|-1|a|",
-                   "lean|kind|1|w|": "lean|" + blink("kind") + "|1|w|",
+    yn.add_blinks({"stand|happy|1|u|c": "stand|" + blink("happy") + "|1|u|c",
                    FINAL["young"]: "look_up|" + blink("awed") + "|1|w|"}, t_wake, T_B, rng)
     # dozing: the head nods slowly (the whole sitting figure sways a little forward)
     yn.mots.append(rot_about(lambda t: -2.2 * max(0.0, math.sin(2 * math.pi * t / 2.4)) if t < t_wake else 0.0,
@@ -837,27 +848,19 @@ def build(ctx):
     add_crook(sc, snap(t_xia - 0.1))
 
     # the sturdy watcher: leaning on his crook, turns, walks over, nudges, hands over the crook, lies down
-    xs, ys = SHEP["sturdy"][1:]
     st = Fig("sturdy", shep_draw("sturdy"), STURDY_REST, K, zorder(STURDY_REST[1]), g0, seed=SEED["sturdy"])
     st.cut(0, "lean|kind|1|a|")
-    t_turn = t_ye - 0.1
-    st.cut(t_turn, "stand|kind|-1|a|c", depth=5)
-    nx = NUDGE[0]
-    a_ents, a_off, a_end = walk_steps(t_turn + 0.3, 2, (nx - xs) / 2, period=0.27)
-    for tk, n in a_ents:
-        st.cut(tk, f"{n}|kind|-1|a|c", dip=False)
+    for k, (tk, n) in enumerate(a_ents):            # he turns round into his first stride (hidden in a dip)
+        st.cut(tk, f"{n}|kind|-1|a|c", dip=(k == 0), depth=4)
     st.cut(a_end, "stand|happy|-1|n|c", depth=3)
     st.mots.append(lambda t: Tf(dx=a_off(t)[0], dy=a_off(t)[1] + (NUDGE[1] - ys) * M.progress(
         t, a_ents[0][0], a_end, "linear")) if a_ents[0][0] - 0.1 <= t < a_end else Tf())
-    # the nudge: lean toward the sleeper and give his shoulder two little shakes
-    t_n0 = t_lun - 0.15
+    # the nudge: lean toward the sleeper and give his shoulder two little shakes; he wakes on the second one
     nudge = rot_about(lambda t: -(11 * env(t, t_n0, t_up - 0.05, 0.18, 0.2) + 2.5 * math.sin(
         2 * math.pi * (t - t_n0) / 0.22) * env(t, t_n0 + 0.1, t_n0 + 0.55, 0.08, 0.1)), (nx, NUDGE[1]), STURDY_REST)
     st.mots.append(nudge)
     st.cut(t_up, "stand|happy|-1|n|", depth=6)           # the crook goes to the young one
-    t_sit = t_yang - 0.05
     st.cut(t_sit, "sit|sleepy|-1|r|", depth=8)
-    t_lie = t_hu - 0.45
     st.cut(t_lie, "sleep|sleepy|1|r|m", depth=5)
     st.cut(t_tian + 0.45, "sit|surprised|1|r|", depth=7)
     st.cut(t_xia + 0.05, "kneel|scared|1|r|m", depth=8)
@@ -923,9 +926,9 @@ def build(ctx):
     sc.sfx("night", 0, dur=T + 0.5, gain_db=-17, fade_in=0.8, fade_out=1.0)
     sc.sfx("fire", 0, dur=T + 0.5, gain_db=-19, fade_in=0.8, fade_out=1.0, pan=-0.15)
     sc.sfx("snore", 0, dur=t_tian + 0.2, gain_db=-27, fade_in=0.8, fade_out=0.4, pan=-0.35)
-    sc.sfx("footsteps", t_turn + 0.3, dur=a_end - t_turn - 0.2, gain_db=-24, pan=0.1)
+    sc.sfx("footsteps", t_turn, dur=a_end - t_turn + 0.1, gain_db=-24, pan=0.1)
     sc.sfx("cloth", t_up, gain_db=-21)
-    sc.sfx("footsteps", t_up + 0.4, dur=w_end - t_up - 0.3, gain_db=-24, pan=0.2)
+    sc.sfx("footsteps", t_walk, dur=w_end - t_walk + 0.1, gain_db=-24, pan=0.2)
     sc.sfx("cloth", t_lie, gain_db=-23)
     sc.sfx("chime", t_app, gain_db=-11, pan=0.3)
     sc.sfx("whoosh", t_app - 0.1, gain_db=-17, pan=0.3)

@@ -10,11 +10,13 @@ the last second of s10 (plain 1 s cross-dissolve). Three places on the same fram
 the paper colour (the film's own transition for a change of place, so people of two shots never overlap):
   THE NIGHT ROAD   '忽然' the caravan walks on;  '星星' the star appears ahead (upper right) with a sparkle and a chime;
                    '又出现了' the riders look up, amazed;  '在前面' Melchior points ahead, Caspar and Balthasar cheer;
-                   '带路' the star glides on ahead, they ride on happily.                       (dip on the line break)
+                   from '在前面' the view stops following them: the star drifts on ahead (up and right) and the
+                   camels walk after it across the standing ground (planted steps, a little faster), riders happy.
+                                                                         (~0.9 s page-turn dip on the line break)
   BETHLEHEM        night: the little town on its hill, the limestone family_house, the caravan arriving on the road;
                    '星星一直走到伯利恒' the star glides across the sky to the town;  '停在了' it stops over the house;
                    '一座房子的上面' a beam of light down to the roof, which glows;  the camels stop at the house.
-                   '博士们高兴极了' the riders cheer (hops), sparkles round the star.            (dip before '他们走进房子')
+                   '博士们高兴极了' the riders cheer (hops), sparkles round the star.  (~0.9 s dip centred on '他们走进')
   THE HOUSE        a warm room: Mary on the bench with little Jesus (a toddler) on her lap, Joseph beside them, starlight
                    through the window, a lamp;  '他们走进房子' the three walk in from the right carrying their treasures
                    (planted-foot walks);  '小耶稣' the toddler waves;  '妈妈马利亚' Mary smiles;  '跪' they kneel and bow
@@ -225,7 +227,7 @@ def build(ctx):
     t_above = ct(ctx, 1, "上面")
     t_boshi = ct(ctx, 2, "博士")
     t_joy = ct(ctx, 2, "高兴")
-    t_dip2 = (ct(ctx, 2, "极了", 1) + ct(ctx, 2, "他们走进")) / 2 + 0.05
+    t_dip2 = ct(ctx, 2, "他们走进")                            # the page turns as '他们走进房子' begins
     t_in = ct(ctx, 2, "他们走进")
     t_see = ct(ctx, 2, "看见")
     t_jesus = ct(ctx, 2, "小耶稣")
@@ -270,24 +272,36 @@ def build(ctx):
             out += [(snap(t_ahead + 0.12 * i), "ride_cheer", 1.1)]
         out += [(snap(t_lead + 0.25 + st0), "ride_happy", 0.6)]
         return out
-    A.add_journey(sc, ctx10, toff, rider_sched=road_sched, z0=50.0, late=True, alpha=road_vis)
+    # '在前面给他们带路': the view stops following them - the star drifts on ahead and the camels walk after it
+    A.add_journey(sc, ctx10, toff, rider_sched=road_sched, z0=50.0, late=True, alpha=road_vis,
+                  release=(t_ahead + toff, t_ahead + toff + 0.6, 1.4))
     # the star appears again, ahead (upper right), and glides on ahead
-    su0, sv0 = 1600, 260
+    su0, sv0 = 1450, 262
     pulse_fr = [star_svg_at(su0, sv0, 1.0, (k % 4) / 4) for k in range(5)]
+
+    def star_off(t):
+        g = M.progress(t, t_ahead, t_dip1 + 0.45, "sine")
+        return 480 * g, -48 * g + 5 * math.sin(2 * math.pi * t / 2.3)
 
     def road_star_m(t):
         if t < t_star or t >= t_dip1:
             return Tf(alpha=0.0)
-        g = M.progress(t, t_ahead + 0.3, t_dip1 + 0.6, "sine")
-        dx, dy = 330 * g, -40 * g
+        dx, dy = star_off(t)
         pop = M.ease("back")(clamp((t - t_star) / 0.45))
         px, py = st(su0, sv0)
         return Tf(dx=dx, dy=dy, sx=max(0.01, pop), sy=max(0.01, pop), px=px, py=py, alpha=clamp((t - t_star) / 0.25))
     sc.add("road_star", pulse_fr, z=50.6, frame_at=lambda t: (t * 1.6) % 4,
            motion=road_star_m)
-    sc.add_dynamic("road_sparks", sparkle_dyn((JX0 + su0 - 260, JY0 + sv0 - 200, JX0 + su0 + 420, JY0 + sv0 + 200),
-                                              count=14, t0=t_star, t1=t_dip1, size=(8, 16), period=1.2, drift=-6,
-                                              seed=31), z=50.7)
+    sparks = sparkle_dyn((JX0 + su0 - 260, JY0 + sv0 - 200, JX0 + su0 + 260, JY0 + sv0 + 200), count=14, t0=t_star,
+                         t1=t_dip1, size=(8, 16), period=1.2, drift=-6, seed=31)
+
+    def sparks_moving(t):
+        out = sparks(t)
+        if out is None:
+            return None
+        dx, dy = star_off(t)
+        return out[0], (out[1][0] + dx, out[1][1] + dy)
+    sc.add_dynamic("road_sparks", sparks_moving, z=50.7)
 
     # ================================================================ 2. Bethlehem
     zt = 100.0
