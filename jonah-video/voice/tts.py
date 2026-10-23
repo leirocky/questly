@@ -780,7 +780,10 @@ def build():
                            for c in chunks],
             })
             cur = start + speech_len + pause
-        dur = frames(lines[-1]["end"] + tail)
+        # An explicit pause after the last line (a question left for the child to answer) that is longer than
+        # the scene's tail is kept in full before the tail; shorter ones fall inside the tail as before.
+        last_pause = sc["lines"][-1][2] if len(sc["lines"][-1]) > 2 else 0.0
+        dur = frames(lines[-1]["end"] + tail + (last_pause if last_pause > tail else 0.0))
         scenes.append({"id": sc["id"], "mood": sc["mood"], "note": sc["note"],
                        "transition": sc.get("transition", "fade"),
                        "start": frames(t_scene), "duration": dur, "lines": lines})
