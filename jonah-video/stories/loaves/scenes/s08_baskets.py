@@ -65,7 +65,10 @@ FAMILY = [  # kind, variant, x, y, pose, facing - the boy's family (his mother f
 GATHER = [  # variant, x, y - the four gathering on the far side
     ("andrew", 2440, 1004), ("john", 2700, 1020), ("james", 2960, 1000), ("philip", 3215, 1016)]
 DROP_GROUPS = ((724, 890), (1781, 890), (2942, 890), (1170, 774))    # left out: the heroes need the front of the slope
-TREES8 = [(600, 0.72, "oak", 7), (1580, 0.64, "olive", 9)]           # in the gaps between the groups (s05: TREES5)
+# the trees stand in gaps between the groups AND clear of every head in every shot (no trunk or canopy edge lines up
+# with a head): one olive on the right of the slope, between the groups and between the gatherers' heads, seen in S1
+# and S3 only - never behind Jesus, the twelve, the family or the people who praise
+TREES8 = [(2668, 0.62, "olive", 9)]
 
 Z_SKY, Z_BG, Z_GLINT, Z_GROUPS, Z_PIECES, Z_ROW_PEOPLE, Z_ROW, Z_PEOPLE, Z_NUM, Z_GLOSS, Z_FG, Z_TINT = (
     0, 1, 1.5, 3, 4, 5, 5.5, 7, 9, 10, 11, 12)

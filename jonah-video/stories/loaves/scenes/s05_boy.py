@@ -595,9 +595,11 @@ def hill_svg(time, part, **kw):
                                 boat=None, trees=False, **kw))
 
 
-# the hillside trees (x, depth fraction, kind, seed), placed in the gaps between the people of each scene; only left of
-# the hill's shoulder (x < 0.66 W), so they stand at the same depth y in every convention
-TREES5 = [(600, 0.72, "oak", 7), (2190, 0.60, "olive", 9)]
+# the hillside trees (x, depth fraction, kind, seed), placed in the gaps between the people of each scene and well
+# clear of every head in every shot (no trunk or canopy edge lines up with a head): the oak behind the teaching rock,
+# left of Peter and Jesus; a small far olive between the crowd clusters near the lake, right of the path. Both are
+# left of the hill's shoulder (x < 0.66 W), so they stand at the same depth y in every convention.
+TREES5 = [(420, 0.72, "oak", 7), (2215, 0.86, "olive", 9)]
 
 
 def tree_at(x, d):
@@ -1038,7 +1040,7 @@ def build(ctx):
     t_back0 = snap(max(t_out1 + 0.2, t_ydd - 0.85))
     t_back1 = t_back0 + 1.5
     t_shrink = snap(max(t_dd[0] - 0.05, t_back1 - 0.1))      # the counted loaves go home once the camera is back
-    t_gone = t_shrink + 0.75
+    t_gone = t_shrink + 0.85
 
     def gather(t0, x, y, i, fly=True):
         """Pop in at t0; on '这一点点' shrink and fly back into Andrew's basket (numbers just fade)."""
@@ -1051,14 +1053,19 @@ def build(ctx):
             if not fly:
                 return Tf(alpha=v.alpha * (1 - M.progress(t, t_shrink, t_shrink + 0.18, "sine")), sx=v.sx, sy=v.sy,
                           px=x, py=y)
-            # an arc down into the basket, shrinking to the size of the loaves inside it; it drops in at the rim
+            # a curve over Andrew's head and steeply down into the basket through the gap between his face and the
+            # boy's head (a quadratic Bezier through a control point high above the basket), shrinking to the size of
+            # the loaves inside it before the drop; it drops in at the rim
             a0 = t_shrink + 0.06 * i
-            u = M.progress(t, a0, a0 + 0.4, "inout")
-            land = M.progress(t, a0 + 0.4, a0 + 0.5, "in")
-            tx_, ty_ = bx + (i - 3) * 5, by - 8 * K
-            k_ = 1 - 0.7 * u
-            return Tf(dx=(tx_ - x) * u, dy=(ty_ - y) * u - 50 * math.sin(math.pi * u) + 10 * land,
-                      sx=v.sx * k_, sy=v.sy * k_, alpha=v.alpha * (1 - land), px=x, py=y)
+            u = M.progress(t, a0, a0 + 0.45, "inout")
+            land = M.progress(t, a0 + 0.45, a0 + 0.55, "in")
+            tx_, ty_ = bx - 10 + (i - 3) * 2, by - 8 * K
+            cx_, cy_ = bx - 30, by - 340
+            px_ = (1 - u) ** 2 * x + 2 * u * (1 - u) * cx_ + u * u * tx_
+            py_ = (1 - u) ** 2 * y + 2 * u * (1 - u) * cy_ + u * u * ty_
+            k_ = 1 - 0.72 * min(1.0, u / 0.75)          # small before the last, steep drop into the gap
+            return Tf(dx=px_ - x, dy=py_ - y + 10 * land, sx=v.sx * k_, sy=v.sy * k_, alpha=v.alpha * (1 - land),
+                      px=x, py=y)
         return m
     t_cloud = snap(t_loaf[0] - 0.22)
     cloud_m = pop_in(t_cloud, (CCX, CCY + 120), dur=0.32, s0=0.35)
