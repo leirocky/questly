@@ -69,7 +69,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s03_crowd", "transition": "dippaper", "mood": "lots",
+        "id": "s03_crowd", "transition": "dippaper", "mood": "lots", "tail": 2.0,
         "note": "Mark 6:30-34. Jesus and the twelve, tired, crowded by people coming and going; they push off in a boat "
                 "for a quiet place across the lake; but people see them and run along the shore from all the towns "
                 "and get there first; Jesus steps out, sees the huge crowd, and his face fills with love; he teaches "
@@ -99,7 +99,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s05_boy", "transition": "dippaper", "mood": "worm",
+        "id": "s05_boy", "transition": "dippaper", "mood": "worm", "tail": 2.3,
         "note": "John 6:8-9. Andrew brings a small boy with a little basket: five round barley loaves and two small "
                 "dried fish; Andrew holds them up, doubtful, looking at the huge crowd; the boy looks up at Jesus and "
                 "gives him his lunch with both hands.",
@@ -111,7 +111,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s06_sit", "transition": "dippaper", "mood": "shore",
+        "id": "s06_sit", "transition": "dippaper", "mood": "shore", "tail": 2.5,
         "note": "Mark 6:39-40, John 6:10, Matthew 14:21. Jesus has everyone sit down on the green grass; the crowd "
                 "settles in neat colourful groups, like little gardens seen from above (groups of a hundred and of "
                 "fifty); a picture-book count: 5000 men plus mothers and children; the whole hillside full.",
@@ -124,18 +124,18 @@ SCENES = [
         ],
     },
     {
-        "id": "s07_bless", "mood": "end",
+        "id": "s07_bless", "mood": "end", "tail": 2.8,
         "note": "John 6:11, Mark 6:41. Jesus takes the five loaves and two fish, looks up to heaven and gives thanks "
                 "(light only, God never drawn); he breaks the bread and hands it to the disciples, who carry it to "
                 "the groups; the bread and fish in each disciple's hands never run out.",
         "lines": [
-            ("N", "耶稣拿起五个饼和两条鱼，抬头望着天，感谢上帝。"),
+            ("N", "耶稣拿起五个饼和两条鱼，抬头望着天，感谢上帝。", 1.4),
             ("N", "然后，他把饼掰开，递给门徒，门徒再分给大家。鱼也是这样。"),
             ("N", "分啊分，分啊分……饼一直分不完！鱼也一直分不完！大家想吃多少，就吃多少。"),
         ],
     },
     {
-        "id": "s08_baskets", "transition": "dippaper", "mood": "lesson",
+        "id": "s08_baskets", "transition": "dippaper", "mood": "lesson", "tail": 2.0,
         "note": "John 6:12-13. Everyone has eaten their fill, children patting full tummies; Jesus tells the "
                 "disciples to gather the leftovers so nothing is wasted; the twelve go round with baskets: twelve "
                 "baskets full, more than the five loaves they started with; the boy's eyes go wide, then he smiles.",
