@@ -23,9 +23,10 @@ film's Tm class; fallback: the subtitle chunks):
   '他也会照顾你' they both beam; a heart floats up over them on '照顾你' (chime)
   '小朋友'      both look at us
   '你有什么'    she thinks, eyes up, her sandwich in both hands ...
-  after it     ... and smiles at us through the 2 s answer pause; her friend waves to us; ~1.8 s after the question the end
-               card '五饼二鱼 · 完' fades in over the sky with a little heart (chime), fully visible ~2.2 s before the
-               film's 1.6 s fade-out; calm, alive final frame (breathing, blinks, the kite, the drifting clouds, motes)
+  after it     ... and smiles at us through the full 2 s answer pause; her friend waves to us; 2.0 s after the question the
+               end card '五饼二鱼 · 完' fades in over the sky (0.5 s) with a little heart (chime), fully visible ~1.6 s
+               before the film's 1.6 s fade-out; calm, alive final frame (breathing, blinks, the kite, the drifting
+               clouds, motes)
 
 Drawn on the same 1.5x stage as s02 (design coordinates of the title page, scaled by K inside each layer).
 """
@@ -419,8 +420,8 @@ def build(ctx):
     waves = [F("wave_sit", "overjoyed", phase=k / 4) for k in range(4)]
     ffig.cycle(d_wave, waves, step=3)
     ffig.at(d_wave_end, F("smile", f_us))
-    for tb in (snap(d_wave_end + 1.1), snap(d_wave_end + 2.9)):
-        if tb + 0.3 < T:
+    for tb in (snap(d_wave_end + 1.1), snap(d_wave_end + 2.6)):
+        if tb + 0.3 < T - 0.2:
             ffig.at(tb, F("smile", f_blink)).at(snap(tb + 0.14), F("smile", f_us))
     fmunch = keyed([(0.0, 1.0), (d_up - 0.25, 1.0), (d_up - 0.05, 0.0), (d_bite + 0.1, 0.0), (d_bite + 0.25, 1.0),
                     (d_bite_end - 0.25, 1.0), (d_bite_end - 0.05, 0.0)], "sine")
@@ -449,10 +450,10 @@ def build(ctx):
     heart_float2(sc, "heart0", hx0 - 10, hy0, 30, snap(t_you + 0.02), dx=-14, rise_px=170)
     heart_float2(sc, "heart1", hx0 + 60, hy0 + 30, 22, snap(t_you + 0.32), dx=16, rise_px=150)
     ex, ey = END
-    t_card = snap(t_end + 1.8)          # the script leaves the child 2 s to answer: the card comes late in it
+    t_card = snap(t_end + 2.0)          # after the child's full 2 s answer pause
     cb, cdefs = end_card_body()
     sc.add("endcard", doc2(cb, cdefs), z=20, wc=0, motion=M.keys(
-        [(t_card, {"alpha": 0, "s": 0.95, "dy": 16 * K}), (t_card + 0.6, {"alpha": 1, "s": 1.0, "dy": 0})], "out",
+        [(t_card, {"alpha": 0, "s": 0.95, "dy": 16 * K}), (t_card + 0.5, {"alpha": 1, "s": 1.0, "dy": 0})], "out",
         pivot=kp(ex, ey - 50)))
     th = t_card + 0.45
     hcx, hcy = kp(ex, ey + 62)
@@ -475,7 +476,7 @@ def build(ctx):
     ce = kcam(BLK_X, 730, 1300)                        # the children and the end card above them
     ce2 = kcam(BLK_X, 726, 1280)
     sc.camera = safe_camera([(0, c0), (0.7, c0), (t_in + 0.1, ci), (t_close, ci), (t_close + 1.8, ck),
-                            (t_end + 0.3, ck), (t_card + 0.6, ce), (T, ce2)], "sine", SW, SH)
+                            (t_end + 0.3, ck), (t_card + 0.5, ce), (T, ce2)], "sine", SW, SH)
 
     # ---------------------------------------------------------------- sound
     sc.sfx("birds", 0, dur=T, gain_db=-30, fade_in=0.8, fade_out=1.6)

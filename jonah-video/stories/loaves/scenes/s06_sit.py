@@ -24,17 +24,17 @@ beat(); nothing is hard-coded to the take). Times are for the current take:
   '一排' 8.13 / 8.52   the far rows sit down row after row (squash dips hide the stand -> sit cuts; cloth rustles)
   '一组' 9.04 .. '坐下' 10.29   the nearer groups sit one after another
   '一百' 11.70  the big front group sits with a pop and a '100' tag (sparkle burst)
-  '五十' 13.64  the smaller group beside it sits with a '50' tag; then the boy (14.2) and Jesus (14.6, the basket on his
+  '五十' 13.64  the smaller group beside it sits with a '50' tag (left of its centre, inside the frame); then the boy (14.2) and Jesus (14.6, the basket on his
                 lap) sit down by the rock
   '从' 15.52    hard cut on the phrase start to the high view (the camera was already rising): Jesus and the boy on the
                 rock in a soft warm glow, the camera rises and pulls back over the beds; '一块一块的小花园' 18.9-20.6 the
                 beds pop one after another like flowers opening (chime); cloud shadows drift, swallows cross
   '光是男人' 21.48  a picture-book counter (a little man in a cream roundel + a big gold number) rolls up from 0 and lands
                 on 5000 on '五千' 23.14 with a sparkle burst (grow, sparkle, chime)
-  '还有' 24.04  hard cut back to the hillside, close on the families at the front: on '妈妈' 24.77 the mothers rock their
+  '还有' 24.04  the 5000 holds a moment longer; hard cut (24.34, on '好多') back to the families at the front: on '妈妈' 24.77 the mothers rock their
                 babies (little hearts float up), on '小朋友' 25.39 three children pop up, wave and hop, then sit again
-  '整个山坡' 26.55  the camera pulls back to the whole hillside, every group seated, Jesus on his rock with the basket on
-                his lap, the boy beside him, Peter and John with their empty baskets; settles 28.7, calm hold (2.6 s) to
+  '整个山坡' 26.55  from 26.33 the camera pulls back to the whole hillside (log-space zoom, sine over 2.5 s), every group seated, Jesus on his rock with the basket on
+                his lap, the boy beside him, Peter and John with their empty baskets; settles 28.8, calm hold (2.5 s) to
                 the end = s07_bless's first second (pixel-identical: END_* keys, shared layers, film-clock motion and crop
                 markers)
 
@@ -100,8 +100,20 @@ def cam_path(keys, curves):
     for tk, c in keys:
         cc = clamp_cam(c)
         assert abs(cc.x - c.x) < 0.5 and abs(cc.y - c.y) < 0.5 and abs(cc.w - c.w) < 0.5, f"camera key {tk:.2f} leaves the stage: {c}"
-    f = M.cam_keys(keys, curves)
-    return lambda t: clamp_cam(f(t))
+    keys = sorted(keys, key=lambda k: k[0])
+    curves = curves if isinstance(curves, (list, tuple)) else [curves] * max(1, len(keys) - 1)
+
+    def f(t):
+        """Eased between keys; the width is interpolated in log space (an even zoom speed, no rush at the wide end)."""
+        if t <= keys[0][0]:
+            return clamp_cam(keys[0][1])
+        for i in range(len(keys) - 1):
+            (t0, a), (t1, b) = keys[i], keys[i + 1]
+            if t <= t1:
+                u = M.progress(t, t0, t1, curves[min(i, len(curves) - 1)])
+                return clamp_cam(Cam(a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u, a.w * (b.w / a.w) ** u, a.rot + (b.rot - a.rot) * u))
+        return clamp_cam(keys[-1][1])
+    return f
 
 
 # ---------------------------------------------------------------- blink expressions (closed-eye twins)
@@ -953,7 +965,7 @@ def build(ctx):
     t_l4e = ctx.lines[4].end
 
     T_HV = snap(t_cong - 0.12)                 # cut to the high view
-    T_BACK = snap(t_hai - 0.12)                # cut back to the hillside
+    T_BACK = snap(min(t_hai + 0.3, t_mama - 0.4))   # cut back to the hillside (the 5000 holds a little longer)
     side_vis = gate(T_HV, T_BACK)
     hv_vis = only(T_HV, T_BACK)
 
@@ -1020,9 +1032,9 @@ def build(ctx):
     # ---- the 100 / 50 tags
     for g, t0, lab in ((G100, t_100, "100"), (G50, t_50, "50")):
         top = min(p["y"] - 250 * p["k"] for p in g["people"])
-        tx, ty = g["x"] + 10, top - 6
+        tx, ty = g["x"] + (10 if lab == "100" else -100), top - 6      # the 50 tag sits left of centre (inside the frame)
         sc.add(f"tag{lab}", tag_svg(tx, ty, lab, 1.6), z=60, wc=0, motion=pop_hold(t0 - 0.02, (tx, ty), 1.5))
-        sc.fx.append(Burst(tx, ty - 48, t0 + 0.05, n=10, r=(60, 150), dur=0.9, seed=hash(lab) % 97))
+        sc.fx.append(Burst(tx, ty - 48, t0 + 0.05, n=10, r=(60, 150), dur=0.9, seed=int(lab) % 97))
 
     # ---- Jesus
     t_up = snap(t_ye + 0.05)
@@ -1185,7 +1197,8 @@ def build(ctx):
     high = cam_path([(T_HV, h0), (t_hy + 0.4, h1), (T_BACK, h2)], ["inout", "linear"])
     c_c1 = Cam(1955, 1000, 1150)
     c_c1b = Cam(1915, 992, 1210)
-    side_c = cam_path([(T_BACK, c_c1), (t_zg - 0.05, c_c1b), (t_zg + 2.15, CAM_END), (T, CAM_END)], ["sine", "inout", "linear"])
+    t_pb = t_zg - 0.22                         # the pull-back: a log-space zoom, sine eased over 2.5 s (peak ~0.47 ln/s)
+    side_c = cam_path([(T_BACK, c_c1), (t_pb, c_c1b), (min(T - 1.6, t_pb + 2.5), CAM_END), (T, CAM_END)], ["sine", "sine", "linear"])
 
     def camera(t):
         if t < T_HV:

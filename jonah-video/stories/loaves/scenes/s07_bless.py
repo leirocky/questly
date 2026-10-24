@@ -12,17 +12,17 @@ Beats (syllable onsets measured in the voice clips with the Noah film's voice_ma
 beat(); nothing is hard-coded to the take). Times are for the current take:
   0 .. 1.0      s06's last frame: the whole hillside seated, Jesus on his rock with the basket, the boy beside him,
                 Peter and John with their empty baskets at their feet
-  1.0 ..        the camera glides in to Jesus (wide -> medium by '抬头', a slow reverent push to '感谢')
-  '拿起' 1.35   he lifts the basket from his lap to his chest
+  1.0 .. 2.9    the camera glides in to Jesus (wide -> medium; log-space zoom, sine), then a slow reverent push to '感谢'
+  '拿起五个饼' 2.16  he lifts the basket from his lap to his chest (keyed 0.4 s after '五个饼' so he is readable)
   '抬头' 3.90   he raises it toward heaven and looks up (thanks); warm light pours down from above (soft beams, a pool of
-                light, drifting motes, a gentle warm vignette); the boy looks up in awe, Peter and John in wonder
+                light, drifting motes, a gentle warm vignette); the boy looks up in awe, Peter and John smile
   '感谢' 5.45   the light swells (chime, sparkle), little sparkles drift down; Peter and John close their eyes; held
   6.3 .. 7.3    the silent pause: the blessing rests - Jesus holds the basket up to heaven in the light (a blink), motes
                 and sparkles drift down; at 7.3 the basket comes back to his lap and the light softens (faintly to the cut)
   '然后' 7.75   Peter stoops and picks up his empty basket (8.3) and walks up to Jesus with it (planted-foot strides)
   '他把饼' 8.61  a whole loaf in Jesus's hands; '掰开' 9.32 he breaks it (6 frames, crumbs, crunch); the boy gasps
   '递给' 10.03  Peter holds his basket out; Jesus hands him the piece - it drops in (10.5, sparkle); '门徒再' 11.19
-                the basket is suddenly heaped full (sparkle burst, chime), Peter beams, turns and carries it off to the
+                the basket is suddenly heaped full (sparkle burst, chime), Peter beams (overjoyed), turns and carries it off to the
                 people (11.8); John picks up his basket (11.5) and comes forward
   '鱼也是' 13.34 Jesus breaks a fish (13.2-13.9) and hands it into John's basket (14.2 / 14.6, sparkle)
   '分' 15.03    hard cut on the phrase start (14.91) to the families at the front: Philip, Peter and Andrew hand out from
@@ -219,7 +219,7 @@ def build(ctx):
     # ---- Jesus (seated on the rock, the boy's basket on his lap)
     jes = Actor("jesus", JSTAND, S6.JS, lambda key: jesus_svg(key), zy(JSTAND[1]), 109, g0)
     jes.cut(-1, END_JESUS)
-    t_lift = snap(t_na - 0.04)
+    t_lift = snap(b(0, "五个饼") + 0.4)           # '拿起五个饼': once the push-in has made him readable
     jes.cut(t_lift, ("lift", "warm", (0.04, -0.02)), dip=5)
     t_bl = snap(t_tai - 0.06)
     jes.cut(t_bl, ("bless", "thanks", 0.0), dip=6)
@@ -282,7 +282,7 @@ def build(ctx):
     sp_ = k_of_y(py)
     pe = Actor("peter", (px, py), sp_, lambda key, v=v, px=px, py=py, s=sp_: disc7_svg(v, px, py, s, key), zy(py), 120 + v, g0)
     pe.cut(-1, END_DISC["peter"])
-    pe.cut(snap(t_tai + 0.4), ("stand", -1, "awed"), dip=3)
+    pe.cut(snap(t_tai + 0.4), ("stand", -1, "happy"), dip=3)
     pe.cut(snap(t_gx + 0.1), ("stand", -1, "peaceful"), dip=3)
     t_stoop = snap(t_rh + 0.05)
     pe.cut(t_stoop, ("stoop", -1, "happy"), dip=5)
@@ -295,11 +295,11 @@ def build(ctx):
     t_w0 = snap(t_dg - 0.3 * n_st - 0.25)
     pe.walk(t_w0, [("cwalk", -1, "a", 0.0), ("cwalk", -1, "b", 0.0)], n_st, 0.3, adv, -1)
     t_recv = snap(t_dg - 0.18)
-    pe.cut(t_recv, ("recv", -1, "awed", 0.0), dip=4)
+    pe.cut(t_recv, ("recv", -1, "happy", 0.0), dip=4)
     t_in = snap(t_give + 0.42)
-    pe.cut(t_in, ("recv", -1, "awed", 0.5), dip=3)
+    pe.cut(t_in, ("recv", -1, "delighted", 0.5), dip=3)
     t_full = snap(t_mtz + 0.02)
-    pe.cut(t_full, ("recv", -1, "amazed", 1.0), dip=5)
+    pe.cut(t_full, ("recv", -1, "overjoyed", 1.0), dip=5)
     t_go = snap(t_full + 0.6)
     pe.cut(t_go, ("carry", 1, "happy", 1.0), dip=4)
     pe.walk(snap(t_go + 0.3), [("cwalk", 1, "a", 1.0), ("cwalk", 1, "b", 1.0)], 11, 0.3, S6.DISC_ADV * sp_, 1)
@@ -318,7 +318,7 @@ def build(ctx):
     sj = k_of_y(jy)
     jo = Actor("john", (jx, jy), sj, lambda key, v=v, jx=jx, jy=jy, s=sj: disc7_svg(v, jx, jy, s, key), zy(jy), 120 + v, g0)
     jo.cut(-1, END_DISC["john"])
-    jo.cut(snap(t_tai + 0.55), ("stand", -1, "awed"), dip=3)
+    jo.cut(snap(t_tai + 0.55), ("stand", -1, "happy"), dip=3)
     jo.cut(snap(t_gx + 0.25), ("stand", -1, "peaceful"), dip=3)
     jo.cut(snap(max(t_l0e + 0.6, t_rh - 0.1)), ("stand", -1, "happy"), dip=3)
     t_jstoop = snap(t_mtz + 0.3)
@@ -331,9 +331,9 @@ def build(ctx):
     t_jw = snap(max(t_jlift + 0.35, t_give2 - 0.3 * n_j - 0.45))
     t_jl = jo.walk(t_jw, [("cwalk", -1, "a", 0.0), ("cwalk", -1, "b", 0.0)], n_j, 0.3, adv_j, -1)
     t_jrecv = snap(max(t_jl + 0.3, t_give2 - 0.2))
-    jo.cut(t_jrecv, ("recv", -1, "awed", 0.0), dip=4)
+    jo.cut(t_jrecv, ("recv", -1, "happy", 0.0), dip=4)
     t_jin = snap(t_give2 + 0.42)
-    jo.cut(t_jin, ("recv", -1, "amazed", 0.5), dip=4)
+    jo.cut(t_jin, ("recv", -1, "overjoyed", 0.5), dip=4)
     jo.extra.append(lambda t: Tf(sy=1 + 0.006 * math.sin(2 * math.pi * (g0 + t) / 3.1 + 3)))
     jo.gates.append(shot1)
     jo.build(sc)
@@ -406,9 +406,9 @@ def build(ctx):
     c_j2 = Cam(712, 882, 1090)
     c_j3 = Cam(736, 886, 1120)
     c_jw = Cam(720, 872, 1300)
-    side1 = cam_path([(0.0, CAM_END), (1.0, CAM_END), (t_tai - 0.1, c_jw), (t_gx + 0.2, c_j), (max(t_l0e + 0.6, t_rh - 0.1), c_j1),
-                      (t_dg - 0.4, c_j2),
-                      (T_CUT, c_j3)], ["linear", "inout", "sine", "sine", "sine", "sine"])
+    t_in1 = max(t_lift + 0.75, 2.9)            # the push-in from the fade's end: log-space zoom, sine, peak ~0.56 ln/s
+    side1 = cam_path([(0.0, CAM_END), (1.0, CAM_END), (t_in1, c_jw), (t_gx + 0.2, c_j), (max(t_l0e + 0.6, t_rh - 0.1), c_j1),
+                      (t_dg - 0.4, c_j2), (T_CUT, c_j3)], ["linear", "sine", "sine", "sine", "sine", "sine"])
     c_s0 = Cam(1905, 1010, 1150)
     c_s1 = Cam(1890, 1004, 1190)
     c_s2 = Cam(1830, 972, 1440)

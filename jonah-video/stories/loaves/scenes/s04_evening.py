@@ -238,7 +238,6 @@ def build(ctx):
         t0 = snap(t_men + 0.02 + 0.07 * i)
         adv = dist / n / a.s
         exp = "worried" if i % 2 == 0 else "concerned"
-        a.cut(snap(t0 - 0.02), ("stand", exp, -1), dip=3)
         a.walk(t0, [(("walk_a", exp, -1), adv), (("walk_b", exp, -1), adv)], n, 0.27, -1)
         t_arrive[nm] = snap(t0 + n * 0.27)
         a.cut(t_arrive[nm], ("worried", "worried", -1), dip=4)

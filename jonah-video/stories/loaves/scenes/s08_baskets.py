@@ -7,7 +7,8 @@ disciples' hands at their cheeks, the boy's eyes wide, his family jumping up); t
 the boy looks at the full baskets and smiles.
 
 The lake_hillside world of s05 (same stage, seed, rock and slope), now at dusk; the crowd sits in its colourful groups
-(galilee_groups on lake_hillside_points()['groups']). The neighbours are page-turn dips: calm first / last frames.
+(galilee_groups on lake_hillside_points()['groups']). lake_hillside is drawn with trees=False: the trees (TREES8) stand
+in gaps between the groups on their own layers, depth-sorted with the group rows. The neighbours are page-turn dips: calm first / last frames.
 
 Beats (syllable onsets measured in the voice clips with the Noah film's voice_marks through the Nativity film's
 beat(); nothing hard-coded to the take). Times are for the current take:
@@ -23,7 +24,8 @@ beat(); nothing hard-coded to the take). Times are for the current take:
   ~14.05        hard cut: twelve full baskets in a row, the twelve standing proudly behind them, Jesus on the left,
                 the boy on the right
   '装满了' 14.18  a count bubble pops over each basket in turn, 1 .. 12, one every 0.25 s (a child can count along),
-                each basket giving a little hop; the twelfth (16.97, the score's full cadence) runs past the word
+                each basket giving a little hop; the twelfth (16.97, the score's full cadence) runs past the word;
+                all twelve numbers stay up together until ~19.0 (gone by 19.3, before '大家都好惊讶')
   ~17.2         a gloss card: the boy's little basket with five loaves ('5') on '五个饼' ... '还多得多' twelve big
                 baskets ('12')
   '大家都好惊讶'  the twelve put their hands to their cheeks, the boy's eyes go wide, his parents jump up amazed
@@ -46,7 +48,7 @@ from engine.motion import Cam, Tf
 from engine.scene import Scene
 from stories.loaves.scenes.s05_boy import (
     CLOUDS, FAR_Y, H5, K, LAKE_Y, LSEED, PTS, ROCK_X, W5, YF, YG, Fig, arrow_svg, beat, bk, breath, bump, card_svg,
-    cut_cam, dk, doc, f1, fk, haze_filter, jk, nod, pop_in, snap, squash, syl, zoom_cam)
+    cut_cam, depth_z, dk, doc, f1, fk, haze_filter, jk, nod, pop_in, snap, squash, syl, tree_at, tree_svg, zoom_cam)
 
 INK = S.P["ink"]
 T0, T1 = 0.8, 1.0                          # dusk: time of day at the start / end of the scene
@@ -63,6 +65,7 @@ FAMILY = [  # kind, variant, x, y, pose, facing - the boy's family (his mother f
 GATHER = [  # variant, x, y - the four gathering on the far side
     ("andrew", 2440, 1004), ("john", 2700, 1020), ("james", 2960, 1000), ("philip", 3215, 1016)]
 DROP_GROUPS = ((724, 890), (1781, 890), (2942, 890), (1170, 774))    # left out: the heroes need the front of the slope
+TREES8 = [(600, 0.72, "oak", 7), (1580, 0.64, "olive", 9)]           # in the gaps between the groups (s05: TREES5)
 
 Z_SKY, Z_BG, Z_GLINT, Z_GROUPS, Z_PIECES, Z_ROW_PEOPLE, Z_ROW, Z_PEOPLE, Z_NUM, Z_GLOSS, Z_FG, Z_TINT = (
     0, 1, 1.5, 3, 4, 5, 5.5, 7, 9, 10, 11, 12)
@@ -86,7 +89,8 @@ def bg_svg(time):
     body = PR.galilee_sky(0, 0, W5, FAR_Y + 140, time=time, sun=SUN8, clouds=0, birds=0, seed=LSEED, scale=1.0)
     body += PR.lake_hillside(0, W5, YF, 1.0, time=time, part="back", seed=LSEED, rock_x=ROCK_X, bottom=H5 + 30)
     body += PR.far_boat(2560, LAKE_Y - 16, 0.13, -1, sail="furled", crew=False, time=time)
-    body += PR.lake_hillside(0, W5, YF, 1.0, time=time, part="mid", seed=LSEED, rock_x=ROCK_X, bottom=H5 + 30)
+    body += PR.lake_hillside(0, W5, YF, 1.0, time=time, part="mid", seed=LSEED, rock_x=ROCK_X, bottom=H5 + 30,
+                             trees=False)          # the trees are own layers, depth-sorted with the seated groups
     return doc(body)
 
 
@@ -295,9 +299,16 @@ def build(ctx):
         y = grp[0][1]
         piv = (W5 / 2, y)
         frames = [groups_svg(grp, "sit_pat_tummy", 0.9, 40 + r), groups_svg(grp, "cheer", 0.9, 40 + r)]
-        sc.add(f"groups{r}", frames, z=Z_GROUPS + 0.01 * r, seed=500 + r,
+        sc.add(f"groups{r}", frames, z=depth_z(Z_GROUPS, y), seed=500 + r,
                frame_at=lambda t: 0.0 if t < t_cheer else 1.0,
                motion=M.combine(breath(piv, g0, 3.4 + 0.3 * r, 0.004, 0.2 * r), bump(t_cheer + 0.02 * r, 1.0, piv, 5, 0.3)))
+
+    for j, (x, d, kind, seed) in enumerate(TREES8):
+        tx, ty, k = tree_at(x, d)
+        sc.add(f"tree{j}", [tree_svg(x, d, kind, seed, tm) for tm in TIMES], z=depth_z(Z_GROUPS, ty) - 1e-4, seed=530 + j,
+               frame_at=frame_of_time(tod),
+               motion=lambda t, j=j, tx=tx, ty=ty: Tf(rot=0.5 * math.sin(2 * math.pi * ((t + g0) / 4.1 + 0.37 * j)),
+                                                      px=tx, py=ty))
 
     # leftover pieces on the grass (S1 / S2: gathered before the baskets are shown)
     left_pieces = [(1110, 1076, 5, 1), (1300, 1058, 6, 2), (1480, 1088, 5, 3), (1640, 1050, 4, 4), (1250, 1110, 4, 5),
@@ -465,13 +476,14 @@ def build(ctx):
     # ---------------------------------------------------------------- S4: the twelve baskets and the twelve
     rx, ry, rs = ROW
     xs = row_basket_xs(rx, rs)
+    t_num_out = snap(min(t_c[11] + 2.3, t_jy - 0.3))        # all twelve numbers together ~1.8 s, gone by 19.3
     for j in range(12):
         piv = (xs[j], ry)
         sc.add(f"basket{j}", row_svg(rx, ry, rs, 0.9, only=j), z=Z_ROW + 0.001 * j,
                motion=M.combine(lambda t: Tf(alpha=1.0 if t >= t_cut3 else 0.0), bump(t_c[j], 1.0, piv, 12, 0.24)))
         top = ry - 166 * rs - 40
         sc.add(f"num{j}", number_svg(xs[j], top, j + 1, 0.6), z=Z_NUM, wc=0,
-               motion=pop_in(t_c[j], (xs[j], top), dur=0.26, t1=snap(t_c[11] + 0.95), s0=0.3))
+               motion=pop_in(t_c[j], (xs[j], top), dur=0.26, t1=t_num_out, s0=0.3))
         sc.sfx("pop", t_c[j] + 0.01, gain_db=-17 - (j % 3), pan=-0.4 + 0.07 * j)
     # the twelve standing behind (two staggered lines)
     back = [(800 + 160 * i, 978, (2, 5, 7, 9, 11, 3)[i]) for i in range(6)]
@@ -548,7 +560,8 @@ def build(ctx):
     c6 = Cam(1480, 750, 1660)
     c7 = Cam(1250, 625, 2222)
     c8 = Cam(1660, 880, 1040)
-    camS4 = zoom_cam([(t_cut3, c4), (t_bi - 0.3, c4), (t_bi + 0.5, c5), (t_jy - 0.3, c5), (t_jy + 0.7, c6),
+    t_c45 = max(t_bi - 0.3, t_c[11] + 0.1)
+    camS4 = zoom_cam([(t_cut3, c4), (t_c45, c4), (t_c45 + 1.0, c5), (t_jy - 0.3, c5), (t_jy + 0.7, c6),
                       (t_djs - 0.2, c6), (t_djs + 1.0, c7), (t_xnh - 0.6, c7), (t_xnh + 1.9, c8), (T, c8)],
                      ["linear", "sine", "linear", "sine", "linear", "sine", "linear", "sine", "linear"])
     sc.camera = cut_cam([(0, camS1), (t_cut1, camS2), (t_cut2, camS3), (t_cut3, camS4)])

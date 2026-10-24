@@ -148,7 +148,7 @@ SCENES = [
         ],
     },
     {
-        "id": "s09_end", "transition": "dippaper", "mood": "end", "tail": 5.5,   # the 2 s answer pause, the end card, a hold, the fade-out
+        "id": "s09_end", "transition": "dippaper", "mood": "end", "tail": 5.7,   # the 2 s answer pause, the end card, a hold, the fade-out
         "note": "Ending: the modern child from the opening, sharing their lunch with the friend again, now with a happy "
                 "glow; a picture-book corner shows the boy giving his basket to Jesus; warm light; closing question "
                 "with a pause.",

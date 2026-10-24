@@ -6,7 +6,9 @@ goes back to the boy (a gloss card: one little basket = one boy's full tummy); t
 him his lunch with both hands; Jesus bends and takes it, smiling; the boy beams.
 
 One wide stage (the lake_hillside world at the golden hour, time 0.55, the same place as s03-s08); the neighbours
-are page-turn dips, so only calm first / last frames are needed.
+are page-turn dips, so only calm first / last frames are needed. lake_hillside is drawn with trees=False: the trees
+(TREES5) stand in gaps between the crowd clusters on their own layers, and trees and clusters are depth-sorted (z from
+their ground y), so no group is ever painted over a tree in front of it.
 
 Beats (syllable onsets measured in the voice clips with the Noah film's voice_marks through the Nativity film's
 beat(); nothing hard-coded to the take). Times are for the current take:
@@ -26,8 +28,10 @@ beat(); nothing hard-coded to the take). Times are for the current take:
   ~14.6         Andrew lifts it out of his hands (the basket travels on its own layer between the hands, no pop);
                 '带着' he holds it up: five loaves, two fish; '可是' his face turns doubtful
   '五个大麦饼'   one loaf pops up into the air on each syllable (1-5), '两' / '小' the two fish (1, 2)
-  '这么多人'     the camera glances back over the huge crowd on the hillside, then returns
-  '这一点点'     the counted loaves and fish shrink back into the basket; Andrew doubtful
+  '这么多人'     the camera glances over the huge crowd on the hillside (out 17.42-18.92, back 19.15-20.65, each a
+                gentle 1.5 s sine move)
+  '这一点点'     once the camera is back (20.55) the counted loaves and fish arc down into Andrew's basket one by one
+                and drop in at the rim (a soft pop); Andrew doubtful
   after the line Andrew hands the basket back down to the boy; the boy turns to Jesus holding it
   '五个饼'       a gloss card: the little open basket ... '只够' = one boy patting his full tummy
   '可是' 26.65   the boy looks up at Jesus; just before '交给' (28.58) he lifts the basket with both hands; Jesus
@@ -585,8 +589,30 @@ def add_clouds(sc, time, g0, z=Z_CLOUD):
 
 
 def hill_svg(time, part, **kw):
+    """lake_hillside without its own trees (trees=False): the trees are drawn on their own layers, depth-sorted with
+    the crowd, so no seated or standing group is ever painted over a tree that stands in front of it."""
     return doc(PR.lake_hillside(0, W5, YF, 1.0, time=time, part=part, seed=LSEED, rock_x=ROCK_X, bottom=H5 + 30,
-                                boat=None, **kw))
+                                boat=None, trees=False, **kw))
+
+
+# the hillside trees (x, depth fraction, kind, seed), placed in the gaps between the people of each scene; only left of
+# the hill's shoulder (x < 0.66 W), so they stand at the same depth y in every convention
+TREES5 = [(600, 0.72, "oak", 7), (2190, 0.60, "olive", 9)]
+
+
+def tree_at(x, d):
+    y, k = DEPTH(d)
+    return x, y, k
+
+
+def tree_svg(x, d, kind, seed, time):
+    tx, ty, k = tree_at(x, d)
+    return doc(f'<g filter="url(#wobble)">{PR._lf_tree(tx, ty, k, time, seed, kind)}</g>')
+
+
+def depth_z(z0, y):
+    """A z inside the crowd band for something standing on the ground at stage y (farther = lower)."""
+    return z0 + 0.5 * (y / H5)
 
 
 def boat_svg(time, x=2560):
@@ -789,11 +815,17 @@ def build(ctx):
 
     # ---------------------------------------------------------------- the world + the crowd
     add_world5(sc, g0)
-    for i, c in enumerate(CROWD5):
+    for i, c in enumerate(CROWD5):                     # depth-sorted: a farther cluster never covers a nearer one
         y, k = DEPTH(c[1])
+        y -= PTS["shoulder"](c[0] / W5) * c[1] ** 1.4
         piv = (c[0], y)
-        sc.add(f"crowd{i}", crowd_cluster_svg(*c), z=Z_CROWD + 0.01 * i, seed=300 + i,
+        sc.add(f"crowd{i}", crowd_cluster_svg(*c), z=depth_z(Z_CROWD, y), seed=300 + i,
                motion=breath(piv, g0, 3.3 + 0.21 * (i % 5), 0.006, 0.17 * i))
+    for j, (x, d, kind, seed) in enumerate(TREES5):
+        tx, ty, k = tree_at(x, d)
+        sc.add(f"tree{j}", tree_svg(x, d, kind, seed, TIME5), z=depth_z(Z_CROWD, ty) - 1e-4, seed=330 + j,
+               motion=lambda t, j=j, tx=tx, ty=ty: Tf(rot=0.5 * math.sin(2 * math.pi * ((t + g0) / 4.1 + 0.37 * j)),
+                                                      px=tx, py=ty))
 
     # ---------------------------------------------------------------- Jesus
     jf = Fig("jesus", (XJ, YG), Z_PEOPLE, g0, seed=11, shadow=120)
@@ -1000,8 +1032,13 @@ def build(ctx):
     CCX, CCY = bx + 10, 528
     loaf_xy = [(CCX - 176 + 88 * i, 454 + 8 * abs(i - 2)) for i in range(5)]
     fish_xy = [(CCX - 70, 566), (CCX + 70, 566)]
-    t_shrink = snap(t_dd[0] - 0.05)
-    t_gone = t_shrink + 0.7
+    # the glance at the crowd: out and back, each move 1.5 s (sine), around '这么多人'
+    t_out0 = snap(max(t_fishes[2] + 0.35, t_zmd - 1.0))
+    t_out1 = t_out0 + 1.5
+    t_back0 = snap(max(t_out1 + 0.2, t_ydd - 0.85))
+    t_back1 = t_back0 + 1.5
+    t_shrink = snap(max(t_dd[0] - 0.05, t_back1 - 0.1))      # the counted loaves go home once the camera is back
+    t_gone = t_shrink + 0.75
 
     def gather(t0, x, y, i, fly=True):
         """Pop in at t0; on '这一点点' shrink and fly back into Andrew's basket (numbers just fade)."""
@@ -1014,10 +1051,14 @@ def build(ctx):
             if not fly:
                 return Tf(alpha=v.alpha * (1 - M.progress(t, t_shrink, t_shrink + 0.18, "sine")), sx=v.sx, sy=v.sy,
                           px=x, py=y)
-            a0 = t_shrink + 0.05 * i
-            u = M.progress(t, a0, a0 + 0.34, "in")
-            return Tf(dx=(bx - x) * u, dy=(by - 24 - y) * u, sx=v.sx * (1 - 0.8 * u), sy=v.sy * (1 - 0.8 * u),
-                      alpha=v.alpha * (1 - M.progress(t, a0 + 0.24, a0 + 0.34, "sine")), px=x, py=y)
+            # an arc down into the basket, shrinking to the size of the loaves inside it; it drops in at the rim
+            a0 = t_shrink + 0.06 * i
+            u = M.progress(t, a0, a0 + 0.4, "inout")
+            land = M.progress(t, a0 + 0.4, a0 + 0.5, "in")
+            tx_, ty_ = bx + (i - 3) * 5, by - 8 * K
+            k_ = 1 - 0.7 * u
+            return Tf(dx=(tx_ - x) * u, dy=(ty_ - y) * u - 50 * math.sin(math.pi * u) + 10 * land,
+                      sx=v.sx * k_, sy=v.sy * k_, alpha=v.alpha * (1 - land), px=x, py=y)
         return m
     t_cloud = snap(t_loaf[0] - 0.22)
     cloud_m = pop_in(t_cloud, (CCX, CCY + 120), dur=0.32, s0=0.35)
@@ -1079,8 +1120,8 @@ def build(ctx):
     c_gloss = Cam(900, 650, 1480)
     c_offer = Cam(840, 725, 1250)
     camB = zoom_cam([(t_cut, c_b0), (t_zsh - 0.1, c_b1), (t_w0 + 0.2, c_walk), (t_w0 + 0.55 * (t_w1 - t_w0), c_mid),
-                     (t_stop + 0.5, c_two), (t_zl, c_two), (t_dz + 0.2, c_show), (t_zmd - 0.45, c_show),
-                     (t_zmd + 0.65, c_wide), (t_ydd - 0.3, c_wide), (t_ydd + 0.8, c_show2), (t_l2e + 0.1, c_show2),
+                     (t_stop + 0.5, c_two), (t_zl, c_two), (t_dz + 0.2, c_show), (t_out0, c_show),
+                     (t_out1, c_wide), (t_back0, c_wide), (t_back1, c_show2), (max(t_l2e + 0.1, t_back1 + 0.2), c_show2),
                      (t_wg + 0.6, c_gloss), (t_ks3 - 0.1, c_gloss), (t_jg + 0.2, c_offer), (T, c_offer)],
                     ["sine", "sine", "linear", "sine", "linear", "sine", "linear", "sine", "linear", "sine", "linear",
                      "sine", "linear", "sine", "linear"])
@@ -1098,6 +1139,7 @@ def build(ctx):
     sc.sfx("cloth", t_p0, gain_db=-18)
     sc.sfx("cloth", t_p1, gain_db=-15)
     sc.sfx("whoosh", t_shrink + 0.05, gain_db=-21)
+    sc.sfx("pop", t_shrink + 0.48, gain_db=-21)                          # they drop into the basket
     sc.sfx("cloth", t_r0, gain_db=-19)
     sc.sfx("pop", t_c0, gain_db=-19, pan=-0.3)
     sc.sfx("pop", t_eq + 0.15, gain_db=-19, pan=-0.3)

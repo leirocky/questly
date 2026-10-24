@@ -683,7 +683,9 @@ E_CROWD = [("man", 0, 1420, 0), ("woman", 7, 1545, 0), ("elder", 3, 1670, 0), ("
 E_JESUS_STOP = 1120                      # x where Jesus stops (y from depth .66)
 E_BOAT = (430, LY - 6)                   # the boat at the shore (fishing_boat, bow to the right)
 KB = HS * 0.38                           # the boat and its crew at the shore line
-E_BUB = (1580, 410)                      # the thought bubble's centre
+E_BUB = (1580, 410)
+E1_BOAT = (900, 686)                     # the far boat in the arrival shot (waterline, mid-lake, left of the crowd)
+E_POINTERS = {(0, 0), (2, 1)}            # (variant, row) of the runners who point back at it (the leftmost two)                      # the thought bubble's centre
 E_BUB_R = (300, 196)
 
 
@@ -700,8 +702,13 @@ def e_member(kind, v, x, row, key, side):
         p_ = ("arrive", "point", "arrive", "wave", "arrive", "point", "cheer")[j]
         if kind == "elder":
             p_ = "arrive"
+        f = 1
+        if (v, row) in E_POINTERS:            # these two turn back and point at the boat still out on the lake
+            p_, f = "point", -1
+        elif p_ == "point":
+            p_ = "wave"
         expr = "tired" if p_ == "arrive" else "eager"
-        return shadow(x, y, k, 100, 0.14) + folk(x, y, k, 1, kind=kind, v=v, pose=p_, expr=expr, phase=0.25 * q)
+        return shadow(x, y, k, 100, 0.14) + folk(x, y, k, f, kind=kind, v=v, pose=p_, expr=expr, phase=0.25 * q)
     # listen: facing Jesus; a couple of people change pose per variant q (shuffling, waving, pointing)
     f = -1
     p_ = ("stand_listen", "stand", "stand_listen", "point", "stand", "stand_listen", "wave")[j]
@@ -1099,10 +1106,12 @@ def build(ctx):
     # pointing at the boat that is still out on the lake)
     t_dao = tm.at(3, "比船还先到了", 4)
     t_arr = snap(t_dao - 0.12)
-    sc.add("e_farboat", [doc(PR.far_boat(1900, 708, 0.27, -1, sail="full", crew=True, time=H_TIME))], z=Z_H + 1.6, seed=SEED_H + 60,
-           wc=0.6, motion=M.combine(lambda t: Tf(dx=-300 * M.progress(t, t_E1, t_E2 + 0.4, lambda q: q),
-                                                 dy=18 * M.progress(t, t_E1, t_E2 + 0.4, lambda q: q) + 2 * math.sin(2 * math.pi * t / 3.1)),
-                                    gE1))
+    # the boat is still far out on the lake (small, mid-lake, left of where the crowd stops), gliding slowly to the shore
+    sc.add("e_farboat", [doc(PR.far_boat(E1_BOAT[0], E1_BOAT[1], 0.13, -1, sail="full", crew=True, time=H_TIME))], z=Z_H + 1.6,
+           seed=SEED_H + 60, wc=0.6,
+           motion=M.combine(lambda t: Tf(dx=-140 * M.progress(t, t_E1, t_E2 + 0.4, lambda q: q),
+                                         dy=6 * M.progress(t, t_E1, t_E2 + 0.4, lambda q: q) + 1.5 * math.sin(2 * math.pi * t / 3.1)),
+                            gE1))
     back = [m for m in E_CROWD if m[3] == 0]
     front = [m for m in E_CROWD if m[3] == 1]
     clusters = [("B", back, 700, 0.0), ("Fa", front[:5], 760, 0.08), ("Fb", front[5:], 820, 0.16)]
@@ -1149,32 +1158,77 @@ def build(ctx):
     crew.cut(snap(t_teng), ("stand", "awed"), dip=3)
     crew.extra.append(breathm(g0, 3.0, 0.008))
     crew.build(sc)
-    # Jesus in the boat, by the bow
+    # Jesus in the boat: two short steps to the bow, a crouch, a hop over the gunwale on '下' (a planted landing on the
+    # sand by the bow on '船'), then he walks down the grass to the people. Boat part on a layer between the hull's back
+    # and front (so the near hull hides his legs inside the boat); once he stands on the sand he hands over, in the same
+    # pose, place and scale, to a layer in front of the slope for the walk.
     bx, by = E_BOAT
-    jb_x = bx + 250 * KB / 0.475
+    jb_x = bx + 250 * KB / 0.475                  # where he stands in the boat
+    jb_bow = bx + 285 * KB / 0.475                # by the bow after two short steps
     t_step = snap(t_xia)
-    sc.add("e_jesus_boat", doc(jes(jb_x, by, KB, 1, pose="stand", expr="warm")), z=Z_H + 2.2, seed=SEED_H + 63,
-           motion=M.combine(lambda t: Tf(alpha=1.0 if t < t_step else 0.0), breathm(g0, 3.4, 0.008), gE2))
+    p_land = (bx + 420 * KB / 0.475, LY + 5)      # on the beach strip, clear of the slope's edge
+    t_s1 = snap(max(t_E2 + 0.12, t_step - 0.6))
+    t_s2 = snap(t_step - 0.34)
+    t_hop = snap(t_step - 0.06)                   # the crouch's bottom; take-off just after
+    t_h0, t_h1 = t_hop + 0.05, snap(t_hop + 0.5)  # airborne
+    HOP_H = 120.0 * KB / 0.475
+
+    def jb_markup(key):
+        pose, expr = key[0], key[1]
+        return jes(jb_x, by, KB, 1, pose=pose, expr=expr)
+
+    def jb_ground(t):
+        """(x, ground y, lift) of his feet."""
+        if t < t_h0:
+            x = jb_x + (jb_bow - jb_x) * (0.5 * M.progress(t, t_s1 - 0.05, t_s1 + 0.09, "sine") +
+                                           0.5 * M.progress(t, t_s2 - 0.05, t_s2 + 0.09, "sine"))
+            return x, by, 0.0
+        u = M.progress(t, t_h0, t_h1, "linear")
+        x = jb_bow + (p_land[0] - jb_bow) * (u * (1.35 - 0.35 * u))
+        y = by + (p_land[1] - by) * u
+        return x, y, HOP_H * 4 * u * (1 - u)
+
+    def jb_motion(t):
+        x, y, lift = jb_ground(t)
+        k = hk(y) / KB
+        land = 0.0
+        if t_h1 <= t <= t_h1 + 0.26:
+            land = math.sin(math.pi * (t - t_h1) / 0.26)
+        return Tf(dx=x - jb_x, dy=y - by - lift + 5 * KB * land, sx=k, sy=k * (1 - 0.055 * land), px=jb_x, py=by)
+    t_sw = snap(t_h1 + 0.3)                       # the hand-over to the land layer (both 'stand', same place)
+    jb = Actor("e_jesus_boat", (jb_x, by), KB, jb_markup, Z_H + 2.2, SEED_H + 63, g0,
+               lambda t: Tf(alpha=gE2(t).alpha * (1.0 if t < t_sw else 0.0)))
+    jb.cut(0, ("walk_b", "warm"))
+    jb.cut(t_s1, ("walk_a", "warm"))
+    jb.cut(t_s2, ("walk_b", "warm"))
+    jb.dips.append((t_hop, 9))
+    jb.cut(t_h1, ("stand", "warm"))
+    jb.extra.append(jb_motion)
+    jb.extra.append(breathm(g0, 3.4, 0.008))
+    jb.build(sc)
+    sc.sfx("whoosh", t_h0, gain_db=-24)
     sc.add("e_boat_front", e_boat_part("front"), z=Z_H + 2.3, seed=SEED_H + 64, motion=gE2)
-    # on land: steps off at the bow, then walks down the grass to the people (growing as he comes nearer)
+    # on land: walks down the grass to the people (growing as he comes nearer)
     y_stop, k_stop = hy_d(0.66, E_JESUS_STOP)
-    p_land = (bx + 420 * KB / 0.475, LY + 12)
     p_stop = (E_JESUS_STOP, y_stop)
     n_w = 6
-    w_per = 0.26
-    t_w0 = snap(t_step + 0.42)
+    w_per = 0.24
+    t_w0 = snap(t_h1 + 0.36)
     t_w1 = snap(t_w0 + n_w * w_per)
 
     def jesus_e_markup(key):
         pose, expr = key[0], key[1]
         return shadow(*p_stop, k_stop, 110, 0.16) + jes(*p_stop, k_stop, 1, pose=pose, expr=expr)
     je = Actor("e_jesus", p_stop, k_stop, jesus_e_markup, Z_H + 5.5, SEED_H + 65, g0,
-               lambda t: Tf(alpha=gE2(t).alpha * (1.0 if t >= t_step else 0.0)))
+               lambda t: Tf(alpha=gE2(t).alpha * (1.0 if t >= t_sw else 0.0)))
     je.cut(0, ("stand", "warm"))
     for q in range(n_w):
         je.cut(t_w0 + q * w_per, ("walk_a" if q % 2 == 0 else "walk_b", "warm"))
-    je.cut(t_w1, ("stand", "warm"), dip=3)
     t_lk = snap(t_xin - 0.05)
+    if t_lk - t_w1 >= 0.5:
+        je.cut(t_w1, ("stand", "warm"), dip=3)
+    else:                                         # no time for a stand: from the last stride into the kind look
+        t_lk = t_w1
     je.cut(t_lk, ("look_kind", "kind"), dip=3)
     je.cut(snap(t_tamen + 0.2), ("look_kind", "warm"), dip=2)
 
@@ -1190,12 +1244,12 @@ def build(ctx):
         k = hk(y) / k_stop
         return Tf(dx=x - p_stop[0], dy=y - p_stop[1], sx=k, sy=k, px=p_stop[0], py=p_stop[1])
     je.extra.append(je_motion)
-    je.extra.append(hopm(t_step + 0.02, k_stop, 14, 0.24))
     je.extra.append(breathm(g0, 3.4, 0.008))
     je.blinks([t_w1 + 0.6, t_teng + 1.1, t_buzhi + 0.3], {("stand", "warm"): ("stand", blink("warm")),
                                                           ("look_kind", "warm"): ("look_kind", blink("warm"))})
     je.build(sc)
-    sc.sfx("splash_small", t_step, gain_db=-16)
+    sc.sfx("thud", t_h1, gain_db=-22)
+    sc.sfx("splash_small", t_h0, gain_db=-22)
     sc.sfx("footsteps", t_w0, dur=n_w * w_per, gain_db=-20)
     # the soft warm light on his face (a wide soft glow over his face and chest, never a halo)
     head_x, head_y = p_stop[0] + 10 * k_stop, p_stop[1] - 270 * k_stop
