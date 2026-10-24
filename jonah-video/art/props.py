@@ -1,5 +1,5 @@
 """Creatures, vehicles, plants, buildings and props for the Jonah, Daniel, David, Noah, Joseph, Storm, Nativity, Lost
-Sheep and Zacchaeus picture-book videos.
+Sheep, Zacchaeus and Loaves picture-book videos.
 
 Every public drawing function returns SVG markup — one ``<g filter="url(#wobble-fine)">…</g>``, no ``<svg>``
 wrapper — to be placed inside ``art.style.svg_doc(...)``. Shapes use the ``art.style.P`` palette, umber ink
@@ -1517,6 +1517,119 @@ and front, the booth, the house views, the grove, the festival back and the room
 people, the coins and small things, and use pre-rendered flipbooks of quantised values for time-of-day changes, the tree's
 sway (2-3 frames), the crowd parting (5 frames), the chest (5 frames), the glosses (8 frames) and the bunting (3-4 frames).
 
+15. LOAVES FILM (John 6:1-14, Mark 6:30-44)   sheets: python3 tools/props_sheet.py loaves_items loaves_baskets loaves_hillside
+-------------------------------------------                loaves_shore loaves_high loaves_modern (each <= 2000 px wide)
+                                                 (+ characters_loaves_group.png / _crowds.png: people with props)
+Person scale as everywhere (adult 330 px; the boy ~238). Jesus, the disciples, the boy, the Galilee crowd and the school
+children are in art/characters.py (LOAVES FILM). Everything here is a new design with this film's own look: a lush emerald
+hillside above the Sea of Galilee in warm amber late-afternoon light that turns golden, then a rose-violet dusk; red
+anemones and yellow crown daisies in the grass; woven honey wicker baskets (not the Storm film's lake shots, the Lost Sheep's
+spring hills or Jericho's valley). TIME OF DAY: the functions of the hillside world take time = 0..1 or a name of LF_TIMES
+('afternoon' 0, 'golden' .5, 'dusk' 1); the colours (sky, far hills, lake, the grass greens, rocks, paths, towns, a warm
+tint for the props) are interpolated between those keys - quantise a change (0, .25, .5, .75, 1) and cross-fade.
+THE LOAVES, THE FISH AND THE BASKETS
+barley_loaf(x, y, scale=1.0, facing=1, state='whole', rot=0.0, time=0.0, seed=0)   Anchor: its centre. A small round flat
+    barley loaf in 3/4 view (~46 x 34 at person scale): a golden-brown domed top, a darker crust, baked dimples, barley
+    flecks. LOAF_STATES: whole (-25, -18, 24, 21) | half (torn in two, the cream crumb showing) | broken (the halves apart,
+    (-33, -18, 34, 22)) | piece (a torn chunk, (-15, -14, 15, 15)) | pieces (three chunks).
+dried_fish(x, y, scale=1.0, facing=1, state='whole', rot=0.0, time=0.0)   Anchor: its centre, head toward facing. A small
+    salted, sun-dried fish (~57 px): silvery tan, a darker back, a round eye, fins, a forked tail. FISH_STATES: whole (-31,
+    -13, 26, 8) | half (the tail half) | piece (the head half) | pair (two fish tied by the tails, (-32, -20, 36, 20)).
+    (small_fish, section 5, is the Jonah film's swimming fish.)
+lunch_basket(x, y, scale=1.0, facing=1, state='closed', rot=0.0, time=0.0)   Anchor: bottom centre; (-49, -92, 48, 3) with its
+    handle. The boy's little round lunch basket of honey wicker with an arched handle: LUNCH_STATES closed (a cream cloth with
+    a blue stripe tucked over it) | open (the cloth folded back: five round barley loaves and two small fish) | empty.
+    LUNCH_BASKET_RIM = (0, -40) (the rim's middle), LUNCH_BASKET_HANDLE = (0, -92). characters.the_boy() carries it,
+    characters.jesus(pose='look_up_bless' / 'smile_boy') and disciples(pose='show_lunch') hold it.
+wicker_basket(x, y, scale=1.0, facing=1, fill=1.0, food='mixed', handles=True, rot=0.0, time=0.0, seed=0)   Anchor: bottom
+    centre; empty (-82, -120, 82, 3), full (-82, -166, 82, 3). A big round basket for the leftovers (~132 wide at the rim,
+    104 tall: to an adult's thigh): a flared woven body, a thick rolled rim (WICKER_RIM_Y = -104, WICKER_W = 132), two rope
+    loop handles; fill 0 empty | .25-.75 torn bread just inside the rim | 1 heaped up in a lumpy mound of torn bread with
+    pieces of fish (BASKET_FOODS 'mixed') or bread only ('bread'). Quantise fill (0, .25, .5, .75, 1).
+baskets_row(x, y, scale=1.0, n=12, fill=1.0, gap=150, rows=2, time=0.0, seed=0)   Anchor: the bottom of the front row
+    (n=12 at scale .5: (-229, -96, 251, 2)). Twelve full baskets in two rows (6 + 6), the back row 34*scale higher and 6%
+    smaller: '装满了十二个篮子'.
+bread_pieces(x, y, scale=1.0, n=7, spread=150, fish=True, time=0.0, seed=0)   Anchor: the middle of the scatter (n 7:
+    (-55, -25, 77, 28)). Leftover pieces lying on the grass (flattened, with soft shadows) for the disciples to gather.
+galilee_flower(x, y, scale=1.0, kind='anemone', sway=0.0, time=0.0)   Anchor: the stem's foot; (-14, -47, 10, 1).
+    LF_FLOWERS anemone (red, the Galilee spring flower) | daisy (yellow crown daisy) | white (chamomile).
+THE SKY, THE HILLSIDE AND THE ROCK
+galilee_sky(x0, y0, x1, y1, time=0.0, sun=None, clouds=1.0, birds=0, phase=0.0, seed=0, scale=1.0)
+    ABSOLUTE box (clipped). A clear warm blue fading to a creamy horizon (afternoon), the golden hour, a rose-violet dusk;
+    sun=(x, y) a big soft sun with a wide amber halo; clouds 0..1 soft lit cumulus banks without ink, a warm rim on top,
+    drifting with phase (1-3 frames); birds n swallows. scale sizes the sun / clouds (use the scene scale).
+lake_hillside(x0, x1, y, scale=1.0, time=0.0, part='all', seed=0, bottom=None, lake_y=None, rock_x=None, flowers=1.0,
+              boat=None, towns=True, trees=True, rock=True, phase=0.0)
+    ABSOLUTE coordinates (sky not included: galilee_sky above it down to about lake_y - 400*scale). y = the front line of the
+    slope (the nearest seated group); the grass rises to the lakeshore at lake_y (default y - 430*scale), the lake runs to
+    the far shore at lake_y - 150*scale under the far hills; bottom default y + 260*scale. part 'back': the far hills
+    (a blue-violet range, rolling golden-tan hills with green patches, an olive shore ridge with little trees, haze), two
+    little lakeside towns, the lake with ripples and a glittering path late in the day, two small boats and the disciples'
+    boat at boat=x (far_boat: full sail, furled after time .6), the beach and reeds | 'mid': the emerald slope (a gradient,
+    soft contour bands, dappled sunlit patches, the hill's grassy shoulder rising on the right, an amber glaze strongest
+    on the sun's side), the footpath down to the shore, oak / olive trees with long shadows late in the day, rocks, grass
+    tufts, flower patches, the teaching rock at rock_x (rock=False: none) | 'front': big grass blades, flowers and stones at
+    the bottom corners | 'all'. Seated groups go between 'mid' and 'front' (galilee_groups(groups=points['groups'])).
+lake_hillside_points(x0, x1, y, scale=1.0, lake_y=None, rock_x=None, seed=0) -> {'lake_y', 'far_y', 'rock': (x, y, k) the
+    teaching rock's anchor and its perspective factor (draw the rock and Jesus at scale*k), 'groups': [(x, y, k), ...] the
+    centres of the seated groups' areas from the lake (k ~.45) to the front (k ~.88), kept off the rock and the footpath,
+    'path': [(x, y), ...] the footpath from the front to the shore, 'depth': d -> (y, k) for a depth fraction d (0 = the
+    front line, 1 = the lakeshore), 'shoulder': u -> px the grassy shoulder's rise at the fraction u of the width}.
+teaching_rock(x, y, scale=1.0, facing=1, time=0.0, seed=0, flowers=True)   Anchor: the ground under Jesus's seat;
+    (-239, -146, 141, 21). A big rounded limestone rock with a flat seat at TEACH_ROCK_SEAT = (-20, -70) (70 up = the seat
+    of jesus 'sit' / 'teach' / 'sit_teach'), its hump behind him (facing = the way his knees point), a step stone, lichen,
+    cracks, moss, grass and anemones: teaching_rock(x, y, s, f) + characters.jesus(x, y, s, f, pose='sit_teach').
+THE LAKESHORE PATH AND THE BOAT
+lakeshore_path(x0, x1, y, scale=1.0, time=0.0, part='all', seed=0, bottom=None, boat=None, towns=True, flowers=1.0, phase=0.0)
+    ABSOLUTE coordinates (sky not included). y = the middle of the path where the crowd runs (about y - 50*scale .. y +
+    50*scale, gently waving). part 'back' (the far hills, a town on the far shore, the lake with glints, the disciples' boat
+    sailing at boat=x (None = no boat), the beach and reeds down to y - 120*scale) | 'path' (a grassy bank with a fishing
+    village of pale houses and palms at the left, flowers, the packed-earth path with pebbles and footprints, the verge
+    with anemones and rocks down to bottom, default y + 240*scale) | 'front' (reeds and a boulder at the near corners) |
+    'all'. People: back -> path -> characters.galilee_crowd(x, y, s, f, pose='run') -> front.
+far_boat(x, y, scale=0.12, facing=1, sail='full', crew=True, time=0.0)   Anchor: its waterline middle, bow toward facing;
+    (-93, -117, 94, 16) at 0.12. The disciples' boat (fishing_boat's colours: a linen sail with three patches, the faded
+    blue-green strake, the curled stern post, the painted eye) seen FAR away, in fishing_boat's scale units (BOAT_LEN = 1500
+    at scale 1: use 0.06-0.25), ink ~2.4 px at any scale; crew=True the tiny heads of the twelve and Jesus (cream and red)
+    at the stern; sail 'full' | 'furled' | 'none'. Glints on the water.
+THE HIGH-ANGLE VIEW (the garden beds)
+hillside_high(x0, y0, x1, y1, time=0.0, seed=0, lake=True, rows=4, cols=None, rock=True, trees=True)
+    ABSOLUTE box (clipped). The hillside seen from high above: emerald grass filling the frame with mown stripes, lighter
+    flattened patches where the groups sit, trees seen from above (round crowns, long shadows), rocks, flower dots; at the top
+    (lake=True) the beach and a strip of the lake with glints; the teaching rock with a short path (rock=True). Fill it with
+    characters.garden_beds(x0, y0, x1, y1, seed=seed, rows=rows, cols=cols, lake=lake) - the SAME box and arguments.
+hillside_high_points(x0, y0, x1, y1, rows=4, cols=None, seed=0, lake=True, rock=True) -> {'beds': [(cx, cy, w, h, k), ...] the
+    group patches row by row from the top (far, k ~.6) to the bottom (k ~1), big beds (about a hundred people) and small ones
+    (about fifty) with grass paths between, 'rock': (x, y, k) where Jesus sits, 'shore_y'}.
+THE MODERN FRAME (the park picnic, s02 / s09)
+city_park(x0, x1, y, scale=1.0, part='all', seed=0, bottom=None)   ABSOLUTE coordinates; y = the line where the picnic
+    blanket's near edge lies. part 'back': a bright cyan sky with soft clouds and a red kite, a skyline of pale modern
+    buildings, plane trees, poplars and a pink blossoming cherry, a curving cream path with a bench and a lamp post, a pond
+    with two ducks, a little yellow playground climbing frame, flower beds, the lawn down to bottom (default y + 220*scale)
+    | 'front' (daisies and grass tufts at the near corners) | 'all'. Not the street festival, the supermarket or the
+    bedroom. ~2 x a figure: a static layer.
+picnic_blanket(x, y, scale=1.0, facing=1, width=560, color=None, part='all')   Anchor: the middle of its NEAR edge;
+    (-286, -156, 285, 18) at width 560. A sky-blue and white gingham blanket (color=... changes the blue) with a sunny yellow
+    border and tassels in 3/4 view; the far edge PICNIC_BLANKET_DEPTH = 150 higher. part 'back' (the blanket) | 'front' (the
+    near border and tassels) | 'all': the children sit between them (anchors = their seats, y .. y - 90*scale).
+lunchbox(x, y, scale=1.0, facing=1, state='closed', lid=None)   Anchor: bottom centre; closed (-45, -38, 45, 1), open (-45,
+    -60, 45, 1). A coral bento box in 3/4 view with a cream clip lid and a sun sticker: LUNCHBOX_STATES closed | open (a
+    sandwich in two triangle halves, strawberries, carrot sticks) | half (one half given away) | empty; lid 0..1 animates
+    the opening. characters.child(outfit='school') holds it on her lap.
+sandwich_half(x, y, scale=1.0, facing=1, rot=0.0, bite=0.0)   Anchor: the middle of its bottom edge; (-18, -30, 16, 1). One
+    triangle sandwich half (crust on two sides, lettuce and cheese along the cut); bite 0..1.
+Constants: LF_TIMES, LF_LOAF, LF_LOAF_DARK, LF_LOAF_LIGHT, LF_CRUMB, LF_FISH, LF_FISH_BACK, LF_WICKER, LF_WICKER_DARK,
+LF_WICKER_LIGHT, LF_CLOTH, LF_CLOTH_STRIPE, ANEMONE, CROWN_DAISY, LUNCH_COLOR (colours); LOAF_STATES, FISH_STATES,
+LUNCH_STATES, LUNCH_BASKET_RIM, LUNCH_BASKET_HANDLE, WICKER_RIM_Y, WICKER_W, BASKET_FOODS, LF_FLOWERS, TEACH_ROCK_SEAT,
+LUNCHBOX_STATES, PICNIC_BLANKET_DEPTH.
+RENDER COST (2112 x 1188 layer, uncached, measured where jesus takes 0.22 s): teaching_rock, wicker_basket, picnic_blanket,
+the loaves / fish / baskets 0.21-0.24 s, baskets_row (12) 0.27 s; galilee_sky + lake_hillside (all) 1.05 s (mid alone 0.84),
+galilee_sky + lakeshore_path 0.75 s, hillside_high 1.4 s (+ characters.garden_beds 2.2 s), city_park 0.88 s. STATIC-LAYER ADVICE: render the sky, the hillside's back / mid / front, the
+lakeshore path, the high view (+ garden beds), the park and the seated groups once on static layers; animate only the
+people in front, the bread in the hands, the boat (move the far_boat layer) and small things, and use pre-rendered
+flipbooks of quantised values for time-of-day changes (5 steps), the breaking (6 frames), hand_out / gather (6 frames) and
+the lunchbox lid (5 frames).
+
 Helpers / constants
 -------------------
 local_to_stage(x, y, scale, facing, lx, ly) -> (stage_x, stage_y); castor_height(growth);
@@ -1532,7 +1645,8 @@ buildings daniel david_items ... noah_ark noah_animals noah_pairs noah_weather n
 joseph_animals joseph_egypt storm_boat storm_lake storm_weather storm_items storm_story nativity_stable
 nativity_animals nativity_places nativity_sky nativity_journey nativity_items nativity_home lost_sheep_hills
 lost_sheep_flock lost_sheep_lamb lost_sheep_places lost_sheep_items lost_sheep_modern zacchaeus_tree zacchaeus_street
-zacchaeus_house zacchaeus_coins zacchaeus_grove zacchaeus_modern]``
+zacchaeus_house zacchaeus_coins zacchaeus_grove zacchaeus_modern loaves_items loaves_baskets loaves_hillside loaves_shore
+loaves_high loaves_modern]``
 -> build/preview/props_*.png (red cross = anchor, dashed figure = 330 px adult at the same scale).
 """
 import hashlib
@@ -16636,3 +16750,1387 @@ def evening_room(x0, x1, y, scale=1.0, glow=0.8, seed=0, door_x=None, window_x=N
         out += f'<rect x="{_f(x0 - 40)}" y="{_f(top)}" width="{_f(x1 - x0 + 80)}" height="{_f(bottom - top + 40)}" fill="#ffd27a" opacity="{0.08 * g:.3f}"/>'
     del time
     return f'<g filter="url(#wobble-fine)">{out}</g>'
+
+
+# ====================================================================== 15. Loaves film (John 6:1-14, Mark 6:30-44)
+# A lush emerald hillside above the Sea of Galilee in warm amber late-afternoon light that turns golden, then dusk: the
+# barley loaves and the dried fish, the boy's little basket, the big wicker baskets and the bread pieces, the hillside
+# over the lake with the teaching rock, the lakeshore path with distant towns and the disciples' boat far out, the
+# high-angle view for the garden-bed shot; the modern park picnic. Module doc section 15 (LOAVES FILM).
+
+LF_TIMES = {"afternoon": 0.0, "golden": 0.5, "dusk": 1.0}
+_LF_KEYS = [
+    (0.0, dict(sky=("#6fb2da", "#9ecbe0", "#d2e2d2", "#f2e2b4", "#f8d79c"), sun="#fff2c4", sun_halo="#ffdf96",
+               cloud="#fdf4e2", cloud_sh="#d6cfc0", cloud_rim="#fff2cc",
+               far=("#aab0cc", "#d8b480", "#8aa064"), far_sh="#a08068", haze="#f0e2c4", lake=("#62b2c4", "#3a8ca8", "#2a7290"),
+               glit="#fff4cc", grass=("#5fb266", "#44a058", "#32884a", "#8ccc70"), grass_dk="#2a7442", grass_lt="#c2e07e",
+               rim="#f2e09a", earth="#b98a5a", path="#dcc08e", path_dk="#b8946a", rock="#d2c2a2", rock_dk="#a08e74",
+               rock_lt="#efe4ca", leaf="#3f8c4c", leaf_lt="#78bc5c", leaf_dk="#2a6640", bark="#86684e", town="#f1e6cc",
+               town_dk="#b8a488", roof="#c98a5a", reed="#a2ac5c", sand="#e8d2a0", tint=("#ffffff", 0.0), shadow="#1f5a3a",
+               glow=0.0)),
+    (0.5, dict(sky=("#86acc8", "#c8c2a8", "#efc68e", "#f8cf88", "#fbe2a6"), sun="#ffe6a0", sun_halo="#ffcf7a",
+               cloud="#fde8c4", cloud_sh="#d8b494", cloud_rim="#fff0c0",
+               far=("#c4a8a4", "#dcaa76", "#9a9a58"), far_sh="#a87a66", haze="#f2d6a6", lake=("#8ab4b8", "#4a8aa0", "#2e6e8a"),
+               glit="#ffe2a0", grass=("#70b05c", "#56a050", "#3c8646", "#9ccc68"), grass_dk="#2e6e40", grass_lt="#c4dc7c",
+               rim="#ffd27a", earth="#c08a52", path="#e2bc84", path_dk="#bc8e60", rock="#dcc29a", rock_dk="#a8886a",
+               rock_lt="#f4e0c0", leaf="#4a8846", leaf_lt="#8cbc58", leaf_dk="#30603c", bark="#8e6a4a", town="#f6e2c0",
+               town_dk="#c09c78", roof="#d08a52", reed="#b4ac58", sand="#efd09a", tint=("#f6b05a", 0.15), shadow="#2a4a34",
+               glow=0.45)),
+    (1.0, dict(sky=("#5c629c", "#9a7ca4", "#de9c88", "#f2b27e", "#f8cc90"), sun="#ffcf90", sun_halo="#f8a878",
+               cloud="#f2c4b4", cloud_sh="#a88aa4", cloud_rim="#ffd8b0",
+               far=("#8c7c9e", "#a8849a", "#6c7a64"), far_sh="#6e5a7a", haze="#e6b4a4", lake=("#9a9cb8", "#5c6e9c", "#3e5280"),
+               glit="#ffd2a0", grass=("#5a9460", "#467e54", "#336446", "#78a868"), grass_dk="#26503a", grass_lt="#a4bc7c",
+               rim="#f8b884", earth="#a87a5a", path="#c8a488", path_dk="#9a7c6a", rock="#bca898", rock_dk="#8a7a78",
+               rock_lt="#dccabc", leaf="#3e7048", leaf_lt="#6c9a5c", leaf_dk="#2a4a3a", bark="#76604e", town="#e8cfc0",
+               town_dk="#a88c84", roof="#b87a5e", reed="#8c8a5c", sand="#d8b498", tint=("#c87a8a", 0.22), shadow="#2a3048",
+               glow=1.0)),
+]
+_LF_CACHE = {}
+LF_LOAF = "#d9a250"            # barley loaves: warm golden-brown crust, a cream crumb
+LF_LOAF_DARK = "#a8702e"
+LF_LOAF_LIGHT = "#efc678"
+LF_CRUMB = "#f3e2b4"
+LF_FISH = "#c9b48a"            # small dried fish: silvery tan with a darker back
+LF_FISH_BACK = "#7f7258"
+LF_WICKER = "#d4a35a"          # woven wicker: honey, with darker and lighter strands
+LF_WICKER_DARK = "#9c6c34"
+LF_WICKER_LIGHT = "#ecc884"
+LF_CLOTH = "#f1e6cc"           # the boy's basket cloth: cream with a blue stripe
+LF_CLOTH_STRIPE = "#4f86b8"
+ANEMONE = "#d8433c"            # the red anemones of the Galilee spring
+CROWN_DAISY = "#f2c33c"
+
+
+def _lf_t(time):
+    if isinstance(time, str):
+        if time not in LF_TIMES:
+            raise ValueError(f"unknown time {time!r}; choose from {tuple(LF_TIMES)} or a number 0..1")
+        return LF_TIMES[time]
+    return _clamp(time)
+
+
+def _lf_pal(time):
+    """The hillside's colours at time 0 (warm afternoon) .. .5 (golden hour) .. 1 (dusk)."""
+    t = round(_lf_t(time), 3)
+    if t in _LF_CACHE:
+        return _LF_CACHE[t]
+    for (t0, a), (t1, b) in zip(_LF_KEYS, _LF_KEYS[1:]):
+        if t0 <= t <= t1:
+            u = _smooth((t - t0) / (t1 - t0))
+            out = {}
+            for k, v in a.items():
+                w = b[k]
+                if isinstance(v, tuple) and k == "tint":
+                    out[k] = (S.mix(v[0], w[0], u), v[1] + (w[1] - v[1]) * u)
+                elif isinstance(v, tuple):
+                    out[k] = tuple(S.mix(c0, c1, u) for c0, c1 in zip(v, w))
+                elif isinstance(v, float):
+                    out[k] = v + (w - v) * u
+                else:
+                    out[k] = S.mix(v, w, u)
+            _LF_CACHE[t] = out
+            return out
+    return _LF_KEYS[0][1]
+
+
+def _lft(col, time, k=1.0):
+    """Tint any colour toward the hillside light at `time` (amber, then rose-violet at dusk)."""
+    c, a = _lf_pal(time)["tint"]
+    return S.mix(col, c, a * k) if a > 0 else col
+
+
+# ---------------------------------------------------------------------- the loaves and the fish (local markup)
+def _barley_loaf(state="whole", time=0.0, rot=0.0, seed=0):
+    """One small round flat barley loaf in 3/4 view (local, anchor = its centre; whole loaf ~46 x 34 px at person scale):
+    a golden-brown domed top with a darker crust ring, a few baked dimples and barley flecks. state 'whole' | 'half'
+    (torn in two: the cream crumb shows along the torn edge) | 'broken' (both halves a little apart) | 'piece' (a torn
+    chunk) | 'pieces' (three chunks)."""
+    col, dk, lt = _lft(LF_LOAF, time, 0.6), _lft(LF_LOAF_DARK, time, 0.6), _lft(LF_LOAF_LIGHT, time, 0.6)
+    crumb = _lft(LF_CRUMB, time, 0.6)
+    rng = random.Random(seed)
+    out = ""
+
+    def flecks(cx, cy, rx, ry, n):
+        s_ = ""
+        for i in range(n):
+            a = rng.uniform(0, 2 * math.pi)
+            r = rng.uniform(0.15, 0.8)
+            s_ += _ell(cx + rx * r * math.cos(a), cy + ry * r * math.sin(a), 1.6, 1.0, lt, 0, extra='opacity="0.9"')
+        return s_
+
+    if state == "whole":
+        out += _ell(0, 5, 23, 15, dk, 3.2)
+        out += _ell(0, 0, 23, 15, col, 3.2)
+        out += _ell(-2, -3, 15, 9, lt, 0, extra='opacity="0.7"')
+        for i in range(6):
+            a = math.radians(30 + 60 * i)
+            x, y = 12 * math.cos(a), 7.5 * math.sin(a) - 1
+            out += _p(f"M{_f(x - 2.6)},{_f(y)} q2.6,2 5.2,0", sw=1.8, stroke=dk, extra='opacity="0.8"')
+        out += flecks(0, -1, 17, 10, 7)
+        out += _ell(-7, -6, 4.5, 2.2, HILITE, 0, extra='opacity="0.55"')
+    elif state in ("half", "broken"):
+        d = 6 if state == "broken" else 0
+        for sgn in (-1, 1):
+            dx = sgn * (3 + d)
+            tear = [(dx, -15), (dx + sgn * 2.5, -9), (dx - sgn * 1.5, -4), (dx + sgn * 2.0, 2), (dx - sgn * 1.0, 8), (dx + sgn * 1.5, 14)]
+            arc = [(dx + sgn * 23 * math.sin(math.radians(a)), 15 * -math.cos(math.radians(a))) for a in range(10, 171, 20)]
+            body = tear[::-1] if sgn > 0 else tear
+            pts = arc + tear[::-1] if sgn > 0 else arc + tear[::-1]
+            out += _p("M" + " L".join(f"{_f(x)},{_f(y + 5)}" for x, y in pts) + " Z", dk, 3.0)
+            out += _p("M" + " L".join(f"{_f(x)},{_f(y)}" for x, y in pts) + " Z", col, 3.0)
+            out += _p("M" + " L".join(f"{_f(x)},{_f(y)}" for x, y in tear) + f" L{_f(dx + sgn * 6)},{_f(12)} L{_f(dx + sgn * 7)},{_f(-12)} Z",
+                      crumb, 0)
+            out += _p("M" + " L".join(f"{_f(x)},{_f(y)}" for x, y in tear), sw=2.6)
+            for j in range(4):
+                out += _circ(dx + sgn * rng.uniform(2, 6), rng.uniform(-10, 10), 1.3, S.shade(crumb, -0.18), 0)
+            out += flecks(dx + sgn * 13, -2, 7, 8, 3)
+            del body
+    elif state == "piece":
+        crust = "M-6,-12 Q8,-14 14,-4 Q16,6 8,11 L4,6 L7,1 L2,-2 L5,-7 L-1,-6 L-3,-10 Z"
+        torn = "M-6,-12 L-3,-10 L-1,-6 L5,-7 L2,-2 L7,1 L4,6 L8,11 Q-2,13 -10,8 Q-15,2 -12,-6 Z"
+        out += _p("M-12,-2 Q-16,8 -8,13 Q4,16 10,13 L12,6 Z", dk, 2.4)
+        out += _p(torn, crumb, 2.6)
+        for (cx, cy) in ((-6, 2), (-2, 6), (-8, -4), (0, 0)):
+            out += _circ(cx, cy, 1.3, S.shade(crumb, -0.2), 0)
+        out += _p(crust, col, 2.6)
+        out += _p("M-2,-11 Q8,-12 12,-4", sw=2.4, stroke=lt, extra='opacity="0.8"')
+    elif state == "pieces":
+        for (dx, dy, r_, s_) in ((-14, 4, -20, 0), (12, 6, 30, 1), (0, -8, 5, 2)):
+            out += _g(_barley_loaf("piece", time, 0, seed + s_), f"translate({dx},{dy}) rotate({r_})")
+    else:
+        raise ValueError(f"barley_loaf: unknown state {state!r}; choose from {LOAF_STATES}")
+    if rot:
+        out = _g(out, f"rotate({_f(rot)})")
+    return out
+
+
+LOAF_STATES = ("whole", "half", "broken", "piece", "pieces")
+FISH_STATES = ("whole", "half", "piece", "pair")
+
+
+def _dried_fish(state="whole", time=0.0, seed=0):
+    """A small dried fish (salted, sun-dried: stiff, slightly curved), local anchor = its centre, ~50 px long, head
+    toward +x: silvery-tan with a darker back, a little round eye, gill line, fins and a forked tail; 'half' (the tail
+    half, a cream break), 'piece' (the head half), 'pair' (two fish tied by the tails with a cord)."""
+    col, back = _lft(LF_FISH, time, 0.5), _lft(LF_FISH_BACK, time, 0.5)
+    belly = _lft("#e8dcbe", time, 0.5)
+    out = ""
+    if state in ("whole", "half"):
+        body = [(25, 0), (18, -6.5), (4, -8.5), (-10, -7), (-18, -3.5), (-22, -1), (-18, 2.5), (-8, 6), (6, 7), (18, 5)]
+        tail = [(-19, -1), (-29, -9), (-27, -1), (-30, 7), (-19, 1.5)]
+        if state == "half":
+            body = [(2, -8.5), (-10, -7), (-18, -3.5), (-22, -1), (-18, 2.5), (-8, 6), (2, 7)]
+        out += _p(_sm(tail, tension=0.6), back, 2.6)
+        for k in (-4, 0, 4):
+            out += _p(f"M-21,{_f(k * 0.3)} L-28,{_f(k * 1.6)}", sw=1.2, stroke=S.shade(back, -0.2), extra='opacity="0.7"')
+        out += _p(f"M-2,-8 Q2,-14 10,-8 Z", back, 2.0)
+        out += _p(_sm(body, tension=0.8), col, 2.8)
+        out += _p(f"M-20,-1 Q-4,-9 {_f(18 if state == 'whole' else 2)},-5", sw=4.5, stroke=back, extra='opacity="0.75"')
+        out += _p(f"M-18,2.5 Q-2,7 {_f(16 if state == 'whole' else 2)},4", sw=3.0, stroke=belly, extra='opacity="0.8"')
+        if state == "whole":
+            out += _p("M13,-6 Q10,0 13,5", sw=1.8, stroke=S.shade(col, -0.35))
+            out += _circ(18, -1.5, 2.6, "#3a3028", 0) + _circ(17.3, -2.3, 0.9, HILITE, 0)
+            out += _p("M24,1 l2,0.5", sw=1.4)
+        else:
+            out += _p("M2,-8.5 L-1,-4 L3,-1 L-1,3 L2,7", sw=2.2) + _p("M2,-8.5 L-1,-4 L3,-1 L-1,3 L2,7 L4,6 L5,-7 Z", belly, 0)
+        for x in (-12, -6, 0, 6):
+            out += _p(f"M{x},-3 q2,2 0,5", sw=1.0, stroke=S.shade(col, -0.25), extra='opacity="0.6"')
+        out += _p("M-6,6 Q-3,11 2,7", back, 1.6)
+    elif state == "piece":
+        body = [(-6, -7.5), (4, -8.5), (18, -6.5), (25, 0), (18, 5), (6, 7), (-6, 6)]
+        out += _p(_sm(body, tension=0.8), col, 2.6)
+        out += _p("M-6,-6 Q4,-9 18,-5", sw=4.5, stroke=back, extra='opacity="0.75"')
+        out += _p("M-6,-7.5 L-3,-3 L-7,0 L-3,3 L-6,6 Z", belly, 0) + _p("M-6,-7.5 L-3,-3 L-7,0 L-3,3 L-6,6", sw=2.0)
+        out += _p("M13,-6 Q10,0 13,5", sw=1.8, stroke=S.shade(col, -0.35))
+        out += _circ(18, -1.5, 2.6, "#3a3028", 0) + _circ(17.3, -2.3, 0.9, HILITE, 0)
+    elif state == "pair":
+        out += _g(_dried_fish("whole", time), "translate(0,-6) rotate(-8)")
+        out += _g(_dried_fish("whole", time), "translate(4,8) rotate(6) scale(-1,1) rotate(180) scale(-1,1)")
+        out += _p("M-26,-6 Q-30,0 -24,8", sw=2.4, stroke="#b08a5a")
+    else:
+        raise ValueError(f"dried_fish: unknown state {state!r}; choose from {FISH_STATES}")
+    return out
+
+
+def barley_loaf(x, y, scale=1.0, facing=1, state="whole", rot=0.0, time=0.0, seed=0):
+    """One small round barley loaf (anchor = its centre; whole (-27, -18, 27, 23)): LOAF_STATES whole | half | broken |
+    piece | pieces; rot degrees; time tints it like the hillside."""
+    if state not in LOAF_STATES:
+        raise ValueError(f"barley_loaf: unknown state {state!r}; choose from {LOAF_STATES}")
+    return _place(_barley_loaf(state, time, 0.0, seed), x, y, scale, facing, rot)
+
+
+def dried_fish(x, y, scale=1.0, facing=1, state="whole", rot=0.0, time=0.0):
+    """One small dried fish (anchor = its centre; whole (-33, -16, 30, 13), head toward facing): FISH_STATES whole |
+    half | piece | pair. (props.small_fish is the Jonah film's swimming fish.)"""
+    if state not in FISH_STATES:
+        raise ValueError(f"dried_fish: unknown state {state!r}; choose from {FISH_STATES}")
+    return _place(_dried_fish(state, time), x, y, scale, facing, rot)
+
+
+# ---------------------------------------------------------------------- the boy's little basket (local markup)
+LUNCH_STATES = ("closed", "open", "empty")
+LUNCH_BASKET_RIM = (0, -40)     # the middle of the rim, above lunch_basket()'s anchor (bottom centre), at scale 1
+LUNCH_BASKET_HANDLE = (0, -92)  # the top of the handle
+
+
+def _weave(d_clip, cid, x0, x1, y0, y1, col, dk, lt, rows=4, stakes=7, sw=1.8):
+    """Wicker weave inside a clip path: horizontal bands of short alternating strokes and the vertical stakes."""
+    s_ = ""
+    for r in range(rows + 1):
+        yy = y0 + (y1 - y0) * r / rows
+        s_ += _p(f"M{_f(x0)},{_f(yy)} L{_f(x1)},{_f(yy)}", sw=sw, stroke=dk, extra='opacity="0.75"')
+    for r in range(rows):
+        ya, yb = y0 + (y1 - y0) * r / rows, y0 + (y1 - y0) * (r + 1) / rows
+        for c in range(stakes * 2):
+            xx = x0 + (x1 - x0) * (c + 0.5 * (r % 2)) / (stakes * 2)
+            s_ += _p(f"M{_f(xx)},{_f(ya + 1.5)} Q{_f(xx + (x1 - x0) / (stakes * 4))},{_f((ya + yb) / 2)} {_f(xx)},{_f(yb - 1.5)}",
+                     sw=sw * 1.1, stroke=lt if (c + r) % 2 else dk, extra='opacity="0.7"')
+    return _clip(cid, d_clip, f'<rect x="{_f(x0 - 10)}" y="{_f(y0 - 10)}" width="{_f(x1 - x0 + 20)}" height="{_f(y1 - y0 + 20)}" '
+                              f'fill="{col}"/>' + s_)
+
+
+def _boy_basket(state="closed", time=0.0, handle=True):
+    """The boy's little round lunch basket (local, anchor = the middle of the rim; ~86 px wide, body down to +40, handle
+    up to -52): honey wicker, a woven rim and an arched handle. 'closed': a cream cloth with a blue stripe tucked over the
+    top; 'open': the cloth folded back over the far side, five round barley loaves and two small dried fish inside;
+    'empty'."""
+    col, dk, lt = _lft(LF_WICKER, time, 0.5), _lft(LF_WICKER_DARK, time, 0.5), _lft(LF_WICKER_LIGHT, time, 0.5)
+    cloth, stripe = _lft(LF_CLOTH, time, 0.4), _lft(LF_CLOTH_STRIPE, time, 0.4)
+    out = ""
+    if handle:
+        out += _tube("M-36,-2 C-38,-60 38,-60 36,-2", 6.5, dk, 2.4) + _p("M-34,-8 C-34,-54 34,-54 34,-8", sw=1.6, stroke=lt)
+    body = "M-43,0 Q-42,30 -26,38 Q0,46 26,38 Q42,30 43,0 Z"
+    inside = _ell(0, 0, 41, 10, S.shade(dk, -0.25), 0)
+    if state == "open":
+        out += _p("M-30,-4 Q-36,-26 -10,-30 Q18,-34 34,-14 Q40,-6 36,-2 Z", cloth, 2.6)
+        out += _p("M-28,-12 Q-6,-26 30,-12", sw=4, stroke=stripe, extra='opacity="0.9"')
+    out += inside
+    if state == "open":
+        for (dx, dy, r_) in ((-22, -15, -10), (0, -19, 2), (22, -15, 12)):
+            out += _g(_barley_loaf("whole", time), f"translate({dx},{dy}) rotate({r_}) scale(0.66)")
+        out += _g(_dried_fish("whole", time), "translate(-6,-22) rotate(-14) scale(0.78)")
+        out += _g(_dried_fish("whole", time), "translate(10,-12) rotate(10) scale(-0.74,0.74)")
+        for (dx, dy, r_) in ((-14, -7, -4), (14, -6, 6)):
+            out += _g(_barley_loaf("whole", time), f"translate({dx},{dy}) rotate({r_}) scale(0.66)")
+    out += _weave(body, _uid("lfbbw", round(_lf_t(time), 3)), -44, 44, 0, 42, col, dk, lt, rows=4, stakes=6)
+    out += _p(body, sw=3.2)
+    out += _p("M-41,22 Q0,34 41,22", sw=1.6, stroke=dk, extra='opacity="0.7"')
+    if state == "closed":
+        out += _p("M-44,2 Q-46,-20 -16,-24 Q10,-28 30,-20 Q46,-14 44,2 Q20,10 -6,9 Q-30,9 -44,2 Z", cloth, 2.8)
+        out += _p("M-38,-8 Q-8,-20 38,-8", sw=4.5, stroke=stripe, extra='opacity="0.9"')
+        out += _p("M-20,-20 Q-16,-6 -22,6 M8,-25 Q12,-10 6,8", sw=1.8, stroke=S.shade(cloth, -0.2))
+        out += _p("M30,4 Q40,14 34,24 Q30,16 26,8 Z", cloth, 2.2)
+    out += _tube("M-43,0 Q0,13 43,0", 6, lt, 2.2) + _p("M-43,0 Q0,-12 43,0", sw=2.6, stroke=dk, extra='opacity="0.8"')
+    return out
+
+
+def lunch_basket(x, y, scale=1.0, facing=1, state="closed", rot=0.0, time=0.0):
+    """The boy's little lunch basket (anchor = bottom centre on the ground; (-49, -97, 49, 7) with its handle): LUNCH_STATES
+    closed (a striped cloth over it) | open (five barley loaves and two small fish) | empty. LUNCH_BASKET_RIM / _HANDLE are
+    the rim centre and the handle top above the anchor. characters.the_boy() carries it."""
+    if state not in LUNCH_STATES:
+        raise ValueError(f"lunch_basket: unknown state {state!r}; choose from {LUNCH_STATES}")
+    return _place(_g(_boy_basket(state, time), f"translate(0,{LUNCH_BASKET_RIM[1]})"), x, y, scale, facing, rot)
+
+
+# ---------------------------------------------------------------------- the big wicker baskets and the leftovers
+WICKER_RIM_Y = -104             # wicker_basket(): the rim's middle above the anchor at scale 1
+WICKER_W = 132                  # the rim's width at scale 1
+BASKET_FOODS = ("bread", "mixed")
+
+
+def _bread_heap(cx, cy, w, h, n, seed, time, fish=True, k=1.0):
+    """A heap of bread pieces (and a few fish pieces) drawn back to front inside a dome of width w and height h."""
+    rng = random.Random(seed)
+    items = []
+    for i in range(n):
+        u = rng.uniform(-1, 1)
+        v = rng.uniform(0, 1) * (1 - 0.85 * u * u)
+        items.append((cy - v * h, cx + u * w / 2, rng.uniform(-40, 40), i))
+    items.sort(key=lambda t: t[0])
+    out = ""
+    for yy, xx, r_, i in items:
+        if fish and i % 6 == 3:
+            out += _g(_dried_fish("half", time), f"translate({_f(xx)},{_f(yy)}) rotate({_f(r_)}) scale({0.75 * k:.3f})")
+        elif i % 7 == 5:
+            out += _g(_barley_loaf("half", time, seed=i), f"translate({_f(xx)},{_f(yy)}) rotate({_f(r_)}) scale({0.62 * k:.3f})")
+        else:
+            out += _g(_barley_loaf("piece", time, seed=i), f"translate({_f(xx)},{_f(yy)}) rotate({_f(r_)}) scale({0.95 * k:.3f})")
+    return out
+
+
+def _wicker_basket(fill=1.0, food="mixed", time=0.0, handles=True, seed=0):
+    """A big round wicker basket (local, anchor = bottom centre; ~132 px wide at the rim, 104 tall at person scale): a
+    slightly flared body of honey wicker with a woven pattern, a thick rolled rim and two rope loop handles; fill 0..1:
+    0 empty (the dark inside), .5 half (bread pieces just below the rim), 1 heaped full above the rim with torn bread
+    and a few pieces of fish (food='mixed') or bread only ('bread')."""
+    col, dk, lt = _lft(LF_WICKER, time, 0.5), _lft(LF_WICKER_DARK, time, 0.5), _lft(LF_WICKER_LIGHT, time, 0.5)
+    f = _clamp(fill)
+    R = WICKER_RIM_Y
+    out = ""
+    if handles:
+        for sgn in (-1, 1):
+            out += _tube(f"M{sgn * 58},{R + 14} C{sgn * 84},{R + 6} {sgn * 84},{R + 40} {sgn * 56},{R + 36}", 6, _lft(ROPE, time, 0.5), 2.2)
+    out += _ell(0, R, 64, 15, S.shade(dk, -0.3), 0)
+    if 0.25 <= f < 0.85:
+        lv = R + 6 - 10 * (f - 0.25)
+        out += _clip(_uid("lfwbi", seed), f"M-62,{R} A62,14 0 0 0 62,{R} L62,{R - 40} L-62,{R - 40} Z",
+                     _bread_heap(0, lv + 8, 112, 16, 12, seed, time, food == "mixed"))
+    body = f"M-66,{R} Q-60,{R * 0.4} -50,-4 Q0,6 50,-4 Q60,{R * 0.4} 66,{R} Z"
+    out += _weave(body, _uid("lfwbw", round(_lf_t(time), 3)), -68, 68, R, 4, col, dk, lt, rows=6, stakes=8, sw=2.0)
+    out += _p(body, sw=3.6)
+    if f >= 0.85:
+        hh = 20 + 14 * (f - 0.85) / 0.15
+        lumps = [(-44, R - hh * 0.35, hh * 0.62), (-20, R - hh * 0.85, hh * 0.72), (6, R - hh * 1.0, hh * 0.76),
+                 (30, R - hh * 0.80, hh * 0.70), (48, R - hh * 0.30, hh * 0.58), (0, R - hh * 0.3, hh * 0.9)]
+        out += _cluster(lumps, _lft(LF_LOAF_LIGHT, time, 0.5), 2.6)
+        out += _bread_heap(0, R + 6, 118, hh, 18, seed, time, food == "mixed", k=1.2)
+    out += _tube(f"M-66,{R} Q0,{R + 18} 66,{R}", 9, lt, 2.4) + _p(f"M-66,{R} Q0,{R - 14} 66,{R}", sw=3.0, stroke=dk, extra='opacity="0.85"')
+    out += _p(f"M-46,-2 Q0,6 46,-2", sw=2.2, stroke=dk, extra='opacity="0.6"')
+    return out
+
+
+def wicker_basket(x, y, scale=1.0, facing=1, fill=1.0, food="mixed", handles=True, rot=0.0, time=0.0, seed=0):
+    """A big woven wicker basket for the leftovers (anchor = bottom centre on the ground; full (-89, -168, 89, 8), empty
+    (-89, -126, 89, 8)): fill 0 empty | .5 half | 1 heaped full of torn bread (BASKET_FOODS 'mixed' adds pieces of fish);
+    WICKER_RIM_Y / WICKER_W the rim. The disciples carry it (characters.disciples pose 'carry_basket' / 'gather' ...)."""
+    if food not in BASKET_FOODS:
+        raise ValueError(f"wicker_basket: unknown food {food!r}; choose from {BASKET_FOODS}")
+    return _place(_wicker_basket(fill, food, time, handles, seed), x, y, scale, facing, rot)
+
+
+def baskets_row(x, y, scale=1.0, n=12, fill=1.0, gap=150, rows=2, time=0.0, seed=0):
+    """Twelve full baskets (n) in `rows` rows - the back row 34*scale higher and 6% smaller, drawn first - centred on x;
+    anchor = the bottom of the front row. '装满了十二个篮子' (count them: 6 + 6)."""
+    rows = max(1, int(rows))
+    n = max(1, int(n))
+    per = -(-n // rows)
+    out = ""
+    for r in reversed(range(rows)):
+        cnt = min(per, n - r * per)
+        if cnt <= 0:
+            continue
+        k = scale * (1 - 0.06 * r)
+        for j in range(cnt):
+            px = x + ((j - (cnt - 1) / 2) * gap + (r % 2) * gap * 0.5) * k
+            out += _place(_wicker_basket(fill, "mixed", time, True, seed + 3 * j + 17 * r), px, y - 34 * scale * r, k,
+                          1 if (j + r) % 2 else -1, filt=None)
+    return f'<g filter="url(#wobble-fine)">{out}</g>'
+
+
+def bread_pieces(x, y, scale=1.0, n=7, spread=150, fish=True, time=0.0, seed=0):
+    """Leftover pieces lying on the grass (anchor = the middle of the scatter; ~spread x 0.3*spread): torn bread and
+    (fish=True) a piece or two of fish, flattened as seen from a little above - for the disciples to gather."""
+    rng = random.Random(seed)
+    out = ""
+    items = sorted(((rng.uniform(-0.15, 0.15) * spread, rng.uniform(-0.5, 0.5) * spread, rng.uniform(-60, 60), i)
+                    for i in range(int(n))), key=lambda t: t[0])
+    for dy, dx, r_, i in items:
+        if fish and i % 4 == 2:
+            body = _g(_dried_fish("half", time), "scale(0.8)")
+        else:
+            body = _barley_loaf("piece", time, seed=seed + i)
+        out += _g(body, f"translate({_f(dx)},{_f(dy)}) rotate({_f(r_)}) scale(1,0.78)")
+        out += _ell(dx + 2, dy + 9, 11, 3, _lf_pal(time)["shadow"], 0, extra='opacity="0.18"')
+    return _place(out, x, y, scale)
+
+
+# ---------------------------------------------------------------------- the sky
+def _lf_cloud(cx, cy, w, h, pal, seed=0, rim_k=0.0):
+    """A soft, lit cumulus bank (no ink): overlapping domes on a gently flat base, a warm rim on top, a shaded underside."""
+    rng = random.Random(seed)
+    out = ""
+    n = 6
+    domes = []
+    for i in range(n):
+        u = (i + 0.5) / n - 0.5
+        r = h * (0.55 - 0.9 * u * u) * rng.uniform(0.85, 1.15)
+        domes.append((cx + u * w * 0.9 + rng.uniform(-6, 6), cy - r * 0.35, max(h * 0.18, r)))
+    out += _ell(cx, cy + h * 0.10, w * 0.50, h * 0.26, pal["cloud_sh"], 0, extra='opacity="0.75"')
+    for x, y, r in domes:
+        out += _circ(x, y, r, pal["cloud"], 0)
+    out += _ell(cx, cy + h * 0.02, w * 0.48, h * 0.20, pal["cloud"], 0)
+    if rim_k > 0:
+        for x, y, r in domes[1:-1]:
+            out += _p(f"M{_f(x - r * 0.7)},{_f(y - r * 0.55)} A{_f(r)},{_f(r)} 0 0 1 {_f(x + r * 0.6)},{_f(y - r * 0.7)}",
+                      sw=max(2.0, r * 0.12), stroke=pal["cloud_rim"], extra=f'opacity="{0.8 * rim_k:.2f}"')
+    out += _ell(cx, cy + h * 0.16, w * 0.42, h * 0.08, pal["cloud_sh"], 0, extra='opacity="0.6"')
+    return out
+
+
+def galilee_sky(x0, y0, x1, y1, time=0.0, sun=None, clouds=1.0, birds=0, phase=0.0, seed=0, scale=1.0):
+    """The sky over the lake (ABSOLUTE box, clipped to it): a clear warm afternoon blue fading to a creamy horizon, the
+    golden hour, a rose-violet dusk (time 0..1 or LF_TIMES); sun=(x, y) a big soft sun with a wide amber halo (low and
+    orange late in the day); clouds 0..1 soft lit cumulus banks (no ink) drifting with phase; birds n swallows."""
+    t = _lf_t(time)
+    pal = _lf_pal(t)
+    W_, H_ = x1 - x0, y1 - y0
+    gid = _uid("lfsky", round(t, 3), x0, y0, x1, y1)
+    c = pal["sky"]
+    out = (f'<defs>{S.lin_grad(gid, [(0, c[0]), (0.32, c[1]), (0.6, c[2]), (0.84, c[3]), (1, c[4])])}</defs>'
+           f'<rect x="{_f(x0 - 4)}" y="{_f(y0 - 4)}" width="{_f(W_ + 8)}" height="{_f(H_ + 8)}" fill="url(#{gid})"/>')
+    if sun is not None:
+        sx, sy = sun
+        r = (58 + 22 * t) * scale
+        out += _ls_glow(sx, sy, r * 6.5, r * 5.0, 0.8, "lfsun", pal["sun"], pal["sun_halo"])
+        out += _circ(sx, sy, r, pal["sun"], 0)
+        out += _circ(sx, sy, r, "none", 2.6 * scale, stroke=S.mix(pal["sun"], "#e89a4a", 0.5), extra='opacity="0.55"')
+    if clouds > 0:
+        rng = random.Random(seed + 41)
+        nc = max(1, int(round(5 * _clamp(clouds) * W_ / 2112)))
+        for i in range(nc):
+            u = (i + rng.uniform(0.15, 0.85)) / nc
+            cx = x0 + ((u + 0.08 * phase * (1 if i % 2 else 0.7)) % 1.0) * (W_ + 600 * scale) - 300 * scale
+            cy = y0 + H_ * rng.uniform(0.14, 0.50)
+            cw = rng.uniform(300, 520) * scale
+            out += _lf_cloud(cx, cy, cw, cw * rng.uniform(0.26, 0.34), pal, seed + i * 5, rim_k=0.4 + 0.6 * t)
+    rng = random.Random(seed + 7)
+    for i in range(int(birds)):
+        bx = x0 + W_ * rng.uniform(0.15, 0.85)
+        by = y0 + H_ * rng.uniform(0.15, 0.45)
+        k = scale * rng.uniform(0.7, 1.1)
+        w_ = (0.6 + 0.4 * math.sin(2 * math.pi * (phase + rng.random()))) * k
+        out += _p(f"M{_f(bx - 16 * k)},{_f(by - 2 * w_ * 4)} Q{_f(bx - 6 * k)},{_f(by - 6 * k)} {_f(bx)},{_f(by)} "
+                  f"Q{_f(bx + 6 * k)},{_f(by - 6 * k)} {_f(bx + 16 * k)},{_f(by - 2 * w_ * 4)}", sw=2.8 * k, stroke=S.shade(c[0], -0.5))
+    cid = _uid("lfskyc", x0, y0, x1, y1)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0 - 2)}" y="{_f(y0 - 2)}" width="{_f(W_ + 4)}" height="{_f(H_ + 4)}"/></clipPath>'
+            f'<g clip-path="url(#{cid})">{out}</g>')
+
+
+# ---------------------------------------------------------------------- the land: flowers, trees, rocks, towns
+def _anemone(s=1.0, time=0.0, sway=0.0, kind="anemone"):
+    """A Galilee spring flower (anchor = the stem's foot, ~40 px tall): 'anemone' red cup of six petals with a dark
+    centre | 'daisy' a yellow crown daisy | 'white' a small white chamomile."""
+    stem = _lft("#4f8a3e", time)
+    hx, hy = 5 * sway * s, -36 * s
+    out = _p(f"M0,0 Q{_f(-2 * s + 2 * sway * s)},{_f(-18 * s)} {_f(hx)},{_f(hy)}", sw=2.8 * s, stroke=stem)
+    out += _p(f"M{_f(-1 * s)},{_f(-6 * s)} q{_f(-9 * s)},{_f(-4 * s)} {_f(-12 * s)},{_f(-12 * s)} q{_f(8 * s)},{_f(1 * s)} {_f(12 * s)},{_f(10 * s)} Z",
+              _lft("#6aa84a", time), 1.4 * s)
+    if kind == "anemone":
+        col = _lft(ANEMONE, time, 0.7)
+        for k in range(6):
+            a = math.radians(-90 + 60 * k)
+            out += _ell(hx + 6 * s * math.cos(a), hy + 4.4 * s * math.sin(a), 6.2 * s, 4.6 * s, col, 1.6 * s,
+                        extra=f'transform="rotate({_f(60 * k)} {_f(hx + 6 * s * math.cos(a))} {_f(hy + 4.4 * s * math.sin(a))})"')
+        out += _circ(hx, hy, 3.6 * s, "#3a2a3a", 0)
+        out += _circ(hx - 3 * s, hy - 3 * s, 1.4 * s, "#fbe6e0", 0, extra='opacity="0.7"')
+    elif kind == "daisy":
+        col = _lft(CROWN_DAISY, time, 0.7)
+        for k in range(10):
+            a = math.radians(36 * k)
+            out += _ell(hx + 6.5 * s * math.cos(a), hy + 5 * s * math.sin(a), 4.6 * s, 2.4 * s, col, 1.2 * s,
+                        extra=f'transform="rotate({_f(36 * k)} {_f(hx + 6.5 * s * math.cos(a))} {_f(hy + 5 * s * math.sin(a))})"')
+        out += _circ(hx, hy, 3.6 * s, _lft("#e08a2a", time, 0.6), 1.2 * s)
+    else:
+        col = _lft("#fbf4e4", time, 0.8)
+        for k in range(8):
+            a = math.radians(45 * k)
+            out += _circ(hx + 4.8 * s * math.cos(a), hy + 3.6 * s * math.sin(a), 2.8 * s, col, 1.0 * s)
+        out += _circ(hx, hy, 2.6 * s, _lft("#f2c43c", time, 0.6), 0)
+    return out
+
+
+LF_FLOWERS = ("anemone", "daisy", "white")
+
+
+def galilee_flower(x, y, scale=1.0, kind="anemone", sway=0.0, time=0.0):
+    """One Galilee spring flower (anchor = the stem's foot; ~(-14, -46, 14, 1)): LF_FLOWERS anemone (red) | daisy (yellow
+    crown daisy) | white (chamomile); sway -1..1."""
+    if kind not in LF_FLOWERS:
+        raise ValueError(f"galilee_flower: unknown kind {kind!r}; choose from {LF_FLOWERS}")
+    return _place(_anemone(1.0, time, sway, kind), x, y, scale)
+
+
+def _lf_flowers(x0, x1, y0, y1, density, seed, time, s, sway=0.0, k0=0.5, k1=1.1):
+    rng = random.Random(seed)
+    n = int(density * (x1 - x0) * (y1 - y0) / (3200 * s * s))
+    items = []
+    for i in range(n):
+        yy = rng.uniform(y0, y1)
+        k = k0 + (k1 - k0) * (yy - y0) / max(1.0, y1 - y0)
+        r = rng.random()
+        kind = "anemone" if r < 0.5 else ("daisy" if r < 0.8 else "white")
+        cx = rng.uniform(x0, x1)
+        for j in range(rng.choice((1, 1, 2, 3))):         # little clumps
+            items.append((yy + j * 3 * s, cx + rng.uniform(-14, 14) * s * k, k * rng.uniform(0.85, 1.1), kind))
+    items.sort()
+    out = ""
+    for yy, xx, k, kind in items:
+        out += _g(_anemone(k * s, time, sway * rng.uniform(0.4, 1.0), kind), f"translate({_f(xx)},{_f(yy)})")
+    return out
+
+
+def _lf_grass(x0, x1, y0, y1, n, seed, cols, s, k0=0.6, k1=1.4):
+    """Tufts of long meadow grass: three or four curved blades each, bigger toward y1 (two colours)."""
+    rng = random.Random(seed)
+    ds = ["", ""]
+    for i in range(int(n)):
+        x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+        k = (k0 + (k1 - k0) * (y - y0) / max(1.0, y1 - y0)) * s
+        lean = rng.uniform(-6, 6) * k
+        ds[i % 2] += (f"M{_f(x - 8 * k)},{_f(y)} q{_f(1 * k)},{_f(-12 * k)} {_f(-4 * k + lean)},{_f(-22 * k)} "
+                      f"M{_f(x - 2 * k)},{_f(y)} q{_f(1 * k)},{_f(-16 * k)} {_f(2 * k + lean)},{_f(-30 * k)} "
+                      f"M{_f(x + 4 * k)},{_f(y)} q{_f(0)},{_f(-12 * k)} {_f(7 * k + lean)},{_f(-24 * k)} "
+                      f"M{_f(x + 9 * k)},{_f(y)} q{_f(-1 * k)},{_f(-8 * k)} {_f(4 * k + lean)},{_f(-15 * k)} ")
+    return (_p(ds[0], sw=2.8 * s, stroke=cols[0], extra='opacity="0.85"') +
+            _p(ds[1], sw=2.6 * s, stroke=cols[1], extra='opacity="0.8"'))
+
+
+def _lf_tree(cx, base, s, time, seed=0, kind="oak"):
+    """A Galilee tree on the hillside (local stage px): 'oak' a broad, flat-topped terebinth / oak - a forked trunk and a
+    wide crown of uneven leaf clumps (wider than tall) with sunlit tops and dark undersides | 'olive' smaller, silvery,
+    its crown broken into clumps with sky between them on a twisted trunk | 'palm' a slim palm by the shore. A soft
+    shadow on the grass (long at golden hour / dusk)."""
+    pal = _lf_pal(time)
+    rng = random.Random(seed)
+    t = _lf_t(time)
+    out = _ell(cx + (50 + 150 * t) * s, base + 4 * s, (110 + 130 * t) * s, 18 * s, pal["shadow"], 0, extra='opacity="0.22"')
+    if kind == "palm":
+        out += _tube(f"M{_f(cx)},{_f(base)} Q{_f(cx + 14 * s)},{_f(base - 120 * s)} {_f(cx + 8 * s)},{_f(base - 230 * s)}", 13 * s,
+                     pal["bark"], 2.6 * s)
+        top = (cx + 8 * s, base - 232 * s)
+        for ang in (-170, -140, -110, -70, -40, -10, 160, 20):
+            a = math.radians(ang)
+            e = (top[0] + 92 * s * math.cos(a), top[1] + 92 * s * math.sin(a) + 30 * s)
+            m = (top[0] + 54 * s * math.cos(a), top[1] + 54 * s * math.sin(a) - 10 * s)
+            out += _p(f"M{_f(top[0])},{_f(top[1])} Q{_f(m[0])},{_f(m[1])} {_f(e[0])},{_f(e[1])} Q{_f(m[0])},{_f(m[1] + 14 * s)} "
+                      f"{_f(top[0])},{_f(top[1] + 6 * s)} Z", pal["leaf"] if ang % 20 else pal["leaf_lt"], 2.2 * s)
+        return out
+    olive = kind == "olive"
+    h = (170 if olive else 220) * s * rng.uniform(0.92, 1.08)
+    w = (190 if olive else 300) * s * rng.uniform(0.92, 1.08)
+    bark = S.mix(pal["bark"], "#8a8478", 0.35) if olive else pal["bark"]
+    out += _tube(f"M{_f(cx - 6 * s)},{_f(base)} C{_f(cx - 18 * s)},{_f(base - h * 0.3)} {_f(cx + 10 * s)},{_f(base - h * 0.4)} "
+                 f"{_f(cx - 4 * s)},{_f(base - h * 0.62)}", (16 if olive else 22) * s, bark, 2.8 * s)
+    for sgn, dx in ((-1, 0.30), (1, 0.34)):
+        out += _tube(f"M{_f(cx - 2 * s)},{_f(base - h * 0.45)} Q{_f(cx + sgn * w * dx * 0.5)},{_f(base - h * 0.55)} "
+                     f"{_f(cx + sgn * w * dx)},{_f(base - h * 0.72)}", 9 * s, bark, 2.4 * s)
+    if olive:
+        leaf, lit, dk = S.mix(pal["leaf"], "#b4c0a4", 0.5), S.mix("#dfe6c8", pal["rim"], 0.3 + 0.3 * t), S.mix(pal["leaf_dk"], "#7a8a76", 0.4)
+    else:
+        leaf, lit, dk = pal["leaf"], S.mix(pal["leaf_lt"], pal["rim"], 0.25 + 0.3 * t), pal["leaf_dk"]
+    clumps = []
+    for row, (cnt, yk, wk) in enumerate(((4, 0.70, 0.92), (3, 0.92, 0.70), (2, 1.10, 0.42))):
+        for i in range(cnt):
+            u = (i + 0.5) / cnt - 0.5
+            rx = w * (0.17 if olive else 0.19) * rng.uniform(0.85, 1.15) * (1 - 0.12 * row)
+            ry = rx * (0.72 if not olive else 0.78)
+            if olive and rng.random() < 0.25:
+                continue
+            clumps.append((cx + u * w * wk + rng.uniform(-8, 8) * s, base - h * yk + rng.uniform(-8, 8) * s, rx, ry))
+    for x, y, rx, ry in clumps:                           # dark underside first, then the leaf mass, then the light
+        out += _ell(x, y + ry * 0.25, rx, ry, dk, 3.0 * s)
+    for x, y, rx, ry in clumps:
+        out += _ell(x, y, rx * 0.95, ry * 0.9, leaf, 0)
+    for x, y, rx, ry in clumps:
+        out += _ell(x - rx * 0.12, y - ry * 0.35, rx * 0.62, ry * 0.42, lit, 0, extra='opacity="0.8"')
+        for j in range(3):
+            a = rng.uniform(0.2, 2.9)
+            out += _p(f"M{_f(x + rx * 0.6 * math.cos(a))},{_f(y + ry * 0.5 * math.sin(a))} q{_f(5 * s)},{_f(-4 * s)} {_f(11 * s)},0",
+                      sw=2.0 * s, stroke=dk, extra='opacity="0.6"')
+    return out
+
+
+def _lf_rock(cx, base, rx, ry, pal, seed=0, sw=3.2):
+    """A rounded limestone boulder sitting on the grass (local stage px) with a lit top, cracks and lichen spots."""
+    rng = random.Random(seed)
+    pts = []
+    for i in range(10):
+        a = math.pi + math.pi * i / 9
+        k = rng.uniform(0.85, 1.08)
+        pts.append((cx + rx * k * math.cos(a), base + ry * 1.9 * k * math.sin(a) * 0.55))
+    pts = [(cx - rx * 1.02, base)] + pts + [(cx + rx * 1.02, base)]
+    d = _sm(pts, closed=True, tension=0.8)
+    out = _p(d, pal["rock"], sw)
+    out += _clip(_uid("lfrock", round(cx), round(base), round(rx), seed), d,
+                 _ell(cx - rx * 0.2, base - ry * 0.95, rx * 0.75, ry * 0.45, pal["rock_lt"], 0, extra='opacity="0.8"') +
+                 _ell(cx + rx * 0.35, base - ry * 0.1, rx * 0.8, ry * 0.45, pal["rock_dk"], 0, extra='opacity="0.45"') +
+                 _circ(cx + rx * 0.3, base - ry * 0.6, rx * 0.10, "#a8b07a", 0, extra='opacity="0.6"') +
+                 _circ(cx - rx * 0.45, base - ry * 0.4, rx * 0.07, "#c9a85a", 0, extra='opacity="0.6"'))
+    out += _p(f"M{_f(cx + rx * 0.1)},{_f(base - ry)} l{_f(rx * 0.08)},{_f(ry * 0.35)} l{_f(-rx * 0.06)},{_f(ry * 0.25)}", sw=sw * 0.6,
+              stroke=pal["rock_dk"])
+    return out
+
+
+def _lf_town(cx, base, s, time, seed=0, n=7):
+    """A tiny far lakeside town (local stage px, ~n * 26*s wide): pale stone cubes with flat roofs, dark doors and windows,
+    a bigger house with a terracotta roof, two palms and a jetty."""
+    pal = _lf_pal(time)
+    rng = random.Random(seed)
+    out = ""
+    xs = sorted(cx + rng.uniform(-1, 1) * n * 14 * s for _ in range(n))
+    for i, x in enumerate(xs):
+        w, h = rng.uniform(18, 30) * s, rng.uniform(14, 26) * s
+        y = base - rng.uniform(0, 14) * s
+        col = pal["town"] if i % 3 else S.mix(pal["town"], pal["town_dk"], 0.4)
+        out += _rect(x - w / 2, y - h, w, h, col, 1.4 * s, stroke=S.mix(INK, col, 0.4))
+        out += _rect(x - w / 2 - 1.5 * s, y - h - 3 * s, w + 3 * s, 3 * s, S.shade(col, -0.12), 0)
+        out += _rect(x - 2 * s, y - 7 * s, 4 * s, 7 * s, S.shade(col, -0.45), 0)
+        if h > 18 * s:
+            out += _rect(x + w * 0.18, y - h * 0.7, 3.5 * s, 3.5 * s, S.shade(col, -0.45), 0)
+    bx = cx + n * 4 * s
+    out += _rect(bx - 22 * s, base - 34 * s, 44 * s, 34 * s, pal["town"], 1.4 * s, stroke=S.mix(INK, pal["town"], 0.4))
+    out += _p(f"M{_f(bx - 26 * s)},{_f(base - 34 * s)} L{_f(bx)},{_f(base - 48 * s)} L{_f(bx + 26 * s)},{_f(base - 34 * s)} Z", pal["roof"], 1.4 * s)
+    for k in (-1, 1):
+        px = cx + k * n * 16 * s
+        out += _p(f"M{_f(px)},{_f(base)} Q{_f(px + 3 * s)},{_f(base - 24 * s)} {_f(px + 2 * s)},{_f(base - 44 * s)}", sw=2.4 * s, stroke=pal["bark"])
+        for a in (-160, -120, -60, -20):
+            r = math.radians(a)
+            out += _p(f"M{_f(px + 2 * s)},{_f(base - 44 * s)} q{_f(10 * s * math.cos(r))},{_f(10 * s * math.sin(r) - 4 * s)} "
+                      f"{_f(18 * s * math.cos(r))},{_f(18 * s * math.sin(r) + 6 * s)}", sw=2.6 * s, stroke=pal["leaf"])
+    out += _rect(cx - 6 * s, base - 1 * s, 40 * s, 3 * s, pal["bark"], 0)
+    return out
+
+
+# ---------------------------------------------------------------------- the disciples' boat far away
+def _far_boat(sail="full", crew=True, time=0.0, ink=2.4, scale=1.0):
+    """The disciples' fishing boat (props.fishing_boat) seen far away (local, scale-1 units = fishing_boat's: BOAT_LEN 1500,
+    anchor = the waterline middle, bow toward +x); simplified, with ink widths that stay ~ink px at the drawing scale."""
+    pal = _lf_pal(time)
+    k = 1.0 / max(0.03, scale)
+    sw = ink * k
+    wood, paint = _lft(BOAT_WOOD, time, 0.6), _lft(BOAT_PAINT, time, 0.6)
+    out = ""
+    if sail != "none":
+        out += _p(f"M230,8 L230,-960", sw=max(sw, 24), stroke=_lft(BOAT_WOOD_DARK, time, 0.5))
+    if sail == "full":
+        d = "M-60,-880 Q230,-912 520,-880 Q620,-560 540,-290 Q230,-250 -80,-290 Q-130,-560 -60,-880 Z"
+        out += _p(d, _lft(SAIL_LINEN, time, 0.5), sw)
+        out += _p("M-60,-880 Q-130,-560 -80,-290 Q20,-280 40,-300 Q-20,-560 40,-890 Z", _lft("#d8ccb4", time, 0.5), 0, extra='opacity="0.8"')
+        if crew:
+            for j, (x0, y0) in enumerate(((60, -760), (330, -640), (150, -470))):
+                out += _rect(x0, y0, 100, 90, _lft(SAIL_PATCH[j], time, 0.5), sw * 0.4)
+        out += _p("M-80,-890 Q230,-922 560,-890", sw=sw * 1.8, stroke=_lft(BOAT_WOOD_DARK, time, 0.5))
+    elif sail == "furled":
+        out += _tube("M-120,-896 Q230,-916 580,-896", 46, _lft(SAIL_LINEN, time, 0.5), sw * 0.8)
+    if crew:
+        cols = ["#3f7282", "#c9a86a", "#8b4a5c", "#77a063", "#c4877e", "#5f7fa6", "#8f78ad", "#7b8a48", "#cdb07f", "#9c5a3c",
+                "#6c7a86", "#b8923a"]
+        for i, c in enumerate(cols):
+            x = -500 + i * 88
+            out += _rect(x - 26, -200, 52, 110, _lft(c, time, 0.5), sw * 0.5, rx=20)
+            out += _circ(x, -230, 32, _lft("#cf9570", time, 0.5), sw * 0.5)
+        out += _rect(-662, -224, 56, 130, _lft("#f0e6d0", time, 0.5), sw * 0.5, rx=20)
+        out += _p("M-656,-210 L-612,-130", sw=26, stroke=_lft("#b24f47", time, 0.5))
+        out += _circ(-634, -258, 34, _lft("#c88e66", time, 0.5), sw * 0.5) + _p("M-664,-262 Q-650,-306 -606,-282 L-604,-236", _lft("#4a3122", time, 0.5), 0)
+    hull = "M-700,-190 Q0,-150 712,-214 L748,-224 Q740,-90 690,-26 Q0,72 -690,-22 Q-740,-120 -750,-196 Z"
+    out += _p(hull, wood, sw)
+    out += _p("M-700,-170 Q0,-128 716,-190", sw=60, stroke=paint, extra='opacity="0.95"')
+    out += _p("M-690,-40 Q0,40 690,-44", sw=46, stroke=_lft(BOAT_TAR, time, 0.4), extra='opacity="0.9"')
+    out += _p(hull, sw=sw)
+    out += _p("M-724,-186 Q-770,-300 -752,-382 Q-722,-404 -704,-376", sw=26, stroke=wood)
+    out += _circ(600, -150, 26, _lft(BOAT_EYE, time, 0.5), sw * 0.4)
+    out += _p("M-760,40 Q-300,70 0,52 Q400,70 780,40", sw=sw * 1.2, stroke=pal["glit"], extra='opacity="0.7"')
+    out += _p("M-520,110 Q-100,130 400,108", sw=sw, stroke=pal["glit"], extra='opacity="0.45"')
+    return out
+
+
+def far_boat(x, y, scale=0.12, facing=1, sail="full", crew=True, time=0.0):
+    """The disciples' boat (the same fishing_boat: linen sail with three patches, blue-green strake, curled stern post, the
+    painted eye) seen FAR away (anchor = its waterline middle, bow toward facing; same scale units as fishing_boat:
+    BOAT_LEN = 1500 at scale 1 - use 0.06-0.25): a simple silhouette with tiny heads of the twelve and Jesus at the stern
+    (crew=False: empty), glints on the water; ink stays ~2.4 px at any scale. sail 'full' | 'furled' | 'none'. BBox
+    at 0.12 (-94, -118, 95, 15)."""
+    if sail not in ("full", "furled", "none"):
+        raise ValueError(f"far_boat: sail must be 'full', 'furled' or 'none', not {sail!r}")
+    return _place(_far_boat(sail, crew, time, 2.4, scale), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the lake band and the far shore
+def _lf_far_hills(x0, x1, y, s, time, seed):
+    """The far shore's hills above the line y (local stage px): a hazy blue-violet range of rounded summits far behind,
+    rolling golden-tan hills in front of it with soft gullies and sunlit flanks, and a low olive-green shore ridge dotted
+    with little trees; a haze gradient where they meet the water."""
+    pal = _lf_pal(time)
+    rng = random.Random(seed)
+    out = ""
+    W_ = x1 - x0
+    for k, (col, hmin, hmax, wmin, wmax) in enumerate(((pal["far"][0], 150, 235, 420, 760), (pal["far"][1], 70, 150, 300, 560),
+                                                         (pal["far"][2], 26, 58, 220, 420))):
+        pts = [(x0 - 60, y + 4)]
+        x = x0 - 60 - rng.uniform(0, 200) * s
+        while x < x1 + 60:
+            w = rng.uniform(wmin, wmax) * s
+            h = rng.uniform(hmin, hmax) * s
+            for j in range(1, 7):
+                u = j / 6
+                pts.append((x + w * u, y - h * (math.sin(math.pi * u) ** 0.8) * 0.85 - 0.15 * h))
+            x += w * rng.uniform(0.75, 0.95)
+        pts.append((x1 + 60, y + 4))
+        pts = [pts[0]] + sorted(pts[1:-1]) + [pts[-1]]
+        clean = [pts[0]]
+        for q in pts[1:]:
+            if q[0] - clean[-1][0] > 18 * s or q is pts[-1]:
+                clean.append(q)
+        d = _sm(clean, closed=False, tension=0.7) + f" L{_f(x1 + 60)},{_f(y + 30 * s)} L{_f(x0 - 60)},{_f(y + 30 * s)} Z"
+        out += _p(d, col, (1.6 if k == 0 else 2.4) * s, stroke=S.mix(col, INK, 0.22 if k == 0 else 0.35))
+        if k == 1:
+            for j in range(int(9 * W_ / 2112)):                  # soft gullies and sunlit flanks
+                gx = x0 + W_ * rng.uniform(0.03, 0.97)
+                gy = y - rng.uniform(25, 90) * s
+                out += _p(f"M{_f(gx)},{_f(gy)} q{_f(10 * s)},{_f(24 * s)} {_f(4 * s)},{_f(56 * s)}", sw=3.0 * s, stroke=pal["far_sh"],
+                          extra='opacity="0.35"')
+                out += _ell(gx - 40 * s, gy + 6 * s, 50 * s, 14 * s, pal["rim"], 0, extra='opacity="0.2"')
+            for j in range(int(7 * W_ / 2112)):                  # green patches of spring pasture
+                gx = x0 + W_ * rng.uniform(0.03, 0.97)
+                out += _ell(gx, y - rng.uniform(10, 50) * s, rng.uniform(40, 90) * s, rng.uniform(8, 14) * s, pal["far"][2], 0,
+                            extra='opacity="0.35"')
+        if k == 2:
+            for j in range(int(30 * W_ / 2112)):
+                tx = x0 + W_ * rng.random()
+                ty = y - rng.uniform(4, 30) * s
+                out += _circ(tx, ty, rng.uniform(5, 9) * s, S.shade(col, -0.25), 0, extra='opacity="0.8"')
+    gid = _uid("lfhaze", round(_lf_t(time), 3), round(y), round(s, 3))
+    out += (f'<defs>{S.lin_grad(gid, [(0, pal["haze"], 0.0), (1, pal["haze"], 0.5)])}</defs>'
+            f'<rect x="{_f(x0 - 40)}" y="{_f(y - 110 * s)}" width="{_f(W_ + 80)}" height="{_f(112 * s)}" fill="url(#{gid})"/>')
+    return out
+
+
+def _lf_lake(x0, x1, y_far, y_near, s, time, seed, sun_x=None, phase=0.0):
+    """The lake from the far shore line y_far to y_near (local stage px): a deepening gradient, drifting ripple lines and
+    a glittering path under the sun (late in the day)."""
+    pal = _lf_pal(time)
+    t = _lf_t(time)
+    gid = _uid("lflake", round(t, 3), round(y_far), round(y_near))
+    c = pal["lake"]
+    out = (f'<defs>{S.lin_grad(gid, [(0, c[0]), (0.45, c[1]), (1, c[2])])}</defs>'
+           f'<rect x="{_f(x0 - 40)}" y="{_f(y_far)}" width="{_f(x1 - x0 + 80)}" height="{_f(y_near - y_far + 4)}" fill="url(#{gid})"/>')
+    rng = random.Random(seed)
+    d = ""
+    for i in range(int(14 * (x1 - x0) / 2112)):
+        yy = y_far + (y_near - y_far) * rng.random() ** 0.8
+        k = 0.4 + 0.8 * (yy - y_far) / max(1.0, y_near - y_far)
+        xx = x0 + (x1 - x0) * ((rng.random() + 0.05 * phase) % 1.0)
+        d += f"M{_f(xx)},{_f(yy)} q{_f(30 * k * s)},{_f(-5 * k * s)} {_f(60 * k * s)},0 "
+    out += _p(d, sw=2.6 * s, stroke=S.mix(c[0], "#ffffff", 0.45), extra='opacity="0.6"')
+    if sun_x is not None or t >= 0.35:
+        sxx = sun_x if sun_x is not None else x0 + (x1 - x0) * 0.72
+        g = ""
+        for i in range(30):
+            yy = y_far + (y_near - y_far) * (i + rng.random()) / 30
+            k = 0.4 + 0.8 * (yy - y_far) / max(1.0, y_near - y_far)
+            w = (24 + 70 * (yy - y_far) / max(1.0, y_near - y_far)) * s
+            xx = sxx + rng.uniform(-1, 1) * w * 0.8 + 20 * s * math.sin(6.3 * phase + i)
+            g += f"M{_f(xx - w * 0.4)},{_f(yy)} l{_f(w * 0.8)},0 "
+            del k
+        out += _p(g, sw=3.4 * s, stroke=pal["glit"], extra=f'opacity="{0.45 + 0.4 * min(1.0, t * 1.5):.2f}"')
+    out += _p(f"M{_f(x0 - 40)},{_f(y_far + 1)} L{_f(x1 + 40)},{_f(y_far + 1)}", sw=2.4 * s, stroke=S.mix(pal["far"][1], INK, 0.3),
+              extra='opacity="0.7"')
+    return out
+
+
+def _lf_shoreline(x0, x1, y, s, time, seed, reeds=True):
+    """Where the hillside / path meets the lake (local stage px): a thin pebbly beach with a foam line and reed clumps."""
+    pal = _lf_pal(time)
+    rng = random.Random(seed)
+    pts = [(x0 - 40, y)] + [(x0 + (x1 - x0) * i / 12, y + 6 * s * math.sin(i * 1.7 + seed)) for i in range(13)] + [(x1 + 40, y)]
+    d = _sm(pts, closed=False) + f" L{_f(x1 + 40)},{_f(y + 26 * s)} L{_f(x0 - 40)},{_f(y + 26 * s)} Z"
+    out = _p(d, pal["sand"], 2.4 * s)
+    out += _p(_sm([(x, yy - 2 * s) for x, yy in pts], closed=False), sw=3.0 * s, stroke=S.mix(pal["lake"][0], "#ffffff", 0.7),
+              extra='opacity="0.85"')
+    peb = ""
+    for i in range(int(40 * (x1 - x0) / 2112)):
+        peb += _ell(rng.uniform(x0, x1), y + rng.uniform(6, 22) * s, rng.uniform(2.5, 5) * s, rng.uniform(1.6, 3) * s,
+                    S.mix(pal["rock"], pal["rock_dk"], rng.random()), 0)
+    out += peb
+    if reeds:
+        for i in range(int(6 * (x1 - x0) / 2112) + 1):
+            rx = x0 + (x1 - x0) * rng.uniform(0.02, 0.98)
+            d2 = ""
+            for j in range(7):
+                h = rng.uniform(30, 60) * s
+                lean = rng.uniform(-10, 10) * s
+                bx = rx + (j - 3) * 4 * s
+                d2 += f"M{_f(bx)},{_f(y + 10 * s)} q{_f(lean * 0.3)},{_f(-h * 0.5)} {_f(lean)},{_f(-h)} "
+            out += _p(d2, sw=2.4 * s, stroke=pal["reed"])
+    return out
+
+
+# ---------------------------------------------------------------------- the hillside above the lake
+def lake_hillside_points(x0, x1, y, scale=1.0, lake_y=None, rock_x=None, seed=0):
+    """Stage points of lake_hillside(x0, x1, y, scale, ...): {'lake_y' (where the slope meets the lake), 'far_y' (the far
+    shoreline), 'rock' (x, y, k): the teaching rock's anchor on the slope and its perspective factor (draw
+    teaching_rock and jesus at scale*k), 'groups': [(x, y, k), ...] the centres of the seated groups' areas, row by
+    row from the lake (small) to the front (k ~ 1), 'path': [(x, y), ...] the footpath from the front up to the shore,
+    'depth' (a function d -> (y, k) for a depth fraction d: 0 = the front line y, 1 = the lakeshore), 'shoulder' (a
+    function u -> px: how far the hill's grassy shoulder on the right rises above the lakeshore at the fraction u of the
+    width)}."""
+    s = scale
+    ly = y - 430 * s if lake_y is None else lake_y
+    fy = ly - 150 * s
+
+    def depth(d):
+        d = max(0.0, min(1.0, d))
+        return y - (y - ly) * (d ** 0.85), 1.0 - 0.62 * d
+    rx = x0 + (x1 - x0) * 0.30 if rock_x is None else rock_x
+    ry, rk = depth(0.32)
+    rng = random.Random(seed)
+    groups = []
+    for r, (d, n) in enumerate(((0.88, 6), (0.68, 5), (0.47, 4), (0.20, 3))):
+        yy, k = depth(d)
+        for j in range(n):
+            gx = x0 + (x1 - x0) * (j + 0.5 + 0.25 * (r % 2) - 0.12 + rng.uniform(-0.06, 0.06)) / n
+            if abs(gx - rx) < 330 * s * k and abs(d - 0.32) < 0.24:
+                continue
+            px_ = x0 + (x1 - x0) * 0.62 + 60 * s * math.sin(d * 8 * 0.9 + seed)
+            if abs(gx - px_) < 190 * s * k:
+                gx += (1 if gx >= px_ else -1) * (190 * s * k - abs(gx - px_))
+            groups.append((gx, yy, k))
+    px = x0 + (x1 - x0) * 0.62
+    path = [(px + 60 * s * math.sin(i * 0.9 + seed), depth(i / 8)[0]) for i in range(9)]
+
+    def shoulder(u):
+        """How far the hill's shoulder rises above the lakeshore at the fraction u of the width (the right side)."""
+        return 240 * s * max(0.0, (u - 0.66) / 0.34) ** 1.7
+    return {"lake_y": ly, "far_y": fy, "rock": (rx, ry, rk), "groups": groups, "path": path, "depth": depth, "shoulder": shoulder}
+
+
+def lake_hillside(x0, x1, y, scale=1.0, time=0.0, part="all", seed=0, bottom=None, lake_y=None, rock_x=None, flowers=1.0,
+                  boat=None, towns=True, trees=True, rock=True, phase=0.0):
+    """The big emerald hillside sloping down to the Sea of Galilee (ABSOLUTE coordinates; sky not included: galilee_sky
+    above). y = the front line of the slope (the nearest seated group); the grass rises to the lakeshore at lake_y
+    (default y - 430*scale) and the lake runs to the far shore (lake_y - 150*scale) under the far hills; bottom default
+    y + 260*scale. part 'back' (the far hills with two little towns on the shore, the lake with glints - and the
+    disciples' boat at boat=x (far_boat) - the near beach and reeds) | 'mid' (the slope: emerald grass in soft contour
+    bands, darker toward the front, long grass tufts, flower patches of red anemones and yellow daisies, oak / olive
+    trees on the sides with long shadows late in the day, rocks, the footpath down to the shore, and the teaching rock at
+    rock_x (rock=False: none)) | 'front' (big grass blades, flowers and stones framing the bottom corners) | 'all'. time
+    0..1 / LF_TIMES. Seated groups go between 'mid' and 'front' at lake_hillside_points()['groups']. Static layers."""
+    pal = _lf_pal(time)
+    t = _lf_t(time)
+    s = scale
+    pts = lake_hillside_points(x0, x1, y, s, lake_y, rock_x, seed)
+    ly, fy = pts["lake_y"], pts["far_y"]
+    bottom = y + 260 * s if bottom is None else bottom
+    rng = random.Random(seed)
+    out = ""
+    if part in ("back", "all"):
+        out += _lf_far_hills(x0, x1, fy, s, time, seed)
+        if towns:
+            out += _lf_town(x0 + (x1 - x0) * 0.22, fy + 2 * s, s * 0.9, time, seed + 1, n=8)
+            out += _lf_town(x0 + (x1 - x0) * 0.78, fy + 2 * s, s * 0.8, time, seed + 2, n=6)
+        out += _lf_lake(x0, x1, fy, ly + 10 * s, s, time, seed, phase=phase)
+        for j in range(2):
+            bx = x0 + (x1 - x0) * (0.45 + 0.3 * j)
+            out += _place(_far_boat("full", False, time, 2.0, 0.05 * s), bx, fy + (34 + 20 * j) * s, 0.05 * s, 1 if j else -1, filt=None)
+        if boat not in (None, False):
+            out += _place(_far_boat("furled" if t > 0.6 else "full", True, time, 2.4, 0.11 * s), boat, ly - 30 * s, 0.11 * s, 1,
+                          filt=None)
+        out += _lf_shoreline(x0, x1, ly, s, time, seed)
+    if part in ("mid", "all"):
+        top = ly + 14 * s
+        sh = pts["shoulder"]
+        prof = [(x0 - 40, top + 6 * s)] + [(x0 + (x1 - x0) * i / 20, top + 8 * s * math.sin(i * 0.9 + seed) - sh(i / 20))
+                                            for i in range(21)] + [(x1 + 40, top - sh(1.0))]
+        d = _sm(prof, closed=False) + f" L{_f(x1 + 40)},{_f(bottom + 40)} L{_f(x0 - 40)},{_f(bottom + 40)} Z"
+        gid = _uid("lfslope", round(t, 3), round(top), round(bottom))
+        g = pal["grass"]
+        out += (f'<defs>{S.lin_grad(gid, [(0, g[3]), (0.22, g[0]), (0.62, g[1]), (1, g[2])])}</defs>'
+                f'<path d="{d}" fill="url(#{gid})" {_st(3.2 * s)}/>')
+        band = ""
+        for i in range(10):                                     # soft contour bands that follow the hill's shoulder
+            dd = 1 - (i + 0.5) / 10
+            yy, k = pts["depth"](dd)
+            bp = [(x0 - 40 + (x1 - x0 + 80) * j / 12, yy - sh(j / 12) * dd ** 1.4 + 10 * s * k * math.sin(j * 1.1 + i)) for j in range(13)]
+            band += (f'<path d="{_sm(bp, closed=False)}" fill="none" stroke="{g[3] if i % 2 else g[2]}" '
+                     f'stroke-width="{_f(30 * s * k)}" opacity="0.26"/>')
+        for j in range(14):                                     # dappled sunlight and soft dips in the ground
+            dd = rng.uniform(0.05, 0.95)
+            yy, k = pts["depth"](dd)
+            xx = x0 + (x1 - x0) * rng.random()
+            yy -= sh((xx - x0) / max(1.0, x1 - x0)) * dd ** 1.4
+            rx_, ry_ = rng.uniform(150, 300) * s * k, rng.uniform(22, 40) * s * k
+            band += _p(S.blob(xx, yy, rx_, ry_, 0.18, 9, seed + j), pal["grass_lt"] if j % 2 else g[2], 0,
+                       extra=f'opacity="{0.20 if j % 2 else 0.16}"')
+        out += _clip(_uid("lfslopec", round(top), round(bottom), x0, x1), d, band)
+        out += _p(_sm(prof, closed=False), sw=9 * s, stroke=pal["rim"], extra=f'opacity="{0.35 + 0.35 * t:.2f}"')
+        path = pts["path"]
+        lp = [(px - (10 + 50 * (1 - i / 8)) * s, py) for i, (px, py) in enumerate(path)]
+        rp = [(px + (10 + 50 * (1 - i / 8)) * s, py) for i, (px, py) in enumerate(path)]
+        out += _p(_sm(lp + rp[::-1], closed=True, tension=0.7), pal["path"], 2.4 * s, stroke=S.mix(pal["path_dk"], INK, 0.3))
+        out += _p(_sm(path, closed=False), sw=3 * s, stroke=pal["path_dk"], extra='opacity="0.45"')
+        if trees:
+            for j, (u, kind) in enumerate(((0.04, "oak"), (0.12, "olive"), (0.90, "oak"), (0.97, "olive"), (0.56, "olive"))):
+                d_ = (0.75, 0.58, 0.70, 0.40, 0.92)[j]
+                yy, k = pts["depth"](d_)
+                out += _lf_tree(x0 + (x1 - x0) * u, yy, s * k, time, seed + j, kind)
+        for j in range(6):
+            d_ = rng.uniform(0.1, 0.9)
+            yy, k = pts["depth"](d_)
+            out += _lf_rock(x0 + (x1 - x0) * rng.uniform(0.05, 0.95), yy, rng.uniform(16, 30) * s * k, rng.uniform(10, 18) * s * k, pal,
+                            seed + 30 + j, 2.6 * s * max(0.6, k))
+        out += _lf_grass(x0, x1, top + 20 * s, y + 200 * s, int(90 * (x1 - x0) / 2112), seed + 3, (g[2], pal["grass_dk"]), s, 0.35, 1.3)
+        if flowers > 0:
+            for j in range(9):
+                d_ = rng.uniform(0.05, 0.9)
+                yy, k = pts["depth"](d_)
+                fx = x0 + (x1 - x0) * rng.uniform(0.03, 0.97)
+                out += _lf_flowers(fx - 90 * s * k, fx + 90 * s * k, yy - 20 * s * k, yy + 24 * s * k, flowers * 3.0, seed + 50 + j,
+                                   time, s * k)
+        if rock:
+            rx, ry, rk = pts["rock"]
+            out += _place(_teaching_rock(time, seed), rx, ry, s * rk, 1, filt=None)
+        out += _clip(_uid("lfsunlit", round(top), round(bottom), x0, x1, round(t, 3)), d, _lf_sunwash(x0, x1, top - 300 * s, bottom + 40, t))
+    if part in ("front", "all"):
+        g = pal["grass"]
+        for side in (0, 1):
+            xa = x0 if side == 0 else x1 - 420 * s
+            out += _lf_grass(xa, xa + 420 * s, bottom - 150 * s, bottom + 10 * s, 26, seed + 70 + side, (pal["grass_dk"], g[2]), s * 1.7, 0.8, 1.4)
+            out += _lf_flowers(xa + 40 * s, xa + 380 * s, bottom - 110 * s, bottom - 10 * s, flowers * 3.0, seed + 80 + side, time, s * 1.5)
+            out += _lf_rock(xa + (90 if side == 0 else 330) * s, bottom + 6 * s, 70 * s, 40 * s, pal, seed + 90 + side, 3.4 * s)
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+def _lf_sunwash(x0, x1, y0, y1, t):
+    """The late-afternoon light over the grass (local stage px): an amber glaze strongest on the sun's side (the right),
+    stronger at the golden hour, rose-violet at dusk."""
+    col = S.mix("#ffd27a", "#f0a07a", max(0.0, t - 0.5) * 2)
+    a = 0.14 + 0.22 * min(1.0, t * 2) - 0.10 * max(0.0, t - 0.5) * 2
+    gid = _uid("lfwash", round(t, 3), round(x0), round(x1))
+    return (f'<defs>{S.lin_grad(gid, [(0, col, 0.0), (0.55, col, a * 0.5), (1, col, a)], x1=0, y1=0, x2=1, y2=0)}</defs>'
+            f'<rect x="{_f(x0 - 40)}" y="{_f(y0)}" width="{_f(x1 - x0 + 80)}" height="{_f(y1 - y0)}" fill="url(#{gid})"/>')
+
+
+# ---------------------------------------------------------------------- the teaching rock
+TEACH_ROCK_SEAT = (-20, -70)     # teaching_rock(): the middle of the flat seat top (local, scale 1) = jesus 'sit_teach' seat
+#                                  when jesus(x, y, s, f, pose='sit_teach') is drawn at the rock's own anchor (x, y)
+
+
+def _teaching_rock(time=0.0, seed=0, flowers=True):
+    """The big rounded limestone rock Jesus sits on (local, anchor = the ground under his seat; facing +x = the side his
+    knees point to): a flat seat at y -70 from x -84 to +32, the rock's back rising behind to a rounded hump (~ -150), a
+    small flat step stone in front, lichen, cracks, moss and grass tufts and anemones at its foot."""
+    pal = _lf_pal(time)
+    rng = random.Random(seed)
+    out = _ell(-40, 4, 170, 18, pal["shadow"], 0, extra='opacity="0.25"')
+    body = [(-220, 2), (-226, -56), (-204, -112), (-160, -142), (-110, -140), (-76, -112), (-48, -80), (-10, -72), (28, -72),
+            (52, -60), (62, -30), (66, 2)]
+    d = _sm(body, closed=True, tension=0.7)
+    out += _p(d, pal["rock"], 4.0)
+    inner = (_p("M-190,-100 Q-150,-150 -100,-146 Q-120,-120 -150,-112 Z", pal["rock_lt"], 0, extra='opacity="0.8"') +
+             _p("M-52,-76 Q-10,-80 40,-70 Q0,-62 -50,-68 Z", pal["rock_lt"], 0, extra='opacity="0.85"') +
+             _ell(-60, -14, 120, 30, pal["rock_dk"], 0, extra='opacity="0.35"') +
+             _ell(20, -40, 40, 26, pal["rock_dk"], 0, extra='opacity="0.25"'))
+    for (cx, cy, r, c) in ((-170, -60, 13, "#a8b07a"), (-130, -30, 9, "#c9a85a"), (10, -50, 8, "#a8b07a"), (-190, -20, 7, "#c9b07a")):
+        inner += _circ(cx, cy, r, c, 0, extra='opacity="0.55"')
+    out += _clip(_uid("lftrock", round(_lf_t(time), 3), seed), d, inner)
+    out += _p("M-118,-138 q-6,40 12,70 q10,30 -4,66 M20,-70 l-4,18 l8,16", sw=2.6, stroke=pal["rock_dk"])
+    out += _p("M-200,-100 Q-160,-60 -186,-6", sw=2.2, stroke=pal["rock_dk"], extra='opacity="0.6"')
+    out += _lf_rock(96, 4, 40, 16, pal, seed + 3, 3.0)
+    out += _p("M-214,-6 q30,-14 60,-4 q30,-12 70,0", sw=6, stroke=_lft("#7a9a4a", time), extra='opacity="0.7"')
+    out += _lf_grass(-230, 120, -6, 6, 16, seed + 5, (pal["grass"][2], pal["grass_dk"]), 1.0, 0.9, 1.2)
+    if flowers:
+        out += _g(_anemone(0.9, time, 0, "anemone"), "translate(-196,4)") + _g(_anemone(0.8, time, 0.4, "daisy"), "translate(-170,6)")
+        out += _g(_anemone(0.85, time, -0.3, "anemone"), "translate(80,6)")
+    return out
+
+
+def teaching_rock(x, y, scale=1.0, facing=1, time=0.0, seed=0, flowers=True):
+    """The big rounded rock on the hillside where Jesus sits to teach (anchor = the ground under his seat;
+    (-240, -164, 140, 26)): a flat seat at TEACH_ROCK_SEAT (70 px up = the seat height of jesus 'sit' / 'teach' /
+    'sit_teach'), the rock's hump behind him (facing = the way his knees point), a step stone, lichen, moss, grass and
+    anemones. jesus(x, y, scale, facing, pose='sit_teach') at the SAME (x, y, scale, facing) sits on it."""
+    return _place(_teaching_rock(time, seed, flowers), x, y, scale, facing)
+
+
+# ---------------------------------------------------------------------- the lakeshore path (the crowd runs ahead)
+def lakeshore_path(x0, x1, y, scale=1.0, time=0.0, part="all", seed=0, bottom=None, boat=None, towns=True, flowers=1.0,
+                   phase=0.0):
+    """The path along the shore where the crowd runs ahead of the boat (ABSOLUTE coordinates; sky not included). y = the
+    middle of the path where people run (the path runs from about y - 50*scale to y + 50*scale, gently waving). part 'back'
+    (the far hills, a town on the far shore, the lake with glints and
+    the disciples' boat sailing at boat=x (far_boat, toward +x; None = no boat), the beach and reeds down to y -
+    70*scale) | 'path' (a green bank with a fishing village - pale houses and palms - at the left, the packed-earth path
+    with pebbles and footprints, the grassy verge below with
+    flowers and rocks down to bottom, default y + 240*scale) | 'front' (reeds and a boulder framing the near corners) |
+    'all'. People: back -> path -> galilee_crowd(x, y, s, f, pose='run') -> front."""
+    pal = _lf_pal(time)
+    t = _lf_t(time)
+    s = scale
+    bottom = y + 240 * s if bottom is None else bottom
+    shore = y - 120 * s
+    fy = shore - 260 * s
+    rng = random.Random(seed)
+    out = ""
+    if part in ("back", "all"):
+        out += _lf_far_hills(x0, x1, fy, s, time, seed + 4)
+        if towns:
+            out += _lf_town(x0 + (x1 - x0) * 0.82, fy + 2 * s, s * 0.85, time, seed + 5, n=9)
+        out += _lf_lake(x0, x1, fy, shore + 8 * s, s, time, seed + 4, phase=phase)
+        if boat is not None:
+            out += _place(_far_boat("full", True, time, 2.4, 0.13 * s), boat, fy + 170 * s, 0.13 * s, 1, filt=None)
+        out += _lf_shoreline(x0, x1, shore, s, time, seed + 4)
+    if part in ("path", "all"):
+        bank = [(x0 - 40, shore + 22 * s)] + [(x0 + (x1 - x0) * i / 10, shore + (24 + 6 * math.sin(i * 1.9 + seed)) * s) for i in range(11)] + \
+               [(x1 + 40, shore + 22 * s)]
+        d = _sm(bank, closed=False) + f" L{_f(x1 + 40)},{_f(bottom + 40)} L{_f(x0 - 40)},{_f(bottom + 40)} Z"
+        gid = _uid("lfbank", round(t, 3), round(shore), round(bottom))
+        g = pal["grass"]
+        out += (f'<defs>{S.lin_grad(gid, [(0, g[3]), (0.5, g[0]), (1, g[2])])}</defs><path d="{d}" fill="url(#{gid})" {_st(3 * s)}/>')
+        if towns:                                           # a fishing village on the grassy bank at the left
+            out += _lf_town(x0 + (x1 - x0) * 0.09, shore + 46 * s, s * 1.5, time, seed + 6, n=6)
+        wav = [math.sin(i * 0.8 + seed) * 14 * s for i in range(15)]
+        top_e = [(x0 - 40 + (x1 - x0 + 80) * i / 14, y - (44 + 8 * math.sin(i * 1.3)) * s + wav[i]) for i in range(15)]
+        bot_e = [(x0 - 40 + (x1 - x0 + 80) * i / 14, y + (46 + 8 * math.sin(i * 1.1 + 1)) * s + wav[i]) for i in range(15)]
+        out += _p(_sm(top_e + bot_e[::-1], closed=True, tension=0.6), pal["path"], 1.8 * s, stroke=pal["path_dk"])
+        out += _p(_sm([(x, yy + 14 * s) for x, yy in top_e], closed=False), sw=10 * s, stroke=S.shade(pal["path"], 0.25), extra='opacity="0.5"')
+        for i in range(int(50 * (x1 - x0) / 2112)):
+            out += _ell(rng.uniform(x0, x1), y + rng.uniform(-36, 36) * s, rng.uniform(2.5, 5) * s, rng.uniform(1.5, 3) * s,
+                        S.mix(pal["path_dk"], pal["rock_dk"], rng.random()), 0, extra='opacity="0.8"')
+        for i in range(int(10 * (x1 - x0) / 2112)):
+            fx, fy_ = rng.uniform(x0, x1), y + rng.uniform(-24, 24) * s
+            out += _ell(fx, fy_, 6 * s, 3 * s, pal["path_dk"], 0, extra='opacity="0.35"') + _ell(fx + 14 * s, fy_ + 6 * s, 6 * s, 3 * s,
+                                                                                                    pal["path_dk"], 0, extra='opacity="0.35"')
+        out += _lf_grass(x0, x1, shore + 30 * s, y - 40 * s, int(45 * (x1 - x0) / 2112), seed + 8, (g[2], pal["grass_dk"]), s, 0.5, 0.9)
+        out += _lf_flowers(x0, x1, shore + 34 * s, y - 50 * s, flowers * 0.6, seed + 12, time, s * 0.8)
+        out += _lf_grass(x0, x1, y + 40 * s, bottom, int(70 * (x1 - x0) / 2112), seed + 9, (g[2], pal["grass_dk"]), s, 0.9, 1.4)
+        if flowers > 0:
+            out += _lf_flowers(x0, x1, y + 60 * s, bottom - 20 * s, flowers * 1.2, seed + 10, time, s)
+        for j in range(4):
+            out += _lf_rock(x0 + (x1 - x0) * rng.uniform(0.05, 0.95), y + rng.uniform(90, 200) * s, rng.uniform(22, 40) * s,
+                            rng.uniform(12, 22) * s, pal, seed + 11 + j, 2.8 * s)
+    if part in ("front", "all"):
+        for side in (0, 1):
+            xa = x0 + (60 if side == 0 else x1 - x0 - 200) * s
+            d2 = ""
+            for j in range(16):
+                h = rng.uniform(120, 220) * s
+                lean = rng.uniform(-30, 30) * s
+                bx = xa + j * 9 * s
+                d2 += f"M{_f(bx)},{_f(bottom + 10 * s)} q{_f(lean * 0.3)},{_f(-h * 0.5)} {_f(lean)},{_f(-h)} "
+            out += _p(d2, sw=4 * s, stroke=pal["reed"])
+            out += _lf_rock(xa + 60 * s, bottom + 10 * s, 80 * s, 46 * s, pal, seed + 20 + side, 3.4 * s)
+    return f'<g filter="url(#wobble)">{out}</g>'
+
+
+# ---------------------------------------------------------------------- the high-angle view (the garden beds)
+def hillside_high_points(x0, y0, x1, y1, rows=4, cols=None, seed=0, lake=True, rock=True):
+    """The layout of hillside_high(x0, y0, x1, y1, ...): {'beds': [(cx, cy, w, h, k), ...] the group patches row by row from
+    the top (far, smaller: k is the perspective factor) to the bottom, alternating big beds (about 100 people) and
+    small ones (about 50), with grass paths between; 'rock': (x, y, k) where Jesus sits; 'shore_y': the lake's edge
+    (lake=True)}. characters.garden_beds() fills the beds with tiny heads and shoulders."""
+    rng = random.Random(seed)
+    W_, H_ = x1 - x0, y1 - y0
+    top = y0 + (0.20 * H_ if lake else 0.04 * H_)
+    beds = []
+    rows = max(1, int(rows))
+    for r in range(rows):
+        u0, u1 = r / rows, (r + 1) / rows
+        ya = top + (y1 - top) * (u0 ** 1.25)
+        yb = top + (y1 - top) * (u1 ** 1.25)
+        k = 0.55 + 0.45 * (r + 0.5) / rows
+        n = (cols or 5) + (1 if r % 2 == 0 else 0)
+        margin = W_ * (0.10 - 0.06 * r / rows)
+        span = W_ - 2 * margin
+        xs = []
+        acc = 0.0
+        widths = [(1.3 if (j + r) % 3 != 1 else 0.75) for j in range(n)]
+        tot = sum(widths)
+        for j in range(n):
+            w = span * widths[j] / tot
+            xs.append((x0 + margin + acc + w / 2, w))
+            acc += w
+        for j, (cx, w) in enumerate(xs):
+            if rock and r == rows - 1 and j == n // 2:
+                continue
+            beds.append((cx + rng.uniform(-6, 6) * k, (ya + yb) / 2 + rng.uniform(-4, 4) * k, w - 34 * k, (yb - ya) - 30 * k, k))
+    rk = 0.55 + 0.45 * (rows - 0.5) / rows
+    rock_pt = (x0 + W_ * 0.5, top + (y1 - top) * (((rows - 0.5) / rows) ** 1.25), rk)
+    return {"beds": beds, "rock": rock_pt, "shore_y": y0 + 0.18 * H_ if lake else None}
+
+
+def hillside_high(x0, y0, x1, y1, time=0.0, seed=0, lake=True, rows=4, cols=None, rock=True, trees=True):
+    """The hillside seen from high above (ABSOLUTE box, clipped to it) for the garden-bed shot (Mark 6:40): the emerald
+    slope fills the frame with mown-meadow texture, soft paths of lighter grass between the beds, a winding footpath,
+    trees seen from above (round crowns and shadows), rocks and flower dots; at the top (lake=True) the beach and a strip
+    of the lake with glints; the teaching rock with Jesus's spot (rock=True). Fill the beds with characters.garden_beds()
+    (same box and arguments) - the colourful groups then read as little gardens on the green."""
+    pal = _lf_pal(time)
+    t = _lf_t(time)
+    pts = hillside_high_points(x0, y0, x1, y1, rows, cols, seed, lake, rock)
+    rng = random.Random(seed)
+    W_, H_ = x1 - x0, y1 - y0
+    g = pal["grass"]
+    gid = _uid("lfhigh", round(t, 3), x0, y0, x1, y1)
+    out = (f'<defs>{S.lin_grad(gid, [(0, g[3]), (0.4, g[0]), (1, g[1])])}</defs>'
+           f'<rect x="{_f(x0 - 4)}" y="{_f(y0 - 4)}" width="{_f(W_ + 8)}" height="{_f(H_ + 8)}" fill="url(#{gid})"/>')
+    if lake:
+        sy = pts["shore_y"]
+        out += _lf_lake(x0, x1, y0 - 4, sy, 1.0, time, seed)
+        out += _lf_shoreline(x0, x1, sy, 0.8, time, seed, reeds=True)
+    for i in range(18):                                          # mown stripes
+        yy = y0 + H_ * (0.2 + 0.8 * i / 18)
+        out += (f'<path d="M{_f(x0 - 40)},{_f(yy)} Q{_f((x0 + x1) / 2)},{_f(yy - 20)} {_f(x1 + 40)},{_f(yy + 10)}" fill="none" '
+                f'stroke="{g[3] if i % 2 else g[1]}" stroke-width="{_f(18 + 18 * i / 18)}" opacity="0.22"/>')
+    for (cx, cy, w, h, k) in pts["beds"]:                        # a lighter, flattened patch under every group
+        out += _p(_sm([(cx - w / 2, cy), (cx - w * 0.42, cy - h / 2), (cx + w * 0.42, cy - h / 2), (cx + w / 2, cy),
+                       (cx + w * 0.42, cy + h / 2), (cx - w * 0.42, cy + h / 2)], closed=True, tension=0.6),
+                  S.mix(g[1], pal["grass_lt"], 0.35), 0, extra='opacity="0.55"')
+    if rock:
+        rx, ry, rk = pts["rock"]
+        path = [(rx + 10 * math.sin(i * 1.3), ry + 30 * rk + (y1 + 40 - ry - 30 * rk) * i / 4) for i in range(5)]
+        out += _p(_sm(path, closed=False), sw=16 * rk, stroke=pal["path"], extra='opacity="0.7"')
+    out += _lf_grass(x0, x1, y0 + H_ * 0.22, y1, int(60 * W_ / 2112), seed + 3, (g[2], pal["grass_dk"]), 0.7, 0.5, 0.9)
+    dots = ""
+    for i in range(int(160 * W_ / 2112)):
+        cx, cy = rng.uniform(x0, x1), rng.uniform(y0 + H_ * 0.2, y1)
+        c = (ANEMONE, CROWN_DAISY, "#fbf4e4")[i % 3]
+        dots += _circ(cx, cy, rng.uniform(2.2, 3.6), _lft(c, time, 0.6), 0)
+    out += dots
+    if trees:
+        for j, (u, v) in enumerate(((0.03, 0.40), (0.97, 0.55), (0.06, 0.92), (0.95, 0.95))):
+            cx, cy = x0 + W_ * u, y0 + H_ * v
+            r = (60 + 30 * v) * (1.0)
+            out += _ell(cx + r * 0.5, cy + r * 0.35, r * 1.1, r * 0.7, pal["shadow"], 0, extra='opacity="0.25"')
+            out += _cluster([(cx - r * 0.4, cy, r * 0.6), (cx + r * 0.4, cy - r * 0.1, r * 0.62), (cx, cy - r * 0.4, r * 0.66),
+                             (cx, cy + r * 0.3, r * 0.6)], pal["leaf"], 3.0)
+            out += _ell(cx - r * 0.25, cy - r * 0.45, r * 0.42, r * 0.28, pal["leaf_lt"], 0, extra='opacity="0.8"')
+    for j in range(5):
+        out += _lf_rock(rng.uniform(x0 + 40, x1 - 40), rng.uniform(y0 + H_ * 0.3, y1 - 20), rng.uniform(14, 24), rng.uniform(9, 14), pal,
+                        seed + 40 + j, 2.6)
+    if rock:
+        rx, ry, rk = pts["rock"]
+        out += _ell(rx + 12 * rk, ry + 12 * rk, 66 * rk, 30 * rk, pal["shadow"], 0, extra='opacity="0.25"')
+        out += _p(S.blob(rx, ry, 56 * rk, 30 * rk, 0.22, 9, seed + 7), S.mix(pal["rock"], pal["rock_dk"], 0.35), 3.0)
+        out += _p(S.blob(rx - 10 * rk, ry - 7 * rk, 32 * rk, 13 * rk, 0.2, 7, seed + 8), pal["rock_lt"], 0, extra='opacity="0.8"')
+        out += _p(f"M{_f(rx + 18 * rk)},{_f(ry - 20 * rk)} l{_f(-6 * rk)},{_f(14 * rk)} l{_f(8 * rk)},{_f(10 * rk)}", sw=2.2, stroke=pal["rock_dk"])
+        out += _circ(rx + 24 * rk, ry + 6 * rk, 6 * rk, "#a8b07a", 0, extra='opacity="0.6"')
+    if t > 0:
+        out += f'<rect x="{_f(x0)}" y="{_f(y0)}" width="{_f(W_)}" height="{_f(H_)}" fill="{pal["tint"][0]}" opacity="{0.10 * pal["tint"][1] / 0.22:.3f}"/>'
+    cid = _uid("lfhighc", x0, y0, x1, y1)
+    return (f'<clipPath id="{cid}"><rect x="{_f(x0)}" y="{_f(y0)}" width="{_f(W_)}" height="{_f(H_)}"/></clipPath>'
+            f'<g clip-path="url(#{cid})"><g filter="url(#wobble)">{out}</g></g>')
+
+
+# ---------------------------------------------------------------------- the modern frame: the park picnic
+LUNCH_COLOR = "#f08a7a"         # the girl's lunchbox: coral with a cream clip lid and a sun sticker
+LUNCHBOX_STATES = ("closed", "open", "half", "empty")
+
+
+def _sandwich_half(bite=0.0, k=1.0):
+    """A triangle sandwich half (local, anchor = the middle of its bottom edge; ~32 wide, 28 tall at person scale): soft
+    white bread with a golden crust on the two short sides, lettuce and cheese peeking along the diagonal cut; bite 0..1
+    takes a round bite out of the top corner."""
+    out = ""
+    body = _p("M-16,0 L-16,-28 L15,0 Z", "#d9a86a", 2.6)
+    body += _p("M-13,-3 L-13,-22 L8,-3 Z", "#fbf3dc", 0)
+    body += _p("M-15,-27 Q-10,-24 -7,-20 Q-2,-18 0,-13 Q5,-12 7,-7 Q12,-6 15,0", sw=3.2, stroke="#7cc45a")
+    body += _p("M-13,-21 L7,-3", sw=2.2, stroke="#f2c43c")
+    body += _p("M-16,0 L-16,-28 L15,0 Z", sw=2.6)
+    if bite > 0:
+        r = 4 + 5 * bite
+        cid = _uid("lfsand", round(bite, 2))
+        body = (f'<mask id="{cid}"><rect x="-40" y="-60" width="80" height="80" fill="#fff"/>'
+                f'<circle cx="-16" cy="-28" r="{_f(r)}" fill="#000"/><circle cx="-10" cy="-30" r="{_f(r * 0.7)}" fill="#000"/></mask>'
+                f'<g mask="url(#{cid})">{body}</g>')
+    out += body
+    return _g(out, f"scale({k})") if k != 1.0 else out
+
+
+def _lunchbox(state="closed", lid=None, k=1.0):
+    """The modern lunchbox (local, anchor = bottom centre; ~84 x 38 at person scale): a coral bento box in 3/4 view with
+    a cream clip lid and a sun sticker. 'closed'; 'open' (the lid propped behind it; inside: a sandwich cut into two
+    triangle halves, strawberries and carrot sticks); 'half' (one sandwich half gone - shared); 'empty'. lid 0..1
+    overrides the lid's opening angle (0 shut .. 1 propped open) for the opening animation."""
+    col = LUNCH_COLOR
+    lid_a = (0.0 if state == "closed" else 1.0) if lid is None else _clamp(lid)
+    out = ""
+    W2, D, H = 40, 12, 24
+    if lid_a > 0:
+        hgt = 22 * lid_a
+        out += _p(f"M{-W2 + 2},{-H - D + 1} L{W2 - 2},{-H - D + 1} L{W2 - 4},{-H - D - hgt} L{-W2 + 4},{-H - D - hgt} Z", "#fbf1dc", 2.6)
+        out += _p(f"M{-W2 + 8},{-H - D - 3} L{W2 - 8},{-H - D - 3} L{W2 - 9},{-H - D - hgt + 4} L{-W2 + 9},{-H - D - hgt + 4} Z",
+                  S.shade("#fbf1dc", -0.08), 0)
+    front = f"M{-W2},{-H} L{W2},{-H} L{W2},-6 Q{W2},0 {W2 - 6},0 L{-W2 + 6},0 Q{-W2},0 {-W2},-6 Z"
+    top = f"M{-W2},{-H} L{-W2 + 10},{-H - D} L{W2 - 10},{-H - D} L{W2},{-H} Z"
+    out += _p(top, S.shade(col, -0.28), 3.0)
+    if lid_a > 0.5:
+        inner = ""
+        out += _p(f"M{-W2 + 5},{-H - 2} L{-W2 + 10},{-H - D + 3} L{W2 - 10},{-H - D + 3} L{W2 - 5},{-H - 2} Z", "#fbf6ea", 2.0)
+        if state in ("open", "half"):
+            inner += _g(_sandwich_half(), f"translate(-22,{-H - 3}) scale(0.62,0.5)")
+            if state == "open":
+                inner += _g(_sandwich_half(), f"translate(-5,{-H - 3}) scale(-0.62,0.5)")
+            for j, (x_, y_) in enumerate(((14, -H - 6), (22, -H - 4), (18, -H - 9))):
+                inner += _p(f"M{x_ - 4},{y_ - 2} Q{x_},{y_ + 5} {x_ + 4},{y_ - 2} Q{x_},{y_ - 5} {x_ - 4},{y_ - 2} Z", "#e84a4a", 1.4)
+                inner += _p(f"M{x_ - 2},{y_ - 3} l2,-2 l2,2", sw=1.4, stroke="#5aa84a")
+            inner += _p(f"M28,{-H - 3} l4,-8 M31,{-H - 3} l5,-7", sw=2.6, stroke="#f29a3a")
+        out += inner
+        out += _p(f"M6,{-H - 2} L7,{-H - D + 3}", sw=2.0, stroke=S.shade(col, -0.2))
+    else:
+        out += _p(top, "#fbf1dc", 2.8)
+        out += _rect(-10, -H - D + 3, 20, 7, S.shade("#fbf1dc", -0.1), 1.4, rx=2)
+    out += _p(front, col, 3.0)
+    out += _p(f"M{-W2 + 3},{-H + 6} L{W2 - 3},{-H + 6}", sw=1.8, stroke=S.shade(col, 0.3), extra='opacity="0.8"')
+    out += _circ(-22, -12, 5.5, "#f6cf55", 1.4)
+    for j in range(8):
+        a = math.radians(45 * j)
+        out += _p(f"M{_f(-22 + 7 * math.cos(a))},{_f(-12 + 7 * math.sin(a))} l{_f(3 * math.cos(a))},{_f(3 * math.sin(a))}", sw=1.4, stroke="#f6cf55")
+    for sgn in (-1, 1):
+        out += _rect(sgn * (W2 + 1) - 3, -H - 3, 6, 11, "#fbf1dc", 1.8, rx=2)
+    return _g(out, f"scale({k})") if k != 1.0 else out
+
+
+def lunchbox(x, y, scale=1.0, facing=1, state="closed", lid=None):
+    """The modern child's lunchbox (anchor = bottom centre; closed (-66, -58, 66, 4), open (-66, -112, 66, 4)):
+    LUNCHBOX_STATES closed | open (a sandwich in two triangle halves, strawberries, carrot sticks) | half (one half shared)
+    | empty; lid 0..1 animates the opening."""
+    if state not in LUNCHBOX_STATES:
+        raise ValueError(f"lunchbox: unknown state {state!r}; choose from {LUNCHBOX_STATES}")
+    return _place(_lunchbox(state, lid), x, y, scale, facing)
+
+
+def sandwich_half(x, y, scale=1.0, facing=1, rot=0.0, bite=0.0):
+    """One triangle sandwich half (anchor = the middle of its bottom edge; (-25, -44, 25, 3)); bite 0..1."""
+    return _place(_sandwich_half(_clamp(bite)), x, y, scale, facing, rot)
+
+
+PICNIC_BLANKET_DEPTH = 150      # picnic_blanket(): the far edge is this far above the near edge at scale 1
+
+
+def picnic_blanket(x, y, scale=1.0, facing=1, width=560, color=None, part="all"):
+    """A picnic blanket on the grass in 3/4 view (anchor = the middle of its NEAR edge; (-width/2 - 34, -158, width/2 + 34, 12)):
+    a sky-blue and white gingham with a sunny yellow border and little tassels; the far edge PICNIC_BLANKET_DEPTH higher.
+    The children sit on it at about y - 40..90*scale (child(outfit='school') sitting poses, anchor = the seat). part
+    'all' | 'back' (all but the near border) | 'front' (the near border and tassels, drawn over feet that reach it)."""
+    c = color or "#6fb6e0"
+    w2, D = width / 2, PICNIC_BLANKET_DEPTH
+    out = ""
+    quad = f"M{-w2},0 L{w2},0 L{w2 - 30},{-D} L{-w2 + 30},{-D} Z"
+    if part in ("all", "back"):
+        out += _p(quad, "#fbf6ea", 3.2)
+        stripes = ""
+        n = int(width / 40)
+        for i in range(n + 1):
+            u = i / n
+            xa, xb = -w2 + width * u, -w2 + 30 + (width - 60) * u
+            if i % 2 == 0:
+                stripes += _p(f"M{_f(xa - 10)},0 L{_f(xa + 10)},0 L{_f(xb + 9)},{-D} L{_f(xb - 9)},{-D} Z", c, 0, extra='opacity="0.55"')
+        for j in range(int(D / 30) + 1):
+            yy = -j * 30 - 8
+            stripes += _p(f"M{-w2},{yy} L{w2},{yy} L{w2},{yy - 14} L{-w2},{yy - 14} Z", c, 0, extra='opacity="0.45"')
+        out += _clip(_uid("lfblank", width, c), quad, stripes)
+        out += _p(quad, sw=3.2)
+        out += _p(f"M{-w2 + 30},{-D} L{w2 - 30},{-D}", sw=10, stroke="#f6cf55")
+    if part in ("all", "front"):
+        out += _p(f"M{-w2},0 L{w2},0", sw=12, stroke="#f6cf55") + _p(f"M{-w2},6 L{w2},6", sw=2.4, stroke=INK)
+        for i in range(int(width / 28) + 1):
+            xx = -w2 + i * 28
+            out += _p(f"M{_f(xx)},6 l-2,10", sw=3, stroke="#f6cf55")
+    return _place(out, x, y, scale, facing)
+
+
+def _park_tree(cx, base, s, kind=0, seed=0):
+    """A city-park tree (local stage px): 0 a broad plane tree with a dappled crown, 1 a tall slim poplar, 2 a blossoming
+    cherry (pink)."""
+    rng = random.Random(seed)
+    out = _ell(cx + 30 * s, base + 4 * s, 110 * s, 14 * s, "#3a7a4a", 0, extra='opacity="0.2"')
+    if kind == 1:
+        out += _tube(f"M{_f(cx)},{_f(base)} L{_f(cx)},{_f(base - 90 * s)}", 12 * s, "#8a6a52", 2.6 * s)
+        out += _p(_sm([(cx, base - 380 * s), (cx + 46 * s, base - 250 * s), (cx + 40 * s, base - 120 * s), (cx, base - 70 * s),
+                       (cx - 40 * s, base - 120 * s), (cx - 46 * s, base - 250 * s)], closed=True), "#4f9e5a", 3 * s)
+        out += _p(f"M{_f(cx - 10 * s)},{_f(base - 340 * s)} Q{_f(cx - 30 * s)},{_f(base - 230 * s)} {_f(cx - 18 * s)},{_f(base - 120 * s)}",
+                  sw=10 * s, stroke="#7cc46a", extra='opacity="0.6"')
+        return out
+    crown, lit = ("#5aa85a", "#8fd06a") if kind == 0 else ("#f4b4c4", "#fbd8e0")
+    out += _tube(f"M{_f(cx)},{_f(base)} Q{_f(cx - 6 * s)},{_f(base - 70 * s)} {_f(cx + 4 * s)},{_f(base - 130 * s)}", 18 * s, "#8a6a52", 2.8 * s)
+    out += _tube(f"M{_f(cx + 2 * s)},{_f(base - 100 * s)} Q{_f(cx + 40 * s)},{_f(base - 130 * s)} {_f(cx + 60 * s)},{_f(base - 170 * s)}", 9 * s, "#8a6a52", 2.4 * s)
+    r = 120 * s * rng.uniform(0.9, 1.1)
+    circ = [(cx - r * 0.6, base - 170 * s - r * 0.3, r * 0.55), (cx + r * 0.6, base - 175 * s - r * 0.35, r * 0.55),
+            (cx, base - 180 * s - r * 0.75, r * 0.65), (cx - r * 0.2, base - 160 * s - r * 0.1, r * 0.55),
+            (cx + r * 0.3, base - 165 * s - r * 0.05, r * 0.5)]
+    out += _cluster(circ, crown, 3 * s)
+    for i in range(10):
+        a = rng.uniform(0, 2 * math.pi)
+        rr = rng.uniform(0.2, 0.9) * r
+        out += _circ(cx + rr * math.cos(a), base - 190 * s - r * 0.4 + rr * 0.6 * math.sin(a), rng.uniform(8, 16) * s, lit, 0,
+                     extra='opacity="0.8"')
+    return out
+
+
+def city_park(x0, x1, y, scale=1.0, part="all", seed=0, bottom=None):
+    """A sunny city park for the modern lunch (ABSOLUTE coordinates; y = the line where the picnic blanket's near edge lies).
+    part 'back': a bright cyan sky with soft clouds and a red kite, a skyline of pale modern buildings beyond the trees,
+    plane trees, poplars and a pink blossoming cherry, a curving cream path with a bench and a lamp post, a pond with two
+    ducks and a little playground slide in the distance, flower beds, and the lawn down to bottom (default y +
+    220*scale) | 'front' (daisies and grass tufts at the near corners) | 'all'. Not the street festival, the supermarket
+    or the spring hills. ~2 x a figure: a static layer."""
+    s = scale
+    bottom = y + 220 * s if bottom is None else bottom
+    rng = random.Random(seed)
+    out = ""
+    hz = y - 330 * s
+    if part in ("back", "all"):
+        top = y - 1200 * s
+        gid = _uid("lfpark", x0, x1, round(y))
+        out += (f'<defs>{S.lin_grad(gid, [(0, "#5ec0ea"), (0.6, "#a8dcf0"), (1, "#e4f4f0")])}</defs>'
+                f'<rect x="{_f(x0 - 4)}" y="{_f(top)}" width="{_f(x1 - x0 + 8)}" height="{_f(hz - top + 20)}" fill="url(#{gid})"/>')
+        for i in range(3):
+            cx = x0 + (x1 - x0) * (0.2 + 0.32 * i) + rng.uniform(-60, 60) * s
+            cy = y - 900 * s + 260 * s * rng.uniform(0.0, 0.6)
+            out += _cluster([(cx - 60 * s, cy, 40 * s), (cx, cy - 22 * s, 54 * s), (cx + 62 * s, cy, 42 * s), (cx, cy + 10 * s, 46 * s)],
+                            "#fbfbf6", 2.6 * s)
+        kx, ky = x0 + (x1 - x0) * 0.78, y - 780 * s
+        out += _p(f"M{_f(kx)},{_f(ky - 40 * s)} L{_f(kx + 30 * s)},{_f(ky)} L{_f(kx)},{_f(ky + 46 * s)} L{_f(kx - 30 * s)},{_f(ky)} Z", "#e8503c", 2.6 * s)
+        out += _p(f"M{_f(kx)},{_f(ky - 40 * s)} L{_f(kx)},{_f(ky + 46 * s)} M{_f(kx - 30 * s)},{_f(ky)} L{_f(kx + 30 * s)},{_f(ky)}", sw=2 * s, stroke="#f6cf55")
+        out += _p(f"M{_f(kx)},{_f(ky + 46 * s)} q{_f(-20 * s)},{_f(40 * s)} {_f(6 * s)},{_f(80 * s)} q{_f(20 * s)},{_f(40 * s)} {_f(-10 * s)},{_f(80 * s)}",
+                  sw=2 * s, stroke=INK, extra='opacity="0.6"')
+        for i in range(int((x1 - x0) / (130 * s)) + 1):                     # the skyline
+            bx = x0 + i * 130 * s + rng.uniform(-20, 20) * s
+            bh = rng.uniform(120, 300) * s
+            bw = rng.uniform(70, 120) * s
+            col = ("#cfe0e8", "#e8dcd0", "#d8e4dc", "#e4d4dc")[i % 4]
+            out += _rect(bx, hz - bh, bw, bh + 10 * s, col, 2.2 * s, stroke=S.mix(INK, col, 0.5))
+            for r_ in range(int(bh / (34 * s))):
+                for c_ in range(int(bw / (26 * s))):
+                    out += _rect(bx + 8 * s + c_ * 26 * s, hz - bh + 12 * s + r_ * 34 * s, 12 * s, 16 * s, "#a8c8dc", 0, extra='opacity="0.7"')
+        out += _p(f"M{_f(x0 - 40)},{_f(hz + 10 * s)} L{_f(x1 + 40)},{_f(hz + 10 * s)} L{_f(x1 + 40)},{_f(bottom + 40)} L{_f(x0 - 40)},{_f(bottom + 40)} Z",
+                  "#7ccb6a", 0)
+        gid2 = _uid("lflawn", x0, x1, round(y))
+        out += (f'<defs>{S.lin_grad(gid2, [(0, "#8fd476"), (1, "#5fb85c")])}</defs>'
+                f'<rect x="{_f(x0 - 40)}" y="{_f(hz + 10 * s)}" width="{_f(x1 - x0 + 80)}" height="{_f(bottom - hz + 30 * s)}" fill="url(#{gid2})"/>')
+        px0 = x0 + (x1 - x0) * 0.62
+        out += _ell(px0, hz + 70 * s, 230 * s, 46 * s, "#7cc8e8", 3 * s)
+        out += _ell(px0 - 40 * s, hz + 62 * s, 120 * s, 16 * s, "#c8eef8", 0, extra='opacity="0.7"')
+        for dx in (-60, 40):
+            out += _ell(px0 + dx * s, hz + 76 * s, 13 * s, 8 * s, "#fbf6ea", 2 * s) + _circ(px0 + (dx + 11) * s, hz + 66 * s, 7 * s, "#4f9e5a", 2 * s)
+            out += _p(f"M{_f(px0 + (dx + 17) * s)},{_f(hz + 66 * s)} l{_f(6 * s)},{_f(1 * s)}", sw=3 * s, stroke="#f29a3a")
+        sx_ = x0 + (x1 - x0) * 0.18
+        out += _p(f"M{_f(sx_)},{_f(hz + 40 * s)} L{_f(sx_ + 70 * s)},{_f(hz - 50 * s)} L{_f(sx_ + 90 * s)},{_f(hz - 50 * s)} L{_f(sx_ + 150 * s)},{_f(hz + 40 * s)}",
+                  sw=12 * s, stroke="#f2c43c")
+        out += _p(f"M{_f(sx_ + 90 * s)},{_f(hz - 50 * s)} L{_f(sx_ + 90 * s)},{_f(hz + 40 * s)} M{_f(sx_ + 70 * s)},{_f(hz - 50 * s)} L{_f(sx_ + 60 * s)},{_f(hz + 40 * s)}",
+                  sw=6 * s, stroke="#e8503c")
+        path = [(x0 - 40, y - 120 * s), (x0 + (x1 - x0) * 0.3, y - 190 * s), (x0 + (x1 - x0) * 0.6, y - 210 * s), (x1 + 40, y - 260 * s)]
+        out += _p(_sm(path, closed=False, tension=0.8), sw=70 * s, stroke="#efe2c4")
+        out += _p(_sm(path, closed=False, tension=0.8), sw=2.6 * s, stroke=S.mix("#efe2c4", INK, 0.35), extra='opacity="0.6"')
+        bx = x0 + (x1 - x0) * 0.40
+        by = y - 230 * s
+        out += _rect(bx - 70 * s, by - 34 * s, 140 * s, 10 * s, "#a8744a", 2.2 * s) + _rect(bx - 70 * s, by - 56 * s, 140 * s, 9 * s, "#a8744a", 2.2 * s)
+        for dx in (-60, 56):
+            out += _rect(bx + dx * s, by - 24 * s, 6 * s, 24 * s, "#4a4a52", 1.6 * s)
+        for i, (u, kind) in enumerate(((0.03, 0), (0.12, 1), (0.30, 2), (0.47, 0), (0.86, 1), (0.95, 0))):
+            out += _park_tree(x0 + (x1 - x0) * u, y - (270 + 30 * (i % 2)) * s, s * (0.9 + 0.1 * (i % 2)), kind, seed + i)
+        lx = x0 + (x1 - x0) * 0.585
+        out += _rect(lx - 4 * s, y - 500 * s, 8 * s, 290 * s, "#4a5a62", 1.8 * s)
+        out += _p(f"M{_f(lx - 18 * s)},{_f(y - 500 * s)} L{_f(lx + 18 * s)},{_f(y - 500 * s)} L{_f(lx + 10 * s)},{_f(y - 534 * s)} L{_f(lx - 10 * s)},{_f(y - 534 * s)} Z",
+                  "#fbf1c8", 2.4 * s) + _rect(lx - 20 * s, y - 504 * s, 40 * s, 6 * s, "#4a5a62", 1.6 * s)
+        for j in range(3):
+            fx = x0 + (x1 - x0) * (0.22 + 0.3 * j)
+            fy_ = y - 160 * s + 20 * j * s
+            out += _ell(fx, fy_, 90 * s, 22 * s, "#7a5a3a", 2 * s)
+            for k_ in range(9):
+                out += _circ(fx - 70 * s + k_ * 17 * s, fy_ - 10 * s - (k_ % 2) * 6 * s, 9 * s, ("#e8503c", "#f6cf55", "#f49ab4")[k_ % 3], 1.6 * s)
+        out += _grass_strokes(x0, x1, y - 140 * s, bottom, int(60 * (x1 - x0) / 2112), seed + 3, "#4f9e4a", s)
+    if part in ("front", "all"):
+        for side in (0, 1):
+            xa = x0 if side == 0 else x1 - 300 * s
+            out += _grass_strokes(xa, xa + 300 * s, bottom - 80 * s, bottom, 30, seed + 9 + side, "#3f8a42", s * 1.6)
+            for k_ in range(6):
+                fx = xa + 30 * s + k_ * 46 * s
+                fy_ = bottom - 30 * s - (k_ % 3) * 16 * s
+                for a in range(6):
+                    r = math.radians(60 * a)
+                    out += _ell(fx + 9 * s * math.cos(r), fy_ + 9 * s * math.sin(r), 6 * s, 4 * s, "#fbf6ea", 1.4 * s)
+                out += _circ(fx, fy_, 5 * s, "#f6cf55", 1.4 * s)
+    return f'<g filter="url(#wobble)">{out}</g>'
