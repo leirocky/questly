@@ -10,13 +10,13 @@ accent() put the attack wherever the cue falls, on tones of the chord sounding t
 row of pops (the five loaves and two fish, the twelve friends, the tiny bites, the twelve baskets), climb() a climbing
 pluck on each; lead() gives a moment's main attack to the picture when it falls inside that moment (the Amen's light,
 the boy's smile).  A listed picture cue always gets its synced accent wherever it falls; only the extra gesture (a
-sweep, the cadence) depends on where.  Fast rows (pops 0.13 s apart) sync only their well-separated ends: the onset
-check cannot tell neighbours apart.  A scene that does not build falls back to the narrator's voice: syl() / span() /
-chars() measure the punctuation groups in the recorded clip the way the scenes do (stories/noah/scenes/s01_title.py
-voice_marks), scaled to the line's length in the timeline.  audio/music.py writes the chord at every moment to
-harmony.json and audio/mix.py tunes the scenes' chimes, sparkles and grows to it, so the chord under every one of those
-cues is a plain major or dominant chord where possible (a sus chord rings its bells a whole step lower; a minor chord
-rings its relative major); mix.py also dips the music 8 dB under every name (耶稣, 门徒, 腓力, 安得烈, 牧羊人).
+sweep, the cadence) depends on where.  Fast rows (pops 0.13 s apart: the twelve friends, the s09 count) sync only
+their well-separated ends: the onset check cannot tell neighbours apart.  A scene that does not build falls back
+to the narrator's voice: syl() / span() / chars() measure the punctuation groups in the recorded clip the way the
+scenes do (stories/noah/scenes/s01_title.py voice_marks), scaled to the line's length in the timeline.  audio/music.py
+writes the chord at every moment to harmony.json and audio/mix.py tunes the scenes' chimes, sparkles and grows to it,
+so the chord under every one of those cues is a plain major or dominant chord where possible (a sus chord rings its
+bells a whole step lower; a minor chord rings its relative major); mix.py also dips the music 8 dB under every name (耶稣, 门徒, 腓力, 安得烈, 牧羊人).
 
 Colour: a warm, generous picnic on the hillside, unlike the nine earlier scores (Jonah's D-major sea, Daniel's Persian
 court in A hijaz, David's G pipe tune, Noah's F hymn and B-flat march, Joseph's D clarinet, the Storm's Galilean
@@ -84,16 +84,17 @@ Cue table (scene: key / meter -- what the music does; picture hits in brackets)
                             oboe, tremolo, ticking pizzicato); E on '你们给他们吃吧' (change, the harp); G-sharp 7 on '门徒们吓了
                             一跳' (change) and the jolt; A on '耶稣又问腓力' (change), hanging on B7sus4; E on '耶稣这样问'
                             (change); the boy's theme far off on the celesta on '其实，耶稣自己早就知道' (change); Philip's
-                            fingers on '腓力掰着手指' (change): plucked steps that stall, a head-shake; the bassoon's sigh on
-                            '就算花好多好多钱买饼' (change) to G-sharp 7 [the jolt (whoosh), he already knows (a glint), the
-                            money (a clink), five tiny bites (the celesta falling)]
+                            fingers on '腓力掰着手指' (change): plucked steps (pizzicato and harp) on the picture's four
+                            fingers that stall, a head-shake; the bassoon's sigh on '就算花好多好多钱买饼' (change) to
+                            G-sharp 7 [the jolt (whoosh), he already knows (a glint), Philip's first and fourth finger,
+                            the money (a clink), five tiny bites (the celesta falling)]
   s05 boy       A -> F#m 2/4 -> E   the hillside head in A on the harp (the deceptive answer to Philip's G-sharp 7);
                             the search on '门徒们找啊找' (change), a ping on '这时候'; E on '彼得的兄弟安得烈' (change, a
                             strum): the boy's theme on the kalimba; the counting game on '这里有个小孩子' (change: A, then E
                             under the count); C-sharp minor on '可是，这么多人' (change), the oboe; '五个饼，两条鱼，只够'
                             (change): the count, tiny; '可是，小男孩把他带的饭' (change): his theme on the cello, home to E
                             [the five loaves and two fish (first, fifth, seventh), the lunch handed over (kalimba and
-                            harp); the chime as Jesus takes it is accented but not listed (the scene's last half second)]
+                            harp), Jesus takes it (a glint); E arrives just after '交给了耶稣']
   s06 sit       E 6/8       harp, guitar and a flute bird for '叫大家都坐下来吧'; the hillside song on the cello on
                             '那里有好多青草' (change), the rows sitting down (harp and pizzicato, climbing, on the picture's
                             rustles); '有的一百个人一组' (change); the garden from above on '从高处看' (change: A, the flute
@@ -103,20 +104,24 @@ Cue table (scene: key / meter -- what the music does; picture hits in brackets)
                             timpani), a child (a kalimba ping)]
   s07 bless     E 6/8       the hush: the boy's theme alone on the harp; '抬头望着天' (change): high strings, a choir
                             'ooh' on A over E; the Amen on '感谢上帝' (change): E, choir 'aah', glockenspiel and harp on the
-                            light; '然后，他把饼掰开' (change: A): the bread breaks (a harp cascade, a pizzicato chord), the
-                            choir fading; '门徒再分给大家' (change): his five notes on the guitar, the fish on celesta and
-                            pizzicato, to B7; the round on '分啊分' (change): his theme in canon over E and A/E, the kalimba,
+                            light, held through the pause; '然后，他把饼掰开' (line, change: A); E/G# as the bread breaks on
+                            the picture (a harp cascade, a pizzicato chord), the choir fading, his five notes passed on
+                            the kalimba after it ('递给门徒'); '门徒再分给大家' (change): his five notes on the guitar,
+                            the fish on celesta and pizzicato, to B7; the round on '分啊分' (change): his theme in canon over E and A/E, the kalimba,
                             the celesta a bar later, the harp a bar after that (the kalimba then a third higher), the
                             guitar and pizzicato joining; abundance
-                            on '大家想吃多少' (change): la do' ti on the violins and cello, the horn, sweeps up A and B7 -- do'
-                            arrives with the next page [he looks up (a glint), the light (the Amen), the bread breaks, the
-                            shares (pizzicato climbing; first and fourth listed)]
+                            on '大家想吃多少' (change): two bars, la do' re' | do' ti on the violins and cello, the horn,
+                            sweeps up A and B7, swelling under the line and relaxing into the page turn -- do' arrives
+                            with the next page [he looks up (a glint), the light (the Amen), the bread breaks, the shares
+                            (pizzicato climbing; second and fourth listed)]
   s08 baskets   E 6/8 -> A -> 2/4 -> E   do' resolves with the page, a contented bassoon (mi re do); A on '把剩下的碎块'
-                            (change, the cello); '门徒们去收' (change): the gathering, the run, the twelfth basket's full
+                            (change, the cello); '门徒们去收' (change): the gathering, the climb on the picture's baskets
+                            (0.25 s apart: A under the first three, B7 from the fourth), the twelfth basket's full
                             cadence (hit, change E); the hillside song in full strings and horn; wonder on '大家都好惊讶'
                             (change): the boy's seven notes on the celesta, hanging on B7sus4; the song on the horn on '大家
                             都说' (change), to a half cadence; his theme on the kalimba on '小男孩看着满满的篮子' (change)
-                            [the twelfth basket (hit and change), the boy smiles (a glint)]
+                            [the first, sixth and eleventh baskets, the twelfth (hit and change), the boy smiles (a
+                            glint)]
   s09 end       A 6/8 -> E  the frame: his seven notes in A on the kalimba (the picture's loaves and fish), three tiny
                             notes for '一点点', the ukulele and the piano; E on '可是在耶稣手里' (change): the hillside song
                             on the cello, the kalimba climbing as it multiplies; '耶稣看见大家饿了' (change): the song home
@@ -1265,15 +1270,20 @@ def evening(c):
         steps_t = [ct.t(q_) - c.t0 for q_ in (0.0, 0.5, 1.0, 1.5)]
     steps_t = [t_ for t_ in steps_t if t_count - 1e-6 <= t_ < t_money - 0.6]
     tune(c, segs, steps_t, ["C#4", "D#4", "E4", "F#4"][:len(steps_t)], part="pz_hi", vel=44, role="fx",
-         art="s", last=0.5, what="Philip counts a finger" if len(fing) >= 4 else None, sync=(0, 3) if len(fing) >= 4 else ())
-    stall = [ct.t(2.0) - c.t0, ct.t(2.5) - c.t0]
-    tune(c, segs, stall, ["G#4", "G#4"], part="pz_hi", vel=40, role="fx", art="s")
-    sh_t = max(t_shake, ct.t(3.0) - c.t0)
+         art="s", last=0.35, what="Philip counts a finger" if len(fing) >= 4 else None,
+         sync=(0, 3) if len(fing) >= 4 else ())
+    tune(c, segs, steps_t, ["C#5", "D#5", "E5", "F#5"][:len(steps_t)], part="harp", vel=40, role="fx", art="",
+         last=0.35, clear=False)                         # the harp doubles his steps (a crisp pluck)
+    t_last = steps_t[-1] if steps_t else ct.t(1.5) - c.t0
+    stall = [t_ for t_ in (t_last + 0.45, t_last + 0.8) if t_ < t_money - 0.5]  # the fifth finger does not come
+    tune(c, segs, stall, ["G#4", "G#4"][:len(stall)], part="pz_hi", vel=40, role="fx", art="s", last=0.3)
+    sh_t = max(t_shake, (stall[-1] + 0.3) if stall else t_last + 0.4)
     shake = [sh_t + 0.2 * j for j in range(4)]
     shake = [t_ for t_ in shake if t_ < t_money - 0.1]
     tune(c, segs, shake, ["A3", "G#3", "A3", "G#3"][:len(shake)], part="bsn", vel=40, role="fx", art="s")
-    ct.duck(1.5, parts=["pz_hi"])
+    ct.duck(1.5, parts=["pz_hi", "harp"])
     lv(ct, ["pz_hi"], -14)
+    lv(ct, ["harp"], -17)
     lv(ct, ["bsn"], -17)
     ct.expr(["vla", "vln1", "vc"], [(0, -26), (4, -25)])
     # 'even lots and lots of money wouldn't buy enough for everyone to have a little bite!': the bassoon's sigh
@@ -1611,8 +1621,9 @@ def sit(c):
 def bless(c):
     """The miracle (E, 6/8).  A hush: the five loaves and two fish in Jesus's hands -- the boy's theme on the harp, alone;
     '抬头望着天' (change): high strings rise and a choir 'ooh' on A over E; the Amen on '感谢上帝' (change): E major, choir
-    'aah', harp glissando and glockenspiel on the picture's light; '然后，他把饼掰开' (change): the bread breaks (a harp
-    cascade, a pizzicato chord); '门徒再分给大家' (change): his five notes passed on to the guitar, the fish on the
+    'aah', harp glissando and glockenspiel on the picture's light, held through the pause; '然后，他把饼掰开' (change):
+    A, and E/G# as the bread breaks on the picture (a harp cascade, a pizzicato chord), his five notes passed on after
+    it; '门徒再分给大家' (change): his five notes passed on to the guitar, the fish on the
     pizzicato and celesta for '鱼也是这样' (to B7); '分啊分' (change): the round -- his theme in canon over E and A/E, the
     kalimba, then the celesta, then the harp, the guitar strumming and the pizzicato joining bar by bar; '大家想吃多少'
     (change): abundance -- the violins and the cello sing la do' ti, the horn, the kalimba and harp sweeping up A and B7,
@@ -1620,27 +1631,35 @@ def bless(c):
     c.gain(-3.0)
     t_look = c.at("抬头望着天")
     t_thx = c.at("感谢上帝")
-    t_brk = c.gap(c.find("然后，他把饼掰开"))
+    t_brk = c.ls(c.find("然后，他把饼掰开"))                  # the Amen holds through the pause after '感谢上帝'
     t_share = c.at("门徒再分给大家")
     t_round = c.gap(c.find("分啊分"))
     t_all = c.at("大家想吃多少")
+    # the bread breaks on the picture's crunch (else just after the voice's 掰开); A until then, E/G# with it, and
+    # his five notes passed on after it ('递给门徒'), the last on F#m7
+    t_bk = pic(c, "crunch", "然后，他把饼掰开", 0)
+    t_b = t_bk if t_bk is not None else voice_at(c, "他把饼掰开") + 0.55
+    t_b = min(max(t_b, t_brk + 0.25), t_share - 0.6) if t_bk is None else t_b
+    n0 = t_b + 0.3
+    d_ = max(0.12, min(0.32, (t_share - 0.45 - n0) / 3.0))
+    pass_t = [n0 + d_ * k for k in range(4)]
     tk = c.seg(0, t_look, 2, "6/8", "E major", nominal=None, label="bless-take")
     lk = c.seg(t_look, t_thx, 1, "6/8", "E major", nominal=None, label="bless-look")
     th = c.seg(t_thx, t_brk, 1, "6/8", "E major", nominal=None, label="bless-thanks")
     br = c.seg(t_brk, t_share, 2, "6/8", "E major", nominal=None, label="bless-break")
     sh = c.seg(t_share, t_round, 2, "6/8", "E major", nominal=None, label="bless-share")
     rd = c.seg(t_round, t_all, 3, "6/8", "E major", nominal=None, label="bless-round")
-    pl = c.seg(t_all, c.dur, 1, "6/8", "E major", nominal=None, label="bless-plenty")
+    pl = c.seg(t_all, c.dur, 2, "6/8", "E major", nominal=None, label="bless-plenty")
     segs = (tk, lk, th, br, sh, rd, pl)
     for sg in (tk, lk, br, sh, rd, pl):
         sg.duck(1.5)
     tk.prog(" | ".join(BOY_PROG))
     lk.prog("Aadd9/E:3")
     th.prog("E:3")
-    br.prog("A:3 | E/G#:3/2 F#m7:3/2")
+    prog48(br, ["A", "E/G#", "F#m7"], edges48(br, c, [t_b, pass_t[3] - 0.05]))
     sh.prog(BOY_PROG[0] + " | B7/D#:3")
     rd.prog("E:3/2 A/E:3/2 | E:3/2 A/E:3/2 | E:3/2 E/G#:3/2")
-    pl.prog("A:3/2 B7:3/2")
+    pl.prog("A:3 | B7sus4:3/2 B7:3/2")
     lk.sync("'抬头望着天': he looks up (A over E)", 0, t_look, kind="change")
     th.sync("'感谢上帝': the Amen (E)", 0, t_thx, kind="change")
     br.sync("'然后，他把饼掰开': the bread is broken (A)", 0, t_brk, kind="change")
@@ -1680,8 +1699,6 @@ def bless(c):
     lv(th, ["glock"], -14)
     lv(th, ["harp"], -15)
     # 'then he broke the bread and gave it to the disciples': the bread breaks (a harp cascade, a pizzicato chord)
-    t_bk = pic(c, "crunch", "然后，他把饼掰开", 0) or pic(c, "cloth", "然后，他把饼掰开", 0)
-    t_b = t_bk if t_bk is not None else min(max(voice_at(c, "他把饼掰开") + 0.55, t_brk + 0.2), t_share - 0.5)
     sg_, q_b = seg_at(c, segs, t_b)
     br.pad(["vla", "vla", "vln1"], 3, 52, 71, vel=26, bass_part="vc", bass_lo=40, bass_hi=52)
     br.pad("choir", 3, 56, 76, q0=0.0, q1=3.0, vel=26, bass_ref=(40, 52))  # the Amen fades into the breaking
@@ -1691,7 +1708,7 @@ def bless(c):
         sg_.add("pz_lo" if p_ < 55 else "pz_hi", q_b, _dq(sg_, q_b, 0.25), p_, 44, "arp", "h")
     sweep(sg_, q_b + 0.02, 0.45, "E6", "E4", 34, 26, up=False, part="harp")
     sg_.sync("'掰开': the bread breaks" + (" (picture)" if t_bk is not None else ""), q_b, t_b)
-    br.mel("kalimba", "r:3 | E5:1/2 G#5:1/2 F#5:1/2 A5:3/2", vel=40)
+    tune(c, segs, pass_t, ["E5", "G#5", "F#5", "A5"], part="kalimba", vel=40, role="melody", clear=False, last=6.0)
     lv(br, ["pz_hi"], -14)
     lv(br, ["harp"], -16)
     lv(br, ["kalimba"], -15)
@@ -1732,24 +1749,24 @@ def bless(c):
     lv(rd, "hand", -22)
     rd.expr(["vla", "vln1", "vc"], [(0, -26), (9, -22)])
     # 'everyone ate as much as they wanted': abundance -- la do' ti on the violins and cello, the horn, sweeps up
-    pl.mel("vln_mel", "C#5:1 E5:1/2 D#5:3/2", vel=42, transpose=12)
-    pl.mel("cello", "C#5:1 E5:1/2 D#5:3/2", vel=44, transpose=-12)
-    pl.mel("horn", "E4:3/2 D#4:3/2", vel=38, role="counter")
+    pl.mel("vln_mel", "C#5:1 E5:1/2 F#5:3/2 | E5:3/2 D#5:3/2", vel=42, transpose=12)
+    pl.mel("cello", "C#5:1 E5:1/2 F#5:3/2 | E5:3/2 D#5:3/2", vel=44, transpose=-12)
+    pl.mel("horn", "C#4:3 | B3:3", vel=38, role="counter")
     strings(pl, vel=32, lo=52, hi=73, bass=(40, 52), cb=(28, 40))
-    sweep(pl, 0.05, 0.5, "A4", "A6", 24, 34, part="harp")
-    sweep(pl, 1.55, 0.5, "B4", "B6", 26, 36, part="kalimba")
+    sweep(pl, 0.05, 0.6, "A4", "A6", 24, 34, part="harp")
+    sweep(pl, 3.05, 0.6, "B4", "B6", 24, 32, part="kalimba")
     pl.duck(3.0, parts=["vln_mel", "cello", "horn"])
-    pl.expr(["vln_mel"], [(0, -21), (3, -19)])
-    pl.expr(["cello"], [(0, -20), (3, -18)])
-    pl.expr(["horn"], [(0, -24), (3, -21)])
-    pl.expr(STR, [(0, -24), (3, -21)])
-    lv(pl, ["harp", "kalimba"], -16)
+    pl.expr(["vln_mel"], [(0, -22), (1.5, -21), (3.5, -22), (6, -26)])     # it swells under the line, relaxes into
+    pl.expr(["cello"], [(0, -21), (1.5, -20), (3.5, -21), (6, -25)])       # the page turn; do' arrives with s08
+    pl.expr(["horn"], [(0, -25), (3, -25), (6, -29)])
+    pl.expr(STR, [(0, -24), (3, -23), (6, -27)])
+    lv(pl, ["harp", "kalimba"], -17)
     t_fish = pic(c, "crunch", "然后，他把饼掰开", 1)
     if t_fish is not None and t_fish < t_round:
         accent(c, segs, t_fish, None, pluck=(55, 67), vel=36)
     shares = pick_times(pics(c, "pop"), t_round - 0.3, t_all)
     if shares:                                              # each share: a pizzicato pluck climbing the chord
-        climb(c, segs, shares, part="pz_hi", lo=59, hi=76, vel=42, sync=(0, len(shares) - 1),
+        climb(c, segs, shares, part="pz_hi", lo=59, hi=76, vel=46, sync=(1, len(shares) - 1) if len(shares) > 2 else (0,),
               what="a share", glock=False)
     follow(c, segs, "sparkle", t_share - 0.3, c.dur - 0.1, glock=(86, 98), vel=32)
     t_eat = pic(c, "crunch", "分啊分", 0)
@@ -1764,8 +1781,8 @@ def baskets(c):
     """Twelve baskets (E).  Full and content: the E of abundance lands with the page, a contented bassoon, harp and
     pizzicato (6/8), the abundance's ti resolving to do' on the violins and cello; A on '把剩下的碎块' (change): the
     cello; '门徒们去收' (change): the leftovers gathered (pizzicato climbing the A chord on the picture's rustles), then
-    the twelve baskets -- on the picture a quick run up the scale A4 ... D#6 over B7 (kalimba, glockenspiel) on the first
-    eleven pops and the high E, the warm full cadence, on the twelfth (without it eleven slower steps over a rising A,
+    the twelve baskets -- on the picture a climb up the scale A4 ... D#6 (kalimba, glockenspiel; A under the first three,
+    B7 from the fourth) on the first eleven pops and the high E, the warm full cadence, on the twelfth (without it eleven slower steps over a rising A,
     E/G#, F#m7, B7 and the cadence at '比原来的五个饼'), timpani and tremolo strings swelling; the hillside song in full
     strings and horn; wonder on '大家都好惊讶' (change): the boy's theme counted on the celesta over E/G#, hanging on
     B7sus4; '大家都说' (change): the song on the horn, to a half cadence; '小男孩看着满满的篮子' (change): his theme on the
@@ -1806,7 +1823,7 @@ def baskets(c):
     for k_ in range(1, len(steps_t)):
         steps_t[k_] = max(steps_t[k_], steps_t[k_ - 1] + 0.05)
     if on_pic:
-        prog48(ga, ["A", "B7"], edges48(ga, c, [steps_t[0] - 0.15]))
+        prog48(ga, ["A", "B7"], edges48(ga, c, [steps_t[3] - 0.05]))
     else:
         prog48(ga, ["A", "E/G#", "F#m7", "B7"], edges48(ga, c, [steps_t[4], steps_t[8], steps_t[10]]))
     fl.prog("E:3")
@@ -1822,18 +1839,18 @@ def baskets(c):
     # 'everyone ate until they were full': E with the page, a contented bassoon, harp, pizzicato
     fd.mel("vln_mel", "E6:3 | r:3", vel=36)                 # la do' ti -- do': the abundance resolves with the page
     fd.mel("cello", "E4:3 | r:3", vel=40)
-    fd.expr(["vln_mel"], [(0, -21), (3, -28)])
-    fd.expr(["cello"], [(0, -20), (3, -27)])
+    fd.expr(["vln_mel"], [(0, -24), (3, -30)])
+    fd.expr(["cello"], [(0, -23), (3, -29)])
     fd.mel("bsn", "G#3:1 F#3:1/2 E3:3/2 | r:3/2 F#3:3/2", vel=42)
     rock(fd, 0, 6, part="harp", lo=40, hi=66, vel=28)
     strings(fd, vel=30, lo=52, hi=73, bass=(40, 52), cb=(28, 40))
     for q_ in (0.0, 1.5, 3.0, 4.5):
         fd.add("pz_lo", q_, 0.5, fd.chord_at(q_ + 1e-3).bass_note(40, 52), 32, "arp", "s")
     fd.duck(2.0, parts=["bsn"])
-    fd.expr(["bsn"], [(0, -19), (1, -16), (6, -17)])
-    lv(fd, ["harp"], -17)
+    fd.expr(["bsn"], [(0, -21), (1.5, -17), (6, -17)])
+    ease(fd, ["harp"], -17, drop=5, over=1.5)
     lv(fd, ["pz_lo"], -15)
-    fd.expr(STR, [(0, -22), (1.5, -23), (6, -24)])
+    fd.expr(STR, [(0, -25), (1.5, -24), (6, -24)])
     follow(c, segs, "pop", 0.1, t_jesus - 0.2, pluck=(52, 64), vel=30)
     # 'gather the leftovers, let nothing be wasted': A, the cello
     js.mel("cello", "A4:1 C#5:1/2 B4:1 A4:1/2 | B4:3/2 G#4:1 D5:1/2", vel=44)
@@ -1846,7 +1863,7 @@ def baskets(c):
     # 'they gathered and gathered ... twelve baskets full!': the climb, eleven steps -- the twelfth is the cadence
     climb_n = ["A4", "B4", "C#5", "D#5", "E5", "F#5", "G#5", "A5", "B5", "C#6", "D#6"]
     tune(c, segs, steps_t, climb_n, part="kalimba", vel=42, role="fx",
-         what=None if on_pic else "a basket is filled", sync=() if on_pic else (0, 5, 10),
+         what="a basket is filled" + (" (picture)" if on_pic else ""), sync=(0, 5, 10),
          glock=(0, 3, 7) if on_pic else (0, 2, 4, 6, 9, 10))
     gath = pick_times(pics(c, "crunch"), t_gath, steps_t[0] - 0.2)
     if gath:                                                # the leftovers gathered: pizzicato climbing the A chord
@@ -2115,7 +2132,7 @@ REQUIRED_HITS = [
     ("s06_sit", "光是男人", "gap", "change"),                         # the whole hillside
     ("s07_bless", "抬头望着天", "phrase", "change"),                  # he looks up
     ("s07_bless", "感谢上帝", "phrase", "change"),                    # the Amen
-    ("s07_bless", "然后，他把饼掰开", "gap", "change"),               # the breaking
+    ("s07_bless", "然后，他把饼掰开", "line", "change"),              # the breaking (the Amen holds through the pause)
     ("s07_bless", "门徒再分给大家", "phrase", "change"),              # passed on
     ("s07_bless", "分啊分", "gap", "change"),                         # the round
     ("s07_bless", "大家想吃多少", "phrase", "change"),                # abundance
@@ -2154,6 +2171,8 @@ PICTURE_HITS = [
     ("s03_crowd", "sparkle", "耶稣就给大家讲上帝的事", 0, 0.0, "hit", "healing sparkles (the celesta)"),
     ("s04_evening", "whoosh", "门徒们吓了一跳", 0, 0.0, "hit", "the disciples jump (a jolt)"),
     ("s04_evening", "chime", "耶稣这样问", 0, 0.0, "hit", "he already knows (a glint)"),
+    ("s04_evening", "pop", "腓力掰着手指", 0, 0.0, "hit", "Philip counts his first finger (a plucked step)"),
+    ("s04_evening", "pop", "腓力掰着手指", 3, 0.0, "hit", "the fourth finger -- then the steps stall"),
     ("s04_evening", "coins", "就算花好多好多钱买饼", 0, 0.0, "hit", "lots and lots of money (a clink)"),
     ("s04_evening", "pop", "就算花好多好多钱买饼", 1, 0.0, "hit", "the first tiny bite (the celesta falls)"),
     ("s04_evening", "pop", "就算花好多好多钱买饼", 5, 0.0, "hit", "the fifth tiny bite"),
@@ -2161,6 +2180,7 @@ PICTURE_HITS = [
     ("s05_boy", "pop", "这里有个小孩子", 4, 0.0, "hit", "the fifth loaf"),
     ("s05_boy", "pop", "这里有个小孩子", 6, 0.0, "hit", "the second fish"),
     ("s05_boy", "cloth", "可是，小男孩把他带的饭", 0, 0.0, "hit", "the boy hands over his lunch"),
+    ("s05_boy", "chime", "五个饼，两条鱼，只够", 0, 0.0, "hit", "Jesus takes the lunch (a glint)"),
     ("s06_sit", "pop", "有的一百个人一组", 0, 0.0, "hit", "a group of a hundred (a big low chord)"),
     ("s06_sit", "pop", "有的一百个人一组", 1, 0.0, "hit", "a group of fifty (a light high chord)"),
     ("s06_sit", "whoosh", "那里有好多青草", 0, 0.0, "hit", "the view rises (a harp sweep)"),
@@ -2171,8 +2191,11 @@ PICTURE_HITS = [
     ("s07_bless", "chime", "抬头望着天", 0, 0.0, "hit", "he looks up to heaven (a glint)"),
     ("s07_bless", "chime", "抬头望着天", 1, 0.0, "hit", "the light: the Amen"),
     ("s07_bless", "crunch", "然后，他把饼掰开", 0, 0.0, "hit", "the bread is broken (a harp cascade)"),
-    ("s07_bless", "pop", "分啊分", 0, 0.0, "hit", "the first share (a pluck)"),
+    ("s07_bless", "pop", "分啊分", 1, 0.0, "hit", "the second share (a pluck, with the kalimba)"),
     ("s07_bless", "pop", "分啊分", 3, 0.0, "hit", "the fourth share, the celesta joins the round"),
+    ("s08_baskets", "pop", "门徒们去收", 0, 0.0, "hit", "the first basket (the climb starts on A)"),
+    ("s08_baskets", "pop", "门徒们去收", 5, 0.0, "hit", "the sixth basket (over B7)"),
+    ("s08_baskets", "pop", "门徒们去收", 10, 0.0, "hit", "the eleventh basket (the leading tone)"),
     ("s08_baskets", "pop", "门徒们去收", 11, 0.0, "hit", "the twelfth basket: the full cadence"),
     ("s08_baskets", "pop", "门徒们去收", 11, 0.0, "change", "the twelfth basket: E"),
     ("s08_baskets", "chime", "大家都说", 0, 0.0, "hit", "the boy smiles (a glint)"),
