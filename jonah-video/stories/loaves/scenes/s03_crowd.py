@@ -1268,9 +1268,9 @@ def build(ctx):
     # the healing light
     for (gx, gy, r, key) in ((LAME[0] + 40 * JK, LAME[1] - 150 * JK, 230, "lm"), (MOTHER[0] + 60, MOTHER[1] - 110, 210, "mo")):
         sc.add(f"f_glow_{key}", warm_glow_svg(gx, gy, r, r * 0.9, "#fff2c0", 0.8, key), z=Z_H + 6.49, wc=0.0, seed=SEED_H + 300,
-               blend="screen", motion=M.combine(lambda t: Tf(alpha=env(t, t_zhi - 0.35, min(T - 1.05, t_zhi + 1.3), 0.35, 0.7)), gF))
+               blend="screen", motion=M.combine(lambda t: Tf(alpha=env(t, t_zhi - 0.35, min(T - 1.05, t_zhi + 2.0), 0.35, 0.9)), gF))
     sc.fx.append(FX.sparkles((LAME[0] - 260, LAME[1] - 380, LAME[0] + 120, LAME[1] - 60), count=16, t0=t_zhi - 0.1,
-                             t1=min(T - 1.05, t_zhi + 1.2),
+                             t1=min(T - 1.05, t_zhi + 1.8),
                              size=(8, 16), period=1.2, drift=-20, seed=31))
     sc.sfx("sparkle", t_zhi - 0.05, gain_db=-11)
     sc.sfx("chime", t_zhi - 0.25, gain_db=-16)

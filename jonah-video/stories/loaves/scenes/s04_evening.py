@@ -274,7 +274,11 @@ def build(ctx):
     ph.cut(snap(t_zhe + 0.3), ("stand", "ponder", -1), dip=3)
     t_c0 = snap(t_bai - 0.05)
     t_c1 = snap(t_yao - 0.08)
-    ph.loop(t_c0, [("count_fingers", "count", -1, p_) for p_ in (0.0, 0.34, 0.67)], 0.36, phase=0.0, dip=3)
+    # four finger steps keyed to 掰 / 手 / 算 / 算 (one, two, three fingers, then he starts over: one), a pop on each
+    t_fing = [snap(tm.at(6, "腓力掰着手指算了算", k) - 0.03) for k in (2, 4, 6, 8)]
+    for q, (tf_, p_) in enumerate(zip(t_fing, (0.0, 0.34, 0.67, 0.0))):
+        ph.cut(tf_, ("count_fingers", "count", -1, p_), dip=3 if q == 0 else None)
+        sc.sfx("pop", tf_ + 0.02, gain_db=-18, pan=0.1)
     ph.loop(t_c1, [("shake_head", "doubtful", -1, p_) for p_ in (0.0, 0.25, 0.5, 0.75)], 0.13, dip=4)
     ph.cut(snap(t_c1 + 0.95), ("talk", "doubtful", -1), dip=3)
     t_spread = snap(t_ye - 0.05)
