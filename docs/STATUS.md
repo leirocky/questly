@@ -132,3 +132,10 @@ Owner feedback on v1: unnatural pauses in the male voices, narration too fast, t
 - Not verified: no human listening and no phone playback of any of the three new films or the four rebuilt ones (all audio judgements are ASR + measurements). Owner was asked to listen.
 - Published: owner said 发布; PR #16 merged to main at the reviewed head 185d728 (merge 41437b8); Pages deploy 39970389010 succeeded; the live page lists nine films and serves all nine mp4s (200, sizes equal to the local builds) and posters.
 - Next executable task: 五饼二鱼 (owner's later list), same workflow.
+### 五饼二鱼 (2026-10-23) — film 10; NOT published yet
+- John 6:1-14 with Mark 6:30-44 (+ Matt 14:21, Luke 9:11): `stories/loaves/`, 9 scenes / 37 lines (N; Z Jesus 98; D disciples 84; P Philip 79; A Andrew 88). Script revised after an independent review (Jesus feeds them, not the boy's lunch; clear 他; one closing question; 牧羊人; Mark 6:40 garden beds; Mark 6:38 找啊找; John 6:14 reaction).
+- Same workflow as films 7-9: voice (names checked in context; 你们给他们吃吧 retaken slower with `tools/robust_take.py --speed`), art agent (byte-identical verification of all earlier outputs and scene layers), 4 scene agents + composer (E major hillside song, the boy's 7-note kalimba theme, a round for the sharing), independent film review → fixes → re-check (all 7 main items pass; two small tangents fixed after: a tree behind John's head, loaves crossing Andrew's face).
+- Story timing on the composer's advice: tails s03 2.0, s05 2.3, s06 2.5, s07 2.8, s08 2.0, s09 5.7; 1.4 s pause after 感谢上帝.
+- Final 6341003: `jonah-video/output/loaves_story.mp4` 256.8 s, 76 MB; music_check 0 failed, test_score 13/13, mix -16.0 LUFS / -1.7 dBTP, mix_name_check 0 misheard. Page card + poster on the branch only. 720p preview sent to the owner.
+- Not verified: no human listening, no phone playback. Known optional leftovers: the title text double-exposes over the park for ~0.8 s in the s01→s02 fade; a 0.4 s near-silent pause at ~97.7 s.
+- Next executable task: when the owner says 发布, PR this branch to main (五饼二鱼 + card), merge with --match-head-commit, check the Pages deploy and the live page (10 films).
