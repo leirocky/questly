@@ -30,8 +30,10 @@ beat(); nothing hard-coded to the take). Times are for the current take:
   '这一点点'     the counted loaves and fish shrink back into the basket; Andrew doubtful
   after the line Andrew hands the basket back down to the boy; the boy turns to Jesus holding it
   '五个饼'       a gloss card: the little open basket ... '只够' = one boy patting his full tummy
-  '可是' 26.65   the boy looks up at Jesus; '交给' he lifts the basket with both hands; Jesus bends kindly (smile_boy)
-  '耶稣' 29.51   the basket passes into Jesus's hands; the boy folds his hands and smiles
+  '可是' 26.65   the boy looks up at Jesus; just before '交给' (28.58) he lifts the basket with both hands; Jesus
+                bends kindly (smile_boy)
+  ~29.05        on '交给了' the basket passes into Jesus's hands (chime 29.32, clear of the scene's end); the boy folds
+                his hands and smiles
   end           calm: Jesus holding the basket, smiling down at the boy; Andrew and Peter watching
 """
 import math
@@ -966,10 +968,11 @@ def build(ctx):
 
     # '可是': he looks up at Jesus; '交给': he lifts the basket; Jesus bends and takes it
     bf.cut(t_ks3 - 0.05, bk("look_up", -1, "hopeful", basket="open"), depth=5)
-    t_off = snap(t_jg - 0.06)
+    # (the hand-over sits on '交给了', half a second before '耶稣', so the chime is clear of the scene's end)
+    t_off = snap(t_jg - 0.3)
     bf.cut(t_off, bk("offer_up", -1, "hopeful", basket="open"), depth=6)
     jf.cut(snap(t_off + 0.1), jk("smile_boy", 1), depth=5)
-    t_q0 = snap(t_ys - 0.02)
+    t_q0 = snap(max(t_off + 0.5, t_ys - 0.5))
     t_q1 = snap(t_q0 + 0.22)
     hb_boy2 = held_basket(C.the_boy, XB, YG, K, -1, -4, -4, 0.62, pose="offer_up")
     hb_jes = held_basket(C.jesus, XJ, YG, K, 1, -4, 0, 0.72, pose="smile_boy")
@@ -1099,5 +1102,5 @@ def build(ctx):
     sc.sfx("pop", t_c0, gain_db=-19, pan=-0.3)
     sc.sfx("pop", t_eq + 0.15, gain_db=-19, pan=-0.3)
     sc.sfx("cloth", t_off, gain_db=-18)
-    sc.sfx("chime", t_q1 + 0.05, gain_db=-17)
+    sc.sfx("chime", t_q1, gain_db=-17)
     return sc

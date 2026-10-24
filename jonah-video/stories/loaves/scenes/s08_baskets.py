@@ -22,8 +22,10 @@ beat(); nothing hard-coded to the take). Times are for the current take:
                 the basket, which fills .25 -> .5 -> .75 -> 1
   ~14.05        hard cut: twelve full baskets in a row, the twelve standing proudly behind them, Jesus on the left,
                 the boy on the right
-  '装满了十二个篮子'  a count bubble pops over each basket in turn, 1 .. 12, each basket giving a little hop
-  '比' 16.33     a gloss card: the boy's little basket with five loaves ('5') ... '还多得多' twelve big baskets ('12')
+  '装满了' 14.18  a count bubble pops over each basket in turn, 1 .. 12, one every 0.25 s (a child can count along),
+                each basket giving a little hop; the twelfth (16.97, the score's full cadence) runs past the word
+  ~17.2         a gloss card: the boy's little basket with five loaves ('5') on '五个饼' ... '还多得多' twelve big
+                baskets ('12')
   '大家都好惊讶'  the twelve put their hands to their cheeks, the boy's eyes go wide, his parents jump up amazed
   '大家都说' 25.98  the camera pulls back over the hillside: the groups cheer (arms up), the twelve wave; '耶稣一定'
                 the boy's father and three people further up point to Jesus, his mother cheers; a soft warm glow
@@ -276,6 +278,9 @@ def build(ctx):
     t_xnh = b(4, "小男孩")
     t_kan = b(4, "看着")
     t_xiao = b(4, "笑了")
+    # the twelve baskets counted at a child's pace: one pop every 0.25 s from '装满了'; the twelfth (the score's full
+    # cadence) runs a little past '十二个篮子', and the gloss card waits for it
+    t_c = [snap(t_count[0] + 0.02 + 0.25 * j) for j in range(12)]
     t_cut1 = snap(t_ys - 0.12)                     # S1 -> S2 (the family -> Jesus)
     t_cut2 = snap((t_l1e + L[2].start) / 2)        # S2 -> S3 (the gathering)
     t_cut3 = snap(t_zm - 0.13)                     # S3 -> S4 (the twelve baskets)
@@ -362,7 +367,7 @@ def build(ctx):
     bf.cut(0, bk("pat_tummy", -1, "yum"))
     bf.mots.append(bump(t_bao[1], K, (XBOY, YG), 6, 0.4))
     bf.cut(snap(t_cut3), bk("smile", -1, "happy"), dip=False)
-    bf.cut(snap(t_count[3] - 0.05), bk("watch", -1, "awed"), depth=5)
+    bf.cut(snap(t_c[2] + 0.1), bk("watch", -1, "awed"), depth=5)
     bf.cut(t_amaze + 0.05, bk("eyes_wide", -1), depth=7)
     bf.cut(snap(t_cheer + 0.2), bk("cheer", -1, "overjoyed"), depth=6)
     # '小男孩看着满满的篮子': he steps over to the full baskets and looks at them
@@ -460,14 +465,13 @@ def build(ctx):
     # ---------------------------------------------------------------- S4: the twelve baskets and the twelve
     rx, ry, rs = ROW
     xs = row_basket_xs(rx, rs)
-    t_c = [snap(tt) for tt in (t_count[0] + (t_count[-1] + 0.12 - t_count[0]) * j / 11 for j in range(12))]
     for j in range(12):
         piv = (xs[j], ry)
         sc.add(f"basket{j}", row_svg(rx, ry, rs, 0.9, only=j), z=Z_ROW + 0.001 * j,
                motion=M.combine(lambda t: Tf(alpha=1.0 if t >= t_cut3 else 0.0), bump(t_c[j], 1.0, piv, 12, 0.24)))
         top = ry - 166 * rs - 40
         sc.add(f"num{j}", number_svg(xs[j], top, j + 1, 0.6), z=Z_NUM, wc=0,
-               motion=pop_in(t_c[j], (xs[j], top), dur=0.26, t1=snap(t_bi + 0.1), s0=0.3))
+               motion=pop_in(t_c[j], (xs[j], top), dur=0.26, t1=snap(t_c[11] + 0.95), s0=0.3))
         sc.sfx("pop", t_c[j] + 0.01, gain_db=-17 - (j % 3), pan=-0.4 + 0.07 * j)
     # the twelve standing behind (two staggered lines)
     back = [(800 + 160 * i, 978, (2, 5, 7, 9, 11, 3)[i]) for i in range(6)]
@@ -492,14 +496,15 @@ def build(ctx):
 
     # ---------------------------------------------------------------- S5: the gloss - one little basket, twelve big ones
     GX, GY, GK = 1170, 440, 1.12
-    t_g0 = snap(t_bi - 0.05)
+    t_g0 = snap(max(t_bi - 0.05, t_c[11] + 0.25))
+    t_small = snap(max(t_wb - 0.05, t_g0 + 0.16))
     t_g1 = snap(t_jy - 0.15)
     sc.add("card", card_svg(GX, GY, GK), z=Z_GLOSS, motion=pop_in(t_g0, (GX, GY), t1=t_g1))
     lx = GX - 192 * GK
     sc.add("card_small", doc(PR.lunch_basket(lx, GY + 40 * GK, 0.78 * GK, 1, state="open", time=0.6)), z=Z_GLOSS + 0.1,
-           motion=pop_in(snap(t_wb - 0.05), (lx, GY), dur=0.3, t1=t_g1, s0=0.4))
+           motion=pop_in(t_small, (lx, GY), dur=0.3, t1=t_g1, s0=0.4))
     sc.add("card_5", label_svg(lx, GY + 104 * GK, "5", 48 * GK), z=Z_GLOSS + 0.2, wc=0,
-           motion=pop_in(snap(t_wb + 0.15), (lx, GY + 88 * GK), dur=0.25, t1=t_g1))
+           motion=pop_in(snap(t_small + 0.2), (lx, GY + 88 * GK), dur=0.25, t1=t_g1))
     sc.add("card_arrow", arrow_svg(GX - 110 * GK, GY - 4 * GK, 0.8 * GK), z=Z_GLOSS + 0.1,
            motion=pop_in(snap(t_hd - 0.25), (GX - 110 * GK, GY), dur=0.25, t1=t_g1))
     bxr = GX + 98 * GK
@@ -557,9 +562,9 @@ def build(ctx):
     sc.sfx("cloth", t_lf + 0.1, gain_db=-21)
     for k, tp in enumerate(picks_t):
         sc.sfx("crunch", tp + 0.22, dur=0.5, gain_db=-24, fade_out=0.2, pan=0.2)
-    sc.sfx("sparkle", t_count[-1] + 0.1, gain_db=-16)
+    sc.sfx("sparkle", t_c[11] + 0.03, gain_db=-16)
     sc.sfx("pop", t_g0, gain_db=-19, pan=-0.2)
-    sc.sfx("pop", t_wb, gain_db=-20, pan=-0.3)
+    sc.sfx("pop", t_small + 0.02, gain_db=-20, pan=-0.3)
     sc.sfx("pop", t_hd, gain_db=-18, pan=0.1)
     sc.sfx("crowd", t_jy, dur=2.2, gain_db=-15, fade_in=0.15, fade_out=1.2, pan=0.2)
     sc.sfx("cheer", t_cheer - 0.05, dur=t_xnh - t_cheer + 0.8, gain_db=-14, fade_in=0.3, fade_out=1.0)
